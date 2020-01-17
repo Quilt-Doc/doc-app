@@ -19,6 +19,8 @@ addCanRead(folderID, userID)
 removeCanRead(folderID, userID)
 */
 createDocument = (req, res) => {
+    console.log(req.body)
+    /*
     const { authorID, parentIDs, snippetIDs, title, description, uploadFileIDs, tagIDs } = req.body;
     let document = new Document(
         {
@@ -32,14 +34,20 @@ createDocument = (req, res) => {
     if (description) document.description = description;
     if (uploadFileIDs) document.uploadFiles = uploadFileIDs.map(snippetID => ObjectId(snippetID));
     if (tagIDs) document.tags = tagIDs.map(tagID => ObjectId(tagID))
+    */
+    /*
     document.save((err, document) => {
         if (err) return res.json({ success: false, error: err });
+        return res.json(document);
+        
         document.populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(document);
         });
+        
     });
+    */
 }
 
 

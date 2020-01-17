@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const document_controller = require('../controllers/DocumentController')
-router.post('/documents/create', document_controller.createDocumet);
+router.post('/documents/create', document_controller.createDocument);
 
 
 const workspace_controller = require('../controllers/WorkspaceController');

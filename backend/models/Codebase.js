@@ -5,7 +5,7 @@ const { ObjectId, Mixed } = Schema.Types;
 var codebaseSchema = new Schema({
 	workspaceID: Date,
 	name: {type: String, index: true},
-	product: ObjectId,
+	project: {type: ObjectId, ref: 'Project'},
 	numPosts: Number,
 	numReqs: Number,
 	url: String,

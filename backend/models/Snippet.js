@@ -4,9 +4,9 @@ const { ObjectId } = Schema.Types;
 
 let snippetSchema = new Schema({
     created: Date,
-    creator: ObjectId,
-    folders: [{type: ObjectId, index: true}],
-    documents: [{type: ObjectId, index: true}],
+    creator: {type: ObjectId, ref: 'User'},
+    folders: [{type: ObjectId, index: true, ref: 'Folder'}],
+    documents: [{type: ObjectId, index: true, ref: 'Document'}],
     type: String,
     location: String, 
     status: String,

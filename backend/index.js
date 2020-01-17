@@ -4,6 +4,7 @@ var cors = require('cors');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 
+require('dotenv').config()
 
 const API_PORT = 3001;
 const app = express();
