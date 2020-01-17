@@ -8,7 +8,6 @@ require('dotenv').config();
 
 const API_PORT = 3001;
 const app = express();
-const router = express.Router();
 
 const session = require('express-session');
 

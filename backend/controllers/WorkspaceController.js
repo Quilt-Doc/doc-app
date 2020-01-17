@@ -1,4 +1,4 @@
-const Tag = require('../models/Workspace');
+const Workspace = require('../models/Workspace');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
