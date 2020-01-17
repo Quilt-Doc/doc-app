@@ -4,7 +4,7 @@ const { ObjectId } = Schema.Types;
 
 let commentSchema = new Schema({
     created: Date,
-    author: ObjectId,
+    creator: ObjectId,
     text: String,
     type: String,
     targetObject: ObjectId

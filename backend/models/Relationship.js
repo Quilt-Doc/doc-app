@@ -4,7 +4,7 @@ const { ObjectId } = Schema.Types;
 
 let relationshipSchema = new Schema({
     created: Date,
-    author: ObjectId,
+    creator: ObjectId,
     source: ObjectId,
     target: ObjectId,
     relationshipType: String,
