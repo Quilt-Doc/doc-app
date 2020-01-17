@@ -35,10 +35,6 @@ app.use(bodyParser.json());
 var routes = require("./routes/routes");
 app.use('/api', routes);
 
-app.post('/endpoint', (req, res) => {
-    console.log(req.body);
-  });
-
 db.once('open', () => console.log('connected to the database'));
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 

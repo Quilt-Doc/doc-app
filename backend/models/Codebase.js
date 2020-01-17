@@ -3,13 +3,12 @@ const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
 var codebaseSchema = new Schema({
-	workspaceID: Date,
-	name: {type: String, index: true},
-	project: {type: ObjectId, ref: 'Project'},
-	numPosts: Number,
-	numReqs: Number,
-	url: String,
-	color: String
+	name: String,
+	workspace: {type: ObjectId, ref: 'Workspace', index: true},
+	link: String,
+	lastScannedDate: Date,
+	scanFrequency: Date,
+	created: Date
 });
 
 var Codebase = mongoose.model("Codebase", codebaseSchema);
