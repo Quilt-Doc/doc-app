@@ -1,4 +1,6 @@
 const Document = require('../models/Document');
+var mongoose = require('mongoose')
+const { ObjectId } = mongoose.Types;
 
 createDocument = (req, res) => {
     const { authorID, parentIDs, snippetIDs, title, description, uploadFileIDs, tagIDs } = req.body;
