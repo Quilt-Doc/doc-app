@@ -10,12 +10,10 @@ const app = express();
 const router = express.Router();
 
 const session = require('express-session');
+const password = 'qZyvXV2chEbJntnE'
+const dbRoute = `mongodb+srv://fsanal:${password}@documentationapp-vtdfe.mongodb.net/test?retryWrites=true&w=majority`
 
-//const dbRoute =
-// 'mongodb+srv://admin:UYeKdxqhRrHQDziB@cluster0-gp8ab.mongodb.net/test?retryWrites=true&w=majority';
-
-
-mongoose.connect('mongodb://localhost:27017/myDatabase');
+//mongoose.connect('mongodb://localhost:27017/myDatabase');
 mongoose.connect(dbRoute, { useNewUrlParser: true });
 
 
