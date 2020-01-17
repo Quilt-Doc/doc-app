@@ -1,15 +1,12 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema;
-const { ObjectId, Mixed } = Schema.Types;
+const { ObjectId} = Schema.Types;
 
 var tagSchema = new Schema({
 	created: Date,
-	name: {type: String, index: true},
-	product: ObjectId,
-	numPosts: Number,
-	numReqs: Number,
-	url: String,
-	color: String
+	project: ObjectId,
+	title: String,
+	color: String,
 });
 
 var Tag = mongoose.model("Tag", tagSchema);
