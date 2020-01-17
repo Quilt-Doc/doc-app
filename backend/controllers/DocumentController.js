@@ -1,9 +1,8 @@
 const Document = require('../models/Document');
+var mongoose = require('mongoose')
+const { ObjectId } = mongoose.Types;
 
 createDocument = (req, res) => {
-    const {title} = req.body
-    console.log(req.body)
-    /*
     const { authorID, parentIDs, snippetIDs, title, description, uploadFileIDs, tagIDs } = req.body;
     let document = new Document(
         {
@@ -25,7 +24,6 @@ createDocument = (req, res) => {
             return res.json(document);
         });
     });
-    */
 }
 
 getDocument = (req, res) => {
