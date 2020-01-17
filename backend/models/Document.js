@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
-let docItemSchema = new Schema({
+let documentSchema = new Schema({
     created: Date,
     author: ObjectId,
     parents: [{type: ObjectId, index: true}],
@@ -15,7 +15,7 @@ let docItemSchema = new Schema({
 	canRead: [{type: ObjectId, index: true}]
 });
 
-let DocItem = mongoose.model("DocItem", docItemSchema);
+let Document = mongoose.model("Document", documentSchema);
 
-module.exports = DocItem;
+module.exports = Document;
 
