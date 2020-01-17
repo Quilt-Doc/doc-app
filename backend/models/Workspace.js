@@ -6,7 +6,7 @@ var workspaceSchema = new Schema({
 	name: {type: String, required: true},
 	creator: {type: ObjectId, required: true},
 	memberUsers: [{type: ObjectId, required: true, index: true}],
-	projectIDs: [{type: ObjectId, index: true}]
+	projects: [{type: ObjectId, ref: 'Project', index: true}]
 });
 
 var Workspace = mongoose.model("Workspace", workspaceSchema);

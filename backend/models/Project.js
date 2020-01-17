@@ -3,10 +3,9 @@ const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
 var projectSchema = new Schema({
-	workspaceID: ObjectId,
 	name: String,
 	author: ObjectId,
-	userIDs: [{type: ObjectId, index: true}],
+	userIDs: [{type: ObjectId, ref: 'User', index: true}],
 	codebases: [{type: ObjectId, index: true}],
 	description: String,
 	created: Date
