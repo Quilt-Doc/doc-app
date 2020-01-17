@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
 var codebaseSchema = new Schema({
-	workspaceID: Date,
+	workspaceID: ObjectId,
 	name: {type: String, index: true},
 	project: {type: ObjectId, ref: 'Project'},
 	numPosts: Number,

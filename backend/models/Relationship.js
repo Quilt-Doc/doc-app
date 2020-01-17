@@ -7,8 +7,8 @@ let relationshipSchema = new Schema({
     creator: {type: ObjectId, ref: 'User'},
     source: ObjectId,  //Can be multiple refs
     target: ObjectId,  //Can be multiple refs -- needs resolution
-    relationshipType: String,
-    relationshipText: String
+    type: String,
+    text: String
 });
 
 let Relationship = mongoose.model("Relationship", relationshipSchema);
