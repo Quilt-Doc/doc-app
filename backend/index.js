@@ -3,20 +3,22 @@ const express = require('express');
 var cors = require('cors');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
+require('dotenv').config();
 
 require('dotenv').config()
 
 const API_PORT = 3001;
 const app = express();
 
-const password = 'qZyvXV2chEbJntnE'
+const session = require('express-session');
+
+// This should be an environment variable
+const password = process.env.EXTERNAL_DB_PASS
 var dbRoute = `mongodb+srv://fsanal:${password}@documentationapp-vtdfe.mongodb.net/test?retryWrites=true&w=majority`
 
-console.log(process.env);
 console.log(process.env.USE_EXTERNAL_DB);
 
-
-if (!typeof process.env.USE_EXTERNAL_DB !== 'undefined' && process.env.USE_EXTERNAL_DB == 'false') {
+if (!typeof process.env.USE_EXTERNAL_DB !== 'undefined' && process.env.USE_EXTERNAL_DB == 0) {
     dbRoute = 'mongodb://127.0.0.1:27017?retryWrites=true&w=majority'
 }
 console.log(dbRoute)
