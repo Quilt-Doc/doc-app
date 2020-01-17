@@ -4,8 +4,8 @@ const { ObjectId, Mixed } = Schema.Types;
 
 var projectSchema = new Schema({
 	name: String,
-	author: ObjectId,
-	userIDs: [{type: ObjectId, ref: 'User', index: true}],
+	creator: {type: ObjectId, ref: 'User', index: true},
+	users: [{type: ObjectId, ref: 'User', index: true}],
 	codebases: [{type: ObjectId, index: true, ref: 'Codebase'}],
 	description: String,
 	created: Date
