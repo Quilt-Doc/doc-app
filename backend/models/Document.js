@@ -4,13 +4,13 @@ const { ObjectId } = Schema.Types;
 
 let documentSchema = new Schema({
     created: Date,
-    author: ObjectId,
-    parents: [{type: ObjectId, index: true}],
-    snippets: [{type: ObjectId, index: true}],
+    author: {type: ObjectId, ref: 'User'},
+    parents: [{type: ObjectId, index: true, ref: 'Folder'}],
+    snippets: [{type: ObjectId, index: true, ref: 'Snippet'}],
     title: String,
     description: String,
-    uploadFiles: [{type: ObjectId, index: true}],
-    tags: [{type: ObjectId, index: true}],
+    uploadFiles: [{type: ObjectId, index: true, ref: 'UploadFile'}],
+    tags: [{type: ObjectId, index: true, ref: 'Tag'}],
     canWrite: [{type: ObjectId, index: true}],
 	canRead: [{type: ObjectId, index: true}]
 });

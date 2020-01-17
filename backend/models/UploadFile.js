@@ -4,7 +4,7 @@ const { ObjectId } = Schema.Types;
 
 let uploadFileSchema = new Schema({
     created: Date,
-    document: ObjectId,
+    document: {type: ObjectId, ref: 'Document'},
     filePath: String,
     fileExtension: String
 });

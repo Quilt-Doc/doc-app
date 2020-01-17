@@ -4,7 +4,7 @@ const { ObjectId} = Schema.Types;
 
 var tagSchema = new Schema({
 	created: Date,
-	project: ObjectId,
+	project: {type: ObjectId, ref: 'Project'},
 	title: String,
 	color: String,
 });

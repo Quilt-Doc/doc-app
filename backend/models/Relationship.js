@@ -4,9 +4,9 @@ const { ObjectId } = Schema.Types;
 
 let relationshipSchema = new Schema({
     created: Date,
-    creator: ObjectId,
-    source: ObjectId,
-    target: ObjectId,
+    creator: {type: ObjectId, ref: 'User'},
+    source: ObjectId,  //Can be multiple refs
+    target: ObjectId,  //Can be multiple refs -- needs resolution
     relationshipType: String,
     relationshipText: String
 });

@@ -6,7 +6,7 @@ var projectSchema = new Schema({
 	name: String,
 	author: ObjectId,
 	userIDs: [{type: ObjectId, ref: 'User', index: true}],
-	codebases: [{type: ObjectId, index: true}],
+	codebases: [{type: ObjectId, index: true, ref: 'Codebase'}],
 	description: String,
 	created: Date
 });

@@ -6,7 +6,7 @@ let userSchema = new Schema({
     created: Date,
     username: String,
     email: String,
-    workspaces: [{type: ObjectId, index: true}]
+    workspaces: [{type: ObjectId, index: true, ref: 'Workspace'}]
 });
 
 let User = mongoose.model("User", userSchema);

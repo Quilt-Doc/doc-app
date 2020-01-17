@@ -3,16 +3,16 @@ const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
 var folderSchema = new Schema({
-	parent: ObjectId,
+	parent: {type: ObjectId, ref: 'Folder'}, 
     projectID: ObjectId,
-	codebase: ObjectId,
+	codebase: {type: ObjectId, ref: 'Codebase'},
 	title: String,
 	description: String,
 	canWrite: [{type: ObjectId, index: true}],
 	canRead: [{type: ObjectId, index: true}],
-	tags: [{type: ObjectId, index: true}],
-	snippets: [{type: ObjectId, index: true}],
-	uploadFiles: [{type: ObjectId, index: true}],
+	tags: [{type: ObjectId, index: true, ref: 'Tag'}],
+	snippets: [{type: ObjectId, index: true, ref: 'Snippet'}],
+	uploadFiles: [{type: ObjectId, index: true, ref: 'UploadFile'}],
 	numCodebaseSnippets: Number,
     numDocuments: Number,
     numAuthors: Number,

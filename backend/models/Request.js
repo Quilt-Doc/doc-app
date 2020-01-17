@@ -4,9 +4,9 @@ const { ObjectId } = Schema.Types;
 
 let requestSchema = new Schema({
     created: Date,
-    creator: ObjectId,
-    targetUser: ObjectId,
-    targetObject: ObjectId,
+    creator: {type: ObjectId, ref: 'User'},
+    targetUser: {type: ObjectId, ref: 'User'},
+    targetObject: ObjectId,  // has multiple object references -- needs resolution
     type: String,
     title: String, 
     description: String,
