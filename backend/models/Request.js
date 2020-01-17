@@ -4,7 +4,7 @@ const { ObjectId } = Schema.Types;
 
 let requestSchema = new Schema({
     created: Date,
-    author: ObjectId,
+    creator: ObjectId,
     targetUser: ObjectId,
     targetObject: ObjectId,
     type: String,
