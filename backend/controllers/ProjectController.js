@@ -80,8 +80,7 @@ deleteProject = (req, res) => {
 
     Project.findByIdAndRemove(id, (err, project) => {
         if (err) return res.json({ success: false, error: err });
-            if (err) return res.json({ success: false, error: err });
-            return res.json(project);
+        return res.json(project);
     });
     /*project.populate('creator').populat('users')
         .populate('codebases', (err, project) => {
