@@ -1,14 +1,30 @@
 USER
+    {"username": "Test User 1", "email": "testuser1@gmail.com", "debugId": "000000000000000000000000"}
+    {"username": "Test User 2", "email": "testuser2@gmail.com", "debugId": "000000000000000000000001"}
+    {"username": "Test User 3", "email": "testuser3@gmail.com", "debugId": "000000000000000000000002"}
+    {"username": "Test User 4", "email": "testuser4@gmail.com", "debugId": "000000000000000000000003"}
+    {"username": "Test User 5", "email": "testuser5@gmail.com", "debugId": "000000000000000000000004"}
 
 WORKSPACE
-    {"name":"Test Workspace 1","creatorId":"5d49d64d349dc8058e47f61d"}
-    {"name":"Test Workspace 2","creatorId":"5d49d64d349dc8058e47f61d"}
-    {"name":"Test Workspace 3","creatorId":"5d49d64d349dc8058e47f61d"}
-    {"name":"Test Workspace 4","creatorId":"5d49d64d349dc8058e47f61d"}
-    {"name":"Test Workspace 5","creatorId":"5d49d64d349dc8058e47f61d"}
+    {"name":"Test Workspace 1", "creatorId":"000000000000000000000000", "debugId": "100000000000000000000000"}
+    {"name":"Test Workspace 2", "creatorId":"000000000000000000000001", "debugId": "100000000000000000000001"}
+    {"name":"Test Workspace 3", "creatorId":"000000000000000000000002", "debugId": "100000000000000000000002"}
+    {"name":"Test Workspace 4", "creatorId":"000000000000000000000003", "debugId": "100000000000000000000003"}
+    {"name":"Test Workspace 5", "creatorId":"000000000000000000000004", "debugId": "100000000000000000000004"}
+
 PROJECT
+    {"name": "Test Project 1", "creatorId": "000000000000000000000000", "description": "#1 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000000"}
+    {"name": "Test Project 2", "creatorId": "000000000000000000000001", "description": "#2 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000001"}
+    {"name": "Test Project 3", "creatorId": "000000000000000000000002", "description": "#3 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000002"}
+    {"name": "Test Project 4", "creatorId": "000000000000000000000003", "description": "#4 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000003"}
+    {"name": "Test Project 5", "creatorId": "000000000000000000000004", "description": "#5 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000004"}
 
 CODEBASE
+    {"name": "Test Codebase 1", "workspaceId": "100000000000000000000000", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000000"}
+    {"name": "Test Codebase 2", "workspaceId": "100000000000000000000001", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000001"}
+    {"name": "Test Codebase 3", "workspaceId": "100000000000000000000002", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000002"}
+    {"name": "Test Codebase 4", "workspaceId": "100000000000000000000003", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000003"}
+    {"name": "Test Codebase 5", "workspaceId": "100000000000000000000004", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000004"}
 
 FOLDER
 
