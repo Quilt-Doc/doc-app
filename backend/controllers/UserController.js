@@ -25,6 +25,21 @@ createUser = (req, res) => {
     });
 }
 
+
+getUser = (req, res) => {
+    const { id } = req.params;
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
+
+    User.findById(id, (err, user) => {
+		if (err) return res.json({success: false, error: err});
+		user.populate('workspaces', (err, user) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(user);
+        });
+    });
+}
+
+
 removeWorkspace = (req, res) => {
     const { workspaceID } = req.body;
     const { id } = req.params;
@@ -57,6 +72,5 @@ deleteUser = (req, res) => {
         });
     });
 }
-
 
 module.exports = { createUser, removeWorkspace, deleteUser}
