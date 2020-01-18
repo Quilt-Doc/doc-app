@@ -1,0 +1,27 @@
+USER
+
+WORKSPACE
+    {"name":"Test Workspace 1","creatorId":"5d49d64d349dc8058e47f61d"}
+    {"name":"Test Workspace 2","creatorId":"5d49d64d349dc8058e47f61d"}
+    {"name":"Test Workspace 3","creatorId":"5d49d64d349dc8058e47f61d"}
+    {"name":"Test Workspace 4","creatorId":"5d49d64d349dc8058e47f61d"}
+    {"name":"Test Workspace 5","creatorId":"5d49d64d349dc8058e47f61d"}
+PROJECT
+
+CODEBASE
+
+FOLDER
+
+DOCUMENT
+
+RELATIONSHIP
+
+UPLOADFILE
+
+SNIPPET
+
+DOCUMENTATION REQUEST
+
+COMMENT
+
+TAG
