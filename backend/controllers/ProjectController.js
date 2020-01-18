@@ -5,7 +5,7 @@ const { ObjectId } = mongoose.Types;
 createProject = (req, res) => {
     // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
     console.log(req.body);
-    const {name, creatorId, description, userIds, codebaseIds} = req.body;
+    const {name, creatorId, description, userIds, codebaseIds, debugId} = req.body;
     console.log('name: ' + name);
     console.log('creatorId: ' + creatorId);
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no project name provided'});
@@ -13,11 +13,17 @@ createProject = (req, res) => {
 
     let project = new Project({
         name: name,
-        creator: ObjectId(creatorId)
+        creator: ObjectId(creatorId),
+        users: [ObjectId(creatorId)]
     });
 
+    // Check if user-defined ids allowed
+    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
+        if (debugId) project._id = ObjectId(debugId);
+    }
+
     if (description) project.description = description;
-    if (userIds) project.users = userIds.map(userId => ObjectId(userId));
+    if (userIds) project.users.concat(userIds.map(userId => ObjectId(userId)));
     if (codebaseIds) project.codebases = codebaseIds.map(codebaseId => ObjectId(codebaseId));
 
     project.save((err, project) => {

@@ -5,7 +5,7 @@ const { ObjectId } = mongoose.Types;
 createWorkspace = (req, res) => {
     // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
     console.log(req.body);
-    const {name, creatorId} = req.body;
+    const {name, creatorId, debugId} = req.body;
     console.log('name: ' + name);
     console.log('creatorId: ' + creatorId);
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no workspace name provided'});
@@ -16,6 +16,11 @@ createWorkspace = (req, res) => {
         creator: ObjectId(creatorId),
         memberUsers: [ObjectId(creatorId)]
     });
+
+    // Check if user-defined ids allowed
+    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
+        if (debugId) workspace._id = ObjectId(debugId);
+    }
 
     workspace.save((err, workspace) => {
         if (err) return res.json({ success: false, error: err });
