@@ -7,7 +7,8 @@ let commentSchema = new Schema({
     creator: {type: ObjectId, ref: 'User'},
     text: String,
     type: String,
-    targetObject: ObjectId
+    targetObject: ObjectId,
+    parent: {type: ObjectId, ref: 'Comment'},
 });
 
 let Comment = mongoose.model("Comment", commentSchema);
