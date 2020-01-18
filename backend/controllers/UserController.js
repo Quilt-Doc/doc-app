@@ -43,7 +43,7 @@ editUser = (req, res) => {
     const { id } = req.params;
     const { username, email} = req.body;
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
-    
+
     let update = {}
     if (username) update.username = username; 
     if (email) update.email = email;
@@ -63,10 +63,8 @@ attachWorkspace = (req, res) => {
 
     if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no workspaceID to delete provided'});
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
-
     let update = {}
     update.workspaces = ObjectId(workspaceID);
-
     User.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, user) => {
         if (err) return res.json({ success: false, error: err });
         user.populate('workspaces', (err, user) => {
