@@ -66,7 +66,7 @@ deleteDocument = (req, res) => {
 }
 
 retrieveDocuments = (req, res) => {
-    let { textQuery, authorID, parentIDs, snippetIDs, uploadFileIDs, tagIDs } = req.body;
+    let { textQuery, authorID, parentIDs, snippetIDs, uploadFileIDs, tagIDs, limit, skip } = req.body;
     
     query = Document.find();
     if (authorID) query.where('author').equals(authorID);
