@@ -3,9 +3,9 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let userSchema = new Schema({
-    created: Date,
     username: String,
     email: String,
+    created: {type: Date, default: Date.now },
     workspaces: [{type: ObjectId, index: true, ref: 'Workspace'}]
 });
 
