@@ -3,7 +3,7 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createComment = (req, res) => {
-    const { creatorID text, type, targetObjectID} = req.body;
+    const { creatorID, text, type, targetObjectID} = req.body;
     let comment = new Comment(
         {
             type,
