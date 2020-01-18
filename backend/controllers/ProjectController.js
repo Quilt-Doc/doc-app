@@ -5,26 +5,26 @@ const { ObjectId } = mongoose.Types;
 createProject = (req, res) => {
     // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
     console.log(req.body);
-    const {name, creatorId, description, userIds, codebaseIds, debugId} = req.body;
+    const {name, creatorID, description, userIDs, codebaseIDs, debugID} = req.body;
     console.log('name: ' + name);
-    console.log('creatorId: ' + creatorId);
+    console.log('creatorID: ' + creatorID);
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no project name provided'});
-    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no project creator ID provided'});
+    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no project creator ID provided'});
 
     let project = new Project({
         name: name,
-        creator: ObjectId(creatorId),
-        users: [ObjectId(creatorId)]
+        creator: ObjectId(creatorID),
+        users: [ObjectId(creatorID)]
     });
 
     // Check if user-defined ids allowed
     if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
-        if (debugId) project._id = ObjectId(debugId);
+        if (debugID) project._id = ObjectId(debugID);
     }
 
     if (description) project.description = description;
-    if (userIds) project.users.concat(userIds.map(userId => ObjectId(userId)));
-    if (codebaseIds) project.codebases = codebaseIds.map(codebaseId => ObjectId(codebaseId));
+    if (userIDs) project.users.concat(userIDs.map(userID => ObjectId(userID)));
+    if (codebaseIDs) project.codebases = codebaseIDs.map(codebaseID => ObjectId(codebaseID));
 
     project.save((err, project) => {
         if (err) return res.json({ success: false, error: err });
@@ -98,13 +98,13 @@ deleteProject = (req, res) => {
 importCodebase = (req, res) => {
 
     const { id } = req.params;
-    const {codebaseId} = req.body;
+    const {codebaseID} = req.body;
     
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no project id provided'});
-    if (!typeof codebaseId == 'undefined' && codebaseId !== null) return res.json({success: false, error: 'no codebase id provided'});
+    if (!typeof codebaseID == 'undefined' && codebaseID !== null) return res.json({success: false, error: 'no codebase id provided'});
 
     let update = {};
-    update.codebases = codebaseId;
+    update.codebases = codebaseID;
 
     Project.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, project) => {
         if (err) return res.json({ success: false, error: err });
@@ -121,13 +121,13 @@ importCodebase = (req, res) => {
 removeCodebase = (req, res) => {
 
     const { id } = req.params;
-    const {codebaseId} = req.body;
+    const {codebaseID} = req.body;
     
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no project id provided'});
-    if (!typeof codebaseId == 'undefined' && codebaseId !== null) return res.json({success: false, error: 'no codebase id provided'});
+    if (!typeof codebaseID == 'undefined' && codebaseID !== null) return res.json({success: false, error: 'no codebase id provided'});
 
     let update = {};
-    update.codebases = codebaseId;
+    update.codebases = codebaseID;
 
     Project.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, project) => {
         if (err) return res.json({ success: false, error: err });

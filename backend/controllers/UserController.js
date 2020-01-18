@@ -5,7 +5,7 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
 createUser = (req, res) => {
-    const { username, email, debugId} = req.body;
+    const { username, email, debugID} = req.body;
     if (!typeof username == 'undefined' && name !== null) return res.json({success: false, error: 'no user username provided'});
     if (!typeof email == 'undefined' && email !== null) return res.json({success: false, error: 'no user email provided'});
 
@@ -18,7 +18,7 @@ createUser = (req, res) => {
 
     // Check if user-defined ids allowed
     if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
-        if (debugId) user._id = ObjectId(debugId);
+        if (debugID) user._id = ObjectId(debugID);
     }
 
     user.save((err, user) => {

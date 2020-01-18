@@ -4,19 +4,19 @@ const { ObjectId, Mixed } = Schema.Types;
 
 var folderSchema = new Schema({
 	parent: {type: ObjectId, ref: 'Folder'}, 
-    projectID: ObjectId,
+    project: {type: ObjectId, ref: 'Project'},
 	codebase: {type: ObjectId, ref: 'Codebase'},
 	title: String,
 	description: String,
-	canWrite: [{type: ObjectId, index: true}],
-	canRead: [{type: ObjectId, index: true}],
+	canWrite: [{type: ObjectId, index: true, ref: 'User'}],
+	canRead: [{type: ObjectId, index: true, ref: 'User'}],
 	tags: [{type: ObjectId, index: true, ref: 'Tag'}],
 	snippets: [{type: ObjectId, index: true, ref: 'Snippet'}],
 	uploadFiles: [{type: ObjectId, index: true, ref: 'UploadFile'}],
 	numCodebaseSnippets: Number,
     numDocuments: Number,
     numAuthors: Number,
-	created: Date
+	created: {type: Date, default: Date.now }
 });
 
 var Folder = mongoose.model("Folder", folderSchema);
