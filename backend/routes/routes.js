@@ -76,4 +76,11 @@ router.put('/requests/edit/:id', request_controller.editRequest);
 router.delete('/requests/delete/:id', request_controller.deleteRequest);
 router.post('/requests/retrieve', request_controller.retrieveRequests);
 // Export API routes
+
+const tag_controller = require('../controllers/TagController');
+router.post('/tags/create', tag_controller.createTag);
+router.get('/tags/get/:id', tag_controller.getTag);
+router.put('/tags/edit/:id', tag_controller.editTag);
+router.delete('/tags/delete/:id', tag_controller.deleteTag);
+router.post('/tags/retrieve', tag_controller.retrieveTags);
 module.exports = router;
