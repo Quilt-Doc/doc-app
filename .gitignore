@@ -1,6 +1,7 @@
 **/.DS_Store
 **/_DS_Store
 **/.env
+**/nohup.out
 #ignore node_modules in backend
 backend/node_modules/*
 

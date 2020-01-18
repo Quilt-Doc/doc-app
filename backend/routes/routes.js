@@ -75,5 +75,14 @@ router.get('/requests/get/:id', request_controller.getRequest);
 router.put('/requests/edit/:id', request_controller.editRequest);
 router.delete('/requests/delete/:id', request_controller.deleteRequest);
 router.post('/requests/retrieve', request_controller.retrieveRequests);
+
+const user_controller = require('../controllers/UserController');
+router.post('/users/create', user_controller.createUser);
+router.get('/users/get/:id', user_controller.getUser);
+router.put('/users/edit/:id', user_controller.editUser);
+router.put('/users/attach_workspace/:id', user_controller.attachWorkspace);
+router.put('/users/remove_workspace/:id', user_controller.removeWorkspace);
+router.put('/users/delete_user/:id', user_controller.deleteUser);
+
 // Export API routes
 module.exports = router;
