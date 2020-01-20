@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let relationshipSchema = new Schema({
-    created: Date,
+    created: {type: Date, default: Date.now },
     creator: {type: ObjectId, ref: 'User'},
     source: ObjectId,  //Can be multiple refs
     target: ObjectId,  //Can be multiple refs -- needs resolution
