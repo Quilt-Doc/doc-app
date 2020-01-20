@@ -9,7 +9,6 @@ createRequest = (req, res) => {
             title,
             targetObject: ObjectId(targetObjectID),
             creator: ObjectId(creatorID),
-            created: new Date(),
         },
     );
     if (type) request.type = type;

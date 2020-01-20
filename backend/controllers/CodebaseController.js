@@ -4,7 +4,6 @@ const { ObjectId } = mongoose.Types;
 
 createCodebase = (req, res) => {
 
-    console.log(req.body);
     const {name, workspaceID, link, debugID} = req.body;
 
     if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no codebase workspace provided'});

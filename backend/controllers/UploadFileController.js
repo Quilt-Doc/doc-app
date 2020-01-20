@@ -4,6 +4,10 @@ const { ObjectId } = mongoose.Types;
 
 createUploadFile = (req, res) => {
     const { documentID, filePath, fileExtension } = req.body;
+
+    if (!typeof documentID == 'undefined' && documentID !== null) return res.json({success: false, error: 'no upload file documentID provided'});
+    if (!typeof filePath == 'undefined' && filePath !== null) return res.json({success: false, error: 'no upload title filePath provided'});
+
     let uploadFile = new UploadFile(
         {
             document: ObjectId(documentID),

@@ -34,6 +34,11 @@ FOLDER
     {"projectID": "200000000000000000000004", "userID": "000000000000000000000004", "parentID": "000000000000000000000000", "title": "Test Folder 5", "codebaseID": "", "description": "#5 Test Folder", "canWrite": "", "canRead": "", "debugID": "400000000000000000000004"}
 
 DOCUMENT
+    {"authorID": "000000000000000000000000", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 1", "description": "#1 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000000"}
+    {"authorID": "000000000000000000000001", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 2", "description": "#2 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000001"}
+    {"authorID": "000000000000000000000002", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 3", "description": "#3 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000002"}
+    {"authorID": "000000000000000000000003", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 4", "description": "#4 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000003"}
+    {"authorID": "000000000000000000000004", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 5", "description": "#5 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000004"}
 
 RELATIONSHIP
 

@@ -4,12 +4,15 @@ const { ObjectId } = mongoose.Types;
 
 createDocument = (req, res) => {
     const { authorID, parentIDs, snippetIDs, title, description, uploadFileIDs, tagIDs } = req.body;
+    
+    if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
+    if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
+
     let document = new Document(
         {
             author: ObjectId(authorID),
             title,
             parents: parentIDs.map(parentID => ObjectId(parentID)),
-            created: new Date(),
         },
     );
     if (snippetIDs) document.snippets = snippetIDs.map(snippetID => ObjectId(snippetID));

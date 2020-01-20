@@ -3,11 +3,8 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createWorkspace = (req, res) => {
-    // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
-    console.log(req.body);
     const {name, creatorID, debugID} = req.body;
-    console.log('name: ' + name);
-    console.log('creatorID: ' + creatorID);
+
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no workspace name provided'});
     if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no workspace creator ID provided'});
 
