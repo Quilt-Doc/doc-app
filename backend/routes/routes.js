@@ -112,4 +112,18 @@ router.put('/tag/delete/:id', tag_controller.deleteTag);
 
 
 // Export API routes
+
+const tag_controller = require('../controllers/TagController');
+router.post('/tags/create', tag_controller.createTag);
+router.get('/tags/get/:id', tag_controller.getTag);
+router.put('/tags/edit/:id', tag_controller.editTag);
+router.delete('/tags/delete/:id', tag_controller.deleteTag);
+router.post('/tags/retrieve', tag_controller.retrieveTags);
+
+const comment_controller = require('../controllers/CommentController');
+router.post('/comments/create', comment_controller.createComment);
+router.get('/comments/get/:id', comment_controller.getComment);
+router.put('/comments/edit/:id', comment_controller.editComment);
+router.delete('/comments/delete/:id', comment_controller.deleteComment);
+router.post('/comments/retrieve', comment_controller.retrieveComments);
 module.exports = router;
