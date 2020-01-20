@@ -12,7 +12,7 @@ createDocument = (req, res) => {
         {
             author: ObjectId(authorID),
             title,
-            parents: parentIDs.map(parentID => ObjectId(parentID)),
+            parents: parentIDs.map(parentID => ObjectId(parentID))
         },
     );
     if (snippetIDs) document.snippets = snippetIDs.map(snippetID => ObjectId(snippetID));

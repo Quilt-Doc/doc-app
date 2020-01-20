@@ -4,10 +4,8 @@ const { ObjectId } = mongoose.Types;
 
 createProject = (req, res) => {
 
-    console.log(req.body);
     const {name, creatorID, description, userIDs, codebaseIDs, debugID} = req.body;
-    console.log('name: ' + name);
-    console.log('creatorID: ' + creatorID);
+
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no project name provided'});
     if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no project creator ID provided'});
 

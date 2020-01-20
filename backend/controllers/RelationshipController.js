@@ -18,7 +18,7 @@ createRelationship = (req, res) => {
         {
             creator: ObjectId(creatorID),
             source: ObjectId(sourceID),
-            target: ObjectId(targetID),
+            target: ObjectId(targetID)
         },
     );
 
