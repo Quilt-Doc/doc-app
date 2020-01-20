@@ -22,7 +22,7 @@ const folder_controller = require('../controllers/FolderController');
 
 router.post('/folders/create', folder_controller.createFolder);
 router.put('/folders/edit/:id', folder_controller.editFolder);
-router.get('/folders/get/', folder_controller.getFolder);
+router.get('/folders/get/:id', folder_controller.getFolder);
 router.put('/folders/delete/:id', folder_controller.deleteFolder);
 router.get('/folders/retrieve/', folder_controller.retrieveFolders);
 router.put('/folders/attach_snippet/:id', folder_controller.attachSnippet);

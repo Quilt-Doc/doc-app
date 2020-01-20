@@ -12,7 +12,6 @@ createFolder = (req, res) => {
     if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no folder title provided'});
 
     let folder = new Folder({
-        name: name,
         project: projectID,
         creator: ObjectId(userID),
         parent: parentID,
@@ -26,10 +25,13 @@ createFolder = (req, res) => {
         if (debugID) folder._id = ObjectId(debugID);
     }
 
-    if (codebaseID) folder.codebaseID = codebaseID;
+    if (codebaseID) folder.codebase = codebaseID;
     if (description) folder.description = description;
     if (canWrite) folder.canWrite = folder.canWrite.concat(canWrite.map(userID => ObjectId(userID)));
     if (canRead) folder.canRead = folder.canRead.concat(canRead.map(userID => ObjectId(userID)));
+
+    console.log('Creator:');
+    console.log(folder.creator);
 
     folder.save((err, folder) => {
         if (err) return res.json({ success: false, error: err });
@@ -71,9 +73,13 @@ getFolder = (req, res) => {
 
     Folder.findById(id, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
-		folder.populate('workspaces', (err, user) => {
+        folder.populate('parent').populate('project')
+        .populate('codebase').populate('creator')
+        .populate('canWrite').populate('canRead')
+        .populate('tags').populate('snippets')
+        .populate('uploadFiles', (err, folder) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(user);
+            return res.json(folder);
         });
     });
 }
