@@ -11,8 +11,8 @@ let documentSchema = new Schema({
     description: String,
     uploadFiles: [{type: ObjectId, index: true, ref: 'UploadFile'}],
     tags: [{type: ObjectId, index: true, ref: 'Tag'}],
-    canWrite: [{type: ObjectId, index: true}],
-	canRead: [{type: ObjectId, index: true}]
+    canWrite: [{type: ObjectId, index: true, ref: 'User'}],
+	canRead: [{type: ObjectId, index: true, ref: 'User'}]
 });
 
 let Document = mongoose.model("Document", documentSchema);

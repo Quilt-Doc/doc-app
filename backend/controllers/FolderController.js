@@ -96,9 +96,28 @@ deleteFolder = (req, res) => {
 }
 
 retrieveFolders = (req, res) => {
-    
+    const {projectID, parentID, codebaseID, textQuery, tagIDs, snippetsIDs, limit, skip} = req.body;
     // (projectID, parentID, codebaseID, textQuery, tagIDs, snippetIDs)
+    
+    query = Folder.find();
+    if (projectID) query.where('project').equals(projectID);
+    if (parentID) query.where('parent').equals(parentID);
+    if (codebaseID) query.where('codebase').equals(codebaseID);
+    // if (textQuery) query.where('codebase').all(tagIDs);
+    if (tagIDs) query.where('tags').all(tagIDs);
+    if (snippetsIDs) query.where('snippets').all(snippetsIDs);
 
+    if (limit) query.limit(Number(limit));
+    if (skip) query.skip(Number(skip));
+
+    query.populate('parent').populate('project')
+    .populate('codebase').populate('creator')
+    .populate('canWrite').populate('canRead')
+    .populate('tags').populate('snippets')
+    .populate('uploadFiles').exec((err, folders) => {
+        if (err) return res.json({ success: false, error: err });
+        return res.json(folders);
+    });
 }
 
 
