@@ -103,5 +103,13 @@ router.put('/users/attach_workspace/:id', user_controller.attachWorkspace);
 router.put('/users/remove_workspace/:id', user_controller.removeWorkspace);
 router.put('/users/delete_user/:id', user_controller.deleteUser);
 
+const tag_controller = require('../controllers/TagController');
+router.post('/tag/create', tag_controller.createTag);
+router.get('/tag/get/:id', tag_controller.getTag);
+router.put('/tag/edit/:id', tag_controller.editTag);
+router.put('/tag/delete/:id', tag_controller.deleteTag);
+
+
+
 // Export API routes
 module.exports = router;
