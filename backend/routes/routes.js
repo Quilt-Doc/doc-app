@@ -30,6 +30,12 @@ router.put('/folders/remove_snippet/:id', folder_controller.removeSnippet);
 router.put('/folders/attach_upload_file/:id', folder_controller.attachUploadFile);
 router.put('/folders/remove_upload_file/:id', folder_controller.removeUploadFile);
 
+router.put('/folders/attach_tag/:id', folder_controller.attachTag);
+router.put('/folders/remove_tag/:id', folder_controller.removeTag);
+router.put('/folders/add_can_write/:id', folder_controller.addCanWrite);
+router.put('/folders/remove_can_write/:id', folder_controller.removeCanWrite);
+router.put('/folders/add_can_read/:id', folder_controller.addCanRead);
+router.put('/folders/remove_can_read/:id', folder_controller.removeCanRead);
 
 
 const codebase_controller = require('../controllers/CodebaseController');

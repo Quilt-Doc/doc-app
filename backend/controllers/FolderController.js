@@ -215,19 +215,149 @@ removeUploadFile = (req, res) => {
 }
 
 
-// TODO: 
-    // attachTag(folderID, tagID)
-    // removeTag(folderID, tagID)
+attachTag = (req, res) => {
+    const { id } = req.params;
+    const { tagID } = req.body;
 
-    // addCanWrite(folderID, userID)
-    // removeCanWrite(folderID, userID)
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
+    if (!typeof tagID == 'undefined' && tagID !== null) return res.json({success: false, error: 'no tagID provided'});
 
-    // addCanRead(folderID, userID)
-    // removeCanRead(folderID, userID)
+    let update = {}
+    update.tags = ObjectId(tagID);
+
+    Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
+        if (err) return res.json({ success: false, error: err });
+        folder.populate('parent').populate('project')
+        .populate('codebase').populate('creator')
+        .populate('canWrite').populate('canRead')
+        .populate('tags').populate('snippets')
+        .populate('uploadFiles', (err, folder) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(folder);
+        });
+    });
+}
+
+removeTag = (req, res) => {
+    const { id } = req.params;
+    const { tagID } = req.body;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
+    if (!typeof tagID == 'undefined' && tagID !== null) return res.json({success: false, error: 'no tagID provided'});
+
+    let update = {}
+    update.tags = ObjectId(tagID);
+
+    Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
+		if (err) return res.json({success: false, error: err});
+		folder.populate('parent').populate('project')
+        .populate('codebase').populate('creator')
+        .populate('canWrite').populate('canRead')
+        .populate('tags').populate('snippets')
+        .populate('uploadFiles', (err, folder) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(folder);
+        });
+    });
+}
+
+addCanWrite = (req, res) => {
+    const { id } = req.params;
+    const { userID } = req.body;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
+    if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no userID provided'});
+
+    let update = {}
+    update.canWrite = ObjectId(userID);
+
+    Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
+        if (err) return res.json({ success: false, error: err });
+        folder.populate('parent').populate('project')
+        .populate('codebase').populate('creator')
+        .populate('canWrite').populate('canRead')
+        .populate('tags').populate('snippets')
+        .populate('uploadFiles', (err, folder) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(folder);
+        });
+    });
+}
+
+removeCanWrite = (req, res) => {
+    const { id } = req.params;
+    const { userID } = req.body;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
+    if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no userID provided'});
+
+    let update = {}
+    update.canWrite = ObjectId(userID);
+
+    Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
+		if (err) return res.json({success: false, error: err});
+		folder.populate('parent').populate('project')
+        .populate('codebase').populate('creator')
+        .populate('canWrite').populate('canRead')
+        .populate('tags').populate('snippets')
+        .populate('uploadFiles', (err, folder) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(folder);
+        });
+    });
+}
+
+addCanRead = (req, res) => {
+    const { id } = req.params;
+    const { userID } = req.body;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
+    if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no userID provided'});
+
+    let update = {}
+    update.canRead = ObjectId(userID);
+
+    Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
+        if (err) return res.json({ success: false, error: err });
+        folder.populate('parent').populate('project')
+        .populate('codebase').populate('creator')
+        .populate('canWrite').populate('canRead')
+        .populate('tags').populate('snippets')
+        .populate('uploadFiles', (err, folder) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(folder);
+        });
+    });
+}
+
+removeCanRead = (req, res) => {
+    const { id } = req.params;
+    const { userID } = req.body;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
+    if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no userID provided'});
+
+    let update = {}
+    update.canRead = ObjectId(userID);
+
+    Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
+		if (err) return res.json({success: false, error: err});
+		folder.populate('parent').populate('project')
+        .populate('codebase').populate('creator')
+        .populate('canWrite').populate('canRead')
+        .populate('tags').populate('snippets')
+        .populate('uploadFiles', (err, folder) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(folder);
+        });
+    });
+}
 
 
 module.exports =
 {
      createFolder, editFolder, getFolder, deleteFolder, retrieveFolders,
-     attachSnippet, removeSnippet, attachUploadFile, removeUploadFile
+     attachSnippet, removeSnippet, attachUploadFile, removeUploadFile,
+     attachTag, removeTag, addCanWrite, removeCanWrite, addCanRead, removeCanRead
+
 }
