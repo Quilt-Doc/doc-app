@@ -25,11 +25,10 @@ createCodebase = (req, res) => {
 
     codebase.save((err, codebase) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(codebase);
-        /*codebase.populate('workspace') (err, codebase) => {
+        codebase.populate('workspace', (err, codebase) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(codebase);
-        });*/
+        });
     });
 }
 
@@ -41,11 +40,10 @@ getCodebase = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no codebase id provided'});
     Codebase.findById(id, (err, codebase) => {
 		if (err) return res.json({success: false, error: err});
-        return res.json(codebase);
-        /*codebase.populate('workspace') (err, codebase) => {
+        codebase.populate('workspace', (err, codebase) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(codebase);
-        });*/
+        });
     });
 }
 
