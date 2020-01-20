@@ -18,6 +18,19 @@ router.put('/projects/delete/:id', project_controller.deleteProject);
 router.put('/projects/import_codebase/:id', project_controller.importCodebase);
 router.put('/projects/remove_codebase/:id', project_controller.removeCodebase);
 
+const folder_controller = require('../controllers/FolderController');
+
+router.post('/folders/create', folder_controller.createFolder);
+router.put('/folders/edit/:id', folder_controller.editFolder);
+router.get('/folders/get/', folder_controller.getFolder);
+router.put('/folders/delete/:id', folder_controller.deleteFolder);
+router.get('/folders/retrieve/', folder_controller.retrieveFolders);
+router.put('/folders/attach_snippet/:id', folder_controller.attachSnippet);
+router.put('/folders/remove_snippet/:id', folder_controller.removeSnippet);
+router.put('/folders/attach_upload_file/:id', folder_controller.attachUploadFile);
+router.put('/folders/remove_upload_file/:id', folder_controller.removeUploadFile);
+
+
 
 const codebase_controller = require('../controllers/CodebaseController');
 router.post('/codebases/create', codebase_controller.createCodebase);
