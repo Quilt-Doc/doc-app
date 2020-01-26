@@ -1,5 +1,4 @@
 // TODO: Add Workspace, Codebase Delete Routes and methods 
-// TODO: Remove all references to Projects
 
 const express = require('express');
 const router = express.Router();
@@ -8,6 +7,7 @@ const router = express.Router();
 const workspace_controller = require('../controllers/WorkspaceController');
 router.post('/workspaces/create', workspace_controller.createWorkspace);
 router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
+router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
 router.put('/workspaces/add_user/:id', workspace_controller.addUser);
 router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
 
@@ -34,7 +34,7 @@ router.put('/folders/remove_can_read/:id', folder_controller.removeCanRead);
 const codebase_controller = require('../controllers/CodebaseController');
 router.post('/codebases/create', codebase_controller.createCodebase);
 router.get('/codebases/get/:id', codebase_controller.getCodebase);
-
+router.delete('/codebases/delete/:id', codebase_controller.deleteCodebase);
 
 
 const document_controller = require('../controllers/DocumentController');

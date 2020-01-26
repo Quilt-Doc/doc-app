@@ -46,6 +46,20 @@ getWorkspace = (req, res) => {
     });
 }
 
+deleteWorkspace = (req, res) => {
+    const { id } = req.params; 
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
+
+    Workspace.findByIdAndRemove(id, (err, workspace) => {
+		if (err) return res.json({success: false, error: err});
+        workspace.populate('creator')
+            .populate('memberUsers', (err, workspace) => {
+            if (err) return res.json({ success: false, error: err });
+                return res.json(workspace);
+            });
+    });
+}
+
 
 // Put request
 // Population only on returns
@@ -90,4 +104,4 @@ removeUser = (req, res) => {
 }
 
 
-module.exports = {createWorkspace, getWorkspace, addUser, removeUser}
+module.exports = {createWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser}
