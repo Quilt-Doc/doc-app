@@ -22,7 +22,7 @@ import api from '../apis/api';
 
 
 export const createDocument = (formValues) => async (dispatch) => {
-    const response = await api.post('/documents/create', { ...formValues });
+    const response = await api.post('/documents/create', formValues );
     dispatch({ type: CREATE_DOCUMENT, payload: response.data });
 }
 
@@ -32,7 +32,7 @@ export const getDocument = id => async dispatch => {
 }
 
 export const retrieveDocuments = (formValues) => async dispatch => {
-    const response = await api.post(`/documents/retrieve`, { ...formValues });
+    const response = await api.post(`/documents/retrieve`, formValues );
     dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data });
 }
 
