@@ -22,17 +22,29 @@ export default (state = {}, action) => {
         case EDIT_DOCUMENT:
             return { ...state, [action.payload._id]: action.payload };
         case ATTACH_DOCUMENT_TAG:
+            return { ...state, [action.payload._id]: action.payload };
         case REMOVE_DOCUMENT_TAG:
+            return { ...state, [action.payload._id]: action.payload };
         case ATTACH_DOCUMENT_SNIPPET:
+            return { ...state, [action.payload._id]: action.payload };
         case REMOVE_DOCUMENT_SNIPPET:
+            return { ...state, [action.payload._id]: action.payload };
         case ATTACH_DOCUMENT_PARENT:
+            return { ...state, [action.payload._id]: action.payload };
         case REMOVE_DOCUMENT_PARENT:
+            return { ...state, [action.payload._id]: action.payload };
         case ATTACH_DOCUMENT_UPLOADFILE:
+            return { ...state, [action.payload._id]: action.payload };
         case REMOVE_DOCUMENT_UPLOADFILE:
+            return { ...state, [action.payload._id]: action.payload };
         case ADD_DOCUMENT_CANWRITE:
+            return { ...state, [action.payload._id]: action.payload };
         case REMOVE_DOCUMENT_CANWRITE:
+            return { ...state, [action.payload._id]: action.payload };
         case ADD_DOCUMENT_CANREAD:
+            return { ...state, [action.payload._id]: action.payload };
         case REMOVE_DOCUMENT_CANREAD:
+            return { ...state, [action.payload._id]: action.payload };
         default: 
             return state;
     }
