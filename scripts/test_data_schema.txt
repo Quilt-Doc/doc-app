@@ -1,44 +1,37 @@
 USER
-    {"username": "Test User 1", "email": "testuser1@gmail.com", "debugId": "000000000000000000000000"}
-    {"username": "Test User 2", "email": "testuser2@gmail.com", "debugId": "000000000000000000000001"}
-    {"username": "Test User 3", "email": "testuser3@gmail.com", "debugId": "000000000000000000000002"}
-    {"username": "Test User 4", "email": "testuser4@gmail.com", "debugId": "000000000000000000000003"}
-    {"username": "Test User 5", "email": "testuser5@gmail.com", "debugId": "000000000000000000000004"}
+    {"username": "Test User 1", "email": "testuser1@gmail.com", "debugID": "000000000000000000000000"}
+    {"username": "Test User 2", "email": "testuser2@gmail.com", "debugID": "000000000000000000000001"}
+    {"username": "Test User 3", "email": "testuser3@gmail.com", "debugID": "000000000000000000000002"}
+    {"username": "Test User 4", "email": "testuser4@gmail.com", "debugID": "000000000000000000000003"}
+    {"username": "Test User 5", "email": "testuser5@gmail.com", "debugID": "000000000000000000000004"}
 
 WORKSPACE
-    {"name":"Test Workspace 1", "creatorId":"000000000000000000000000", "debugId": "100000000000000000000000"}
-    {"name":"Test Workspace 2", "creatorId":"000000000000000000000001", "debugId": "100000000000000000000001"}
-    {"name":"Test Workspace 3", "creatorId":"000000000000000000000002", "debugId": "100000000000000000000002"}
-    {"name":"Test Workspace 4", "creatorId":"000000000000000000000003", "debugId": "100000000000000000000003"}
-    {"name":"Test Workspace 5", "creatorId":"000000000000000000000004", "debugId": "100000000000000000000004"}
-
-PROJECT
-    {"name": "Test Project 1", "creatorId": "000000000000000000000000", "description": "#1 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000000"}
-    {"name": "Test Project 2", "creatorId": "000000000000000000000001", "description": "#2 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000001"}
-    {"name": "Test Project 3", "creatorId": "000000000000000000000002", "description": "#3 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000002"}
-    {"name": "Test Project 4", "creatorId": "000000000000000000000003", "description": "#4 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000003"}
-    {"name": "Test Project 5", "creatorId": "000000000000000000000004", "description": "#5 Test Project.", "userIds": "", "codebaseIds": "", "debugId": "200000000000000000000004"}
+    {"name":"Test Workspace 1", "creatorID":"000000000000000000000000", "debugID": "100000000000000000000000"}
+    {"name":"Test Workspace 2", "creatorID":"000000000000000000000001", "debugID": "100000000000000000000001"}
+    {"name":"Test Workspace 3", "creatorID":"000000000000000000000002", "debugID": "100000000000000000000002"}
+    {"name":"Test Workspace 4", "creatorID":"000000000000000000000003", "debugID": "100000000000000000000003"}
+    {"name":"Test Workspace 5", "creatorID":"000000000000000000000004", "debugID": "100000000000000000000004"}
 
 CODEBASE
-    {"name": "Test Codebase 1", "workspaceId": "100000000000000000000000", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000000"}
-    {"name": "Test Codebase 2", "workspaceId": "100000000000000000000001", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000001"}
-    {"name": "Test Codebase 3", "workspaceId": "100000000000000000000002", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000002"}
-    {"name": "Test Codebase 4", "workspaceId": "100000000000000000000003", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000003"}
-    {"name": "Test Codebase 5", "workspaceId": "100000000000000000000004", "link": "https://github.com/kgodara/doc-app", "debugId": "300000000000000000000004"}
+    {"name": "Test Codebase 1", "workspaceID": "100000000000000000000000", "link": "https://github.com/kgodara/doc-app", "debugID": "200000000000000000000000"}
+    {"name": "Test Codebase 2", "workspaceID": "100000000000000000000001", "link": "https://github.com/kgodara/doc-app", "debugID": "200000000000000000000001"}
+    {"name": "Test Codebase 3", "workspaceID": "100000000000000000000002", "link": "https://github.com/kgodara/doc-app", "debugID": "200000000000000000000002"}
+    {"name": "Test Codebase 4", "workspaceID": "100000000000000000000003", "link": "https://github.com/kgodara/doc-app", "debugID": "200000000000000000000003"}
+    {"name": "Test Codebase 5", "workspaceID": "100000000000000000000004", "link": "https://github.com/kgodara/doc-app", "debugID": "200000000000000000000004"}
 
 FOLDER
-    {"projectID": "200000000000000000000000", "userID": "000000000000000000000000", "parentID": "000000000000000000000000", "title": "Test Folder 1", "codebaseID": "", "description": "#1 Test Folder", "canWrite": "", "canRead": "", "debugID": "400000000000000000000000"}
-    {"projectID": "200000000000000000000001", "userID": "000000000000000000000001", "parentID": "000000000000000000000000", "title": "Test Folder 2", "codebaseID": "", "description": "#2 Test Folder", "canWrite": "", "canRead": "", "debugID": "400000000000000000000001"}
-    {"projectID": "200000000000000000000002", "userID": "000000000000000000000002", "parentID": "000000000000000000000000", "title": "Test Folder 3", "codebaseID": "", "description": "#3 Test Folder", "canWrite": "", "canRead": "", "debugID": "400000000000000000000002"}
-    {"projectID": "200000000000000000000003", "userID": "000000000000000000000003", "parentID": "000000000000000000000000", "title": "Test Folder 4", "codebaseID": "", "description": "#4 Test Folder", "canWrite": "", "canRead": "", "debugID": "400000000000000000000003"}
-    {"projectID": "200000000000000000000004", "userID": "000000000000000000000004", "parentID": "000000000000000000000000", "title": "Test Folder 5", "codebaseID": "", "description": "#5 Test Folder", "canWrite": "", "canRead": "", "debugID": "400000000000000000000004"}
+    {"workspaceID": "100000000000000000000000", "userID": "000000000000000000000000", "parentID": "000000000000000000000000", "title": "Test Folder 1", "codebaseID": "", "description": "#1 Test Folder", "canWrite": "", "canRead": "", "debugID": "300000000000000000000000"}
+    {"workspaceID": "100000000000000000000001", "userID": "000000000000000000000001", "parentID": "000000000000000000000000", "title": "Test Folder 2", "codebaseID": "", "description": "#2 Test Folder", "canWrite": "", "canRead": "", "debugID": "300000000000000000000001"}
+    {"workspaceID": "100000000000000000000002", "userID": "000000000000000000000002", "parentID": "000000000000000000000000", "title": "Test Folder 3", "codebaseID": "", "description": "#3 Test Folder", "canWrite": "", "canRead": "", "debugID": "300000000000000000000002"}
+    {"workspaceID": "100000000000000000000003", "userID": "000000000000000000000003", "parentID": "000000000000000000000000", "title": "Test Folder 4", "codebaseID": "", "description": "#4 Test Folder", "canWrite": "", "canRead": "", "debugID": "300000000000000000000003"}
+    {"workspaceID": "100000000000000000000004", "userID": "000000000000000000000004", "parentID": "000000000000000000000000", "title": "Test Folder 5", "codebaseID": "", "description": "#5 Test Folder", "canWrite": "", "canRead": "", "debugID": "300000000000000000000004"}
 
 DOCUMENT
-    {"authorID": "000000000000000000000000", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 1", "description": "#1 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000000"}
-    {"authorID": "000000000000000000000001", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 2", "description": "#2 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000001"}
-    {"authorID": "000000000000000000000002", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 3", "description": "#3 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000002"}
-    {"authorID": "000000000000000000000003", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 4", "description": "#4 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000003"}
-    {"authorID": "000000000000000000000004", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 5", "description": "#5 Test Document", "uploadFileIDs": "", "tagIDs": "", debugID: "500000000000000000000004"}
+    {"authorID": "000000000000000000000000", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 1", "description": "#1 Test Document", "uploadFileIDs": "", "tagIDs": "", "debugID": "400000000000000000000000"}
+    {"authorID": "000000000000000000000001", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 2", "description": "#2 Test Document", "uploadFileIDs": "", "tagIDs": "", "debugID": "400000000000000000000001"}
+    {"authorID": "000000000000000000000002", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 3", "description": "#3 Test Document", "uploadFileIDs": "", "tagIDs": "", "debugID": "400000000000000000000002"}
+    {"authorID": "000000000000000000000003", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 4", "description": "#4 Test Document", "uploadFileIDs": "", "tagIDs": "", "debugID": "400000000000000000000003"}
+    {"authorID": "000000000000000000000004", "parentIDs": "000000000000000000000000", "snippetIDs": "", "title": "Test Document 5", "description": "#5 Test Document", "uploadFileIDs": "", "tagIDs": "", "debugID": "400000000000000000000004"}
 
 RELATIONSHIP
 
