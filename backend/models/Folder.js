@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
 var folderSchema = new Schema({
+	workspace: {type: ObjectId, ref: 'Workspace'},
 	parent: {type: ObjectId, ref: 'Folder'}, 
 	codebase: {type: ObjectId, ref: 'Codebase'},
 	title: String,

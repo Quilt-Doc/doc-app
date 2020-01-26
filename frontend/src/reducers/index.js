@@ -4,7 +4,7 @@ import snippetReducer from './Snippet_Reducer';
 import requestReducer from './Request_Reducer';
 
 export default combineReducers({
-    documentState: documentReducer,
+    documents: documentReducer,
     snippetState: snippetReducer,
     requestReducer: requestReducer
 });
