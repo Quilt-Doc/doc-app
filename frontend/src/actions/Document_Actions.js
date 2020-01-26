@@ -10,5 +10,3 @@ export const createDocument = (workspaceID, formValues) => async (dispatch, getS
     const response = await api.post('/documents/create', {...formValues, workspaceID});
     dispatch({ type: CREATE_DOCUMENT, payload: response.data });
 }
-
-
