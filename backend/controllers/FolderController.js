@@ -4,13 +4,15 @@ const { ObjectId } = mongoose.Types;
 
 createFolder = (req, res) => {
 
-    const {userID, parentID, title, codebaseID, description, canWrite, canRead, debugID} = req.body;
+    const {workspaceID, userID, parentID, title, codebaseID, description, canWrite, canRead, debugID} = req.body;
 
+    if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no folder workspaceID provided'});
     if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no folder userID provided'});
     if (!typeof parentID == 'undefined' && parentID !== null) return res.json({success: false, error: 'no folder parentID provided'});
     if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no folder title provided'});
 
     let folder = new Folder({
+        workspace: ObjectId(workspaceID),
         creator: ObjectId(userID),
         parent: parentID,
         title: title,
