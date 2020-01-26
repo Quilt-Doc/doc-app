@@ -1,9 +1,9 @@
 import {
     CREATE_DOCUMENT, GET_DOCUMENT, RETRIEVE_DOCUMENTS, DELETE_DOCUMENT, 
-    EDIT_DOCUMENT, ATTACH_DOCUMENT_TAG, REMOVE_DOCUMENT_TAG, ATTACH_DOCUMENT_SNIPPET, 
-    REMOVE_DOCUMENT_SNIPPET, REMOVE_DOCUMENT_PARENT, ATTACH_DOCUMENT_UPLOADFILE, 
-    REMOVE_DOCUMENT_UPLOADFILE, ADD_DOCUMENT_CANWRITE, REMOVE_DOCUMENT_CANWRITE, 
-    ADD_DOCUMENT_CANREAD, REMOVE_DOCUMENT_CANREAD
+    EDIT_DOCUMENT, DOCUMENT_ATTACH_TAG, DOCUMENT_REMOVE_TAG, DOCUMENT_ATTACH_SNIPPET, 
+    DOCUMENT_REMOVE_SNIPPET, DOCUMENT_ATTACH_PARENT, DOCUMENT_REMOVE_PARENT, DOCUMENT_ATTACH_UPLOADFILE, 
+    DOCUMENT_REMOVE_UPLOADFILE, DOCUMENT_ADD_CANWRITE, DOCUMENT_REMOVE_CANWRITE, 
+    DOCUMENT_ADD_CANREAD, DOCUMENT_REMOVE_CANREAD
 } from '../actions/types/Document_Types'
 
 import _ from 'lodash';
@@ -21,29 +21,29 @@ export default (state = {}, action) => {
             return _.omit(state, action.payload._id);
         case EDIT_DOCUMENT:
             return { ...state, [action.payload._id]: action.payload };
-        case ATTACH_DOCUMENT_TAG:
+        case DOCUMENT_ATTACH_TAG:
             return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_DOCUMENT_TAG:
+        case DOCUMENT_REMOVE_TAG:
             return { ...state, [action.payload._id]: action.payload };
-        case ATTACH_DOCUMENT_SNIPPET:
+        case DOCUMENT_ATTACH_SNIPPET:
             return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_DOCUMENT_SNIPPET:
+        case DOCUMENT_REMOVE_SNIPPET:
             return { ...state, [action.payload._id]: action.payload };
-        case ATTACH_DOCUMENT_PARENT:
+        case DOCUMENT_ATTACH_PARENT:
             return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_DOCUMENT_PARENT:
+        case DOCUMENT_REMOVE_PARENT:
             return { ...state, [action.payload._id]: action.payload };
-        case ATTACH_DOCUMENT_UPLOADFILE:
+        case DOCUMENT_ATTACH_UPLOADFILE:
             return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_DOCUMENT_UPLOADFILE:
+        case DOCUMENT_REMOVE_UPLOADFILE:
             return { ...state, [action.payload._id]: action.payload };
-        case ADD_DOCUMENT_CANWRITE:
+        case DOCUMENT_ADD_CANWRITE:
             return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_DOCUMENT_CANWRITE:
+        case DOCUMENT_REMOVE_CANWRITE:
             return { ...state, [action.payload._id]: action.payload };
-        case ADD_DOCUMENT_CANREAD:
+        case DOCUMENT_ADD_CANREAD:
             return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_DOCUMENT_CANREAD:
+        case DOCUMENT_REMOVE_CANREAD:
             return { ...state, [action.payload._id]: action.payload };
         default: 
             return state;
