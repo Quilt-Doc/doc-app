@@ -8,13 +8,13 @@ import {
 
 import api from '../apis/api';
 
-export const createWorkspace = (workspaceID, formValues) => async (dispatch, getState) => {
-    const response = await api.post('/workspaces/create', {...formValues, workspaceID});
+export const createWorkspace = (formValues) => async (dispatch) => {
+    const response = await api.post('/workspaces/create', formValues);
     dispatch({ type: CREATE_WORKSPACE, payload: response.data });
 }
 
 // /workspaces/get/:id'
-export const getWorkspace = (id) => async dispatch => {
+export const getWorkspace = id => async dispatch => {
     const response = await api.get(`/workspaces/get/${id}`);
     dispatch({ type: GET_WORKSPACE, payload: response.data });
 }
@@ -26,13 +26,13 @@ export const deleteWorkspace = (id) => async dispatch => {
 }
 
 // /workspaces/add_user/:id
-export const workspaceAddUser = (workspaceID, formValues) => async (dispatch, getState) => {
-    const response = await api.put(`/workspaces/add_user/${id}`, formValues);
+export const workspaceAddUser = (id, userID) => async (dispatch) => {
+    const response = await api.put(`/workspaces/add_user/${id}`, { userID });
     dispatch({ type: WORKSPACE_ADD_USER, payload: response.data });
 }
 
 // /workspaces/remove_user/:id
-export const workspaceRemoveUser = (workspaceID, formValues) => async (dispatch, getState) => {
-    const response = await api.put(`/workspaces/remove_user/${id}`, formValues);
+export const workspaceRemoveUser = (id, userID) => async (dispatch) => {
+    const response = await api.put(`/workspaces/remove_user/${id}`, { userID });
     dispatch({ type: WORKSPACE_REMOVE_USER, payload: response.data });
 }
