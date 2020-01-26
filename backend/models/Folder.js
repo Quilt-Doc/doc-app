@@ -4,7 +4,6 @@ const { ObjectId, Mixed } = Schema.Types;
 
 var folderSchema = new Schema({
 	parent: {type: ObjectId, ref: 'Folder'}, 
-    project: {type: ObjectId, ref: 'Project'},
 	codebase: {type: ObjectId, ref: 'Codebase'},
 	title: String,
 	creator: {type: ObjectId, index: true, ref: 'User'},

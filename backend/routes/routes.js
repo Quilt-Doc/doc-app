@@ -1,3 +1,5 @@
+// TODO: Add Workspace, Codebase Delete Routes and methods 
+
 const express = require('express');
 const router = express.Router();
 
@@ -5,25 +7,16 @@ const router = express.Router();
 const workspace_controller = require('../controllers/WorkspaceController');
 router.post('/workspaces/create', workspace_controller.createWorkspace);
 router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
-router.put('/workspaces/add_project/:id', workspace_controller.addProject);
-router.put('/workspaces/remove_project/:id', workspace_controller.removeProject);
+router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
 router.put('/workspaces/add_user/:id', workspace_controller.addUser);
 router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
-
-const project_controller = require('../controllers/ProjectController');
-router.post('/projects/create', project_controller.createProject);
-router.get('/projects/get/:id', project_controller.getProject);
-router.put('/projects/edit/:id', project_controller.editProject);
-router.put('/projects/delete/:id', project_controller.deleteProject);
-router.put('/projects/import_codebase/:id', project_controller.importCodebase);
-router.put('/projects/remove_codebase/:id', project_controller.removeCodebase);
 
 const folder_controller = require('../controllers/FolderController');
 
 router.post('/folders/create', folder_controller.createFolder);
 router.put('/folders/edit/:id', folder_controller.editFolder);
 router.get('/folders/get/:id', folder_controller.getFolder);
-router.put('/folders/delete/:id', folder_controller.deleteFolder);
+router.delete('/folders/delete/:id', folder_controller.deleteFolder);
 router.get('/folders/retrieve/', folder_controller.retrieveFolders);
 router.put('/folders/attach_snippet/:id', folder_controller.attachSnippet);
 router.put('/folders/remove_snippet/:id', folder_controller.removeSnippet);
@@ -41,7 +34,7 @@ router.put('/folders/remove_can_read/:id', folder_controller.removeCanRead);
 const codebase_controller = require('../controllers/CodebaseController');
 router.post('/codebases/create', codebase_controller.createCodebase);
 router.get('/codebases/get/:id', codebase_controller.getCodebase);
-
+router.delete('/codebases/delete/:id', codebase_controller.deleteCodebase);
 
 
 const document_controller = require('../controllers/DocumentController');
@@ -101,13 +94,13 @@ router.get('/users/get/:id', user_controller.getUser);
 router.put('/users/edit/:id', user_controller.editUser);
 router.put('/users/attach_workspace/:id', user_controller.attachWorkspace);
 router.put('/users/remove_workspace/:id', user_controller.removeWorkspace);
-router.put('/users/delete_user/:id', user_controller.deleteUser);
+router.delete('/users/delete_user/:id', user_controller.deleteUser);
 
 const tag_controller = require('../controllers/TagController');
 router.post('/tag/create', tag_controller.createTag);
 router.get('/tag/get/:id', tag_controller.getTag);
 router.put('/tag/edit/:id', tag_controller.editTag);
-router.put('/tag/delete/:id', tag_controller.deleteTag);
+router.delete('/tag/delete/:id', tag_controller.deleteTag);
 
 
 

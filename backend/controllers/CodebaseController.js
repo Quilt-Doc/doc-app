@@ -20,7 +20,6 @@ createCodebase = (req, res) => {
     }
 
     if (link) codebase.link = link;
-    
 
     codebase.save((err, codebase) => {
         if (err) return res.json({ success: false, error: err });
@@ -46,4 +45,17 @@ getCodebase = (req, res) => {
     });
 }
 
-module.exports = {createCodebase, getCodebase}
+deleteCodebase = (req, res) => {
+    const { id } = req.params;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no codebase id provided'});
+    Codebase.findByIdAndRemove(id, (err, codebase) => {
+		if (err) return res.json({success: false, error: err});
+        codebase.populate('workspace', (err, codebase) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(codebase);
+        });
+    });
+}
+
+module.exports = {createCodebase, getCodebase, deleteCodebase}

@@ -23,8 +23,8 @@ createWorkspace = (req, res) => {
         if (err) return res.json({ success: false, error: err });
         workspace.save((err, workspace) => {
             if (err) return res.json({ success: false, error: err });
-            workspace.populate('creator').populate('memberUsers')
-            .populate('projects', (err, workspace) => {
+            workspace.populate('creator')
+            .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
             });
@@ -38,51 +38,23 @@ getWorkspace = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
     Workspace.findById(id, (err, workspace) => {
 		if (err) return res.json({success: false, error: err});
-		workspace.populate('creator').populate('memberUsers')
-            .populate('projects', (err, workspace) => {
+        workspace.populate('creator')
+                .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
             });
     });
 }
 
-// Put request
-// Population only on returns
-addProject = (req, res) => {
-    id = req.params.id;
-    const { projectID } = req.body;
-
+deleteWorkspace = (req, res) => {
+    const { id } = req.params; 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
-    if (!typeof projectID == 'undefined' && projectID !== null) return res.json({success: false, error: 'no project id provided'});
 
-    let update = {};
-    if (projectID) update.projects = ObjectId(projectID);
-
-    Workspace.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, workspace) => {
-        if (err) return res.json({ success: false, error: err });
-		workspace.populate('creator').populate('memberUsers')
-            .populate('projects', (err, workspace) => {
-                if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
-        });
-    });
-}
-
-removeProject = (req, res) => {
-    const { id } = req.params;
-    const { projectID } = req.body;
-    
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
-    if (!typeof projectID == 'undefined' && projectID !== null) return res.json({success: false, error: 'no project id provided'});
-
-    let update = {};
-    if (projectID) update.projects = ObjectId(projectID);
-
-    Workspace.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, workspace) => {
-        if (err) return res.json({ success: false, error: err });
-		workspace.populate('creator').populate('memberUsers')
-            .populate('projects', (err, workspace) => {
-                if (err) return res.json({ success: false, error: err });
+    Workspace.findByIdAndRemove(id, (err, workspace) => {
+		if (err) return res.json({success: false, error: err});
+        workspace.populate('creator')
+            .populate('memberUsers', (err, workspace) => {
+            if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
             });
     });
@@ -103,8 +75,8 @@ addUser = (req, res) => {
 
     Workspace.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-		workspace.populate('creator').populate('memberUsers')
-            .populate('projects', (err, workspace) => {
+        workspace.populate('creator')
+                .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
         });
@@ -116,15 +88,15 @@ removeUser = (req, res) => {
     const { userID } = req.body;
     
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
-    if (!typeof userID == 'undefined' && projectID !== null) return res.json({success: false, error: 'no user id provided'});
+    if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no user id provided'});
 
     let update = {};
     if (userID) update.memberUsers = ObjectId(userID);
 
     Workspace.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-		workspace.populate('creator').populate('memberUsers')
-            .populate('projects', (err, workspace) => {
+        workspace.populate('creator')
+                .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
             });
@@ -132,4 +104,4 @@ removeUser = (req, res) => {
 }
 
 
-module.exports = {createWorkspace, getWorkspace, addProject, removeProject, addUser, removeUser}
+module.exports = {createWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser}
