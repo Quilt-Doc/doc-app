@@ -8,8 +8,7 @@ createTag = (req, res) => {
         {
             title,
             color,
-            project: ObjectId(projectID),
-            created: new Date(),
+            project: ObjectId(projectID)
         },
     );
     tag.save((err, tag) => {

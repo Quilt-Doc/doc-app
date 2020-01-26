@@ -8,14 +8,20 @@ const { ObjectId } = mongoose.Types;
 
 createRelationship = (req, res) => {
     const { creatorID, sourceID, targetID, type, text } = req.body;
+
+    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no relationship creatorID provided'});
+    if (!typeof sourceID == 'undefined' && sourceID !== null) return res.json({success: false, error: 'no relationship sourceID provided'});
+    if (!typeof targetID == 'undefined' && targetID !== null) return res.json({success: false, error: 'no relationship targetID provided'});
+
+
     let relationship = new Relationship(
         {
             creator: ObjectId(creatorID),
             source: ObjectId(sourceID),
-            target: ObjectId(targetID),
-            created: new Date(),
+            target: ObjectId(targetID)
         },
     );
+
     if (type) relationship.type = type;
     if (text) relationship.text = text;
     relationship.save((err, relationship) => {

@@ -7,6 +7,7 @@ var folderSchema = new Schema({
     project: {type: ObjectId, ref: 'Project'},
 	codebase: {type: ObjectId, ref: 'Codebase'},
 	title: String,
+	creator: {type: ObjectId, index: true, ref: 'User'},
 	description: String,
 	canWrite: [{type: ObjectId, index: true, ref: 'User'}],
 	canRead: [{type: ObjectId, index: true, ref: 'User'}],

@@ -8,7 +8,7 @@ var projectSchema = new Schema({
 	users: [{type: ObjectId, ref: 'User', index: true}],
 	codebases: [{type: ObjectId, index: true, ref: 'Codebase'}],
 	description: String,
-	created: Date
+	created: {type: Date, default: Date.now}
 });
 
 var Project = mongoose.model("Project", projectSchema);

@@ -8,7 +8,7 @@ var codebaseSchema = new Schema({
 	link: String,
 	lastScannedDate: Date,
 	scanFrequency: Date,
-	created: Date
+	created: {type: Date, default: Date.now }
 });
 
 var Codebase = mongoose.model("Codebase", codebaseSchema);

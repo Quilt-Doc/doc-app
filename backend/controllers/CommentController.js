@@ -9,8 +9,7 @@ createComment = (req, res) => {
             type,
             targetObject: ObjectId(targetObjectID),
             creator: ObjectId(creatorID),
-            text: text,
-            created: new Date(),
+            text: text
         },
     );
     comment.save((err, comment) => {

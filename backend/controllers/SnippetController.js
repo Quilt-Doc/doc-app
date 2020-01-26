@@ -6,8 +6,7 @@ createSnippet = (req, res) => {
     const { folderIDs, documentIDs, location, type, status, name } = req.body;
     let snippet = new Snippet(
         {
-            name,
-            created: new Date(),
+            name
         },
     );
     if (type) snippet.type = type;

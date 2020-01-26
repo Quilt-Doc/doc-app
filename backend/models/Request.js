@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let requestSchema = new Schema({
-    created: Date,
+    created: {type: Date, default: Date.now },
     creator: {type: ObjectId, ref: 'User'},
     targetUser: {type: ObjectId, ref: 'User'},
     targetObject: ObjectId,  // has multiple object references -- needs resolution

@@ -3,11 +3,8 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createWorkspace = (req, res) => {
-    // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
-    console.log(req.body);
     const {name, creatorID, debugID} = req.body;
-    console.log('name: ' + name);
-    console.log('creatorID: ' + creatorID);
+
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no workspace name provided'});
     if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no workspace creator ID provided'});
 
@@ -26,13 +23,12 @@ createWorkspace = (req, res) => {
         if (err) return res.json({ success: false, error: err });
         workspace.save((err, workspace) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
+            workspace.populate('creator').populate('memberUsers')
+            .populate('projects', (err, workspace) => {
+                if (err) return res.json({ success: false, error: err });
+                return res.json(workspace);
+            });
         });
-        /*workspace.populate('projects')
-        .populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
-        });*/
     });
 }
 
@@ -42,13 +38,12 @@ getWorkspace = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
     Workspace.findById(id, (err, workspace) => {
 		if (err) return res.json({success: false, error: err});
-		return res.json(workspace);
+		workspace.populate('creator').populate('memberUsers')
+            .populate('projects', (err, workspace) => {
+                if (err) return res.json({ success: false, error: err });
+                return res.json(workspace);
+            });
     });
-        /*workspace.populate('projects')
-        .populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
-        });*/
 }
 
 // Put request
@@ -65,12 +60,11 @@ addProject = (req, res) => {
 
     Workspace.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-		return res.json(workspace);
-        /*workspace.populate('projects')
-        .populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
-        });*/
+		workspace.populate('creator').populate('memberUsers')
+            .populate('projects', (err, workspace) => {
+                if (err) return res.json({ success: false, error: err });
+                return res.json(workspace);
+        });
     });
 }
 
@@ -86,12 +80,11 @@ removeProject = (req, res) => {
 
     Workspace.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-		return res.json(workspace);
-        /*workspace.populate('projects')
-        .populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
-        });*/
+		workspace.populate('creator').populate('memberUsers')
+            .populate('projects', (err, workspace) => {
+                if (err) return res.json({ success: false, error: err });
+                return res.json(workspace);
+            });
     });
 }
 
@@ -110,12 +103,11 @@ addUser = (req, res) => {
 
     Workspace.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-		return res.json(workspace);
-        /*workspace.populate('projects')
-        .populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
-        });*/
+		workspace.populate('creator').populate('memberUsers')
+            .populate('projects', (err, workspace) => {
+                if (err) return res.json({ success: false, error: err });
+                return res.json(workspace);
+        });
     });
 }
 
@@ -131,12 +123,11 @@ removeUser = (req, res) => {
 
     Workspace.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-		return res.json(workspace);
-        /*workspace.populate('projects')
-        .populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
-        });*/
+		workspace.populate('creator').populate('memberUsers')
+            .populate('projects', (err, workspace) => {
+                if (err) return res.json({ success: false, error: err });
+                return res.json(workspace);
+            });
     });
 }
 

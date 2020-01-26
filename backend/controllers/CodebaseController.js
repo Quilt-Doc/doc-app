@@ -4,7 +4,6 @@ const { ObjectId } = mongoose.Types;
 
 createCodebase = (req, res) => {
 
-    console.log(req.body);
     const {name, workspaceID, link, debugID} = req.body;
 
     if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no codebase workspace provided'});
@@ -25,11 +24,10 @@ createCodebase = (req, res) => {
 
     codebase.save((err, codebase) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(codebase);
-        /*codebase.populate('workspace') (err, codebase) => {
+        codebase.populate('workspace', (err, codebase) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(codebase);
-        });*/
+        });
     });
 }
 
@@ -41,11 +39,10 @@ getCodebase = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no codebase id provided'});
     Codebase.findById(id, (err, codebase) => {
 		if (err) return res.json({success: false, error: err});
-        return res.json(codebase);
-        /*codebase.populate('workspace') (err, codebase) => {
+        codebase.populate('workspace', (err, codebase) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(codebase);
-        });*/
+        });
     });
 }
 
