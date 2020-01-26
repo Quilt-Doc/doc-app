@@ -65,7 +65,7 @@ retrieveComments = (req, res) => {
     if (targetObjectID) query.where('targetObject').equals(targetObjectID)
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
-    query.populate('project').exec((err, comments) => {
+    query.populate('creator').exec((err, comments) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(comments);
     });
