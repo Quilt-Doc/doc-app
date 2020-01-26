@@ -9,7 +9,6 @@ import {
 import api from '../apis/api';
 
 export const createWorkspace = (workspaceID, formValues) => async (dispatch, getState) => {
-    let authorID = getState()
     const response = await api.post('/workspaces/create', {...formValues, workspaceID});
     dispatch({ type: CREATE_WORKSPACE, payload: response.data });
 }
@@ -28,14 +27,12 @@ export const deleteWorkspace = (id) => async dispatch => {
 
 // /workspaces/add_user/:id
 export const workspaceAddUser = (workspaceID, formValues) => async (dispatch, getState) => {
-    let authorID = getState()
-    const response = await api.put(`/workspaces/add_user/${id}`, {...formValues, workspaceID});
+    const response = await api.put(`/workspaces/add_user/${id}`, formValues);
     dispatch({ type: WORKSPACE_ADD_USER, payload: response.data });
 }
 
 // /workspaces/remove_user/:id
 export const workspaceRemoveUser = (workspaceID, formValues) => async (dispatch, getState) => {
-    let authorID = getState()
-    const response = await api.put(`/workspaces/remove_user/${id}`, {...formValues, workspaceID});
+    const response = await api.put(`/workspaces/remove_user/${id}`, formValues);
     dispatch({ type: WORKSPACE_REMOVE_USER, payload: response.data });
 }
