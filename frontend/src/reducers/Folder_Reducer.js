@@ -14,7 +14,7 @@ import {
     FOLDER_REMOVE_CAN_WRITE,
     FOLDER_ADD_CAN_READ,
     FOLDER_REMOVE_CAN_READ,
-} from './types/Folder_Types';
+} from '../actions/types/Folder_Types';
 
 
 import _ from 'lodash';
