@@ -23,11 +23,6 @@ def create_workspace(payload):
     workspace_url = urljoin(set_connect_info.url, endpoint)
     r = requests.post(workspace_url, data=json.dumps(payload), headers=set_connect_info.headers)
 
-def create_project(payload):
-    endpoint = 'projects/create/'
-    project_url = urljoin(set_connect_info.url, endpoint)
-    r = requests.post(project_url, data=json.dumps(payload), headers=set_connect_info.headers)
-
 def create_codebase(payload):
     endpoint = 'codebases/create/'
     codebase_url = urljoin(set_connect_info.url, endpoint)
