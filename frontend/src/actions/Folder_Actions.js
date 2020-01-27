@@ -19,7 +19,7 @@ import {
 import api from '../apis/api';
 
 
-export const creteFolder = (formValues) => async (dispatch) => {
+export const createFolder = (formValues) => async (dispatch) => {
     const response = await api.post('/folders/create', formValues );
     dispatch({ type: CREATE_FOLDER, payload: response.data });
 }
