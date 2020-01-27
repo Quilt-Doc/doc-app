@@ -112,4 +112,9 @@ router.get('/comments/get/:id', comment_controller.getComment);
 router.put('/comments/edit/:id', comment_controller.editComment);
 router.delete('/comments/delete/:id', comment_controller.deleteComment);
 router.post('/comments/retrieve', comment_controller.retrieveComments);
+
+const repo_controller = require('../controllers/RepoController');
+router.post('/repo/refresh_path', repo_controller.repoRefreshPath);
+
+
 module.exports = router;

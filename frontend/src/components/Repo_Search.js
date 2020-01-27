@@ -7,7 +7,7 @@ import { Field, reduxForm } from 'redux-form';
 
 import { connect } from 'react-redux';
 
-import { repoSearch } from '../actions/Repo_Actions';
+import { repoRefreshPath } from '../actions/Repo_Actions';
 
 
 
@@ -19,7 +19,8 @@ class Repo_Search extends Component {
 	}
 
 	onSubmit = (formValues) => {
-		const promise = this.props.repoSearch(formValues);
+		console.log(formValues);
+		const promise = this.props.repoRefreshPath(formValues);
 		// console.log(formValues);
 		/*this.props.form.validateFields((err, values) => {
 			if (!err) {
@@ -61,7 +62,7 @@ class Repo_Search extends Component {
 		return (
 			<div>
 				<Form layout="inline" onSubmit= {this.props.handleSubmit(this.onSubmit)}>
-					<Field name = "repo" component = {this.renderRepoInput} label = "Repo" />
+					<Field name = "repo_name" component = {this.renderRepoInput} label = "Repo" />
 					<Form.Item>
           				<Button type="primary" htmlType="submit">
             				Scan...
@@ -77,4 +78,4 @@ const RepoSearch = Form.create({ name: 'repo_search' })(Repo_Search);
 
 export default reduxForm({
     form: 'repo_search'
-})(connect(null, { repoSearch })(RepoSearch));
+})(connect(null, { repoRefreshPath })(RepoSearch));
