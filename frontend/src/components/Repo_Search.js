@@ -47,7 +47,7 @@ class Repo_Search extends Component {
             		<Input
 						addonBefore="http://github.com/"
               			//prefix={<Icon type="file" style={{ color: 'rgba(0,0,0,.25)' }} />}
-						placeholder="twbs/bootstrap"
+						placeholder="twbs/bootstrap/"
 						{...input}
 						required
             		/>

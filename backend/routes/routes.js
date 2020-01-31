@@ -115,6 +115,7 @@ router.post('/comments/retrieve', comment_controller.retrieveComments);
 
 const repo_controller = require('../controllers/RepoController');
 router.post('/repo/refresh_path', repo_controller.repoRefreshPath);
+router.post('/repo/get_file', repo_controller.repoGetFile);
 
 
 module.exports = router;

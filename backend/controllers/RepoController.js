@@ -1,5 +1,7 @@
 const url = require('url');
 
+var request = require("request");
+
 const axios = require('../apis/api');
 const api = axios.requestClient();
 
@@ -28,7 +30,8 @@ repoRefreshPath = (req, res) => {
     console.log(repos_contents);
 
     const req_url = url.resolve(repos_contents, repo_path);
-    console.log(req_url)
+    console.log('FINAL REQ URL: ', req_url);
+
     api.get(req_url)
     .then(function (response) {
         return res.json(response.data);
@@ -38,6 +41,13 @@ repoRefreshPath = (req, res) => {
       });
 }
 
+repoGetFile = (req, res) => {
+    var { download_link} = req.body;
+    if (typeof download_link == 'undefined' || download_link == null) return res.json({success: false, error: 'no repo download_link provided'});
+    console.log('download_link: ', download_link);
+    request.get(download_link).pipe(res);
+}
+
 module.exports = {
-    repoRefreshPath
+    repoRefreshPath, repoGetFile
 }

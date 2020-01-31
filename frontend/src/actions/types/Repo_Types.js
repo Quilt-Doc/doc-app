@@ -1,3 +1,2 @@
-export const REPO_SEARCH = 'REPO_SEARCH';
 export const REPO_REFRESH_PATH = 'REPO_REFRESH_PATH';
-export const REPO_VIEW_CODEFILE = 'REPO_VIEW_CODEFILE';
+export const REPO_GET_FILE = 'REPO_GET_FILE';
