@@ -11,6 +11,8 @@ import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
 
+import { reducer as formReducer } from 'redux-form'
+
 export default combineReducers({
     workspaces: workspaceReducer,
     codebases: codebaseReducer,
@@ -21,4 +23,5 @@ export default combineReducers({
     comments: commentReducer,
     users: userReducer,
     tags: tagReducer,
+    form: formReducer
 });

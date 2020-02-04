@@ -6,6 +6,7 @@ var folderSchema = new Schema({
 	workspace: {type: ObjectId, ref: 'Workspace'},
 	parent: {type: ObjectId, ref: 'Folder'}, 
 	codebase: {type: ObjectId, ref: 'Codebase'},
+	root: Boolean,
 	title: String,
 	creator: {type: ObjectId, index: true, ref: 'User'},
 	description: String,

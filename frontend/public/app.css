@@ -1,0 +1,20 @@
+*,
+*::after,
+*::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: inherit;  
+}
+
+
+html {
+    /*root*/
+    font-size: 23px;
+    height: 100%;
+}
+
+body {
+    box-sizing: border-box;
+    height: 100%;
+    font-family: 'Nunito Sans', sans-serif;
+}

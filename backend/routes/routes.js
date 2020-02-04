@@ -17,7 +17,7 @@ router.post('/folders/create', folder_controller.createFolder);
 router.put('/folders/edit/:id', folder_controller.editFolder);
 router.get('/folders/get/:id', folder_controller.getFolder);
 router.delete('/folders/delete/:id', folder_controller.deleteFolder);
-router.get('/folders/retrieve/', folder_controller.retrieveFolders);
+router.post('/folders/retrieve/', folder_controller.retrieveFolders);
 router.put('/folders/attach_snippet/:id', folder_controller.attachSnippet);
 router.put('/folders/remove_snippet/:id', folder_controller.removeSnippet);
 router.put('/folders/attach_upload_file/:id', folder_controller.attachUploadFile);

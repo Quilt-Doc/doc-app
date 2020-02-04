@@ -4,7 +4,7 @@ const { ObjectId, Mixed } = Schema.Types;
 
 var workspaceSchema = new Schema({
 	name: {type: String, required: true},
-	creator: {type: ObjectId, required: true},
+	creator: {type: ObjectId, required: true, ref: 'User'},
 	memberUsers: [{type: ObjectId, required: true, index: true, ref: 'User'}],
 });
 

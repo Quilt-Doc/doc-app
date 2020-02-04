@@ -19,8 +19,9 @@ import {
 import api from '../apis/api';
 
 
-export const creteFolder = (formValues) => async (dispatch) => {
+export const createFolder = (formValues) => async (dispatch) => {
     const response = await api.post('/folders/create', formValues );
+    return response.data;
     dispatch({ type: CREATE_FOLDER, payload: response.data });
 }
 
@@ -42,9 +43,14 @@ export const deleteFolder = id => async dispatch => {
     dispatch({ type: DELETE_FOLDER, payload: response.data });
 }
 
-export const retrieveFolders = (formValues) => async dispatch => {
-    const response = await api.get(`/folders/retrieve/`, formValues);
+export const retrieveFolders = (workspaceID, formValues) => async dispatch => {
+    const response = await api.post(`/folders/retrieve/`, {...formValues, workspaceID});
     dispatch({ type: RETRIEVE_FOLDERS, payload: response.data });
+}
+
+export const retrieveChildren = (parentID) => async () => {
+    const response = await api.post(`/folders/retrieve/`, {parentID});
+    return response.data
 }
 
 // /folders/attach_snippet/:id
