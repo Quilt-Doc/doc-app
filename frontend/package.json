@@ -13,23 +13,15 @@
     "react-dom": "^16.12.0",
     "react-highlight": "^0.12.0",
     "react-redux": "^7.1.3",
-<<<<<<< HEAD
     "react-router": "^5.1.2",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.3.0",
     "redux": "^4.0.5",
     "redux-form": "^8.3.0",
     "redux-thunk": "^2.3.0",
-    "styled-components": "^5.0.0"
-=======
-    "react-router-dom": "^5.1.2",
-    "react-scripts": "3.3.0",
-    "redux": "^4.0.5",
-    "redux-form": "^8.2.6",
+    "styled-components": "^5.0.0",
     "redux-logger": "^3.0.6",
-    "redux-thunk": "^2.3.0",
     "url-join": "^4.0.1"
->>>>>>> 22ceb3f3af7c96d884ebaa4ed98b854deed94423
   },
   "scripts": {
     "start": "react-scripts start",
