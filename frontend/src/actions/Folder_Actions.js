@@ -22,7 +22,7 @@ import api from '../apis/api';
 export const createFolder = (formValues) => async (dispatch) => {
     const response = await api.post('/folders/create', formValues );
     return response.data;
-    dispatch({ type: CREATE_FOLDER, payload: response.data });
+    // dispatch({ type: CREATE_FOLDER, payload: response.data });
 }
 
 // /folders/edit/:id

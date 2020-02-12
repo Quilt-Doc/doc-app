@@ -1,9 +1,7 @@
 import React, { Component } from 'react';
 
 import 'antd/dist/antd.css';
-import { Icon, List, Typography } from 'antd';
-
-import { Field, reduxForm } from 'redux-form';
+import { Icon, List} from 'antd';
 
 import { connect } from 'react-redux';
 
@@ -31,15 +29,15 @@ class CodeBaseExplorer extends Component {
 
     handleItemSelect(item) {
         console.log('Selected Item: ', item);
-        if (item.type == 'dir') {
-            const promise = this.props.repoRefreshPath({
-                                                        selectedItem: item, repo_name: this.props.repo_name,
-                                                        repo_path: urljoin(this.props.repo_current_path, item.name)
-                                                        });
+        if (item.type === 'dir') {
+            this.props.repoRefreshPath({
+                selectedItem: item, repo_name: this.props.repo_name,
+                repo_path: urljoin(this.props.repo_current_path, item.name)
+            });
         }
-        if (item.type == 'file') {
+        if (item.type === 'file') {
             console.log('Trying to fetch file');
-            const promise = this.props.repoGetFile({
+            this.props.repoGetFile({
                 download_link: item.download_url,
                 file_name: item.name
             });
@@ -48,10 +46,10 @@ class CodeBaseExplorer extends Component {
     
     renderContentItem(item){
         var iconType = <Icon type='exclamation'/>;
-        if (item.type == 'file') {
+        if (item.type === 'file') {
             iconType = <Icon type='file'/>;
         }
-        if (item.type == 'dir') {
+        if (item.type === 'dir') {
             iconType = <Icon type='folder'/>;
         }
         return (

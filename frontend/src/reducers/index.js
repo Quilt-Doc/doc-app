@@ -12,7 +12,6 @@ import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
 
-import { reducer as formReducer } from 'redux-form'
 import repoReducer from './Repo_Reducer';
 
 export default combineReducers({

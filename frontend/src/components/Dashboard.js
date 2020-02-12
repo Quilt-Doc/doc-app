@@ -4,7 +4,7 @@ import React from 'react';
 import Sidebar from './Sidebar';
 
 //styles
-import styled from "styled-components"
+import styled from "styled-components";
 
 const Dashboard = () => {
     return (

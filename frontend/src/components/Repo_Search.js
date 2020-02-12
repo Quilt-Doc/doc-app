@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import 'antd/dist/antd.css';
-import { Input, Form, Button, Icon } from 'antd';
+import { Input, Form, Button} from 'antd';
 
 import { Field, reduxForm } from 'redux-form';
 
@@ -20,7 +20,7 @@ class Repo_Search extends Component {
 
 	onSubmit = (formValues) => {
 		console.log(formValues);
-		const promise = this.props.repoRefreshPath(formValues);
+		this.props.repoRefreshPath(formValues);
 		// console.log(formValues);
 		/*this.props.form.validateFields((err, values) => {
 			if (!err) {

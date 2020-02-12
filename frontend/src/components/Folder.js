@@ -70,7 +70,7 @@ class Folder extends React.Component {
     }
       
     handleMenuClick(e){
-        if (e.key == 1) {
+        if (e.key === 1) {
             this.setState({
                 modalVisible: true,
             });
