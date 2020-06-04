@@ -5,7 +5,7 @@ import { Icon, List} from 'antd';
 
 import { connect } from 'react-redux';
 
-import { repoRefreshPath, repoGetFile} from '../actions/Repo_Actions';
+import { repoRefreshPath, repoGetFile, repoParseFile} from '../actions/Repo_Actions';
 
 var urljoin = require('url-join');
 
@@ -40,7 +40,12 @@ class CodeBaseExplorer extends Component {
             this.props.repoGetFile({
                 download_link: item.download_url,
                 file_name: item.name
-            });
+            }).then(
+                this.props.repoParseFile({
+                    file_contents: this.props.file_contents,
+                    file_name: this.props.file_name
+                })
+            );
         }
     }
     
@@ -85,8 +90,10 @@ const mapStateToProps = (state) => {
     return {
         contents: Object.values(state.repos.path_contents),
         repo_name: state.repos.repo_name,
-        repo_current_path: state.repos.repo_current_path
+        repo_current_path: state.repos.repo_current_path,
+        file_contents: state.repos.file_contents,
+        file_name: state.repos.file_name
     }
 }
 
-export default connect(mapStateToProps, {repoRefreshPath, repoGetFile})(CodeBaseExplorer);
+export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, repoParseFile})(CodeBaseExplorer);

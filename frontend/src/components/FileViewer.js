@@ -9,7 +9,7 @@ import { connect } from 'react-redux';
 
 import { repoRefreshPath, repoGetFile } from '../actions/Repo_Actions';
 
-import styled from "styled-components"
+import styled from "styled-components";
 
 import Selection from '@simonwep/selection-js';
 
@@ -77,7 +77,7 @@ class FileViewer extends Component {
 	
 	getSnippetSelection() {
 		var selection = window.getSelection();
-		console.log(selection.toStr)
+		console.log(selection.toStr);
 	}
 
 	render() {
