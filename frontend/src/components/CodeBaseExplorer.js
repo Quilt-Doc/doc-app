@@ -37,15 +37,24 @@ class CodeBaseExplorer extends Component {
         }
         if (item.type === 'file') {
             console.log('Trying to fetch file');
-            this.props.repoGetFile({
-                download_link: item.download_url,
-                file_name: item.name
-            }).then(
-                this.props.repoParseFile({
-                    file_contents: this.props.file_contents,
-                    file_name: this.props.file_name
-                })
-            );
+            if (process.env.CALL_DOXYGEN) {
+                this.props.repoGetFile({
+                    download_link: item.download_url,
+                    file_name: item.name
+                }).then(
+                    this.props.repoParseFile({
+                        file_contents: this.props.file_contents,
+                        file_name: this.props.file_name
+                    })
+                );
+            }
+            else {
+                this.props.repoGetFile({
+                    download_link: item.download_url,
+                    file_name: item.name
+                });
+            }
+            
         }
     }
     
