@@ -54,6 +54,12 @@ repoGetFile = (req, res) => {
 }
 
 repoParseFile = (req, res) => {
+    
+    console.log(process.env);
+    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
+        return res.json({success: false, error: 'doxygen disabled on this backend'});
+    }
+
     var { file_contents, file_name } = req.body;
     // console.log('repoParseFile received content: ', req.body);
     if (typeof file_contents == 'undefined' || file_contents == null) return res.json({success: false, error: 'no repo file_contents provided'});
