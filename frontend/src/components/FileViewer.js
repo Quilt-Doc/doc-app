@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import 'antd/dist/antd.css';
 import 'highlight.js/styles/atom-one-dark.css'
 
-import { Button } from 'antd';
+import {Button } from 'antd';
 
 import { connect } from 'react-redux';
 

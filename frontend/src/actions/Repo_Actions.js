@@ -1,7 +1,8 @@
 import {
     REPO_GET_FILE,
     REPO_REFRESH_PATH,
-    REPO_PARSE_FILE
+    REPO_PARSE_FILE,
+    REPO_CLEAR_FILE
 } from './types/Repo_Types';
 
 import api from '../apis/api';
@@ -45,4 +46,8 @@ export const repoParseFile = (file_contents) => async (dispatch) => {
     console.log(response);
 
     dispatch({ type: REPO_PARSE_FILE, payload: 'test'});
+}
+
+export const repoClearFile = () => async (dispatch) => {
+    dispatch({ type: REPO_CLEAR_FILE});
 }

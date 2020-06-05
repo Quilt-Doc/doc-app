@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 
 import 'antd/dist/antd.css';
-import { Icon, List} from 'antd';
+import { Icon, List, Button} from 'antd';
 
 import { connect } from 'react-redux';
 
-import { repoRefreshPath, repoGetFile, repoParseFile} from '../actions/Repo_Actions';
+import { repoRefreshPath, repoGetFile, repoParseFile, repoClearFile} from '../actions/Repo_Actions';
 
 var urljoin = require('url-join');
 
@@ -57,7 +57,7 @@ class CodeBaseExplorer extends Component {
             
         }
     }
-    
+
     renderContentItem(item){
         var iconType = <Icon type='exclamation'/>;
         if (item.type === 'file') {
@@ -73,9 +73,44 @@ class CodeBaseExplorer extends Component {
         )
     }
 
+    backButtonClick = () => {
+        this.props.repoRefreshPath({
+            repo_name: this.props.repo_name,
+            repo_path: this.props.repo_current_path.substring(0, this.props.repo_current_path.lastIndexOf('/'))
+        });
+        this.props.repoClearFile();
+    }
+
+    disableBackButton = () => {
+        if(this.props.repo_current_path) {
+            if (this.props.repo_current_path.length > 0) {
+                return false;
+            }
+        }
+        if(this.props.file_name) {
+            if(this.props.file_name.length > 0) {
+                return false
+            }
+        }
+
+        return true;
+    }
+
+    renderBackButton = () => {
+		return (
+			<Button type="text" onClick={this.backButtonClick} disabled = {this.disableBackButton()} style={{ background: "lightgrey", borderColor: "lightblue" }}>
+        <Icon type='left'/>
+      </Button>
+		);
+	}
+
+
+
 	render() {
+
 		return (
 			<div>
+                {this.renderBackButton(this.props.repo_current_path)}
                 <List
                     bordered
                     dataSource={this.props.contents}
@@ -105,4 +140,4 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, repoParseFile})(CodeBaseExplorer);
+export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, repoParseFile, repoClearFile})(CodeBaseExplorer);
