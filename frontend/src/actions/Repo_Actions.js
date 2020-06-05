@@ -41,7 +41,7 @@ export const repoParseFile = (file_contents) => async (dispatch) => {
 
     console.log('repo_parse_file called');
     const response = await api.post('/repo/parse_file', file_contents);
-    console.log('repoParseFile response: ', response);
+    console.log(response);
 
     dispatch({ type: REPO_PARSE_FILE, payload: 'test'});
 }

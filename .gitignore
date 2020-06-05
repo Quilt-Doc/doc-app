@@ -15,6 +15,9 @@
 # Ignore node_modules in backend
 backend/node_modules/*
 
+# Ignore doxygen related files
+backend/doxygen*
+
 node_modules/*
 
 # Ignore node_modules in frontend
