@@ -40,12 +40,13 @@ class CodeBaseExplorer extends Component {
             this.props.repoGetFile({
                 download_link: item.download_url,
                 file_name: item.name
-            }).then(
+            });
+            /*.then(
                 this.props.repoParseFile({
                     file_contents: this.props.file_contents,
                     file_name: this.props.file_name
                 })
-            );
+            );*/
             
         }
     }
