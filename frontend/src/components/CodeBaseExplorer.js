@@ -17,6 +17,19 @@ class CodeBaseExplorer extends Component {
 		// this.props.form.validateFields();
 	}
 
+    componentDidUpdate(prevProps) {
+      // Typical usage (don't forget to compare props):
+      console.log('Codebase did update');
+      if (this.props.file_contents !== prevProps.file_contents) {
+        console.log('CALLING PARSE');
+        console.log(this.props.file_contents);
+        this.props.repoParseFile({
+                    file_contents: this.props.file_contents,
+                    file_name: this.props.file_name
+                });
+      }
+    }
+
 	renderError({ error, touched }) {
 		if (touched && error) {
 			return (
@@ -41,12 +54,6 @@ class CodeBaseExplorer extends Component {
                 download_link: item.download_url,
                 file_name: item.name
             });
-            /*.then(
-                this.props.repoParseFile({
-                    file_contents: this.props.file_contents,
-                    file_name: this.props.file_name
-                })
-            );*/
             
         }
     }

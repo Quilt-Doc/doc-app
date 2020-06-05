@@ -35,8 +35,6 @@ export const repoGetFile = (file_desc) => async (dispatch) => {
     
     dispatch({ type: REPO_GET_FILE, payload: response.data, file_name: file_desc.file_name});
 
-    repoParseFile(response.data);
-
 }
 
 export const repoParseFile = (file_contents) => async (dispatch) => {
