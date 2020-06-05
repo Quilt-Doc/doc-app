@@ -1,0 +1,4 @@
+setx USE_EXTERNAL_DB 0
+setx EXTERNAL_DB_PASS qZyvXV2chEbJntnE
+
+setx DEBUG_CUSTOM_ID 1
