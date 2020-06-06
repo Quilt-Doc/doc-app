@@ -1,0 +1,21 @@
+
+**/.DS_Store
+**/_DS_Store
+**/.swp
+
+# Don't include credentials
+**/.env
+
+# Don't include detached process output
+**/nohup.out
+
+# Ignore python artifacts
+**/__pycache__
+
+# Ignore node_modules in backend
+backend/node_modules/*
+
+node_modules/*
+
+# Ignore node_modules in frontend
+frontend/node_modules/*
