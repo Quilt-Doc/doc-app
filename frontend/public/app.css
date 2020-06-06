@@ -9,7 +9,11 @@
 
 html {
     /*root*/
+<<<<<<< HEAD
     font-size: 62.5%;
+=======
+    font-size: 23px;
+>>>>>>> 517255baf348e7741f9e5e4a3e4876e2ffbdae0f
     height: 100%;
 }
 
@@ -21,6 +25,7 @@ body {
 
 .selected {
   background: rgba(0, 128, 64, 0.3);
+<<<<<<< HEAD
 }
 
 .selected_code {
@@ -31,4 +36,6 @@ body {
 
 .plus_icon {
   margin-top:10rem !important;
+=======
+>>>>>>> 517255baf348e7741f9e5e4a3e4876e2ffbdae0f
 }

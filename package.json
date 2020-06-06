@@ -10,8 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
     "concurrently": "^5.0.2",
     "lodash": "^4.17.15",
     "react-textarea-autosize": "^8.0.1"
+=======
+    "concurrently": "^5.0.2"
+>>>>>>> 517255baf348e7741f9e5e4a3e4876e2ffbdae0f
   }
 }

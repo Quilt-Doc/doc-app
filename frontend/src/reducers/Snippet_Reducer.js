@@ -16,9 +16,6 @@ export default (state = {}, action) => {
         case GET_SNIPPET:
             return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_SNIPPETS:
-            let item = { ..._.mapKeys(action.payload, 'start_line') };
-            console.log("THE LINE NUMBERS")
-            console.log(item)
             return { ..._.mapKeys(action.payload, 'start_line') };
         case DELETE_SNIPPET:
             return _.omit(state, action.payload._id);

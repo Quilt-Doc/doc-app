@@ -1,6 +1,8 @@
 import {
     REPO_REFRESH_PATH,
-    REPO_GET_FILE
+    REPO_GET_FILE,
+    REPO_PARSE_FILE,
+    REPO_CLEAR_FILE
 } from '../actions/types/Repo_Types';
 
 
@@ -23,6 +25,14 @@ export default (state = initialContents, action) => {
                 ...state, file_name: action.file_name,
                 file_contents: action.payload
                 };
+        case REPO_PARSE_FILE:
+            return {
+                ...state, parsed_data: action.parsed_data
+            }
+        case REPO_CLEAR_FILE:
+            return {
+                ...state, file_name: '', file_contents: ''
+            };
         
         default: 
             return state;

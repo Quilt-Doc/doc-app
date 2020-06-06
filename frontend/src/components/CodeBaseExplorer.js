@@ -18,6 +18,19 @@ class CodeBaseExplorer extends Component {
 		// this.props.form.validateFields();
 	}
 
+    componentDidUpdate(prevProps) {
+      // Typical usage (don't forget to compare props):
+      console.log('Codebase did update');
+      if (this.props.file_contents !== prevProps.file_contents) {
+        console.log('CALLING PARSE');
+        console.log(this.props.file_contents);
+        this.props.repoParseFile({
+                    file_contents: this.props.file_contents,
+                    file_name: this.props.file_name
+                });
+      }
+    }
+
 	renderError({ error, touched }) {
 		if (touched && error) {
 			return (
@@ -29,7 +42,6 @@ class CodeBaseExplorer extends Component {
     }
 
     handleItemSelect(item) {
-           
         console.log('Selected Item: ', item);
         if (item.type === 'dir') {
             this.props.repoRefreshPath({
@@ -43,9 +55,10 @@ class CodeBaseExplorer extends Component {
                 download_link: item.download_url,
                 file_name: item.name
             });
+            
         }
     }
-    
+
     renderContentItem(item){
         var iconType = <Icon type='exclamation'/>;
         if (item.type === 'file') {
@@ -78,9 +91,44 @@ class CodeBaseExplorer extends Component {
         }
     }
 
+    backButtonClick = () => {
+        this.props.repoRefreshPath({
+            repo_name: this.props.repo_name,
+            repo_path: this.props.repo_current_path.substring(0, this.props.repo_current_path.lastIndexOf('/'))
+        });
+        this.props.repoClearFile();
+    }
+
+    disableBackButton = () => {
+        if(this.props.repo_current_path) {
+            if (this.props.repo_current_path.length > 0) {
+                return false;
+            }
+        }
+        if(this.props.file_name) {
+            if(this.props.file_name.length > 0) {
+                return false
+            }
+        }
+
+        return true;
+    }
+
+    renderBackButton = () => {
+		return (
+			<Button type="text" onClick={this.backButtonClick} disabled = {this.disableBackButton()} style={{ background: "lightgrey", borderColor: "lightblue" }}>
+        <Icon type='left'/>
+      </Button>
+		);
+	}
+
+
+
 	render() {
+
 		return (
 			<div>
+                {this.renderBackButton(this.props.repo_current_path)}
                 <List
                     bordered
                     dataSource={this.props.contents}
@@ -104,8 +152,10 @@ const mapStateToProps = (state) => {
     return {
         contents: Object.values(state.repos.path_contents),
         repo_name: state.repos.repo_name,
-        repo_current_path: state.repos.repo_current_path
+        repo_current_path: state.repos.repo_current_path,
+        file_contents: state.repos.file_contents,
+        file_name: state.repos.file_name
     }
 }
 
-export default connect(mapStateToProps, {repoRefreshPath, repoGetFile})(CodeBaseExplorer);
+export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, repoParseFile, repoClearFile})(CodeBaseExplorer);

@@ -76,7 +76,6 @@ class Folder extends React.Component {
             });
         }
     }
-    
     menu = (
         <Menu onClick={(e) => {this.handleMenuClick(e)}}>
             <Menu.Item key="1">

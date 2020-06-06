@@ -77,19 +77,16 @@ class FileViewer extends Component {
 	
 	getSnippetSelection() {
 		var selection = window.getSelection();
-		console.log(selection.toStr)
+		console.log(selection.toStr);
 	}
 
 	render() {
-		console.log("HERE FILE")
-		console.log(this.props.file_contents)
+
 		const lines = this.props.file_contents.split("\n");
-		const file_lines = lines.map((line, idx) =>{
-			console.log(line)
-			return (<tr>
+		const file_lines = lines.map((line, idx) =>
+			<tr>
 				<FileLineNumber>{idx}</FileLineNumber> <FileLineContent className="file-line">{line}</FileLineContent>
-			</tr>)
-			}
+			</tr>
 		  );
 
 
