@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 
 import 'antd/dist/antd.css';
-import { Icon, List} from 'antd';
+import { Icon, List, Button} from 'antd';
 
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
-import { repoRefreshPath, repoGetFile} from '../actions/Repo_Actions';
+import { repoRefreshPath, repoGetFile, repoParseFile, repoClearFile} from '../actions/Repo_Actions';
 
 var urljoin = require('url-join');
 

@@ -1,11 +1,8 @@
 import {
     REPO_GET_FILE,
     REPO_REFRESH_PATH,
-<<<<<<< HEAD
-=======
     REPO_PARSE_FILE,
     REPO_CLEAR_FILE
->>>>>>> 517255baf348e7741f9e5e4a3e4876e2ffbdae0f
 } from './types/Repo_Types';
 
 import api from '../apis/api';
@@ -19,10 +16,7 @@ import api from '../apis/api';
 export const repoRefreshPath = (formValues) => async (dispatch) => {
     console.log('formValues: ', formValues);
     const response = await api.post('/repo/refresh_path', formValues );
-<<<<<<< HEAD
-=======
     console.log('repoRefreshPath response: ', response);
->>>>>>> 517255baf348e7741f9e5e4a3e4876e2ffbdae0f
     
     var current_path = '';
 
@@ -35,14 +29,6 @@ export const repoRefreshPath = (formValues) => async (dispatch) => {
 }
 
 export const repoGetFile = (file_desc) => async (dispatch) => {
-<<<<<<< HEAD
-    
-    console.log('file_desc: ', file_desc);
-    const response = await api.post('/repo/get_file', file_desc);
-    console.log('response: ', response);
-    dispatch({ type: REPO_GET_FILE, payload: response.data, file_name: file_desc.file_name});
-
-=======
 
     console.log('file_desc: ', file_desc);
     const response = await api.post('/repo/get_file', file_desc);
@@ -64,5 +50,4 @@ export const repoParseFile = (file_contents) => async (dispatch) => {
 
 export const repoClearFile = () => async (dispatch) => {
     dispatch({ type: REPO_CLEAR_FILE});
->>>>>>> 517255baf348e7741f9e5e4a3e4876e2ffbdae0f
 }
