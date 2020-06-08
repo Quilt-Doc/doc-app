@@ -15,10 +15,12 @@ const logger = createLogger();
 
 const store = createStore(reducers,
     composeEnhancers(
-        applyMiddleware(reduxThunk),
-        applyMiddleware(logger)
+        applyMiddleware(reduxThunk)
     )
 );
+
+/*,
+        applyMiddleware(logger)*/
 
 
 ReactDOM.render(

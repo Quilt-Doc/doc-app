@@ -16,7 +16,7 @@ export default (state = {}, action) => {
         case GET_SNIPPET:
             return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_SNIPPETS:
-            return { ..._.mapKeys(action.payload, '_id') };
+            return { ..._.mapKeys(action.payload, 'start_line') };
         case DELETE_SNIPPET:
             return _.omit(state, action.payload._id);
         case EDIT_SNIPPET:

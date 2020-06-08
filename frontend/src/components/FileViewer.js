@@ -9,7 +9,7 @@ import { connect } from 'react-redux';
 
 import { repoRefreshPath, repoGetFile } from '../actions/Repo_Actions';
 
-import styled from "styled-components";
+import styled from "styled-components"
 
 import Selection from '@simonwep/selection-js';
 
@@ -131,6 +131,7 @@ const FileLineNumber = styled.td`
 	user-select:none;
 `
 const FileLineContent = styled.td`
+	white-space: pre-wrap;
 	-webkit-user-select: auto;  /* Chrome 49+ */
 	-moz-user-select: auto;     /* Firefox 43+ */
 	-ms-user-select: auto;      /* No support yet */

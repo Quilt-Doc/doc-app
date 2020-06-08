@@ -9,7 +9,7 @@
 
 html {
     /*root*/
-    font-size: 23px;
+    font-size: 62.5%;
     height: 100%;
 }
 
@@ -21,4 +21,14 @@ body {
 
 .selected {
   background: rgba(0, 128, 64, 0.3);
+}
+
+.selected_code {
+  background-color: white !important;
+  border-left: 1.5px solid #19E5BE;
+  /*box-shadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;*/
+}
+
+.plus_icon {
+  margin-top:10rem !important;
 }

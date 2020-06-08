@@ -8,6 +8,29 @@ const MEMBER_KINDS = ['define', 'property', 'event', 'variable', 'typedef', 'enu
 'enumvalue', 'function', 'signal', 'prototype', 'friend', 'dcop', 'slot'];
 
 
+getRefs = (repo_link, res) => {
+
+    var timestamp = Date.now().toString();    
+    var repo_disk_path = 'git_repos/' + timestamp +'/';
+
+    const child = execFile('git', ['clone', repo_link, repo_disk_path], (error, stdout, stderr) => {
+        if (error) {
+            return res.json({success: false, error: 'getRefs error on execFile: ' + error});
+        }
+        var new_env = process.env;
+        new_env.DOXYGEN_FILE = repo_disk_path;
+        var xml_dir = 'doxygen_xml/' + file_name.slice(0, file_name.lastIndexOf('.'));
+        new_env.DOXYGEN_XML_DIR = 'git_repos/' + timestamp + '_xml/';
+
+        const child = execFile('doxygen', ['Doxyfile'], {env: new_env}, (error, stdout, stderr) => {
+            if (error) {
+                return res.json({success: false, error: 'parseCode error on execFile: ' + error});
+            }
+        });
+    });
+}
+
+
 
 parseCode = (file_name, res) => {
     
@@ -78,5 +101,6 @@ parseCode = (file_name, res) => {
 }
 
 module.exports = {
+    getRefs,
     parseCode
 }

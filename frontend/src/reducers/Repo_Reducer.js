@@ -1,13 +1,21 @@
 import {
     REPO_REFRESH_PATH,
     REPO_GET_FILE,
-    REPO_PARSE_FILE
+    REPO_PARSE_FILE,
+    REPO_CLEAR_FILE
 } from '../actions/types/Repo_Types';
 
 
 import _ from 'lodash';
 
-const initialContents = {path_contents: {}}
+const initialContents = {
+                        path_contents: {},
+                        references: {
+                            namespaces: [{name: 'BillingLogic', kind: 'class'}],
+                            functions: [{name: 'runCalc', kind: 'function'}],
+                            members: [{name: 'dollars', kind: 'var'}]
+                        }
+                        }
 
 export default (state = initialContents, action) => {
     switch (action.type) {
@@ -28,6 +36,10 @@ export default (state = initialContents, action) => {
             return {
                 ...state, parsed_data: action.parsed_data
             }
+        case REPO_CLEAR_FILE:
+            return {
+                ...state, file_name: '', file_contents: ''
+            };
         
         default: 
             return state;

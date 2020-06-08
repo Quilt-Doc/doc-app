@@ -3,12 +3,15 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createSnippet = (req, res) => {
-    const { folderIDs, documentIDs, location, type, status, name } = req.body;
+    const { annotation, code, start_line, folderIDs, documentIDs, location, type, status, name } = req.body;
     let snippet = new Snippet(
         {
-            name
+           code,
+           annotation,
+           start_line
         },
     );
+    if (name) snippet.name = name;
     if (type) snippet.type = type;
     if (status) snippet.status = status;
     if (location) snippet.location = location;
