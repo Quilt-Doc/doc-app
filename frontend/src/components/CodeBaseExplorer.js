@@ -6,7 +6,7 @@ import { Icon, List, Button} from 'antd';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
-import { repoRefreshPath, repoGetFile, repoParseFile, repoClearFile} from '../actions/Repo_Actions';
+import { repoRefreshPath, repoGetFile, repoParseFile, repoClearFile, repoGetRefs} from '../actions/Repo_Actions';
 
 var urljoin = require('url-join');
 
@@ -27,6 +27,14 @@ class CodeBaseExplorer extends Component {
         this.props.repoParseFile({
                     file_contents: this.props.file_contents,
                     file_name: this.props.file_name
+                });
+      }
+
+      if (this.props.repo_name !== prevProps.repo_name) {
+        console.log('CALLING GET REFS');
+        console.log(this.props);
+        this.props.repoGetRefs({
+                    repo_link: this.props.repo_name
                 });
       }
     }
@@ -158,4 +166,4 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, repoParseFile, repoClearFile})(CodeBaseExplorer);
+export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, repoParseFile, repoClearFile, repoGetRefs})(CodeBaseExplorer);

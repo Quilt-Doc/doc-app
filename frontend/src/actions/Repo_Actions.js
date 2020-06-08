@@ -48,6 +48,13 @@ export const repoParseFile = (file_contents) => async (dispatch) => {
     dispatch({ type: REPO_PARSE_FILE, payload: 'test'});
 }
 
+export const repoGetRefs = (repo_link) => async (dispatch) => {
+
+    console.log('repo_get_refs called');
+    const response = await api.post('/repo/get_refs', repo_link);
+    console.log('response');
+}
+
 export const repoClearFile = () => async (dispatch) => {
     dispatch({ type: REPO_CLEAR_FILE});
 }

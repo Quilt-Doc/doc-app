@@ -6,6 +6,7 @@ import history from '../history';
 //components
 import Dashboard from './Dashboard';
 import CodeViewer from './CodeViewer';
+import DocumentCreate from './Document/DocumentCreate';
 
 
 import CodeView from './Code Page/CodeView';
@@ -16,7 +17,7 @@ const App = () => {
                   
                   <Route path = "/codeview/:location" component = {CodeView} />
                   <Route exact path="/code_viewer" component={CodeViewer} />
-                  
+                  <Route exact path= "/document_create" component={DocumentCreate} />
                 </Router>
             </>)
 }
