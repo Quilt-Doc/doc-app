@@ -3,6 +3,10 @@
 const express = require('express');
 const router = express.Router();
 
+const reference_controller = require('../controllers/ReferenceController');
+router.post('/references/create', reference_controller.createReferences);
+router.post('/references/get', reference_controller.getReferences);
+
 
 const workspace_controller = require('../controllers/WorkspaceController');
 router.post('/workspaces/create', workspace_controller.createWorkspace);
