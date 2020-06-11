@@ -13,6 +13,8 @@ import styled from 'styled-components';
 
 import api from '../apis/api';
 
+import { repoUpdateRefs } from '../../actions/Repo_Actions';
+
 
   // https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions#Using_Special_Characters
   function escapeRegexCharacters(str) {
@@ -33,6 +35,9 @@ import api from '../apis/api';
 					.then(function (response) {
 						console.log('GET REFERENCES RESPONSE');
 						console.log(response);
+						this.props.repos.repoUpdateRefs({
+										references: response.data
+						});
 					  })
 					  .catch(function (error) {
 						console.log(error);
@@ -40,7 +45,7 @@ import api from '../apis/api';
 	console.log('RESPONSE');
 	console.log(response);
 
-	const regex = new RegExp('^' + escapedValue, 'i');
+	/*const regex = new RegExp('^' + escapedValue, 'i');
   
 	var result =  results_src
 	  .map(section => {
@@ -49,11 +54,11 @@ import api from '../apis/api';
 		  results: section.results.filter(result => regex.test(result.name))
 		};
 	  })
-	  .filter(section => section.results.length > 0);
+	  .filter(section => section.results.length > 0);*/
 
-	  console.log('getSuggestions RETURN');
-	  console.log(result);
-	return result;
+	  //console.log('getSuggestions RETURN');
+	  //console.log(result);
+	return this.props.references;
   }
   
   function renderSuggestion(suggestion) {
@@ -70,7 +75,7 @@ import api from '../apis/api';
 				{suggestion.kind}::{suggestion.name}
 			</span>
 			<span>
-				test.py::4
+				{suggestion.file}::{suggestion.lineNum}
 			</span>
     	</div>
 	);
@@ -166,21 +171,8 @@ const mapStateToProps = (state) => {
     
     return {
 
-		references: [
-			{
-				title: 'Namespaces',
-				results: state.repos.references['namespaces']
-			},
-			{
-				title: 'Functions',
-				results: state.repos.references['functions']
-			},
-			{
-				title: 'Members',
-				results: state.repos.references['members']
-			}
-		]
+		references: state.repos.references
     }
 }
 
-export default connect(mapStateToProps)(ReferenceSearch);
+export default connect(mapStateToProps, { repoUpdateRefs })(ReferenceSearch);

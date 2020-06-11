@@ -2,7 +2,8 @@ import {
     REPO_GET_FILE,
     REPO_REFRESH_PATH,
     REPO_PARSE_FILE,
-    REPO_CLEAR_FILE
+    REPO_CLEAR_FILE,
+    REPO_UPDATE_REFS
 } from './types/Repo_Types';
 
 import api from '../apis/api';
@@ -58,4 +59,8 @@ export const repoGetRefs = (repo_link) => async (dispatch) => {
 
 export const repoClearFile = () => async (dispatch) => {
     dispatch({ type: REPO_CLEAR_FILE});
+}
+
+export const repoUpdateRefs = (repo_refs) => async (dispatch) => {
+    dispatch({type: REPO_UPDATE_REFS, references: repo_refs.references});
 }
