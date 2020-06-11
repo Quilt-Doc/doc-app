@@ -62,5 +62,6 @@ export const repoClearFile = () => async (dispatch) => {
 }
 
 export const repoUpdateRefs = (repo_refs) => async (dispatch) => {
+    console.log('repo update refs called');
     dispatch({type: REPO_UPDATE_REFS, references: repo_refs.references});
 }

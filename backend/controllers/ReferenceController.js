@@ -27,7 +27,8 @@ createReferences = (req, res) => {
         return reference;
     })
 
-
+    console.log('REF OBJ LIST');
+    console.log(ref_obj_list);
     Reference.create( ref_obj_list, (err, reference) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(reference);
@@ -39,10 +40,14 @@ getReferences = (req, res) => {
     const { text, repo_link } = req.body;
     var text_query = text;
 
+
     if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no reference repo_link provided'});
     if (!(text)) {
         text_query = '';
     }
+
+    console.log('repo_link: ', repo_link);
+    console.log('text: ', text);
 
     var re = new RegExp(text, 'i');
 
@@ -54,6 +59,8 @@ getReferences = (req, res) => {
             ]
         }
         ).sort('kind').exec(function(err, references) {
+        console.log('results: ')
+        console.log(references);
         res.json(references);
     });
 }

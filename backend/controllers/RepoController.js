@@ -77,6 +77,7 @@ repoParseFile = (req, res) => {
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir);
         }
+
         parse_utils.parseCode(file_name, res);
 
     });
@@ -96,7 +97,7 @@ repoGetRefs = (req, res) => {
     if (typeof repo_link == 'undefined' || repo_link == null) return res.json({success: false, error: 'no repo repo_link provided'});
 
     var final_repo_link = url.resolve(REPO_BASE_URL, repo_link);
-    parse_utils.getRefs(final_repo_link, res);
+    parse_utils.getRefs(repo_link, final_repo_link, res);
 }
 
 module.exports = {
