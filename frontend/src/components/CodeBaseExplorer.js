@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { repoRefreshPath, repoGetFile, repoParseFile, repoClearFile, repoGetRefs} from '../actions/Repo_Actions';
+import { createCodebase } from '../actions/Codebase_Actions';
 
 var urljoin = require('url-join');
 
@@ -36,6 +37,10 @@ class CodeBaseExplorer extends Component {
         this.props.repoGetRefs({
                     repo_link: this.props.repo_name
                 });
+        this.props.createCodebase ({
+                    name: this.props.repo_name,
+                    link: this.props.repo_name
+        })
       }
     }
 
