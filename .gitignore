@@ -15,6 +15,9 @@
 # Ignore node_modules in backend
 backend/node_modules/*
 
+# ignore git_repos
+backend/git_repo*
+
 # Ignore doxygen related files
 backend/doxygen*
 
