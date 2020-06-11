@@ -21,45 +21,6 @@ import { repoUpdateRefs } from '../../actions/Repo_Actions';
 	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
   
-  function getSuggestions(value, results_src) {
-	  if (results_src.length < 1) {
-		  return [];
-	  }
-	const escapedValue = escapeRegexCharacters(value.trim());
-	
-	if (escapedValue === '') {
-	  return [];
-	}
-
-	const response = api.post('/references/get', {text: escapedValue, repo_link: "/cewing/fizzbuzz/"} )
-					.then(function (response) {
-						console.log('GET REFERENCES RESPONSE');
-						console.log(response);
-						this.props.repos.repoUpdateRefs({
-										references: response.data
-						});
-					  })
-					  .catch(function (error) {
-						console.log(error);
-					  });
-	console.log('RESPONSE');
-	console.log(response);
-
-	/*const regex = new RegExp('^' + escapedValue, 'i');
-  
-	var result =  results_src
-	  .map(section => {
-		return {
-		  title: section.title,
-		  results: section.results.filter(result => regex.test(result.name))
-		};
-	  })
-	  .filter(section => section.results.length > 0);*/
-
-	  //console.log('getSuggestions RETURN');
-	  //console.log(result);
-	return this.props.references;
-  }
   
   function renderSuggestion(suggestion) {
 	console.log('renderSuggestion');
@@ -101,22 +62,35 @@ class ReferenceSearch extends Component {
 		this.state = {
 		  value: '',
 		  suggestions: [],
-		  references: [
-			{
-				title: 'Namespaces',
-				results: []
-			},
-			{
-				title: 'Functions',
-				results: []
-			},
-			{
-				title: 'Members',
-				results: []
-			}
-		]
+		  references: []
 		};
 	  }
+
+	getSuggestions = (value, results_src) => {
+		if (results_src.length < 1) {
+			return [];
+		}
+	  	const escapedValue = escapeRegexCharacters(value.trim());
+	  
+	  	if (escapedValue === '') {
+			return [];
+	  	}
+  
+	  	const response = api.post('/references/get', {text: escapedValue, repo_link: "/cewing/fizzbuzz/"} )
+					  .then(function (response) {
+						  console.log('GET REFERENCES RESPONSE');
+						  console.log(response);
+						  this.props.repos.repoUpdateRefs({
+										  references: response.data
+						  });
+						})
+						.catch(function (error) {
+						  console.log(error);
+						});
+	  	console.log('RESPONSE');
+	  	console.log(response);
+	  	return this.props.references;
+		}
 
 	  onChange = (event, { newValue, method }) => {
 		this.setState({
@@ -126,7 +100,7 @@ class ReferenceSearch extends Component {
 
 	  onSuggestionsFetchRequested = ({ value }) => {
 		this.setState({
-		  suggestions: getSuggestions(value, this.props.references)
+		  suggestions: this.getSuggestions(value, this.props.references)
 		});
 	  };
 	
