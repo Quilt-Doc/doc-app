@@ -11,7 +11,7 @@ import {Button } from 'antd';
 import Autosuggest from 'react-autosuggest';
 import styled from 'styled-components';
 
-import api from '../apis/api';
+import api from '../../apis/api';
 
 import { repoUpdateRefs } from '../../actions/Repo_Actions';
 

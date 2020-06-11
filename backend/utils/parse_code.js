@@ -6,6 +6,10 @@ var path = require('path');
 var DOMParser = require('xmldom').DOMParser;
 
 const fsPromises = require('fs').promises
+const axios = require('../apis/api');
+const api = axios.requestClient();
+
+const REF_CREATE_URL = 'http://localhost:3001/api/references/create';
 
 
 const COMPOUND_KINDS = ["class", "struct", "union", "interface", "protocol", "category",
@@ -80,10 +84,10 @@ getRefs = (repo_link, res) => {
                         console.log(target_files);
 
                         func(target_files)
-                            .then(res =>  {
+                            .then(results =>  {
                                 // console.log('target file called');
                                 // console.log(res);
-                                res.forEach( function(read_file, file_num) {
+                                results.forEach( function(read_file, file_num) {
                                     var xmlDoc = default_parser.parseFromString(read_file.toString(), "text/xml");
                                     var compound_defs = xmlDoc.getElementsByTagName("compounddef");
 
@@ -129,77 +133,23 @@ getRefs = (repo_link, res) => {
                                             // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
                                             file = file.substring(file.indexOf('/')+1)
                                             file = file.substring(file.indexOf('/')+1)
-                                            found_refs.push({name: name, kind: kind, file: file, location: location})
+                                            found_refs.push({name: name, kind: kind, file: file, location: location, link: repo_link})
                                         }
                                     })
                                 });
                                 console.log('END FOUND_REFS');
-                                console.log(found_refs)
+                                console.log(found_refs);
+                                api.post(REF_CREATE_URL, {ref_list: found_refs})
+                                .then(function (response) {
+                                    return res.json(response.data);
+                                  })
+                                  .catch(function (err) {
+                                    console.log('Failure');
+                                    console.log(err);
+                                    return res.json({ success: false, error: err });
+                                  });
                             })
                             .catch(console.log);
-
-                        /* target_files.forEach(function(iter_file, idx) {
-                            fs.readFile(new_env.DOXYGEN_XML_DIR + '/' + iter_file,
-                                function(err, data) {
-                                if (err) {
-                                    return res.json({success: false, error: 'getRefs error on readFile: ' + err});
-                                }
-                                console.log(typeof data);
-                                var xmlDoc = default_parser.parseFromString(data.toString(), "text/xml");
-                                var compound_defs = xmlDoc.getElementsByTagName("compounddef");
-
-
-                                target_refs.forEach(function (i, k) {
-                                    var found_element = xmlDoc.getElementById(i['$']['refid']);
-                                    var location = ''
-                                    var file = ''
-                                    var name = ''
-                                    var kind = ''
-
-                                    if (found_element) {
-                                        kind = found_element.getAttribute('kind');
-                                        if (found_element.tagName === 'compounddef') {
-                                            x = found_element.childNodes;
-                                            // console.log('found compounddef');
-                                            for (j = 0; j < x.length; j++) {
-                                                if (x[j].tagName === 'location') {
-                                                    // console.log('compound - found location');
-                                                    location = x[j].getAttribute('line');
-                                                    file = x[j].getAttribute('file');
-                                                }
-                                                else if (x[j].tagName === 'compoundname') {
-                                                    console.log('compound - found name')
-                                                    name = x[j].childNodes[0].nodeValue;
-                                                    console.log(name);
-                                                }
-                                            }
-                                        }
-                                        else if (found_element.tagName === 'memberdef') {
-                                            x = found_element.childNodes;
-                                            for (j = 0; j < x.length; j++) {
-                                                if (x[j].tagName === 'location') {
-                                                    location = x[j].getAttribute('line');
-                                                    file = x[j].getAttribute('file');
-                                                }
-                                                else if (x[j].tagName === 'name') {
-                                                    name = x[j].childNodes[0].nodeValue;
-                                                }
-                                            }
-                                        }
-                                        // console.log('name, kind, file, location');
-                                        // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
-                                        found_refs.push({name: name, kind: kind, file: file, location: location})
-                                    }
-                                });
-                                
-                            });
-                            console.log('found_refs')
-                            console.log(found_refs)
-                        }); */
-
-                        // return res.json({payload: return_json})
-                        
-                        // console.log('Done');
                     });
                 });
 
