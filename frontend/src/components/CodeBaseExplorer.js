@@ -31,6 +31,9 @@ class CodeBaseExplorer extends Component {
                 });
       }
 
+      console.log('Current repo name: ', this.props.repo_name);
+      console.log('Previous repo name: ', prevProps.repo_name);
+
       if (this.props.repo_name !== prevProps.repo_name) {
         console.log('CALLING GET REFS');
         console.log(this.props);

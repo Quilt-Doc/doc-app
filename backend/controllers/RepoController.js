@@ -92,7 +92,7 @@ repoGetRefs = (req, res) => {
     }
 
     var { repo_link } = req.body;
-    console.log('repoParseFile received content: ', req.body);
+    console.log('repoGetRefs received content: ', req.body);
     if (typeof repo_link == 'undefined' || repo_link == null) return res.json({success: false, error: 'no repo repo_link provided'});
 
     var final_repo_link = url.resolve(REPO_BASE_URL, repo_link);
@@ -100,5 +100,5 @@ repoGetRefs = (req, res) => {
 }
 
 module.exports = {
-    repoRefreshPath, repoGetFile, repoParseFile
+    repoRefreshPath, repoGetFile, repoParseFile, repoGetRefs
 }

@@ -52,7 +52,8 @@ export const repoGetRefs = (repo_link) => async (dispatch) => {
 
     console.log('repo_get_refs called');
     const response = await api.post('/repo/get_refs', repo_link);
-    console.log('response');
+    console.log('getRefs response');
+    console.log(response)
 }
 
 export const repoClearFile = () => async (dispatch) => {
