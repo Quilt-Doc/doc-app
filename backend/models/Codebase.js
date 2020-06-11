@@ -8,6 +8,7 @@ var codebaseSchema = new Schema({
 	link: String,
 	lastScannedDate: Date,
 	scanFrequency: Date,
+	references: [{type: ObjectId, ref: 'Reference', index: true}],
 	created: {type: Date, default: Date.now }
 });
 
