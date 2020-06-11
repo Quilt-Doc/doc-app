@@ -174,4 +174,4 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, repoParseFile, repoClearFile, repoGetRefs})(CodeBaseExplorer);
+export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, createCodebase, repoParseFile, repoClearFile, repoGetRefs})(CodeBaseExplorer);
