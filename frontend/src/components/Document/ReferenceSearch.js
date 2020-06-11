@@ -11,6 +11,8 @@ import {Button } from 'antd';
 import Autosuggest from 'react-autosuggest';
 import styled from 'styled-components';
 
+import api from '../apis/api';
+
 
   // https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions#Using_Special_Characters
   function escapeRegexCharacters(str) {
@@ -26,7 +28,18 @@ import styled from 'styled-components';
 	if (escapedValue === '') {
 	  return [];
 	}
-  
+
+	const response = api.post('/references/get', {text: escapedValue, repo_link: "/cewing/fizzbuzz/"} )
+					.then(function (response) {
+						console.log('GET REFERENCES RESPONSE');
+						console.log(response);
+					  })
+					  .catch(function (error) {
+						console.log(error);
+					  });
+	console.log('RESPONSE');
+	console.log(response);
+
 	const regex = new RegExp('^' + escapedValue, 'i');
   
 	var result =  results_src
