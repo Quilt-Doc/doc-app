@@ -41,6 +41,8 @@ import { repoUpdateRefs } from '../../actions/Repo_Actions';
     	</div>
 	);
   }
+
+  
   
   function renderSectionTitle(section) {
 	console.log('renderSectionTitle');
@@ -66,17 +68,16 @@ class ReferenceSearch extends Component {
 		};
 	  }
 
-	getSuggestions = (value, results_src) => {
-		if (results_src.length < 1) {
-			return [];
-		}
+	getSuggestions = (value) => {
+
 	  	const escapedValue = escapeRegexCharacters(value.trim());
 	  
 	  	if (escapedValue === '') {
 			return [];
 	  	}
-  
-	  	const response = api.post('/references/get', {text: escapedValue, repo_link: "/cewing/fizzbuzz/"} )
+
+	  	response = () => {
+			  	api.post('/references/get', {text: escapedValue, repo_link: "/cewing/fizzbuzz/"} )
 					  .then(function (response) {
 						  console.log('GET REFERENCES RESPONSE');
 						  console.log(response);
@@ -87,8 +88,9 @@ class ReferenceSearch extends Component {
 						.catch(function (error) {
 						  console.log(error);
 						});
-	  	console.log('RESPONSE');
-	  	console.log(response);
+		}
+	  	// console.log('RESPONSE');
+	  	// console.log(response);
 	  	return this.props.references;
 		}
 
