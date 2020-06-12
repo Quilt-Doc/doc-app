@@ -39,12 +39,14 @@ class Repository_Viewer extends React.Component {
     }
 
     renderLink(link) {
+        console.log('LINK: ', link);
         let position = link.indexOf('github.com/');
         return `/codebase/directory/${link.slice(position + 11, link.length)}`
     }
 
     renderRepositories() {
         console.log("ENTERED HERE")
+        console.log(this.props.codebases);
         let icons = [repo_icon1, repo_icon2, repo_icon3, repo_icon4, repo_icon5, repo_icon6, repo_icon7]
 
         let jsx_codebases = []

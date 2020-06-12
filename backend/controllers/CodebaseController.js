@@ -3,16 +3,19 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createCodebase = (req, res) => {
-
+    console.log('Called create codebase');
     const {name, workspaceID, link, debugID, icon} = req.body;
+
 
     // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no codebase workspace provided'});
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no codebase name provided'});
 
     let codebase = new Codebase({
         name: name,
-        // workspaceID: ObjectId(workspaceID)
+        link,
+        icon
     });
+    console.log('Link: ', link);
 
     // Check if user-defined ids allowed
     if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {

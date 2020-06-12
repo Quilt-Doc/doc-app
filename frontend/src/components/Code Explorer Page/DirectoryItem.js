@@ -59,6 +59,7 @@ class DirectoryItem extends React.Component {
     renderDirectoryLink(item) {
         
         if (item.type === 'dir') {
+            console.log('DIR PATH: ', `/codebase/${window.location.pathname.slice(10)}`);
             return `/codebase/${window.location.pathname.slice(10) + item.name +'/'}`
         } else {
             let url_items = item.download_url.split('/').slice(3)

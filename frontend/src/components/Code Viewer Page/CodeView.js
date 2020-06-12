@@ -170,7 +170,7 @@ class CodeView extends React.Component {
 
     renderSnippets() {
         
-        
+        console.log(this.props.file_contents);
         const lines = this.props.file_contents.split("\n");
         //this.state.snippets, dictionary --keys with start line
         
@@ -489,13 +489,14 @@ class CodeView extends React.Component {
                 
             );
         } else {
-            return (
+            /*return (
                 <>
                 <Container>
                     {this.renderSnippets()}
                  </Container>
                 </>
-            );
+            );*/
+            return null;
         }
     }
 }
