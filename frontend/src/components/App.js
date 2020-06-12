@@ -7,19 +7,33 @@ import history from '../history';
 import Dashboard from './Dashboard';
 import CodeViewer from './CodeViewer';
 
+import Dash from './Code Explorer Page/Dash'
 
-import CodeView from './Code Page/CodeView';
 
+import CodeView from './Code Viewer Page/CodeView';
+//import RichTextExample from './Text Editor/Text_Editor';
+import MarkdownShortcutsExample from './Text Editor/Slate_Startup'
+import HoveringMenuExample from'./Text Editor/HoveringMenuExample'
+import Repository_Viewer from './Repository_Viewer';
+
+//split markers -- directory, file
 const App = () => {
     return (<>
                 <Router history = {history}>
-                  
+                  <Route path = '/code_explorer' component = {Dash}/>
                   <Route path = "/codeview/:location" component = {CodeView} />
                   <Route exact path="/code_viewer" component={CodeViewer} />
+                  <Route path = '/text_editor' component = {HoveringMenuExample}/>
+                 
                   
+                  <Route path = "" component = {Dashboard} />
                 </Router>
             </>)
 }
+
+/*
+ <Route path = "/codebase/:link"
+ */
 
 /*
 

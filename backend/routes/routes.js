@@ -33,6 +33,7 @@ router.put('/folders/remove_can_read/:id', folder_controller.removeCanRead);
 
 const codebase_controller = require('../controllers/CodebaseController');
 router.post('/codebases/create', codebase_controller.createCodebase);
+router.post('/codebases/retrieve', codebase_controller.retrieveCodebases);
 router.get('/codebases/get/:id', codebase_controller.getCodebase);
 router.delete('/codebases/delete/:id', codebase_controller.deleteCodebase);
 
@@ -115,6 +116,7 @@ router.post('/comments/retrieve', comment_controller.retrieveComments);
 
 const repo_controller = require('../controllers/RepoController');
 router.post('/repo/refresh_path', repo_controller.repoRefreshPath);
+router.post('/repo/refresh_path_new', repo_controller.repoRefreshPathNew)
 router.post('/repo/get_file', repo_controller.repoGetFile);
 router.post('/repo/parse_file', repo_controller.repoParseFile);
 

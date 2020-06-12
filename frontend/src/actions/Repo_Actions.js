@@ -2,7 +2,8 @@ import {
     REPO_GET_FILE,
     REPO_REFRESH_PATH,
     REPO_PARSE_FILE,
-    REPO_CLEAR_FILE
+    REPO_CLEAR_FILE,
+    REPO_REFRESH_PATH_NEW
 } from './types/Repo_Types';
 
 import api from '../apis/api';
@@ -26,6 +27,15 @@ export const repoRefreshPath = (formValues) => async (dispatch) => {
 
     console.log(response);
     dispatch({ type: REPO_REFRESH_PATH, payload: response.data, repo_name: formValues.repo_name, repo_current_path: current_path });
+}
+
+export const repoRefreshPathNew = (formValues) => async (dispatch) => {
+    console.log('formValues: ', formValues);
+    const response = await api.post('/repo/refresh_path_new', formValues );
+    console.log('repoRefreshPath response: ', response);
+    
+    console.log(response);
+    dispatch({ type: REPO_REFRESH_PATH_NEW, payload: response.data });
 }
 
 export const repoGetFile = (file_desc) => async (dispatch) => {

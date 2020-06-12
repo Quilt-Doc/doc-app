@@ -2,7 +2,8 @@ import {
     REPO_REFRESH_PATH,
     REPO_GET_FILE,
     REPO_PARSE_FILE,
-    REPO_CLEAR_FILE
+    REPO_CLEAR_FILE,
+    REPO_REFRESH_PATH_NEW
 } from '../actions/types/Repo_Types';
 
 
@@ -20,6 +21,10 @@ export default (state = initialContents, action) => {
                     repo_current_path: action.repo_current_path,
                     path_contents: action.payload
                     };
+        case REPO_REFRESH_PATH_NEW:
+            console.log('PAYLOAD: ')
+            console.log(action.payload)
+            return { ...state, path_contents: action.payload };
         case REPO_GET_FILE:
             return { 
                 ...state, file_name: action.file_name,
