@@ -11,9 +11,10 @@ createCodebase = (req, res) => {
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no codebase name provided'});
 
     let codebase = new Codebase({
-        name: name,
+        name,
         link,
         icon
+        // workspaceID: ObjectId(workspaceID)
     });
     console.log('Link: ', link);
 
