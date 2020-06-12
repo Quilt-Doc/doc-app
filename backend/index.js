@@ -38,4 +38,4 @@ app.use(cors());
 var routes = require("./routes/routes");
 app.use('/api', routes);
 
-app.listen(API_PORT, () => console.log(`LISTENING ON PORT ${API_PORT}`));
+app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
