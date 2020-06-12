@@ -84,9 +84,12 @@ repoRefreshPathNew = (req, res) => {
       });
 }
 
+
 repoGetFile = (req, res) => {
     var { download_link} = req.body;
     if (typeof download_link == 'undefined' || download_link == null) return res.json({success: false, error: 'no repo download_link provided'});
+    // if (typeof repo_name == 'undefined' || repo_name == null) return res.json({success: false, error: 'no repo repo_name provided'});
+    
     console.log('download_link: ', download_link);
     request.get(download_link).pipe(res);
 }

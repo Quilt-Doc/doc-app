@@ -119,8 +119,8 @@ router.delete('/comments/delete/:id', comment_controller.deleteComment);
 router.post('/comments/retrieve', comment_controller.retrieveComments);
 
 const repo_controller = require('../controllers/RepoController');
-router.post('/repo/refresh_path', repo_controller.repoRefreshPath);
-router.post('/repo/refresh_path_new', repo_controller.repoRefreshPathNew)
+router.post('/repo/refresh_path', repo_controller.repoRefreshPath)
+router.post('/repo/refresh_path_new', repo_controller.repoRefreshPathNew);
 router.post('/repo/get_file', repo_controller.repoGetFile);
 router.post('/repo/parse_file', repo_controller.repoParseFile);
 router.post('/repo/get_refs', repo_controller.repoGetRefs);

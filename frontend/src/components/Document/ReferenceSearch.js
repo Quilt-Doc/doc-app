@@ -41,6 +41,8 @@ import { repoUpdateRefs } from '../../actions/Repo_Actions';
     	</div>
 	);
   }
+
+  
   
   function renderSectionTitle(section) {
 	console.log('renderSectionTitle');
@@ -130,9 +132,15 @@ class ReferenceSearch extends Component {
 	  	if (escapedValue === '') {
 			return [];
 	  	}
+<<<<<<< HEAD
+
+	  	response = () => {
+			  	api.post('/references/get', {text: escapedValue, repo_link: "/cewing/fizzbuzz/"} )
+=======
   		console.log('Calling response')
 	  	var get_response = (val, repoUpdateRefs) => {
 			  	api.post('/references/get', {text: val, repo_link: "kgodara/doc-app/"} )
+>>>>>>> c2d76565361e743112290b4d3a0864f2fc75b645
 					  .then(function (response) {
 						  console.log('GET REFERENCES RESPONSE');
 						  console.log(response);
@@ -147,6 +155,13 @@ class ReferenceSearch extends Component {
 						.catch(function (error) {
 						  console.log(error);
 						});
+<<<<<<< HEAD
+		}
+	  	// console.log('RESPONSE');
+	  	// console.log(response);
+	  	return this.props.references;
+=======
+>>>>>>> c2d76565361e743112290b4d3a0864f2fc75b645
 		}
 		get_response(escapedValue, this.props.repoUpdateRefs);
 		}*/
