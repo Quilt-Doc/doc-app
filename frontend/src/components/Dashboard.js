@@ -16,7 +16,7 @@ const Dashboard = () => {
     return (
         <Container>
             <TopNav>
-                <Styled_Icon onClick = {() => {}} src = {preeta_icon}/>
+                <Styled_Icon  src = {preeta_icon}/>
                 <Navbar_Button2 margin_left = {'6'} border_radius = {'0.5rem'} onClick = {() => this.setState({modal_display: ''})}>
                     Home
                 </Navbar_Button2>

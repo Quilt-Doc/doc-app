@@ -9,7 +9,7 @@ var codebaseSchema = new Schema({
 	lastScannedDate: Date,
 	scanFrequency: Date,
 	created: {type: Date, default: Date.now },
-	icon: Number
+	icon: Number,
 	references: [{type: ObjectId, ref: 'Reference', index: true}]
 });
 

@@ -3,7 +3,7 @@ import {
     REPO_GET_FILE,
     REPO_PARSE_FILE,
     REPO_CLEAR_FILE,
-    REPO_REFRESH_PATH_NEW
+    REPO_REFRESH_PATH_NEW,
     REPO_UPDATE_REFS
 } from '../actions/types/Repo_Types';
 
