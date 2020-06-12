@@ -4,20 +4,17 @@ import React from 'react';
 import styled from "styled-components"
 
 //images
-import bucket_icon from '../../images/bucket.svg'
 import doc_icon from '../../images/paper.svg';
 
 //react-router
 import { Link } from 'react-router-dom';
 
-//components
-import HoveringMenuExample from '../Text Editor/HoveringMenuExample';
-
 //actions
-import { repoRefreshPathNew, repoGetFile, repoParseFile, repoClearFile} from '../../actions/Repo_Actions';
+import { addSelected, deleteSelected } from '../../actions/Selected_Actions';
 
 //misc
 import { connect } from 'react-redux';
+
 /*to = {this.renderDirectoryLink(directory.name)}*/
 class DirectoryItem extends React.Component {
     constructor(props) {
@@ -27,6 +24,20 @@ class DirectoryItem extends React.Component {
            'check_box_border_color': '#D7D7D7',
            'check_box_check_display': 'none'
            
+        }
+    }
+
+    componentDidMount() {
+        if (this.props.item.sha in this.props.selected){
+            this.setState({
+                'check_box_border_color': '#19E5BE',
+                'check_box_check_display': ''
+             })
+        } else {
+            this.setState({
+                'check_box_border_color': '#D7D7D7',
+                'check_box_check_display': 'none'
+             })
         }
     }
 
@@ -42,16 +53,20 @@ class DirectoryItem extends React.Component {
         return {'font-size': "2rem", 'color': '#19E5BE', 'display': this.state.check_box_check_display}
     }
 
-    turnCheckOn = () => {
-        if (this.state.check_box_check_display === 'none') {
-            this.setState({
-                'check_box_border_color': '#19E5BE',
-                'check_box_check_display': ''
-             })
-        } else {
+    turnCheckOn = (item) => {
+        console.log(this.props.selected)
+        console.log("WE HERE")
+        if (item.sha in this.props.selected){
+            this.props.deleteSelected(item)
             this.setState({
                 'check_box_border_color': '#D7D7D7',
                 'check_box_check_display': 'none'
+             })
+        } else {
+            this.props.addSelected(item)
+            this.setState({
+                'check_box_border_color': '#19E5BE',
+                'check_box_check_display': ''
              })
         }
     }
@@ -73,7 +88,7 @@ class DirectoryItem extends React.Component {
 
     render() {
         return (<File_Line>
-                    <Check_Box_Border onClick = {() => {this.turnCheckOn()}}>
+                    <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
                         <Check_Box border_color = {this.state.check_box_border_color}>
                             <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
                         </Check_Box>
@@ -97,8 +112,14 @@ class DirectoryItem extends React.Component {
 
 }
 
-export default DirectoryItem
 
+const mapStateToProps = (state) => {
+    return {
+        selected : state.selected
+    }
+}
+
+export default connect(mapStateToProps, { addSelected, deleteSelected } )(DirectoryItem);
 
 
 const File_Line = styled.div`

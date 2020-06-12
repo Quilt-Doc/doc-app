@@ -12,6 +12,8 @@ import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
 
+import selectedReducer from './Selected_Reducer';
+
 import repoReducer from './Repo_Reducer';
 
 export default combineReducers({
@@ -25,6 +27,6 @@ export default combineReducers({
     users: userReducer,
     tags: tagReducer,
     repos: repoReducer,
-
+    selected: selectedReducer,
     form: formReducer,
 });

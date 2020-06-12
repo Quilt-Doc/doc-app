@@ -34,12 +34,7 @@ class Dash extends React.Component {
                     <Doc_Create_Button   >
                         <ion-icon style={{'font-size': '3.7rem'}} name="create-outline"></ion-icon>
                     </Doc_Create_Button>
-                    <Side_Navbar_Item>
-                        <Styled_Icon src = {code_icon}/>
-                    </Side_Navbar_Item>
-                    <Side_Navbar_Item>
-                        <Styled_Icon src = {doc_icon}/>
-                    </Side_Navbar_Item>
+                    
                 </Side_Navbar>
                 <Right_View>
                     <Switch history = {history}>

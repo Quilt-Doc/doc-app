@@ -2,34 +2,32 @@ import React from 'react';
 import history from '../history';
 
 //components
-import Sidebar from './Sidebar';
 import Dash from './Code Explorer Page/Dash';
+import Bucket from './Top Navbar/Bucket'
 
 //styles
 import styled from "styled-components";
 
 //images
-import bucket_icon from '../images/bucket.svg'
 import preeta_icon from '../images/preeta.png'
+
 
 const Dashboard = () => {
     return (
         <Container>
             <TopNav>
                 <Styled_Icon  src = {preeta_icon}/>
-                <Navbar_Button2 margin_left = {'6'} border_radius = {'0.5rem'} onClick = {() => this.setState({modal_display: ''})}>
+                <Navbar_Button2 margin_left = {'6'} border_radius = {'0.5rem'} onClick = {() => history.push('/codebase')}>
                     Home
                 </Navbar_Button2>
-                <Navbar_Button2 margin_left = {'1'} border_radius = {'0.5rem'} onClick = {() => this.setState({modal_display: ''})}>
+                <Navbar_Button2 margin_left = {'1'} border_radius = {'0.5rem'} onClick = {() => history.push('/codebase')}>
                     Spaces
                 </Navbar_Button2>
-                <Navbar_Button2 margin_left = {'1'} border_radius = {'0.5rem'} onClick = {() => this.setState({modal_display: ''})}>
+                <Navbar_Button2 margin_left = {'1'} border_radius = {'0.5rem'} onClick = {() => history.push('/codebase')}>
                     People
                 </Navbar_Button2>
                 <Searchbar/>
-                <Navbar_Button>
-                    <ion-icon style={{'font-size': '3rem'}} name="albums-outline"></ion-icon>
-                </Navbar_Button>
+                <Bucket/>
                 
             </TopNav>
             <Dash/>
@@ -128,5 +126,6 @@ const Styled_Icon = styled.img`
 
 const Styled_Icon2 = styled.img`
     width: 4rem;
-
+    cursor: pointer;
+   
 `
