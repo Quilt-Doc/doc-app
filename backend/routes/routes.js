@@ -37,6 +37,7 @@ router.put('/folders/remove_can_read/:id', folder_controller.removeCanRead);
 
 const codebase_controller = require('../controllers/CodebaseController');
 router.post('/codebases/create', codebase_controller.createCodebase);
+router.post('/codebases/retrieve', codebase_controller.retrieveCodebases);
 router.get('/codebases/get/:id', codebase_controller.getCodebase);
 router.delete('/codebases/delete/:id', codebase_controller.deleteCodebase);
 

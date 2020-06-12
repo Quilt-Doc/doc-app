@@ -25,6 +25,7 @@ import { connect } from 'react-redux';
 
 //implement on scroll
 
+// IMPORTANT BUG TO FIX -- need to filter the selected items to find the smallest line number, cannot assume
 
 
 //markers for multiple documentation
@@ -53,16 +54,16 @@ class CodeView extends React.Component {
     }
 
     componentDidMount() {
+        console.log("LOCATION NAME")
+        console.log(window.location.pathname.slice(18))
         this.createSelection()
-        this.props.retrieveSnippets({location: window.location.pathname.slice(9)})
+        this.props.retrieveSnippets({location: window.location.pathname.slice(18)})
         this.getFileContents()
-
-       
     }
 
     getFileContents() {
-        let download_link = "https://raw.githubusercontent.com" + window.location.pathname.slice(9)
-        let file_name = window.location.pathname.slice(9).split('/').pop()
+        let download_link = "https://raw.githubusercontent.com" + window.location.pathname.slice(18)
+        let file_name = window.location.pathname.slice(18).split('/').pop()
         this.props.repoGetFile({download_link, file_name});
     }
 

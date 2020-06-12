@@ -84,7 +84,10 @@ repoRefreshPathNew = (req, res) => {
       });
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> f3ae564d87716300b911ba2c42e2fe4d2df7efa4
 repoGetFile = (req, res) => {
     var { download_link, repo_name} = req.body;
     if (typeof download_link == 'undefined' || download_link == null) return res.json({success: false, error: 'no repo download_link provided'});
@@ -140,5 +143,9 @@ repoGetRefs = (req, res) => {
 }
 
 module.exports = {
+<<<<<<< HEAD
     repoRefreshPath, repoGetFile, repoParseFile, repoGetRefs, repoRefreshPathNew
+=======
+    repoRefreshPath, repoGetFile, repoParseFile, repoRefreshPathNew, repoGetRefs
+>>>>>>> f3ae564d87716300b911ba2c42e2fe4d2df7efa4
 }

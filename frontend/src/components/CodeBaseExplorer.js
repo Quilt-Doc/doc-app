@@ -59,6 +59,7 @@ class CodeBaseExplorer extends Component {
 
     handleItemSelect(item) {
         console.log('Selected Item: ', item);
+        console.log(this.props.repo_name)
         if (item.type === 'dir') {
             this.props.repoRefreshPath({
                 selectedItem: item, repo_name: this.props.repo_name,

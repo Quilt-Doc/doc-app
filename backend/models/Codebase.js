@@ -8,8 +8,9 @@ var codebaseSchema = new Schema({
 	link: String,
 	lastScannedDate: Date,
 	scanFrequency: Date,
-	references: [{type: ObjectId, ref: 'Reference', index: true}],
-	created: {type: Date, default: Date.now }
+	created: {type: Date, default: Date.now },
+	icon: Number,
+	references: [{type: ObjectId, ref: 'Reference', index: true}]
 });
 
 var Codebase = mongoose.model("Codebase", codebaseSchema);
