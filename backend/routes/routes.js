@@ -3,6 +3,10 @@
 const express = require('express');
 const router = express.Router();
 
+const reference_controller = require('../controllers/ReferenceController');
+router.post('/references/create', reference_controller.createReferences);
+router.post('/references/get', reference_controller.getReferences);
+
 
 const workspace_controller = require('../controllers/WorkspaceController');
 router.post('/workspaces/create', workspace_controller.createWorkspace);
@@ -119,6 +123,7 @@ router.post('/repo/refresh_path', repo_controller.repoRefreshPath);
 router.post('/repo/refresh_path_new', repo_controller.repoRefreshPathNew)
 router.post('/repo/get_file', repo_controller.repoGetFile);
 router.post('/repo/parse_file', repo_controller.repoParseFile);
+router.post('/repo/get_refs', repo_controller.repoGetRefs);
 
 
 module.exports = router;

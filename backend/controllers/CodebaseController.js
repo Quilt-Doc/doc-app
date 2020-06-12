@@ -6,13 +6,12 @@ createCodebase = (req, res) => {
 
     const {name, workspaceID, link, debugID, icon} = req.body;
 
-    //if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no codebase workspace provided'});
+    // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no codebase workspace provided'});
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no codebase name provided'});
 
     let codebase = new Codebase({
-        name,
-        link,
-        icon,
+        name: name,
+        // workspaceID: ObjectId(workspaceID)
     });
 
     // Check if user-defined ids allowed

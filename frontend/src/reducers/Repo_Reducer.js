@@ -4,12 +4,16 @@ import {
     REPO_PARSE_FILE,
     REPO_CLEAR_FILE,
     REPO_REFRESH_PATH_NEW
+    REPO_UPDATE_REFS
 } from '../actions/types/Repo_Types';
 
 
 import _ from 'lodash';
 
-const initialContents = {path_contents: {}}
+const initialContents = {
+                        path_contents: {},
+                        references: []
+                        }
 
 export default (state = initialContents, action) => {
     switch (action.type) {
@@ -38,6 +42,10 @@ export default (state = initialContents, action) => {
             return {
                 ...state, file_name: '', file_contents: ''
             };
+        case REPO_UPDATE_REFS:
+            return {
+                ...state, references: action.references
+            }
         
         default: 
             return state;

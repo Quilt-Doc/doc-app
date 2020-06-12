@@ -9,6 +9,8 @@ const api = axios.requestClient();
 
 const API_URL = 'https://api.github.com';
 
+const REPO_BASE_URL = 'https://github.com/'
+
 const fs = require('fs');
 const fsPath = require('fs-path');
 
@@ -111,12 +113,29 @@ repoParseFile = (req, res) => {
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir);
         }
+
         parse_utils.parseCode(file_name, res);
 
     });
 
 }
 
+
+repoGetRefs = (req, res) => {
+    
+    //console.log(process.env);
+    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
+        return res.json({success: false, error: 'doxygen disabled on this backend'});
+    }
+
+    var { repo_link } = req.body;
+    console.log('repoGetRefs received content: ', req.body);
+    if (typeof repo_link == 'undefined' || repo_link == null) return res.json({success: false, error: 'no repo repo_link provided'});
+
+    var final_repo_link = url.resolve(REPO_BASE_URL, repo_link);
+    parse_utils.getRefs(repo_link, final_repo_link, res);
+}
+
 module.exports = {
-    repoRefreshPath, repoGetFile, repoParseFile, repoRefreshPathNew
+    repoRefreshPath, repoGetFile, repoParseFile, repoRefreshPathNew, repoGetRefs
 }

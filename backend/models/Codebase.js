@@ -10,6 +10,7 @@ var codebaseSchema = new Schema({
 	scanFrequency: Date,
 	created: {type: Date, default: Date.now },
 	icon: Number
+	references: [{type: ObjectId, ref: 'Reference', index: true}]
 });
 
 var Codebase = mongoose.model("Codebase", codebaseSchema);
