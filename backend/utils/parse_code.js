@@ -19,13 +19,13 @@ const MEMBER_KINDS = ['define', 'property', 'event', 'variable', 'typedef', 'enu
 'enumvalue', 'function', 'signal', 'prototype', 'friend', 'dcop', 'slot'];
 
 
-getRefs = (repo_link, res) => {
+getRefs = (repo_link, final_repo_link, res) => {
 
     var timestamp = Date.now().toString();    
     var repo_disk_path = 'git_repos/' + timestamp +'/';
     const { exec, execFile } = require('child_process');
 
-    const child = execFile('git', ['clone', repo_link, repo_disk_path], (error, stdout, stderr) => {
+    const child = execFile('git', ['clone', final_repo_link, repo_disk_path], (error, stdout, stderr) => {
         if (error) {
             return res.json({success: false, error: 'getRefs error on execFile: ' + error});
         }
@@ -141,6 +141,7 @@ getRefs = (repo_link, res) => {
                                 console.log(found_refs);
                                 api.post(REF_CREATE_URL, {ref_list: found_refs})
                                 .then(function (response) {
+
                                     return res.json(response.data);
                                   })
                                   .catch(function (err) {

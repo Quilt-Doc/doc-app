@@ -11,11 +11,7 @@ import _ from 'lodash';
 
 const initialContents = {
                         path_contents: {},
-                        references: {
-                            namespaces: [{name: 'BillingLogic', kind: 'class'}],
-                            functions: [{name: 'runCalc', kind: 'function'}],
-                            members: [{name: 'dollars', kind: 'var'}]
-                        }
+                        references: []
                         }
 
 export default (state = initialContents, action) => {

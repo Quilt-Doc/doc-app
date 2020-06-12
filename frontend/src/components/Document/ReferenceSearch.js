@@ -64,35 +64,107 @@ class ReferenceSearch extends Component {
 		this.state = {
 		  value: '',
 		  suggestions: [],
-		  references: []
+		  isLoading: false
 		};
+    
+    	this.lastRequestId = null;
 	  }
 
-	getSuggestions = (value) => {
+	loadSuggestions(value) {
+	    /*
+	    // Cancel the previous request
+	    if (this.lastRequestId !== null) {
+	      clearTimeout(this.lastRequestId);
+	    }*/
+	    
+	    this.setState({
+	      isLoading: true
+	    });
 
+	    /*fetch('http://localhost:3001/api/references/get', {
+		  method: 'POST', // or 'PUT'
+		  headers: {
+		    'Content-Type': 'application/json',
+		  },
+		  body: JSON.stringify(value),
+		})*/
+		var that = this;
+		api.post('/references/get', {text: value, repo_link: "kgodara/doc-app/"} )
+		.then(function (response) {
+			console.log('GET REFERENCES RESPONSE');
+			console.log(response);
+			repoUpdateRefs({
+				references: response.data
+				});
+			  console.log('RESPONSE');
+			  console.log(response.data);
+			  that.setState({
+		        isLoading: false,
+		        suggestions: response.data
+		      });
+			})
+			.catch(function (error) {
+			  console.log(error);
+			});
+		/*.then(response => response.json())
+		.then(data => {
+		  console.log('Success:', data);
+		  this.setState({ suggestions: data })
+		})
+		.catch((error) => {
+		  console.error('Error:', error);
+		});*/
+	    
+	    // Fake request
+	    /*this.lastRequestId = setTimeout(() => {
+	      this.setState({
+	        isLoading: false,
+	        suggestions: getMatchingLanguages(value)
+	      });
+	    }, 1000);*/
+  	}
+
+	/*getSuggestions = (value) => {
+		console.log('get suggestions called');
 	  	const escapedValue = escapeRegexCharacters(value.trim());
+	  	console.log('value: ', value)
 	  
 	  	if (escapedValue === '') {
 			return [];
 	  	}
+<<<<<<< HEAD
 
 	  	response = () => {
 			  	api.post('/references/get', {text: escapedValue, repo_link: "/cewing/fizzbuzz/"} )
+=======
+  		console.log('Calling response')
+	  	var get_response = (val, repoUpdateRefs) => {
+			  	api.post('/references/get', {text: val, repo_link: "kgodara/doc-app/"} )
+>>>>>>> c2d76565361e743112290b4d3a0864f2fc75b645
 					  .then(function (response) {
 						  console.log('GET REFERENCES RESPONSE');
 						  console.log(response);
-						  this.props.repos.repoUpdateRefs({
+						  repoUpdateRefs({
 										  references: response.data
 						  });
+						  return response.data
+						  console.log('RESPONSE');
+						  console.log(response.data);
+						  return response.data
 						})
 						.catch(function (error) {
 						  console.log(error);
 						});
+<<<<<<< HEAD
 		}
 	  	// console.log('RESPONSE');
 	  	// console.log(response);
 	  	return this.props.references;
+=======
+>>>>>>> c2d76565361e743112290b4d3a0864f2fc75b645
 		}
+		get_response(escapedValue, this.props.repoUpdateRefs);
+		}*/
 
 	  onChange = (event, { newValue, method }) => {
 		this.setState({
@@ -101,9 +173,33 @@ class ReferenceSearch extends Component {
 	  };
 
 	  onSuggestionsFetchRequested = ({ value }) => {
-		this.setState({
-		  suggestions: this.getSuggestions(value, this.props.references)
+	  	var data = { repo_link: "kgodara/doc-app/", text: value };
+
+	  	this.loadSuggestions(value);
+
+		/*fetch('http://localhost:3001/api/references/get', {
+		  method: 'POST', // or 'PUT'
+		  headers: {
+		    'Content-Type': 'application/json',
+		  },
+		  body: JSON.stringify(data),
+		})
+		.then(response => response.json())
+		.then(data => {
+		  console.log('Success:', data);
+		  this.setState({ suggestions: data })
+		})
+		.catch((error) => {
+		  console.error('Error:', error);
 		});
+	  	/*this.getSuggestions(value)
+	  	.then(function(answer) {
+	  		console.log('ANSWER')
+	  		console.log(answer)
+	  		this.setState({
+		  		suggestions: answer
+			});
+	  	});*/
 	  };
 	
 	  onSuggestionsClearRequested = () => {
@@ -125,9 +221,13 @@ class ReferenceSearch extends Component {
 		  value,
 		  onChange: this.onChange
 		};
+		const status = (this.isLoading ? 'Loading...' : 'Type to load suggestions');
 	
 		return (
 		<div>
+			<div className="status">
+         		<strong>Status:</strong> {status}
+        	</div>
 		  <Autosuggest 
 			multiSection={true}
 			suggestions={suggestions}

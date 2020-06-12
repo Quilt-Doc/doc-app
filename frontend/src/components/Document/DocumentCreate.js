@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import { Button} from 'antd';
 
 import ReferenceSearch from './ReferenceSearch';
+import ReferenceSearch2 from './ReferenceSearch2';
 import InlineReference from './InlineReference';
 import DocumentContentEditor from './DocumentContentEditor';
 
@@ -20,7 +21,7 @@ class DocumentCreate extends Component {
 
 		return (
 			<div>
-                <ReferenceSearch/>
+                <ReferenceSearch2/>
 				<DocumentContentEditor/>
 				<InlineReference name='Test' kind='class' file='test.py' lineNum='58'/>
 			</div>
