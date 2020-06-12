@@ -64,6 +64,7 @@ class CodeView extends React.Component {
     getFileContents() {
         let download_link = "https://raw.githubusercontent.com" + window.location.pathname.slice(18)
         let file_name = window.location.pathname.slice(18).split('/').pop()
+        console.log('window.location.pathname: ', window.location.pathname);
         this.props.repoGetFile({download_link, file_name});
     }
 
@@ -170,7 +171,6 @@ class CodeView extends React.Component {
 
     renderSnippets() {
         
-        console.log(this.props.file_contents);
         const lines = this.props.file_contents.split("\n");
         //this.state.snippets, dictionary --keys with start line
         

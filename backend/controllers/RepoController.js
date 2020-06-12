@@ -14,6 +14,10 @@ const REPO_BASE_URL = 'https://github.com/'
 const fs = require('fs');
 const fsPath = require('fs-path');
 
+const Codebase = require('../models/Codebase');
+var mongoose = require('mongoose')
+const { ObjectId } = mongoose.Types;
+
 /*repoSearch = (req, res) => {
     console.log(req.body);
     const { repo_name } = req.body;
@@ -91,7 +95,52 @@ repoGetFile = (req, res) => {
     // if (typeof repo_name == 'undefined' || repo_name == null) return res.json({success: false, error: 'no repo repo_name provided'});
     
     console.log('download_link: ', download_link);
-    request.get(download_link).pipe(res);
+    // request.get(download_link).pipe(res);
+    
+    request.get(download_link, function(err, res_2, body) {
+
+
+        var repo_path = download_link.substring(download_link.indexOf('.com/')+5);
+        var owner = repo_path.substring(0, repo_path.indexOf('/'));
+        var repo_name_temp = repo_path.substring(repo_path.indexOf(owner)+owner.length+1);
+        var repo_name = repo_name_temp.substring(0, repo_name_temp.indexOf('/'));
+
+        // Here we are trying to remove the '/master/' section
+        var branch_and_path = repo_path.substring(repo_path.indexOf(repo_name)+repo_name.length+1);
+        var file_path_in_repo = branch_and_path.substring(branch_and_path.indexOf('/')+1)
+
+        console.log('repo_path: ', repo_path);
+        console.log('owner: ', owner);
+        console.log('repo_name: ', repo_name);
+        console.log('branch_and_path: ', branch_and_path);
+        console.log('file_path_in_repo: ', file_path_in_repo);
+
+        var commit_url = url.resolve(API_URL, 'repos/');
+        commit_url = url.resolve(commit_url, owner + '/');
+        commit_url = url.resolve(commit_url, repo_name + '/');
+        commit_url = url.resolve(commit_url, 'commits');
+
+        var file_contents = body;
+
+        api.get(commit_url, {
+            params: {
+              path: file_path_in_repo
+            }
+          })
+          .then(function (response) {
+            var latest_commit_sha = response.data[0]['sha'];
+            console.log(response);
+            return res.json({latest_file_commit: latest_commit_sha, file_contents: file_contents});
+          })
+          .catch(function (error) {
+            return res.json({success: false, error: err});
+          });
+
+
+        //commit_url = url.resolve(commit_url, repo_link);
+        //commit_url = url.resolve(commit_url, 'commits');
+        // return res.json({data: body});
+    });
 }
 
 repoParseFile = (req, res) => {
@@ -139,6 +188,53 @@ repoGetRefs = (req, res) => {
     parse_utils.getRefs(repo_link, final_repo_link, res);
 }
 
+repoUpdateCommit = (req, res) => {
+    console.log(req.body);
+    var { repo_id, repo_link } = req.body;
+    if (!typeof repo_id == 'undefined' && repo_id !== null) return res.json({success: false, error: 'no repo repo_id provided'});
+    if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no repo repo_link provided'});
+
+    repo_link = repo_link.substring(repo_link.indexOf('.com/')+ 5);
+
+    var commit_url = url.resolve(API_URL, 'repos/');
+    commit_url = url.resolve(commit_url, repo_link);
+    commit_url = url.resolve(commit_url, 'commits');
+
+    console.log('FINAL REQ URL: ', commit_url);
+
+    api.get(commit_url)
+    .then(function (response) {
+        console.log('repoUpdateCommit response: ');
+        console.log(response.data);
+        var latest_sha = response.data[0]['sha'];
+        console.log('latest_sha: ', latest_sha);
+        
+        Codebase.findById(repo_id, (err, codebase) => {
+            // console.log('last_processed_commit.length: ', )
+            if (codebase.last_processed_commit.length == 0) {
+                let update = {};
+                update.last_processed_commit = latest_sha;
+                Codebase.findByIdAndUpdate(repo_id, { $set: update }, { new: true }, (err, updated_codebase) => {
+                    if (err) return res.json({ success: false, error: err });
+                    updated_codebase.populate('creator', (err, updated_codebase) => {
+                        if (err) return res.json(err);
+                        return res.json(updated_codebase);
+                    });
+                });
+            }
+            else {
+                return res.json({ success: true, msg: 'Already found commit: ' +  codebase.last_processed_commit});
+            }
+        }).catch(function (err) {
+            return res.json({ success: false, error: err});
+        });
+      })
+      .catch(function (err) {
+        return res.json({ success: false, error: err });
+      });
+
+}
+
 module.exports = {
-    repoRefreshPath, repoGetFile, repoParseFile, repoRefreshPathNew, repoGetRefs
+    repoRefreshPath, repoGetFile, repoParseFile, repoRefreshPathNew, repoGetRefs, repoUpdateCommit
 }

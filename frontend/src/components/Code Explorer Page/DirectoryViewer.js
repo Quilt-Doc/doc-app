@@ -10,7 +10,7 @@ import { withRouter } from 'react-router';
 import DirectoryItem from './DirectoryItem';
 
 //actions
-import { repoRefreshPathNew } from '../../actions/Repo_Actions';
+import { repoRefreshPathNew} from '../../actions/Repo_Actions';
 
 //connect
 import { connect } from 'react-redux';
@@ -93,7 +93,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, { repoRefreshPathNew } )(DirectoryViewer));
+export default withRouter(connect(mapStateToProps, { repoRefreshPathNew} )(DirectoryViewer));
 
 
 const DirectoryContainer = styled.div`

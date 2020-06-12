@@ -32,7 +32,8 @@ export default (state = initialContents, action) => {
         case REPO_GET_FILE:
             return { 
                 ...state, file_name: action.file_name,
-                file_contents: action.payload
+                file_contents: action.payload,
+                file_latest_commit: action.latest_commit
                 };
         case REPO_PARSE_FILE:
             return {

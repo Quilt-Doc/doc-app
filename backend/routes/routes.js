@@ -124,6 +124,7 @@ router.post('/repo/refresh_path_new', repo_controller.repoRefreshPathNew);
 router.post('/repo/get_file', repo_controller.repoGetFile);
 router.post('/repo/parse_file', repo_controller.repoParseFile);
 router.post('/repo/get_refs', repo_controller.repoGetRefs);
+router.post('/repo/update_commit', repo_controller.repoUpdateCommit);
 
 
 module.exports = router;

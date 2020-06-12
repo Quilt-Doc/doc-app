@@ -12,6 +12,8 @@ export const createCodebase = (formValues) => async (dispatch) => {
     console.log("CREATING");
     const response = await api.post('/codebases/create', formValues);
     dispatch({ type: CREATE_CODEBASE, payload: response.data });
+    return [response.data._id, formValues.link];
+
 }
 
 // /codebases/get/:id'

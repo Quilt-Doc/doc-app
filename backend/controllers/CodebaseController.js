@@ -52,6 +52,7 @@ deleteCodebase = (req, res) => {
     const { id } = req.params;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no codebase id provided'});
+
     Codebase.findByIdAndRemove(id, (err, codebase) => {
 		if (err) return res.json({success: false, error: err});
         codebase.populate('workspace', (err, codebase) => {

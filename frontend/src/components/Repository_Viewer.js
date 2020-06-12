@@ -15,6 +15,7 @@ import repo_background from '../images/repo_background.svg'
 
 //actions
 import { createCodebase, retrieveCodebases } from '../actions/Codebase_Actions'
+import { repoUpdateCommit } from '../actions/Repo_Actions'
 
 //react-router
 import { Link } from 'react-router-dom';
@@ -80,9 +81,11 @@ class Repository_Viewer extends React.Component {
     }
 
     createRepository() {
-        this.props.createCodebase({name: this.name_input.current.value, link: this.address_input.current.value, icon: this.count}).then(() => {
+        this.props.createCodebase({name: this.name_input.current.value, link: this.address_input.current.value, icon: this.count}).then((repo_data) => {
+            this.props.repoUpdateCommit({ repo_id: repo_data[0], repo_link: repo_data[1]})
             this.clearModal()
         })
+
     }
 
     clearModal() {
@@ -134,7 +137,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {createCodebase, retrieveCodebases})(Repository_Viewer);
+export default connect(mapStateToProps, {createCodebase, retrieveCodebases, repoUpdateCommit})(Repository_Viewer);
 
 
 const Styled_Icon = styled.img`

@@ -30,6 +30,13 @@ export const repoRefreshPath = (formValues) => async (dispatch) => {
     dispatch({ type: REPO_REFRESH_PATH, payload: response.data, repo_name: formValues.repo_name, repo_current_path: current_path });
 }
 
+export const repoUpdateCommit = (formValues) => async (dispatch) => {
+    console.log('repoUpdateCommit formValues: ', formValues);
+    const response = await api.post('/repo/update_commit', formValues);
+    console.log('repoUpdateCommit response: ')
+    console.log(response);
+}
+
 export const repoRefreshPathNew = (formValues) => async (dispatch) => {
     console.log('formValues: ', formValues);
     const response = await api.post('/repo/refresh_path_new', formValues );
@@ -45,9 +52,10 @@ export const repoGetFile = (file_desc) => async (dispatch) => {
     const response = await api.post('/repo/get_file', file_desc);
     console.log('repoGetFile response: ', response);
     
-    dispatch({ type: REPO_GET_FILE, payload: response.data, file_name: file_desc.file_name});
+    dispatch({ type: REPO_GET_FILE, payload: response.data.file_contents, file_name: file_desc.file_name, latest_commit: response.data.latest_file_commit});
 
 }
+
 
 export const repoParseFile = (file_contents) => async (dispatch) => {
 
