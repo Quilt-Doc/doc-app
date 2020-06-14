@@ -19,13 +19,13 @@ const MEMBER_KINDS = ['define', 'property', 'event', 'variable', 'typedef', 'enu
 'enumvalue', 'function', 'signal', 'prototype', 'friend', 'dcop', 'slot'];
 
 
-getRefs = (repo_link, final_repo_link, res) => {
+getRefs = (repoLink, finalRepoLink, res) => {
 
     var timestamp = Date.now().toString();    
     var repo_disk_path = 'git_repos/' + timestamp +'/';
     const { exec, execFile } = require('child_process');
 
-    const child = execFile('git', ['clone', final_repo_link, repo_disk_path], (error, stdout, stderr) => {
+    const child = execFile('git', ['clone', finalRepoLink, repo_disk_path], (error, stdout, stderr) => {
         if (error) {
             return res.json({success: false, error: 'getRefs error on execFile: ' + error});
         }
@@ -133,7 +133,7 @@ getRefs = (repo_link, final_repo_link, res) => {
                                             // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
                                             file = file.substring(file.indexOf('/')+1)
                                             file = file.substring(file.indexOf('/')+1)
-                                            found_refs.push({name: name, kind: kind, file: file, location: location, link: repo_link})
+                                            found_refs.push({name: name, kind: kind, file: file, location: location, link: repoLink})
                                         }
                                     })
                                 });
@@ -161,20 +161,20 @@ getRefs = (repo_link, final_repo_link, res) => {
 
 
 
-parseCode = (file_name, res) => {
+parseCode = (fileName, res) => {
     
-    if (!file_name.includes('.')) {
+    if (!fileName.includes('.')) {
          return res.json({success: false, error: 'parseCode error: No file extension'});
     }
 
-    var extension = file_name.slice(file_name.lastIndexOf('.')+1);
+    var extension = fileName.slice(fileName.lastIndexOf('.')+1);
     console.log('Parse code got extension: ', extension);
     
     const { exec, execFile } = require('child_process');
 
     var new_env = process.env;
-    new_env.DOXYGEN_FILE = 'doxygen_input/' + file_name;
-    var xml_dir = 'doxygen_xml/' + file_name.slice(0, file_name.lastIndexOf('.'));
+    new_env.DOXYGEN_FILE = 'doxygen_input/' + fileName;
+    var xml_dir = 'doxygen_xml/' + fileName.slice(0, fileName.lastIndexOf('.'));
     new_env.DOXYGEN_XML_DIR = xml_dir;
     const child = execFile('doxygen', ['Doxyfile'], {env: new_env}, (error, stdout, stderr) => {
         if (error) {

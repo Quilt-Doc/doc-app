@@ -37,16 +37,16 @@ createReferences = (req, res) => {
 
 getReferences = (req, res) => {
 
-    const { text, repo_link } = req.body;
+    const { text, repoLink } = req.body;
     var text_query = text;
 
 
-    if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no reference repo_link provided'});
+    if (!typeof repoLink == 'undefined' && repoLink !== null) return res.json({success: false, error: 'no reference repoLink provided'});
     if (!(text)) {
         text_query = '';
     }
 
-    console.log('repo_link: ', repo_link);
+    console.log('repoLink: ', repoLink);
     console.log('text: ', text);
 
     var re = new RegExp(text, 'i');
@@ -55,7 +55,7 @@ getReferences = (req, res) => {
         {
             $and : [
                 { $or: [{ name: { $regex: re } }, { kind: { $regex: re } }, { file: { $regex: re } }] },
-                { link: repo_link }
+                { link: repoLink }
             ]
         }
         ).sort('kind').exec(function(err, references) {

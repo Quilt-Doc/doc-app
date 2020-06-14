@@ -12,7 +12,7 @@ set_connect_info()
 
 import create_objects
 
-accepted_types = ['user', 'workspace', 'codebase']
+accepted_types = ['user', 'workspace', 'repository']
 accepted_methods = {}
 
 mod = importlib.import_module('create_objects')

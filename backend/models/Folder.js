@@ -5,7 +5,7 @@ const { ObjectId, Mixed } = Schema.Types;
 var folderSchema = new Schema({
 	workspace: {type: ObjectId, ref: 'Workspace'},
 	parent: {type: ObjectId, ref: 'Folder'}, 
-	codebase: {type: ObjectId, ref: 'Codebase'},
+	repository: {type: ObjectId, ref: 'Repository'},
 	root: Boolean,
 	title: String,
 	creator: {type: ObjectId, index: true, ref: 'User'},

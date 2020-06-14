@@ -1,4 +1,4 @@
-// TODO: Add Workspace, Codebase Delete Routes and methods 
+// TODO: Add Workspace, Repository Delete Routes and methods 
 
 const express = require('express');
 const router = express.Router();
@@ -33,13 +33,6 @@ router.put('/folders/add_can_write/:id', folder_controller.addCanWrite);
 router.put('/folders/remove_can_write/:id', folder_controller.removeCanWrite);
 router.put('/folders/add_can_read/:id', folder_controller.addCanRead);
 router.put('/folders/remove_can_read/:id', folder_controller.removeCanRead);
-
-
-const codebase_controller = require('../controllers/CodebaseController');
-router.post('/codebases/create', codebase_controller.createCodebase);
-router.get('/codebases/get/:id', codebase_controller.getCodebase);
-router.delete('/codebases/delete/:id', codebase_controller.deleteCodebase);
-
 
 const document_controller = require('../controllers/DocumentController');
 router.post('/documents/create', document_controller.createDocument);
@@ -117,11 +110,16 @@ router.put('/comments/edit/:id', comment_controller.editComment);
 router.delete('/comments/delete/:id', comment_controller.deleteComment);
 router.post('/comments/retrieve', comment_controller.retrieveComments);
 
-const repo_controller = require('../controllers/RepoController');
-router.post('/repo/refresh_path', repo_controller.repoRefreshPath);
-router.post('/repo/get_file', repo_controller.repoGetFile);
-router.post('/repo/parse_file', repo_controller.repoParseFile);
-router.post('/repo/get_refs', repo_controller.repoGetRefs);
+const repository_controller = require('../controllers/RepositoryController');
+router.post('/repositories/refresh_path', repository_controller.refreshRepositoryPath)
+router.post('/repositories/refresh_path_new', repository_controller.refreshRepositoryPathNew);
+router.post('/repositories/get_file', repository_controller.getRepositoryFile);
+router.post('/repositories/parse_file', repository_controller.parseRepositoryFile);
+router.post('/repositories/get_refs', repository_controller.getRepositoryRefs);
+router.post('/repositories/create', repository_controller.createRepository);
+router.post('/repositories/retrieve', repository_controller.retrieveRepositories);
+router.get('/repositories/get/:id', repository_controller.getRepository);
+router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
 
 
 module.exports = router;

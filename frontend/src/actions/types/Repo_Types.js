@@ -1,5 +1,0 @@
-export const REPO_REFRESH_PATH = 'REPO_REFRESH_PATH';
-export const REPO_GET_FILE = 'REPO_GET_FILE';
-export const REPO_PARSE_FILE = 'REPO_PARSE_FILE';
-export const REPO_CLEAR_FILE = 'REPO_CLEAR_FILE';
-export const REPO_UPDATE_REFS = 'REPO_UPDATE_REFS';

@@ -1,0 +1,233 @@
+const url = require('url');
+
+var request = require("request");
+
+const axios = require('../apis/api');
+const parseUtils = require('../utils/parse_code');
+
+const api = axios.requestClient();
+
+const apiURL = 'https://api.github.com';
+
+const repoBaseURL = 'https://github.com/'
+
+const fs = require('fs');
+const fsPath = require('fs-path');
+
+const Repository = require('../models/Repository');
+var mongoose = require('mongoose')
+const { ObjectId } = mongoose.Types;
+
+/*repositorySearch = (req, res) => {
+    console.log(req.body);
+    const { RepositorysitoryName } = req.body;
+    const response = await api.get('/repos//create', formValues );
+
+    if (!typeof repositoryName == 'undefined' && repositoryName !== null) return res.json({success: false, error: 'no repo repositoryName provided'});
+    
+    return res.json({status: 'SUCCESS'});
+}*/
+
+refreshRepositoryPath = (req, res) => {
+    console.log(req.body);
+    var { repositoryName, repositoryPath} = req.body;
+    if (!typeof repositoryName == 'undefined' && repositoryName !== null) return res.json({success: false, error: 'no repo repositoryName provided'});
+    if (typeof repositoryPath == 'undefined') repositoryPath = '';
+    
+    var reposCreate = url.resolve(apiURL, '/repos/create');
+    console.log(reposCreate);
+    
+    var reposContents = url.resolve(url.resolve(reposCreate, repositoryName), 'contents/');
+    console.log(reposContents);
+
+    const reqURL = url.resolve(reposContents, repositoryPath);
+    console.log('FINAL REQ URL: ', reqURL);
+
+    api.get(reqURL)
+    .then(function (response) {
+        return res.json(response.data);
+      })
+      .catch(function (err) {
+        return res.json({ success: false, error: err });
+      });
+}
+
+refreshRepositoryPathNew = (req, res) => {
+    console.log(req.body);
+    var {repositoryPath} = req.body;
+    if (!typeof repositoryPath == 'undefined' && repositoryPath !== null) return res.json({success: false, error: 'no repo repositoryPath provided'});
+    
+    if (repositoryPath[repositoryPath.length - 1] !== '/') {
+        repositoryPath = repositoryPath + '/';
+    }
+    
+    var secondNameFirst = repositoryPath.substring(repositoryPath.indexOf('/')+1);
+    var secondName = secondNameFirst.substring(0, secondNameFirst.indexOf('/')+1);
+
+    var repositoryName = repositoryPath.substring(0, repositoryPath.indexOf('/')+1) + secondName;
+    //repositoryName = repositoryPath.substring(0,repositoryPath.indexOf('/')+1) + 
+
+    repositoryPath = repositoryPath.substring(repositoryPath.indexOf(repositoryName)+repositoryName.length);
+
+
+    var reposCreate = url.resolve(apiURL, '/repos/create');
+    console.log(reposCreate);
+    
+    var reposContents = url.resolve(url.resolve(reposCreate, repositoryName), 'contents/');
+    console.log(reposContents);
+
+    const reqURL = url.resolve(reposContents, repositoryPath);
+    console.log('FINAL REQ URL: ', reqURL);
+
+    api.get(reqURL)
+    .then(function (response) {
+        return res.json(response.data);
+      })
+      .catch(function (err) {
+        return res.json({ success: false, error: err });
+      });
+}
+
+
+getRepositoryFile = (req, res) => {
+    var { downloadLink} = req.body;
+    if (typeof downloadLink == 'undefined' || downloadLink == null) return res.json({success: false, error: 'no repo downloadLink provided'});
+    // if (typeof repositoryName == 'undefined' || repositoryName == null) return res.json({success: false, error: 'no repo repositoryName provided'});
+    
+    console.log('downloadLink: ', downloadLink);
+    request.get(downloadLink).pipe(res);
+}
+
+parseRepositoryFile = (req, res) => {
+    
+    //console.log(process.env);
+    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
+        return res.json({success: false, error: 'doxygen disabled on this backend'});
+    }
+
+    var { fileContents, fileName } = req.body;
+    console.log('parseRepositoryFile received content: ', req.body);
+    if (typeof fileContents == 'undefined' || fileContents == null) return res.json({success: false, error: 'no repo fileContents provided'});
+    if (typeof fileName == 'undefined' || fileName == null) return res.json({success: false, error: 'no repo fileName provided'});
+
+    fileName = Date.now() + '_' + fileName;
+
+    fsPath.writeFile('doxygen_input/' + fileName, fileContents, function (err) {
+        if (err) return console.log(err);
+        console.log('File written to: ', fileName);
+        var dir = './doxygen_xml';
+
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+        parseUtils.parseCode(fileName, res);
+
+    });
+
+}
+
+
+getRepositoryRefs = (req, res) => {
+    
+    //console.log(process.env);
+    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
+        return res.json({success: false, error: 'doxygen disabled on this backend'});
+    }
+
+    var { repoLink } = req.body;
+    console.log('getRepositoryRefs received content: ', req.body);
+    if (typeof repoLink == 'undefined' || repoLink == null) return res.json({success: false, error: 'no repo repoLink provided'});
+
+    var finalRepoLink = url.resolve(repoBaseURL, repoLink);
+    parseUtils.getRefs(repoLink, finalRepoLink, res);
+}
+
+
+createRepository = (req, res) => {
+    console.log('Called create repository');
+    const {name, workspaceID, link, debugID, icon} = req.body;
+
+
+    // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no repository workspace provided'});
+    if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no repository name provided'});
+
+    let repository = new Repository({
+        name,
+        link,
+        icon
+        // workspaceID: ObjectId(workspaceID)
+    });
+    console.log('Link: ', link);
+
+    // Check if user-defined ids allowed
+    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
+        if (debugID) repository._id = ObjectId(debugID);
+    }
+
+    if (workspaceID) repository.workspace = ObjectId(workspaceID)
+    repository.save((err, repository) => {
+        console.log(err)
+        if (err) return res.json({ success: false, error: err });
+        repository.populate('workspace', (err, repository) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(repository);
+        });
+    });
+}
+
+getRepository = (req, res) => {
+    // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
+    console.log(req.body);
+    const { id } = req.params;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
+    Repository.findById(id, (err, repository) => {
+		if (err) return res.json({success: false, error: err});
+        repository.populate('workspace', (err, repository) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(repository);
+        });
+    });
+}
+
+deleteRepository = (req, res) => {
+    const { id } = req.params;
+
+    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
+    Repository.findByIdAndRemove(id, (err, repository) => {
+		if (err) return res.json({success: false, error: err});
+        repository.populate('workspace', (err, repository) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(repository);
+        });
+    });
+}
+
+
+
+retrieveRepositories = (req, res) => {
+    const {name, workspaceID, link} = req.body;
+    // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
+
+    query = Repository.find();
+    if (name) query.where('name').equals(name);
+    if (workspaceID) query.where('workspace').equals(workspaceID);
+    if (link) query.where('link').equals(link);
+
+    query.populate('workspace').exec((err, repositories) => {
+        if (err) return res.json({ success: false, error: err });
+        return res.json(repositories);
+    });
+}
+
+
+
+module.exports = {
+    refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
+    createRepository, getRepository, deleteRepository, retrieveRepositories
+}
+
+
+
+///

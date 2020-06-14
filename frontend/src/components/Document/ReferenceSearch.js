@@ -13,7 +13,7 @@ import styled from 'styled-components';
 
 import api from '../../apis/api';
 
-import { repoUpdateRefs } from '../../actions/Repo_Actions';
+import { updateRepositoryRefs } from '../../actions/Repository_Actions';
 
 
   // https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions#Using_Special_Characters
@@ -41,6 +41,8 @@ import { repoUpdateRefs } from '../../actions/Repo_Actions';
     	</div>
 	);
   }
+
+  
   
   function renderSectionTitle(section) {
 	console.log('renderSectionTitle');
@@ -87,11 +89,11 @@ class ReferenceSearch extends Component {
 		  body: JSON.stringify(value),
 		})*/
 		var that = this;
-		api.post('/references/get', {text: value, repo_link: "kgodara/doc-app/"} )
+		api.post('/references/get', {text: value, repoLink: "kgodara/doc-app/"} )
 		.then(function (response) {
 			console.log('GET REFERENCES RESPONSE');
 			console.log(response);
-			repoUpdateRefs({
+			updateRepositoryRefs({
 				references: response.data
 				});
 			  console.log('RESPONSE');
@@ -130,13 +132,19 @@ class ReferenceSearch extends Component {
 	  	if (escapedValue === '') {
 			return [];
 	  	}
+<<<<<<< HEAD
+
+	  	response = () => {
+			  	api.post('/references/get', {text: escapedValue, repoLink: "/cewing/fizzbuzz/"} )
+=======
   		console.log('Calling response')
-	  	var get_response = (val, repoUpdateRefs) => {
-			  	api.post('/references/get', {text: val, repo_link: "kgodara/doc-app/"} )
+	  	var get_response = (val, updateRepositoryRefs) => {
+			  	api.post('/references/get', {text: val, repoLink: "kgodara/doc-app/"} )
+>>>>>>> c2d76565361e743112290b4d3a0864f2fc75b645
 					  .then(function (response) {
 						  console.log('GET REFERENCES RESPONSE');
 						  console.log(response);
-						  repoUpdateRefs({
+						  updateRepositoryRefs({
 										  references: response.data
 						  });
 						  return response.data
@@ -147,8 +155,15 @@ class ReferenceSearch extends Component {
 						.catch(function (error) {
 						  console.log(error);
 						});
+<<<<<<< HEAD
 		}
-		get_response(escapedValue, this.props.repoUpdateRefs);
+	  	// console.log('RESPONSE');
+	  	// console.log(response);
+	  	return this.props.references;
+=======
+>>>>>>> c2d76565361e743112290b4d3a0864f2fc75b645
+		}
+		get_response(escapedValue, this.props.updateRepositoryRefs);
 		}*/
 
 	  onChange = (event, { newValue, method }) => {
@@ -158,7 +173,7 @@ class ReferenceSearch extends Component {
 	  };
 
 	  onSuggestionsFetchRequested = ({ value }) => {
-	  	var data = { repo_link: "kgodara/doc-app/", text: value };
+	  	var data = { repoLink: "kgodara/doc-app/", text: value };
 
 	  	this.loadSuggestions(value);
 
@@ -232,8 +247,8 @@ const mapStateToProps = (state) => {
     
     return {
 
-		references: state.repos.references
+		references: state.repositories.references
     }
 }
 
-export default connect(mapStateToProps, { repoUpdateRefs })(ReferenceSearch);
+export default connect(mapStateToProps, { updateRepositoryRefs })(ReferenceSearch);
