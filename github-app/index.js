@@ -58,6 +58,7 @@ handler.on('push', function (event) {
     event.payload.ref)
   console.log('Print payload');
   console.log(event.payload);
+  var head_commit = event.payload['head_commit']
 })
 
 handler.on('issues', function (event) {

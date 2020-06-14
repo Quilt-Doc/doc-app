@@ -21,8 +21,9 @@ class DirectoryView extends React.Component {
         // acquires the repository path from the url --- may need to change how this is done (hash, github Oauth)
         console.log(window.location.pathname.slice(22))
         this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)}).then(() => {
+            console.log('Passing repo link: ', this.props.rep)
             this.props.getRepositoryRefs({
-                repoLink: this.props.repositoryName
+                repoLink: window.location.pathname.slice(22)
             });
         })
     }
@@ -85,12 +86,12 @@ const mapStateToProps = (state) => {
     console.log('STATE.repositories.pathContents: ', state.repositories.pathContents)
     if (typeof state.repositories.pathContents == 'undefined' || state.repositories.pathContents == null){
         return {
-            contents: []
+            contents: [],
         }
     }
 
     return {
-        contents: Object.values(state.repositories.pathContents)
+        contents: Object.values(state.repositories.pathContents),
     }
 }
 
