@@ -103,3 +103,10 @@ export const retrieveRepositories = (formValues) => async dispatch => {
     const response = await api.post('/repositories/retrieve', formValues);
     dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data });
 }
+
+export const updateRepositoryCommit = (formValues) => async (dispatch) => {
+    console.log('repoUpdateCommit formValues: ', formValues);
+    const response = await api.post('/repo/update_commit', formValues);
+    console.log('repoUpdateCommit response: ')
+    console.log(response);
+}

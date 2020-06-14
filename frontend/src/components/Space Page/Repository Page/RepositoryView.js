@@ -14,8 +14,7 @@ import repoIcon7 from '../../../images/repo7.svg'
 import repoBackground from '../../../images/repoBackground.svg'
 
 //actions
-import { createRepository, retrieveRepositories } from '../../../actions/Repository_Actions'
-import { repoUpdateCommit } from '../actions/Repo_Actions'
+import { createRepository, retrieveRepositories, updateRepositoryCommit } from '../../../actions/Repository_Actions'
 
 //react-router
 import { Link } from 'react-router-dom';
@@ -80,7 +79,7 @@ class RepositoryView extends React.Component {
 
     createRepository() {
         this.props.createRepository({name: this.nameInput.current.value, link: this.addressInput.current.value, icon: this.count}).then((repo_data) => {
-            this.props.repoUpdateCommit({ repo_id: repo_data[0], repo_link: repo_data[1]})
+            this.props.updateRepositoryCommit({ repo_id: repo_data[0], repo_link: repo_data[1]})
             this.clearModal()
         })
 
@@ -132,7 +131,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {createRepository, retrieveRepositories, repoUpdateCommit})(RepositoryView);
+export default connect(mapStateToProps, {createRepository, retrieveRepositories, updateRepositoryCommit})(RepositoryView);
 
 
 const StyledIcon = styled.img`
