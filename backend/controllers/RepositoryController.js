@@ -230,7 +230,7 @@ updateRepositoryCommit = (req, res) => {
 
     repo_link = repo_link.substring(repo_link.indexOf('.com/')+ 5);
 
-    var commit_url = url.resolve(API_URL, 'repos/');
+    var commit_url = url.resolve(apiURL, 'repos/');
     commit_url = url.resolve(commit_url, repo_link);
     commit_url = url.resolve(commit_url, 'commits');
 
