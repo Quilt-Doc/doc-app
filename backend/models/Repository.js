@@ -6,6 +6,7 @@ var repositorySchema = new Schema({
 	name: String,
 	workspace: {type: ObjectId, ref: 'Workspace', index: true},
 	link: String,
+	last_processed_commit: { type: String, default: ''},
 	lastScannedDate: Date,
 	scanFrequency: Date,
 	created: {type: Date, default: Date.now },
