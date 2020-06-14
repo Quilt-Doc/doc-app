@@ -222,10 +222,58 @@ retrieveRepositories = (req, res) => {
 }
 
 
+updateRepositoryCommit = (req, res) => {
+    console.log(req.body);
+    var { repo_id, repo_link } = req.body;
+    if (!typeof repo_id == 'undefined' && repo_id !== null) return res.json({success: false, error: 'no repo repo_id provided'});
+    if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no repo repo_link provided'});
+
+    repo_link = repo_link.substring(repo_link.indexOf('.com/')+ 5);
+
+    var commit_url = url.resolve(API_URL, 'repos/');
+    commit_url = url.resolve(commit_url, repo_link);
+    commit_url = url.resolve(commit_url, 'commits');
+
+    console.log('FINAL REQ URL: ', commit_url);
+
+    api.get(commit_url)
+    .then(function (response) {
+        console.log('repoUpdateCommit response: ');
+        console.log(response.data);
+        var latest_sha = response.data[0]['sha'];
+        console.log('latest_sha: ', latest_sha);
+        
+        Codebase.findById(repo_id, (err, codebase) => {
+            // console.log('last_processed_commit.length: ', )
+            if (codebase.last_processed_commit.length == 0) {
+                let update = {};
+                update.last_processed_commit = latest_sha;
+                Codebase.findByIdAndUpdate(repo_id, { $set: update }, { new: true }, (err, updated_codebase) => {
+                    if (err) return res.json({ success: false, error: err });
+                    updated_codebase.populate('creator', (err, updated_codebase) => {
+                        if (err) return res.json(err);
+                        return res.json(updated_codebase);
+                    });
+                });
+            }
+            else {
+                return res.json({ success: true, msg: 'Already found commit: ' +  codebase.last_processed_commit});
+            }
+        }).catch(function (err) {
+            return res.json({ success: false, error: err});
+        });
+      })
+      .catch(function (err) {
+        return res.json({ success: false, error: err });
+      });
+
+}
+
+
 
 module.exports = {
     refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
-    createRepository, getRepository, deleteRepository, retrieveRepositories
+    createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit
 }
 
 
