@@ -14,7 +14,11 @@ import repoIcon7 from '../../../images/repo7.svg'
 import repoBackground from '../../../images/repoBackground.svg'
 
 //actions
-import { createRepository, retrieveRepositories, updateRepositoryCommit } from '../../../actions/Repository_Actions'
+import { createRepository, retrieveRepositories, updateRepositoryCommit} from '../../../actions/Repository_Actions'
+
+// Old
+// import {getRepositoryRefs} from '../../actions/Repository_Actions';
+
 
 //react-router
 import { Link } from 'react-router-dom';
