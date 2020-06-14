@@ -72,15 +72,15 @@ const mapStateToProps = (state) => {
 		references: [
 			{
 				title: 'Namespaces',
-				results: state.repos.references['namespaces']
+				results: state.repositories.references['namespaces']
 			},
 			{
 				title: 'Functions',
-				results: state.repos.references['functions']
+				results: state.repositories.references['functions']
 			},
 			{
 				title: 'Members',
-				results: state.repos.references['members']
+				results: state.repositories.references['members']
 			}
 		]
     }

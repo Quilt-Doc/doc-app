@@ -3,51 +3,36 @@ import React from 'react';
 //styles 
 import styled from "styled-components";
 
-
-//images
-import code_icon from '../../images/coding.svg';
-import doc_icon from '../../images/paper.svg';
-
 //components
-import CodebaseNavigation from './CodebaseNavigation';
-import Repository_Viewer from '../Repository_Viewer';
+import RepositoryNavigation from './RepositoryNavigation';
+import RepositoryView from './Repository Page/RepositoryView';
 
 //react-router
 import { Switch, Route } from 'react-router-dom';
 import history from '../../history';
 
-class Dash extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-           
-        }
-    }
+class SpaceView extends React.Component {
 
-    /*
-        onClick = {() => this.setState({modal_display: ''})}
-    */
     render() {
         return (
             <Container>
-                <Side_Navbar>
-                    <Doc_Create_Button   >
-                        <ion-icon style={{'font-size': '3.7rem'}} name="create-outline"></ion-icon>
-                    </Doc_Create_Button>
-                    
-                </Side_Navbar>
-                <Right_View>
+                <SideNavbar>
+                    <DocumentCreateButton   >
+                        <ion-icon style={{'fontSize': '3.7rem'}} name="create-outline"></ion-icon>
+                    </DocumentCreateButton>
+                </SideNavbar>
+                <RightView>
                     <Switch history = {history}>
-                        <Route exact path = "/codebase" component = {Repository_Viewer} />
-                        <Route path = "/codebase" component = {CodebaseNavigation}/>
+                        <Route exact path = "/repository" component = {RepositoryView} />
+                        <Route path = "/repository" component = {RepositoryNavigation}/>
                     </Switch>
-                </Right_View>
+                </RightView>
             </Container>
         );
     }
 }
 
-export default Dash;
+export default SpaceView;
 
 
 //Styled Components
@@ -56,7 +41,7 @@ const Container = styled.div`
     display: flex;
 `
 
-const Side_Navbar = styled.div`
+const SideNavbar = styled.div`
     width: 11rem;
     background-color: #F4F4F6;
     display: flex;
@@ -65,7 +50,8 @@ const Side_Navbar = styled.div`
     padding-top: 5rem;
 `
 
-const Side_Navbar_Item = styled.div`
+/*
+const SideNavbarItem = styled.div`
     height: 9rem;
     display: flex;
     justify-content: center;
@@ -75,12 +61,11 @@ const Side_Navbar_Item = styled.div`
         border-left: 0.55rem solid #5534FF;
     }
 `
-
-const Doc_Create_Button = styled.div`
+*/
+const DocumentCreateButton = styled.div`
     border-radius: 50%;
     margin-top: 0rem;
     margin-bottom: 5rem;
-
     width: 7rem;
     height: 7rem;
     background-color: white;
@@ -98,11 +83,7 @@ const Doc_Create_Button = styled.div`
     }
 `
 
-const Styled_Icon = styled.img`
-    width: 5rem;
-`
-
-const Right_View = styled.div`
+const RightView = styled.div`
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     background-color: white;
     width: 100%;

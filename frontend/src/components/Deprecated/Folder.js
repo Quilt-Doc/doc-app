@@ -12,7 +12,7 @@ import { withRouter } from 'react-router';
 import styled from "styled-components"
 
 //actions
-import { retrieveChildren, createFolder } from "../actions/Folder_Actions"
+import { retrieveChildren, createFolder } from "../../actions/Folder_Actions"
 
 //components
 import { Modal, Icon, Dropdown, Menu } from 'antd'

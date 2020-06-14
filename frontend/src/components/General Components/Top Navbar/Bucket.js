@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import styled from "styled-components";
 
 //images
-import archive_icon from '../../images/archive.svg';
+import archive_icon from '../../../images/archive.svg';
 
 
 class Bucket extends React.Component {
@@ -20,8 +20,6 @@ class Bucket extends React.Component {
     }
 
     renderCount() {
-        console.log("HERE BOI")
-        console.log(this.props.selected)
         if (this.props.selected) {
             return String(this.props.selected.length)
         } else {
@@ -31,10 +29,10 @@ class Bucket extends React.Component {
 
     render(){
         return (
-            <Navbar_Button>
-                <Styled_Icon2 src = {archive_icon}/>
+            <NavbarButton>
+                <StyledIcon2 src = {archive_icon}/>
                 <Count>{this.renderCount()}</Count>
-            </Navbar_Button>
+            </NavbarButton>
         )
     }
     
@@ -49,7 +47,7 @@ const mapStateToProps = (state) => {
 
 export default connect(mapStateToProps)(Bucket);
 
-const Navbar_Button = styled.div`
+const NavbarButton = styled.div`
     padding: 1.2rem 1.5rem;
    
     height: 7rem;
@@ -69,7 +67,7 @@ const Navbar_Button = styled.div`
     }
 `
 
-const Styled_Icon2 = styled.img`
+const StyledIcon2 = styled.img`
     width: 2.5rem;
     cursor: pointer;
    

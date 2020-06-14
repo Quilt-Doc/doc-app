@@ -4,17 +4,17 @@ import React from 'react';
 import styled from "styled-components"
 
 //images
-import repo_icon1 from '../images/repo1.svg'
-import repo_icon2 from '../images/repo2.svg'
-import repo_icon3 from '../images/repo3.svg'
-import repo_icon4 from '../images/repo4.svg'
-import repo_icon5 from '../images/repo5.svg'
-import repo_icon6 from '../images/repo6.svg'
-import repo_icon7 from '../images/repo7.svg'
-import repo_background from '../images/repo_background.svg'
+import repoIcon1 from '../../../images/repo1.svg'
+import repoIcon2 from '../../../images/repo2.svg'
+import repoIcon3 from '../../../images/repo3.svg'
+import repoIcon4 from '../../../images/repo4.svg'
+import repoIcon5 from '../../../images/repo5.svg'
+import repoIcon6 from '../../../images/repo6.svg'
+import repoIcon7 from '../../../images/repo7.svg'
+import repoBackground from '../../../images/repoBackground.svg'
 
 //actions
-import { createCodebase, retrieveCodebases } from '../actions/Codebase_Actions'
+import { createRepository, retrieveRepositories } from '../../../actions/Repository_Actions'
 
 //react-router
 import { Link } from 'react-router-dom';
@@ -22,104 +22,100 @@ import { Link } from 'react-router-dom';
 //misc
 import { connect } from 'react-redux';
 
-class Repository_Viewer extends React.Component {
+class RepositoryView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-           modal_display: 'none',
+           modalDisplay: 'none',
         }
 
         this.count = 0
-        this.address_input = React.createRef();
-        this.name_input = React.createRef();
+        this.addressInput = React.createRef();
+        this.nameInput = React.createRef();
     }
 
     componentDidMount() {
-        this.props.retrieveCodebases()
+        this.props.retrieveRepositories()
     }
 
     renderLink(link) {
-        console.log('LINK: ', link);
         let position = link.indexOf('github.com/');
-        return `/codebase/directory/${link.slice(position + 11, link.length)}`
+        return `/repository/directory/${link.slice(position + 11, link.length)}`
     }
 
     renderRepositories() {
-        console.log("ENTERED HERE")
-        console.log(this.props.codebases);
-        let icons = [repo_icon1, repo_icon2, repo_icon3, repo_icon4, repo_icon5, repo_icon6, repo_icon7]
+        let icons = [repoIcon1, repoIcon2, repoIcon3, repoIcon4, repoIcon5, repoIcon6, repoIcon7]
 
-        let jsx_codebases = []
-        this.props.codebases.map((codebase) => {
-            jsx_codebases.push(
-                <Link to = {this.renderLink(codebase.link)}><Repo_Box onClick = {() => {console.log(codebase.link)}}>
-                    <Styled_Icon src = {icons[codebase.icon]}/>
-                    {codebase.name}
-                </Repo_Box></Link>
+        let repositoriesJSX = []
+        this.props.repositories.map((repository, i) => {
+            repositoriesJSX.push(
+                <Link key = {i} to = {this.renderLink(repository.link)}><RepoBox onClick = {() => {console.log(repository.link)}}>
+                    <StyledIcon src = {icons[repository.icon]}/>
+                    {repository.name}
+                </RepoBox></Link>
             )
+            return
         })
 
-        this.count = jsx_codebases.length
+        this.count = repositoriesJSX.length
 
-        jsx_codebases.push( <Repo_Box opacity = {0.5} onClick = {() => this.setState({modal_display: ''})}>
-                                <ion-icon style={{'font-size':'6rem', 'margin-bottom': '0.45rem'}} name="add-outline"></ion-icon>
+        repositoriesJSX.push( <RepoBox opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
+                                <ion-icon style={{'fontSize':'6rem', 'marginBottom': '0.45rem'}} name="add-outline"></ion-icon>
                                 Add New Repository
-                            </Repo_Box>
+                            </RepoBox>
         )
         
-        let all_jsx = []
-        for (let i = 0; i < jsx_codebases.length; i+= 3) {
-            all_jsx.push(<Repo_Row>
-                {jsx_codebases.slice(i, i + 3).map(jsx_codebase => {
-                    return jsx_codebase
+        let allJSX = []
+        for (let i = 0; i < repositoriesJSX.length; i+= 3) {
+            allJSX.push(<RepoRow>
+                {repositoriesJSX.slice(i, i + 3).map(repositoryJSX => {
+                    return repositoryJSX
                 })}
-            </Repo_Row>)
+            </RepoRow>)
         }
         
-        return all_jsx
+        return allJSX
     }
 
     createRepository() {
-        this.props.createCodebase({name: this.name_input.current.value, link: this.address_input.current.value, icon: this.count}).then(() => {
+        this.props.createRepository({name: this.nameInput.current.value, link: this.addressInput.current.value, icon: this.count}).then(() => {
             this.clearModal()
         })
     }
 
     clearModal() {
-        this.setState({modal_display: 'none'})
-        this.name_input.current.value = "";
-        this.address_input.current.value = "";
+        this.setState({modalDisplay: 'none'})
+        this.nameInput.current.value = "";
+        this.addressInput.current.value = "";
     }
 
-
-
     render() {
-        if (this.props.codebases){
+        if (this.props.repositories){
             return (
                 <Container>
                     <Header>Repositories</Header>
-                    <Repo_Container>
+                    <RepoContainer>
                         {this.renderRepositories()}
-                    </Repo_Container>
-                    <Modal_Background onClick = {() => this.clearModal()} display = {this.state.modal_display}>
-                        <Modal_Content onClick = {(e) => e.stopPropagation()}>
-                            <Modal_Header>Link to a Repository</Modal_Header>
-                            <Modal_Container>
-                                <Forms_Container>
-                                    <Form_Container>
-                                        <Form_Header>Repository Address</Form_Header>
-                                        <StyledInput ref={this.address_input} placeholder = {'github.com/repository-address'}  />
-                                    </Form_Container>
-                                    <Form_Container>
-                                        <Form_Header>Repository Name</Form_Header>
-                                        <StyledInput ref={this.name_input} placeholder = {'repository-address'}  />
-                                    </Form_Container>
+                    </RepoContainer>
+                    <ModalBackground onClick = {() => this.clearModal()} display = {this.state.modalDisplay}>
+                        <ModalContent onClick = {(e) => e.stopPropagation()}>
+                            <ModalHeader>Link to a Repository</ModalHeader>
+                            <ModalContainer>
+                                <FormsContainer>
+                                    <FormContainer>
+                                        <FormHeader>Repository Address</FormHeader>
+                                        <StyledInput ref={this.addressInput} placeholder = {'github.com/repository-address'}  />
+                                    </FormContainer>
+                                    <FormContainer>
+                                        <FormHeader>Repository Name</FormHeader>
+                                        <StyledInput ref={this.nameInput} placeholder = {'repository-address'}  />
+                                    </FormContainer>
                                     <SubmitButton onClick = {() => this.createRepository()}>CREATE</SubmitButton>
-                                </Forms_Container>
-                                <Modal_Image/>
-                            </Modal_Container>
-                        </Modal_Content>
-                    </Modal_Background>
+                                </FormsContainer>
+                                <ModalImage/>
+                            </ModalContainer>
+                        </ModalContent>
+                    </ModalBackground>
                 </Container>
             )
         }
@@ -128,16 +124,15 @@ class Repository_Viewer extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    console.log(Object.values(state.codebases))
     return {
-        codebases: Object.values(state.codebases)
+        repositories: Object.values(state.repositories.repositories)
     }
 }
 
-export default connect(mapStateToProps, {createCodebase, retrieveCodebases})(Repository_Viewer);
+export default connect(mapStateToProps, {createRepository, retrieveRepositories})(RepositoryView);
 
 
-const Styled_Icon = styled.img`
+const StyledIcon = styled.img`
     width: 5rem;
     margin-bottom: 1.5rem;
 `
@@ -155,7 +150,7 @@ const Container = styled.div`
     margin-top: 7rem;
 `
 
-const Repo_Container = styled.div`
+const RepoContainer = styled.div`
     background-color: rgba(244, 244, 246, 0.7);
     margin-top: 3rem;
     display: flex;
@@ -165,12 +160,12 @@ const Repo_Container = styled.div`
     padding-bottom: 4rem;
 `
 
-const Repo_Row = styled.div`
+const RepoRow = styled.div`
     display: flex;
     margin-top: 4rem;
 `
 
-const Repo_Box = styled.div`
+const RepoBox = styled.div`
     background-color: white;
     margin-left: 4.5rem;
     margin-right: 4rem;
@@ -198,7 +193,7 @@ const Repo_Box = styled.div`
 
 // Modal
 /* The Modal (background) */
-const Modal_Background = styled.div`
+const ModalBackground = styled.div`
     /*display: none;  Hidden by default */
     position: fixed; /* Stay in place */
     z-index: 10000; /* Sit on top */
@@ -213,7 +208,7 @@ const Modal_Background = styled.div`
 `
   
   /* Modal Content/Box */
-const Modal_Content = styled.div`
+const ModalContent = styled.div`
     background-color: #fefefe;
     margin: 4.5% auto; /* 15% from the top and centered */
     padding: 5rem;
@@ -228,14 +223,14 @@ const Modal_Content = styled.div`
     max-width: 96rem;
 `
 
-const Modal_Image = styled.div`
+const ModalImage = styled.div`
     height: 35rem;
     width: 48rem;
     margin-left: 3rem;
-    background-image: url(${repo_background});
+    background-image: url(${repoBackground});
     background-size: cover;
 `
-const Modal_Header = styled.div`
+const ModalHeader = styled.div`
     font-size: 4rem;
     color: #172A4E;
     font-weight:bold;
@@ -256,15 +251,15 @@ const StyledInput = styled.input`
     }
 `
 
-const Modal_Container = styled.div`
+const ModalContainer = styled.div`
     display: flex;
 `
 
-const Form_Container = styled.div`
+const FormContainer = styled.div`
     display: flex;
     flex-direction: column
 `
-const Form_Header = styled.div`
+const FormHeader = styled.div`
     font-size: 1.6rem;
     color: #172A4E;
     letter-spacing: 0.05rem;
@@ -272,7 +267,7 @@ const Form_Header = styled.div`
     margin-bottom: 1rem;
 `
 
-const Forms_Container = styled.div`
+const FormsContainer = styled.div`
     display: flex;
     flex-direction: column;
     margin-top: 6rem;

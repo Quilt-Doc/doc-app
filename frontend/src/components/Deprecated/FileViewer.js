@@ -7,7 +7,7 @@ import { Button } from 'antd';
 
 import { connect } from 'react-redux';
 
-import { repoRefreshPath, repoGetFile } from '../actions/Repo_Actions';
+import { refreshRepositoryPath, getRepositoryFile } from '../../actions/Repository_Actions';
 
 import styled from "styled-components"
 
@@ -82,7 +82,7 @@ class FileViewer extends Component {
 
 	render() {
 
-		const lines = this.props.file_contents.split("\n");
+		const lines = this.props.fileContents.split("\n");
 		const file_lines = lines.map((line, idx) =>
 			<tr>
 				<FileLineNumber>{idx}</FileLineNumber> <FileLineContent className="file-line">{line}</FileLineContent>
@@ -105,16 +105,16 @@ class FileViewer extends Component {
 // {this.renderContents()}
 
 const mapStateToProps = (state) => {
-    console.log('STATE.REPOS.PATH_CONTENTS: ', state.repos.path_contents)
-    if (typeof state.repos.file_contents == 'undefined' || state.repos.file_contents == null){
+    console.log('STATE.REPOSITORIES.pathContents: ', state.repositories.pathContents)
+    if (typeof state.repositories.fileContents == 'undefined' || state.repositories.fileContents == null){
         return {
-            file_contents: ''
+            fileContents: ''
         }
     }
 
     return {
-        file_contents: state.repos.file_contents,
-        file_name: state.repos.file_name
+        fileContents: state.repositories.fileContents,
+        fileName: state.repositories.fileName
     }
 }
 
@@ -140,4 +140,4 @@ const FileLineContent = styled.td`
 
 
 
-export default connect(mapStateToProps, {repoRefreshPath, repoGetFile})(FileViewer);
+export default connect(mapStateToProps, {refreshRepositoryPath, getRepositoryFile})(FileViewer);

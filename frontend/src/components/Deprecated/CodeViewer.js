@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import RepoSearch from './Repo_Search'
 import CodeBaseExplorer from './CodeBaseExplorer'
 import FileViewer from './FileViewer'
-import DocumentCreate from './DocumentCreate'
+import DocumentCreate from '../DocumentCreate'
 
 class CodeViewer extends Component {
   render() {

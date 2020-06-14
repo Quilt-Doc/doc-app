@@ -10,7 +10,7 @@ import { connect } from 'react-redux';
 import styled from "styled-components"
 
 //actions
-import { retrieveChildren } from "../actions/Folder_Actions"
+import { retrieveChildren } from "../../actions/Folder_Actions"
 
 //components
 import { Icon } from 'antd'

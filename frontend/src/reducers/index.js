@@ -2,7 +2,7 @@ import { combineReducers } from 'redux';
 import { reducer as formReducer } from 'redux-form'
 
 import workspaceReducer from './Workspace_Reducer';
-import codebaseReducer from './Codebase_Reducer';
+import repositoryReducer from './Repository_Reducer';
 import folderReducer from './Folder_Reducer';
 
 import documentReducer from './Document_Reducer';
@@ -14,11 +14,10 @@ import tagReducer from './Tag_Reducer';
 
 import selectedReducer from './Selected_Reducer';
 
-import repoReducer from './Repo_Reducer';
 
 export default combineReducers({
     workspaces: workspaceReducer,
-    codebases: codebaseReducer,
+    repositories: repositoryReducer,
     folders: folderReducer,
     documents: documentReducer,
     snippets: snippetReducer,
@@ -26,7 +25,6 @@ export default combineReducers({
     comments: commentReducer,
     users: userReducer,
     tags: tagReducer,
-    repos: repoReducer,
     selected: selectedReducer,
     form: formReducer,
 });

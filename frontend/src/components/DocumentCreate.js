@@ -17,11 +17,11 @@ class DocumentCreate extends Component {
 }
 
 const mapStateToProps = (state) => {
-	// ', state.repos.path_contents)
+	// ', state.repositories.pathContents)
 	console.log('DOCUMENT CREATE LISTENER');
-	if (!(typeof state.repos.file_contents == 'undefined' || state.repos.file_contents == null) &&
-		(typeof state.repos.parsed_data == 'undefined' || state.repos.parsed_data == null)) {
-		console.log('file_contents exists');
+	if (!(typeof state.repositories.fileContents == 'undefined' || state.repositories.fileContents == null) &&
+		(typeof state.repositories.parsed_data == 'undefined' || state.repositories.parsed_data == null)) {
+		console.log('fileContents exists');
 	}
 
     return {}

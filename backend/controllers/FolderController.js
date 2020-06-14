@@ -4,7 +4,7 @@ const { ObjectId } = mongoose.Types;
 
 createFolder = (req, res) => {
 
-    const {workspaceID, creatorID, parentID, title, codebaseID, description, canWrite, canRead, debugID} = req.body;
+    const {workspaceID, creatorID, parentID, title, repositoryID, description, canWrite, canRead, debugID} = req.body;
 
     if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no folder workspaceID provided'});
     if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no folder creatorID provided'});
@@ -24,14 +24,14 @@ createFolder = (req, res) => {
         if (debugID) folder._id = ObjectId(debugID);
     }
     if (parentID)  folder.parent = ObjectId(parentID); else folder.root = true
-    if (codebaseID) folder.codebase = ObjectId(codebaseID);
+    if (repositoryID) folder.repository = ObjectId(repositoryID);
     if (description) folder.description = description;
     if (canWrite) folder.canWrite = folder.canWrite.concat(canWrite.map(creatorID => ObjectId(creatorID)));
     if (canRead) folder.canRead = folder.canRead.concat(canRead.map(creatorID => ObjectId(creatorID)));
     folder.save((err, folder) => {
         if (err) return res.json({ success: false, error: err });
         return folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead', (err, folder) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(folder);
@@ -53,7 +53,7 @@ editFolder = (req, res) => {
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
         folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -69,7 +69,7 @@ getFolder = (req, res) => {
     Folder.findById(id, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
         folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -86,7 +86,7 @@ deleteFolder = (req, res) => {
     Folder.findByIdAndRemove(id, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
 		folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -97,15 +97,15 @@ deleteFolder = (req, res) => {
 }
 
 retrieveFolders = (req, res) => {
-    const {title, workspaceID, parentID, codebaseID, textQuery, tagIDs, snippetsIDs, limit, skip, root} = req.body;
-    // (parentID, codebaseID, textQuery, tagIDs, snippetIDs)
+    const {title, workspaceID, parentID, repositoryID, textQuery, tagIDs, snippetsIDs, limit, skip, root} = req.body;
+    // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
 
     query = Folder.find();
     if (title) query.where('title').equals(title);
     if (parentID) query.where('parent').equals(parentID);
-    if (codebaseID) query.where('codebase').equals(codebaseID);
+    if (repositoryID) query.where('repository').equals(repositoryID);
     if (workspaceID) query.where('workspace').equals(workspaceID)
-    // if (textQuery) query.where('codebase').all(tagIDs);
+    // if (textQuery) query.where('repository').all(tagIDs);
     if (tagIDs) query.where('tags').all(tagIDs);
     if (root) query.where('root').equals(root)
     if (snippetsIDs) query.where('snippets').all(snippetsIDs);
@@ -113,7 +113,7 @@ retrieveFolders = (req, res) => {
     if (skip) query.skip(Number(skip));
 
     query.populate('parent')
-    .populate('codebase').populate('creator')
+    .populate('repository').populate('creator')
     .populate('canWrite').populate('canRead')
     .populate('tags').populate('snippets')
     .populate('uploadFiles').populate('workspace').exec((err, folders) => {
@@ -136,7 +136,7 @@ attachSnippet = (req, res) => {
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
         folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -159,7 +159,7 @@ removeSnippet = (req, res) => {
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
 		folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -183,7 +183,7 @@ attachUploadFile = (req, res) => {
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
         folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -206,7 +206,7 @@ removeUploadFile = (req, res) => {
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
 		folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -230,7 +230,7 @@ attachTag = (req, res) => {
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
         folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -253,7 +253,7 @@ removeTag = (req, res) => {
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
 		folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -276,7 +276,7 @@ addCanWrite = (req, res) => {
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
         folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -299,7 +299,7 @@ removeCanWrite = (req, res) => {
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
 		folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -322,7 +322,7 @@ addCanRead = (req, res) => {
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
         folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {
@@ -345,7 +345,7 @@ removeCanRead = (req, res) => {
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
 		folder.populate('parent')
-        .populate('codebase').populate('creator')
+        .populate('repository').populate('creator')
         .populate('canWrite').populate('canRead')
         .populate('tags').populate('snippets')
         .populate('uploadFiles', (err, folder) => {

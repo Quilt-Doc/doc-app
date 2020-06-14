@@ -6,8 +6,8 @@ import { Icon, List, Button} from 'antd';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
-import { repoRefreshPath, repoGetFile, repoParseFile, repoClearFile, repoGetRefs} from '../actions/Repo_Actions';
-import { createCodebase } from '../actions/Codebase_Actions';
+import { refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, clearRepositoriyRefs, getRepositoryRefs} from '../../actions/Repository_Actions';
+import { createCodebase } from '../../actions/Codebase_Actions';
 
 var urljoin = require('url-join');
 
@@ -21,28 +21,28 @@ class CodeBaseExplorer extends Component {
 
     componentDidUpdate(prevProps) {
       // Typical usage (don't forget to compare props):
-      console.log('Codebase did update');
-      if (this.props.file_contents !== prevProps.file_contents) {
+      console.log('Repository did update');
+      if (this.props.fileContents !== prevProps.fileContents) {
         console.log('CALLING PARSE');
-        console.log(this.props.file_contents);
-        this.props.repoParseFile({
-                    file_contents: this.props.file_contents,
-                    file_name: this.props.file_name
+        console.log(this.props.fileContents);
+        this.props.parseRepositoryFile({
+                    fileContents: this.props.fileContents,
+                    fileName: this.props.fileName
                 });
       }
 
-      console.log('Current repo name: ', this.props.repo_name);
-      console.log('Previous repo name: ', prevProps.repo_name);
+      console.log('Current repo name: ', this.props.repositoryName);
+      console.log('Previous repo name: ', prevProps.repositoryName);
 
-      if (this.props.repo_name !== prevProps.repo_name) {
+      if (this.props.repositoryName !== prevProps.repositoryName) {
         console.log('CALLING GET REFS');
         console.log(this.props);
-        this.props.repoGetRefs({
-                    repo_link: this.props.repo_name
+        this.props.getRepositoryRefs({
+                    repoLink: this.props.repositoryName
                 });
         this.props.createCodebase ({
-                    name: this.props.repo_name,
-                    link: this.props.repo_name
+                    name: this.props.repositoryName,
+                    link: this.props.repositoryName
         })
       }
     }
@@ -59,18 +59,18 @@ class CodeBaseExplorer extends Component {
 
     handleItemSelect(item) {
         console.log('Selected Item: ', item);
-        console.log(this.props.repo_name)
+        console.log(this.props.repositoryName)
         if (item.type === 'dir') {
-            this.props.repoRefreshPath({
-                selectedItem: item, repo_name: this.props.repo_name,
-                repo_path: urljoin(this.props.repo_current_path, item.name)
+            this.props.refreshRepositoryPath({
+                selectedItem: item, repositoryName: this.props.repositoryName,
+                repositoryPath: urljoin(this.props.repositoryCurrentPath, item.name)
             });
         }
         if (item.type === 'file') {
             console.log('Trying to fetch file');
-            this.props.repoGetFile({
-                download_link: item.download_url,
-                file_name: item.name
+            this.props.getRepositoryFile({
+                downloadLink: item.download_url,
+                fileName: item.name
             });
             
         }
@@ -109,21 +109,21 @@ class CodeBaseExplorer extends Component {
     }
 
     backButtonClick = () => {
-        this.props.repoRefreshPath({
-            repo_name: this.props.repo_name,
-            repo_path: this.props.repo_current_path.substring(0, this.props.repo_current_path.lastIndexOf('/'))
+        this.props.refreshRepositoryPath({
+            repositoryName: this.props.repositoryName,
+            repositoryPath: this.props.repositoryCurrentPath.substring(0, this.props.repositoryCurrentPath.lastIndexOf('/'))
         });
-        this.props.repoClearFile();
+        this.props.clearRepositoriyRefs();
     }
 
     disableBackButton = () => {
-        if(this.props.repo_current_path) {
-            if (this.props.repo_current_path.length > 0) {
+        if(this.props.repositoryCurrentPath) {
+            if (this.props.repositoryCurrentPath.length > 0) {
                 return false;
             }
         }
-        if(this.props.file_name) {
-            if(this.props.file_name.length > 0) {
+        if(this.props.fileName) {
+            if(this.props.fileName.length > 0) {
                 return false
             }
         }
@@ -145,7 +145,7 @@ class CodeBaseExplorer extends Component {
 
 		return (
 			<div>
-                {this.renderBackButton(this.props.repo_current_path)}
+                {this.renderBackButton(this.props.repositoryCurrentPath)}
                 <List
                     bordered
                     dataSource={this.props.contents}
@@ -159,20 +159,20 @@ class CodeBaseExplorer extends Component {
 // {this.renderContents()}
 
 const mapStateToProps = (state) => {
-    console.log('STATE.REPOS.PATH_CONTENTS: ', state.repos.path_contents)
-    if (typeof state.repos.path_contents == 'undefined' || state.repos.path_contents == null){
+    console.log('STATE.REPOSITORIES.pathContents: ', state.repositories.pathContents)
+    if (typeof state.repositories.pathContents == 'undefined' || state.repositories.pathContents == null){
         return {
             contents: []
         }
     }
 
     return {
-        contents: Object.values(state.repos.path_contents),
-        repo_name: state.repos.repo_name,
-        repo_current_path: state.repos.repo_current_path,
-        file_contents: state.repos.file_contents,
-        file_name: state.repos.file_name
+        contents: Object.values(state.repositories.pathContents),
+        repositoryName: state.repositories.repositoryName,
+        repositoryCurrentPath: state.repositories.repositoryCurrentPath,
+        fileContents: state.repositories.fileContents,
+        fileName: state.repositories.fileName
     }
 }
 
-export default connect(mapStateToProps, {repoRefreshPath, repoGetFile, createCodebase, repoParseFile, repoClearFile, repoGetRefs})(CodeBaseExplorer);
+export default connect(mapStateToProps, {refreshRepositoryPath, getRepositoryFile, createCodebase, parseRepositoryFile, clearRepositoriyRefs, getRepositoryRefs})(CodeBaseExplorer);

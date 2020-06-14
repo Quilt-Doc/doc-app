@@ -4,13 +4,13 @@ import React from 'react';
 import styled from "styled-components"
 
 //images
-import doc_icon from '../../images/paper.svg';
+import doc_icon from '../../../images/paper.svg';
 
 //react-router
 import { Link } from 'react-router-dom';
 
 //actions
-import { addSelected, deleteSelected } from '../../actions/Selected_Actions';
+import { addSelected, deleteSelected } from '../../../actions/Selected_Actions';
 
 //misc
 import { connect } from 'react-redux';
@@ -20,7 +20,7 @@ class DirectoryItem extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-           'file_item_background_color': '',
+           'fileItemBackgroundColor': '',
            'check_box_border_color': '#D7D7D7',
            'check_box_check_display': 'none'
            
@@ -42,15 +42,15 @@ class DirectoryItem extends React.Component {
     }
 
     hoverFileItem = () => {
-        this.setState({'file_item_background_color': '#F4F4F6'})
+        this.setState({'fileItemBackgroundColor': '#F4F4F6'})
     }
 
     unhoverFileItem = () => {
-        this.setState({'file_item_background_color': ''})
+        this.setState({'fileItemBackgroundColor': ''})
     }
 
     renderCheck = () => {
-        return {'font-size': "2rem", 'color': '#19E5BE', 'display': this.state.check_box_check_display}
+        return {'fontSize': "2rem", 'color': '#19E5BE', 'display': this.state.check_box_check_display}
     }
 
     turnCheckOn = (item) => {
@@ -74,12 +74,12 @@ class DirectoryItem extends React.Component {
     renderDirectoryLink(item) {
         
         if (item.type === 'dir') {
-            console.log('DIR PATH: ', `/codebase/${window.location.pathname.slice(10)}`);
-            return `/codebase/${window.location.pathname.slice(10) + item.name +'/'}`
+            console.log('DIR PATH: ', `/repository/${window.location.pathname.slice(12)}`);
+            return `/repository/${window.location.pathname.slice(12) + item.name +'/'}`
         } else {
             let url_items = item.download_url.split('/').slice(3)
             let final_path = url_items.join('/') 
-            return `/codebase/codeview/${final_path}`
+            return `/repository/codeview/${final_path}`
         }
         
 
@@ -94,17 +94,17 @@ class DirectoryItem extends React.Component {
                             <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
                         </Check_Box>
                     </Check_Box_Border>
-                    <File_Item background_color = {this.state.file_item_background_color}  border_bottom = {this.props.border_bottom}>
+                    <File_Item backgroundColor = {this.state.fileItemBackgroundColor}  borderBottom = {this.props.borderBottom}>
                         <Hover_File_Item  
                             onMouseEnter = {() => this.hoverFileItem()}
                             onMouseLeave = {() => this.unhoverFileItem()}
                             to = {this.renderDirectoryLink(this.props.item)}
                         >
-                            <ion-icon style={{'margin-right': "1rem", 'font-size': '2rem'}}  name={this.props.type}></ion-icon>
+                            <ion-icon style={{'marginRight': "1rem", 'fontSize': '2rem'}}  name={this.props.type}></ion-icon>
                             <Filename>{this.props.item.name}</Filename>
                         </Hover_File_Item >
                         <Statistics>
-                            <Styled_Icon width = {'2'}  src = {doc_icon}/>
+                            <StyledIcon width = {'2'}  src = {doc_icon}/>
                             <Document_Count color = {'#172A4E'}>0</Document_Count>
                         </Statistics>
                     </File_Item>
@@ -173,11 +173,11 @@ const File_Item = styled.div`
     letter-spacing: 0.5px;
     
     border-top: 1px solid #EDEFF1;
-    border-bottom: ${props => props.border_bottom};
+    border-bottom: ${props => props.borderBottom};
 
     cursor: pointer;
 
-    background-color: ${props => props.background_color}
+    background-color: ${props => props.backgroundColor}
     
 `
 
@@ -208,7 +208,7 @@ const Statistics = styled.div`
 
 `
 
-const Styled_Icon = styled.img`
+const StyledIcon = styled.img`
     width: ${props => props.width}rem;
 `
 

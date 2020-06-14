@@ -9,7 +9,7 @@ import styled from "styled-components";
 
 import { Range, Point } from 'slate'
 
-import header_icon from '../../images/header.svg'
+import header_icon from '../../../images/header.svg'
 
 const SHORTCUTS = {
   '*': 'list-item',
@@ -79,7 +79,7 @@ const HoveringMenuExample = () => {
         renderElement = {renderElement}
         renderLeaf={renderLeaf}
         placeholder="Enter some text..."
-        spellcheck="false"
+        spellCheck="false"
       />
     </Slate>
   )
@@ -197,15 +197,15 @@ const HoveringToolbar = (props) => {
   return (<Menu ref={ref}>
                 <MenuHeader>Insert Blocks</MenuHeader>
                <MenuButton onClick = {() => {toggleBlock(editor, props)}}>
-                  <IconBorder><ion-icon style={{'font-size': '20px !important;'}} name="text-outline"></ion-icon></IconBorder>
+                  <IconBorder><ion-icon style={{'fontSize': '20px !important'}} name="text-outline"></ion-icon></IconBorder>
                   <MenuButtonText>Text</MenuButtonText>
                </MenuButton>
                <MenuButton onClick = {() => {toggleBlock(editor, props)}}>
-                  <IconBorder><ion-icon style={{'font-size': '7rem'}} name="filter-outline"></ion-icon></IconBorder>
+                  <IconBorder><ion-icon style={{'fontSize': '7rem'}} name="filter-outline"></ion-icon></IconBorder>
                   <MenuButtonText>Heading</MenuButtonText>
                </MenuButton>
                <MenuButton>
-                  <IconBorder><ion-icon style={{'font-size': '7rem'}} name="code-slash-outline"></ion-icon></IconBorder>
+                  <IconBorder><ion-icon style={{'fontSize': '7rem'}} name="code-slash-outline"></ion-icon></IconBorder>
                   <MenuButtonText>Code Snippet</MenuButtonText>
                </MenuButton>
                <MenuButton>
@@ -225,11 +225,11 @@ const HoveringToolbar = (props) => {
                   <MenuButtonText>Bulleted List</MenuButtonText>
                </MenuButton>
                <MenuButton>
-                  <IconBorder><Styled_Icon width = {'3.5'} src = {header_icon}/></IconBorder>
+                  <IconBorder><StyledIcon width = {'3.5'} src = {header_icon}/></IconBorder>
                   <MenuButtonText>Bulleted List</MenuButtonText>
                </MenuButton>
                <MenuButton>
-                  <IconBorder><Styled_Icon width = {'3.5'} src = {header_icon}/></IconBorder>
+                  <IconBorder><StyledIcon width = {'3.5'} src = {header_icon}/></IconBorder>
                   <MenuButtonText>Bulleted List</MenuButtonText>
                </MenuButton>
           </Menu>
@@ -283,7 +283,7 @@ const IconBorder = styled.div`
   box-shadow: 0 3px 6px 0 rgba(0,0,0,.1), 0 1px 3px 0 rgba(0,0,0,.08);
 `
 
-const Styled_Icon = styled.img`
+const StyledIcon = styled.img`
     width: ${props => props.width}rem;
 `
 

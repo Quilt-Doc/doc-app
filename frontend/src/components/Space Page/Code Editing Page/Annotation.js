@@ -7,40 +7,36 @@ class Annotation extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            'background_color': '',
-            'box_shadow': '',
+            'backgroundColor': '',
+            'boxShadow': '',
             'opacity': '.4'
         }
     }
 
     hover() {
-        this.setState({'background_color': 'white', 
-                       'box_shadow': '0 6px 8px rgba(102,119,136,.03), 0 1px 2px rgba(102,119,136,.3)', 
+        this.setState({'backgroundColor': 'white', 
+                       'boxShadow': '0 6px 8px rgba(102,119,136,.03), 0 1px 2px rgba(102,119,136,.3)', 
                        'opacity': '1'})
     }
 
     unhover() {
-        this.setState({ 'background_color': '',
-                        'box_shadow': '',
+        this.setState({ 'backgroundColor': '',
+                        'boxShadow': '',
                         'opacity': '.4'})
     }
 
-    /*
-    onMouseEnter = {this.props.scalePane} 
-                onMouseLeave = {this.props.unhoverBoth}
-    */
+
     render() {
         return (
-            <Annotation_Card 
-                background_color = {this.state.background_color}
-                box_shadow = {this.state.box_shadow}
+            <AnnotationCard 
+                backgroundColor = {this.state.backgroundColor}
+                boxShadow = {this.state.boxShadow}
                 opacity = {this.state.opacity}
-                
             >
                 <Note>
                     {this.props.annotation}
                 </Note>
-            </Annotation_Card>
+            </AnnotationCard>
         );
     }
 }
@@ -49,7 +45,7 @@ export default Annotation;
 
 //Styled Components
 
-const Annotation_Card = styled.div`
+const AnnotationCard = styled.div`
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
     width: 32rem;
     font-size: 1.6rem;
@@ -62,8 +58,8 @@ const Annotation_Card = styled.div`
     cursor: text;
     transition: opacity .1s ease;
     margin-bottom: 1rem;
-    background-color: ${props => props.background_color};
-    box-shadow: ${props => props.box_shadow};
+    background-color: ${props => props.backgroundColor};
+    box-shadow: ${props => props.boxShadow};
     opacity: ${props => props.opacity};
 `
 

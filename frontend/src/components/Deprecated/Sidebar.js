@@ -11,7 +11,7 @@ import { withRouter } from 'react-router';
 import styled from "styled-components"
 
 //actions
-import { retrieveFolders } from "../actions/Folder_Actions"
+import { retrieveFolders } from "../../actions/Folder_Actions"
 
 //components
 import { Icon } from 'antd'

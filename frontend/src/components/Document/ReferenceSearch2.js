@@ -13,7 +13,7 @@ import styled from 'styled-components';
 
 import api from '../../apis/api';
 
-import { repoUpdateRefs } from '../../actions/Repo_Actions';
+import { updateRepositoryRefs } from '../../actions/Repository_Actions';
 
 /* ---------- */
 /*    Data    */
@@ -98,7 +98,7 @@ class ReferenceSearch2 extends React.Component {
       isLoading: true
     });
     var that = this;
-    api.post('/references/get', {text: value, repo_link: "cewing/fizzbuzz/"} )
+    api.post('/references/get', {text: value, repoLink: "cewing/fizzbuzz/"} )
             .then(function (response) {
               console.log('GET REFERENCES RESPONSE');
               console.log(response);
@@ -106,7 +106,7 @@ class ReferenceSearch2 extends React.Component {
                 isLoading: false,
                 suggestions: response.data //getMatchingLanguages(value)
               });
-              /*repoUpdateRefs({
+              /*updateRepositoryRefs({
                       references: response.data
               });*/
               /*return response.data

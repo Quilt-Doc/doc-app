@@ -7,7 +7,7 @@ let snippetSchema = new Schema({
     name: String,
     annotation: String,
     code: [String],
-    start_line: Number,
+    startLine: Number,
     creator: {type: ObjectId, ref: 'User'},
     folders: [{type: ObjectId, index: true, ref: 'Folder'}],
     documents: [{type: ObjectId, index: true, ref: 'Document'}],

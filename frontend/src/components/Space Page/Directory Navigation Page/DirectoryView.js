@@ -10,25 +10,22 @@ import { withRouter } from 'react-router';
 import DirectoryItem from './DirectoryItem';
 
 //actions
-import { repoRefreshPathNew } from '../../actions/Repo_Actions';
+import { refreshRepositoryPathNew } from '../../../actions/Repository_Actions';
 
 //connect
 import { connect } from 'react-redux';
 
-class DirectoryViewer extends React.Component {
-    constructor(props) {
-        super(props);
-    }
+class DirectoryView extends React.Component {
 
     componentDidMount() {
-        console.log(window.location.pathname)
-        console.log({repo_path: window.location.pathname.slice(20)})
-        this.props.repoRefreshPathNew({repo_path: window.location.pathname.slice(20)})
+        // acquires the repository path from the url --- may need to change how this is done (hash, github Oauth)
+        console.log(window.location.pathname.slice(22))
+        this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)})
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.location.pathname !== this.props.location.pathname) {
-            this.props.repoRefreshPathNew({repo_path: window.location.pathname.slice(20)})
+            this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)})
         }
     }
 
@@ -40,12 +37,12 @@ class DirectoryViewer extends React.Component {
         }
 
         return directories.map((directory, i) => {
-            let border_bottom = i === this.props.contents.length - 1 ? '1px solid #EDEFF1;' : ''
+            let borderBottom = i === this.props.contents.length - 1 ? '1px solid #EDEFF1;' : ''
             return (<DirectoryItem 
                         key = {directory.sha} 
                         item = {directory}
                         type = {'folder'}
-                        border_bottom = {border_bottom}
+                        borderBottom = {borderBottom}
                     />    
                     )
         })
@@ -58,12 +55,12 @@ class DirectoryViewer extends React.Component {
             files = files.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
         }
         return files.map((file, i) => {
-            let border_bottom = i === files.length - 1 ? '1px solid #EDEFF1;' : ''
+            let borderBottom = i === files.length - 1 ? '1px solid #EDEFF1;' : ''
             return (<DirectoryItem 
                         key = {file.sha} 
                         item = {file}
                         type = {'document-outline'} 
-                        border_bottom = {border_bottom}
+                        borderBottom = {borderBottom}
                     />)
         })
     }
@@ -81,49 +78,25 @@ class DirectoryViewer extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    console.log('STATE.REPOS.PATH_CONTENTS: ', state.repos.path_contents)
-    if (typeof state.repos.path_contents == 'undefined' || state.repos.path_contents == null){
+    console.log('STATE.repositories.pathContents: ', state.repositories.pathContents)
+    if (typeof state.repositories.pathContents == 'undefined' || state.repositories.pathContents == null){
         return {
             contents: []
         }
     }
 
     return {
-        contents: Object.values(state.repos.path_contents)
+        contents: Object.values(state.repositories.pathContents)
     }
 }
 
-export default withRouter(connect(mapStateToProps, { repoRefreshPathNew } )(DirectoryViewer));
+export default withRouter(connect(mapStateToProps, { refreshRepositoryPathNew } )(DirectoryView));
 
 
 const DirectoryContainer = styled.div`
-    
     margin-top: 7rem;
     border-radius: 0.1rem;
     display: flex;
     flex-direction: column;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
-
-/*
-
- <DirectoryItem 
-                            key = {'1'} 
-                            item = {{name: 'wav2vec.py', type: 'file', download_url: 'rat.com/three'}}
-                            type = {'document-outline'}
-                            border_bottom = {''}
-                        />    
-                        <DirectoryItem 
-                            key = {'2'} 
-                            item = {{name: 'features', type: 'dir', download_url: 'rat.com/three'}}
-                            type = {'folder'}
-                            border_bottom = {''}
-                        />    
-                        <DirectoryItem 
-                            key = {'3'} 
-                            item = {{name: 'BERT', type: 'dir', download_url: 'rat.com/three'}}
-                            type = {'folder'}
-                            border_bottom = {'1px solid #EDEFF1;'}
-                        />    
-
-                        */

@@ -2,35 +2,35 @@ import React from 'react';
 import history from '../history';
 
 //components
-import Dash from './Code Explorer Page/Dash';
-import Bucket from './Top Navbar/Bucket'
+import SpaceView from './Space Page/SpaceView';
+import Bucket from './General Components/Top Navbar/Bucket'
 
 //styles
 import styled from "styled-components";
 
 //images
-import preeta_icon from '../images/preeta.png'
+import preetaicon from '../images/preeta.png'
 
 
 const Dashboard = () => {
     return (
         <Container>
             <TopNav>
-                <Styled_Icon  src = {preeta_icon}/>
-                <Navbar_Button2 margin_left = {'6'} border_radius = {'0.5rem'} onClick = {() => history.push('/codebase')}>
+                <StyledIcon  src = {preetaicon}/>
+                <NavbarButton2 marginLeft = {'6'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
                     Home
-                </Navbar_Button2>
-                <Navbar_Button2 margin_left = {'1'} border_radius = {'0.5rem'} onClick = {() => history.push('/codebase')}>
+                </NavbarButton2>
+                <NavbarButton2 marginLeft = {'1'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
                     Spaces
-                </Navbar_Button2>
-                <Navbar_Button2 margin_left = {'1'} border_radius = {'0.5rem'} onClick = {() => history.push('/codebase')}>
+                </NavbarButton2>
+                <NavbarButton2 marginLeft = {'1'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
                     People
-                </Navbar_Button2>
+                </NavbarButton2>
                 <Searchbar/>
                 <Bucket/>
                 
             </TopNav>
-            <Dash/>
+            <SpaceView/>
         </Container>
     )
 }
@@ -61,7 +61,7 @@ const Container = styled.div`
 `
 
 
-const Navbar_Button = styled.div`
+const NavbarButton = styled.div`
     padding: 1.2rem 1.5rem;
    
     height: 6rem;
@@ -82,10 +82,10 @@ const Navbar_Button = styled.div`
 `
 
 
-const Navbar_Button2 = styled.div`
+const NavbarButton2 = styled.div`
     padding: 1.2rem 1.5rem;
     
-    border-radius: ${props => props.border_radius};
+    border-radius: ${props => props.borderRadius};
     height: 5rem;
     font-size: 1.6rem;
     letter-spacing: 0.1rem;
@@ -94,7 +94,7 @@ const Navbar_Button2 = styled.div`
 
     display: flex;
     align-items: center;
-    margin-left: ${props => props.margin_left}rem;
+    margin-left: ${props => props.marginLeft}rem;
 
     &:hover {
         
@@ -119,12 +119,12 @@ const Searchbar = styled.input`
     
 `
 
-const Styled_Icon = styled.img`
+const StyledIcon = styled.img`
     width: 3.5rem;
     margin-left: 3.5rem;
 `
 
-const Styled_Icon2 = styled.img`
+const StyledIcon2 = styled.img`
     width: 4rem;
     cursor: pointer;
    
