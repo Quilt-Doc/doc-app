@@ -79,7 +79,7 @@ class RepositoryView extends React.Component {
 
     createRepository() {
         this.props.createRepository({name: this.nameInput.current.value, link: this.addressInput.current.value, icon: this.count}).then((repo_data) => {
-            this.props.updateRepositoryCommit({ repo_id: repo_data[0], repo_link: repo_data[1]})
+            this.props.updateRepositoryCommit({ repo_id: repo_data['_id'], repo_link: repo_data['link']})
             this.clearModal()
         })
 
