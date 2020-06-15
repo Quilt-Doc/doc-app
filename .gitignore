@@ -6,6 +6,9 @@
 # Don't include credentials
 **/.env
 
+# Don't include private keys
+**/*.pem
+
 # Don't include detached process output
 **/nohup.out
 
@@ -22,6 +25,9 @@ backend/git_repo*
 backend/doxygen*
 
 node_modules/*
+
+# Ignore github-app node_modules
+github-app/node_modules/*
 
 # Ignore node_modules in frontend
 frontend/node_modules/*

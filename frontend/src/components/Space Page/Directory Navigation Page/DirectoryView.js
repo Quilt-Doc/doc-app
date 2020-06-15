@@ -10,7 +10,7 @@ import { withRouter } from 'react-router';
 import DirectoryItem from './DirectoryItem';
 
 //actions
-import { refreshRepositoryPathNew } from '../../../actions/Repository_Actions';
+import { refreshRepositoryPathNew, getRepositoryRefs } from '../../../actions/Repository_Actions';
 
 //connect
 import { connect } from 'react-redux';
@@ -20,7 +20,12 @@ class DirectoryView extends React.Component {
     componentDidMount() {
         // acquires the repository path from the url --- may need to change how this is done (hash, github Oauth)
         console.log(window.location.pathname.slice(22))
-        this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)})
+        this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)}).then(() => {
+            console.log('Passing repo link: ', this.props.rep)
+            this.props.getRepositoryRefs({
+                repoLink: window.location.pathname.slice(22)
+            });
+        })
     }
 
     componentDidUpdate(prevProps) {
@@ -81,16 +86,16 @@ const mapStateToProps = (state) => {
     console.log('STATE.repositories.pathContents: ', state.repositories.pathContents)
     if (typeof state.repositories.pathContents == 'undefined' || state.repositories.pathContents == null){
         return {
-            contents: []
+            contents: [],
         }
     }
 
     return {
-        contents: Object.values(state.repositories.pathContents)
+        contents: Object.values(state.repositories.pathContents),
     }
 }
 
-export default withRouter(connect(mapStateToProps, { refreshRepositoryPathNew } )(DirectoryView));
+export default withRouter(connect(mapStateToProps, { refreshRepositoryPathNew, getRepositoryRefs } )(DirectoryView));
 
 
 const DirectoryContainer = styled.div`

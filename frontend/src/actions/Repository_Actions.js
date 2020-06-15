@@ -84,7 +84,10 @@ export const updateRepositoryRefs = (repositoryRefs) => async (dispatch) => {
 export const createRepository = (formValues) => async (dispatch) => {
     console.log("CREATING");
     const response = await api.post('/repositories/create', formValues);
+    console.log('createRepository response: ');
+    console.log(response);
     dispatch({ type: CREATE_REPOSITORY, payload: response.data });
+    return response.data;
 }
 
 // /repositories/get/:id'
@@ -102,4 +105,11 @@ export const deleteRepository = (id) => async dispatch => {
 export const retrieveRepositories = (formValues) => async dispatch => {
     const response = await api.post('/repositories/retrieve', formValues);
     dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data });
+}
+
+export const updateRepositoryCommit = (formValues) => async (dispatch) => {
+    console.log('repoUpdateCommit formValues: ', formValues);
+    const response = await api.post('/repositories/update_commit', formValues);
+    console.log('repoUpdateCommit response: ')
+    console.log(response);
 }

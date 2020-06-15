@@ -118,6 +118,7 @@ router.post('/repositories/parse_file', repository_controller.parseRepositoryFil
 router.post('/repositories/get_refs', repository_controller.getRepositoryRefs);
 router.post('/repositories/create', repository_controller.createRepository);
 router.post('/repositories/retrieve', repository_controller.retrieveRepositories);
+router.post('/repositories/update_commit', repository_controller.updateRepositoryCommit);
 router.get('/repositories/get/:id', repository_controller.getRepository);
 router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
 
