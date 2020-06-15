@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 //styles
 import styled, { keyframes } from "styled-components"
 import SyntaxHighlighter from 'react-syntax-highlighter';
-
+import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 //components
 import Annotation from './Annotation';
 import Snippet from './Snippet';
@@ -21,6 +21,8 @@ import { getRepositoryFile } from '../../../actions/Repository_Actions';
 
 //misc
 import { connect } from 'react-redux';
+import { xonokai, pojoaque } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { hopscotch } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 
 //implement on scroll
@@ -204,7 +206,7 @@ class CodeView extends React.Component {
 
                 // render lines that are not snippets, note the id is used to differentiate during selection
                 let codeline = (<Wrapper id = {`linecode-${i}`} className = {'codeline'}>
-                                    <CodeLine  language='python' style='vs'>
+                                    <CodeLine  language='python' style="vs">
                                         {inputLine}
                                     </CodeLine>
                                 </Wrapper>)

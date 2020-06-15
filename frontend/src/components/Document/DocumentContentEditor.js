@@ -10,6 +10,7 @@ import {
 } from 'slate-react'
 import { withHistory } from 'slate-history'
 
+
 import { Button, Icon } from 'antd';
 import InlineReference from './InlineReference';
 
