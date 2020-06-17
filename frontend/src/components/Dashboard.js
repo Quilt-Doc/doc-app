@@ -15,21 +15,7 @@ import preetaicon from '../images/preeta.png'
 const Dashboard = () => {
     return (
         <Container>
-            <TopNav>
-                <StyledIcon  src = {preetaicon}/>
-                <NavbarButton2 marginLeft = {'6'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
-                    Home
-                </NavbarButton2>
-                <NavbarButton2 marginLeft = {'1'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
-                    Spaces
-                </NavbarButton2>
-                <NavbarButton2 marginLeft = {'1'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
-                    People
-                </NavbarButton2>
-                <Searchbar/>
-                <Bucket/>
-                
-            </TopNav>
+            <TopNav/>
             <SpaceView/>
         </Container>
     )
@@ -43,7 +29,21 @@ const Dashboard = () => {
             </RightView>
 
 */
-
+//  DESIGN NEEDS TO BE CLEANED UP
+/*
+<StyledIcon  src = {preetaicon}/>
+                <NavbarButton2 marginLeft = {'6'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
+                    Home
+                </NavbarButton2>
+                <NavbarButton2 marginLeft = {'1'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
+                    Spaces
+                </NavbarButton2>
+                <NavbarButton2 marginLeft = {'1'} borderRadius = {'0.5rem'} onClick = {() => history.push('/repository')}>
+                    People
+                </NavbarButton2>
+                <Searchbar/>
+                <Bucket/>
+*/
 export default Dashboard;
 
 const TopNav = styled.div`

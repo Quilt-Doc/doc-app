@@ -27,11 +27,18 @@ class Bucket extends React.Component {
         }
     }
 
+    renderDisplay() {
+        if (this.renderCount() > 0){
+            return '1'
+        } else {
+            return '0'
+        }
+    }
     render(){
         return (
-            <NavbarButton>
-                <StyledIcon2 src = {archive_icon}/>
-                <Count>{this.renderCount()}</Count>
+            <NavbarButton display = {this.renderDisplay()}>
+                
+                <Count  >{this.renderCount()}</Count>
             </NavbarButton>
         )
     }
@@ -49,34 +56,38 @@ export default connect(mapStateToProps)(Bucket);
 
 const NavbarButton = styled.div`
     padding: 1.2rem 1.5rem;
-   
-    height: 7rem;
-    width: 10rem;
-    margin-left:12rem;
+    height: 3.2rem;
+    width: 3rem;
+    border-radius: 25%;
+    background-color: white;
+    margin-top: 2.2rem;
+    margin-left:26.5rem;
     font-size: 1.5rem;
     letter-spacing: 0.1rem;
     color:  #172A4E;
     cursor: pointer;
-
+    position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
     &:hover {
-        background-color:   #F1F3F4; 
-        border-radius: 4px;
+        
     }
+    border: 1px solid #1BE5BE;
+    transition: opacity 0.07s ease-in;
+    opacity: ${props => props.display};
+    
 `
 
 const StyledIcon2 = styled.img`
-    width: 2.5rem;
+    width: 1.2rem;
     cursor: pointer;
-   
+    color: #19E5BE;
 `
 
 const Count = styled.div`
-    font-size: 2.3rem;
-    font-weight: bold;
-    margin-top: 0.45rem;
+    font-size: 1.2rem;
+    font-weight: 300;
     color: #19E5BE;
-    margin-left: 1.7rem;
+    
 `

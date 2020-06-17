@@ -1,4 +1,3 @@
-
 import React, { useReducer, useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Slate, Editable, ReactEditor, withReact, useSlate } from 'slate-react'
 import { Node, Editor, Transforms, Text, createEditor } from 'slate'
@@ -581,10 +580,10 @@ const StyledEditable = styled(Editable)`
   caret-color: #46474f;
   color: #46474f;
   font-size: 16px;
-  margin: 0 auto;
   padding-top: 6rem;
-  width: 78%;
+  width: 83rem;
   padding-bottom: 2rem;
+  margin:0 auto;
 `
 
 const MenuHeader = styled.div`
