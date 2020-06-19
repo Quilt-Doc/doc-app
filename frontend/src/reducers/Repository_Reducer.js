@@ -46,7 +46,7 @@ export default (state = initialContents, action) => {
             };
         case UPDATE_REPOSITORY_REFS:
             return {
-                ...state, references: action.references
+                ...state, references: action.payload
             }
         case CREATE_REPOSITORY:
             

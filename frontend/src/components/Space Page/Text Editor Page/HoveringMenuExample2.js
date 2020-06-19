@@ -8,6 +8,10 @@ import styled from "styled-components";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import Prism from 'prismjs'
 
+
+//components
+import ReferenceMenu from './ReferenceMenu';
+
 import more_editor_icon from '../../../images/more_editor.svg'
 
 import "../../../css/prism.css";
@@ -32,6 +36,7 @@ import menu_editor from '../../../images/menu_editor.svg'
 //BUGS
 //TEXT AREA SCROLL BUG
 //HOVER POSITION IN DROPDOWN JUMPING SOMETIMES OR NOT MOVING ON DOWN PRESS
+// WHEN YOU TYPE TO SEARCH DROPDOWN IN BETWEEN SENTENCE, IT CUTS OFF QUICKLY (AFTER2 LETTERS)
 
 //EXTENSIONS/MAYBE
 // INSERT P NODE BELOW CODE OR LIST IF CREATED
@@ -81,12 +86,16 @@ const editor_reducer = (state, action) => {
 				{name: "Code snippet", icon: "code-slash-outline", block: "code-line"},
 				{name: "Code reference", icon: "code-slash-outline", block: "code-reference"}
 			 ]}
+		case 'turn_references_on':
+			return {...state, referenceDropdownActive: true, ...action.payload}
+		case 'turn_references_off':
+			return {...state, referenceDropdownActive: false}
 		case 'add_text':
 			//const active = state.is_active
 			const new_text = state.text + action.payload
 			return { ...state, text: new_text }
 		case 'update_focus':
-			if (state.is_active) {
+			if (state.is_active || state.referenceDropdownActive) {
 				return { ...state, focus: action.payload }
 			} else {
 				return state
@@ -95,6 +104,13 @@ const editor_reducer = (state, action) => {
 			return {...state, hovered: action.payload}
 		case 'setLengthBlocks':
 			return {...state, hovered: {position: 0, ui: state.hovered.ui}, blockLength: action.payload, blocks: action.filterBlocks}
+		case 'deleteText':
+			if (state.is_active || state.referenceDropdownActive) {
+				let text = state.text
+				return {...state, text: text.slice(0, text.length - 1)}
+			}
+		case 'clearDropdownFilter':
+				return {...state, text: ''}
 		default:
 			return state
 	}
@@ -268,12 +284,12 @@ const HoveringMenuExample = () => {
 	return (
 		<Slate editor={editor} value={value} onChange={value => setValue(value)}>
 			<HoveringToolbar dispatch={dispatch} range={range} active={state.is_active} rect={state.rect} hovered = {state.hovered} blockLength = {state.blockLength}/>
+			<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>
 			<StyledEditable
 				onClick = {() => {
 					if (state.is_active){
 						dispatch({'type': 'turn_active_off'})
 					}
-					
 				}}
 				onKeyDown={event => {
 					if (event.key === "Tab") {
@@ -372,10 +388,12 @@ const HoveringToolbar = (props) => {
 					 ]
 	let filteredBlockTypes = blockTypes
 	const toggleBlock = useCallback(
-		(editor, props, blocktype) => { /*selection_then, setActive, range, start_path) => {*/
+		(event, editor, props, blocktype) => { /*selection_then, setActive, range, start_path) => {*/
+			event.preventDefault()
 			let range = props.range
-			console.log("RANGE BLOCK", range)
-			console.log(Editor.start(editor, range.anchor.path))
+			let {selection} = editor
+			console.log(selection)
+
 			if (props.range.focus.offset !== props.range.anchor.offset) {
 				range = _.cloneDeep(props.range)
 				range.focus.offset += 1
@@ -383,45 +401,57 @@ const HoveringToolbar = (props) => {
 			//console.log(range)
 			Transforms.select(editor, range)
 			Transforms.delete(editor)
-			const node = { type: blocktype, children: [] }
 
-			console.log(Editor.start(editor, range.anchor.path))
-			console.log(range.anchor)
-			if (!Point.equals(range.anchor, Editor.start(editor, range.anchor.path))) {
-				Transforms.insertNodes(
-					editor,
-					node,
-					{ match: n => Editor.isBlock(editor, n), at: Editor.end(editor, range.focus.path) }
-				)
-	
-				Transforms.select(editor, { offset: 0, path: [range.focus.path[0] + 1, 0] })
+			if (blocktype === 'code-reference') {
+				//console.log("HERE 1")
+				props.dispatch({type: 'turn_active_off'})
+				
+				Transforms.insertText(editor, '*')
+				ReactEditor.focus(editor)
+				props.dispatch({type: 'turn_references_on'})
+				//console.log("HERE 2")
 			} else {
-				Transforms.setNodes(
-					editor,
-					{ type: blocktype },
-					{ match: n => Editor.isBlock(editor, n) }
-				)
+				const node = { type: blocktype, children: [] }
+
+				console.log(Editor.start(editor, range.anchor.path))
+				console.log(range.anchor)
+				if (!Point.equals(range.anchor, Editor.start(editor, range.anchor.path))) {
+					Transforms.insertNodes(
+						editor,
+						node,
+						{ match: n => Editor.isBlock(editor, n), at: Editor.end(editor, range.focus.path) }
+					)
+		
+					Transforms.select(editor, { offset: 0, path: [range.focus.path[0] + 1, 0] })
+				} else {
+					Transforms.setNodes(
+						editor,
+						{ type: blocktype },
+						{ match: n => Editor.isBlock(editor, n) }
+					)
+				}
+				if (blocktype === 'code-line') {
+					const list = { type: 'code-block', children: [] }
+					Transforms.wrapNodes(editor, list, {
+						match: n => n.type === 'code-line',
+					})
+				}
+
+				if (blocktype === 'list-item') {
+					const list = { type: 'bulleted-list', children: [] }
+					Transforms.wrapNodes(editor, list, {
+						match: n => n.type === 'list-item',
+					})
+				}
+
+
+				ReactEditor.focus(editor)
+
+				//Transforms.liftNodes(editor, {at: next_item.focus})
+
+				props.dispatch({ type: 'turn_active_off' })
 			}
-			if (blocktype === 'code-line') {
-				const list = { type: 'code-block', children: [] }
-				Transforms.wrapNodes(editor, list, {
-					match: n => n.type === 'code-line',
-				})
-			}
-
-			if (blocktype === 'list-item') {
-				const list = { type: 'bulleted-list', children: [] }
-				Transforms.wrapNodes(editor, list, {
-					match: n => n.type === 'list-item',
-				})
-			}
-
-
-			ReactEditor.focus(editor)
-
-			//Transforms.liftNodes(editor, {at: next_item.focus})
-
-			props.dispatch({ type: 'turn_active_off' })
+			
 
 
 			//Transforms.delete(editor)
@@ -505,16 +535,13 @@ const HoveringToolbar = (props) => {
 							<MenuButton  
 								onMouseEnter = {() => props.dispatch({type: 'setHovered', payload: {position: i, ui: 'mouse'}})}
 								backgroundColor = {backgroundColor} 
-								onClick={() => { toggleBlock(editor, props, block.block) }}
+								onClick={(e) => { toggleBlock(e, editor, props, block.block) }}
 							>
 								<IconBorder><ion-icon style={{ 'fontSize': '20px !important' }} name={block.icon}></ion-icon></IconBorder>
 								<MenuButtonText>{block.name}</MenuButtonText>
 							</MenuButton>
 						)
 					})
-		
-		console.log(blocks.length)
-		console.log(props.blockLength)
 		if (blocks.length !== props.blockLength) {
 			props.dispatch({type: 'setLengthBlocks', filterBlocks: filteredBlockTypes,  payload: blocks.length})
 		}
@@ -728,6 +755,27 @@ const withShortcuts = (editor, dispatch) => {
 	editor.isVoid = element => {
 		return element.type === 'code-reference' ? true : isVoid(element)
 	}
+
+	editor.insertBlock = (attributes, range) => {
+		let text = Array.from(Node.texts(editor, {from: range.anchor.path, to: range.anchor.path}))[0][0].text.trim()
+		if (text !== '') {
+			let node = { ...attributes, children: [] }
+			Transforms.insertNodes(
+				editor,
+				node,
+				{ match: n => Editor.isBlock(editor, n), at: Editor.end(editor, range.focus.path) }
+			)
+			Transforms.select(editor, { offset: 0, path: [range.focus.path[0] + 1, 0] })
+		} else {
+			Transforms.setNodes(
+				editor,
+				attributes,
+				{ match: n => Editor.isBlock(editor, n) }
+			)
+		}
+
+		dispatch({type: "clearDropdownFilter"})
+	}
 	
 	editor.insertText = text => {
 
@@ -738,19 +786,25 @@ const withShortcuts = (editor, dispatch) => {
 		})
 
 		let [block, path] = match
-		if (text === "/" && block.type !== 'code-line') {
-			console.log(block)
-			const domSelection = window.getSelection()
-			const domRange = domSelection.getRangeAt(0)
-			const rect = domRange.getBoundingClientRect()
-			//console.log(rect)
-			dispatch({ type: 'turn_active_on', payload: { rect, anchor: selection.focus, focus: selection.focus} })
-		}
-
 
 		dispatch({ type: 'update_focus', payload: selection.focus })
 
 		dispatch({ type: 'add_text', payload: text })
+
+		if (text === "*" && block.type !== 'code-line') {
+			const domSelection = window.getSelection()
+			const domRange = domSelection.getRangeAt(0)
+			const rect = domRange.getBoundingClientRect()
+			dispatch({type: 'turn_references_on', payload: { rect, anchor: selection.focus, focus: selection.focus, text: ''}})
+		}
+
+		if (text === "/" && block.type !== 'code-line') {
+			const domSelection = window.getSelection()
+			const domRange = domSelection.getRangeAt(0)
+			const rect = domRange.getBoundingClientRect()
+			//console.log(rect)
+			dispatch({ type: 'turn_active_on', payload: { rect, anchor: selection.focus, focus: selection.focus, text:''} })
+		}
 
 		if (text === ' ' && selection && Range.isCollapsed(selection)) {
 			const { anchor } = selection
@@ -793,16 +847,23 @@ const withShortcuts = (editor, dispatch) => {
 		console.log("SELECTION", selection)
 		console.log("ARGS", args)
 
+
+
 		if (selection && Range.isCollapsed(selection)) {
 			//acquire node entry at selection
 			const match = Editor.above(editor, {
 				match: n => Editor.isBlock(editor, n),
 			})
 
+			dispatch({type: 'deleteText'})
 			let texts = Node.texts(editor, {from: selection.anchor.path, to: selection.focus.path})
 			for (let t of texts){
-				if (t[0].text.slice(selection.focus.offset - 1, selection.focus.offset) === "/") {
+				let lastSeen = t[0].text.slice(selection.focus.offset - 1, selection.focus.offset)
+				if (lastSeen === "/") {
 					dispatch({type: 'turn_active_off'})
+				}  else if  (lastSeen === "*") {
+					console.log("ENTERED *")
+					dispatch({type: 'turn_references_off'})
 				}
 			}
 
@@ -810,8 +871,6 @@ const withShortcuts = (editor, dispatch) => {
 			if (match) {
 				const [block, path] = match
 				const start = Editor.start(editor, path)
-
-				console.log("END PATH", Editor.end(editor, path))
 				if (
 					block.type !== 'paragraph' &&
 					Point.equals(selection.anchor, start) &&
@@ -837,15 +896,21 @@ const withShortcuts = (editor, dispatch) => {
 	return editor
 }
 
-const CodeReference = () => {
+const CodeReference = (props) => {
 	return (
-		<CodeReferenceBox contentEditable = {false}>
-			<ReferenceClassName>class</ReferenceClassName>
-			<CodeLine2>torch.utils.data.DataLoader<i>(dataset, batch_size=1, shuffle=False, sampler=None, batch_sampler=None, num_workers=0, collate_fn=None, pin_memory=False, drop_last=False, timeout=0, worker_init_fn=None, multiprocessing_context=None)</i></CodeLine2>
+		<CodeReferenceBox contentEditable = {false} color = {props.color} >
+			<ReferenceClassName color = {props.color} >{props.kind}</ReferenceClassName>
+			<CodeLine2>{props.path}<Name>{props.name}</Name></CodeLine2>
 			<Source>[SOURCE]</Source>
 		</CodeReferenceBox>
 	)
 }
+
+const Name = styled.span`
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: #172A4E;
+`
 
 const Source = styled.div`
 	font-size: 1rem;
@@ -870,7 +935,7 @@ const CodeLine2 = styled.div`
 
 const ReferenceClassName = styled.div`
 	text-transform: uppercase;
-	color: #19E5BE;
+	color: ${props => props.color};
 	font-size: 1.5rem;
 	width: 15rem;
 `
@@ -879,7 +944,7 @@ const CodeReferenceBox = styled.div`
 	margin-top: 2.5rem;
 	background-color: #F7F9FB;
 	padding: 2rem;
-	border-top: 2.25px solid #19E5BE;
+	border-top: 2.25px solid ${props => props.color};
 	display: flex;
 `
 
@@ -946,6 +1011,7 @@ class Element extends React.Component {
 		switch (element.type) {
 			case 'heading-one':
 				return (<Wrapper
+							
 							onMouseEnter = {() => this.setState({opacity: 1})}
 							onMouseLeave = {() => this.setState({opacity: 0})}
 						>
@@ -997,6 +1063,7 @@ class Element extends React.Component {
 							<Wrapper
 								onMouseEnter = {() => this.setState({opacity: 1})}
 								onMouseLeave = {() => this.setState({opacity: 0})}
+							
 							>
 								<LeftNav contentEditable = {false} opacity = {this.state.opacity}>
 									<StyledIcon cursor = {'pointer'} width={'1.8'} src={menu_editor} />
@@ -1012,7 +1079,14 @@ class Element extends React.Component {
 						)
 			case 'code-reference':
 				return (
-							<CodeReference {...attributes}>{children}</CodeReference>
+							<CodeReference  
+								color = {element.color} 
+								path = {element.path}
+								name = {element.name}
+								kind = {element.kind}
+								{...attributes}>{children}
+							</CodeReference>
+								
 						)
 			case 'function-reference':
 				return (
@@ -1170,22 +1244,6 @@ const initialValue = [
 		],
 	},
 	{
-		type: 'function-reference',
-		children: [
-			{
-				type: 'code-line',
-				children: [{ text: 'import numpy as np' }]
-			},
-			{
-				type: 'code-line',
-				children: [{ text: '       ' }]
-			},
-			{
-				type: 'code-line',
-				children: [{ text: '  def pingu(x: int):' }]
-			}],
-	},
-	{
 		type: 'code-block',
 		children: [
 			{
@@ -1218,22 +1276,6 @@ const initialValue = [
 					'An iterable-style dataset is an instance of a subclass of IterableDataset that implements the __iter__() protocol, and represents an iterable over data samples. This type of datasets is particularly suitable for cases where random reads are expensive or even improbable, and where the batch size depends on the fetched data.',
 			},
 		],
-	},
-	{
-		type: 'code-reference',
-		children: [
-			{
-				type: 'code-line',
-				children: [{ text: 'import numpy as np' }]
-			},
-			{
-				type: 'code-line',
-				children: [{ text: '       ' }]
-			},
-			{
-				type: 'code-line',
-				children: [{ text: '  def pingu(x: int):' }]
-			}],
 	}
 ]
 
