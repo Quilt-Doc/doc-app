@@ -69,6 +69,7 @@ export const getRepositoryRefs = (repoLink) => async (dispatch) => {
     const response = await api.post('/repositories/get_refs', repoLink);
     console.log('getRefs response');
     console.log(response)
+    dispatch({ type: UPDATE_REPOSITORY_REFS, payload: response.data})
 }
 
 export const clearRepositoryRefs = () => async (dispatch) => {

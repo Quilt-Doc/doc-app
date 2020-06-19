@@ -62,7 +62,7 @@ const Container = styled.div`
 const Header = styled.div`
     font-size: 3.5rem;
     color: #172A4E;
-    font-weight: bold;
+    font-weight:400;
     letter-spacing: 0.1rem;
     margin-bottom: 7rem;
 `
