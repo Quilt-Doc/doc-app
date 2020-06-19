@@ -12,7 +12,8 @@ const session = require('express-session');
 
 // This should be an environment variable
 const password = process.env.EXTERNAL_DB_PASS
-var dbRoute = `mongodb+srv://fsanal:${password}@documentationapp-vtdfe.mongodb.net/test?retryWrites=true&w=majority`
+const user = process.env.EXTERNAL_DB_USER;
+var dbRoute = `mongodb+srv://${user}:${password}@docapp-cluster-hnftq.mongodb.net/<dbname>?retryWrites=true&w=majority`
 
 console.log(process.env.USE_EXTERNAL_DB);
 
