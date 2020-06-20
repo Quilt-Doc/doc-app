@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.699.0",
     "axios": "^0.19.2",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
@@ -18,8 +19,10 @@
     "fs-path": "0.0.24",
     "mongoose": "^5.8.7",
     "morgan": "^1.9.1",
+    "node-windows": "^1.0.0-beta.1",
     "nodemon": "^2.0.2",
     "request": "^2.88.0",
+    "uuid": "^8.1.0",
     "xml2js": "^0.4.23",
     "xmldom": "^0.3.0"
   }

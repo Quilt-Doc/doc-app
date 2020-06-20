@@ -2,10 +2,12 @@ const url = require('url');
 
 var request = require("request");
 
-const axios = require('../apis/api');
+const apis = require('../apis/api');
 const parseUtils = require('../utils/parse_code');
 
-const api = axios.requestClient();
+const api = apis.requestClient();
+const sqs = apis.requestSQSServiceObject();
+const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 
 const apiURL = 'https://api.github.com';
 
@@ -17,6 +19,12 @@ const fsPath = require('fs-path');
 const Repository = require('../models/Repository');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
+
+var EventLogger = require('node-windows').EventLogger;
+
+var log = new EventLogger('DocApp EventLogger Hello!');
+
+const { v4 } = require('uuid');
 
 /*repositorySearch = (req, res) => {
     console.log(req.body);
@@ -139,8 +147,50 @@ getRepositoryRefs = (req, res) => {
     console.log('getRepositoryRefs received content: ', req.body);
     if (typeof repoLink == 'undefined' || repoLink == null) return res.json({success: false, error: 'no repo repoLink provided'});
 
-    var finalRepoLink = url.resolve(repoBaseURL, repoLink);
-    parseUtils.getRefs(repoLink, finalRepoLink, res);
+    var timestamp = Date.now().toString();
+    // log.info('Timestamp: ', timestamp);
+    var apiCallLink = url.resolve(repoBaseURL, repoLink);
+
+    var getRefsData = {
+        'repoLink': repoLink,
+        'apiCallLink': apiCallLink,
+    }
+    var uuid = v4();
+    var sqsRefsData = {
+        MessageAttributes: {
+          "repoLink": {
+            DataType: "String",
+            StringValue: getRefsData.repoLink
+          },
+          "apiCallLink": {
+            DataType: "String",
+            StringValue: getRefsData.apiCallLink
+          }
+        },
+        MessageBody: JSON.stringify(getRefsData),
+        MessageDeduplicationId: timestamp,
+        MessageGroupId: "getRefRequest_" + timestamp,
+        QueueUrl: queueUrl
+    };
+
+    log.info(`Refs | MessageDeduplicationId: ${timestamp}`);
+    log.info(`Refs | MessageGroupId: getRefRequest_${timestamp}`);
+
+    // Send the refs data to the SQS queue
+    let sendSqsMessage = sqs.sendMessage(sqsRefsData).promise();
+
+    sendSqsMessage.then((data) => {
+        log.info(`Refs | SUCCESS: ${data.MessageId}`)
+        console.log(`Refs | SUCCESS: ${data.MessageId}`);
+        res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
+    }).catch((err) => {
+        log.error(`Refs | ERROR: ${err}`)
+        console.log(`Refs | ERROR: ${err}`);
+
+        // Send email to emails API
+        res.json({success: false, msg: "We ran into an error. Please try again."});
+    });
+    // parseUtils.getRefs(repoLink, apiCallLink, res);
 }
 
 

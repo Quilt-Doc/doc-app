@@ -23,21 +23,29 @@ getRefs = (repoLink, finalRepoLink, res) => {
 
     var timestamp = Date.now().toString();    
     var repo_disk_path = 'git_repos/' + timestamp +'/';
-    const { exec, execFile } = require('child_process');
+    const { exec, execFile, spawn } = require('child_process');
 
     const child = execFile('git', ['clone', finalRepoLink, repo_disk_path], (error, stdout, stderr) => {
         if (error) {
-            return res.json({success: false, error: 'getRefs error on execFile: ' + error});
+            return res.json({success: false, error: '#1 getRefs error on execFile: ' + error});
         }
         console.log('getRefs git clone successful');
         var new_env = process.env;
         new_env.DOXYGEN_FILE = repo_disk_path;
         new_env.DOXYGEN_XML_DIR = 'git_repos/' + timestamp + '_xml/';
 
-        const child = execFile('doxygen', ['Doxyfile'], {env: new_env}, (error, stdout, stderr) => {
+        const child_spawn = spawn('doxygen', ['Doxyfile'], {env: new_env, stdio: [
+    0, // Use parent's stdin for child.
+    'pipe', // Pipe child's stdout to parent.
+    fs.openSync('err.out', 'w') // Direct child's stderr to a file.
+  ]});
+        child_spawn.on('exit', code => {
+            console.log(`Exit code is: ${code}`);
+
+       /* const child = execFile('doxygen', ['Doxyfile'], {env: new_env}, (error, stdout, stderr) => {
             if (error) {
-                return res.json({success: false, error: 'parseCode error on execFile: ' + error});
-            }
+                return res.json({success: false, error: '#1. parseCode error on execFile: ' + error});
+            }*/
             console.log('getRefs doxygen successful');
 
             fs.readdir(new_env.DOXYGEN_XML_DIR, (err, files) => {
@@ -133,7 +141,7 @@ getRefs = (repoLink, finalRepoLink, res) => {
                                             // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
                                             file = file.substring(file.indexOf('/')+1)
                                             file = file.substring(file.indexOf('/')+1)
-                                            found_refs.push({name: name, kind: kind, file: file, location: location, link: repoLink})
+                                            found_refs.push({name: name, kind: kind, file: file, lineNum: location, link: repoLink})
                                         }
                                     })
                                 });
@@ -178,7 +186,7 @@ parseCode = (fileName, res) => {
     new_env.DOXYGEN_XML_DIR = xml_dir;
     const child = execFile('doxygen', ['Doxyfile'], {env: new_env}, (error, stdout, stderr) => {
         if (error) {
-            return res.json({success: false, error: 'parseCode error on execFile: ' + error});
+            return res.json({success: false, error: 'Rat lord parseCode error on execFile: ' + error});
         }
 
         // Time to construct the final JSON to return
