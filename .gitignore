@@ -24,6 +24,10 @@ backend/git_repo*
 # Ignore doxygen related files
 backend/doxygen*
 
+# Ignore Windows service executables
+backend/daemon*
+worker/daemon*
+
 node_modules/*
 
 # Ignore github-app node_modules
@@ -31,3 +35,6 @@ github-app/node_modules/*
 
 # Ignore node_modules in frontend
 frontend/node_modules/*
+
+# Ignore node_modules in backend
+worker/node_modules/*

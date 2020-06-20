@@ -12,12 +12,14 @@ const session = require('express-session');
 
 // This should be an environment variable
 const password = process.env.EXTERNAL_DB_PASS
-var dbRoute = `mongodb+srv://fsanal:${password}@documentationapp-vtdfe.mongodb.net/test?retryWrites=true&w=majority`
+const user = process.env.EXTERNAL_DB_USER;
+var dbRoute = `mongodb+srv://${user}:${password}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`
 
 console.log(process.env.USE_EXTERNAL_DB);
 
-if (!typeof process.env.USE_EXTERNAL_DB !== 'undefined' && process.env.USE_EXTERNAL_DB == 0) {
+if (process.env.USE_EXTERNAL_DB == 0) {
     dbRoute = 'mongodb://127.0.0.1:27017?retryWrites=true&w=majority'
+    console.log('Running')
 }
 console.log(dbRoute);
 
