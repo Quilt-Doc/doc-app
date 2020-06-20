@@ -11,7 +11,7 @@ import DirectoryItem from './DirectoryItem';
 
 //actions
 import { refreshRepositoryPathNew, getRepositoryRefs } from '../../../actions/Repository_Actions';
-
+import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
 //connect
 import { connect } from 'react-redux';
 
@@ -19,32 +19,45 @@ class DirectoryView extends React.Component {
 
     componentDidMount() {
         // acquires the repository path from the url --- may need to change how this is done (hash, github Oauth)
-        console.log(window.location.pathname.slice(22))
+        
+        let urlSplit = window.location.pathname.split('/').slice(3)
+        if (urlSplit.slice(urlSplit.length - 1)[0] === '') {
+            urlSplit.pop()
+        }
+        let path = urlSplit.length > 1 ? urlSplit.slice(1).join('/') : ''
+        this.props.retrieveRepositoryItems({path, repositoryID: urlSplit.slice(0, 1)[0]})
+        /*
         this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)}).then(() => {
             console.log('Passing repo link: ', this.props.rep)
             this.props.getRepositoryRefs({
                 repoLink: window.location.pathname.slice(22)
             });
         })
+        */
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.location.pathname !== this.props.location.pathname) {
-            this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)})
+            let urlSplit = window.location.pathname.split('/').slice(3)
+            if (urlSplit.slice(urlSplit.length - 1)[0] === '') {
+                urlSplit.pop()
+            }
+            let path = urlSplit.length > 1 ? urlSplit.slice(1).join('/') : ''
+            this.props.retrieveRepositoryItems({path, repositoryID: urlSplit.slice(0, 1)[0]})
         }
     }
 
     renderFolders = () => {
-        let directories = this.props.contents.filter(content => content.type === "dir")
+        let directories = this.props.repositoryItems.filter(repositoryItem => repositoryItem.kind === "dir")
 
         if (directories) {
             directories = directories.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
         }
 
         return directories.map((directory, i) => {
-            let borderBottom = i === this.props.contents.length - 1 ? '1px solid #EDEFF1;' : ''
+            let borderBottom = i === this.props.repositoryItems.length - 1 ? '1px solid #EDEFF1;' : ''
             return (<DirectoryItem 
-                        key = {directory.sha} 
+                        key = {directory._id} 
                         item = {directory}
                         type = {'folder'}
                         borderBottom = {borderBottom}
@@ -54,7 +67,7 @@ class DirectoryView extends React.Component {
     }
 
     renderFiles = () => {
-        let files = this.props.contents.filter(content => content.type === "file")
+        let files = this.props.repositoryItems.filter(repositoryItem => repositoryItem.kind === "file")
 
         if (files) {
             files = files.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
@@ -62,7 +75,7 @@ class DirectoryView extends React.Component {
         return files.map((file, i) => {
             let borderBottom = i === files.length - 1 ? '1px solid #EDEFF1;' : ''
             return (<DirectoryItem 
-                        key = {file.sha} 
+                        key = {file._id} 
                         item = {file}
                         type = {'document-outline'} 
                         borderBottom = {borderBottom}
@@ -71,7 +84,7 @@ class DirectoryView extends React.Component {
     }
 
     render() {
-        if (this.props.contents) {
+        if (this.props.repositoryItems) {
             return (
                     <DirectoryContainer>
                         {this.renderFolders()}
@@ -83,19 +96,12 @@ class DirectoryView extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    console.log('STATE.repositories.pathContents: ', state.repositories.pathContents)
-    if (typeof state.repositories.pathContents == 'undefined' || state.repositories.pathContents == null){
-        return {
-            contents: [],
-        }
-    }
-
     return {
-        contents: Object.values(state.repositories.pathContents),
+        repositoryItems: Object.values(state.repositoryItems),
     }
 }
 
-export default withRouter(connect(mapStateToProps, { refreshRepositoryPathNew, getRepositoryRefs } )(DirectoryView));
+export default withRouter(connect(mapStateToProps, { refreshRepositoryPathNew, getRepositoryRefs, retrieveRepositoryItems } )(DirectoryView));
 
 
 const DirectoryContainer = styled.div`

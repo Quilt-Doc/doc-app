@@ -54,7 +54,7 @@ const Container = styled.div`
     width: 120rem;
     margin: 0 auto;
     margin-top: 5rem;
-    
+    margin-left: 5rem;
 `
 
 // DIRECTORY COMPONENTS

@@ -42,9 +42,8 @@ class RepositoryView extends React.Component {
         this.props.retrieveRepositories()
     }
 
-    renderLink(link) {
-        let position = link.indexOf('github.com/');
-        return `/repository/directory/${link.slice(position + 11, link.length)}`
+    renderLink(id) {
+        return `/repository/directory/${id}`
     }
 
     renderRepositories() {
@@ -53,7 +52,7 @@ class RepositoryView extends React.Component {
         let repositoriesJSX = []
         this.props.repositories.map((repository, i) => {
             repositoriesJSX.push(
-                <Link key = {i} to = {this.renderLink(repository.link)}><RepoBox onClick = {() => {console.log(repository.link)}}>
+                <Link key = {i} to = {this.renderLink(repository._id)}><RepoBox onClick = {() => {console.log(repository.link)}}>
                     <StyledIcon src = {icons[repository.icon]}/>
                     {repository.name}
                 </RepoBox></Link>

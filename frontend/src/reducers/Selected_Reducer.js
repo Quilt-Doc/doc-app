@@ -12,9 +12,9 @@ export default (state = {}, action) => {
     switch (action.type) {
        
         case ADD_SELECTED:
-            return { ...state, [action.payload.sha]: action.payload };
+            return { ...state, [action.payload._id]: action.payload };
         case DELETE_SELECTED:
-            return _.omit(state, action.payload.sha);
+            return _.omit(state, action.payload._id);
         default:
             return state
     }

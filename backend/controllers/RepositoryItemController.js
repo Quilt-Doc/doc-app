@@ -77,7 +77,7 @@ retrieveRepositoryItems = (req, res) => {
     query = RepositoryItem.find();
     if (kind) query.where('kind').equals(kind);
     if (name) query.where('name').equals(name);
-    if (path) query.where('path').equals(path);
+    if (path || path === '') query.where('path').equals(path);
     if (repositoryID) query.where('repository').equals(repositoryID);
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
