@@ -131,5 +131,8 @@ router.put('/repository/items/edit/:id', repository_item_controller.editReposito
 router.get('/repository/items/get/:id', repository_item_controller.getRepositoryItem);
 router.post('/repository/items/retrieve', repository_item_controller.retrieveRepositoryItems);
 router.delete('/repository/items/delete/:id', repository_item_controller.deleteRepositoryItem);
+router.post('/repository/items/attach_document', repository_item_controller.attachDocument);
+router.post('/repository/items/remove_document', repository_item_controller.removeDocument);
+
 
 module.exports = router;

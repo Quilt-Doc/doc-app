@@ -46,13 +46,7 @@ class Bucket extends React.Component {
 }
 
 
-const mapStateToProps = (state) => {
-    return {
-        selected : Object.values(state.selected)
-    }
-}
-
-export default connect(mapStateToProps)(Bucket);
+export default Bucket;
 
 const NavbarButton = styled.div`
     padding: 1.2rem 1.5rem;

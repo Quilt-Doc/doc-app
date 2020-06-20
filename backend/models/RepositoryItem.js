@@ -8,6 +8,7 @@ var repositoryItemSchema = new Schema({
 	name: String,
 	path: String,
 	kind: String,
+	documents: [{type: ObjectId, ref: 'Document'}],
 	created: {type: Date, default: Date.now }
 });
 

@@ -3,6 +3,9 @@ import React from 'react';
 //styles 
 import styled from "styled-components";
 
+//redux
+import { connect } from 'react-redux';
+
 //components
 import HoveringMenuExample from './Text Editor Page/HoveringMenuExample';
 import RepositoryNavigation from './RepositoryNavigation';
@@ -13,6 +16,13 @@ import Bucket from '../General Components/Top Navbar/Bucket';
 import { Switch, Route, Link } from 'react-router-dom';
 import history from '../../history';
 
+//actions
+import { createDocument } from '../../actions/Document_Actions';
+import { attachDocument } from '../../actions/RepositoryItem_Actions';
+import { clearSelected } from '../../actions/Selected_Actions';
+
+import { HistoryEditor } from 'slate-history';
+
 class SideNavbar extends React.Component {
     constructor(props) {
         super(props)
@@ -20,6 +30,26 @@ class SideNavbar extends React.Component {
             searchbarBorder: ''
         }
     }
+
+    createDocumentFromButton() {
+        this.props.createDocument().then(document => {
+            let repositoryItemIDs = this.props.selected.map(item => item._id)
+            this.props.attachDocument({repositoryItemIDs, documentID : document._id}).then(() => {
+                this.props.clearSelected()
+                let urlItems = window.location.pathname.split('/').slice(0, 4)
+                urlItems.push('document')
+                urlItems.push(document._id)
+                console.log("URL", urlItems.join('/'))
+                history.push(urlItems.join('/'))
+            })
+
+            /*
+            this.props.attachDocument({})
+            */
+        })
+    }
+
+
     render(){
         return(
             <SideNavbarContainer>
@@ -31,10 +61,10 @@ class SideNavbar extends React.Component {
                     <ion-icon style={{'color': '#1BE5BE', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
                     <Searchbar placeholder = {'Search Docs..'} spellCheck = {false} />
                 </SearchbarWrapper>
-                <DocumentCreateButton onClick = {this.props.openModal} >
+                <DocumentCreateButton onClick = { () => {this.createDocumentFromButton()}} >
                     <ion-icon style={{'color': 'white', 'fontSize': '2.4rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
                     Create Document
-                    <Bucket/>
+                    <Bucket selected = {this.props.selected}/>
                 </DocumentCreateButton>
                
                 <DocumentationContainer>
@@ -115,7 +145,13 @@ class SideNavbar extends React.Component {
 }
 
 
-export default SideNavbar;
+const mapStateToProps = (state) => {
+    return {
+        selected : Object.values(state.selected)
+    }
+}
+
+export default connect(mapStateToProps, { createDocument, attachDocument, clearSelected })(SideNavbar);
 
 
 const SideNavbarContainer = styled.div`

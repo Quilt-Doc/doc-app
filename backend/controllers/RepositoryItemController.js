@@ -22,7 +22,7 @@ createRepositoryItem = (req, res) => {
 
     repositoryItem.save((err, repositoryItem) => {
         if (err) return res.json({ success: false, error: err });
-        repositoryItem.populate('repository', (err, repositoryItem) => {
+        repositoryItem.populate('documents').populate('repository', (err, repositoryItem) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(repositoryItem)
         });
@@ -36,7 +36,7 @@ getRepositoryItem = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository item id provided'});
     RepositoryItem.findById(id, (err, repositoryItem) => {
 		if (err) return res.json({success: false, error: err});
-        repositoryItem.populate('repository', (err, repositoryItem) => {
+        repositoryItem.populate('documents').populate('repository', (err, repositoryItem) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(repositoryItem);
         });
@@ -52,7 +52,7 @@ editRepositoryItem = (req, res) => {
     if (kind) update.kind = kind;
     RepositoryItem.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, repositoryItem) => {
         if (err) return res.json({ success: false, error: err });
-        repositoryItem.populate('repository', (err, repositoryItem) => {
+        repositoryItem.populate('documents').populate('repository', (err, repositoryItem) => {
             if (err) return res.json(err);
             return res.json(repositoryItem);
         });
@@ -65,7 +65,7 @@ deleteRepositoryItem = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository item id provided'});
     RepositoryItem.findByIdAndRemove(id, (err, repositoryItem) => {
 		if (err) return res.json({success: false, error: err});
-        repositoryItem.populate('repository', (err, repositoryItem) => {
+        repositoryItem.populate('documents').populate('repository', (err, repositoryItem) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(repositoryItem);
         });
@@ -81,10 +81,45 @@ retrieveRepositoryItems = (req, res) => {
     if (repositoryID) query.where('repository').equals(repositoryID);
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
-    query.populate('repository').exec((err, repositoryItems) => {
+    query.populate('documents').populate('repository').exec((err, repositoryItems) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(repositoryItems);
     });
 }
 
-module.exports = { createRepositoryItem, getRepositoryItem, editRepositoryItem, deleteRepositoryItem, retrieveRepositoryItems }
+attachDocument = (req, res) => {
+    const { repositoryItemIDs, documentID } = req.body;
+    console.log("REPITEMIDS", repositoryItemIDs)
+    console.log("DOCIDS", documentID)
+    let filter = { _id: { $in: repositoryItemIDs }}
+    let update = {}
+    if (documentID) update.documents = ObjectId(documentID);
+    RepositoryItem.updateMany(filter, { $push: update }, { new: true }, (err, modified) => {
+        if (err) return res.json({ success: false, error: err });
+        let query =  RepositoryItem.find(filter);
+        query.populate('repository').populate('documents').exec((err2, repositoryItems) => {
+            if (err2) return res.json({ success: false, error: err2 });
+            console.log(repositoryItems)
+            return res.json(repositoryItems)
+        })
+    })
+}
+
+removeDocument = (req, res) => {
+    const { repositoryItemIDs, documentID } = req.params;
+    let filter = { _id: { $in: repositoryItemIDs }}
+    let update = {}
+    if (documentID) update.documents = ObjectId(documentID);
+    RepositoryItem.updateMany(filter, { $pull: update }, { new: true }, (err, repositoryItems) => {
+        if (err) return res.json({ success: false, error: err });
+        repositoryItems.populate('repository').populate('documents', (err, repositoryItems) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(repositoryItems)
+        });
+    })
+}
+
+module.exports = { createRepositoryItem, getRepositoryItem,
+    editRepositoryItem, deleteRepositoryItem, retrieveRepositoryItems,
+    attachDocument, removeDocument
+}

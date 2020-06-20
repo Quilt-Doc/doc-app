@@ -34,3 +34,9 @@ export const editRepositoryItem = (id, formValues) => async dispatch => {
     const response = await api.put(`/repository/items/edit/${id}`, formValues);
     dispatch({ type: EDIT_REPOSITORYITEM, payload: response.data });
 }
+
+export const attachDocument = (formValues) => async dispatch => {
+    const response = await api.post(`repository/items/attach_document`, formValues);
+    console.log(response)
+    /*dispatch({ type: EDIT_REPOSITORYITEM, payload: response.data });*/
+}

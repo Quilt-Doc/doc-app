@@ -5,8 +5,6 @@ const { ObjectId } = Schema.Types;
 let documentSchema = new Schema({
     created: {type: Date, default: Date.now },
     authors: [{type: ObjectId, ref: 'User'}],
-    relevantFiles: String,
-    relevantFolders: String,
     title: String,
     markup: String,
     uploadFiles: [{type: ObjectId, index: true, ref: 'UploadFile'}],

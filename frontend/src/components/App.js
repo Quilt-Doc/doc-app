@@ -8,6 +8,7 @@ import Dashboard from './Dashboard';
 import DocumentCreate from './Document/DocumentCreate';
 import Test from './Test';
 import ReferenceMenu from './Space Page/Text Editor Page/ReferenceMenu';
+import TextEditorView from './Space Page/Text Editor Page/TextEditorView';
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
 
 //split markers -- directory, file
@@ -15,7 +16,6 @@ const App = () => {
     return (<>
                 <Router history = {history}>
                   <Route path = "" component = {Dashboard} />
-                 
                 </Router>
             </>)
 }
