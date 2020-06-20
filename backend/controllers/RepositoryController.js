@@ -8,12 +8,13 @@ const parseUtils = require('../utils/parse_code');
 const api = axios.requestClient();
 
 const apiURL = 'https://api.github.com';
-
+const localURL = 'https://localhost:3001/api'
 const repoBaseURL = 'https://github.com/'
 
 const fs = require('fs');
 const fsPath = require('fs-path');
 
+const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -145,9 +146,7 @@ getRepositoryRefs = (req, res) => {
 
 
 createRepository = (req, res) => {
-    console.log('Called create repository');
     const {name, workspaceID, link, debugID, icon} = req.body;
-
 
     // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no repository workspace provided'});
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no repository name provided'});
@@ -158,7 +157,7 @@ createRepository = (req, res) => {
         icon
         // workspaceID: ObjectId(workspaceID)
     });
-    console.log('Link: ', link);
+
 
     // Check if user-defined ids allowed
     if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
@@ -166,13 +165,44 @@ createRepository = (req, res) => {
     }
 
     if (workspaceID) repository.workspace = ObjectId(workspaceID)
+
+    let linkItems = link.split('/')
+
+    // looks like pytorch/fairseq
+    let repositoryNameOwner = linkItems.slice(linkItems.length - 3, linkItems.length - 1).join('/')
+
+
     repository.save((err, repository) => {
-        console.log(err)
         if (err) return res.json({ success: false, error: err });
-        repository.populate('workspace', (err, repository) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(repository);
-        });
+
+        // Get all commits from default branch 
+        api.get(`${apiURL}/repos/${repositoryNameOwner}/commits`).then((response) => {
+
+            // Extract tree SHA from most recent commit
+            let treeSHA = response.data[0].commit.tree.sha
+
+            // Extract contents using tree SHA
+            api.get(`${apiURL}/repos/${repositoryNameOwner}/git/trees/${treeSHA}?recursive=true`).then((response) => {
+                let repositoryItems = response.data.tree.map(item => {
+                    let pathSplit = item.path.split('/')
+                    let name = pathSplit.slice(pathSplit.length - 1)[0]
+                    let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
+                    let kind = item.type === 'blob' ? 'file' : 'dir'
+                    return {name, path, kind, repository: ObjectId(repository._id)}
+                })
+                
+                // Save repository contents as items in our database
+                RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
+                    if (errInsertItems) return res.json({ success: false, error: errInsertItems });
+                    repository.populate('workspace', (errPopulation, repository) => {
+                        if (errPopulation) return res.json({ success: false, error: errPopulation });
+
+                        // return the repository object
+                        return res.json(repository);
+                    });
+                })
+            })
+        })
     });
 }
 
@@ -223,7 +253,7 @@ retrieveRepositories = (req, res) => {
 
 
 updateRepositoryCommit = (req, res) => {
-    console.log(req.body);
+    //console.log(req.body);
     var { repo_id, repo_link } = req.body;
     if (!typeof repo_id == 'undefined' && repo_id !== null) return res.json({success: false, error: 'no repo repo_id provided'});
     if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no repo repo_link provided'});
@@ -234,14 +264,14 @@ updateRepositoryCommit = (req, res) => {
     commit_url = url.resolve(commit_url, repo_link);
     commit_url = url.resolve(commit_url, 'commits');
 
-    console.log('FINAL REQ URL: ', commit_url);
+    //console.log('FINAL REQ URL: ', commit_url);
 
     api.get(commit_url)
     .then(function (response) {
-        console.log('repoUpdateCommit response: ');
-        console.log(response.data);
+        //console.log('repoUpdateCommit response: ');
+        //console.log(response.data);
         var latest_sha = response.data[0]['sha'];
-        console.log('latest_sha: ', latest_sha);
+        //console.log('latest_sha: ', latest_sha);
         
         Codebase.findById(repo_id, (err, codebase) => {
             // console.log('last_processed_commit.length: ', )

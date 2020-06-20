@@ -31,7 +31,7 @@ class SideNavbar extends React.Component {
                     <ion-icon style={{'color': '#1BE5BE', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
                     <Searchbar placeholder = {'Search Docs..'} spellCheck = {false} />
                 </SearchbarWrapper>
-                <DocumentCreateButton>
+                <DocumentCreateButton onClick = {this.props.openModal} >
                     <ion-icon style={{'color': 'white', 'fontSize': '2.4rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
                     Create Document
                     <Bucket/>
@@ -119,10 +119,10 @@ export default SideNavbar;
 
 
 const SideNavbarContainer = styled.div`
-    width: 41rem;
     background-color: #F3F4F7;
     display: flex;
     flex-direction: column;
+    height: 92vh;
 `
 
 const DocumentCreateButton = styled.div`
@@ -135,13 +135,13 @@ const DocumentCreateButton = styled.div`
     align-items: center;
     background-color: #1BE5BE;
     margin-left: 1.5rem;
-
+    margin-right: 1.5rem;
     margin-top: 2rem;
     border-radius: 0.5rem;
     display: flex;
     align-items: center;
     width: 30rem;
-    height: 4rem;
+    height: 4.5rem;
     padding: 0.5rem 1rem;
 
     &:hover {
@@ -153,6 +153,7 @@ const DocumentCreateButton = styled.div`
 const SearchbarWrapper = styled.div`
     margin-top: 4rem;
     margin-left: 1.5rem;
+    margin-right: 1.5rem;
     border-radius: 0.1rem;
     background-color: white;
     display: flex;
