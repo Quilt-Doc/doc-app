@@ -73,12 +73,13 @@ deleteRepositoryItem = (req, res) => {
 }
 
 retrieveRepositoryItems = (req, res) => {
-    let { textQuery, name, path, repositoryID, kind, limit, skip } = req.body;
+    let { textQuery, name, path, repositoryID, kind, limit, skip, documentIDs } = req.body;
     query = RepositoryItem.find();
     if (kind) query.where('kind').equals(kind);
     if (name) query.where('name').equals(name);
     if (path || path === '') query.where('path').equals(path);
     if (repositoryID) query.where('repository').equals(repositoryID);
+    if (documentIDs) query.where('documents').in(documentIDs);
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
     query.populate('documents').populate('repository').exec((err, repositoryItems) => {
@@ -110,12 +111,14 @@ removeDocument = (req, res) => {
     let filter = { _id: { $in: repositoryItemIDs }}
     let update = {}
     if (documentID) update.documents = ObjectId(documentID);
-    RepositoryItem.updateMany(filter, { $pull: update }, { new: true }, (err, repositoryItems) => {
+    RepositoryItem.updateMany(filter, { $pull: update }, { new: true }, (err, modified) => {
         if (err) return res.json({ success: false, error: err });
-        repositoryItems.populate('repository').populate('documents', (err, repositoryItems) => {
-            if (err) return res.json({ success: false, error: err });
+        let query =  RepositoryItem.find(filter);
+        query.populate('repository').populate('documents').exec((err2, repositoryItems) => {
+            if (err2) return res.json({ success: false, error: err2 });
+            console.log(repositoryItems)
             return res.json(repositoryItems)
-        });
+        })
     })
 }
 

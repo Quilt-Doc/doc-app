@@ -31,8 +31,7 @@ createDocument = (req, res) => {
 }
 
 getDocument = (req, res) => {
-    Document.findById(req.params.id).populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-    .populate('tags').exec(function (err, document) {
+    Document.findById(req.params.id).populate('authors').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
         return res.json(document);
     });
@@ -42,14 +41,13 @@ getDocument = (req, res) => {
 
 editDocument = (req, res) => {
     const { id } = req.params;
-    const { title, description } = req.body;
+    const { title, markup } = req.body;
     let update = {};
     if (title) update.title = title;
-    if (description) update.description = description;
+    if (markup) update.markup = markup;
     Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
+        document.populate('author', (err, document) => {
             if (err) return res.json(err);
             return res.json(document);
         });

@@ -126,9 +126,29 @@ function getContent(token) {
 	}
 }
 
-const HoveringMenuExample = () => {
-	const [value, setValue] = useState(initialValue)
-
+const HoveringMenuExample2 = (props) => {
+	
+	//const [value, setValue] = useState(initialValue)
+	const [value, setValue] = [props.markup, props.setValue]
+	/*
+	let value = [
+		{
+			type: 'paragraph',
+			children: [
+				{
+					text: 'Click here to start writing'
+				}
+			]
+		}
+	]
+	console.log(props.markup)
+	if (props.markup){
+		value = JSON.parse(props.markup)
+		console.log("MARKUP", value)
+	}
+	
+	let setValue = props.setValue
+	*/
 	const initial_reducer_state = { is_active: false, start_path: null, end_path: null, text: '', rect: null, hovered: {position: 0, ui: 'mouse'}, blockLength: 7, blocks: [
 		{name: "Text", icon: "text-outline", block: "paragraph"},
 		{name: "Heading 1", icon: "filter-outline", block: "heading-one"},
@@ -595,7 +615,7 @@ const checkScroll = (ref, hovered) => {
 
 
 
-export default HoveringMenuExample;
+export default HoveringMenuExample2;
 
 const StyledSlate = styled(Slate)`
   line-height: 1 !important;

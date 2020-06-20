@@ -30,6 +30,7 @@ export const createDocument = (formValues) => async (dispatch) => {
 export const getDocument = id => async dispatch => {
     const response = await api.get(`/documents/get/${id}`);
     dispatch({ type: GET_DOCUMENT, payload: response.data });
+    return response.data
 }
 
 export const retrieveDocuments = (formValues) => async dispatch => {

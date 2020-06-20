@@ -36,16 +36,46 @@ class SideNavbar extends React.Component {
             let repositoryItemIDs = this.props.selected.map(item => item._id)
             this.props.attachDocument({repositoryItemIDs, documentID : document._id}).then(() => {
                 this.props.clearSelected()
-                let urlItems = window.location.pathname.split('/').slice(0, 4)
-                urlItems.push('document')
-                urlItems.push(document._id)
-                console.log("URL", urlItems.join('/'))
-                history.push(urlItems.join('/'))
+                //let urlItems = window.location.pathname.split('/').slice(0, 2)
+                //urlItems.push('document')
+                //urlItems.push(document._id)
+                //console.log("URL", urlItems.join('/'))
+                history.push(`/document/${document._id}`)
             })
 
             /*
             this.props.attachDocument({})
             */
+        })
+    }
+
+    renderCodeDocumentNavigation(){
+        let items = this.props.repositoryItems.filter(item => 
+            {return item.documents && item.documents.length > 0}
+        )
+        items = items.sort((a, b) => {
+            if (a.documents.length > b.documents.length) return 1; 
+            else if (a.documents.length > b.documents.length) return -1; 
+            else if (a.name > b.name) return 1;
+            else if (b.name > a.name) return -1;
+            else return 0;
+        })
+        return items.map(item => {
+            return (<CodeDocumentContainer>
+                        <CodeDocumentHeader>
+                            {item.name}
+                        </CodeDocumentHeader>
+                        <CodeDocuments>
+                            {item.documents.map(document => {
+                                return (
+                                    <CodeDocumentItem to ="/documentation">
+                                        {document.title ? document.title : "Untitled"}
+                                    </CodeDocumentItem>
+                                )   
+                            }) }
+                        </CodeDocuments>
+                    </CodeDocumentContainer>
+                    )
         })
     }
 
@@ -68,65 +98,14 @@ class SideNavbar extends React.Component {
                 </DocumentCreateButton>
                
                 <DocumentationContainer>
-                    <CodeDocumentContainer>
-                            <CodeDocumentHeader>
-                                move_track
-                            </CodeDocumentHeader>
-                            <CodeDocuments>
-                                <CodeDocumentItem to ="/documentation">
-                                    StdErrs
-                                </CodeDocumentItem>
-                                <CodeDocumentItem to ="/documentation">
-                                    Keeping Track of While Loops
-                                </CodeDocumentItem>
-                                <CodeDocumentItem to ="/documentation">
-                                    repoGetUpdate
-                                </CodeDocumentItem>
-                                <CodeDocumentItem to ="/documentation">
-                                    repoPullFile
-                                </CodeDocumentItem>
-                                <CodeDocumentItem to ="/documentation">
-                                    File Movement Diffs
-                                </CodeDocumentItem>
-                                <CodeDocumentItem to ="/documentation">
-                                    Github Authorization
-                                </CodeDocumentItem>
-                            </CodeDocuments>
-                        </CodeDocumentContainer>
-                    <CodeDocumentContainer>
-                        <CodeDocumentHeader >
-                            file_copy_test.java
-                        </CodeDocumentHeader>
-                        <CodeDocuments>
-                            <CodeDocumentItem to ="/documentation">
-                                Understanding Copying
-                            </CodeDocumentItem>
-                            <CodeDocumentItem to ="/documentation">
-                                Testing the Copy
-                            </CodeDocumentItem>
-                            <CodeDocumentItem to ="/documentation">
-                                File API
-                            </CodeDocumentItem>
-                        </CodeDocuments>
-                    </CodeDocumentContainer>
-                    <CodeDocumentContainer>
-                        <CodeDocumentHeader>
-                            post_commit.py
-                        </CodeDocumentHeader>
-                        <CodeDocuments>
-                            <CodeDocumentItem to ="/documentation">
-                                Committing to the Repository
-                            </CodeDocumentItem>
-                            <CodeDocumentItem to ="/documentation">
-                                DOxygen Pipeline
-                            </CodeDocumentItem>
-                        </CodeDocuments>
-                    </CodeDocumentContainer>
-                    <CodeDocumentContainer>
-                        <CodeDocumentHeader>
-                            snippet_val.py
-                        </CodeDocumentHeader>
-                        <CodeDocuments>
+                    {this.renderCodeDocumentNavigation()}
+                </DocumentationContainer>
+            </SideNavbarContainer>
+        )
+    }
+}
+
+/*<CodeDocuments>
                             <CodeDocumentItem to ="/documentation">
                                 Snippet Validation
                             </CodeDocumentItem>
@@ -137,17 +116,75 @@ class SideNavbar extends React.Component {
                                 Subsequence Location Calculation
                             </CodeDocumentItem>
                         </CodeDocuments>
-                    </CodeDocumentContainer>
-                </DocumentationContainer>
-            </SideNavbarContainer>
-        )
-    }
-}
+                         <CodeDocuments>
+                            <CodeDocumentItem to ="/documentation">
+                                Committing to the Repository
+                            </CodeDocumentItem>
+                            <CodeDocumentItem to ="/documentation">
+                                DOxygen Pipeline
+                            </CodeDocumentItem>
+                        </CodeDocuments>
+                        
+                        
+const DocumentationContainer = styled.div`
+    margin-top: 4rem;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #D7D7D7;
+    padding: 3rem 3rem;
+    height: 70rem;
+    overflow-y: scroll;
 
+`
+
+const CodeDocumentContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 3rem;
+`
+
+const CodeDocumentHeader = styled.div`
+    font-size: 1.6rem;
+    color: #262626;
+    margin-bottom: 2rem;
+    cursor: pointer;
+    &:hover {
+        color: black;
+    }
+    
+`
+
+const CodeDocuments = styled.div`
+
+`
+
+const CodeDocumentItem = styled(Link)`
+    display: block;
+    cursor: pointer;
+    font-size: 1.3rem;
+    margin-bottom: 1rem !important;
+    font-weight: 300 !important;
+    &:hover {
+        opacity: 1;
+    }
+    text-decoration: none; 
+    &:focus, &:hover, &:visited, &:link, &:active {
+        text-decoration: none;
+        color: black;
+    }
+    opacity: 0.6;
+    color: black;
+`
+
+                        
+                        
+                        
+                        */
 
 const mapStateToProps = (state) => {
     return {
-        selected : Object.values(state.selected)
+        selected : Object.values(state.selected),
+        repositoryItems: Object.values(state.repositoryItems)
     }
 }
 
@@ -217,7 +254,7 @@ const Searchbar = styled.input`
     font-weight: 400;
     width: 25rem;
 `
-
+              
 const DocumentationContainer = styled.div`
     margin-top: 4rem;
     display: flex;
@@ -267,4 +304,3 @@ const CodeDocumentItem = styled(Link)`
     opacity: 0.6;
     color: black;
 `
-

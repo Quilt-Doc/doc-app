@@ -33,7 +33,7 @@ class SpaceView extends React.Component {
                         <Switch history = {history}>
                             <Route exact path = "/repository" component = {RepositoryView} />
                             <Route path = "/repository" component = {RepositoryNavigation}/>
-                            <Route path = "/documentation" component = {TextEditorView}/>
+                            <Route path = "/document/:documentID" component = { TextEditorView } />
                         </Switch>
                     </RightView>
                 </Container>

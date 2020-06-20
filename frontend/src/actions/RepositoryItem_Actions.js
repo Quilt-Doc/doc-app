@@ -3,7 +3,9 @@ import {
     GET_REPOSITORYITEM,
     EDIT_REPOSITORYITEM,
     DELETE_REPOSITORYITEM,
-    RETRIEVE_REPOSITORYITEMS
+    RETRIEVE_REPOSITORYITEMS,
+    ATTACH_DOCUMENT,
+    REMOVE_DOCUMENT
 } from './types/RepositoryItem_Types'
 
 import api from '../apis/api';
@@ -37,6 +39,10 @@ export const editRepositoryItem = (id, formValues) => async dispatch => {
 
 export const attachDocument = (formValues) => async dispatch => {
     const response = await api.post(`repository/items/attach_document`, formValues);
-    console.log(response)
-    /*dispatch({ type: EDIT_REPOSITORYITEM, payload: response.data });*/
+    dispatch({ type: ATTACH_DOCUMENT, payload: response.data });
+}
+
+export const removeDocument = (formValues) => async dispatch => {
+    const response = await api.post(`repository/items/remove_document`, formValues);
+    dispatch({ type: REMOVE_DOCUMENT, payload: response.data });
 }

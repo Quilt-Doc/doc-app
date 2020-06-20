@@ -6,9 +6,12 @@ import HoveringMenuExample2 from './HoveringMenuExample2';
 //styles 
 import styled from "styled-components";
 
-//axios
-import axios from 'axios';
+//actions
+import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
+import { getDocument, editDocument } from '../../../actions/Document_Actions';
 
+//redux
+import { connect } from 'react-redux';
 /*
 export const createComment = (formValues) => async (dispatch) => {
     const response = await api.post('/comments/create', formValues );
@@ -20,9 +23,11 @@ class TextEditorView extends React.Component {
 
     constructor(props) {
         super(props)
+        this.state = {}
     }
 
     componentDidMount(){
+        
         const initialValue = [
             {
                 type: 'paragraph',
@@ -33,43 +38,83 @@ class TextEditorView extends React.Component {
                 ]
             }
         ]
-        /*
-        axios.get('https://api.github.com/repos/cewing/fizzbuzz/branches').then((response)=>{
-                console.log(response.data)
+
+        let urlItems = window.location.pathname.split('/')
+        if (urlItems.slice(urlItems.length - 1) === '') {
+            urlItems.pop()
+        }
+        let documentID = urlItems.slice(urlItems.length - 1)[0]
+
+        this.props.retrieveRepositoryItems({documentIDs:[documentID]})
+
+        this.props.getDocument(documentID).then((document) =>{
+            if (!document.markup){
+                document.markup = initialValue
+            } else {
+                document.markup = JSON.parse(document.markup)
             }
-        );
-        */
-       axios.get('https://api.github.com/repos/pytorch/pytorch/commits').then((response)=>{
-           let treeSHA = response.data[0].commit.tree.sha
-           axios.get(`https://api.github.com/repos/pytorch/pytorch/git/trees/${treeSHA}?recursive=true`).then((response) =>
-            console.log("GITHUB RESPONSE", response.data)
-           )
-       })
-        console.log(typeof JSON.stringify(initialValue))
+            this.setState({document})
+        })
+
+        window.addEventListener('beforeunload', this.saveMarkup, false);
+        
+        this.setValue = this.setValue.bind(this)
+    }
+
+    saveMarkup = () =>{
+        
+        if (this.state.document){
+            this.props.editDocument(this.state.document._id, {markup: JSON.stringify(this.state.document.markup)})
+        }
+    }
+
+    setValue(value) {
+        console.log("ENTERED")
+        console.log(this.state)
+        let document = this.state.document
+        document.markup = value
+        this.setState({document})
+    }   
+
+    componentWillUnmount() {
+        this.saveMarkup()
+        window.removeEventListener('beforeunload', this.saveMarkup, false)
+    }
+   
+    renderReferences(){
+        console.log(this.props.repositoryItems)
+        return this.props.repositoryItems.map((item) => {
+            return <Reference>{item.name}</Reference>
+        })
+    }
+
+    onTitleChange(e){
+        this.props.editDocument(this.state.document._id, {title: e.target.value}).then(() => {
+            this.props.retrieveRepositoryItems({documentIDs:[this.state.document._id]})
+        })
     }
 
     render(){
+        if (!this.state.document){
+            return null
+        }
         return(
             <EditorContainer>
                 <TextContainer>
-                    <Title placeholder = {'Document Title'}/>
-                    <HoveringMenuExample2/>
+                    <Title placeholder = {'Document Title'} value = {this.state.document.title} onChange = {e => this.onTitleChange(e)} />
+                    <HoveringMenuExample2 markup = {this.state.document.markup} setValue = {this.setValue}/>
                 </TextContainer>
                 <InfoBar>
                     <InfoBlock>
                         <InfoHeader>Authors</InfoHeader>
                         <ReferenceContainer>
-                            <Author>FS</Author>
-                            <Author>KG</Author>
+                            <Author>JK</Author>
                         </ReferenceContainer>
                     </InfoBlock>
                     <InfoBlock>
                         <InfoHeader>Relevant Files and Folders</InfoHeader>
                         <ReferenceContainer>
-                            <Reference>file_copy_test.java</Reference>
-                            <Reference>move_track</Reference>
-                            <Reference>post_commit.py</Reference>
-                            <Reference>snippet_val.py</Reference>
+                            {this.renderReferences()}
                         </ReferenceContainer>
                     </InfoBlock>
                     
@@ -80,7 +125,13 @@ class TextEditorView extends React.Component {
     }
 }
 
-export default TextEditorView
+const mapStateToProps = (state) => {
+    return {
+        repositoryItems: Object.values(state.repositoryItems)
+    }
+}
+
+export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, editDocument })(TextEditorView);
 
 const EditorContainer = styled.div`
     display: flex;
