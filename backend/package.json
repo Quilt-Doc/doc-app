@@ -19,11 +19,13 @@
     "fs-path": "0.0.24",
     "mongoose": "^5.8.7",
     "morgan": "^1.9.1",
-    "node-windows": "^1.0.0-beta.1",
     "nodemon": "^2.0.2",
     "request": "^2.88.0",
     "uuid": "^8.1.0",
     "xml2js": "^0.4.23",
     "xmldom": "^0.3.0"
+  },
+  "optionalDependencies": {
+    "node-windows": "^1.0.0-beta.1"
   }
 }

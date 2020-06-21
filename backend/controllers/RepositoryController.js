@@ -21,10 +21,12 @@ const Repository = require('../models/Repository');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
-var EventLogger = require('node-windows').EventLogger;
-
-var log = new EventLogger('DocApp EventLogger Hello!');
-
+var EventLogger = undefined;
+var log = undefined;
+if (process.env.RUN_AS_REMOTE_BACKEND === 1) {
+    EventLogger = require('node-windows').EventLogger;
+    log = new EventLogger('DocApp EventLogger Hello!');
+}
 const { v4 } = require('uuid');
 
 /*repositorySearch = (req, res) => {
@@ -173,19 +175,18 @@ getRepositoryRefs = (req, res) => {
         MessageGroupId: "getRefRequest_" + timestamp,
         QueueUrl: queueUrl
     };
-
-    log.info(`Refs | MessageDeduplicationId: ${timestamp}`);
-    log.info(`Refs | MessageGroupId: getRefRequest_${timestamp}`);
-
+    if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Refs | MessageDeduplicationId: ${timestamp}`);
+    if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Refs | MessageGroupId: getRefRequest_${timestamp}`);
     // Send the refs data to the SQS queue
     let sendSqsMessage = sqs.sendMessage(sqsRefsData).promise();
 
     sendSqsMessage.then((data) => {
-        log.info(`Refs | SUCCESS: ${data.MessageId}`)
+
+        if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Refs | SUCCESS: ${data.MessageId}`);
         console.log(`Refs | SUCCESS: ${data.MessageId}`);
         res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
     }).catch((err) => {
-        log.error(`Refs | ERROR: ${err}`)
+        if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Refs | ERROR: ${err}`);
         console.log(`Refs | ERROR: ${err}`);
 
         // Send email to emails API
