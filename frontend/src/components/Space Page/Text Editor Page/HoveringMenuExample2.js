@@ -126,9 +126,29 @@ function getContent(token) {
 	}
 }
 
-const HoveringMenuExample = () => {
-	const [value, setValue] = useState(initialValue)
-
+const HoveringMenuExample2 = (props) => {
+	
+	//const [value, setValue] = useState(initialValue)
+	const [value, setValue] = [props.markup, props.setValue]
+	/*
+	let value = [
+		{
+			type: 'paragraph',
+			children: [
+				{
+					text: 'Click here to start writing'
+				}
+			]
+		}
+	]
+	console.log(props.markup)
+	if (props.markup){
+		value = JSON.parse(props.markup)
+		console.log("MARKUP", value)
+	}
+	
+	let setValue = props.setValue
+	*/
 	const initial_reducer_state = { is_active: false, start_path: null, end_path: null, text: '', rect: null, hovered: {position: 0, ui: 'mouse'}, blockLength: 7, blocks: [
 		{name: "Text", icon: "text-outline", block: "paragraph"},
 		{name: "Heading 1", icon: "filter-outline", block: "heading-one"},
@@ -275,7 +295,7 @@ const HoveringMenuExample = () => {
 	
 	
 
-
+/*<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>*/
 
 	
 	let range = { anchor: state.anchor, focus: state.focus }
@@ -284,7 +304,7 @@ const HoveringMenuExample = () => {
 	return (
 		<Slate editor={editor} value={value} onChange={value => setValue(value)}>
 			<HoveringToolbar dispatch={dispatch} range={range} active={state.is_active} rect={state.rect} hovered = {state.hovered} blockLength = {state.blockLength}/>
-			<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>
+			
 			<StyledEditable
 				onClick = {() => {
 					if (state.is_active){
@@ -345,7 +365,7 @@ const HoveringMenuExample = () => {
 				}}
 				renderElement={renderElement}
 				renderLeaf={renderLeaf}
-				placeholder="Enter some text..."
+				placeholder="Click here to start writing"
 				spellCheck="false"
 				decorate={decorate}
 			/>
@@ -595,7 +615,7 @@ const checkScroll = (ref, hovered) => {
 
 
 
-export default HoveringMenuExample;
+export default HoveringMenuExample2;
 
 const StyledSlate = styled(Slate)`
   line-height: 1 !important;
@@ -608,10 +628,12 @@ const StyledEditable = styled(Editable)`
   color: #46474f;
   font-size: 16px;
   padding-top: 6rem;
-  width: 83rem;
-  padding-bottom: 2rem;
-  margin:0 auto;
-`
+  width: 92rem;
+  padding-top: 0.5rem;
+  padding-left: 6rem;
+  padding-right: 6rem;
+  padding-bottom: 4rem;
+`	
 
 const MenuHeader = styled.div`
 color:  black;
@@ -1202,6 +1224,17 @@ const LeftNav = styled.span`
 
 const initialValue = [
 	{
+		type: 'paragraph',
+		children: [
+			{
+				text: 'Click here to start writing'
+			}
+		]
+	}
+]
+/*
+const initialValue = [
+	{
 		type: 'heading-one',
 		children: [
 			{
@@ -1278,7 +1311,7 @@ const initialValue = [
 		],
 	}
 ]
-
+*/
 
 //Markup Components
 

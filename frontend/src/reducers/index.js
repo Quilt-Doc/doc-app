@@ -4,6 +4,7 @@ import { reducer as formReducer } from 'redux-form'
 import workspaceReducer from './Workspace_Reducer';
 import repositoryReducer from './Repository_Reducer';
 import folderReducer from './Folder_Reducer';
+import repositoryItemReducer from './RepositoryItem_Reducer';
 
 import documentReducer from './Document_Reducer';
 import snippetReducer from './Snippet_Reducer';
@@ -26,5 +27,6 @@ export default combineReducers({
     users: userReducer,
     tags: tagReducer,
     selected: selectedReducer,
+    repositoryItems: repositoryItemReducer,
     form: formReducer,
 });

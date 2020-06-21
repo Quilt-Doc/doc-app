@@ -6,9 +6,11 @@ import styled from "styled-components";
 //components
 import HoveringMenuExample2 from './Text Editor Page/HoveringMenuExample2';
 import HoveringMenuExample from './Text Editor Page/HoveringMenuExample';
+import TextEditorView from './Text Editor Page/TextEditorView';
 import RepositoryNavigation from './RepositoryNavigation';
 import RepositoryView from './Repository Page/RepositoryView';
 import SideNavbar from './SideNavbar';
+import DocumentCreationView from './Document Creation Page/DocumentCreationView';
 
 //react-router
 import { Switch, Route } from 'react-router-dom';
@@ -26,29 +28,31 @@ class SpaceView extends React.Component {
         return (
             <>
                 <Container>
-                    <SideNavbar/>
+                    <SideNavbar openModal = {() => this.setState({'modalDisplay': ''})}/>
                     <RightView>
                         <Switch history = {history}>
                             <Route exact path = "/repository" component = {RepositoryView} />
                             <Route path = "/repository" component = {RepositoryNavigation}/>
-                            <Route path = "/documentation" component = {HoveringMenuExample2}/>
+                            <Route path = "/document/:documentID" component = { TextEditorView } />
                         </Switch>
                     </RightView>
                 </Container>
-                <ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>
-                    <ModalContent onClick = {(e) => {e.stopPropagation()}}>
-                        <Document>
-                            <HoveringMenuExample/>
-                        </Document>
-                    </ModalContent>
-                </ModalBackground>
+                <DocumentCreationView display = {this.state.modalDisplay} clearModal = {() => this.setState({'modalDisplay':'none'})}/>
             </>
         );
     }
 }
 
 export default SpaceView;
-
+/*  
+<ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>
+                    <ModalContent onClick = {(e) => {e.stopPropagation()}}>
+                        <Document>
+                           
+                        </Document>
+                    </ModalContent>
+                </ModalBackground>
+*/
 
 //Styled Components
 

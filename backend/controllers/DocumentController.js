@@ -5,24 +5,25 @@ const { ObjectId } = mongoose.Types;
 createDocument = (req, res) => {
     const { authorID, parentIDs, snippetIDs, title, description, uploadFileIDs, tagIDs } = req.body;
     
-    if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
-    if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
+    //if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
+    //if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
 
     let document = new Document(
-        {
+        /*{
             author: ObjectId(authorID),
             title,
-            parents: parentIDs.map(parentID => ObjectId(parentID))
-        },
+        },*/
     );
-    if (snippetIDs) document.snippets = snippetIDs.map(snippetID => ObjectId(snippetID));
-    if (description) document.description = description;
-    if (uploadFileIDs) document.uploadFiles = uploadFileIDs.map(snippetID => ObjectId(snippetID));
-    if (tagIDs) document.tags = tagIDs.map(tagID => ObjectId(tagID))
+
+    //if (!typeof author == 'undefined' && author !== null) document.author = ObjectId(authorID)
+    //if (!typeof title == 'undefined' && title !== null ) document.title = ObjectId()
+    //if (snippetIDs) document.snippets = snippetIDs.map(snippetID => ObjectId(snippetID));
+    //if (description) document.description = description;
+    //if (uploadFileIDs) document.uploadFiles = uploadFileIDs.map(snippetID => ObjectId(snippetID));
+    //if (tagIDs) document.tags = tagIDs.map(tagID => ObjectId(tagID))
     document.save((err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
+        document.populate('authors', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(document);
         });
@@ -30,8 +31,7 @@ createDocument = (req, res) => {
 }
 
 getDocument = (req, res) => {
-    Document.findById(req.params.id).populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-    .populate('tags').exec(function (err, document) {
+    Document.findById(req.params.id).populate('authors').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
         return res.json(document);
     });
@@ -41,14 +41,13 @@ getDocument = (req, res) => {
 
 editDocument = (req, res) => {
     const { id } = req.params;
-    const { title, description } = req.body;
+    const { title, markup } = req.body;
     let update = {};
     if (title) update.title = title;
-    if (description) update.description = description;
+    if (markup) update.markup = markup;
     Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
+        document.populate('author', (err, document) => {
             if (err) return res.json(err);
             return res.json(document);
         });

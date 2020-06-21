@@ -2,21 +2,30 @@ const url = require('url');
 
 var request = require("request");
 
-const axios = require('../apis/api');
+const apis = require('../apis/api');
 const parseUtils = require('../utils/parse_code');
 
-const api = axios.requestClient();
+const api = apis.requestClient();
+const sqs = apis.requestSQSServiceObject();
+const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 
 const apiURL = 'https://api.github.com';
-
+const localURL = 'https://localhost:3001/api'
 const repoBaseURL = 'https://github.com/'
 
 const fs = require('fs');
 const fsPath = require('fs-path');
 
+const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
+
+var EventLogger = require('node-windows').EventLogger;
+
+var log = new EventLogger('DocApp EventLogger Hello!');
+
+const { v4 } = require('uuid');
 
 /*repositorySearch = (req, res) => {
     console.log(req.body);
@@ -139,15 +148,55 @@ getRepositoryRefs = (req, res) => {
     console.log('getRepositoryRefs received content: ', req.body);
     if (typeof repoLink == 'undefined' || repoLink == null) return res.json({success: false, error: 'no repo repoLink provided'});
 
-    var finalRepoLink = url.resolve(repoBaseURL, repoLink);
-    parseUtils.getRefs(repoLink, finalRepoLink, res);
+    var timestamp = Date.now().toString();
+    // log.info('Timestamp: ', timestamp);
+    var apiCallLink = url.resolve(repoBaseURL, repoLink);
+
+    var getRefsData = {
+        'repoLink': repoLink,
+        'apiCallLink': apiCallLink,
+    }
+    var uuid = v4();
+    var sqsRefsData = {
+        MessageAttributes: {
+          "repoLink": {
+            DataType: "String",
+            StringValue: getRefsData.repoLink
+          },
+          "apiCallLink": {
+            DataType: "String",
+            StringValue: getRefsData.apiCallLink
+          }
+        },
+        MessageBody: JSON.stringify(getRefsData),
+        MessageDeduplicationId: timestamp,
+        MessageGroupId: "getRefRequest_" + timestamp,
+        QueueUrl: queueUrl
+    };
+
+    log.info(`Refs | MessageDeduplicationId: ${timestamp}`);
+    log.info(`Refs | MessageGroupId: getRefRequest_${timestamp}`);
+
+    // Send the refs data to the SQS queue
+    let sendSqsMessage = sqs.sendMessage(sqsRefsData).promise();
+
+    sendSqsMessage.then((data) => {
+        log.info(`Refs | SUCCESS: ${data.MessageId}`)
+        console.log(`Refs | SUCCESS: ${data.MessageId}`);
+        res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
+    }).catch((err) => {
+        log.error(`Refs | ERROR: ${err}`)
+        console.log(`Refs | ERROR: ${err}`);
+
+        // Send email to emails API
+        res.json({success: false, msg: "We ran into an error. Please try again."});
+    });
+    // parseUtils.getRefs(repoLink, apiCallLink, res);
 }
 
 
 createRepository = (req, res) => {
-    console.log('Called create repository');
     const {name, workspaceID, link, debugID, icon} = req.body;
-
 
     // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no repository workspace provided'});
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no repository name provided'});
@@ -158,7 +207,7 @@ createRepository = (req, res) => {
         icon
         // workspaceID: ObjectId(workspaceID)
     });
-    console.log('Link: ', link);
+
 
     // Check if user-defined ids allowed
     if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
@@ -166,13 +215,44 @@ createRepository = (req, res) => {
     }
 
     if (workspaceID) repository.workspace = ObjectId(workspaceID)
+
+    let linkItems = link.split('/')
+
+    // looks like pytorch/fairseq
+    let repositoryNameOwner = linkItems.slice(linkItems.length - 3, linkItems.length - 1).join('/')
+
+
     repository.save((err, repository) => {
-        console.log(err)
         if (err) return res.json({ success: false, error: err });
-        repository.populate('workspace', (err, repository) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(repository);
-        });
+
+        // Get all commits from default branch 
+        api.get(`${apiURL}/repos/${repositoryNameOwner}/commits`).then((response) => {
+
+            // Extract tree SHA from most recent commit
+            let treeSHA = response.data[0].commit.tree.sha
+
+            // Extract contents using tree SHA
+            api.get(`${apiURL}/repos/${repositoryNameOwner}/git/trees/${treeSHA}?recursive=true`).then((response) => {
+                let repositoryItems = response.data.tree.map(item => {
+                    let pathSplit = item.path.split('/')
+                    let name = pathSplit.slice(pathSplit.length - 1)[0]
+                    let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
+                    let kind = item.type === 'blob' ? 'file' : 'dir'
+                    return {name, path, kind, repository: ObjectId(repository._id)}
+                })
+                
+                // Save repository contents as items in our database
+                RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
+                    if (errInsertItems) return res.json({ success: false, error: errInsertItems });
+                    repository.populate('workspace', (errPopulation, repository) => {
+                        if (errPopulation) return res.json({ success: false, error: errPopulation });
+
+                        // return the repository object
+                        return res.json(repository);
+                    });
+                })
+            })
+        })
     });
 }
 
@@ -230,7 +310,7 @@ retrieveRepositories = (req, res) => {
 
 
 updateRepositoryCommit = (req, res) => {
-    console.log(req.body);
+    //console.log(req.body);
     var { repo_id, repo_link } = req.body;
     if (!typeof repo_id == 'undefined' && repo_id !== null) return res.json({success: false, error: 'no repo repo_id provided'});
     if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no repo repo_link provided'});
@@ -241,14 +321,14 @@ updateRepositoryCommit = (req, res) => {
     commit_url = url.resolve(commit_url, repo_link);
     commit_url = url.resolve(commit_url, 'commits');
 
-    console.log('FINAL REQ URL: ', commit_url);
+    //console.log('FINAL REQ URL: ', commit_url);
 
     api.get(commit_url)
     .then(function (response) {
-        console.log('repoUpdateCommit response: ');
-        console.log(response.data);
+        //console.log('repoUpdateCommit response: ');
+        //console.log(response.data);
         var latest_sha = response.data[0]['sha'];
-        console.log('latest_sha: ', latest_sha);
+        //console.log('latest_sha: ', latest_sha);
         
         Codebase.findById(repo_id, (err, codebase) => {
             // console.log('last_processed_commit.length: ', )

@@ -28,7 +28,7 @@ class DirectoryItem extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.item.sha in this.props.selected){
+        if (this.props.item._id in this.props.selected){
             this.setState({
                 'check_box_border_color': '#19E5BE',
                 'check_box_check_display': ''
@@ -56,7 +56,7 @@ class DirectoryItem extends React.Component {
     turnCheckOn = (item) => {
         console.log(this.props.selected)
         console.log("WE HERE")
-        if (item.sha in this.props.selected){
+        if (item._id in this.props.selected){
             this.props.deleteSelected(item)
             this.setState({
                 'check_box_border_color': '#D7D7D7',
@@ -72,6 +72,7 @@ class DirectoryItem extends React.Component {
     }
 
     renderDirectoryLink(item) {
+<<<<<<< HEAD
         
         if (item.type === 'dir') {
             console.log('DIR PATH: ', `/repository/${window.location.pathname.slice(12)}`);
@@ -81,10 +82,29 @@ class DirectoryItem extends React.Component {
             let url_items = item.download_url.split('/').slice(3)
             let final_path = url_items.join('/') 
             return `/repository/codeview/${final_path}`
+=======
+        console.log(window.location.pathname)
+        let urlItems = window.location.pathname.split('/').slice(3)
+        console.log(urlItems)
+        if (urlItems.slice(urlItems.length-1)[0] === '') {
+            urlItems.pop()
+>>>>>>> 0661867bcc79a16a5419efe5f79165b23460eac0
         }
-        
-
+        urlItems.push(item.name)
+        let finalURL = urlItems.join('/')
+        if (item.kind === 'dir') {
+            return `/repository/directory/${finalURL}`
+        }
+        return `/repository/directory/codeview/${finalURL}`
     }
+    /*
+    let urlItems = window.location.pathname.split('/')
+            if (urlItems.slice(urlItems.length-1)[0] === '') {
+                urlItems.pop()
+            }
+            urlItems.push(item.name)
+            let finalURL = urlItems.join('/')
+            */
 
     
 

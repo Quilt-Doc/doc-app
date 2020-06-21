@@ -4,11 +4,9 @@ const { ObjectId } = Schema.Types;
 
 let documentSchema = new Schema({
     created: {type: Date, default: Date.now },
-    author: {type: ObjectId, ref: 'User'},
-    parents: [{type: ObjectId, index: true, ref: 'Folder'}],
-    snippets: [{type: ObjectId, index: true, ref: 'Snippet'}],
+    authors: [{type: ObjectId, ref: 'User'}],
     title: String,
-    description: String,
+    markup: String,
     uploadFiles: [{type: ObjectId, index: true, ref: 'UploadFile'}],
     tags: [{type: ObjectId, index: true, ref: 'Tag'}],
     canWrite: [{type: ObjectId, index: true, ref: 'User'}],

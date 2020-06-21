@@ -24,11 +24,13 @@ import api from '../apis/api';
 export const createDocument = (formValues) => async (dispatch) => {
     const response = await api.post('/documents/create', formValues );
     dispatch({ type: CREATE_DOCUMENT, payload: response.data });
+    return response.data
 }
 
 export const getDocument = id => async dispatch => {
     const response = await api.get(`/documents/get/${id}`);
     dispatch({ type: GET_DOCUMENT, payload: response.data });
+    return response.data
 }
 
 export const retrieveDocuments = (formValues) => async dispatch => {

@@ -123,4 +123,16 @@ router.get('/repositories/get/:id', repository_controller.getRepository);
 router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
 
 
+//repositoryitem routes
+
+const repository_item_controller = require('../controllers/RepositoryItemController');
+router.post('/repository/items/create', repository_item_controller.createRepositoryItem)
+router.put('/repository/items/edit/:id', repository_item_controller.editRepositoryItem);
+router.get('/repository/items/get/:id', repository_item_controller.getRepositoryItem);
+router.post('/repository/items/retrieve', repository_item_controller.retrieveRepositoryItems);
+router.delete('/repository/items/delete/:id', repository_item_controller.deleteRepositoryItem);
+router.post('/repository/items/attach_document', repository_item_controller.attachDocument);
+router.post('/repository/items/remove_document', repository_item_controller.removeDocument);
+
+
 module.exports = router;
