@@ -153,7 +153,7 @@ class CodeView extends React.Component {
         // iterate over lines, if the line points to a snippet -- create an annotation and snippet,
         // then skip iteration index to the end of the snippet
         while (i < lines.length) {
-            if (this.props.snippets && i in this.props.snippets) {
+            if (this.props.snippets && i in this.props.snippets/* && 1 == 2*/) {
                 const annotationRef = 'annotation' + i
                 const snippetRef = 'snippet' + i
                 const annotation  =  <Annotation 

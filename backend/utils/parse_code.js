@@ -36,7 +36,7 @@ getRefs = (repoLink, finalRepoLink, res) => {
 
         const child = execFile('doxygen', ['Doxyfile'], {env: new_env}, (error, stdout, stderr) => {
             if (error) {
-                return res.json({success: false, error: 'parseCode error on execFile: ' + error});
+                return res.json({success: false, error: 'getRefs error #1 on execFile: ' + error});
             }
             console.log('getRefs doxygen successful');
 

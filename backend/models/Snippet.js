@@ -12,7 +12,8 @@ let snippetSchema = new Schema({
     folders: [{type: ObjectId, index: true, ref: 'Folder'}],
     documents: [{type: ObjectId, index: true, ref: 'Document'}],
     type: String,
-    location: String, 
+    pathInRepository: String,
+    repository: String,
     status: String,
     expirationDate: Date,
 });

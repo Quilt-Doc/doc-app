@@ -77,6 +77,7 @@ class DirectoryItem extends React.Component {
             console.log('DIR PATH: ', `/repository/${window.location.pathname.slice(12)}`);
             return `/repository/${window.location.pathname.slice(12) + item.name +'/'}`
         } else {
+            // console.log('Item download url: ', item.download_url);
             let url_items = item.download_url.split('/').slice(3)
             let final_path = url_items.join('/') 
             return `/repository/codeview/${final_path}`

@@ -191,6 +191,7 @@ getRepository = (req, res) => {
     });
 }
 
+
 deleteRepository = (req, res) => {
     const { id } = req.params;
 
@@ -213,7 +214,13 @@ retrieveRepositories = (req, res) => {
     query = Repository.find();
     if (name) query.where('name').equals(name);
     if (workspaceID) query.where('workspace').equals(workspaceID);
-    if (link) query.where('link').equals(link);
+
+    if (link) {
+        if (link[link.length - 1] != '/') {
+            link = link + '/'
+        }
+        query.where('link').equals('github.com/' + link);
+    }
 
     query.populate('workspace').exec((err, repositories) => {
         if (err) return res.json({ success: false, error: err });
