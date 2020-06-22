@@ -22,6 +22,8 @@ export const getRepositoryItem = id => async dispatch => {
 }
 
 export const retrieveRepositoryItems = (formValues) => async dispatch => {
+    console.log('Called with formValues: ');
+    console.log(formValues);
     const response = await api.post(`/repository/items/retrieve`, formValues );
     console.log(response.data)
     dispatch({ type: RETRIEVE_REPOSITORYITEMS, payload: response.data });
