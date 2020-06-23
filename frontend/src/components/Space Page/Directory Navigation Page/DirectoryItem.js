@@ -72,23 +72,11 @@ class DirectoryItem extends React.Component {
     }
 
     renderDirectoryLink(item) {
-<<<<<<< HEAD
-        
-        if (item.type === 'dir') {
-            console.log('DIR PATH: ', `/repository/${window.location.pathname.slice(12)}`);
-            return `/repository/${window.location.pathname.slice(12) + item.name +'/'}`
-        } else {
-            // console.log('Item download url: ', item.download_url);
-            let url_items = item.download_url.split('/').slice(3)
-            let final_path = url_items.join('/') 
-            return `/repository/codeview/${final_path}`
-=======
         console.log(window.location.pathname)
         let urlItems = window.location.pathname.split('/').slice(3)
         console.log(urlItems)
         if (urlItems.slice(urlItems.length-1)[0] === '') {
             urlItems.pop()
->>>>>>> 0661867bcc79a16a5419efe5f79165b23460eac0
         }
         urlItems.push(item.name)
         let finalURL = urlItems.join('/')

@@ -4,8 +4,12 @@ const { ObjectId } = Schema.Types;
 
 let userSchema = new Schema({
     username: String,
+    accessToken: String,
+    refreshToken: String, 
+    profileID: String,
     email: String,
     created: {type: Date, default: Date.now },
+    domain: String,
     workspaces: [{type: ObjectId, index: true, ref: 'Workspace'}]
 });
 

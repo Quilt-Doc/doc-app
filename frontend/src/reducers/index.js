@@ -13,6 +13,8 @@ import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
 
+import authReducer from './Auth_Reducer';
+
 import selectedReducer from './Selected_Reducer';
 
 
@@ -29,4 +31,5 @@ export default combineReducers({
     selected: selectedReducer,
     repositoryItems: repositoryItemReducer,
     form: formReducer,
+    auth: authReducer
 });

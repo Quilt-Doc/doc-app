@@ -49,7 +49,6 @@ export default (state = initialContents, action) => {
                 ...state, references: action.payload
             }
         case CREATE_REPOSITORY:
-            
             repositories = {...repositories, [action.payload._id]: action.payload}
             return { ...state, repositories };
         case GET_REPOSITORY:
