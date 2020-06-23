@@ -83,7 +83,7 @@ class DirectoryItem extends React.Component {
         if (item.kind === 'dir') {
             return `/repository/directory/${finalURL}`
         }
-        return `/repository/directory/codeview/${finalURL}`
+        return `/repository/codeview/${finalURL}`
     }
     /*
     let urlItems = window.location.pathname.split('/')

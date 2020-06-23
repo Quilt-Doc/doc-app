@@ -13,6 +13,8 @@ import {
 
 import api from '../apis/api';
 
+var urljoin = require('url-join');
+
 
 /* export const repoSearch = (formValues) => async (dispatch) => {
     const response = await api.post('/repositories/search', formValues );
@@ -43,10 +45,22 @@ export const refreshRepositoryPathNew = (formValues) => async (dispatch) => {
     dispatch({ type: REFRESH_REPOSITORY_PATH_NEW, payload: response.data });
 }
 
+// Example download link: https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
 export const getRepositoryFile = (file_desc) => async (dispatch) => {
 
     console.log('file_desc: ', file_desc);
-    const response = await api.post('/repositories/get_file', file_desc);
+    var id = file_desc.repositoryId;
+    const repository = await api.get(`/repositories/get/${id}`);
+
+
+    console.log('Repository Object: ');
+    console.log(repository);
+
+    var downloadLink = urljoin("https://raw.githubusercontent.com/", repository.data.name);
+    downloadLink = urljoin(downloadLink, 'master/');
+    downloadLink = urljoin(downloadLink, file_desc.pathInRepo);
+
+    const response = await api.post('/repositories/get_file', {downloadLink});
     console.log('getRepositoryFile response: ', response);
     
     dispatch({ type: GET_REPOSITORY_FILE, payload: response.data, fileName: file_desc.fileName});

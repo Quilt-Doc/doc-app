@@ -68,9 +68,14 @@ class CodeView extends React.Component {
 
     // using url path, extract download link... use download link to get file contents from database
     getFileContents() {
-        let downloadLink = "https://raw.githubusercontent.com" + window.location.pathname.slice(20)
-        let fileName = window.location.pathname.slice(20).split('/').pop()
-        this.props.getRepositoryFile({downloadLink, fileName})
+        console.log(window.location.pathname.slice(20));
+        // .slice(1) because starts with a slash
+        
+        var pathInRepo = window.location.pathname.slice(20).split('/').slice(1);
+        var repositoryId = pathInRepo.shift();
+        console.log('repository Id: ', repositoryId);
+        let fileName = window.location.pathname.slice(20).split('/').pop();
+        this.props.getRepositoryFile({repositoryId, fileName, pathInRepo: pathInRepo.join('/')});
     }
 
     // translate annotation pane manually if a new snippet is being created 
@@ -365,6 +370,7 @@ const mapStateToProps = (state) => {
         }
     }
     return {
+        repositories: state.repositories,
         fileContents: state.repositories.fileContents,
         fileName: state.repositories.fileName,
         filePath: state.repositories.repositoryCurrentPath + '/' + state.repositories.fileName,

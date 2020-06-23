@@ -38,10 +38,14 @@ class DirectoryView extends React.Component {
     componentDidUpdate(prevProps) {
         if (prevProps.location.pathname !== this.props.location.pathname) {
             let urlSplit = window.location.pathname.split('/').slice(3)
+            console.log('urlSplit: ', urlSplit);
             if (urlSplit.slice(urlSplit.length - 1)[0] === '') {
                 urlSplit.pop()
             }
+            console.log('urlSplit: ', urlSplit);
             let path = urlSplit.length > 1 ? urlSplit.slice(1).join('/') : ''
+            console.log('path: ', path);
+            console.log('Calling Retrieve 2');
             this.props.retrieveRepositoryItems({path, repositoryID: urlSplit.slice(0, 1)[0]})
         }
     }

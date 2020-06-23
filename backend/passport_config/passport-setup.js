@@ -20,11 +20,14 @@ passport.deserializeUser((id, done) => {
 passport.use(
     new GithubStrategy(
         {
-            clientID: process.env.GITHUB_CLIENT_ID,
-            clientSecret:  process.env.GITHUB_CLIENT_SECRET,
+            clientID: process.env.GITHUB_CLIENT_ID, /*"Iv1.42c86ad42af65b91",*/ /*process.env.GITHUB_CLIENT_ID,*/
+            clientSecret:  process.env.GITHUB_CLIENT_SECRET, /* "a7dad0ce0330652d3dc0bf403f685a3de9d7b04b",*/
             callbackURL: "/api/auth/github/redirect"
         },
         async (accessToken, refreshToken, profile, done) => {
+            console.log("CLIENT SECRET", process.env.GITHUB_CLIENT_SECRET.toString())
+            console.log("CLIENT ID", process.env.GITHUB_CLIENT_ID)
+            
             let currentUser = await User.findOne({
                 domain: 'github',
                 profileID: profile.id,

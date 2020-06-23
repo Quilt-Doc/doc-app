@@ -5,13 +5,15 @@ const bodyParser = require('body-parser');
 const logger = require('morgan');
 const session = require('express-session');
 
+require('dotenv').config();
+
 // PASSPORT 
 const passport = require("passport");
 const passportSetup = require("./passport_config/passport-setup");
 const cookieSession = require("cookie-session");
 const cookieParser = require("cookie-parser");
 
-require('dotenv').config();
+
 
 const API_PORT = 3001;
 const app = express();
