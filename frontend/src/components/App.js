@@ -9,13 +9,15 @@ import DocumentCreate from './Document/DocumentCreate';
 import Test from './Test';
 import ReferenceMenu from './Space Page/Text Editor Page/ReferenceMenu';
 import TextEditorView from './Space Page/Text Editor Page/TextEditorView';
+import GithubAppTest from './GithubAppTest';
+import Home from './Home';
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
 
 //split markers -- directory, file
 const App = () => {
     return (<>
                 <Router history = {history}>
-                  <Route path = "" component = {Dashboard} />
+                  <Route path = "" component = {Home} />
                 </Router>
             </>)
 }

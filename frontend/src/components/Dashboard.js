@@ -15,12 +15,17 @@ import preetaicon from '../images/preeta.png'
 const Dashboard = () => {
     return (
         <Container>
-            <TopNav/>
+            <TopNav>
+                <LogoutButton onClick = {goLogout}>Logout</LogoutButton>
+            </TopNav>
             <SpaceView/>
         </Container>
     )
 }
 
+const goLogout = () => {
+    window.open("http://localhost:3001/api/auth/logout", "_self");
+}
 /*
 
 <LeftNav/>
@@ -51,7 +56,8 @@ const TopNav = styled.div`
     box-shadow: 0 2px 2px rgba(0,0,0,0.1);
     display: flex;
     z-index: 4;
-    align-items: center
+    align-items: center;
+    justify-content: center;
 `
 
 const Container = styled.div`
@@ -128,4 +134,21 @@ const StyledIcon2 = styled.img`
     width: 4rem;
     cursor: pointer;
    
+`
+
+const LogoutButton = styled.div`
+    padding: 0.5rem;
+    width: 7.7rem;
+    height: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 0.4rem;
+    color: #19E5BE;
+    border: 1px solid #19E5BE;
+    &:hover {
+        color: white;
+        background-color: #19E5BE;
+    }
+    cursor: pointer;
+    margin-left: 140rem;
 `

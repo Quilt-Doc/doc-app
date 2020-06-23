@@ -1,4 +1,6 @@
 // TODO: Add Workspace, Repository Delete Routes and methods 
+const passport = require("passport");
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
 
 const express = require('express');
 const router = express.Router();
@@ -135,4 +137,14 @@ router.post('/repository/items/attach_document', repository_item_controller.atta
 router.post('/repository/items/remove_document', repository_item_controller.removeDocument);
 
 
+//auth routes
+const auth_controller = require('../controllers/AuthController');
+router.get('/auth/login/success', auth_controller.loginSuccess);
+router.get('/auth/login/failed', auth_controller.loginFailed);
+router.get('/auth/logout', auth_controller.logout);
+router.get('/auth/github', passport.authenticate("github"));
+router.get('/auth/github/redirect', passport.authenticate("github", {
+                                        successRedirect: CLIENT_HOME_PAGE_URL,
+                                        failureRedirect: "/api/auth/login/failed"
+                                    }));
 module.exports = router;
