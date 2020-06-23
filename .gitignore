@@ -20,6 +20,7 @@ backend/node_modules/*
 
 # ignore git_repos
 backend/git_repo*
+github-app/git_repo*
 
 # Ignore doxygen related files
 backend/doxygen*

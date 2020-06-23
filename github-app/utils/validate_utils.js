@@ -23,7 +23,7 @@ const parseCommitObjects = (logLines) => {
   
           var lineData = logLines[i].split("\t");
           // Operation type
-          commitObjects[commitObjects.length-1].changes.push({operation: lineData[0], file_names:  lineData.slice(1)});
+          commitObjects[commitObjects.length-1].changes.push({operation: lineData[0], fileNames:  lineData.slice(1)});
         }
       }
   
@@ -45,6 +45,7 @@ const parseCommitObjects = (logLines) => {
       var commit = commitObjects[i];
       console.log('On Commit: ');
       console.log(commit);
+      // console.log(commit.fileNames);
 
       var trackedFiles = [];
         
@@ -54,20 +55,20 @@ const parseCommitObjects = (logLines) => {
         var commitOperation = commit.changes[k].operation;
         console.log('COMMIT OPERATION: ', commitOperation);
         var fileObj = trackedFiles.find( function( ele ) { 
-          return ele.ref == commitChanges.file_names[0];
+          return ele.ref == commitChanges.fileNames[0];
         });
   
         // If there is already a file object for this existing in trackedFiles, update the new_ref
         // Else: add file object: {old_ref: snippetFiles[x], ref: commit}
         if (commitOperation == 'R') {
           console.log('Rename Operation');
-          if (commitChanges.file_names.length < 2) {
+          if (commitChanges.fileNames.length < 2) {
             throw new Error('Rename Operation with less than 2 names');
           }
           if (fileObj) {
             if (!(fileObj.deleted)) {
               // Update the fileObj with the new file name
-              fileObj.ref = commitChanges.file_names[0];
+              fileObj.ref = commitChanges.fileNames[0];
               fileObj.sha = commit.sha;
             }
           }
@@ -75,8 +76,8 @@ const parseCommitObjects = (logLines) => {
           // This is the case where the file is being referenced and renamed
           // for the first time in the commit log
           else {
-            if (snippetFiles.includes(commitChanges.file_names[0])) {
-              trackedFiles.push({old_ref: commitChanges.file_names[0], new_ref: commitChanges.file_names[1], sha: commit.sha, deleted: false});
+            if (snippetFiles.includes(commitChanges.fileNames[0])) {
+              trackedFiles.push({old_ref: commitChanges.fileNames[0], new_ref: commitChanges.fileNames[1], sha: commit.sha, deleted: false});
             }
           }
         }
@@ -97,8 +98,8 @@ const parseCommitObjects = (logLines) => {
             }
             // What do we do if this is the only commit referencing the file
             // Idea: Add a fileObj to trackedFiles with status: 'DELETED'
-            else if (snippetFiles.includes(commitChanges.file_names[0])) {
-              trackedFiles.push({ref: commitChanges.file_names[0], deleted: true, sha: commit.sha});
+            else if (snippetFiles.includes(commitChanges.fileNames[0])) {
+              trackedFiles.push({ref: commitChanges.fileNames[0], deleted: true, sha: commit.sha});
             }
   
           }
@@ -106,8 +107,8 @@ const parseCommitObjects = (logLines) => {
           else if (commitOperation == 'M' || commitOperation == 'A') {
               console.log('Add File / Modify File Operation ');
             if (!(fileObj)) {
-              if (snippetFiles.includes(commitChanges.file_names[0])) {
-                trackedFiles.push({ref: commitChanges.file_names[0], deleted: false, sha: commit.sha});
+              if (snippetFiles.includes(commitChanges.fileNames[0])) {
+                trackedFiles.push({ref: commitChanges.fileNames[0], deleted: false, sha: commit.sha});
               }
             }
   
