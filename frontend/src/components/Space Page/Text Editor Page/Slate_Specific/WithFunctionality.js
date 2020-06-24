@@ -1,23 +1,11 @@
 
 // slate
 import { Node, Editor, Transforms, Range, Point } from 'slate'
+import { ReactEditor } from 'slate-react';
 
 const withFunctionality = (editor, dispatch) => {
 	const { deleteBackward, insertText, isVoid } = editor
-		
-
-	editor.rat = (node, path, rect) => {
-		Transforms.insertNodes(
-			editor,
-			node,
-			{ match: n => Editor.isBlock(editor, n), at: path }
-		)
-		let point = { offset: 0, path: [path.path[0] + 1, 0]}
-		Transforms.select(editor, point)
-		Transforms.insertText(editor, "/")
-		//Transforms.delete(editor)
-		dispatch({ type: 'markupMenuOn', payload: { rect, anchor: point, focus: point } })
-	}
+	
 
 	editor.isVoid = element => {
 		return element.type === 'code-reference' ? true : isVoid(element)
@@ -110,10 +98,9 @@ const withFunctionality = (editor, dispatch) => {
 		}
 
 		if (text === "/" && block.type !== 'code-line') {
-			const domSelection = window.getSelection()
-			const domRange = domSelection.getRangeAt(0)
-			const rect = domRange.getBoundingClientRect()
-			//console.log(rect)
+
+			let range = ReactEditor.toDOMRange(editor, {anchor: selection.focus, focus: selection.focus})
+			let rect = range.getBoundingClientRect()
 			dispatch({ type: 'markupMenuOn', payload: { rect, anchor: selection.focus, focus: selection.focus, text:''} })
 		}
 

@@ -66,7 +66,9 @@ const RightView = styled.div`
     padding-top: 4rem;
     padding-left: 0rem;
     overflow-y: scroll;
+    overflow-x: hidden;
     height: 92vh;
+
 `
 
 

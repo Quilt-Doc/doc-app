@@ -47,11 +47,9 @@ Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-i
 //BUGS
 //TEXT AREA SCROLL BUG
 //HOVER POSITION IN DROPDOWN JUMPING SOMETIMES OR NOT MOVING ON DOWN PRESS
-// WHEN YOU TYPE TO SEARCH DROPDOWN IN BETWEEN SENTENCE, IT CUTS OFF QUICKLY (AFTER2 LETTERS)
 
 //EXTENSIONS/MAYBE
 // INSERT P NODE BELOW CODE OR LIST IF CREATED
-
 
 // Priorities
 // FIX EMBEDDABLE BACKWARDS 
@@ -239,9 +237,10 @@ const StyledEditable = styled(Editable)`
   color: #46474f;
   font-size: 16px;
   padding-top: 6rem;
-  width: 92rem;
+  width: 89rem;
   padding-top: 0.5rem;
   padding-left: 8rem;
-  padding-right: 8rem;
+  padding-right: 6rem;
   padding-bottom: 4rem;
+  resize: none !important;
 `	

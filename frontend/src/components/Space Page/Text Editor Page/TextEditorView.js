@@ -212,7 +212,6 @@ export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, 
 
 const EditorContainer = styled.div`
     display: flex;
-    overflow-y: scroll;
     margin-top: 4rem;
     margin-left: 3.5rem;
 `
@@ -264,6 +263,8 @@ const TextContainer = styled.div`
     display: flex;
     flex-direction: column;
     overflow-y: scroll;
+    min-width: 89rem;
+    margin-left: 2rem;
 `
 
 const Title = styled.input`
@@ -272,7 +273,7 @@ const Title = styled.input`
     letter-spacing: 1.78px;
     line-height: 1;
     color: #262626;
-    margin-left:6rem;
+    margin-left:8rem;
     margin-right: 6rem;
     outline: none;
     border: none;

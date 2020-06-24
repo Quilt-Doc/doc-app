@@ -57,7 +57,7 @@ const TopNav = styled.div`
     display: flex;
     z-index: 4;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
 `
 
 const Container = styled.div`
@@ -148,6 +148,5 @@ const LogoutButton = styled.div`
         background-color: #19E5BE;
     }
     cursor: pointer;
-    margin-left: 140rem;
-    justify-content: center;
+    margin-right: 2rem;
 `
