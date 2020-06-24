@@ -21,6 +21,7 @@ import styled from "styled-components";
 
 //components
 import MarkupMenu from '../Menus/MarkupMenu';
+import ReferenceMenu from '../Menus/ReferenceMenu';
 
 //react dnd
 import { DndProvider } from 'react-dnd'

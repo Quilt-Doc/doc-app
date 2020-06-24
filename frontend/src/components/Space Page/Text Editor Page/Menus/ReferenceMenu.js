@@ -49,6 +49,7 @@ class ReferenceMenu extends React.Component {
            filterText = this.props.editorState.text
        }
        
+        console.log(this.props.referencs)
         let kindReferences = this.props.references.filter((reference) => {
             return reference.kind === kind && reference.file
         })
