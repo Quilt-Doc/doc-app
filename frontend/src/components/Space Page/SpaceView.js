@@ -14,20 +14,31 @@ import DocumentCreationView from './Document Creation Page/DocumentCreationView'
 import { Switch, Route } from 'react-router-dom';
 import history from '../../history';
 
+//react-redux
+import { connect } from 'react-redux';
+
+//actions
+import { updateRightViewScroll } from '../../actions/UI_Actions';
+
 class SpaceView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
            'modalDisplay': 'none'
         } 
+        this.rightViewRef = React.createRef()
+    }
+
+    onScroll = () => {
+        //this.props.updateRightViewScroll(this.rightViewRef.current.scrollTop)
     }
 
     render() {
         return (
             <>
                 <Container>
-                    <SideNavbar openModal = {() => this.setState({'modalDisplay': ''})}/>
-                    <RightView>
+                    <SideNavbar  openModal = {() => this.setState({'modalDisplay': ''})}/>
+                    <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
                         <Switch history = {history}>
                             <Route exact path = "/repository" component = {RepositoryView} />
                             <Route path = "/repository" component = {RepositoryNavigation}/>
@@ -41,7 +52,16 @@ class SpaceView extends React.Component {
     }
 }
 
-export default SpaceView;
+const mapStateToProps = (state) => {
+    return {
+        
+    }
+}
+
+
+
+export default connect(mapStateToProps, { updateRightViewScroll })(SpaceView);
+
 /*  
 <ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>
                     <ModalContent onClick = {(e) => {e.stopPropagation()}}>

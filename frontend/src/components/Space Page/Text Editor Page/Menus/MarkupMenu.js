@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, useState } from 'react'
 
 // slate
 import {  ReactEditor, useSlate } from 'slate-react'
@@ -52,6 +52,7 @@ const MarkupMenu = (props) => {
 		}, []
 	)
 
+
 	useEffect(() => {
 		const el = ref.current
 		if (!el) {
@@ -61,10 +62,14 @@ const MarkupMenu = (props) => {
 			el.removeAttribute('style')
 			return
 		}
+
 		el.style.opacity = 1
-		el.style.top = `${props.state.rect.top + window.pageYOffset + 15 + props.state.rect.height}px`
+		el.style.top = `${props.state.rect.top - props.state.scrollTop + props.state.prevScrollTop + window.pageYOffset + 15 + props.state.rect.height}px`
 		el.style.left = `${props.state.rect.left + window.pageXOffset + 2.5}px`
 	})
+
+	
+	
 
 	const renderMenu = () => {
 		return props.state.blocktypes.map((type, i) => {
@@ -107,6 +112,18 @@ const checkScroll = (ref, hovered) => {
 		} else {
 			ref.current.scrollTop = 0
 		}
+	}
+}
+
+const getScrollParent = (node) => {
+	if (node == null) {
+	  return null;
+	}
+  
+	if (node.scrollHeight > node.clientHeight) {
+	  return node;
+	} else {
+	  return getScrollParent(node.parentNode);
 	}
 }
 

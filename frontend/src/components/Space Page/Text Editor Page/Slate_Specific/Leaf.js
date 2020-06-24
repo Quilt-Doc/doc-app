@@ -2,10 +2,13 @@ import React from 'react'
 
 //styles
 import styled from 'styled-components'
-import {useSelected} from 'slate-react'
+import {Range} from 'slate'
+import {useSelected, useSlate} from 'slate-react'
 const Leaf = ({ attributes, children, leaf }) => {
 
-	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph"){
+	let editor = useSlate()
+	let {selection} = editor
+	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){
 		children = <Container>
 						{children}
 						<div className = 'paragraphPlaceholder' data-ph = {"Enter '/' to insert markup"}/>

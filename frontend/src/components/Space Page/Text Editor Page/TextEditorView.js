@@ -12,12 +12,11 @@ import { getDocument, editDocument } from '../../../actions/Document_Actions';
 
 //redux
 import { connect } from 'react-redux';
-/*
-export const createComment = (formValues) => async (dispatch) => {
-    const response = await api.post('/comments/create', formValues );
-    dispatch({ type: CREATE_COMMENT, payload: response.data });
-}
-*/
+
+//Change type of markup using toolbar and/or delete markup
+//listen for onscroll events to update dropdown
+//Force layout of Document Title rather than an input
+//Deal with embeddable deletion and backwards
 
 class TextEditorView extends React.Component {
 
@@ -25,6 +24,7 @@ class TextEditorView extends React.Component {
         super(props)
         this.state = {}
     }
+
 
     componentDidMount(){
         
@@ -146,8 +146,6 @@ class TextEditorView extends React.Component {
     }
 
     setValue(value) {
-        console.log("ENTERED")
-        console.log(this.state)
         let document = this.state.document
         document.markup = value
         this.setState({document})
@@ -159,7 +157,6 @@ class TextEditorView extends React.Component {
     }
    
     renderReferences(){
-        console.log(this.props.repositoryItems)
         return this.props.repositoryItems.map((item) => {
             return <Reference>{item.name}</Reference>
         })
@@ -179,7 +176,11 @@ class TextEditorView extends React.Component {
             <EditorContainer>
                 <TextContainer>
                     <Title placeholder = {'Document Title'} value = {this.state.document.title} onChange = {e => this.onTitleChange(e)} />
-                    <DocumentEditor markup = {this.state.document.markup} setValue = {this.setValue}/>
+                    <DocumentEditor 
+                        markup = {this.state.document.markup} 
+                        setValue = {this.setValue}
+                        scrollTop = {this.props.scrollTop}
+                    />
                 </TextContainer>
                 <InfoBar>
                     <InfoBlock>
@@ -204,6 +205,7 @@ class TextEditorView extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
+        scrollTop: state.ui.scrollRightView,
         repositoryItems: Object.values(state.repositoryItems)
     }
 }
@@ -213,7 +215,7 @@ export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, 
 const EditorContainer = styled.div`
     display: flex;
     margin-top: 4rem;
-    margin-left: 3.5rem;
+    
 `
 const InfoBar = styled.div`
     padding-left: 1rem;
@@ -264,7 +266,6 @@ const TextContainer = styled.div`
     flex-direction: column;
     overflow-y: scroll;
     min-width: 89rem;
-    margin-left: 2rem;
 `
 
 const Title = styled.input`
@@ -273,7 +274,7 @@ const Title = styled.input`
     letter-spacing: 1.78px;
     line-height: 1;
     color: #262626;
-    margin-left:8rem;
+    margin-left:14.5rem;
     margin-right: 6rem;
     outline: none;
     border: none;

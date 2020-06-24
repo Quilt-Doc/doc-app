@@ -20,7 +20,7 @@ import _ from 'lodash'
 import styled from "styled-components";
 
 //components
-import MarkupDropdown from '../Menus/MarkupMenu';
+import MarkupMenu from '../Menus/MarkupMenu';
 
 //react dnd
 import { DndProvider } from 'react-dnd'
@@ -54,7 +54,7 @@ Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-i
 // Priorities
 // FIX EMBEDDABLE BACKWARDS 
 // FIX TOOLBAR
-// FIX CREATION
+// REFERENCES
 
 const DocumentEditor = (props) => {
 	
@@ -66,18 +66,24 @@ const DocumentEditor = (props) => {
 		text: '', 
 		rect: null, 
 		hovered: {position: 0, ui: 'mouse'}, 
-		blocktypes
+		blocktypes,
+		scrollTop:0
 	}
 
 	const [state, dispatch] = useReducer(
 		editorReducer,
 		initialState
 	);
+	/*
+	if (props.scrollTop !== state.scrollTop) {
+		dispatch({type: 'set_Scroll', payload: props.scrollTop})
+	}*/
+
 
 	const renderElement = useCallback(props => <Element {...props} />, [])
 	const renderLeaf = useCallback(props => <Leaf {...props} />, [])
 
-	const editor = useMemo(() => withFunctionality(withHistory(withReact(createEditor())), dispatch), [])
+	const editor = useMemo(() => withFunctionality(withHistory(withReact(createEditor())), dispatch, props.scrollTop), [])
 /*<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>*/
 	
 	let range = { anchor: state.anchor, focus: state.focus }
@@ -87,7 +93,7 @@ const DocumentEditor = (props) => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Slate editor={editor} value={value} onChange={value => setValue(value)}>
-				<MarkupDropdown dispatch = {dispatch} range = {range} state = {state}/>
+				<MarkupMenu dispatch = {dispatch} range = {range} state = {state} scrollTop = {props.scrollTop}/>
 				
 				<StyledEditable
 					onClick = {() => {
@@ -237,9 +243,9 @@ const StyledEditable = styled(Editable)`
   color: #46474f;
   font-size: 16px;
   padding-top: 6rem;
-  width: 89rem;
+  width: 94rem;
   padding-top: 0.5rem;
-  padding-left: 8rem;
+  padding-left: 14.5rem;
   padding-right: 6rem;
   padding-bottom: 4rem;
   resize: none !important;

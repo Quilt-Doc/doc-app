@@ -1,11 +1,14 @@
+import _ from 'lodash';
+
 const editorReducer = (state, action) => {
 	switch (action.type) {
 		case 'markupMenuOn':
 			if (!state.markupMenuActive) {
-				return { ...state, markupMenuActive: true, ...action.payload }
+				return { ...state, prevScrollTop: state.scrollTop, markupMenuActive: true, ...action.payload }
 			}
 		case 'markupMenuOff':
 			return { ...state, 
+						prevScrollTop: 0,
 						markupMenuActive: false,
 						rect: null,
 						hovered: {position: 0, ui: 'mouse'},  
@@ -29,6 +32,8 @@ const editorReducer = (state, action) => {
 			} else {
 				return state
 			}
+		case 'set_Scroll':
+			return {...state, scrollTop: action.payload}
 		case 'setHovered':
 			return {...state, hovered: action.payload}
 		case 'setBlockTypes':

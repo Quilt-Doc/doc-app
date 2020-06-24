@@ -2,8 +2,9 @@
 // slate
 import { Node, Editor, Transforms, Range, Point } from 'slate'
 import { ReactEditor } from 'slate-react';
-
-const withFunctionality = (editor, dispatch) => {
+		
+const withFunctionality = (editor, dispatch, scrollTop) => {
+	
 	const { deleteBackward, insertText, isVoid } = editor
 	
 
@@ -98,7 +99,7 @@ const withFunctionality = (editor, dispatch) => {
 		}
 
 		if (text === "/" && block.type !== 'code-line') {
-
+			console.log(scrollTop)
 			let range = ReactEditor.toDOMRange(editor, {anchor: selection.focus, focus: selection.focus})
 			let rect = range.getBoundingClientRect()
 			dispatch({ type: 'markupMenuOn', payload: { rect, anchor: selection.focus, focus: selection.focus, text:''} })

@@ -28,110 +28,14 @@ class Element extends React.Component {
 
 	
 	renderElement(element, attributes, children) {
-		switch (element.type) {
-			case 'heading-one':
-				return (<Wrapper
-							
-							onMouseEnter = {() => this.setState({opacity: 1})}
-							onMouseLeave = {() => this.setState({opacity: 0})}
-						>
-							<LeftNav contentEditable = {false} opacity = {this.state.opacity}>
-								<BlockTool element = {element}/>
-							</LeftNav>
-							<H1  {...attributes}>{children}</H1>
-						</Wrapper>)
-			case 'heading-two':
-				return (
-						<Wrapper
-							onMouseEnter = {() => this.setState({opacity: 1})}
-							onMouseLeave = {() => this.setState({opacity: 0})}
-						>
-							<LeftNav contentEditable = {false} opacity = {this.state.opacity}>
-								<BlockTool element = {element}/>
-							</LeftNav>
-							<H2 {...attributes}>{children}</H2>
-						</Wrapper>
-				)
-			case 'heading-three':
-				return (
-						<Wrapper
-							onMouseEnter = {() => this.setState({opacity: 1})}
-							onMouseLeave = {() => this.setState({opacity: 0})}
-						>
-							<LeftNav contentEditable = {false} opacity = {this.state.opacity}>
-								<BlockTool element = {element}/>
-							</LeftNav>
-							<H3 onClick = {() => {console.log('CHILDREN', children); console.log('ATTRIBUTES', attributes); console.log("ELEMENT", element)}} {...attributes}>{children}</H3>
-						</Wrapper>
-						) 
-			case 'bulleted-list':
-				return (
-						<Wrapper
-							onMouseEnter = {() => this.setState({opacity: 1})}
-							onMouseLeave = {() => this.setState({opacity: 0})}
-						>
-							<LeftNav contentEditable = {false} opacity = {this.state.opacity}>
-								<BlockTool element = {element}/>
-							</LeftNav>
-							<UL {...attributes}>{children}</UL>
-						</Wrapper>
-						)	
-			case 'list-item':
-				return <li {...attributes}>{children}</li>
-			case 'code-block':
-				return (
-							<Wrapper
-								onMouseEnter = {() => this.setState({opacity: 1})}
-								onMouseLeave = {() => this.setState({opacity: 0})}
-							
-							>
-								<LeftNav contentEditable = {false} opacity = {this.state.opacity}>
-									<BlockTool element = {element}/>
-								</LeftNav>
-								<CodeBlock {...attributes}>{children}</CodeBlock>
-							</Wrapper>
-						)
-				
-			case 'code-line':
-				return (
-							
-							<CodeLine {...attributes}>{children}</CodeLine>
-						)
-			case 'code-reference':
-				return (
-							<CodeReference  
-								color = {element.color} 
-								path = {element.path}
-								name = {element.name}
-								kind = {element.kind}
-								{...attributes}>{children}
-							</CodeReference>
-								
-						)
-			default:
-				return (
-						<Paragraph element = {element} attributes = {attributes} children = {children}/>
-						/*
-						<Wrapper
-								onMouseEnter = {() => this.setState({opacity: 1})}
-								onMouseLeave = {() => this.setState({opacity: 0})}
-							>
-								<LeftNav contentEditable = {false} opacity = {this.state.opacity}>
-									<BlockTool element = {element}/>
-								</LeftNav>
-								<P   {...attributes}>{children}</P>
-						</Wrapper>
-						*/
-					)
-		}
+		if (element.type ==='list-item') {
+			return <li {...attributes}>{children}</li>
+		} else if (element.type === 'code-line') {
+			return <CodeLine {...attributes}>{children}</CodeLine>
+		} else {
+			return <ElementWrapper element = {element} attributes = {attributes} children = {children}/>
+		}		
 	}
-
-	checkEditor() {
-		let editor = useSlate()
-		let {selection} = editor
-		console.log(selection)
-	}
-
 
 	render(){
 		let attributes = this.props.attributes
@@ -159,7 +63,7 @@ function swapNodes(item, children, attributes, element, editor) {
 		})
 }
 
-const Paragraph = ({children, attributes, element}) => {
+const ElementWrapper = ({children, attributes, element}) => {
 	let editor = useSlate()
 	let [styles, changeStyles] = useState({opacity: 0})
 
@@ -189,12 +93,12 @@ const Paragraph = ({children, attributes, element}) => {
 			return styles.opacity
 		}
 	} 
-	return (
 
+	
+
+	return (
 		<Wrapper 
-				
 				ref={drop}
-				
 				onMouseEnter = {() => changeStyles({...styles, opacity: 1})}
 				onMouseLeave = {() => changeStyles({...styles, opacity: 0})}
 			>
@@ -202,15 +106,57 @@ const Paragraph = ({children, attributes, element}) => {
 					<BlockTool drag = {drag} element = {element}/>
 				</LeftNav>
 				<div ref = {preview}>
-					<P borderTop = {borderTop}  {...attributes}>{children}</P>
+					{getCorrectElement(borderTop, element, attributes, children)}
 				</div>
 		</Wrapper>
 	)
 }
 
+const getCorrectElement = (borderTop, element, attributes, children) => {
+	let type = element.type
+	switch (type) {
+		case 'heading-one':
+			return <H1 borderTop = {borderTop}  {...attributes}>{children}</H1>
+		case 'heading-two':
+			return <H2 borderTop = {borderTop} {...attributes}>{children}</H2>
+		case 'heading-three':
+			return <H3 borderTop = {borderTop} {...attributes}>{children}</H3>
+		case 'bulleted-list':
+			return <UL borderTop = {borderTop} {...attributes}>{children}</UL>
+		case 'code-block':
+			return <CodeBlock borderTop = {borderTop} {...attributes}>{children}</CodeBlock>
+		case 'code-reference':
+			return (
+						<CodeReference  
+							color = {element.color} 
+							path = {element.path}
+							name = {element.name}
+							kind = {element.kind}
+							{...attributes}>{children}
+						</CodeReference>
+							
+					)
+		default:
+			return <P borderTop = {borderTop}  {...attributes}>{children}</P>
+	}
+}
+
+
+
+
 const BlockTool = (props) => {
 	let editor = useSlate()
+	let [dropdownOpacity, setDropdownOpacity] = useState(0)
 	const toolRef = useRef()
+	const typeMapping = {
+		"paragraph": {name: "Text", icon: "text-outline", description: "Paragraph style text markup"},
+		"heading-one": {name: "Heading 1", icon: "filter-outline", description: "Large sized header for titles"},
+		"heading-two": {name: "Heading 2", icon: "filter-outline", description: "Medium sized header to delineate sections"},
+		"heading-three": {name: "Heading 3", icon: "filter-outline", description: "Subheader to delineate sections"},
+		"list-item": {name: "Bullet list", icon: "list-outline", description: "Bulleted list to order items and text"},
+		"code-line": {name: "Code snippet", icon: "code-slash-outline", description: "Block of inline, editable code"},
+		"code-reference": {name: "Code reference", icon: "code-slash-outline", description: "Pointer to repository declarations"}
+	}
 	
 	let insertBlock = () => {
 		let node = { type: 'paragraph', children: [] }
@@ -237,32 +183,107 @@ const BlockTool = (props) => {
 	
 		ReactEditor.focus(editor)
 	
-		//editor.insertBlock(node, Editor.end(editor, {anchor: point, focus: point}))
 	}
 
-	
-	let checkRect = () => {
-		let path = Editor.end(editor, ReactEditor.findPath(editor, props.element))
-		let node = { type: 'paragraph', children: [] }
-		let toolRect = toolRef.current.getBoundingClientRect()
-		toolRect.y += 50
-		toolRect.x += 20
-		editor.rat(node, path, toolRect)
-		//console.log(toolRef.current.getBoundingClientRect())
+	const setNode = (type) => {
+		Transforms.setNodes(editor, {type}, {at: ReactEditor.findPath(editor, props.element)})
 	}
-//console.log("EDITOR", ReactEditor.findPath(editor, props.element)
+
+	const removeNode = () => {
+		Transforms.removeNodes(editor, {at: ReactEditor.findPath(editor, props.element)})
+	}
+
+	const renderOptionsButtons = () => {
+		return Object.keys(typeMapping).map(type => {
+			return <OptionButton onClick = {() => setNode(type)}>{typeMapping[type].name}</OptionButton>
+		})
+	}
+
+
 	return (
 			<ToolbarContainer>
 				<CreateBlockButton onClick = {() => {insertBlock()}}>
 					<ion-icon style = {{'fontSize': '2rem'}}name="add-outline" ></ion-icon>
 				</CreateBlockButton>
-				<CreateBlockButton ref={props.drag}>
+				<CreateBlockButton ref={props.drag} onClick = {() => {dropdownOpacity === 1 ? setDropdownOpacity(0) : setDropdownOpacity(1)}}>
 					<ion-icon  style = {{'fontSize': '2rem'}} name="reorder-four-outline"></ion-icon>
 				</CreateBlockButton>
-			
+				<OptionsMenu 
+							contentEditable={false} 
+							opacity = {dropdownOpacity}
+							display = {dropdownOpacity === 1 ? '' : 'none'}
+							style={{ userSelect: "none" }}
+							>
+					<OptionHeader 
+						marginBottom = {'0.2rem'}
+						borderBottom = {'1px solid #DFDFDF'}
+						padding = {'1.5rem'}
+						color = {'#ff4757'}
+						hoverColor = {'#F7F9FB'}
+						pointer = {'pointer'}
+						onClick = {() => removeNode()}
+						>	<ion-icon style ={{'fontSize': '1.4rem', 'marginRight': '0.5rem', 'width': '1.5rem'}} name="trash-outline"></ion-icon>
+							Remove
+						</OptionHeader>
+					<OptionHeader padding = {'1.5rem'}>
+						<ion-icon style ={{'fontSize': '1.4rem', 'marginRight': '0.5rem', 'width': '1.5rem'}} name="pencil-outline"></ion-icon>
+						Set Markup
+						</OptionHeader>
+					{renderOptionsButtons()}
+				</OptionsMenu>
 			</ToolbarContainer>
 	)
 }
+
+const OptionHeader = styled.div`
+	height: 1.3rem;
+	font-size: 1.3rem;
+	display: flex;
+	align-items: center;
+	
+	font-weight: 300;
+	margin-bottom: ${props => props.marginBottom};
+	border-bottom: ${props => props.borderBottom};
+	padding: ${props => props.padding} 1rem;
+	color: ${props => props.color};
+	&:hover {
+		cursor: ${props => props.pointer};
+		background-color: ${props => props.hoverColor};
+	}
+`
+
+const OptionButton = styled.div`
+	font-size: 1.25rem;
+	opacity: 0.8;
+	font-weight: 300;
+	margin-left: 0.2rem;
+	padding: 0.6rem 0.8rem;
+	&:hover {
+		cursor: pointer;
+		background-color: #F7F9FB;
+		opacity: 1;
+	}
+`
+const OptionsMenu = styled.div`
+	width: 12rem;
+	max-height: 31.5rem;
+	position: absolute;
+	box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
+	overflow-y: scroll;
+	color:  #262626;
+	display: flex;
+    flex-direction: column;
+	
+	transition: opacity 0.3s;
+	background-color: white;
+	border-radius: 3px;
+	margin-top: 16rem;
+	left: -8rem;
+	z-index: 100;
+	opacity: ${props => props.opacity};
+	display: ${props => props.display};
+	padding-bottom: 0.5rem;
+`
 
 
 const Menu = styled.div`
@@ -284,6 +305,7 @@ const Menu = styled.div`
 	overflow-y: scroll;
 	font-weight: 300;
 	color:  #262626;
+	
 `
 
 
@@ -292,6 +314,7 @@ const ToolbarContainer = styled.div`
 	display: flex;
 	align-items: center;
 	margin-top: 0.3rem;
+	position: relative;
 `
 
 const CreateBlockButton = styled.div`
@@ -343,6 +366,8 @@ const H1 = styled.div`
   line-height: 1;
   margin-top: 3rem;
   color: #262626;
+  border-top: 2px solid transparent;
+  border-top: ${props => props.borderTop};
 `
 
 const H2 = styled.div`
@@ -353,6 +378,8 @@ const H2 = styled.div`
   font-weight: 300;
   color: #262626;
   margin-top: 2.5rem;
+  border-top: 2px solid transparent;
+  border-top: ${props => props.borderTop};
 `
 
 const H3 = styled.div`
@@ -363,6 +390,8 @@ const H3 = styled.div`
   margin-top: 2rem;
   color: #262626;
   font-weight: 300;
+  border-top: 2px solid transparent;
+  border-top: ${props => props.borderTop};
 `
 
 const P = styled.div`
@@ -379,6 +408,8 @@ const P = styled.div`
 
 const UL = styled.ul`
 	margin-left: 2rem;
+	border-top: 2px solid transparent;
+  	border-top: ${props => props.borderTop};
 `
 
 const CodeBlock = styled.div`
@@ -386,6 +417,8 @@ const CodeBlock = styled.div`
     background-color: #F7F9FB;
 	padding: 2.5rem;
 	tab-size: 4;
+	border-top: 2px solid transparent;
+  	border-top: ${props => props.borderTop};
 `
 
 const CodeLine = styled.div`

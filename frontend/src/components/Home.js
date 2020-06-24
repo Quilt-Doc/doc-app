@@ -11,8 +11,9 @@ import { checkLogin } from '../actions/Auth_Actions'
 
 //components
 import Dashboard from './Dashboard';
-import DocumentCreate from './Document/DocumentCreate';
 
+//css -- needs to be thrown later
+import 'antd/dist/antd.css';
 
 
 class Home extends React.Component {
