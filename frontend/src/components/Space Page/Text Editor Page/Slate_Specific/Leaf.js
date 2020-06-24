@@ -5,7 +5,6 @@ import styled from 'styled-components'
 import {useSelected} from 'slate-react'
 const Leaf = ({ attributes, children, leaf }) => {
 
-	console.log(children.props)
 	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph"){
 		children = <Container>
 						{children}
