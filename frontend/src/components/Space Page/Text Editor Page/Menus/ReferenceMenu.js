@@ -7,7 +7,7 @@ import styled from "styled-components";
 import { connect } from 'react-redux';
 
 //actions
-import { getRepositoryRefs  } from '../../../actions/Repository_Actions';
+import { getRepositoryRefs  } from '../../../../actions/Repository_Actions';
 
 //slate
 import { Transforms, Node } from 'slate';
@@ -175,7 +175,7 @@ class ReferenceMenu extends React.Component {
         Transforms.delete(editor)
         editor.insertBlock({type: 'code-reference', kind, path, name, color}, range)
 
-        this.props.dispatch({type: 'turn_references_off'})
+        this.props.dispatch({type: 'referenceMenuOff'})
     }
 
     //tabINDEX MENU

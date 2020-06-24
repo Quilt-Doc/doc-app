@@ -4,8 +4,6 @@ import React from 'react';
 import styled from "styled-components";
 
 //components
-import HoveringMenuExample2 from './Text Editor Page/HoveringMenuExample2';
-import HoveringMenuExample from './Text Editor Page/HoveringMenuExample';
 import TextEditorView from './Text Editor Page/TextEditorView';
 import RepositoryNavigation from './RepositoryNavigation';
 import RepositoryView from './Repository Page/RepositoryView';

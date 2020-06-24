@@ -62,8 +62,8 @@ const TopNav = styled.div`
 
 const Container = styled.div`
     display: flex;
-    flex-direction:column
-    
+    flex-direction:column;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
 
 
@@ -137,9 +137,7 @@ const StyledIcon2 = styled.img`
 `
 
 const LogoutButton = styled.div`
-    padding: 0.5rem;
-    width: 7.7rem;
-    height: 3rem;
+    padding: 1rem 0.8rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     border-radius: 0.4rem;
@@ -151,4 +149,5 @@ const LogoutButton = styled.div`
     }
     cursor: pointer;
     margin-left: 140rem;
+    justify-content: center;
 `

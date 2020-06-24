@@ -11,6 +11,9 @@ import { checkLogin } from '../actions/Auth_Actions'
 
 //components
 import Dashboard from './Dashboard';
+import DocumentCreate from './Document/DocumentCreate';
+
+
 
 class Home extends React.Component {
 
@@ -95,7 +98,7 @@ const LoginButton = styled.div`
     border: 1px solid #1BE5BE;
     color: #172A4E;
     display: flex;
-    justify-content: center;
+    align-items: center;
     padding: 1.5rem;
     border-radius: 4px;
     cursor: pointer;

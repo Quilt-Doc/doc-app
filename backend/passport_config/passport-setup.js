@@ -25,9 +25,6 @@ passport.use(
             callbackURL: "/api/auth/github/redirect"
         },
         async (accessToken, refreshToken, profile, done) => {
-            console.log("CLIENT SECRET", process.env.GITHUB_CLIENT_SECRET.toString())
-            console.log("CLIENT ID", process.env.GITHUB_CLIENT_ID)
-            
             let currentUser = await User.findOne({
                 domain: 'github',
                 profileID: profile.id,
