@@ -9,6 +9,72 @@ const SNIPPET_EXPANSION_FACTOR = 1.5;
 const SNIPPET_VALID_REGION_THRESHOLD = 0.5;
 const NUM_VALID_SNIPPET_START_LINES = 3;
 
+const SNIPPET_STATUS_INVALID = 'INVALID';
+const SNIPPET_STATUS_NEW_REGION = 'NEW_REGION';
+const SNIPPET_STATUS_VALID = 'VALID';
+
+
+// fileData: new fileContents, finalResult: final selected snippet region, windowSize: size of max snippet range
+const trimSnippet = (fileData, finalResult, windowSize) => {
+  // Now we will trim it on both sides so the range starts and ends with code from original snippet
+
+  var newSize = 0;
+  var newIdx = finalResult.idx;
+  // Trim from the front
+  var frontTrim = 0;
+  for(i = 0; i < windowSize; i++) {
+    // console.log('include index: ', i+finalResult.idx);
+    // console.log('Checking includes: ', fileData[i+finalResult.idx].val);
+    if (targetData.includes(fileData[i+newIdx].val)) {
+      break;
+    }
+    else {
+      frontTrim = frontTrim + 1;
+    }
+  }
+  // console.log('FrontTrim: ', frontTrim);
+  newSize = windowSize - frontTrim;
+  newIdx = newIdx + frontTrim;
+
+  // Trim from the back
+  var backTrim = 0;
+  for(i = (windowSize-1-frontTrim); i >= 0; i--) {
+    if (targetData.includes(fileData[i+newIdx].val)) {
+      break;
+    }
+    else {
+      backTrim = backTrim + 1;
+    }
+  }
+  // console.log('BackTrim: ', backTrim);
+  newSize = newSize - backTrim;
+  return [ newSize,  newIdx];
+}
+
+const getMaxCandidateScore = (possibleRegions) => {
+    // Higher val & numLines is good, lower distance is good
+    var candidateScores = possibleRegions.map(regionObj => (regionObj.val + regionObj.numLines + (1-regionObj.distance)) / 3);
+    console.log('candidateScores: ');
+    console.log(candidateScores);
+  
+    var maxScore = 0;
+    var maxScoreIdx = 0;
+    for(i = 0; i < candidateScores.length; i++) {
+      if (i == 0) {
+        maxScore = candidateScores[0];
+      }
+      else {
+        if (candidateScores[i] > maxScore) {
+          maxScore = candidateScores[i];
+          maxScoreIdx = i;
+        }
+      }
+    }
+    return maxScoreIdx;
+}
+
+
+
 const findNewSnippetRegion = (snippetObj, fileContents) => {
   // var snippetObj = {startLine: 2, numLines: 5, code: ['test1();', 'test2();', 'test3();', 'test4();', 'test5();']};
   var snippetCode = snippetObj.code.join('\n');
@@ -145,62 +211,33 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
     return { status: 'INVALID' };
   }
 
-  // Higher val & numLines is good, lower distance is good
-  var candidateScores = possibleRegions.map(regionObj => (regionObj.val + regionObj.numLines + (1-regionObj.distance)) / 3);
-  console.log('candidateScores: ');
-  console.log(candidateScores);
+  // Get the region candidate with the best score
+  var maxScoreIdx = getMaxCandidateScore(possibleRegions);
 
-  var maxScore = 0;
-  var maxScoreIdx = 0;
-  for(i = 0; i < candidateScores.length; i++) {
-    if (i == 0) {
-      maxScore = candidateScores[0];
-    }
-    else {
-      if (candidateScores[i] > maxScore) {
-        maxScore = candidateScores[i];
-        maxScoreIdx = i;
-      }
-    }
-  }
   // This is our selected new snippet
   var finalResult = possibleRegions[maxScoreIdx];
 
-  // Now we will trim it on both sides so the range starts and ends with code from original snippet
+  [finalResult.size, finalResult.idx] = trimSnippet(fileData, finalResult, windowSize);
 
-  // Trim from the front
-  var frontTrim = 0;
-  for(i = 0; i < windowSize; i++) {
-    // console.log('include index: ', i+finalResult.idx);
-    // console.log('Checking includes: ', fileData[i+finalResult.idx].val);
-    if (targetData.includes(fileData[i+finalResult.idx].val)) {
-      break;
-    }
-    else {
-      frontTrim = frontTrim + 1;
-    }
-  }
-  // console.log('FrontTrim: ', frontTrim);
-  finalResult.size = windowSize - frontTrim;
-  finalResult.idx = finalResult.idx + frontTrim;
-
-  // Trim from the back
-  var backTrim = 0;
-  for(i = (windowSize-1-frontTrim); i >= 0; i--) {
-    if (targetData.includes(fileData[i+finalResult.idx].val)) {
-      break;
-    }
-    else {
-      backTrim = backTrim + 1;
-    }
-  }
-  // console.log('BackTrim: ', backTrim);
-  finalResult.size = finalResult.size - backTrim;
-
+  var newSnippet = populateSnippetObj(finalResult, SNIPPET_STATUS_NEW_REGION, snippetObj, fileData);
   console.log('Returning: ');
-  console.log({startLine: finalResult.idx, numLines: finalResult.size});
-  return {startLine: finalResult.idx, numLines: finalResult.size, status: 'NEW_REGION'};
+
+  console.log(newSnippet);
+
+  return newSnippet;
 }
+
+
+const populateSnippetObj = (finalResult, status, snippetObj, fileData) => {
+  snippetObj.startLine = finalResult.idx;
+  snippetObj.numLines = finalResult.size;
+  snippetObj.status = status;
+  snippetObj.code = [];
+  for( i = startLine; i < numLines; i++ ) {
+    snippetObj.code.push(fileData[i]);
+  }
+  return snippetObj;
+};
 
 
 module.exports = { findNewSnippetRegion };
@@ -211,3 +248,7 @@ module.exports = { findNewSnippetRegion };
 
 // Now I want to get the correct alignment for the window around these increasing segments which maximizes the amount of snippet lines in the window
 // ^^ We shouldn't have to do this because if there is a better alignment at the snippet max, then it will be represented in our array as a separate element
+/* {pathInRepository: snippetObj.pathInRepository.substr(snippetObj.pathInRepository.indexOf("/")+1),
+    _id: snippetObj._id, startLineNum: snippetObj.startLine, numLines: snippetObj.code.length,
+    firstLine: snippetObj.code[0], endLine: snippetObj.code[snippetObj.code.length-1]        
+    } */
