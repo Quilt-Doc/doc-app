@@ -9,9 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.702.0",
     "axios": "^0.19.2",
     "dotenv": "^8.2.0",
     "github-webhook-handler": "^1.0.0",
-    "jsonwebtoken": "^8.5.1"
+    "jsonwebtoken": "^8.5.1",
+    "request": "^2.88.2"
   }
 }
