@@ -1,0 +1,1 @@
+export const SCROLL_RIGHT_VIEW = "SCROLL_RIGHT_VIEW";

@@ -32,3 +32,11 @@ body {
 .plus_icon {
   margin-top:10rem !important;
 }
+
+.paragraphPlaceholder:before{
+  content:attr(data-ph);
+  color:#262626;
+  opacity: 0.5;
+  font-weight: 300;
+  cursor: text;
+}

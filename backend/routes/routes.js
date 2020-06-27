@@ -1,6 +1,6 @@
 // TODO: Add Workspace, Repository Delete Routes and methods 
 const passport = require("passport");
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 
 const express = require('express');
 const router = express.Router();

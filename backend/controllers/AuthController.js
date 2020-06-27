@@ -1,5 +1,4 @@
-const passport = require("passport");
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 
 loginSuccess = (req, res) => {
     if (req.user) {

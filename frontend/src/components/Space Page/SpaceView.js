@@ -4,8 +4,6 @@ import React from 'react';
 import styled from "styled-components";
 
 //components
-import HoveringMenuExample2 from './Text Editor Page/HoveringMenuExample2';
-import HoveringMenuExample from './Text Editor Page/HoveringMenuExample';
 import TextEditorView from './Text Editor Page/TextEditorView';
 import RepositoryNavigation from './RepositoryNavigation';
 import RepositoryView from './Repository Page/RepositoryView';
@@ -16,20 +14,31 @@ import DocumentCreationView from './Document Creation Page/DocumentCreationView'
 import { Switch, Route } from 'react-router-dom';
 import history from '../../history';
 
+//react-redux
+import { connect } from 'react-redux';
+
+//actions
+import { updateRightViewScroll } from '../../actions/UI_Actions';
+
 class SpaceView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
            'modalDisplay': 'none'
         } 
+        this.rightViewRef = React.createRef()
+    }
+
+    onScroll = () => {
+        //this.props.updateRightViewScroll(this.rightViewRef.current.scrollTop)
     }
 
     render() {
         return (
             <>
                 <Container>
-                    <SideNavbar openModal = {() => this.setState({'modalDisplay': ''})}/>
-                    <RightView>
+                    <SideNavbar  openModal = {() => this.setState({'modalDisplay': ''})}/>
+                    <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
                         <Switch history = {history}>
                             <Route exact path = "/repository" component = {RepositoryView} />
                             <Route path = "/repository" component = {RepositoryNavigation}/>
@@ -43,7 +52,16 @@ class SpaceView extends React.Component {
     }
 }
 
-export default SpaceView;
+const mapStateToProps = (state) => {
+    return {
+        
+    }
+}
+
+
+
+export default connect(mapStateToProps, { updateRightViewScroll })(SpaceView);
+
 /*  
 <ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>
                     <ModalContent onClick = {(e) => {e.stopPropagation()}}>
@@ -68,7 +86,9 @@ const RightView = styled.div`
     padding-top: 4rem;
     padding-left: 0rem;
     overflow-y: scroll;
+    overflow-x: hidden;
     height: 92vh;
+
 `
 
 
