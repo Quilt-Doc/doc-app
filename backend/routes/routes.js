@@ -147,4 +147,9 @@ router.get('/auth/github/redirect', passport.authenticate("github", {
                                         successRedirect: CLIENT_HOME_PAGE_URL,
                                         failureRedirect: "/api/auth/login/failed"
                                     }));
+
+//token routes
+const token_controller = require('../controllers/TokenController');
+router.post('/tokens/create', token_controller.createToken);
+
 module.exports = router;

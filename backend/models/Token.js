@@ -4,8 +4,8 @@ const { ObjectId, Mixed } = Schema.Types;
 
 var tokenSchema = new Schema({
     installationId: Number,
-    calue: String,
-    expiryTime: Number,
+    value: String,
+    expireTime: Number,
     type: String,
 });
 
