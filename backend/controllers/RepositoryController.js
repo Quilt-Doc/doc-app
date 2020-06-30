@@ -32,6 +32,10 @@ if (process.env.RUN_AS_REMOTE_BACKEND === 1) {
 const { v4 } = require('uuid');
 const { json } = require('body-parser');
 
+const JOB_GET_REFS = 1;
+const JOB_UPDATE_SNIPPETS = 2;
+const JOB_SEMANTIC = 3;
+
 /*repositorySearch = (req, res) => {
     console.log(req.body);
     const { RepositorysitoryName } = req.body;
@@ -77,6 +81,7 @@ createRepository = async (req, res) => {
             runSemanticData['defaultBranch'] = response.data.default_branch,
             runSemanticData['cloneUrl'] = response.data.clone_url,
             runSemanticData['installationId'] = installationId.toString();
+            runSemanticData['jobType'] =  JOB_SEMANTIC;
 
             installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
     
@@ -141,7 +146,11 @@ createRepository = async (req, res) => {
                             "installationId": {
                                 DataType: "String",
                                 StringValue: runSemanticData.installationId
-                            }
+                            },
+                            "jobType": {
+                                DataType: "Number",
+                                StringValue: JOB_SEMANTIC.toString()
+                              }
                         },
                         MessageBody: JSON.stringify(runSemanticData),
                         MessageDeduplicationId: timestamp,
@@ -303,6 +312,7 @@ getRepositoryRefs = (req, res) => {
     var getRefsData = {
         'repoLink': repoLink,
         'apiCallLink': apiCallLink,
+        'jobType': JOB_GET_REFS
     }
     var uuid = v4();
     var sqsRefsData = {
@@ -314,6 +324,10 @@ getRepositoryRefs = (req, res) => {
           "apiCallLink": {
             DataType: "String",
             StringValue: getRefsData.apiCallLink
+          },
+          "jobType": {
+            DataType: "Number",
+            StringValue: JOB_GET_REFS.toString()
           }
         },
         MessageBody: JSON.stringify(getRefsData),
