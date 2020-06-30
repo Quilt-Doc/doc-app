@@ -2,7 +2,10 @@ var jwt = require('jsonwebtoken');
 
 const Token = require('../models/Token');
 
+<<<<<<< HEAD
 const fs = require('fs');
+=======
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
 
 const requestClient = () => {
     const axios = require('axios');
@@ -49,8 +52,12 @@ createJWTToken = () => {
     //Get timestamp in seconds
     const timeNow = Math.round(now / 1000);
 
+<<<<<<< HEAD
     // Reduce from max by 30 sec to stop rounding errors
     const expirationTime = timeNow + (10 * 60) - 30;
+=======
+    const expirationTime = timeNow + (10 * 60);
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
 
     // Generate the JWT
     var payload = {
@@ -65,7 +72,11 @@ createJWTToken = () => {
     var private_key = fs.readFileSync(process.env.GITHUB_APP_PRIVATE_KEY_FILE, 'utf8');
     
     var newToken = {
+<<<<<<< HEAD
         value: jwt.sign(payload, private_key, { algorithm: 'RS256' }),
+=======
+        token: jwt.sign(payload, private_key, { algorithm: 'RS256' }),
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
         expireTime: expirationTime,
     }
 
@@ -74,6 +85,7 @@ createJWTToken = () => {
 }
 
 // Modify 
+<<<<<<< HEAD
 const requestAppToken = async () => {
     
     var currentTime = new Date().getTime();
@@ -116,6 +128,46 @@ const requestAppToken = async () => {
         return undefined;
     });
 
+=======
+const requestAppToken = () => {
+    
+    var currentTime = new Date().getTime();
+    curentTime = Math.round(now  / 1000);
+
+    var token = undefined;
+    
+    Token.findOne({'type': 'APP'}, function (err, foundToken) {
+        if (err) {
+            console.log('Error finding app access token: ');
+            console.log(err);
+            return {};
+        }
+        token = foundToken;
+    });
+
+    console.log('Token found is: ');
+    console.log(token);
+
+    if (typeof token == 'undefined') {
+        token = createJWTToken();
+        token.installationId = -1;
+        token.type = 'APP';
+        token.status = 'RESOLVED';
+        token.save()
+        token.save((err, savedToken) => {
+            if (err) {
+                console.log('Error Saving new app token: ');
+                console.log(err);
+                return {};
+            } 
+        });
+        return token;
+        // If token has less than two minutes of life left.
+    }
+    else {
+       return token;
+    }
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
 }
 
 const requestNewInstallationToken = async (appToken, installationId) => {
@@ -130,6 +182,7 @@ const requestNewInstallationToken = async (appToken, installationId) => {
     var installationApi = axios.create({
         baseURL: "https://api.github.com/installations/",
     });
+<<<<<<< HEAD
 
     // replace newlin, carriage-return, etc
     const regex = /\r?\n|\r/g;
@@ -139,6 +192,12 @@ const requestNewInstallationToken = async (appToken, installationId) => {
     let config = {
         headers: {
           Authorization: "Bearer " + appToken.value,
+=======
+    
+    let config = {
+        headers: {
+          Authorization: "Bearer " + appToken,
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
           Accept: "application/vnd.github.machine-man-preview+json"
         }
     }
@@ -146,6 +205,7 @@ const requestNewInstallationToken = async (appToken, installationId) => {
     var currentTime = new Date().getTime();
 
 
+<<<<<<< HEAD
     return await installationApi.post(installationId + "/access_tokens", {}, config)
     .then((response) => {
         console.log('ACCESS_TOKENS RESPONSE: ');
@@ -171,6 +231,16 @@ const requestNewInstallationToken = async (appToken, installationId) => {
     })
     .catch((error) => {
         console.log('Error fetching new installation access token: ', error);
+=======
+    installationApi.post(installationId + "/access_tokens", config)
+    .then((response) => {
+        var newToken = response.data;
+        newToken = {token: newToken.token, expireTime: Date.parse(newToken.expires_at)}
+        return newToken;
+    })
+    .catch((error) => {
+        console.log('Error: ', error);
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
         return {};
     });
 }
@@ -183,8 +253,11 @@ const requestInstallationToken = async (appToken, installationId) => {
         -H "Accept: application/vnd.github.machine-man-preview+json" \
         https://api.github.com/installation/repositories
     */
+<<<<<<< HEAD
     console.log('requestInstallationToken received appToken: ');
     console.log(appToken);
+=======
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
     const axios = require('axios');
     var installationApi = axios.create({
         baseURL: "https://api.github.com/installations/",
@@ -201,6 +274,7 @@ const requestInstallationToken = async (appToken, installationId) => {
 
     var retrievedToken = undefined;
 
+<<<<<<< HEAD
     return await Token.findOne({ installationId })
     .then(async (token) => {
         retrievedToken = token;
@@ -227,24 +301,57 @@ const requestInstallationToken = async (appToken, installationId) => {
         } 
     });
 
+=======
+    Token.findOne({ installationId }, function (err, token) {
+        if (err) {
+            console.log('Error searching for install token: ');
+            console.log(err);
+        }
+        retrievedToken = token;
+    });
+
+    if (retrievedToken == 'undefined') {
+        return await requestNewInstallationToken(appToken, installationId);
+    }
+
+    else {
+        retrievedToken.installationId = installationId;
+        retrievedToken.type = 'INSTALL';
+        retrievedToken.status = 'RESOLVED';
+        return retrievedToken;
+    }
+
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
 }
 
 const requestInstallationClient = async (installationId) => {
     const axios = require('axios');
+<<<<<<< HEAD
     var appToken = await requestAppToken();
     console.log('Received App Token');
     console.log(appToken);
     var installationToken = await requestInstallationToken(appToken, installationId);
     console.log('Received Installation Token');
     console.log(installationToken);
+=======
+    var appToken = requestAppToken();
+    var installationToken = await requestInstallationToken(appToken, installationId);
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
     var installationApi = axios.create({
         baseURL: "https://api.github.com/",
         headers: {
             post: {        // can be common or any other method
+<<<<<<< HEAD
                 Authorization: 'token ' + installationToken.value
             },
             get: {
                 Authorization: 'token ' + installationToken.value
+=======
+                Authorization: 'token ' + installationToken
+            },
+            get: {
+                Authorization: 'token ' + installationToken
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef
             }
           }
     });
@@ -257,4 +364,8 @@ module.exports = {
     requestAppToken,
     requestInstallationToken,
     requestInstallationClient
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b2e2f6fe96abd3a55283a7793c30f08c678b10ef

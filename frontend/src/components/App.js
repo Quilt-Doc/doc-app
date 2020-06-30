@@ -5,19 +5,15 @@ import history from '../history';
 
 //components
 import Dashboard from './Dashboard';
-import DocumentCreate from './Document/DocumentCreate';
-import Test from './Test';
-import ReferenceMenu from './Space Page/Text Editor Page/ReferenceMenu';
-import TextEditorView from './Space Page/Text Editor Page/TextEditorView';
-import GithubAppTest from './GithubAppTest';
 import Home from './Home';
+import Test from './Test'
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
 
 //split markers -- directory, file
 const App = () => {
     return (<>
                 <Router history = {history}>
-                  <Route path = "" component = {Home} />
+                  <Route path = "" component = {Dashboard} />
                 </Router>
             </>)
 }

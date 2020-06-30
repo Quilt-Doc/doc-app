@@ -13,10 +13,13 @@ import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
 
+import uiReducer from './UI_Reducer';
+
 import authReducer from './Auth_Reducer';
 
 import selectedReducer from './Selected_Reducer';
 
+import semanticReducer from './Semantic_Reducer';
 
 export default combineReducers({
     workspaces: workspaceReducer,
@@ -31,5 +34,7 @@ export default combineReducers({
     selected: selectedReducer,
     repositoryItems: repositoryItemReducer,
     form: formReducer,
-    auth: authReducer
+    auth: authReducer,
+    ui: uiReducer,
+    callbacks: semanticReducer
 });

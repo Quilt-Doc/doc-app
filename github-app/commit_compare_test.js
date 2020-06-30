@@ -52,7 +52,7 @@ const getRepositoryObject = async (repoLink) => {
   });
   console.log('getRepositoryResponse: ');
   console.log(getRepositoryResponse.data);
-  var repoCommit = getRepositoryResponse.data.last_processed_commit;
+  var repoCommit = getRepositoryResponse.data.lastProcessedCommit;
   var repoId = getRepositoryResponse.data._id;
   return [repoId, repoCommit];
 };
