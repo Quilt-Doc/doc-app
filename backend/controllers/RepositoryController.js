@@ -30,6 +30,7 @@ if (process.env.RUN_AS_REMOTE_BACKEND === 1) {
     log = new EventLogger('DocApp EventLogger Hello!');
 }
 const { v4 } = require('uuid');
+const { json } = require('body-parser');
 
 /*repositorySearch = (req, res) => {
     console.log(req.body);
@@ -41,7 +42,6 @@ const { v4 } = require('uuid');
     return res.json({status: 'SUCCESS'});
 }*/
 
-<<<<<<< HEAD
 // Needs to use installation token
 createRepository = async (req, res) => {
     const {fullName, installationId, htmlURL, cloneURL, debugID, icon} = req.body;
@@ -82,13 +82,15 @@ createRepository = async (req, res) => {
                     `https://github.com/${fullName}.git`,
                 ];
 
-                let args2 = ["v2-run", "semantic", "parse"]
+                // let args2 = ["v2-run", "semantic", "parse"]
+                let args2 = [];
                 //"--", "--json-symbols"
                 // Extract contents using tree SHA
-                console.log("REP NAME OWNER", fullName)
+                console.log("REPO NAME OWNER", fullName)
                 let repoName = fullName.split("/").slice(1)[0]
-                console.log(repoName)
+                console.log(repoName);
                 installationClient.get(`/repos/${fullName}/git/trees/${treeSHA}?recursive=true`).then((response) => {
+                    
                     let repositoryItems = response.data.tree.map(item => {
                         
                         let pathSplit = item.path.split('/')
@@ -96,56 +98,73 @@ createRepository = async (req, res) => {
                         let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
                         let kind = item.type === 'blob' ? 'file' : 'dir'
                         if (kind === 'file') {
-                            args2.push(`../content/${repoName}/${item.path}`)
+                            // args2.push(`../content/${repoName}/${item.path}`)
+                            args2.push(`${item.path}`);
                         }
                         return {name, path, kind, repository: ObjectId(repository._id)}
                     })
 
 
-                    
+                    // SQS Message Section Start
+                    var timestamp = Date.now().toString();
+                    // default_branch, fullName, cloneUrl, args_2, installationId 
+                    var runSemanticData = {
+                        'fullName': response.data.full_name,
+                        'defaultBranch': response.data.default_branch,
+                        'cloneUrl': response.data.clone_url,
+                        'semanticTargets': JSON.stringify({targets: args2}),
+                        'installationId': installationId
+                    }
 
-                    /*const getContent = execFile("git", args, 
-                        {cwd: "./semantic/content"}, (error, stdout, stderr) => {
-                        if (error) {
-                            console.log('error during clone call to github: ' + error);
-                            return;
-                        } 
-                        const command = `cabal`
-                        args2.push("--")
-                        args2.push("--json-symbols")
-                        
-                        console.log("ARGS2", args2)
+                    console.log('RUN SEMANTIC DATA: ');
+                    console.log(runSemanticData);
 
-                        const getCallbacks = execFile(command, args2,
-                            {maxBuffer: (1024*1024)*50, cwd: './semantic/semantic/'}, (error, stdout, stderr) => {
-                                if (error) {
-                                    console.log("error during semantic parse:", error)
-                                    return 
-                                }
-                                console.log("STDOUT", stdout)
-                                let output = JSON.parse(stdout.split("Up to date")[1].trim())
-                                
-                                //console.log("OUT BEFORE", output)
-                                console.log(output)
-                                output = output.filter(o => o.nodeType === "REFERENCE" && o.syntaxType === "CALL")
-                                
-                                //console.log(output)
-                                const removeContent = execFile("rm", ["-r", repoName],
-                                    {maxBuffer: (1024*1024)*50, cwd: './semantic/content'}, (error, stdout, stderr) => {
-                                        if (error) {
-                                            console.log("error deleting file after usage:", error)
-                                        }
-                                    console.log("callback retrieval process successfully completed")
-                                })
-
-                                //return res.json(output)
-                                //console.log(output.files[0].symbols)
-                                //console.log("PARSED CONTENT", JSON.parse(output))
+                    var sqsSemanticData = {
+                        MessageAttributes: {
+                            "fullName": {
+                                DataType: "String",
+                                StringValue: runSemanticData.fullName
+                            },
+                            "defaultBranch": {
+                                DataType: "String",
+                                StringValue: runSemanticData.defaultBranch
+                            },
+                            "cloneUrl": {
+                                DataType: "String",
+                                StringValue: runSemanticData.cloneUrl
+                            },
+                            "semanticTargets": {
+                                DataType: "String",
+                                StringValue: runSemanticData.semanticTargets
+                            },
+                            "installationId": {
+                                DataType: "String",
+                                StringValue: runSemanticData.installationId
                             }
-                        )
-                    })*/
-    
-                    //console.log("REPO ITEMS", repositoryItems)
+                        },
+                        MessageBody: JSON.stringify(runSemanticData),
+                        MessageDeduplicationId: timestamp,
+                        MessageGroupId: "runSemantic_" + timestamp,
+                        QueueUrl: queueUrl
+                    };
+                    if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Semantic | MessageDeduplicationId: ${timestamp}`);
+                    if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Semantic | MessageGroupId: getRefRequest_${timestamp}`);
+                    // Send the semantic data to the SQS queue
+                    let sendSqsMessage = sqs.sendMessage(sqsSemanticData).promise();
+
+                    sendSqsMessage.then((data) => {
+
+                        if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Semantic | SUCCESS: ${data.MessageId}`);
+                        console.log(`Semantic | SUCCESS: ${data.MessageId}`);
+                        res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
+                    }).catch((err) => {
+                        if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Semantic | ERROR: ${err}`);
+                        console.log(`Semantic | ERROR: ${err}`);
+
+                        // Send email to emails API
+                        res.json({success: false, msg: "We ran into an error. Please try again."});
+                    });
+                    // SQS Message Section End
                     
                     // Save repository contents as items in our database
                     RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
@@ -168,8 +187,6 @@ createRepository = async (req, res) => {
 
 
 // Deprecated
-=======
->>>>>>> 561abed00bb4290ad9fa2890fbd9139a927409af
 refreshRepositoryPath = (req, res) => {
     console.log(req.body);
     var { repositoryName, repositoryPath} = req.body;
@@ -324,134 +341,6 @@ getRepositoryRefs = (req, res) => {
         res.json({success: false, msg: "We ran into an error. Please try again."});
     });
     // parseUtils.getRefs(repoLink, apiCallLink, res);
-}
-
-
-createRepository = (req, res) => {
-    const {name, workspaceID, link, debugID, icon} = req.body;
-
-    // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no repository workspace provided'});
-    if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no repository name provided'});
-
-    let repository = new Repository({
-        name,
-        link,
-        icon
-        // workspaceID: ObjectId(workspaceID)
-    });
-
-
-    // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
-        if (debugID) repository._id = ObjectId(debugID);
-    }
-
-    if (workspaceID) repository.workspace = ObjectId(workspaceID)
-
-    let linkItems = link.split('/')
-
-    // looks like pytorch/fairseq
-    let repositoryNameOwner = linkItems.slice(linkItems.length - 3, linkItems.length - 1).join('/')
-
-
-    repository.save((err, repository) => {
-        if (err) return res.json({ success: false, error: err });
-
-        api.get(`${apiURL}/repos/${repositoryNameOwner}`).then((response) => {
-            //console.log("FIRST RESPONSE", response.data)
-            // Get all commits from default branch 
-            api.get(`${apiURL}/repos/${repositoryNameOwner}/commits/${response.data.default_branch}`).then((response) => {
-    
-                // Extract tree SHA from most recent commit
-                let treeSHA = response.data.commit.tree.sha
-
-                let args = [
-                    'clone',
-                    `https://github.com/${repositoryNameOwner}.git`,
-                ];
-
-                let args2 = ["v2-run", "semantic", "parse"]
-                //"--", "--json-symbols"
-                // Extract contents using tree SHA
-                console.log("REP NAME OWNER", repositoryNameOwner)
-                let repoName = repositoryNameOwner.split("/").slice(1)[0]
-                console.log(repoName)
-                api.get(`${apiURL}/repos/${repositoryNameOwner}/git/trees/${treeSHA}?recursive=true`).then((response) => {
-                    let repositoryItems = response.data.tree.map(item => {
-                        
-                        let pathSplit = item.path.split('/')
-                        let name = pathSplit.slice(pathSplit.length - 1)[0]
-                        let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
-                        let kind = item.type === 'blob' ? 'file' : 'dir'
-                        if (kind === 'file') {
-                            args2.push(`../content/${repoName}/${item.path}`)
-                        }
-                        return {name, path, kind, repository: ObjectId(repository._id)}
-                    })
-
-
-                    
-
-                    const getContent = execFile("git", args, 
-                        {cwd: "./semantic/content"}, (error, stdout, stderr) => {
-                        if (error) {
-                            console.log('error during clone call to github: ' + error);
-                            return;
-                        } 
-                        const command = `cabal`
-                        args2.push("--")
-                        args2.push("--json-symbols")
-                        
-                        console.log("ARGS2", args2)
-
-                        const getCallbacks = execFile(command, args2,
-                            {maxBuffer: (1024*1024)*50, cwd: './semantic/semantic/'}, (error, stdout, stderr) => {
-                                if (error) {
-                                    console.log("error during semantic parse:", error)
-                                    return 
-                                }
-                                console.log("STDOUT", stdout)
-                                let output = JSON.parse(stdout.split("Up to date")[1].trim())
-                                
-                                //console.log("OUT BEFORE", output)
-                                console.log(output)
-                                output = output.filter(o => o.nodeType === "REFERENCE" && o.syntaxType === "CALL")
-                                
-                                //console.log(output)
-                                const removeContent = execFile("rm", ["-r", repoName],
-                                    {maxBuffer: (1024*1024)*50, cwd: './semantic/content'}, (error, stdout, stderr) => {
-                                        if (error) {
-                                            console.log("error deleting file after usage:", error)
-                                        }
-                                    console.log("callback retrieval process successfully completed")
-                                })
-
-                                //return res.json(output)
-                                //console.log(output.files[0].symbols)
-                                //console.log("PARSED CONTENT", JSON.parse(output))
-                            }
-                        )
-                    })
-    
-
-
-                    //console.log("REPO ITEMS", repositoryItems)
-                    
-                    // Save repository contents as items in our database
-                    RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
-                        if (errInsertItems) return res.json({ success: false, error: errInsertItems });
-                        repository.populate('workspace', (errPopulation, repository) => {
-                            if (errPopulation) return res.json({ success: false, error: errPopulation });
-
-                            // return the repository object
-                            return res.json(repository);
-                        });
-                    })
-                })
-            })
-        })
-        
-    });
 }
 
 getRepository = (req, res) => {
