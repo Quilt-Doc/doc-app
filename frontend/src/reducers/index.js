@@ -19,6 +19,7 @@ import authReducer from './Auth_Reducer';
 
 import selectedReducer from './Selected_Reducer';
 
+import semanticReducer from './Semantic_Reducer';
 
 export default combineReducers({
     workspaces: workspaceReducer,
@@ -34,5 +35,6 @@ export default combineReducers({
     repositoryItems: repositoryItemReducer,
     form: formReducer,
     auth: authReducer,
-    ui: uiReducer
+    ui: uiReducer,
+    callbacks: semanticReducer
 });

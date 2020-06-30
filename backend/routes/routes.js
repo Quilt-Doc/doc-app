@@ -147,4 +147,10 @@ router.get('/auth/github/redirect', passport.authenticate("github", {
                                         successRedirect: CLIENT_HOME_PAGE_URL,
                                         failureRedirect: "/api/auth/login/failed"
                                     }));
+
+
+//semantic routes
+const semantic_controller = require('../controllers/semantic/SemanticController');
+router.post('/semantic/callbacks/retrieve', semantic_controller.acquireCallbacks);
+
 module.exports = router;

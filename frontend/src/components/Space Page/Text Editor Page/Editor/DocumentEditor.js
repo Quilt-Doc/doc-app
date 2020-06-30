@@ -48,6 +48,7 @@ Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-i
 //BUGS
 //TEXT AREA SCROLL BUG
 //HOVER POSITION IN DROPDOWN JUMPING SOMETIMES OR NOT MOVING ON DOWN PRESS
+// ACCOUNT FOR NEW LINES IN NONSTRING TOKENS IN DECORATE
 
 //EXTENSIONS/MAYBE
 // INSERT P NODE BELOW CODE OR LIST IF CREATED
@@ -189,7 +190,6 @@ const decorate = ([node, path]) => {
 			const string = childTexts.join('\n')
 			const grammar = Prism.languages["python"]
 			const tokens = Prism.tokenize(string, grammar).reverse()
-
 			const identifiers = {
 									'keyword':'#C679DD',
 									'boolean': '#56B6C2',

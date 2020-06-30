@@ -30,6 +30,9 @@ worker/git_repo*
 # Ignore doxygen related files
 backend/doxygen*
 
+# Ignore semantic related files
+backend/semantic
+
 # Ignore Windows service executables
 backend/daemon*
 worker/daemon*

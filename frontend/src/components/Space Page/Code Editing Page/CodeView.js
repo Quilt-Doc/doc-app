@@ -5,7 +5,8 @@ import ReactDOM from 'react-dom';
 //styles
 import styled, { keyframes } from "styled-components"
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+
 //components
 import Annotation from './Annotation';
 import Snippet from './Snippet';
@@ -16,18 +17,22 @@ import Selection from '@simonwep/selection-js';
 import _ from 'lodash';
 
 //actions
-import {retrieveSnippets, createSnippet} from '../../../actions/Snippet_Actions'
+import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
 import { getRepositoryFile } from '../../../actions/Repository_Actions';
+import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
 
 //misc
 import { connect } from 'react-redux';
-import { xonokai, pojoaque } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { hopscotch } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+//prism
+import Prism from 'prismjs'
+// eslint-disable-next-line
+Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-interpolation":{pattern:/(?:f|rf|fr)(?:("""|''')[\s\S]*?\1|("|')(?:\\.|(?!\2)[^\\\r\n])*\2)/i,greedy:!0,inside:{interpolation:{pattern:/((?:^|[^{])(?:{{)*){(?!{)(?:[^{}]|{(?!{)(?:[^{}]|{(?!{)(?:[^{}])+})+})+}/,lookbehind:!0,inside:{"format-spec":{pattern:/(:)[^:(){}]+(?=}$)/,lookbehind:!0},"conversion-option":{pattern:/![sra](?=[:}]$)/,alias:"punctuation"},rest:null}},string:/[\s\S]+/}},"triple-quoted-string":{pattern:/(?:[rub]|rb|br)?("""|''')[\s\S]*?\1/i,greedy:!0,alias:"string"},string:{pattern:/(?:[rub]|rb|br)?("|')(?:\\.|(?!\1)[^\\\r\n])*\1/i,greedy:!0},function:{pattern:/((?:^|\s)def[ \t]+)[a-zA-Z_]\w*(?=\s*\()/g,lookbehind:!0},"class-name":{pattern:/(\bclass\s+)\w+/i,lookbehind:!0},decorator:{pattern:/(^\s*)@\w+(?:\.\w+)*/im,lookbehind:!0,alias:["annotation","punctuation"],inside:{punctuation:/\./}},keyword:/\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|print|raise|return|try|while|with|yield)\b/,builtin:/\b(?:__import__|abs|all|any|apply|ascii|basestring|bin|bool|buffer|bytearray|bytes|callable|chr|classmethod|cmp|coerce|compile|complex|delattr|dict|dir|divmod|enumerate|eval|execfile|file|filter|float|format|frozenset|getattr|globals|hasattr|hash|help|hex|id|input|int|intern|isinstance|issubclass|iter|len|list|locals|long|map|max|memoryview|min|next|object|oct|open|ord|pow|property|range|raw_input|reduce|reload|repr|reversed|round|set|setattr|slice|sorted|staticmethod|str|sum|super|tuple|type|unichr|unicode|vars|xrange|zip)\b/,boolean:/\b(?:True|False|None)\b/,number:/(?:\b(?=\d)|\B(?=\.))(?:0[bo])?(?:(?:\d|0x[\da-f])[\da-f]*\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/i,operator:/[-+%=]=?|!=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/,punctuation:/[{}[\];(),.:]/},Prism.languages.python["string-interpolation"].inside.interpolation.inside.rest=Prism.languages.python,Prism.languages.py=Prism.languages.python;
+
 
 
 //implement on scroll
 
-// IMPORTANT BUG TO FIX -- need to filter the selected items to find the smallest line number, cannot assume
 
 
 //markers for multiple documentation
@@ -47,7 +52,13 @@ class CodeView extends React.Component {
             'newSnippetId': '',
 
             //variable to control selection during creation of annotation
-            'cannotSelect': false
+            'cannotSelect': false,
+
+            'allLinesJSX': [],
+
+            'selectionMode': false,
+
+            'reselectingSnippet': null
         }
 
         // variable to determine whether annotation scale
@@ -62,20 +73,37 @@ class CodeView extends React.Component {
         // retrieve snippets using url path 
         this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
 
+        
         // get contents of code file from database
         this.getFileContents()
+
+        // get callback references -- temporary
+        
+        /*
+        this.props.retrieveCallbacks().then(() =>{
+            console.log("CALLBACKS", this.props.callbacks)
+        })*/
+       
     }
+
 
     // using url path, extract download link... use download link to get file contents from database
     getFileContents() {
-        console.log(window.location.pathname.slice(20));
+        //console.log(window.location.pathname.slice(20));
         // .slice(1) because starts with a slash
         
         var pathInRepo = window.location.pathname.slice(20).split('/').slice(1);
         var repositoryId = pathInRepo.shift();
-        console.log('repository Id: ', repositoryId);
+        //console.log('repository Id: ', repositoryId);
         let fileName = window.location.pathname.slice(20).split('/').pop();
-        this.props.getRepositoryFile({repositoryId, fileName, pathInRepo: pathInRepo.join('/')});
+        //console.log('filename:', fileName)
+        this.props.getRepositoryFile({repositoryId, fileName, pathInRepo: pathInRepo.join('/')}).then(() => {
+            this.props.retrieveCallbacks({repositoryId, fileName, pathInRepo: pathInRepo.join('/')}).then(() => {
+                const allLinesJSX = this.colorLines()
+                this.setState({allLinesJSX})
+            })
+        })
+        
     }
 
     // translate annotation pane manually if a new snippet is being created 
@@ -108,21 +136,28 @@ class CodeView extends React.Component {
 			// The container is also the boundary in this case
 			boundaries: ['.codetext']
 		}).on('start', ({inst, selected, oe}) => {
-            if (!(this.state.cannotSelect)) {
+            if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
+                this.state.reselectingSnippet) {
+                let addedClass = 'selected_code'
+                console.log(addedClass)
                 this.setState({selected: {}})
                 for (const el of selected) {
-                    el.classList.remove('selected_code');
+                    el.classList.remove(addedClass);
                     inst.removeFromSelection(el);
                 }
                 inst.clearSelection();
             }
 		}).on('move', ({changed: {removed, added}}) => {
             // Add a custom class to the elements that where selected.
-            if (!(this.state.cannotSelect)) {
+            if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
+                this.state.reselectingSnippet) {
+                
+                let addedClass = 'selected_code'
+                console.log("ADDED CLASS", addedClass)
                 let selected = this.state.selected
                 for (const el of added) {
                     selected[el.id] = el
-                    el.classList.add('selected_code');
+                    el.classList.add(addedClass);
                 }
             
                 // Remove the class from elements that were removed
@@ -131,24 +166,185 @@ class CodeView extends React.Component {
                     if (el.id in selected) {
                         delete selected[el.id]
                     }
-                    el.classList.remove('selected_code');
+                    el.classList.remove(addedClass);
                 }
                 
                 this.setState({selected})
             }
 		}).on('stop', ({inst}) => {
-            if (!(this.state.cannotSelect)) {
+            if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
+            this.state.reselectingSnippet) {
                 inst.keepSelection();
             }
 		});
     }
 
+    renderCallbacks(line, callbacks, offset, lineNumber, currLineJSX) {
+        const { span, symbol } =  callbacks.slice(-1)[0];
+        const { start, end } = span;
 
+        if (lineNumber === start.line && start.column >= offset && start.column < offset + line.length) {
+            let last = end.line === lineNumber ? start.column - offset - 1 + symbol.length : line.length
+
+            currLineJSX.push(<>{line.slice(0, start.column - offset - 1)}</>)
+            currLineJSX.push(<ColoredSpan 
+                                color = {'#61AEEE'}>
+                                {line.slice(start.column - offset - 1, last)}
+                             </ColoredSpan>)
+            currLineJSX.push(<>{line.slice(last)}</>)
+            callbacks.pop()
+        } else {
+            currLineJSX.push(<>{line}</>)
+        }
+    } 
+
+    toggleSelection = () => {
+
+        if (this.state.selectionMode) {
+            this.deselectItems();
+            this.setState({
+                'scaleY': 0,
+                'selected': {},
+                'newSnippetId': '',
+                'cannotSelect': false,
+                'selectionMode': false
+            });
+        } else {
+            this.deselectItems();
+            this.setState({
+                'scaleY': 0,
+                'selected': {},
+                'newSnippetId': '',
+                'cannotSelect': false,
+                'selectionMode': true,
+                'reselectingSnippet': null
+            })
+        }
+    }
+    
+    colorLines() {
+        const grammar = Prism.languages["python"]
+        const identifiers = {
+            'keyword':{color: '#C679DD', type: ''},
+            'boolean': {color: '#56B6C2', type: ''},
+            'function': {color: '#61AEEE', type: ''},
+            'class-name': {color: '#E6C07A', type: ''},
+            'string': {color: '#98C379', type: ''},
+            'triple-quoted-string': {color: '#98C379', type: ''},
+            'number': {color: '#D19966', type: ''},
+            'decorator': {color: '#61AEEE',type: ''},
+            'builtin': {color:'#61AEEE', type: ''},
+            'comment': {color: '#5C6370', type: 'italic'}
+        }
+        const tokens = Prism.tokenize(this.props.fileContents, grammar)
+
+        let allLinesJSX = []
+        let currLineJSX = []
+        let callbacks = [...this.props.callbacks].reverse()
+        let lineNumber = 1
+        let offset = 0
+        
+        tokens.forEach(token => {
+            let content = this.getContent(token)
+            let splitContent = content.split("\n")
+            if (typeof token !== "string" && token.type in identifiers) {
+                for (let i = 0; i < splitContent.length - 1; i++){
+                    if (splitContent[i] !== '') {
+                        currLineJSX.push(<ColoredSpan 
+                                            type =  {identifiers[token.type].type} 
+                                            color = {identifiers[token.type].color}>
+                                            {splitContent[i]}
+                                        </ColoredSpan>)
+                    }
+                    
+                    if (currLineJSX.length > 0) {
+                        allLinesJSX.push(currLineJSX)
+                    } else {
+                        allLinesJSX.push([<>{"  "}</>])
+                    }
+
+                    offset = 0
+                    lineNumber += 1
+                    currLineJSX = []   
+                }
+                if (splitContent.slice(-1)[0] !== '') {
+                    currLineJSX.push(<ColoredSpan 
+                                        type =  {identifiers[token.type].type} 
+                                        color = {identifiers[token.type].color}>
+                                        {splitContent.slice(-1)[0]}
+                                    </ColoredSpan>)
+                }
+                offset += splitContent.slice(-1)[0].length
+                if (callbacks.length > 0 && 
+                    (lineNumber > callbacks.slice(-1)[0].span.end.line || 
+                    (lineNumber === callbacks.slice(-1)[0].span.end.line && offset + 1 > callbacks.slice(-1)[0].span.start.column))) {
+                    callbacks.pop()
+                }
+            } else {
+                for (let i = 0; i < splitContent.length - 1; i ++){
+                    if (splitContent[i] !== '') {
+                        if (callbacks.length > 0) {
+                            this.renderCallbacks(splitContent[i], callbacks, offset, lineNumber, currLineJSX)   
+                        } else {
+                            currLineJSX.push(<>{splitContent[i]}</>)
+                        }
+                    }
+
+                    if (currLineJSX.length > 0) {
+                        allLinesJSX.push(currLineJSX)
+                    } else {
+                        allLinesJSX.push([<>{"  "}</>])
+                    }
+                    
+                    offset = 0
+                    lineNumber += 1
+                    currLineJSX = []
+                    if (callbacks.length > 0 && lineNumber > callbacks.slice(-1)[0].span.end.line) {
+                        callbacks.pop()
+                    }
+                }
+                if (splitContent.slice(-1)[0] !== '') {
+                    if (callbacks.length > 0) {
+                        this.renderCallbacks(splitContent.slice(-1)[0], callbacks, offset, lineNumber, currLineJSX)
+                    } else {
+                        currLineJSX.push(<>{content}</>)
+                    }
+                }
+                offset += splitContent.slice(-1)[0].length
+            }
+        })
+        if (currLineJSX.length !== 0) {
+            allLinesJSX.push(currLineJSX)
+        }
+
+        return allLinesJSX
+    }
+
+
+    getContent = (token) => {
+        if (typeof token === 'string') {
+            return token
+        } else if (typeof token.content === 'string') {
+            return token.content
+        } else {
+            return token.content.map(this.getContent).join('')
+        }
+    }
+
+    reselectSnippet(startLine) {
+        this.setState({reselectingSnippet: startLine})
+    }
+
+    deleteSnippet(index) {
+        this.props.deleteSnippet(this.props.snippets[index]._id).then(() => {
+            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        })
+    }
     // render the snippets that are in the database
     renderSnippets() {
         // extract the lines from fileContents
-        const lines = this.props.fileContents.split("\n");
-
+        //const lines = this.props.fileContents.split("\n");
+        const lines = this.state.allLinesJSX;
         // jsx that will be rendered, store these in an array to render them appropriately later
         let snippetJSX = []
         let annotationJSX = []
@@ -157,8 +353,12 @@ class CodeView extends React.Component {
 
         // iterate over lines, if the line points to a snippet -- create an annotation and snippet,
         // then skip iteration index to the end of the snippet
+        let deprecatedSeen = false;
         while (i < lines.length) {
-            if (this.props.snippets && i in this.props.snippets/* && 1 == 2*/) {
+            if (this.props.snippets 
+                && i in this.props.snippets 
+                && (this.state.reselectingSnippet !== i || this.props.snippets[i].status === "INVALID")
+                && !deprecatedSeen ) {
                 const annotationRef = 'annotation' + i
                 const snippetRef = 'snippet' + i
                 const annotation  =  <Annotation 
@@ -169,16 +369,27 @@ class CodeView extends React.Component {
                                     unhoverBoth = {() => this.unhoverBoth(snippetRef, annotationRef)} 
                                     />
                 const snippet =   <Snippet 
+                                    status = {this.props.snippets[i].status}
                                     key = {snippetRef} 
                                     ref={snippetRef} 
-                                    codelines = {this.props.snippets[i].code}
+                                    index = {i}
+                                    codeViewState = {this.state}
+                                    reselectSnippet = {(index) => this.reselectSnippet(index)}
+                                    deleteSnippet = {(index) => this.deleteSnippet(index)}
+                                    codelines = {lines.slice(i, i + this.props.snippets[i].code.length)}
                                     scalePane = {() => this.scalePane(snippetRef, annotationRef)} 
                                     unhoverBoth = {() => this.unhoverBoth(snippetRef, annotationRef)}
                                     />
                 snippetJSX.push(snippet)
                 annotationJSX.push(annotation)
-                i += this.props.snippets[i].code.length - 1
+                if (this.props.snippets[i].status !== "INVALID") {
+                    i += this.props.snippets[i].code.length - 1;
+                } else {
+                    deprecatedSeen = true
+                    i -= 1;
+                }
             } else {
+                deprecatedSeen = false
                 // if we are in selection mode, find the line that corresponds to the top of the snippet
                 // that will be created
                 if (this.state.newSnippetId === `linecode-${i}`) {
@@ -205,13 +416,23 @@ class CodeView extends React.Component {
 
                 // if the input is a space break, insert space to render a line
                 let inputLine = lines[i]
-                if (inputLine === ''){
-                    inputLine = '    '
-                }
-
+                //if (inputLine === ''){
+                //    inputLine = '    '
+                //}
+                //
                 // render lines that are not snippets, note the id is used to differentiate during selection
-                let codeline = (<Wrapper id = {`linecode-${i}`} className = {'codeline'}>
-                                    <CodeLine  language='python' style="vs">
+                let border = "1.5px solid transparent"
+                let backgroundColor = ""
+                if (this.state.reselectingSnippet && 
+                    i >= this.state.reselectingSnippet &&
+                    i < this.state.reselectingSnippet + this.props.snippets[this.state.reselectingSnippet].code.length
+                    ) {
+                        
+                        border = "1.5px solid #a29bfe"
+                        backgroundColor = "#F1F8FF"
+                    }
+                let codeline = (<Wrapper backgroundColor = {backgroundColor} border = {border} id = {`linecode-${i}`} className = {'codeline'}>
+                                    <CodeLine  >
                                         {inputLine}
                                     </CodeLine>
                                 </Wrapper>)
@@ -221,7 +442,9 @@ class CodeView extends React.Component {
         }
 
         // all code related objects packaged into one variable
-        const allCode = <CodeText className = {'codetext'}>
+        const allCode = <CodeText 
+                            cursor = {this.state.selectionMode || this.state.reselectingSnippet !== null ? "grab" : ""}
+                            className = {'codetext'}>
                             {snippetJSX.map(snippet => {return snippet })}
                          </CodeText>
         
@@ -232,9 +455,13 @@ class CodeView extends React.Component {
                 {allCode} 
                 {allAnno}
                 {this.renderSnippetAdditionButton()}
+                
+                
                 </>)
     }
 
+    /*{this.renderSnippetChangeButton()}
+                {this.renderSnippetCancelButton()}*/
 
     // reset state to before create annotation mode
     resetAnnotationCreation() {
@@ -261,7 +488,7 @@ class CodeView extends React.Component {
         //createSnippet must handle all state reset, acquire beginning/end line data
         //snippet content, etc and send them over to the action
 
-        this.props.createSnippet({startLine, code, annotation, location}).then(() => {
+        this.props.createSnippet({startLine, code, annotation, location, status: "INVALID"}).then(() => {
             this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
             this.setState({
                 'selected': {},
@@ -270,7 +497,20 @@ class CodeView extends React.Component {
             });
         })
         //start and end line number, text in array format of all lines, annotation
-        
+    }
+
+    reselectSnippetFunction(elem_key) {
+        let startLine = parseInt(elem_key.split('-').pop())
+        let length = _.keys(this.state.selected).length
+        let code = this.props.fileContents.split("\n").slice(startLine, startLine + length)
+        this.deselectItems()
+        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {startLine, code, status: "VALID"}).then(() => {
+            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+            this.setState({
+                'selected': {},
+                'reselectingSnippet': null
+            });
+        })
     }
 
     // remove css class showing that an element is selected on screen
@@ -311,10 +551,17 @@ class CodeView extends React.Component {
             let elem = this.state.selected[elem_key]
             //console.log(elem.scrollTop)
             let offset = elem.getBoundingClientRect().top - 25 + window.scrollY
-            return  <AddButton  onClick = {() =>  {this.renderSelectionChanges(elem_key)}}
+            if (this.state.selectionMode) {
+                return  <AddButton  onClick = {() =>  {this.renderSelectionChanges(elem_key)}}
                 factor = {offset}  >
                         <ion-icon style={{'margin-top': "0.9rem"}} name="add-outline"></ion-icon>
                     </AddButton>
+            } else {
+                return  <AddButton  onClick = {() =>  {this.reselectSnippetFunction(elem_key)}}
+                factor = {offset}  >
+                        <ion-icon style={{'margin-top': "0.9rem"}} name="checkmark-outline"></ion-icon>
+                    </AddButton>
+            }
         }
     }
 
@@ -344,12 +591,32 @@ class CodeView extends React.Component {
         annotation.unhover()
     }
 
+    
+
     // render function
     render() {
-        if (this.props.fileContents) {
+        //console.log("CALLBACKS PREV", this.props.callbacks)
+        if (this.props.fileContents && this.props.callbacks.length > 0) {
             return (
                 <>
                     <Container>
+                        <Toolbar>
+                            <IconBorder 
+                                color = {this.state.selectionMode ? '#19E5BE;' : '#262626'}
+                                opacity = {this.state.selectionMode ? '1' : '0.5'}
+                                onClick = {this.toggleSelection}>
+                                <ion-icon 
+                                    style = {{'fontSize': '1.4rem'}} 
+                                    name="color-wand-outline">
+                                </ion-icon>
+                            </IconBorder>
+                            <IconBorder>
+                                <ion-icon 
+                                    name="hammer-outline"
+                                    style = {{'fontSize': '1.3rem'}} >
+                                </ion-icon>
+                            </IconBorder>
+                        </Toolbar>
                         {this.renderSnippets()}
                     </Container>
                 </>
@@ -369,30 +636,69 @@ const mapStateToProps = (state) => {
             fileContents: ''
         }
     }
+    //state.callbacks.forEach(c => console.log("ELEM", c))
     return {
         repositories: state.repositories,
         fileContents: state.repositories.fileContents,
         fileName: state.repositories.fileName,
         filePath: state.repositories.repositoryCurrentPath + '/' + state.repositories.fileName,
-        snippets: state.snippets
+        snippets: state.snippets,
+        callbacks: state.callbacks
     }
 }
 
-export default connect(mapStateToProps, {retrieveSnippets, createSnippet, getRepositoryFile})(CodeView);
+export default connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, deleteSnippet, getRepositoryFile, retrieveCallbacks})(CodeView);
 
 
 
 //Styled Components
-
 const Container = styled.div`
-    margin: 0 auto;
+    
     margin-top: 5rem;
-    width: 120rem;
+    width: 110rem;
     background-color: #F7F9FB;
     display: flex;
     box-shadow: 0 0 4px 1px rgba(0,0,0,.05), 2px 2px 2px 1px rgba(0,0,0,.05) !important;
     border-radius: 0.4rem !important;
     margin-bottom: 5rem;
+    margin-left: 4rem;
+`
+
+const Toolbar = styled.div`
+    position: absolute;
+    height: 6rem;
+    width: 3.3rem;
+    top: 29.15rem;
+    left: 36.25rem;
+    background-color: black;
+    z-index: 5;
+    box-shadow: 0 0 4px 1px rgba(0,0,0,.05), 2px 2px 2px 1px rgba(0,0,0,.05) !important;
+    background-color: #F7F9FB;
+    border-radius: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+`
+
+const IconBorder = styled.div`
+    width: 2.3rem;
+    height: 2.3rem;
+    border: 1px solid #262626;
+    color: #262626;
+    margin-top: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+    &:hover {
+        opacity: 1;
+    }
+    color: ${props => props.color};
+    border: 1px solid ${props => props.color};
+    opacity: ${props => props.opacity};
 `
 
 const Overflow_Wrapper = styled.div`
@@ -401,13 +707,14 @@ const Overflow_Wrapper = styled.div`
 `
 
 const CodeText = styled.div`
-    width: 80rem;
+    width: 77rem;
     padding: 1.5rem;
     border-right: 1px solid #ECECEF;
     display: flex;
     flex-direction: column;
     font-family: 'Roboto Mono', monospace !important;
     padding-bottom: 10rem;
+    cursor: ${props => props.cursor};
     
 `
 
@@ -416,26 +723,25 @@ const AnnotationBar = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 40rem;
-    
+    width: 33rem;
     transition: transform 0.5s cubic-bezier(0, 0.475, 0.01, 1.035);
     transform: ${props => `translateY(${props.scaleY}px)`};
 `
 
-const CodeLine = styled(SyntaxHighlighter)`
-    font-size: 1.35rem;
+const CodeLine = styled.div`
+    font-size: 1.27rem;
     margin: 0;
     padding: 0.1rem !important;
     background-color: inherit !important;
     padding-left: 1.6rem !important;
     boxShadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;
-    cursor: grab;
+    cursor: drag;
     white-space: pre-wrap !important;
 `
 
-
 const Wrapper = styled.div`
-   
+    border-left: ${props => props.border};
+    background-color : ${props => props.backgroundColor};
 `
 
 const AddButton = styled.div`
@@ -447,10 +753,11 @@ const AddButton = styled.div`
     position: absolute;
     z-index: 10;
     font-size: 2rem;
-    margin-left: 78rem;
+    margin-left: 74.95rem;
     text-align: center;
     color: #19E5BE;
     border: 1.5px solid #19E5BE;
+
     top: ${props => props.factor}px !important;
     animation-name: moveInBottom;
     animation-duration: 0.5s;
@@ -471,7 +778,7 @@ const AddButton = styled.div`
 `   
 
 const AnnotationCardInput = styled.div`
-    width: 32rem;
+    width: 31rem;
     padding: 1.6rem 2rem;
     border-radius: 0.1rem;
     background-color: white;
@@ -488,7 +795,7 @@ const StyledTextareaAutosize = styled(TextareaAutosize)`
     border: none;
     line-height: 1.8;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     letter-spacing: 0.2px;
 
     &::placeholder {
@@ -535,4 +842,14 @@ const CancelAnnotation = styled.div`
         background-color: #f53b57;
     }
     cursor: pointer;
+`
+
+
+const ColoredSpan = styled.span`
+    color : ${props => props.color};
+    font-style: ${props => props.type};
+`
+
+const ObliqueSpan = styled.span`
+	font-style: italic;
 `

@@ -3,8 +3,6 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createReferences = (req, res) => {
-
-
     const { ref_list } = req.body;
     if (!typeof ref_list == 'undefined' && ref_list !== null) return res.json({success: false, error: 'no reference ref_list provided'});
     console.log('ref_list');
