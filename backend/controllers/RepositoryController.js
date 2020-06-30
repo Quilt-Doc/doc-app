@@ -11,10 +11,12 @@ const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fi
 
 const apiURL = 'https://api.github.com';
 const localURL = 'https://localhost:3001/api'
-const githubBaseURL = 'https://github.com/'
+const repoBaseURL = 'https://github.com/'
 
 const fs = require('fs');
 const fsPath = require('fs-path');
+
+const { exec, execFile } = require('child_process');
 
 const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
@@ -29,8 +31,17 @@ if (process.env.RUN_AS_REMOTE_BACKEND === 1) {
 }
 const { v4 } = require('uuid');
 
+/*repositorySearch = (req, res) => {
+    console.log(req.body);
+    const { RepositorysitoryName } = req.body;
+    const response = await api.get('/repos//create', formValues );
 
+    if (!typeof repositoryName == 'undefined' && repositoryName !== null) return res.json({success: false, error: 'no repo repositoryName provided'});
+    
+    return res.json({status: 'SUCCESS'});
+}*/
 
+<<<<<<< HEAD
 // Needs to use installation token
 createRepository = async (req, res) => {
     const {fullName, installationId, htmlURL, cloneURL, debugID, icon} = req.body;
@@ -157,6 +168,8 @@ createRepository = async (req, res) => {
 
 
 // Deprecated
+=======
+>>>>>>> 561abed00bb4290ad9fa2890fbd9139a927409af
 refreshRepositoryPath = (req, res) => {
     console.log(req.body);
     var { repositoryName, repositoryPath} = req.body;
@@ -181,7 +194,6 @@ refreshRepositoryPath = (req, res) => {
       });
 }
 
-// Deprecated
 refreshRepositoryPathNew = (req, res) => {
     console.log(req.body);
     var {repositoryPath} = req.body;
@@ -219,7 +231,6 @@ refreshRepositoryPathNew = (req, res) => {
 }
 
 
-// Needs to use API call with correct media type, not `githubusercontent`
 getRepositoryFile = (req, res) => {
     var { downloadLink} = req.body;
     if (typeof downloadLink == 'undefined' || downloadLink == null) return res.json({success: false, error: 'no repo downloadLink provided'});
@@ -227,6 +238,35 @@ getRepositoryFile = (req, res) => {
     
     console.log('downloadLink: ', downloadLink);
     request.get(downloadLink).pipe(res);
+}
+
+parseRepositoryFile = (req, res) => {
+    
+    //console.log(process.env);
+    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
+        return res.json({success: false, error: 'doxygen disabled on this backend'});
+    }
+
+    var { fileContents, fileName } = req.body;
+    console.log('parseRepositoryFile received content: ', req.body);
+    if (typeof fileContents == 'undefined' || fileContents == null) return res.json({success: false, error: 'no repo fileContents provided'});
+    if (typeof fileName == 'undefined' || fileName == null) return res.json({success: false, error: 'no repo fileName provided'});
+
+    fileName = Date.now() + '_' + fileName;
+
+    fsPath.writeFile('doxygen_input/' + fileName, fileContents, function (err) {
+        if (err) return console.log(err);
+        console.log('File written to: ', fileName);
+        var dir = './doxygen_xml';
+
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+        parseUtils.parseCode(fileName, res);
+
+    });
+
 }
 
 
@@ -237,27 +277,28 @@ getRepositoryRefs = (req, res) => {
         return res.json({success: false, error: 'doxygen disabled on this backend'});
     }
 
-    var { fullName, installationId } = req.body;
+    var { repoLink } = req.body;
     console.log('getRepositoryRefs received content: ', req.body);
-    if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
-    if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
+    if (typeof repoLink == 'undefined' || repoLink == null) return res.json({success: false, error: 'no repo repoLink provided'});
 
     var timestamp = Date.now().toString();
+    // log.info('Timestamp: ', timestamp);
+    var apiCallLink = url.resolve(repoBaseURL, repoLink);
 
     var getRefsData = {
-        'fullName': fullName,
-        'installationId': installationId,
+        'repoLink': repoLink,
+        'apiCallLink': apiCallLink,
     }
     var uuid = v4();
     var sqsRefsData = {
         MessageAttributes: {
-          "fullName": {
+          "repoLink": {
             DataType: "String",
-            StringValue: getRefsData.fullName
+            StringValue: getRefsData.repoLink
           },
-          "installationId": {
+          "apiCallLink": {
             DataType: "String",
-            StringValue: getRefsData.installationId
+            StringValue: getRefsData.apiCallLink
           }
         },
         MessageBody: JSON.stringify(getRefsData),
@@ -285,6 +326,134 @@ getRepositoryRefs = (req, res) => {
     // parseUtils.getRefs(repoLink, apiCallLink, res);
 }
 
+
+createRepository = (req, res) => {
+    const {name, workspaceID, link, debugID, icon} = req.body;
+
+    // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no repository workspace provided'});
+    if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no repository name provided'});
+
+    let repository = new Repository({
+        name,
+        link,
+        icon
+        // workspaceID: ObjectId(workspaceID)
+    });
+
+
+    // Check if user-defined ids allowed
+    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
+        if (debugID) repository._id = ObjectId(debugID);
+    }
+
+    if (workspaceID) repository.workspace = ObjectId(workspaceID)
+
+    let linkItems = link.split('/')
+
+    // looks like pytorch/fairseq
+    let repositoryNameOwner = linkItems.slice(linkItems.length - 3, linkItems.length - 1).join('/')
+
+
+    repository.save((err, repository) => {
+        if (err) return res.json({ success: false, error: err });
+
+        api.get(`${apiURL}/repos/${repositoryNameOwner}`).then((response) => {
+            //console.log("FIRST RESPONSE", response.data)
+            // Get all commits from default branch 
+            api.get(`${apiURL}/repos/${repositoryNameOwner}/commits/${response.data.default_branch}`).then((response) => {
+    
+                // Extract tree SHA from most recent commit
+                let treeSHA = response.data.commit.tree.sha
+
+                let args = [
+                    'clone',
+                    `https://github.com/${repositoryNameOwner}.git`,
+                ];
+
+                let args2 = ["v2-run", "semantic", "parse"]
+                //"--", "--json-symbols"
+                // Extract contents using tree SHA
+                console.log("REP NAME OWNER", repositoryNameOwner)
+                let repoName = repositoryNameOwner.split("/").slice(1)[0]
+                console.log(repoName)
+                api.get(`${apiURL}/repos/${repositoryNameOwner}/git/trees/${treeSHA}?recursive=true`).then((response) => {
+                    let repositoryItems = response.data.tree.map(item => {
+                        
+                        let pathSplit = item.path.split('/')
+                        let name = pathSplit.slice(pathSplit.length - 1)[0]
+                        let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
+                        let kind = item.type === 'blob' ? 'file' : 'dir'
+                        if (kind === 'file') {
+                            args2.push(`../content/${repoName}/${item.path}`)
+                        }
+                        return {name, path, kind, repository: ObjectId(repository._id)}
+                    })
+
+
+                    
+
+                    const getContent = execFile("git", args, 
+                        {cwd: "./semantic/content"}, (error, stdout, stderr) => {
+                        if (error) {
+                            console.log('error during clone call to github: ' + error);
+                            return;
+                        } 
+                        const command = `cabal`
+                        args2.push("--")
+                        args2.push("--json-symbols")
+                        
+                        console.log("ARGS2", args2)
+
+                        const getCallbacks = execFile(command, args2,
+                            {maxBuffer: (1024*1024)*50, cwd: './semantic/semantic/'}, (error, stdout, stderr) => {
+                                if (error) {
+                                    console.log("error during semantic parse:", error)
+                                    return 
+                                }
+                                console.log("STDOUT", stdout)
+                                let output = JSON.parse(stdout.split("Up to date")[1].trim())
+                                
+                                //console.log("OUT BEFORE", output)
+                                console.log(output)
+                                output = output.filter(o => o.nodeType === "REFERENCE" && o.syntaxType === "CALL")
+                                
+                                //console.log(output)
+                                const removeContent = execFile("rm", ["-r", repoName],
+                                    {maxBuffer: (1024*1024)*50, cwd: './semantic/content'}, (error, stdout, stderr) => {
+                                        if (error) {
+                                            console.log("error deleting file after usage:", error)
+                                        }
+                                    console.log("callback retrieval process successfully completed")
+                                })
+
+                                //return res.json(output)
+                                //console.log(output.files[0].symbols)
+                                //console.log("PARSED CONTENT", JSON.parse(output))
+                            }
+                        )
+                    })
+    
+
+
+                    //console.log("REPO ITEMS", repositoryItems)
+                    
+                    // Save repository contents as items in our database
+                    RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
+                        if (errInsertItems) return res.json({ success: false, error: errInsertItems });
+                        repository.populate('workspace', (errPopulation, repository) => {
+                            if (errPopulation) return res.json({ success: false, error: errPopulation });
+
+                            // return the repository object
+                            return res.json(repository);
+                        });
+                    })
+                })
+            })
+        })
+        
+    });
+}
+
 getRepository = (req, res) => {
     // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
     console.log(req.body);
@@ -293,7 +462,10 @@ getRepository = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
     Repository.findById(id, (err, repository) => {
 		if (err) return res.json({success: false, error: err});
-        return res.json(repository);
+        repository.populate('workspace', (err, repository) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(repository);
+        });
     });
 }
 
@@ -304,63 +476,82 @@ deleteRepository = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
     Repository.findByIdAndRemove(id, (err, repository) => {
 		if (err) return res.json({success: false, error: err});
-        return res.json(repository);
+        repository.populate('workspace', (err, repository) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(repository);
+        });
     });
 }
 
 
 
 retrieveRepositories = (req, res) => {
-    const {fullName, installationId} = req.body;
+    const {name, workspaceID, link} = req.body;
     // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
 
     query = Repository.find();
-    if (fullName) query.where('fullName').equals(fullName);
-    if (installationId) query.where('installationId').equals(installationId);
+    if (name) query.where('name').equals(name);
+    if (workspaceID) query.where('workspace').equals(workspaceID);
 
-    query.exec((err, repositories) => {
+    if (link) {
+        if (link[link.length - 1] != '/') {
+            link = link + '/'
+        }
+        query.where('link').equals('github.com/' + link);
+    }
+
+    query.populate('workspace').exec((err, repositories) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(repositories);
     });
 }
 
-// Needs to use installation token
+
 updateRepositoryCommit = (req, res) => {
     //console.log(req.body);
-    var {installationId, fullName } = req.body;
-    if (!typeof installationId == 'undefined' && installationId !== null) return res.json({success: false, error: 'no repo installationId provided'});
-    if (!typeof fullName == 'undefined' && fullName !== null) return res.json({success: false, error: 'no repo fullName provided'});
+    var { repo_id, repo_link } = req.body;
+    if (!typeof repo_id == 'undefined' && repo_id !== null) return res.json({success: false, error: 'no repo repo_id provided'});
+    if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no repo repo_link provided'});
 
-    // fullName = repoLink.substring(repoLink.indexOf('.com/')+ 5);
+    repo_link = repo_link.substring(repo_link.indexOf('.com/')+ 5);
 
-    var query = { fullName: fullName, installationId: installationId };
+    var commit_url = url.resolve(apiURL, 'repos/');
+    commit_url = url.resolve(commit_url, repo_link);
+    commit_url = url.resolve(commit_url, 'commits');
 
-    //console.log('FINAL REQ URL: ', commitUrl);
-    var installationClient = await apis.requestInstallationClient(installationId);
+    //console.log('FINAL REQ URL: ', commit_url);
 
-    installationClient.get('repos/' + fullName + '/commits')
+    api.get(commit_url)
     .then(function (response) {
         //console.log('repoUpdateCommit response: ');
         //console.log(response.data);
-        var latestSha = response.data[0]['sha'];
-        //console.log('latestSha: ', latestSha);
-
-        let update = {};
-        update.lastProcessedCommit = latestSha;
-        Repository.findOneAndUpdate(query, { $set: update }, { new: true }, (err, updatedRepository) => {
-            if (err) return res.json({ success: false, error: err });
-            updatedRepository.populate('creator', (err, updatedRepository) => {
-                if (err) return res.json(err);
-                return res.json(updatedRepository);
-            });
+        var latest_sha = response.data[0]['sha'];
+        //console.log('latest_sha: ', latest_sha);
+        
+        Codebase.findById(repo_id, (err, codebase) => {
+            // console.log('last_processed_commit.length: ', )
+            if (codebase.last_processed_commit.length == 0) {
+                let update = {};
+                update.last_processed_commit = latest_sha;
+                Codebase.findByIdAndUpdate(repo_id, { $set: update }, { new: true }, (err, updated_codebase) => {
+                    if (err) return res.json({ success: false, error: err });
+                    updated_codebase.populate('creator', (err, updated_codebase) => {
+                        if (err) return res.json(err);
+                        return res.json(updated_codebase);
+                    });
+                });
+            }
+            else {
+                return res.json({ success: true, msg: 'Already found commit: ' +  codebase.last_processed_commit});
+            }
         }).catch(function (err) {
             return res.json({ success: false, error: err});
         });
-
       })
       .catch(function (err) {
         return res.json({ success: false, error: err });
       });
+
 }
 
 
@@ -369,3 +560,7 @@ module.exports = {
     refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
     createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit
 }
+
+
+
+///

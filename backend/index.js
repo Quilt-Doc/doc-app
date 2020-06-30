@@ -48,7 +48,7 @@ app.use(logger('dev'));
 
 // handle cookies 
 
-console.log(process.env.COOKIE_KEY)
+
 app.use(
     cookieSession({
       name: "session",

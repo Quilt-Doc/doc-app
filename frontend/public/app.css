@@ -25,8 +25,15 @@ body {
 
 .selected_code {
   background-color: white !important;
-  border-left: 1.5px solid #19E5BE;
+  border-left: 1.5px solid #19E5BE !important;
   /*box-shadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;*/
+}
+
+.reselected_code {
+  background-color: white !important;
+  border-left: 1.5px solid #19E5BE !important;
+  /*
+  border-left: 1.5px solid #5534FF !important;*/
 }
 
 .plus_icon {
