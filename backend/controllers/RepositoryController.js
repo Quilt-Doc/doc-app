@@ -16,6 +16,8 @@ const repoBaseURL = 'https://github.com/'
 const fs = require('fs');
 const fsPath = require('fs-path');
 
+const { exec, execFile } = require('child_process');
+
 const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
 var mongoose = require('mongoose')
@@ -39,6 +41,135 @@ const { v4 } = require('uuid');
     return res.json({status: 'SUCCESS'});
 }*/
 
+<<<<<<< HEAD
+// Needs to use installation token
+createRepository = async (req, res) => {
+    const {fullName, installationId, htmlURL, cloneURL, debugID, icon} = req.body;
+
+    if (!typeof fullName == 'undefined' && fullName !== null) return res.json({success: false, error: 'no repository fullName provided'});
+    if (!typeof installationId == 'undefined' && installationId !== null) return res.json({success: false, error: 'no repository installationId provided'});
+
+
+    let repository = new Repository({
+        fullName,
+        installationId,
+        icon
+    });
+
+    if (htmlURL) repository.htmlURL = htmlURL;
+    if (cloneURL) repository.cloneURL = cloneURL;
+
+
+    // Check if user-defined ids allowed
+    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
+        if (debugID) repository._id = ObjectId(debugID);
+    }
+
+    repository.save((err, repository) => {
+        if (err) return res.json({ success: false, error: err });
+        var installationClient = await apis.requestInstallationClient(installationId);
+
+        installationClient.get(`/repos/${fullName}`).then((response) => {
+            //console.log("FIRST RESPONSE", response.data)
+            // Get all commits from default branch 
+            installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
+    
+                // Extract tree SHA from most recent commit
+                let treeSHA = response.data.commit.tree.sha
+
+                let args = [
+                    'clone',
+                    `https://github.com/${fullName}.git`,
+                ];
+
+                let args2 = ["v2-run", "semantic", "parse"]
+                //"--", "--json-symbols"
+                // Extract contents using tree SHA
+                console.log("REP NAME OWNER", fullName)
+                let repoName = fullName.split("/").slice(1)[0]
+                console.log(repoName)
+                installationClient.get(`/repos/${fullName}/git/trees/${treeSHA}?recursive=true`).then((response) => {
+                    let repositoryItems = response.data.tree.map(item => {
+                        
+                        let pathSplit = item.path.split('/')
+                        let name = pathSplit.slice(pathSplit.length - 1)[0]
+                        let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
+                        let kind = item.type === 'blob' ? 'file' : 'dir'
+                        if (kind === 'file') {
+                            args2.push(`../content/${repoName}/${item.path}`)
+                        }
+                        return {name, path, kind, repository: ObjectId(repository._id)}
+                    })
+
+
+                    
+
+                    /*const getContent = execFile("git", args, 
+                        {cwd: "./semantic/content"}, (error, stdout, stderr) => {
+                        if (error) {
+                            console.log('error during clone call to github: ' + error);
+                            return;
+                        } 
+                        const command = `cabal`
+                        args2.push("--")
+                        args2.push("--json-symbols")
+                        
+                        console.log("ARGS2", args2)
+
+                        const getCallbacks = execFile(command, args2,
+                            {maxBuffer: (1024*1024)*50, cwd: './semantic/semantic/'}, (error, stdout, stderr) => {
+                                if (error) {
+                                    console.log("error during semantic parse:", error)
+                                    return 
+                                }
+                                console.log("STDOUT", stdout)
+                                let output = JSON.parse(stdout.split("Up to date")[1].trim())
+                                
+                                //console.log("OUT BEFORE", output)
+                                console.log(output)
+                                output = output.filter(o => o.nodeType === "REFERENCE" && o.syntaxType === "CALL")
+                                
+                                //console.log(output)
+                                const removeContent = execFile("rm", ["-r", repoName],
+                                    {maxBuffer: (1024*1024)*50, cwd: './semantic/content'}, (error, stdout, stderr) => {
+                                        if (error) {
+                                            console.log("error deleting file after usage:", error)
+                                        }
+                                    console.log("callback retrieval process successfully completed")
+                                })
+
+                                //return res.json(output)
+                                //console.log(output.files[0].symbols)
+                                //console.log("PARSED CONTENT", JSON.parse(output))
+                            }
+                        )
+                    })*/
+    
+                    //console.log("REPO ITEMS", repositoryItems)
+                    
+                    // Save repository contents as items in our database
+                    RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
+                        if (errInsertItems) return res.json({ success: false, error: errInsertItems });
+                        repository.populate('workspace', (errPopulation, repository) => {
+                            if (errPopulation) return res.json({ success: false, error: errPopulation });
+
+                            // return the repository object
+                            return res.json(repository);
+                        });
+                    })
+                })
+            })
+        })
+        
+    });
+}
+
+
+
+
+// Deprecated
+=======
+>>>>>>> 561abed00bb4290ad9fa2890fbd9139a927409af
 refreshRepositoryPath = (req, res) => {
     console.log(req.body);
     var { repositoryName, repositoryPath} = req.body;
@@ -140,7 +271,7 @@ parseRepositoryFile = (req, res) => {
 
 
 getRepositoryRefs = (req, res) => {
-    
+
     //console.log(process.env);
     if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
         return res.json({success: false, error: 'doxygen disabled on this backend'});
@@ -226,34 +357,100 @@ createRepository = (req, res) => {
     repository.save((err, repository) => {
         if (err) return res.json({ success: false, error: err });
 
-        // Get all commits from default branch 
-        api.get(`${apiURL}/repos/${repositoryNameOwner}/commits`).then((response) => {
+        api.get(`${apiURL}/repos/${repositoryNameOwner}`).then((response) => {
+            //console.log("FIRST RESPONSE", response.data)
+            // Get all commits from default branch 
+            api.get(`${apiURL}/repos/${repositoryNameOwner}/commits/${response.data.default_branch}`).then((response) => {
+    
+                // Extract tree SHA from most recent commit
+                let treeSHA = response.data.commit.tree.sha
 
-            // Extract tree SHA from most recent commit
-            let treeSHA = response.data[0].commit.tree.sha
+                let args = [
+                    'clone',
+                    `https://github.com/${repositoryNameOwner}.git`,
+                ];
 
-            // Extract contents using tree SHA
-            api.get(`${apiURL}/repos/${repositoryNameOwner}/git/trees/${treeSHA}?recursive=true`).then((response) => {
-                let repositoryItems = response.data.tree.map(item => {
-                    let pathSplit = item.path.split('/')
-                    let name = pathSplit.slice(pathSplit.length - 1)[0]
-                    let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
-                    let kind = item.type === 'blob' ? 'file' : 'dir'
-                    return {name, path, kind, repository: ObjectId(repository._id)}
-                })
-                
-                // Save repository contents as items in our database
-                RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
-                    if (errInsertItems) return res.json({ success: false, error: errInsertItems });
-                    repository.populate('workspace', (errPopulation, repository) => {
-                        if (errPopulation) return res.json({ success: false, error: errPopulation });
+                let args2 = ["v2-run", "semantic", "parse"]
+                //"--", "--json-symbols"
+                // Extract contents using tree SHA
+                console.log("REP NAME OWNER", repositoryNameOwner)
+                let repoName = repositoryNameOwner.split("/").slice(1)[0]
+                console.log(repoName)
+                api.get(`${apiURL}/repos/${repositoryNameOwner}/git/trees/${treeSHA}?recursive=true`).then((response) => {
+                    let repositoryItems = response.data.tree.map(item => {
+                        
+                        let pathSplit = item.path.split('/')
+                        let name = pathSplit.slice(pathSplit.length - 1)[0]
+                        let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
+                        let kind = item.type === 'blob' ? 'file' : 'dir'
+                        if (kind === 'file') {
+                            args2.push(`../content/${repoName}/${item.path}`)
+                        }
+                        return {name, path, kind, repository: ObjectId(repository._id)}
+                    })
 
-                        // return the repository object
-                        return res.json(repository);
-                    });
+
+                    
+
+                    const getContent = execFile("git", args, 
+                        {cwd: "./semantic/content"}, (error, stdout, stderr) => {
+                        if (error) {
+                            console.log('error during clone call to github: ' + error);
+                            return;
+                        } 
+                        const command = `cabal`
+                        args2.push("--")
+                        args2.push("--json-symbols")
+                        
+                        console.log("ARGS2", args2)
+
+                        const getCallbacks = execFile(command, args2,
+                            {maxBuffer: (1024*1024)*50, cwd: './semantic/semantic/'}, (error, stdout, stderr) => {
+                                if (error) {
+                                    console.log("error during semantic parse:", error)
+                                    return 
+                                }
+                                console.log("STDOUT", stdout)
+                                let output = JSON.parse(stdout.split("Up to date")[1].trim())
+                                
+                                //console.log("OUT BEFORE", output)
+                                console.log(output)
+                                output = output.filter(o => o.nodeType === "REFERENCE" && o.syntaxType === "CALL")
+                                
+                                //console.log(output)
+                                const removeContent = execFile("rm", ["-r", repoName],
+                                    {maxBuffer: (1024*1024)*50, cwd: './semantic/content'}, (error, stdout, stderr) => {
+                                        if (error) {
+                                            console.log("error deleting file after usage:", error)
+                                        }
+                                    console.log("callback retrieval process successfully completed")
+                                })
+
+                                //return res.json(output)
+                                //console.log(output.files[0].symbols)
+                                //console.log("PARSED CONTENT", JSON.parse(output))
+                            }
+                        )
+                    })
+    
+
+
+                    //console.log("REPO ITEMS", repositoryItems)
+                    
+                    // Save repository contents as items in our database
+                    RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
+                        if (errInsertItems) return res.json({ success: false, error: errInsertItems });
+                        repository.populate('workspace', (errPopulation, repository) => {
+                            if (errPopulation) return res.json({ success: false, error: errPopulation });
+
+                            // return the repository object
+                            return res.json(repository);
+                        });
+                    })
                 })
             })
         })
+        
     });
 }
 

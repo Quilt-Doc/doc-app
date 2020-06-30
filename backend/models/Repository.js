@@ -4,11 +4,11 @@ const { ObjectId, Mixed } = Schema.Types;
 
 var repositorySchema = new Schema({
 	name: String,
-	workspace: {type: ObjectId, ref: 'Workspace', index: true},
 	link: String,
-	last_processed_commit: { type: String, default: ''},
-	lastScannedDate: Date,
-	scanFrequency: Date,
+	lastProcessedCommit: { type: String, default: ''},
+	installationId: Number,
+	htmlURL: String,
+	cloneURL: String,
 	created: {type: Date, default: Date.now },
 	icon: Number,
 	references: [{type: ObjectId, ref: 'Reference', index: true}]
