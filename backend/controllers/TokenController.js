@@ -29,6 +29,7 @@ createToken = async (req, res) => {
 
     token.value = installationToken.value;
     token.expireTime = installationToken.expireTime;
+    token.status = '';
 
     console.log('Creating Token: ');
     console.log(token);

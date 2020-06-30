@@ -1,5 +1,7 @@
 var jwt = require('jsonwebtoken');
 
+const Token = require('../models/Token');
+
 
 const requestClient = () => {
     const axios = require('axios');
@@ -57,7 +59,7 @@ createJWTToken = () => {
       // GitHub App's identifier
       iss: process.env.GITHUB_APP_ID
     }
-  
+
     var private_key = fs.readFileSync(process.env.GITHUB_APP_PRIVATE_KEY_FILE, 'utf8');
     
     var newToken = {
@@ -69,25 +71,71 @@ createJWTToken = () => {
 
 }
 
+// Modify 
 const requestAppToken = () => {
     
     var currentTime = new Date().getTime();
     curentTime = Math.round(now  / 1000);
 
     var token = undefined;
+    
+    Token.findOne({'type': 'APP'}, function (err, foundToken) {
+        if (err) {
+            console.log('Error finding app access token: ');
+            console.log(err);
+            return {};
+        }
+        token = foundToken;
+    });
 
-    if (typeof requestAppToken.currentToken == 'undefined') {
-        requestAppToken.currentToken = createJWTToken();
+    console.log('Token found is: ');
+    console.log(token);
+
+    if (typeof token == 'undefined') {
+        token = createJWTToken();
+
         // If token has less than two minutes of life left.
     }
     else {
-        // If token has less than two minutes of life left.
-        if ((requestAppToken.expireTime - currentTime) < (60*2)) {
-            requestAppToken.currentToken = createJWTToken();
-        }
+       return token;
     }
 
     return requestAppToken.currentToken.token;
+}
+
+const requestNewInstallationToken = async (appToken, installationId) => {
+
+    /*
+    curl -i \
+        -H "Authorization: token YOUR_INSTALLATION_ACCESS_TOKEN" \
+        -H "Accept: application/vnd.github.machine-man-preview+json" \
+        https://api.github.com/installation/repositories
+    */
+    const axios = require('axios');
+    var installationApi = axios.create({
+        baseURL: "https://api.github.com/installations/",
+    });
+    
+    let config = {
+        headers: {
+          Authorization: "Bearer " + appToken,
+          Accept: "application/vnd.github.machine-man-preview+json"
+        }
+    }
+
+    var currentTime = new Date().getTime();
+
+
+    installationApi.post(installationId + "/access_tokens", config)
+    .then((response) => {
+        var newToken = response.data;
+        newToken = {token: newToken.token, expireTime: Date.parse(newToken.expires_at)}
+        return newToken;
+    })
+    .catch((error) => {
+        console.log('Error: ', error);
+        return {};
+    });
 }
 
 const requestInstallationToken = async (appToken, installationId) => {
@@ -112,43 +160,25 @@ const requestInstallationToken = async (appToken, installationId) => {
 
     var currentTime = new Date().getTime();
 
-    
-    if (typeof requestInstallationToken.tokens == 'undefined') {
-        requestInstallationToken.tokens = {};
-    }
+    var retrievedToken = undefined;
 
+    Token.findOne({ installationId }, function (err, token) {
+        if (err) {
+            console.log('Error searching for install token: ');
+            console.log(err);
+        }
+        retrievedToken = token;
+    });
 
-    if (!installationId in requestInstallationToken.tokens) {
-        installationApi.post(installationId + "/access_tokens", config)
-        .then((response) => {
-            var newToken = response.data;
-            requestInstallationToken.tokens[installationId] = {token: newToken.token, expireTime: Date.parse(newToken.expires_at)}
-            return requestInstallationToken.tokens[installationId].token;
-        })
-        .catch((error) => {
-            console.log('Error: ', error);
-            return;
-        });
+    if (retrievedToken == 'undefined') {
+        return await requestNewInstallationToken(appToken, installationId);
     }
 
     else {
-        // If less than two minutes left in token life
-        if((requestInstallationToken.tokens[installationId].expireTime - currentTime) < (60*2*1000)) {
-            installationApi.post(installationId + "/access_tokens", config)
-            .then((response) => {
-                var newToken = response.data;
-                requestInstallationToken.tokens[installationId] = {token: newToken.token, expireTime: Date.parse(newToken.expires_at)}
-                return requestInstallationToken.tokens[installationId].token;
-            })
-            .catch((error) => {
-                console.log('Error: ', error);
-                return;
-            });
-        }
-        // If token previously existed and has not expired
-        else {
-            return requestInstallationToken.tokens[installationId].token;
-        }
+        retrievedToken.installationId = installationId;
+        newToken.type = 'INSTALL';
+        newToken.status = 'RESOLVED';
+        return retrievedToken;
     }
 
 }
@@ -175,5 +205,6 @@ module.exports = {
     requestClient,
     requestSQSServiceObject,
     requestAppToken,
-    requestInstallationToken
+    requestInstallationToken,
+    requestInstallationClient
 }
