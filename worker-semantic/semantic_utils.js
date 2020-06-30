@@ -1,6 +1,6 @@
 // Input: fullName, cloneUrl, semanticTargets, installationId 
 
-const Token = require('../backend/models/Token');
+const Token = require('./models/Token');
 
 
 const getInstallToken = async (installationId) => {
@@ -53,9 +53,8 @@ const execSemantic = async () =>  {
         args2.push("--")
         args2.push("--json-symbols")
         
-        console.log("ARGS2", args2)
 
-        args2 = args2.map(path => '../' + repoDiskPath + path);
+        args2 = args2.map(path => '../doc-app/backend/' + repoDiskPath + path);
 
         console.log('Args 2: ');
         console.log(args2);
@@ -63,7 +62,7 @@ const execSemantic = async () =>  {
 
 
         const getCallbacks = execFile(command, args2,
-            {maxBuffer: (1024*1024)*50, cwd: './semantic-master/'}, (error, stdout, stderr) => {
+            {maxBuffer: (1024*1024)*50, cwd: '../../semantic-master/'}, (error, stdout, stderr) => {
                 if (error) {
                     console.log("error during semantic parse:", error)
                     return 
