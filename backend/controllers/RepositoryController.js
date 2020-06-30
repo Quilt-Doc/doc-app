@@ -241,7 +241,7 @@ createRepository = (req, res) => {
                     `https://github.com/${repositoryNameOwner}.git`,
                 ];
 
-                let args2 = ["v2-run", "semantic", "parse"
+                let args2 = ["v2-run", "semantic", "parse"]
                 //"--", "--json-symbols"
                 // Extract contents using tree SHA
                 console.log("REP NAME OWNER", repositoryNameOwner)
