@@ -110,8 +110,6 @@ const requestAppToken = () => {
     else {
        return token;
     }
-
-    return requestAppToken.currentToken.token;
 }
 
 const requestNewInstallationToken = async (appToken, installationId) => {
