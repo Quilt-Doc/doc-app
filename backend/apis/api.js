@@ -93,7 +93,18 @@ const requestAppToken = () => {
 
     if (typeof token == 'undefined') {
         token = createJWTToken();
-
+        token.installationId = -1;
+        token.type = 'APP';
+        token.status = 'RESOLVED';
+        token.save()
+        token.save((err, savedToken) => {
+            if (err) {
+                console.log('Error Saving new app token: ');
+                console.log(err);
+                return {};
+            } 
+        });
+        return token;
         // If token has less than two minutes of life left.
     }
     else {
@@ -176,8 +187,8 @@ const requestInstallationToken = async (appToken, installationId) => {
 
     else {
         retrievedToken.installationId = installationId;
-        newToken.type = 'INSTALL';
-        newToken.status = 'RESOLVED';
+        retrievedToken.type = 'INSTALL';
+        retrievedToken.status = 'RESOLVED';
         return retrievedToken;
     }
 
