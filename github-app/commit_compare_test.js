@@ -19,13 +19,9 @@ Possible status letters are:
   X: "unknown" change type (most probably a bug, please report it) - We will skip this
 */
 
-// We will 
-
-var https = require('https')
-
 const fs = require('fs');
 
-const { api } = require('./apis/api');
+const api = require('./apis/api').requestBackendClient();
 
 const fs_promises = require('fs').promises;
 
@@ -46,35 +42,36 @@ require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
 
-const getRepositoryObject = async (repoLink) => {
+const getRepositoryObject = async (installationId, fullName) => {
+
   const getRepositoryResponse = await api.post('/repositories/retrieve', {
-    link: repoLink
+    installationId: installationId,
+    fullName: fullName
   });
   console.log('getRepositoryResponse: ');
   console.log(getRepositoryResponse.data);
-  var repoCommit = getRepositoryResponse.data.last_processed_commit;
+  var repoCommit = getRepositoryResponse.data.lastProcessedCommit;
   var repoId = getRepositoryResponse.data._id;
   return [repoId, repoCommit];
 };
 
-const runValidation = async (headCommit, finalRepoLink) => {
+const runValidation = async () => {
   var timestamp = Date.now().toString();    
   var repoDiskPath = 'git_repos/' + timestamp +'/';
-  const gitClone = spawnSync('git', ['clone', finalRepoLink, repoDiskPath]);
+  const gitClone = spawnSync('git', ['clone', process.env.cloneUrl, repoDiskPath]);
 
   // Testing Values:
   // var head_commit = '7774441eb5e8bfaa8c151b2bc3a4f7e72ddc6ce5';
   // var repo_commit = '3a64c575cca6ed3e90bf6464ccc4f5a8814c9693';
   var repoId = '';
   var repoCommit = '';
-  [repoId, repoCommit] = await getRepositoryObject('kgodara/snippet-logic-test/');
+  [repoId, repoCommit] = await getRepositoryObject(process.env.installationId, process.env.process.env.repositoryFullName);
 
-  repoCommit = '3a64c575cca6ed3e90bf6464ccc4f5a8814c9693';
-  headCommit = '7774441eb5e8bfaa8c151b2bc3a4f7e72ddc6ce5';
+  headCommit = process.env.headCommit;
 
   const child = execFile('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H',
     repoCommit + '..' + headCommit],
-    { cwd: '../../snippet-logic-test/' },
+    { cwd: './' + repoDiskPath },
   (error, stdout, stderr) => {
     console.log('stdout: ');
     console.log(stdout.toString());
@@ -94,8 +91,8 @@ const runValidation = async (headCommit, finalRepoLink) => {
 
 
     api.post('/snippets/retrieve', {
-      repository: '5ef0fc64dd768d18107a9e8a',
-      pathInRepository: 'post_commit.py'
+      repository: repoId,
+//      pathInRepository: 'post_commit.py'
     })
     .then(function (response) {
       console.log(response.data);
@@ -121,7 +118,7 @@ const runValidation = async (headCommit, finalRepoLink) => {
     // Now we have the list of tracked files, {ref: path, sha: (commit), deleted: bool}
     console.log('Tracked Files');
     console.log(trackedFiles);
-    beginSnippetValidation(snippetData, trackedFiles);
+    beginSnippetValidation(snippetData, trackedFiles, repoDiskPath);
 
 
     })
@@ -134,14 +131,14 @@ const runValidation = async (headCommit, finalRepoLink) => {
 }
 
 
-const beginSnippetValidation = async (snippetData, trackedFiles) => {
+const beginSnippetValidation = async (snippetData, trackedFiles, repoDiskPath) => {
   // Intra-file section
   const validationResults = trackedFiles.map((currentFile) => {
     var relevantSnippets = snippetData.filter((snippetObj) => {
       console.log('Comparison: ' +  snippetObj.pathInRepository + ' - ' + currentFile.ref);
       return snippetObj.pathInRepository == currentFile.ref;
     });
-      return fileContentValidation(currentFile, relevantSnippets);
+      return fileContentValidation(currentFile, relevantSnippets, repoDiskPath);
   });
   await Promise.all(validationResults).then((results) => {
     console.log('Validation Results: ');
@@ -153,7 +150,7 @@ const beginSnippetValidation = async (snippetData, trackedFiles) => {
 }
 
 // Check if start and end lines in same place, snippet automatically valid
-const fileContentValidation = async (fileObj, snippetData) => {
+const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
   console.log('fileContentValidation received fileObj: ');
   console.log(fileObj);
   if (fileObj.deleted) {
@@ -163,7 +160,7 @@ const fileContentValidation = async (fileObj, snippetData) => {
     });
     return false
   }
-  const data = await fs_promises.readFile('../../snippet-logic-test/' + fileObj.ref, 'utf8');
+  const data = await fs_promises.readFile('./' + repoDiskPath + fileObj.ref, 'utf8');
 
   var lines = data.toString().split('\n');
 
@@ -205,16 +202,11 @@ const fileContentValidation = async (fileObj, snippetData) => {
     snippetsToMove[i] = findNewSnippetRegion(snippetsToMove[i], lines);
   }
 
-  console.log();
+  console.log('snippetsToMove: ');
+  console.log(snippetsToMove);
 
 }
-runValidation('', 'https://github.com/kgodara/snippet-logic-test.git');
 
-
-/*child.stdout.on('data', (data) => {
-  console.log(`child stdout:\n${data}`);
-});
-
-child.stderr.on('data', (data) => {
-  console.error(`child stderr:\n${data}`);
-});*/
+module.exports = {
+    runValidation
+}
