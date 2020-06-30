@@ -76,7 +76,7 @@ createRepository = async (req, res) => {
             runSemanticData['fullName'] = response.data.full_name;
             runSemanticData['defaultBranch'] = response.data.default_branch,
             runSemanticData['cloneUrl'] = response.data.clone_url,
-            runSemanticData['installationId'] = installationId;
+            runSemanticData['installationId'] = installationId.toString();
 
             installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
     
