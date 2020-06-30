@@ -3,8 +3,13 @@
 
 */
 
+const JOB_GET_REFS = 1;
+const JOB_UPDATE_SNIPPETS = 2;
+
 
 var mongoose = require('mongoose')
+
+const snippetUtils = require('./commit_compare_test');
 
 var sqs = require('./apis/api').requestSQSServiceObject();
 
@@ -65,14 +70,15 @@ const pollQueue = async (cluster) => {
 	.then(res => {
     	console.log("Success", res);
     	if (res.Messages) {
+        console.log('Message Attributes: ');
+        console.log(res.Messages[0].MessageAttributes);
 	    	// We are only grabbing one message
-	   		var jobData = JSON.parse(res.Messages[0].Body);
+	   		var jobType = JSON.parse(res.Messages[0].Body).jobType;
 	   		// Make new env and pass it to a fork call
 	   		var workerEnv = {
-	   			repoLink: jobData.repoLink,
-	   			apiCallLink: jobData.apiCallLink,
-          receipt: res.Messages[0].ReceiptHandle
-
+          jobData: res.Messages[0].Body,
+          receipt: res.Messages[0].ReceiptHandle,
+          jobType: jobType
 	   		}
         numWorkersActive = numWorkersActive + 1;
 	   		var worker = cluster.fork(workerEnv);
@@ -148,10 +154,28 @@ if (cluster.isMaster) {
   cluster.on('exit', (worker, code, signal) => {
     console.log(`worker ${worker.process.pid} died`);
   });
-} 
+}
 else {
   // workerId = process.id;
   // workerReceipts[workerId] = process.env.receipt;
-  parseUtils.getRefs();
+  console.log('jobType: ', process.env.jobType);
+  var jobData = JSON.parse(process.env.jobData);
+  console.log('Condition: ');
+  console.log(process.env.jobType == JOB_UPDATE_SNIPPETS);
+  if(process.env.jobType === JOB_GET_REFS) {
+    console.log('running get refs job');
+    process.env.repoLink = jobData.repoLink;
+    process.env.apiCallLink = jobData.apiCallLink;
+    parseUtils.getRefs();
+  }
+  else if(process.env.jobType == JOB_UPDATE_SNIPPETS) {
+    console.log('running update snippets job');
+    process.env.headCommit = jobData.headCommit;
+    process.env.repositoryFullName = jobData.repositoryFullName;
+    process.env.cloneUrl = jobData.cloneUrl;
+    process.env.installationId = jobData.installationId;
+    snippetUtils.runValidation();
+
+  }
   console.log(`Worker ${process.pid} started`);
 }

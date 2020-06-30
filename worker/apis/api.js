@@ -13,6 +13,13 @@ const requestClient = () => {
     });
 }
 
+const requestBackendClient = () => {
+    const axios = require('axios');
+    return axios.create({
+        baseURL: "http://54.160.81.133:3001/api"
+    });
+}
+
 const requestSQSServiceObject = () => {
     // Load the AWS SDK for Node.js
     var AWS = require('aws-sdk');
@@ -38,5 +45,6 @@ const requestSQSServiceObject = () => {
 
 module.exports = {
     requestClient,
-    requestSQSServiceObject
+    requestSQSServiceObject,
+    requestBackendClient
 }
