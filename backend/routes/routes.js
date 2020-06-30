@@ -1,6 +1,6 @@
 // TODO: Add Workspace, Repository Delete Routes and methods 
 const passport = require("passport");
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 
 const express = require('express');
 const router = express.Router();
@@ -147,4 +147,13 @@ router.get('/auth/github/redirect', passport.authenticate("github", {
                                         successRedirect: CLIENT_HOME_PAGE_URL,
                                         failureRedirect: "/api/auth/login/failed"
                                     }));
+
+
+//semantic routes
+const semantic_controller = require('../controllers/semantic/SemanticController');
+router.post('/semantic/callbacks/retrieve', semantic_controller.acquireCallbacks);
+//token routes
+const token_controller = require('../controllers/TokenController');
+router.post('/tokens/create', token_controller.createToken);
+
 module.exports = router;

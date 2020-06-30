@@ -12,6 +12,10 @@ import { checkLogin } from '../actions/Auth_Actions'
 //components
 import Dashboard from './Dashboard';
 
+//css -- needs to be thrown later
+import 'antd/dist/antd.css';
+
+
 class Home extends React.Component {
 
     componentDidMount(){
@@ -95,7 +99,7 @@ const LoginButton = styled.div`
     border: 1px solid #1BE5BE;
     color: #172A4E;
     display: flex;
-    justify-content: center;
+    align-items: center;
     padding: 1.5rem;
     border-radius: 4px;
     cursor: pointer;

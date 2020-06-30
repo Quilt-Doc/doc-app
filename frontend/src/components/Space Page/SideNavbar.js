@@ -7,21 +7,16 @@ import styled from "styled-components";
 import { connect } from 'react-redux';
 
 //components
-import HoveringMenuExample from './Text Editor Page/HoveringMenuExample';
-import RepositoryNavigation from './RepositoryNavigation';
-import RepositoryView from './Repository Page/RepositoryView';
 import Bucket from '../General Components/Top Navbar/Bucket';
 
 //react-router
-import { Switch, Route, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import history from '../../history';
 
 //actions
 import { createDocument } from '../../actions/Document_Actions';
 import { attachDocument } from '../../actions/RepositoryItem_Actions';
 import { clearSelected } from '../../actions/Selected_Actions';
-
-import { HistoryEditor } from 'slate-history';
 
 class SideNavbar extends React.Component {
     constructor(props) {
@@ -214,7 +209,7 @@ const DocumentCreateButton = styled.div`
     display: flex;
     align-items: center;
     width: 30rem;
-    height: 4.5rem;
+    height: 4.5rem !important;
     padding: 0.5rem 1rem;
 
     &:hover {
@@ -253,6 +248,7 @@ const Searchbar = styled.input`
     }
     font-weight: 400;
     width: 25rem;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
               
 const DocumentationContainer = styled.div`

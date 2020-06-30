@@ -47,8 +47,8 @@ export default Annotation;
 
 const AnnotationCard = styled.div`
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
-    width: 32rem;
-    font-size: 1.6rem;
+    width: 31rem;
+    font-size: 1.4rem;
     line-height: 1.8;
     letter-spacing: 0.2px;
     padding: 1.6rem 2rem;

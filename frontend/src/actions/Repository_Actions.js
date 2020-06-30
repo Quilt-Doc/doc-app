@@ -55,14 +55,16 @@ export const getRepositoryFile = (file_desc) => async (dispatch) => {
 
     console.log('Repository Object: ');
     console.log(repository);
+    console.log(repository.data.name)
 
     var downloadLink = urljoin("https://raw.githubusercontent.com/", repository.data.name);
     downloadLink = urljoin(downloadLink, 'master/');
     downloadLink = urljoin(downloadLink, file_desc.pathInRepo);
+    
 
     const response = await api.post('/repositories/get_file', {downloadLink});
     console.log('getRepositoryFile response: ', response);
-    
+
     dispatch({ type: GET_REPOSITORY_FILE, payload: response.data, fileName: file_desc.fileName});
 
 }

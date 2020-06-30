@@ -71,7 +71,7 @@ getSnippet = (req, res) => {
 
 editSnippet = (req, res) => {
     const { id } = req.params;
-    const { name, location, type, status } = req.body;
+    const { name, location, type, status, code, startLine } = req.body;
     let update = {};
     if (name) update.name = name;
     if (location) {
@@ -81,7 +81,11 @@ editSnippet = (req, res) => {
     }
     if (type) update.type = type;
     if (status) update.status = status;
-
+    console.log("CODE", code)
+    console.log("STARTLINE", startLine)
+    console.log("ID", id)
+    if (code) update.code = code;
+    if (startLine) update.startLine = startLine;
 
     Snippet.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, snippet) => {
         if (err) return res.json({ success: false, error: err });
