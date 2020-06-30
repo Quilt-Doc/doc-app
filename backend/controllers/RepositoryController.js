@@ -65,13 +65,19 @@ createRepository = async (req, res) => {
         if (debugID) repository._id = ObjectId(debugID);
     }
 
-    repository.save((err, repository) => {
+    repository.save(async (err, repository) => {
         if (err) return res.json({ success: false, error: err });
         var installationClient = await apis.requestInstallationClient(installationId);
 
         installationClient.get(`/repos/${fullName}`).then((response) => {
             //console.log("FIRST RESPONSE", response.data)
-            // Get all commits from default branch 
+            // Get all commits from default branch
+            var runSemanticData = {};
+            runSemanticData['fullName'] = response.data.full_name;
+            runSemanticData['defaultBranch'] = response.data.default_branch,
+            runSemanticData['cloneUrl'] = response.data.clone_url,
+            runSemanticData['installationId'] = installationId.toString();
+
             installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
     
                 // Extract tree SHA from most recent commit
@@ -108,13 +114,8 @@ createRepository = async (req, res) => {
                     // SQS Message Section Start
                     var timestamp = Date.now().toString();
                     // default_branch, fullName, cloneUrl, args_2, installationId 
-                    var runSemanticData = {
-                        'fullName': response.data.full_name,
-                        'defaultBranch': response.data.default_branch,
-                        'cloneUrl': response.data.clone_url,
-                        'semanticTargets': JSON.stringify({targets: args2}),
-                        'installationId': installationId
-                    }
+
+                    runSemanticData['semanticTargets'] = JSON.stringify({targets: args2}),
 
                     console.log('RUN SEMANTIC DATA: ');
                     console.log(runSemanticData);
@@ -156,13 +157,10 @@ createRepository = async (req, res) => {
 
                         if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Semantic | SUCCESS: ${data.MessageId}`);
                         console.log(`Semantic | SUCCESS: ${data.MessageId}`);
-                        res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
                     }).catch((err) => {
                         if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Semantic | ERROR: ${err}`);
                         console.log(`Semantic | ERROR: ${err}`);
 
-                        // Send email to emails API
-                        res.json({success: false, msg: "We ran into an error. Please try again."});
                     });
                     // SQS Message Section End
                     
@@ -332,13 +330,13 @@ getRepositoryRefs = (req, res) => {
 
         if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Refs | SUCCESS: ${data.MessageId}`);
         console.log(`Refs | SUCCESS: ${data.MessageId}`);
-        res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
+        // res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
     }).catch((err) => {
         if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Refs | ERROR: ${err}`);
         console.log(`Refs | ERROR: ${err}`);
 
         // Send email to emails API
-        res.json({success: false, msg: "We ran into an error. Please try again."});
+        // res.json({success: false, msg: "We ran into an error. Please try again."});
     });
     // parseUtils.getRefs(repoLink, apiCallLink, res);
 }
