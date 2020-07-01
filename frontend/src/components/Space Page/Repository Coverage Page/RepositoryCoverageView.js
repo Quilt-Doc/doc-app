@@ -202,33 +202,114 @@ class RepositoryCoverageView extends React.Component {
                                     <ListName>Document Breakage</ListName>
                             </ListToolBar>
                             <ListItemContainer2 maxHeight = {"65rem"} width = {"30rem"}>
-                                <ListItem2>
+                            <ListItem2 borderLeftColor = {'#ff4757'}>
                                     <ion-icon style={{'opacity': '1', 
                                                       'color': '#172A4E', 
                                                       'fontSize': '3.5rem', 
                                                       'marginRight': "0.3rem",
                                                       'marginLeft': "1.6rem"}} name="cut-outline"></ion-icon>
-                                    <Description marginLeft = {"2rem"}>Lines 12 - 14</Description>
-
-                                    <ion-icon  style={{'opacity': '1', 
-                                                      'color': '#172A4E', 
-                                                      'fontSize': '2.3rem'}} name="arrow-forward-outline"></ion-icon>
-                                    <Description  marginTop = {"-0.3rem"} marginLeft = {"1rem"}>Lines 17 - 19</Description>
+                                    <DescriptionContainer>
+                                        <RelevantFiles>preeti.js</RelevantFiles>
+                                        <DescriptionHeader>Snippet Deprecated</DescriptionHeader>
+                                        <DescriptionContent>
+                                            <Description  color = {'#ff4757'} marginLeft = {"2rem"}>Lines 327 - 329 </Description>
+                                        </DescriptionContent>
+                                        
+                                    </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2>
+                                <ListItem2 borderLeftColor = {'#ff4757'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                      'color': '#172A4E', 
+                                                      'fontSize': '3.5rem', 
+                                                      'marginRight': "0.3rem",
+                                                      'marginLeft': "1.6rem"}} name="cut-outline"></ion-icon>
+                                    <DescriptionContainer>
+                                        <RelevantFiles>preet_app.assembly</RelevantFiles>
+                                        <DescriptionHeader>Snippet Deleted</DescriptionHeader>
+                                        <DescriptionContent>
+                                            <Description  color = {'#ff4757'} marginLeft = {"2rem"}>Lines 3192 - 3194 </Description>
+                                        </DescriptionContent>
+                                        
+                                    </DescriptionContainer>
+                                </ListItem2>
+                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                      'color': '#172A4E', 
+                                                      'fontSize': '3.5rem', 
+                                                      'marginRight': "0.3rem",
+                                                      'marginLeft': "1.6rem"}} name="cut-outline"></ion-icon>
+                                    <DescriptionContainer>
+                                        <RelevantFiles>Reference.js</RelevantFiles>
+                                        <DescriptionHeader>Snippet Relocated</DescriptionHeader>
+                                        <DescriptionContent>
+                                            <Description marginLeft = {"2rem"}>Lines 12 - 14 &nbsp;  &rarr; &nbsp;   Lines 17 - 19</Description>
+                                        </DescriptionContent>
+                                        
+                                    </DescriptionContainer>
+                                </ListItem2>
+                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                      'color': '#172A4E', 
+                                                      'fontSize': '3.5rem', 
+                                                      'marginRight': "0.3rem",
+                                                      'marginLeft': "1.6rem"}} name="cut-outline"></ion-icon>
+                                    <DescriptionContainer>
+                                        <RelevantFiles>Reference.js</RelevantFiles>
+                                        <DescriptionHeader>Snippet Relocated</DescriptionHeader>
+                                        <DescriptionContent>
+                                            <Description marginLeft = {"2rem"}>Lines 12 - 14 &nbsp;  &rarr; &nbsp;   Lines 17 - 19</Description>
+                                        </DescriptionContent>
+                                        
+                                    </DescriptionContainer>
+                                </ListItem2>
+                                <ListItem2 borderLeftColor = {'#ff4757'}>
                                     <ion-icon style={{'opacity': '1', 
                                                       'color': '#172A4E', 
                                                       'fontSize': '3.5rem', 
                                                       'marginRight': "0.3rem",
                                                       'marginLeft': "1.6rem"}} name="pencil-outline"></ion-icon>
-                                    <Description marginLeft = {"2rem"}>Lines 12 - 14</Description>
 
-                                    <ion-icon  style={{'opacity': '1', 
-                                                      'color': '#172A4E', 
-                                                      'fontSize': '2.3rem'}} name="arrow-forward-outline"></ion-icon>
-                                    <Description  marginTop = {"-0.3rem"} marginLeft = {"1rem"}>Lines 17 - 19</Description>
+<DescriptionContainer>
+                                        <RelevantFiles>Starting the server</RelevantFiles>
+                                        <DescriptionHeader>Reference Removed</DescriptionHeader>
+                                        <DescriptionContent>
+                                            <Description marginLeft = {"2rem"} color = {'#ff4757'}>backend</Description>
+                                        </DescriptionContent>
+                                        
+                                    </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2></ListItem2>
+                                <ListItem2 borderLeftColor = {'#ff4757'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                        'color': '#172A4E', 
+                                                        'fontSize': '3.5rem', 
+                                                        'marginRight': "0.3rem",
+                                                        'marginLeft': "1.6rem"}} name="pencil-outline"></ion-icon>
+
+                                        <DescriptionContainer>
+                                            <RelevantFiles>Building Semantic</RelevantFiles>
+                                            <DescriptionHeader>Reference Removed</DescriptionHeader>
+                                            <DescriptionContent>
+                                                <Description marginLeft = {"2rem"} color = {'#ff4757'}>SemanticController</Description>
+                                            </DescriptionContent>
+                                            
+                                        </DescriptionContainer>
+                                </ListItem2>
+                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                        'color': '#172A4E', 
+                                                        'fontSize': '3.5rem', 
+                                                        'marginRight': "0.3rem",
+                                                        'marginLeft': "1.6rem"}} name="pencil-outline"></ion-icon>
+
+                                        <DescriptionContainer>
+                                            <RelevantFiles>Building Semantic</RelevantFiles>
+                                            <DescriptionHeader>Reference Relocated</DescriptionHeader>
+                                            <DescriptionContent>
+                                                <Description marginLeft = {"2rem"} >Parser.js</Description>
+                                            </DescriptionContent>
+                                            
+                                        </DescriptionContainer>
+                                </ListItem2>
                             </ListItemContainer2>
                         </RightContainer>
                 </Container>
@@ -262,6 +343,7 @@ const Container = styled.div`
     height: 87%;
     padding: 3rem;
     background-color: #F7F9FB;
+
 `
 
 const CoverageContainer = styled.div`
@@ -271,8 +353,8 @@ const CoverageContainer = styled.div`
 const LeftContainer = styled.div`
     display: flex;
     flex-direction: column;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
     border-radius: 0.2rem;
     width: 65rem;
     background-color: white;
@@ -313,7 +395,7 @@ const ListName = styled.div`
     margin-left: 2rem;
     color: #172A4E;
     font-size: 1.6rem;
-    font-weight: bold
+    font-weight: 300;
 `
 
 const ItemName = styled.div`
@@ -381,34 +463,70 @@ const IconBorder = styled.div`
 
 const ListItemContainer2 = styled.div`
     flex-direction:column;
-    height: 60rem;
+    height: 57rem;
     width: 36rem;
+    overflow-y: scroll;
 `
 
 const RightContainer = styled.div`
-    margin-left: 3rem;
+    margin-left: 5rem;
     background-color: white;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    /*
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     width: 36rem;
     border-radius: 0.2rem;
+    height: 62rem;
 `
 
 const ListItem2 = styled.div`
-    height: 6.5rem;
-
-    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     display: flex;
     align-items: center;
-    border-left: 3px solid #19E5BE;
-    border-radius: 2px;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.5rem;
+    &:first-of-type{
+        margin-top: 0.6rem;
+    }
+    border-left: 2px solid ${props => props.borderLeftColor};
+    transition: background-color 0.1s ease-in;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
+    cursor: pointer;
 `
 
 const Description = styled.div`
     margin-left: ${props => props.marginLeft};
     margin-right: 1rem;
+
     color: #172A4E;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     margin-top: ${props => props.marginTop};
+    color: ${props => props.color};
+`
+
+const DescriptionContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+`
+
+const DescriptionHeader = styled.div`
+    margin-left: 2rem;
+    font-size: 1.4rem;
+    color: #172A4E; 
+    margin-bottom: 0.5rem;
+`
+
+const DescriptionContent = styled.div`
+    display: flex;
+    
+`
+const RelevantFiles = styled.div`
+    margin-left: 2rem;
+    font-size: 1.2rem;
+    color: #172A4E; 
+    margin-bottom: 0.3rem;
 `
 
 const IconBox = styled.div`
