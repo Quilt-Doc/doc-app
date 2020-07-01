@@ -1,4 +1,4 @@
-const Tag = require('../models/Tag');
+/*const Tag = require('../../models/unused/Tag');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -74,3 +74,4 @@ retrieveTags = (req, res) => {
 
 module.exports = { createTag, getTag, editTag, deleteTag, 
     retrieveTags }
+*/

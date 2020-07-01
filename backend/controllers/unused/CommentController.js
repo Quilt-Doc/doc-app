@@ -1,4 +1,5 @@
-const Comment = require('../models/Comment');
+/*
+const Comment = require('../../models/unused/Comment');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -75,3 +76,4 @@ retrieveComments = (req, res) => {
 
 module.exports = { createComment, getComment, editComment, deleteComment, 
     retrieveComments }
+*/

@@ -1,6 +1,6 @@
 // TODO: Need to validate email (both syntax, and for uniqueness)
 
-const User = require('../models/User');
+const User = require('../../models/authentication/User');
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 

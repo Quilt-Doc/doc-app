@@ -5,36 +5,21 @@ const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 const express = require('express');
 const router = express.Router();
 
+//base routes
+
 const reference_controller = require('../controllers/ReferenceController');
+//DEPRECATED
 router.post('/references/create', reference_controller.createReferences);
 router.post('/references/get', reference_controller.getReferences);
 
-
-const workspace_controller = require('../controllers/WorkspaceController');
-router.post('/workspaces/create', workspace_controller.createWorkspace);
-router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
-router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
-router.put('/workspaces/add_user/:id', workspace_controller.addUser);
-router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
-
-const folder_controller = require('../controllers/FolderController');
-
-router.post('/folders/create', folder_controller.createFolder);
-router.put('/folders/edit/:id', folder_controller.editFolder);
-router.get('/folders/get/:id', folder_controller.getFolder);
-router.delete('/folders/delete/:id', folder_controller.deleteFolder);
-router.post('/folders/retrieve/', folder_controller.retrieveFolders);
-router.put('/folders/attach_snippet/:id', folder_controller.attachSnippet);
-router.put('/folders/remove_snippet/:id', folder_controller.removeSnippet);
-router.put('/folders/attach_upload_file/:id', folder_controller.attachUploadFile);
-router.put('/folders/remove_upload_file/:id', folder_controller.removeUploadFile);
-
-router.put('/folders/attach_tag/:id', folder_controller.attachTag);
-router.put('/folders/remove_tag/:id', folder_controller.removeTag);
-router.put('/folders/add_can_write/:id', folder_controller.addCanWrite);
-router.put('/folders/remove_can_write/:id', folder_controller.removeCanWrite);
-router.put('/folders/add_can_read/:id', folder_controller.addCanRead);
-router.put('/folders/remove_can_read/:id', folder_controller.removeCanRead);
+// NEW
+router.post('/references/create2', reference_controller.createReferences2);
+router.get('/references/get2/:id', reference_controller.getReference);
+router.put('/references/edit/:id', reference_controller.editReference);
+router.delete('/references/delete/:id', reference_controller.deleteReference);
+router.post('/references/retrieve',  reference_controller.retrieveReferences);
+router.post('/references/attach_document',  reference_controller.attachDocument);
+router.post('/references/remove_document',  reference_controller.removeDocument);
 
 const document_controller = require('../controllers/DocumentController');
 router.post('/documents/create', document_controller.createDocument);
@@ -55,20 +40,6 @@ router.put('/documents/remove_canwrite/:id', document_controller.removeCanWrite)
 router.put('/documents/add_canread/:id', document_controller.addCanRead);
 router.put('/documents/remove_canread/:id', document_controller.removeCanRead);
 
-const relationship_controller = require('../controllers/RelationshipController');
-router.post('/relationships/create', relationship_controller.createRelationship);
-router.get('/relationships/get/:id', relationship_controller.getRelationship);
-router.put('/relationships/edit/:id', relationship_controller.editRelationship);
-router.delete('/relationships/delete/:id', relationship_controller.deleteRelationship);
-router.post('/relationships/retrieve', relationship_controller.retrieveRelationships);
-
-const uploadFile_controller = require('../controllers/UploadFileController');
-router.post('/uploadfiles/create', uploadFile_controller.createUploadFile);
-router.get('/uploadfiles/get/:id', uploadFile_controller.getUploadFile);
-router.put('/uploadfiles/edit/:id', uploadFile_controller.editUploadFile);
-router.delete('/uploadfiles/delete/:id', uploadFile_controller.deleteUploadFile);
-router.post('/uploadfiles/retrieve', uploadFile_controller.retrieveUploadFiles);
-
 const snippet_controller = require('../controllers/SnippetController');
 router.post('/snippets/create', snippet_controller.createSnippet);
 router.get('/snippets/get/:id', snippet_controller.getSnippet);
@@ -80,37 +51,12 @@ router.put('/snippets/remove_folder/:id', snippet_controller.removeFolder);
 router.put('/snippets/attach_document/:id', snippet_controller.attachDocument);
 router.put('/snippets/remove_document/:id', snippet_controller.removeDocument);
 
-const request_controller = require('../controllers/RequestController');
-router.post('/requests/create', request_controller.createRequest);
-router.get('/requests/get/:id', request_controller.getRequest);
-router.put('/requests/edit/:id', request_controller.editRequest);
-router.delete('/requests/delete/:id', request_controller.deleteRequest);
-router.post('/requests/retrieve', request_controller.retrieveRequests);
-
-const user_controller = require('../controllers/UserController');
-router.post('/users/create', user_controller.createUser);
-router.get('/users/get/:id', user_controller.getUser);
-router.put('/users/edit/:id', user_controller.editUser);
-router.put('/users/attach_workspace/:id', user_controller.attachWorkspace);
-router.put('/users/remove_workspace/:id', user_controller.removeWorkspace);
-router.delete('/users/delete_user/:id', user_controller.deleteUser);
-
-
-// Export API routes
-
-const tag_controller = require('../controllers/TagController');
-router.post('/tags/create', tag_controller.createTag);
-router.get('/tags/get/:id', tag_controller.getTag);
-router.put('/tags/edit/:id', tag_controller.editTag);
-router.delete('/tags/delete/:id', tag_controller.deleteTag);
-router.post('/tags/retrieve', tag_controller.retrieveTags);
-
-const comment_controller = require('../controllers/CommentController');
-router.post('/comments/create', comment_controller.createComment);
-router.get('/comments/get/:id', comment_controller.getComment);
-router.put('/comments/edit/:id', comment_controller.editComment);
-router.delete('/comments/delete/:id', comment_controller.deleteComment);
-router.post('/comments/retrieve', comment_controller.retrieveComments);
+const snippet_controller2 = require('../controllers/SnippetController2');
+router.post('/snippets2/create', snippet_controller2.createSnippet);
+router.get('/snippets2/get/:id', snippet_controller2.getSnippet);
+router.put('/snippets2/edit/:id', snippet_controller2.editSnippet);
+router.delete('/snippets2/delete/:id', snippet_controller2.deleteSnippet);
+router.post('/snippets2/retrieve', snippet_controller2.retrieveSnippets);
 
 const repository_controller = require('../controllers/RepositoryController');
 router.post('/repositories/refresh_path', repository_controller.refreshRepositoryPath)
@@ -125,20 +71,9 @@ router.get('/repositories/get/:id', repository_controller.getRepository);
 router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
 
 
-//repositoryitem routes
-
-const repository_item_controller = require('../controllers/RepositoryItemController');
-router.post('/repository/items/create', repository_item_controller.createRepositoryItem)
-router.put('/repository/items/edit/:id', repository_item_controller.editRepositoryItem);
-router.get('/repository/items/get/:id', repository_item_controller.getRepositoryItem);
-router.post('/repository/items/retrieve', repository_item_controller.retrieveRepositoryItems);
-router.delete('/repository/items/delete/:id', repository_item_controller.deleteRepositoryItem);
-router.post('/repository/items/attach_document', repository_item_controller.attachDocument);
-router.post('/repository/items/remove_document', repository_item_controller.removeDocument);
-
 
 //auth routes
-const auth_controller = require('../controllers/AuthController');
+const auth_controller = require('../controllers/authentication/AuthController');
 router.get('/auth/login/success', auth_controller.loginSuccess);
 router.get('/auth/login/failed', auth_controller.loginFailed);
 router.get('/auth/logout', auth_controller.logout);
@@ -148,10 +83,18 @@ router.get('/auth/github/redirect', passport.authenticate("github", {
                                         failureRedirect: "/api/auth/login/failed"
                                     }));
 
+const user_controller = require('../controllers/authentication/UserController');
+router.post('/users/create', user_controller.createUser);
+router.get('/users/get/:id', user_controller.getUser);
+router.put('/users/edit/:id', user_controller.editUser);
+router.put('/users/attach_workspace/:id', user_controller.attachWorkspace);
+router.put('/users/remove_workspace/:id', user_controller.removeWorkspace);
+router.delete('/users/delete_user/:id', user_controller.deleteUser);
 
 //semantic routes
 const semantic_controller = require('../controllers/semantic/SemanticController');
 router.post('/semantic/callbacks/retrieve', semantic_controller.acquireCallbacks);
+
 //token routes
 const token_controller = require('../controllers/TokenController');
 router.post('/tokens/create', token_controller.createToken);

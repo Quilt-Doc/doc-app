@@ -18,7 +18,7 @@ const fsPath = require('fs-path');
 
 const { exec, execFile } = require('child_process');
 
-const RepositoryItem = require('../models/RepositoryItem')
+const RepositoryItem = require('../models/unused/deprecated/RepositoryItem');
 const Repository = require('../models/Repository');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;

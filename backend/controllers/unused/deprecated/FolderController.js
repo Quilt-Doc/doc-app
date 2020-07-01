@@ -1,4 +1,5 @@
-const Folder = require('../models/Folder');
+/*
+const Folder = require('../../../models/Folder');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -363,3 +364,4 @@ module.exports =
      attachTag, removeTag, addCanWrite, removeCanWrite, addCanRead, removeCanRead
 
 }
+*/

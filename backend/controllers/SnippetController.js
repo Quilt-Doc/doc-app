@@ -67,8 +67,6 @@ getSnippet = (req, res) => {
     });
 }
 
-
-
 editSnippet = (req, res) => {
     const { id } = req.params;
     const { name, location, type, status, code, startLine } = req.body;

@@ -1,7 +1,8 @@
 
 //Will need to update with populates in regards to relationships
 //Will need to update in regards to text fields for if statements and variable setting
-const Relationship = require('../models/Relationship');
+/*
+const Relationship = require('../../models/Relationship');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -91,4 +92,4 @@ retrieveRelationships = (req, res) => {
 
 module.exports = {
     createRelationship, getRelationship, editRelationship, deleteRelationship, retrieveRelationships
-}
+}*/

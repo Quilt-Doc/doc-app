@@ -2,20 +2,23 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
+
 let snippetSchema = new Schema({
-    created: {type: Date, default: Date.now },
     name: String,
-    annotation: String,
-    code: [String],
-    startLine: Number,
+    annotation: {type: String, required: true},
+    code: {type: [String], required: true},
+    startLine: {type: Number, required: true},
+    path: {type: String, required: true, index: true},
+    status: {type: String, required: true},
+    repository: {type: ObjectId, ref: 'Repository', required: true},
     creator: {type: ObjectId, ref: 'User'},
+    
+    // DEPRECATED 
     folders: [{type: ObjectId, index: true, ref: 'Folder'}],
     documents: [{type: ObjectId, index: true, ref: 'Document'}],
     type: String,
     pathInRepository: String,
-    repository: String,
-    status: String,
-    expirationDate: Date,
+    expirationDate: Date
 });
 
 let Snippet = mongoose.model("Snippet", snippetSchema);

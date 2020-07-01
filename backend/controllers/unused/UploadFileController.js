@@ -1,4 +1,5 @@
-const UploadFile = require('../models/UploadFile');
+/*
+const UploadFile = require('../../models/UploadFile');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -77,3 +78,4 @@ retrieveUploadFiles = (req, res) => {
 module.exports = {
     createUploadFile, getUploadFile, editUploadFile, deleteUploadFile, retrieveUploadFiles
 }
+*/

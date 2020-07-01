@@ -1,4 +1,5 @@
-const RepositoryItem = require('../models/RepositoryItem');
+/*
+const RepositoryItem = require('../../../models/RepositoryItem');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -88,6 +89,9 @@ retrieveRepositoryItems = (req, res) => {
     });
 }
 
+
+
+
 attachDocument = (req, res) => {
     const { repositoryItemIDs, documentID } = req.body;
     console.log("REPITEMIDS", repositoryItemIDs)
@@ -125,4 +129,4 @@ removeDocument = (req, res) => {
 module.exports = { createRepositoryItem, getRepositoryItem,
     editRepositoryItem, deleteRepositoryItem, retrieveRepositoryItems,
     attachDocument, removeDocument
-}
+}*/

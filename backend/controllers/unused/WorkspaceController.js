@@ -1,4 +1,5 @@
-const Workspace = require('../models/Workspace');
+/*
+const Workspace = require('../../models/Workspace');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -105,3 +106,4 @@ removeUser = (req, res) => {
 
 
 module.exports = {createWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser}
+*/
