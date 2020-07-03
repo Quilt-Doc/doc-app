@@ -179,6 +179,8 @@ cron.schedule('* * * * *', () => {
             console.log(results);
         });
 
+        // TODO: Update DB with new tokens
+
         
 
         console.log("This shouldn't print before 'Token Request Results.'");

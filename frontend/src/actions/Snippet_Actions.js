@@ -6,12 +6,12 @@ import {
     RETRIEVE_SNIPPETS
 } from './types/Snippet_Types'
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 
 export const createSnippet = (formValues) => async (dispatch) => {
-    // console.log('Creating snippet with values: ');
-    // console.log(formValues);
+    console.log('Creating snippet with values: ');
+    console.log(formValues);
     const response = await api.post('/snippets/create', formValues );
     dispatch({ type: CREATE_SNIPPET, payload: response.data });
 }

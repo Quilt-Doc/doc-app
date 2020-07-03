@@ -4,6 +4,8 @@ import axios from 'axios';
 
 import styled from 'styled-components';
 
+import { apiEndpoint } from '../apis/api';
+
 class GithubAppTest extends React.Component {
     constructor(props) {
         super(props)
@@ -33,7 +35,7 @@ class GithubAppTest extends React.Component {
             console.log(responseJson)
         })*/
         
-        axios.get("http://localhost:3001/api/auth/login/success", { withCredentials: true }).then(response => {
+        axios.get( apiEndpoint + "/auth/login/success", { withCredentials: true }).then(response => {
             console.log(response)
         })
         //console.log(response)
@@ -72,11 +74,11 @@ class GithubAppTest extends React.Component {
     }
 
     goLogin = () => {
-        window.open("http://localhost:3001/api/auth/github", "_self");
+        window.open( apiEndpoint + "/auth/github", "_self");
     }
 
     goLogout = () => {
-        window.open("http://localhost:3001/api/auth/logout", "_self");
+        window.open( apiEndpoint + "/auth/logout", "_self");
     }
 
     render(){

@@ -18,7 +18,7 @@ import {
     DOCUMENT_REMOVE_CANREAD
 } from './types/Document_Types';
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 
 export const createDocument = (formValues) => async (dispatch) => {

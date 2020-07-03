@@ -5,11 +5,13 @@
 
 const JOB_GET_REFS = 1;
 const JOB_UPDATE_SNIPPETS = 2;
+const JOB_SEMANTIC = 3;
 
 
 var mongoose = require('mongoose')
 
 const snippetUtils = require('./commit_compare_test');
+const semanticUtils = require('./semantic_utils');
 
 var sqs = require('./apis/api').requestSQSServiceObject();
 
@@ -168,6 +170,7 @@ else {
     process.env.apiCallLink = jobData.apiCallLink;
     parseUtils.getRefs();
   }
+
   else if(process.env.jobType == JOB_UPDATE_SNIPPETS) {
     console.log('running update snippets job');
     process.env.headCommit = jobData.headCommit;
@@ -175,7 +178,18 @@ else {
     process.env.cloneUrl = jobData.cloneUrl;
     process.env.installationId = jobData.installationId;
     snippetUtils.runValidation();
-
   }
+
+  else if (process.env.jobType == JOB_SEMANTIC) {
+    console.log('running exec semantic job');
+    // fullName, cloneUrl, semanticTargets, installationId 
+    process.env.fullName = jobData.fullName;
+    process.env.cloneUrl = jobData.cloneUrl;
+    process.env.semanticTargets = jobData.semanticTargets;
+    process.env.installationId = jobData.installationId;
+    semanticUtils.execSemantic();
+}
+  
+
   console.log(`Worker ${process.pid} started`);
 }
