@@ -92,7 +92,8 @@ const getNewInstallToken = async (tokenModel, config) => {
     installationApi.post(tokenModel.installationId + "/access_tokens", config)
         .then((response) => {
             var newToken = response.data;
-            newToken = {token: newToken.token, expireTime: Date.parse(newToken.expires_at)};
+            newToken = {value: newToken.token, expireTime: Date.parse(newToken.expires_at)};
+
             return newToken;
         })
         .catch((error) => {
@@ -108,7 +109,7 @@ cron.schedule('* * * * *', () => {
     // App Token Section START ------
     var retrievedToken = undefined;
     var currentTime = new Date().getTime();
-    curentTime = Math.round(now  / 1000);
+    curentTime = Math.round(currentTime  / 1000);
 
     var currentAppToken = undefined;
 
@@ -161,7 +162,7 @@ cron.schedule('* * * * *', () => {
 
 
     // Find install tokens whose expiration time is less than 3 minutes from now and which are not being updated currently.
-    Token.updateMany({'type': 'INSTALL', 'expireTime': { $lte: (currentTime + (60*3))}, 'status': 'RESOLVED'}, {"$set":{"status": 'UPDATING'}}, function (err, installTokens) {
+    Token.updateMany({'type': 'INSTALL', 'expireTime': { $lte: (currentTime + (60*3))}, 'status': 'RESOLVED'}, {"$set":{"status": 'UPDATING'}}, async function (err, installTokens) {
         if (err) {
             console.log('Error fetching install tokens');
             console.log(err);
@@ -174,14 +175,29 @@ cron.schedule('* * * * *', () => {
         });
 
         // Now `newTokens` should have all of our new tokens
-        await Promise.all(newTokens).then((results) => {
+        const results = await Promise.all(newTokens);/*.then((results) => {
             console.log('Token Request Results: ');
             console.log(results);
-        });
+
+        });*/
 
         // TODO: Update DB with new tokens
-
-        
+        const bulkOps = results.map(tokenObj => ({
+            updateOne: {
+                filter: { installationId: tokenObj.installationId },
+                // Where field is the field you want to update
+                update: { $set: { value: tokebObj.value, expireTime: tokenObj.expireTime } },
+                upsert: true
+                }
+            }));
+           // where Model is the name of your model
+           return Token.collection
+               .bulkWrite(bulkOps)
+               .then(results => res.json(results))
+               .catch(err => {
+                   console.log('Error refreshing snippets: ', err);
+                   res.json({success: false, error: err});
+               });   
 
         console.log("This shouldn't print before 'Token Request Results.'");
 
