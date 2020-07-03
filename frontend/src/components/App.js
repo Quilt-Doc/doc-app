@@ -5,6 +5,7 @@ import history from '../history';
 
 //components
 import Dashboard from './Dashboard';
+import NavbarProfile from './Top Navbar/NavbarProfile'
 import Home from './Home';
 import Test from './Test'
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'

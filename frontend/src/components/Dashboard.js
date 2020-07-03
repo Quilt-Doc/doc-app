@@ -4,7 +4,7 @@ import history from '../history';
 //components
 import SpaceView from './Space Page/SpaceView';
 import Bucket from './General Components/Top Navbar/Bucket'
-
+import NavbarProfile from './Top Navbar/NavbarProfile';
 //styles
 import styled from "styled-components";
 
@@ -16,7 +16,9 @@ const Dashboard = () => {
     return (
         <Container>
             <TopNav>
-                <LogoutButton onClick = {goLogout}>Logout</LogoutButton>
+                <NavbarProfile
+                    goLogout = {goLogout}
+                />
             </TopNav>
             <SpaceView/>
         </Container>
@@ -57,7 +59,6 @@ const TopNav = styled.div`
     display: flex;
     z-index: 4;
     align-items: center;
-    justify-content: flex-end;
 `
 
 const Container = styled.div`

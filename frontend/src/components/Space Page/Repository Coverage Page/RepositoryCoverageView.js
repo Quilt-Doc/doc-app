@@ -6,6 +6,8 @@ import styled from "styled-components"
 //misc
 import { connect } from 'react-redux';
 
+//components
+import ActivityFeed from './ActivityFeed';
 
 class RepositoryCoverageView extends React.Component {
     constructor(props) {
@@ -19,7 +21,12 @@ class RepositoryCoverageView extends React.Component {
                 <Header>
                         Track Document Coverage
                 </Header>
+                <AllContainer>
+                    <Healthbar>
+                    </Healthbar>
+                
                 <Container>
+                    <LeftLeftContainer>
                         <LeftContainer>
                             <ListToolBar>
                                 <ListName>Problem Areas</ListName>
@@ -59,7 +66,6 @@ class RepositoryCoverageView extends React.Component {
                                     <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cut-outline"></ion-icon>
                                     <Count>30</Count>
                                     </Statistic>
-                                    
                                 </ListItem>
                                 <ListItem>
                                     <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', 'marginRight': "2rem"}} name="folder-sharp"></ion-icon>
@@ -197,6 +203,8 @@ class RepositoryCoverageView extends React.Component {
                                 </ListItem>
                             </ListItemContainer>
                         </LeftContainer>
+                        <ActivityFeed/>
+                            </LeftLeftContainer>
                         <RightContainer>
                             <ListToolBar>
                                     <ListName>Document Breakage</ListName>
@@ -311,8 +319,10 @@ class RepositoryCoverageView extends React.Component {
                                         </DescriptionContainer>
                                 </ListItem2>
                             </ListItemContainer2>
+                            
                         </RightContainer>
                 </Container>
+                </AllContainer>
             </>
         );
     }
@@ -331,19 +341,28 @@ export default RepositoryCoverageView;
 const Header = styled.div`
     color: #172A4E;
     font-size: 2.5rem;
-    margin-left: 4rem;
+    margin-left: 8rem;
     margin-bottom: 2rem;
 `
 
 const Container = styled.div`
     display: flex;
-    margin-left: 4rem;
-    margin-right: 4rem;
+    margin-left: 8rem;
+    margin-right: 8rem;
     margin-bottom: 4rem;
-    height: 87%;
+    height: 84rem;
     padding: 3rem;
     background-color: #F7F9FB;
+    width: 112.5rem;
+`
 
+const AllContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+`
+
+const Healthbar = styled.div`
+    height: 3rem;
 `
 
 const CoverageContainer = styled.div`
@@ -360,6 +379,11 @@ const LeftContainer = styled.div`
     background-color: white;
     padding-bottom: 0.5rem;
     max-height: 32rem;
+`
+
+const LeftLeftContainer = styled.div`
+    display: flex;
+    flex-direction: column;
 `
 
 
@@ -390,6 +414,7 @@ const ListItem = styled.div`
     display: flex;
     font-size: 1.5rem;
 `
+
 
 const ListName = styled.div`
     margin-left: 2rem;
@@ -469,7 +494,7 @@ const ListItemContainer2 = styled.div`
 `
 
 const RightContainer = styled.div`
-    margin-left: 5rem;
+    margin-left: 5.2rem;
     background-color: white;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
     /*
