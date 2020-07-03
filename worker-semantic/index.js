@@ -188,7 +188,7 @@ else {
       process.env.cloneUrl = jobData.cloneUrl;
       process.env.semanticTargets = jobData.semanticTargets;
       process.env.installationId = jobData.installationId;
-
+      semanticUtils.execSemantic();
   }
 
   console.log(`Worker ${process.pid} started`);

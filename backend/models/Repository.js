@@ -2,6 +2,8 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
+// split name into name, owner
+// add default branch
 var repositorySchema = new Schema({
 	name: String,
 	link: String,

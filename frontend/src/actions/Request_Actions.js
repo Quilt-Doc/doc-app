@@ -6,7 +6,7 @@ import {
     RETRIEVE_REQUESTS
 } from './types/Request_Types'
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 
 export const createRequest = (formValues) => async (dispatch) => {

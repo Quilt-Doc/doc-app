@@ -182,7 +182,8 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   // We did not find any increasing subsequences
   if (Math.max(...windowMaxes) < 2) {
-    return {status: 'INVALID'};
+    snippetObj.status = SNIPPET_STATUS_INVALID;
+    return snippetObj;
   }
 
   var snippetCenterLine = ((snippetObj.startLine + snippetObj.numLines-1)/2);
@@ -208,7 +209,8 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   // There are no regions that meet threshold
   if (possibleRegions.length < 1) {
-    return { status: 'INVALID' };
+    snippetObj.status = SNIPPET_STATUS_INVALID;
+    return snippetObj;
   }
 
   // Get the region candidate with the best score

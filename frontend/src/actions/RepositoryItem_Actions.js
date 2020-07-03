@@ -8,7 +8,7 @@ import {
     REMOVE_DOCUMENT
 } from './types/RepositoryItem_Types'
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 
 export const createRepositoryItem = (formValues) => async (dispatch) => {

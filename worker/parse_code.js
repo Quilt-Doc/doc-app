@@ -16,6 +16,8 @@ const { ObjectId } = mongoose.Types;
 
 const url = require('url');
 
+const tokenUtils = require('./utils/token_utils');
+
 var request = require("request");
 
 
@@ -41,15 +43,16 @@ getRefs = () => {
     worker.send({receipt: process.env.receipt})
 
     repoLink = process.env.repoLink;
-    finalRepoLink = process.env.apiCallLink;
+    var installToken = await tokenUtils.getInstallToken(process.env.installationId);
 
+    var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
 
 
     var timestamp = Date.now().toString();    
     var repo_disk_path = 'git_repos/' + timestamp +'/';
     const { exec, execFile } = require('child_process');
 
-    const child = execFile('git', ['clone', finalRepoLink, repo_disk_path], (error, stdout, stderr) => {
+    const child = execFile('git', ['clone', cloneUrl, repo_disk_path], (error, stdout, stderr) => {
         if (error) {
             console.log('getRefs error on execFile: ' + error);
             worker.process.kill(worker.process.pid)

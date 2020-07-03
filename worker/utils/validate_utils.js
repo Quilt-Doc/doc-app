@@ -58,8 +58,8 @@ const parseCommitObjects = (logLines) => {
           return ele.ref == commitChanges.fileNames[0];
         });
   
-        // If there is already a file object for this existing in trackedFiles, update the new_ref
-        // Else: add file object: {old_ref: snippetFiles[x], ref: commit}
+        // If there is already a file object for this existing in trackedFiles, update the ref
+        // Else: add file object: {oldRef: snippetFiles[x], ref: commit}
         if (commitOperation == 'R') {
           console.log('Rename Operation');
           if (commitChanges.fileNames.length < 2) {
@@ -77,7 +77,7 @@ const parseCommitObjects = (logLines) => {
           // for the first time in the commit log
           else {
             if (snippetFiles.includes(commitChanges.fileNames[0])) {
-              trackedFiles.push({old_ref: commitChanges.fileNames[0], new_ref: commitChanges.fileNames[1], sha: commit.sha, deleted: false});
+              trackedFiles.push({oldRef: commitChanges.fileNames[0], ref: commitChanges.fileNames[1], sha: commit.sha, deleted: false});
             }
           }
         }

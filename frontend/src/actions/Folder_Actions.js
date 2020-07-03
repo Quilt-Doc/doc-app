@@ -16,7 +16,7 @@ import {
     FOLDER_REMOVE_CAN_READ,
 } from './types/Folder_Types';
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 
 export const createFolder = (formValues) => async (dispatch) => {
