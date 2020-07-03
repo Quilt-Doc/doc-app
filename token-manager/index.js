@@ -1,4 +1,7 @@
 require('dotenv').config();
+const fs = require('fs');
+var jwt = require('jsonwebtoken');
+
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -88,8 +91,8 @@ const updateAppToken = (oldToken) => {
     });
 
 }
-const getNewInstallToken = async (tokenModel, config) => {
-    installationApi.post(tokenModel.installationId + "/access_tokens", config)
+const getNewInstallToken = async (tokenModel, installationApi) => {
+    installationApi.post(tokenModel.installationId + "/access_tokens")
         .then((response) => {
             var newToken = response.data;
             newToken = {value: newToken.token, expireTime: Date.parse(newToken.expires_at)};
@@ -151,14 +154,12 @@ cron.schedule('* * * * *', () => {
     const axios = require('axios');
     var installationApi = axios.create({
         baseURL: "https://api.github.com/installations/",
+        headers: {
+            Authorization: "Bearer " + currentAppToken,
+            Accept: "application/vnd.github.machine-man-preview+json"
+          }
     });
     
-    let config = {
-        headers: {
-          Authorization: "Bearer " + currentAppToken,
-          Accept: "application/vnd.github.machine-man-preview+json"
-        }
-    }
 
 
     // Find install tokens whose expiration time is less than 3 minutes from now and which are not being updated currently.
@@ -169,9 +170,10 @@ cron.schedule('* * * * *', () => {
             return;
         }
 
-
-        var newTokens = installTokens.map(tokenModel => {
-            return getNewInstallToken(tokenModel, config);
+        console.log('installTokens: ');
+        console.log(installTokens);
+        var newTokens = installTokens.map(async (tokenModel) => {
+            return await getNewInstallToken(tokenModel, installationApi);
         });
 
         // Now `newTokens` should have all of our new tokens
@@ -195,7 +197,7 @@ cron.schedule('* * * * *', () => {
                .bulkWrite(bulkOps)
                .then(results => res.json(results))
                .catch(err => {
-                   console.log('Error refreshing snippets: ', err);
+                   console.log('Error refreshing tokens: ', err);
                    res.json({success: false, error: err});
                });   
 

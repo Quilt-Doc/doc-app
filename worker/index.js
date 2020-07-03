@@ -163,7 +163,7 @@ else {
   console.log('jobType: ', process.env.jobType);
   var jobData = JSON.parse(process.env.jobData);
   console.log('Condition: ');
-  console.log(process.env.jobType == JOB_UPDATE_SNIPPETS);
+  console.log(process.env.jobType == JOB_GET_REFS);
   if(process.env.jobType === JOB_GET_REFS) {
     console.log('running get refs job');
     process.env.repoLink = jobData.repoLink;
