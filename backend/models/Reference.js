@@ -7,6 +7,8 @@ var referenceSchema = new Schema({
 	kind: String,
 	path: String,
 	lineNum: Number,
+	position: String,
+	parseProvider: String,
 	repository: {type: ObjectId, ref: 'Repository'},
 	created: {type: Date, default: Date.now }
 });
