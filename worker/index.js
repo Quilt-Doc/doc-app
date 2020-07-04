@@ -164,10 +164,12 @@ else {
   var jobData = JSON.parse(process.env.jobData);
   console.log('Condition: ');
   console.log(process.env.jobType == JOB_GET_REFS);
+
   if(process.env.jobType === JOB_GET_REFS) {
     console.log('running get refs job');
-    process.env.repoLink = jobData.repoLink;
-    process.env.apiCallLink = jobData.apiCallLink;
+    process.env.installationId = jobData.installationId;
+    process.env.cloneUrl = jobData.cloneUrl;
+    process.env.repositoryId = jobData.repositoryId;
     parseUtils.getRefs();
   }
 

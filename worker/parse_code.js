@@ -42,17 +42,17 @@ getRefs = () => {
 
     worker.send({receipt: process.env.receipt})
 
-    repoLink = process.env.repoLink;
+    var repositoryId = process.env.repositoryId;
     var installToken = await tokenUtils.getInstallToken(process.env.installationId);
 
     var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
 
 
     var timestamp = Date.now().toString();    
-    var repo_disk_path = 'git_repos/' + timestamp +'/';
+    var repoDiskPath = 'git_repos/' + timestamp +'/';
     const { exec, execFile } = require('child_process');
 
-    const child = execFile('git', ['clone', cloneUrl, repo_disk_path], (error, stdout, stderr) => {
+    const child = execFile('git', ['clone', cloneUrl, repoDiskPath], (error, stdout, stderr) => {
         if (error) {
             console.log('getRefs error on execFile: ' + error);
             worker.process.kill(worker.process.pid)
@@ -60,7 +60,7 @@ getRefs = () => {
         }
         console.log('getRefs git clone successful');
         var new_env = process.env;
-        new_env.DOXYGEN_FILE = repo_disk_path;
+        new_env.DOXYGEN_FILE = repoDiskPath;
         new_env.DOXYGEN_XML_DIR = 'git_repos/' + timestamp + '_xml/';
 
         const child = execFile('doxygen', ['Doxyfile'], {env: new_env, maxBuffer: (1024*1024)*50}, (error, stdout, stderr) => {
@@ -168,9 +168,12 @@ getRefs = () => {
                                             }
                                             // console.log('name, kind, file, location');
                                             // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
-                                            file = file.substring(file.indexOf('/')+1)
-                                            file = file.substring(file.indexOf('/')+1)
-                                            found_refs.push({name: name, kind: kind, file: file, location: location, link: repoLink})
+
+                                            // Remove our local directories where we placed git repo contents
+                                            file = file.substring(file.indexOf('/')+1);
+                                            file = file.substring(file.indexOf('/')+1);
+
+                                            found_refs.push({name: name, kind: kind, path: file, location: location, repository: repositoryId})
                                         }
                                     })
                                 });
@@ -195,31 +198,38 @@ getRefs = () => {
 
 
 
-createReferences = (ref_list, worker) => {
+createReferences = (refList, worker) => {
 
 
-    if (!typeof ref_list == 'undefined' && ref_list !== null) {
-        console.log('Error: no ref_list provided');
-        return;//  res.json({success: false, error: 'no reference ref_list provided'});
+    if (!typeof refList == 'undefined' && refList !== null) {
+        console.log('Error: no refList provided');
+        return;//  res.json({success: false, error: 'no reference refList provided'});
     }
-    console.log('ref_list');
-    // console.log(ref_list);
-    var ref_obj_list = ref_list.map(ref => {
-        var {name, kind, file, lineNum, link} = ref;
+    console.log('refList');
+    // console.log(refList);
+    var refObjList = refList.map(ref => {
+        var {name, kind, path, lineNum, path, repositoryId} = ref;
         if (!typeof name == 'undefined' && name !== null) {
-            console.log('no `name` in ref_list provided');
+            console.log('no `name` in refList provided');
             worker.process.kill(worker.process.pid);
             return;
         }
-        if (!typeof link == 'undefined' && link !== null) {
-            console.log('no `link` in ref_list provided');
+        if (!typeof path == 'undefined' && path !== null) {
+            console.log('no `path` in refList provided');
+            worker.process.kill(worker.process.pid);
+            return;
+        }
+
+        if (!typeof repositoryId == 'undefined' && path !== null) {
+            console.log('no `repositoryId` in refList provided');
             worker.process.kill(worker.process.pid);
             return;
         }
 
         let reference = new Reference({
             name: name,
-            link: link
+            path: path,
+            repository: ObjectId(repositoryId)
 
         });
 
@@ -231,8 +241,8 @@ createReferences = (ref_list, worker) => {
     })
 
     console.log('REF OBJ LIST');
-    // console.log(ref_obj_list);
-    Reference.create( ref_obj_list, (err, reference) => {
+    // console.log(refObjList);
+    Reference.create( refObjList, (err, reference) => {
         if (err) {
             console.log('Error: ', err);
         }

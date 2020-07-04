@@ -5,8 +5,9 @@ var request = require("request");
 const apis = require('../apis/api');
 const parseUtils = require('../utils/parse_code');
 
+const jobs = require('../apis/jobs');
+
 const api = apis.requestClient();
-const sqs = apis.requestSQSServiceObject();
 const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 
 const apiURL = 'https://api.github.com';
@@ -102,7 +103,7 @@ createRepository = async (req, res) => {
                 console.log(repoName);
                 installationClient.get(`/repos/${fullName}/git/trees/${treeSHA}?recursive=true`).then((response) => {
                     
-                    let repositoryItems = response.data.tree.map(item => {
+                    let treeReferences = response.data.tree.map(item => {
                         
                         let pathSplit = item.path.split('/')
                         let name = pathSplit.slice(pathSplit.length - 1)[0]
@@ -115,74 +116,40 @@ createRepository = async (req, res) => {
                         return {name, path, kind, repository: ObjectId(repository._id)}
                     })
 
-
-                    // SQS Message Section Start
-                    var timestamp = Date.now().toString();
-                    // default_branch, fullName, cloneUrl, args_2, installationId 
-
-                    runSemanticData['semanticTargets'] = JSON.stringify({targets: args2}),
-
-                    console.log('RUN SEMANTIC DATA: ');
-                    console.log(runSemanticData);
-
-                    var sqsSemanticData = {
-                        MessageAttributes: {
-                            "fullName": {
-                                DataType: "String",
-                                StringValue: runSemanticData.fullName
-                            },
-                            "defaultBranch": {
-                                DataType: "String",
-                                StringValue: runSemanticData.defaultBranch
-                            },
-                            "cloneUrl": {
-                                DataType: "String",
-                                StringValue: runSemanticData.cloneUrl
-                            },
-                            "semanticTargets": {
-                                DataType: "String",
-                                StringValue: runSemanticData.semanticTargets
-                            },
-                            "installationId": {
-                                DataType: "String",
-                                StringValue: runSemanticData.installationId
-                            },
-                            "jobType": {
-                                DataType: "Number",
-                                StringValue: JOB_SEMANTIC.toString()
-                              }
-                        },
-                        MessageBody: JSON.stringify(runSemanticData),
-                        MessageDeduplicationId: timestamp,
-                        MessageGroupId: "runSemantic_" + timestamp,
-                        QueueUrl: queueUrl
-                    };
-                    if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Semantic | MessageDeduplicationId: ${timestamp}`);
-                    if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Semantic | MessageGroupId: getRefRequest_${timestamp}`);
-                    // Send the semantic data to the SQS queue
-                    let sendSqsMessage = sqs.sendMessage(sqsSemanticData).promise();
-
-                    sendSqsMessage.then((data) => {
-
-                        if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Semantic | SUCCESS: ${data.MessageId}`);
-                        console.log(`Semantic | SUCCESS: ${data.MessageId}`);
-                    }).catch((err) => {
-                        if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Semantic | ERROR: ${err}`);
-                        console.log(`Semantic | ERROR: ${err}`);
-
-                    });
-                    // SQS Message Section End
-                    
                     // Save repository contents as items in our database
-                    RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
+                    Reference.insertMany(treeReferences, (errInsertItems, treeReferences) => {
                         if (errInsertItems) return res.json({ success: false, error: errInsertItems });
-                        repository.populate('workspace', (errPopulation, repository) => {
+                        return res.json(repository);
+                        /*repository.populate('workspace', (errPopulation, repository) => {
                             if (errPopulation) return res.json({ success: false, error: errPopulation });
 
                             // return the repository object
                             return res.json(repository);
-                        });
-                    })
+                        });*/
+                    });
+
+                    //DOXYGEN
+                    // SQS Message Section Start
+                    var runDoxygenData = {
+                        'installationId': installationId.toString(),
+                        'cloneUrl': cloneUrl,
+                        'jobType': JOB_GET_REFS
+                    }
+
+                    console.log('RUN DOXYGEN DATA: ');
+                    console.log(runDoxygenData);
+
+                    jobs.dispatchDoxygenJob(runDoxygenData, log);
+
+
+
+                    // SEMANTIC
+                    // default_branch, fullName, cloneUrl, args_2, installationId 
+
+                    runSemanticData['semanticTargets'] = JSON.stringify({targets: args2});
+                    
+                    jobs.dispatchSemanticJob(runSemanticData, log);
+                
                 })
             })
         })
