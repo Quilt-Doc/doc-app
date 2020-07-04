@@ -37,7 +37,7 @@ const Dashboard = () => {
                 </NavbarElement>
                 
                 
-                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginLeft': '55rem', 'marginRight': '2rem'}} name="search-outline"></ion-icon>
+                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginLeft': '70rem', 'marginRight': '2rem'}} name="search-outline"></ion-icon>
                 <ion-icon   style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="notifications-outline"></ion-icon>
                 <ion-icon  style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="bookmarks-outline"></ion-icon>
                 <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="add-outline"></ion-icon>

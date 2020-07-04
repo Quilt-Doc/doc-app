@@ -36,7 +36,7 @@ class RepositoryNavigation extends React.Component {
             return (
                 <>
                     <Container>
-                        <Header>Pytorch / Fairseq</Header>
+                        <Header>backend / apis</Header>
                         <Router history = {history}>
                             <Route path = "/repository/directory/:link" component = { DirectoryView } />
                             <Route path = "/repository/codeview/:link" component = { CodeView } />
@@ -53,18 +53,14 @@ export default RepositoryNavigation
 // Styled Components
 
 const Container = styled.div`
-    width: 120rem;
-    margin: 0 auto;
-    margin-top: 5rem;
-    margin-left: 5rem;
+    margin-left: 8rem;
+    margin-right: 8rem;
 `
 
 // DIRECTORY COMPONENTS
 
 const Header = styled.div`
-    font-size: 3.5rem;
+    font-size: 2.5rem;
     color: #172A4E;
-    font-weight:400;
-    letter-spacing: 0.1rem;
-    margin-bottom: 7rem;
+    margin-bottom: 8rem;
 `

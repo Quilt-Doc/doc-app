@@ -10,6 +10,8 @@ import RepositoryView from './Repository Page/RepositoryView';
 import SideNavbar from './SideNavbar';
 import DocumentCreationView from './Document Creation Page/DocumentCreationView';
 import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
+import RequestView from './Request Page/RequestView';
+
 
 //react-router
 import { Switch, Route } from 'react-router-dom';
@@ -41,6 +43,7 @@ class SpaceView extends React.Component {
                     <SideNavbar  openModal = {() => this.setState({'modalDisplay': ''})}/>
                     <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
                         <Switch history = {history}>
+                            <Route path = "/request" component = {RequestView} />
                             <Route path = "/coverage" component = {RepositoryCoverageView} />
                             <Route exact path = "/repository" component = {RepositoryView} />
                             <Route path = "/repository" component = {RepositoryNavigation}/>

@@ -97,31 +97,45 @@ class DirectoryItem extends React.Component {
     
 
     render() {
-        return (<File_Line>
+        return (
+                <ListItem>
                     <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
                         <Check_Box border_color = {this.state.check_box_border_color}>
                             <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
                         </Check_Box>
                     </Check_Box_Border>
-                    <File_Item backgroundColor = {this.state.fileItemBackgroundColor}  borderBottom = {this.props.borderBottom}>
-                        <Hover_File_Item  
-                            onMouseEnter = {() => this.hoverFileItem()}
-                            onMouseLeave = {() => this.unhoverFileItem()}
-                            to = {this.renderDirectoryLink(this.props.item)}
-                        >
-                            <ion-icon style={{'marginRight': "1rem", 'fontSize': '2rem'}}  name={this.props.type}></ion-icon>
-                            <Filename>{this.props.item.name}</Filename>
-                        </Hover_File_Item >
-                        <Statistics>
-                            <StyledIcon width = {'2'}  src = {doc_icon}/>
-                            <Document_Count color = {'#172A4E'}>0</Document_Count>
-                        </Statistics>
-                    </File_Item>
-                </File_Line>)
+
+                    <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', 'marginRight': "2rem"}} name="folder-sharp"></ion-icon>
+                    <ItemName>apis</ItemName>
+                    <ProgressContainer>
+                        <ProgressBar>
+                            {/*<ProgressPart backgroundColor = { }/>*/}
+                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'25%'}/>
+                            <ProgressPart backgroundColor = {'#ff4757'} width = {'75%'}/>
+                        </ProgressBar>
+                        <ProgressDescription>
+
+                        </ProgressDescription>
+                    </ProgressContainer>
+                    <Statistic>
+                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cube-outline"></ion-icon>
+                        <Count>75</Count>
+                    </Statistic>
+                    <Statistic>
+                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="pencil-outline"></ion-icon>
+                        <Count>25</Count>
+                    </Statistic>
+                    <Statistic>
+                    <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cut-outline"></ion-icon>
+                    <Count>30</Count>
+                    </Statistic>
+                </ListItem>
+               )
     }
 
 }
 
+/*to = {this.renderDirectoryLink(this.props.item)}*/
 
 const mapStateToProps = (state) => {
     return {
@@ -131,17 +145,83 @@ const mapStateToProps = (state) => {
 
 export default connect(mapStateToProps, { addSelected, deleteSelected } )(DirectoryItem);
 
-
+/*
 const File_Line = styled.div`
     display: flex;
     
     align-items: center;
+`*/
+
+const ListItem = styled.div`
+    height: 4.5rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    transition: background-color 0.1s ease-in;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
+    color: #172A4E;
+    cursor: pointer;
+    align-items: center;
+    display: flex;
+    font-size: 1.5rem;
 `
+
+const ItemName = styled.div`
+    width: 16rem;
+`
+
+// PROGRESS
+
+
+const ProgressContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 20rem;
+    margin-right: 35rem;
+`
+
+const ProgressBar = styled.div`
+    width: 23rem;
+    height: 0.65rem;
+    border-radius: 12rem;
+    display: flex;
+`
+
+const ProgressPart = styled.div`
+    background-color: ${props => props.backgroundColor};
+    width: ${props => props.width};
+    padding: 0.2rem;
+`
+
+const ProgressDescription = styled.div`
+
+`
+
+const Statistic = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 2.5rem;
+    font-size: 1.1rem;
+    opacity: 0.6; 
+    width: 6rem;
+    transition: all 0.05s ease-in;
+    &: hover {
+        opacity: 1;
+    }
+    
+`
+
+const Count = styled.div`
+
+`
+
 
 const Check_Box_Border = styled.div`
     height: 4rem;
     width: 4rem;
-    margin-right: 1rem;
+    margin-right: 2rem;
     &:hover {
         background-color: #F4F4F6;
     }
@@ -166,7 +246,7 @@ const Check_Box = styled.div`
 
     }
 `
-
+/*
 const File_Item = styled.div`
     
     height: 4rem;
@@ -229,4 +309,4 @@ const Document_Count = styled.div`
     justify-content: flex-end;
     align-items: center;
     margin-top: 0.4rem;
-`
+`*/
