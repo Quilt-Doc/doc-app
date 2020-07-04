@@ -52,8 +52,8 @@ class NavbarProfile extends React.Component {
 export default NavbarProfile;
 
 const ProfileButton = styled.div`
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 3rem;
+    height: 3rem;
     justify-content: center;
     align-items: center;
     display: flex;
@@ -67,7 +67,6 @@ const ProfileButton = styled.div`
 
 const Container = styled.div`
     position: relative;
-    margin-left: 145rem;
 `
 
 const ProfileMenu  = styled.div`
@@ -138,15 +137,15 @@ const ProfileName = styled.div`
 
 const MenuButton = styled.div`
     padding-left: 1.7rem;
-    font-size: 1.5rem;
-    height: 4rem;
+    font-size: 1.4rem;
+    height: 3.5rem;
     
     display: flex;
     align-items: center;
     cursor: pointer;
-    opacity: 0.8;
+
     &:hover {
-        opacity: 1;
+
         background-color: #F4F4F6;
     }
 `

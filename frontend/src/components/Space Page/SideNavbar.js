@@ -391,39 +391,6 @@ const DocumentCreateButton = styled.div`
     
 `
 
-const SearchbarWrapper = styled.div`
-    margin-top: 4rem;
-    margin-left: 1.5rem;
-    margin-right: 1.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid #DFE1E5;
-    background-color: white;
-    display: flex;
-    align-items: center;
-    width: 26rem;
-    height: 4.5rem;
-    padding: 0.5rem 1.5rem;
-    
-    
-`
-
-const Searchbar = styled.input`
-    border-radius: 2px;
-    border: none;
-    padding: 0.4rem 0.4rem;
-    font-size: 1.5rem;
-    outline: none;
-    color: #172A4E;
-    margin-left: 1rem;
-    margin-top: 0.1rem;
-    &::placeholder {
-        color: #6B778C;
-        font-weight: 400;
-    }
-    font-weight: 400;
-    width: 25rem;
-    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
-`
               
 const DocumentationContainer = styled.div`
     margin-top: 2rem;
