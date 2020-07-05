@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="pipelines_8py" kind="file">
+    <compoundname>pipelines.py</compoundname>
+    <innerclass refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline" prot="public">college_data::pipelines::CollegeDataPipeline</innerclass>
+    <innernamespace refid="namespacecollege__data_1_1pipelines">college_data::pipelines</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">#<sp/>-*-<sp/>coding:<sp/>utf-8<sp/>-*-</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">#<sp/>Define<sp/>your<sp/>item<sp/>pipelines<sp/>here</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">#</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="comment">#<sp/>Don&apos;t<sp/>forget<sp/>to<sp/>add<sp/>your<sp/>pipeline<sp/>to<sp/>the<sp/>ITEM_PIPELINES<sp/>setting</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="comment">#<sp/>See:<sp/>http://doc.scrapy.org/en/latest/topics/item-pipeline.html</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight></codeline>
+<codeline lineno="9" refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline" kindref="compound">CollegeDataPipeline</ref>(object):</highlight></codeline>
+<codeline lineno="10"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">process_item(self,<sp/>item,<sp/>spider):</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>item</highlight></codeline>
+    </programlisting>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/pipelines.py"/>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="pdf__txt_8py" kind="file">
+    <compoundname>pdf_txt.py</compoundname>
+    <innernamespace refid="namespacepdf__txt">pdf_txt</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="keyword">import</highlight><highlight class="normal"><sp/>fitz</highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal">doc<sp/>=<sp/>fitz.open(</highlight><highlight class="stringliteral">&apos;colleges/cornell/1000569.pdf&apos;</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="4"><highlight class="normal">n<sp/>=<sp/>0</highlight></codeline>
+<codeline lineno="5"><highlight class="normal">found<sp/>=<sp/>0</highlight></codeline>
+<codeline lineno="6"><highlight class="normal">pages_read<sp/>=<sp/>0</highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>n<sp/>&lt;<sp/>doc.pageCount:</highlight></codeline>
+<codeline lineno="8"><highlight class="normal"><sp/><sp/><sp/><sp/>page<sp/>=<sp/>doc.loadPage(n)</highlight></codeline>
+<codeline lineno="9"><highlight class="normal"><sp/><sp/><sp/><sp/>text<sp/>=<sp/>page.getText(</highlight><highlight class="stringliteral">&quot;text&quot;</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="10"><highlight class="normal"><sp/><sp/><sp/><sp/>print(str(text))</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"><sp/><sp/><sp/><sp/>n<sp/>+=<sp/>1</highlight></codeline>
+    </programlisting>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py"/>
+  </compounddef>
+</doxygen>

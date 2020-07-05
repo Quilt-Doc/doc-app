@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="namespacearby__redis" kind="namespace">
+    <compoundname>arby_redis</compoundname>
+    <innerclass refid="classarby__redis_1_1_feature_updater" prot="public">arby_redis::FeatureUpdater</innerclass>
+    <innerclass refid="classarby__redis_1_1_web_socket_queue_manager" prot="public">arby_redis::WebSocketQueueManager</innerclass>
+    <innerclass refid="classarby__redis_1_1my_websocket_client" prot="public">arby_redis::myWebsocketClient</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="namespacearby__redis_1a222b376b64dbea42e08e4b6bc5e76e1f" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float arby_redis::ask_avg</definition>
+        <argsstring></argsstring>
+        <name>ask_avg</name>
+        <initializer>= 0.0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="50" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="50" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacearby__redis_1aca532a010142f7baad1e397f34e2bee3" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float arby_redis::bid_avg</definition>
+        <argsstring></argsstring>
+        <name>bid_avg</name>
+        <initializer>= 0.0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="51" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="51" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="namespacearby__redis_1a67198f118b2c742ea8a418c970242532" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis::assign_priority</definition>
+        <argsstring></argsstring>
+        <name>assign_priority</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="479" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="479" bodyend="487"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacearby__redis_1ad9fe79891be1cfdcfef173945d67b47f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis::main</definition>
+        <argsstring></argsstring>
+        <name>main</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="488" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="488" bodyend="614"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><verbatim>Market Making TODO List (highest to lowest priority)
+   ISSUE: ON_MSG NEEDS TO BE ASYNCHRONOUS -- LAGGING BEHIND REALTIME DUE TO BLOCKING CALL
+   ISSUE: DONE TRADES ARE NOT BEING LOGGED
+   ISSUE: UNAWARE IF MULTIPLE DONE MESSAGES SENT FOR SAME TRADE
+   ISSUE: UNAWARE IF DONE AND MATCH MESSAGES SENT FOR SAME RESOLUTION
+
+   TODO: create bid sorted set, need to check and modify order updates
+   TODO: add logging -- UPDATE: update logging to maximize relevancy -- and add performance metrics
+   TODO: add config for auth client
+   TODO: version control
+   TODO: add trade recording for ML dataset (14 days)
+   TODO: deploy to AWS
+   TODO: implement basic algorithm and passive limit orders from auth client
+   TODO: implement signal detection (ML)
+   TODO: explore news signal detection
+   TODO: compare performance with sorted sets vs priority queues
+   TODO: explore FPGA
+   TODO: explore Arbitrage</verbatim> </para>    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

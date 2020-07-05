@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="1593844913331_2scripts_2requirements_8txt" kind="file">
+    <compoundname>requirements.txt</compoundname>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="normal">python-dotenv</highlight></codeline>
+<codeline lineno="2"><highlight class="normal">pytest</highlight></codeline>
+<codeline lineno="3"><highlight class="normal">requests</highlight></codeline>
+    </programlisting>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/requirements.txt"/>
+  </compounddef>
+</doxygen>

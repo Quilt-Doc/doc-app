@@ -1,0 +1,498 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.8.5">
+  <compound refid="class_binomial_queue_1_1binomial__queue" kind="class"><name>BinomialQueue::binomial_queue</name>
+    <member refid="class_binomial_queue_1_1binomial__queue_1aa0481eebd2b33c107e90ae39592266ea" kind="variable"><name>rank</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1ad40aefb6bfe5334e848e2f9334c1353e" kind="variable"><name>children</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a8b177272099be507a8bbb66eb90a71da" kind="function"><name>__init__</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a1b626e6e78364eda4a1089f183288f06" kind="function"><name>get_root</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a76147d4ccfb4d053a52c1dcc6bc708e5" kind="function"><name>get_rank</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a8245feffb04861d30b302c795e4d41c9" kind="function"><name>link</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1af398046f894b6ff5d4232d9215c9b243" kind="function"><name>insert</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1acd84e93ac0a8df26963b4c8f29612fb2" kind="function"><name>insert_helper</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1aa37fba7b64806062b3537e36d2ffb129" kind="function"><name>meld_queue</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a440a6b96094ca5b8a01feb5d9548f00b" kind="function"><name>get_min</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a3966e7af446242e175e8020dd803ff58" kind="function"><name>extract_min</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a8b177272099be507a8bbb66eb90a71da" kind="function"><name>__init__</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a1b626e6e78364eda4a1089f183288f06" kind="function"><name>get_root</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a76147d4ccfb4d053a52c1dcc6bc708e5" kind="function"><name>get_rank</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a8245feffb04861d30b302c795e4d41c9" kind="function"><name>link</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1af398046f894b6ff5d4232d9215c9b243" kind="function"><name>insert</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1acd84e93ac0a8df26963b4c8f29612fb2" kind="function"><name>insert_helper</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1aa37fba7b64806062b3537e36d2ffb129" kind="function"><name>meld_queue</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a440a6b96094ca5b8a01feb5d9548f00b" kind="function"><name>get_min</name></member>
+    <member refid="class_binomial_queue_1_1binomial__queue_1a3966e7af446242e175e8020dd803ff58" kind="function"><name>extract_min</name></member>
+  </compound>
+  <compound refid="classcollege__data_1_1items_1_1_college_data_item" kind="class"><name>college_data::items::CollegeDataItem</name>
+  </compound>
+  <compound refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline" kind="class"><name>college_data::pipelines::CollegeDataPipeline</name>
+    <member refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline_1ac00a74ead3603105246d647a05280193" kind="function"><name>process_item</name></member>
+  </compound>
+  <compound refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider" kind="class"><name>college_data::spiders::college_data_spider::CollegeDataSpider</name>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a84179ab93a00aa54ea0a7ceb1d8d9bb6" kind="variable"><name>name</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ad71203fe26485cc72d42f1a3195ce73c" kind="variable"><name>num</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1acddf652bc8d8b40c5e96ac27462187cf" kind="variable"><name>domain</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ada3bca652ab1a5ee943af5a539fb8896" kind="variable"><name>path</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a0c49be25960370885bbf1a2d7ac37367" kind="variable"><name>cds</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a7daedca148de7132fd6990da85acf950" kind="variable"><name>cds2</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a18576da87e3fa667518b59e572354d14" kind="variable"><name>factbook</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a5c843cb24115f1d5a08cacd635d9a319" kind="variable"><name>factbook3</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a99c6ec1925b0c961cc491a8ce5bbbc57" kind="variable"><name>doc</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a2f0be664b026fe8b404d504bee69a16e" kind="variable"><name>n</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a63049991a5b2560a4bff62fc06b51790" kind="variable"><name>found</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ab71fae9ff8831c3f73010c10e6ee33a5" kind="variable"><name>pages_read</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ac2417003b4452bcde87aa4167b49a095" kind="variable"><name>page</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1abd416c22d9869199e5fd0b0e8fdafb0f" kind="variable"><name>text</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1adf107babe9b7d58c7cd33be4097a9b46" kind="function"><name>__init__</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a6bb416160f05c2810e3007b2d2b63a4d" kind="function"><name>spider_closed</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a05b43664ae2f13ca416efeb6a31f1a12" kind="function"><name>start_requests</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a28d121a47ac85e74cc59a2a1ec4a8829" kind="function"><name>college_parse</name></member>
+    <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a44950dcd6a47e3ba363b0a8c0896ce9a" kind="function"><name>save_pdf</name></member>
+  </compound>
+  <compound refid="classcollege__data_1_1middlewares_1_1_college_data_spider_middleware" kind="class"><name>college_data::middlewares::CollegeDataSpiderMiddleware</name>
+    <member refid="classcollege__data_1_1middlewares_1_1_college_data_spider_middleware_1a0ded7034181d8690167302290ae6c3b1" kind="function"><name>from_crawler</name></member>
+    <member refid="classcollege__data_1_1middlewares_1_1_college_data_spider_middleware_1a0104b38fed8417ca3cb34f16fd559cd2" kind="function"><name>process_spider_input</name></member>
+    <member refid="classcollege__data_1_1middlewares_1_1_college_data_spider_middleware_1a36a4b6266031ebab105b073cd152bdf6" kind="function"><name>process_spider_output</name></member>
+    <member refid="classcollege__data_1_1middlewares_1_1_college_data_spider_middleware_1a03e68651fae554c1594f19b9eebf7da1" kind="function"><name>process_spider_exception</name></member>
+    <member refid="classcollege__data_1_1middlewares_1_1_college_data_spider_middleware_1a7a3263c3f5516224be667599928aa853" kind="function"><name>process_start_requests</name></member>
+    <member refid="classcollege__data_1_1middlewares_1_1_college_data_spider_middleware_1a503de6c133561ae35fda1d0d079d20bd" kind="function"><name>spider_opened</name></member>
+  </compound>
+  <compound refid="classarby__redis_1_1_feature_updater" kind="class"><name>arby_redis::FeatureUpdater</name>
+    <member refid="classarby__redis_1_1_feature_updater_1a4557decd03356f2dc41369de34d962fe" kind="variable"><name>feature_log</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1aff72e2530619087e3d865941bc083624" kind="variable"><name>redis_client</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1a7cb75241cd18d8d2d571da3232bbefe7" kind="variable"><name>pipe</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1acec7531a9e6ee0f8ad57f6d78668216f" kind="variable"><name>order_book_depth</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1a214505f28b6f4c1f970fabcae1737f6c" kind="variable"><name>product</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1af3604b33d92a991ba0b3467a7a37089e" kind="variable"><name>ob_pressure</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1a6075d7edae54725315c3a762bff6c9a2" kind="function"><name>__init__</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1ae6e69b55e4491671a480c4f4ec521d40" kind="function"><name>get_ob_pressure</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1aaa4b06343e243a752faa01ebbded8dc4" kind="function"><name>run</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1a6075d7edae54725315c3a762bff6c9a2" kind="function"><name>__init__</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1ae6e69b55e4491671a480c4f4ec521d40" kind="function"><name>get_ob_pressure</name></member>
+    <member refid="classarby__redis_1_1_feature_updater_1aaa4b06343e243a752faa01ebbded8dc4" kind="function"><name>run</name></member>
+  </compound>
+  <compound refid="classarby__redis_1_1my_websocket_client" kind="class"><name>arby_redis::myWebsocketClient</name>
+    <member refid="classarby__redis_1_1my_websocket_client_1aabf3556e797aa48ee605083d872c96bd" kind="variable"><name>url</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1abe9d241608757d36184f21448e4cdcf1" kind="variable"><name>products</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a845dc758ebf3655deb9614748aef5e65" kind="variable"><name>channels</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a08ecd5600f486cfb74e9c32840a3318c" kind="variable"><name>type</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a377354d694723c2657ff88be4ba31843" kind="variable"><name>stop</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1aa1243bd15f873bceaededd3ecaf86ccf" kind="variable"><name>error</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a8952401b4e9e3f85356747c5dee2f444" kind="variable"><name>ws</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ad1801fcbc3671ebe8b3c5e2275ba5ea1" kind="variable"><name>thread</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a867d987d96b754b9cfb35e53f1e75187" kind="variable"><name>auth</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1aa83b24a75ebeb8a1524ec65869b30e1a" kind="variable"><name>api_key</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a0e7ad31963b3d770c78a678f93f823e0" kind="variable"><name>api_secret</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1aed1cfd6cccbc1f49b70d1e227f542975" kind="variable"><name>api_passphrase</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1abfc1764731a2f6f51c82eb94cc9c3a1a" kind="variable"><name>redis_db</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ae5e65a51394659c356e210c9a4c063d3" kind="variable"><name>order_limit</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ae5edbc4135d443cdd6646720f972361e" kind="variable"><name>orders_received</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a2f6d9c5f41009bc7466c4075bbbffb67" kind="variable"><name>message_count</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a4ba76d9cc571ef82c151f09e7bbd2ed3" kind="variable"><name>msg_queue</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1aac1e6a3865b3313de8420635bf091a36" kind="variable"><name>switched</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a7734e713dec7892e10389ffca5478252" kind="variable"><name>redis_client</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a87768ee45ffe3fd6f554a2b7e97e3c83" kind="variable"><name>current_change_order</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ab16b1c40fa7a262e9bc8c49d7fb03221" kind="variable"><name>socket_manager</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a23367c59511c124b13438f6b387056a5" kind="variable"><name>pipe</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a71b2a9891d8299e50018191f02a6f4fb" kind="variable"><name>sequence_num</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a9a8a862608134fa22a8413427e7c4ab2" kind="function"><name>__init__</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a74bf51b429f9f6b33a794c85db42e2e0" kind="function"><name>start</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ad14a3836571096e27924a1eab3f7afa2" kind="function"><name>on_open</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ab86d2dff284df6d2856abcee58308dd4" kind="function"><name>get_millis</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a1cbf2ac1fa265daa354e00b2b95cd204" kind="function"><name>start_realtime</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ae5a87e03d54e155d806d8f96ed7b4276" kind="function"><name>update_db</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a79be6a64558cdcd52246f1650acc035f" kind="function"><name>on_message</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a84bde67df7945d3231fcbddc5f728003" kind="function"><name>on_close</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a8413c9d21d3f88a1420ad788b44eff25" kind="function"><name>close</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a802ddb00145d7a2586f727b3f7a32a75" kind="function"><name>on_error</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a9a8a862608134fa22a8413427e7c4ab2" kind="function"><name>__init__</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a74bf51b429f9f6b33a794c85db42e2e0" kind="function"><name>start</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ad14a3836571096e27924a1eab3f7afa2" kind="function"><name>on_open</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ab86d2dff284df6d2856abcee58308dd4" kind="function"><name>get_millis</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a1cbf2ac1fa265daa354e00b2b95cd204" kind="function"><name>start_realtime</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1ae5a87e03d54e155d806d8f96ed7b4276" kind="function"><name>update_db</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a79be6a64558cdcd52246f1650acc035f" kind="function"><name>on_message</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a84bde67df7945d3231fcbddc5f728003" kind="function"><name>on_close</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a8413c9d21d3f88a1420ad788b44eff25" kind="function"><name>close</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a802ddb00145d7a2586f727b3f7a32a75" kind="function"><name>on_error</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a2a070d075c2f1a79fe845ea3f631cc1c" kind="function"><name>_connect</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a71b739dc247c0946963a91c67db0e6e9" kind="function"><name>_listen</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a81245cb23a5d8aa9121f6fb0fa46936b" kind="function"><name>_disconnect</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a2a070d075c2f1a79fe845ea3f631cc1c" kind="function"><name>_connect</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a71b739dc247c0946963a91c67db0e6e9" kind="function"><name>_listen</name></member>
+    <member refid="classarby__redis_1_1my_websocket_client_1a81245cb23a5d8aa9121f6fb0fa46936b" kind="function"><name>_disconnect</name></member>
+  </compound>
+  <compound refid="classheap__lib_1_1node" kind="class"><name>heap_lib::node</name>
+    <member refid="classheap__lib_1_1node_1a8bc6ff752d2104404b9c40fc7e966797" kind="variable"><name>val</name></member>
+    <member refid="classheap__lib_1_1node_1a95fcf351b1716a622d7ee9b4fe883a10" kind="variable"><name>rank</name></member>
+    <member refid="classheap__lib_1_1node_1a30d240b45e24cc6bb373256dde70b024" kind="variable"><name>children</name></member>
+    <member refid="classheap__lib_1_1node_1a5cabeb97a9dabf04a3d6da726dbdd641" kind="variable"><name>parent</name></member>
+    <member refid="classheap__lib_1_1node_1a9ba2bc9fc4767de4814b972794c5db6b" kind="variable"><name>__dict__</name></member>
+    <member refid="classheap__lib_1_1node_1ad53f5f5ebb11f0fa20041a1f9d3db297" kind="function"><name>__init__</name></member>
+    <member refid="classheap__lib_1_1node_1a6f528f5beafcb2e14a62e7f3ad895882" kind="function"><name>set_parent</name></member>
+    <member refid="classheap__lib_1_1node_1aed181238258b0f88806ad3aed19dbd92" kind="function"><name>__eq__</name></member>
+    <member refid="classheap__lib_1_1node_1ac2220bf772963699fecaadd6a1d26685" kind="function"><name>__hash__</name></member>
+    <member refid="classheap__lib_1_1node_1a434da090e9ef7701dcdd433c35633fa0" kind="function"><name>__repr__</name></member>
+    <member refid="classheap__lib_1_1node_1a8cb28971906d208254d50c8160b27e34" kind="function"><name>__str__</name></member>
+    <member refid="classheap__lib_1_1node_1ad53f5f5ebb11f0fa20041a1f9d3db297" kind="function"><name>__init__</name></member>
+    <member refid="classheap__lib_1_1node_1a6f528f5beafcb2e14a62e7f3ad895882" kind="function"><name>set_parent</name></member>
+    <member refid="classheap__lib_1_1node_1aed181238258b0f88806ad3aed19dbd92" kind="function"><name>__eq__</name></member>
+    <member refid="classheap__lib_1_1node_1ac2220bf772963699fecaadd6a1d26685" kind="function"><name>__hash__</name></member>
+    <member refid="classheap__lib_1_1node_1a434da090e9ef7701dcdd433c35633fa0" kind="function"><name>__repr__</name></member>
+    <member refid="classheap__lib_1_1node_1a8cb28971906d208254d50c8160b27e34" kind="function"><name>__str__</name></member>
+  </compound>
+  <compound refid="classrotate__useragent_1_1_rotate_user_agent_middleware" kind="class"><name>rotate_useragent::RotateUserAgentMiddleware</name>
+    <member refid="classrotate__useragent_1_1_rotate_user_agent_middleware_1ae8337ccb2687d2340ad2c264c524118d" kind="variable"><name>user_agent</name></member>
+    <member refid="classrotate__useragent_1_1_rotate_user_agent_middleware_1a893ef3255a913a26125baa5b1df9e592" kind="function"><name>__init__</name></member>
+    <member refid="classrotate__useragent_1_1_rotate_user_agent_middleware_1a6a40c12b3f91d4369a6ed3ef0fb837e9" kind="function"><name>process_request</name></member>
+  </compound>
+  <compound refid="class_skew_binomial_queue_1_1skew__binomial__queue" kind="class"><name>SkewBinomialQueue::skew_binomial_queue</name>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a6b4ec836ec17a71ba90765ce33685619" kind="variable"><name>rank</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1aedd345b59975999567fbc7b6298d878d" kind="variable"><name>children</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1ab1ba1e7d899d6a4b7fb53353171f0ff6" kind="function"><name>__init__</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a164e0b2f092e58652b43518609380881" kind="function"><name>get_root</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1ad68e90790145147231fc6a8ffe0b5184" kind="function"><name>get_rank</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1aadd1fde2388ce697be076226dfac8c1c" kind="function"><name>get_min</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a2a5fcd09474fb19b07016a58001ce4d5" kind="function"><name>simple_link</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1aa774f9e9af663df04673daed2c0fd435" kind="function"><name>skew_link</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a76a01e02d1bcae4c6e81f6607a430419" kind="function"><name>insert</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a96d8673c20716f4440426af19200adc9" kind="function"><name>meld_queue</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1ab89511d697275e0140a00c45750cbce3" kind="function"><name>extract_min</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1ab1ba1e7d899d6a4b7fb53353171f0ff6" kind="function"><name>__init__</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a164e0b2f092e58652b43518609380881" kind="function"><name>get_root</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1ad68e90790145147231fc6a8ffe0b5184" kind="function"><name>get_rank</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1aadd1fde2388ce697be076226dfac8c1c" kind="function"><name>get_min</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a2a5fcd09474fb19b07016a58001ce4d5" kind="function"><name>simple_link</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1aa774f9e9af663df04673daed2c0fd435" kind="function"><name>skew_link</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a76a01e02d1bcae4c6e81f6607a430419" kind="function"><name>insert</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1a96d8673c20716f4440426af19200adc9" kind="function"><name>meld_queue</name></member>
+    <member refid="class_skew_binomial_queue_1_1skew__binomial__queue_1ab89511d697275e0140a00c45750cbce3" kind="function"><name>extract_min</name></member>
+  </compound>
+  <compound refid="classarby__redis_1_1_web_socket_queue_manager" kind="class"><name>arby_redis::WebSocketQueueManager</name>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1ac1c01510f3ad642b5b43a5568c23aa46" kind="variable"><name>redis</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1adf5239c5d11688691e2f0d9787dd7fb7" kind="variable"><name>pipe</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1ad9756336dd533610873380825c28cbb6" kind="variable"><name>sequence_num</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1a0084c652fbd8e8ae34459ea4fbdba77c" kind="variable"><name>msg_queue</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1acd1723897e0d84cdb16efb9e0d7be945" kind="variable"><name>current_change_order</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1ac595f0c917fd5912183e745048c7358b" kind="function"><name>__init__</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1af8d1fbe97480defc18c15a1dc59c1f5c" kind="function"><name>run</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1ac595f0c917fd5912183e745048c7358b" kind="function"><name>__init__</name></member>
+    <member refid="classarby__redis_1_1_web_socket_queue_manager_1af8d1fbe97480defc18c15a1dc59c1f5c" kind="function"><name>run</name></member>
+  </compound>
+  <compound refid="namespacearby__log__handler" kind="namespace"><name>arby_log_handler</name>
+    <member refid="namespacearby__log__handler_1a2611683a3bce86e877ceb6e83f92bbe1" kind="function"><name>main</name></member>
+  </compound>
+  <compound refid="namespacearby__redis" kind="namespace"><name>arby_redis</name>
+    <member refid="namespacearby__redis_1a222b376b64dbea42e08e4b6bc5e76e1f" kind="variable"><name>ask_avg</name></member>
+    <member refid="namespacearby__redis_1aca532a010142f7baad1e397f34e2bee3" kind="variable"><name>bid_avg</name></member>
+    <member refid="namespacearby__redis_1a67198f118b2c742ea8a418c970242532" kind="function"><name>assign_priority</name></member>
+    <member refid="namespacearby__redis_1ad9fe79891be1cfdcfef173945d67b47f" kind="function"><name>main</name></member>
+  </compound>
+  <compound refid="namespace_binomial_queue" kind="namespace"><name>BinomialQueue</name>
+    <member refid="namespace_binomial_queue_1af8c37a17d863548fd0fdc18250c772d5" kind="variable"><name>tree0</name></member>
+    <member refid="namespace_binomial_queue_1a9e50cff3158595e883e66aa2aeffca46" kind="variable"><name>tree1</name></member>
+    <member refid="namespace_binomial_queue_1a211cf0c944aca1b3eb4377b82b63b994" kind="variable"><name>tree2</name></member>
+    <member refid="namespace_binomial_queue_1a095876af66ed80fdf50b9d7341ec4047" kind="variable"><name>queue0</name></member>
+    <member refid="namespace_binomial_queue_1a38e96ca60f29cf7e8b4223f16f434f22" kind="variable"><name>tree3</name></member>
+    <member refid="namespace_binomial_queue_1a930af9680f4175e9eae7aa2f74daaef3" kind="variable"><name>tree4</name></member>
+    <member refid="namespace_binomial_queue_1a2be915a582d93f77c7dbaba919cf3b8e" kind="variable"><name>queue1</name></member>
+  </compound>
+  <compound refid="namespacecollege__data" kind="namespace"><name>college_data</name>
+  </compound>
+  <compound refid="namespacecollege__data_1_1items" kind="namespace"><name>college_data::items</name>
+  </compound>
+  <compound refid="namespacecollege__data_1_1middlewares" kind="namespace"><name>college_data::middlewares</name>
+  </compound>
+  <compound refid="namespacecollege__data_1_1pipelines" kind="namespace"><name>college_data::pipelines</name>
+  </compound>
+  <compound refid="namespacecollege__data_1_1settings" kind="namespace"><name>college_data::settings</name>
+    <member refid="namespacecollege__data_1_1settings_1a5149e74a3beadfb96782f2fad83e5565" kind="variable"><name>BOT_NAME</name></member>
+    <member refid="namespacecollege__data_1_1settings_1a5b982c21e3835dd6c460051108dd59ca" kind="variable"><name>SPIDER_MODULES</name></member>
+    <member refid="namespacecollege__data_1_1settings_1a44616e988293bf935952e790b1f521d2" kind="variable"><name>NEWSPIDER_MODULE</name></member>
+    <member refid="namespacecollege__data_1_1settings_1a78ab01fdb8ed435c1936e1040798382a" kind="variable"><name>ROBOTSTXT_OBEY</name></member>
+    <member refid="namespacecollege__data_1_1settings_1a6894b44fb1118051dc7ed1375b4ec76f" kind="variable"><name>DOWNLOADER_MIDDLEWARES</name></member>
+    <member refid="namespacecollege__data_1_1settings_1aa68fb7fcb5872d9bba3a3700ef634374" kind="variable"><name>DOWNLOAD_TIMEOUT</name></member>
+  </compound>
+  <compound refid="namespacecollege__data_1_1spiders" kind="namespace"><name>college_data::spiders</name>
+  </compound>
+  <compound refid="namespacecollege__data_1_1spiders_1_1college__data__spider" kind="namespace"><name>college_data::spiders::college_data_spider</name>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1a792fec6c68b2582d0da390329b55ee59" kind="variable"><name>done_domain</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1ac40351c8830c525b0682f920f80b2913" kind="variable"><name>start_time</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1a8ec413b00403b757e8ca3de12f9ec3b0" kind="variable"><name>cds</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1a432ae77a5ae1e4873f81553a51255ae2" kind="variable"><name>cds2</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1acdb9c7c3144c414a52d465d46ac490f6" kind="variable"><name>factbook</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1a808987e37696470415061ca45df6565b" kind="variable"><name>factbook3</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1abaffed981fc2b31750d365f6ac4f8a11" kind="variable"><name>df</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1ab089f27716f710a2c4046aaadef5c4f5" kind="variable"><name>domain_list</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1a34612709329610537eb621e8baea4eab" kind="variable"><name>college_name</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1a3b8c4a544588994fc066682fa47bcc2f" kind="variable"><name>college_dict</name></member>
+    <member refid="namespacecollege__data_1_1spiders_1_1college__data__spider_1a8e05bc89811e73fbaafe892b5988a41e" kind="function"><name>get_domain</name></member>
+  </compound>
+  <compound refid="namespaceheap__lib" kind="namespace"><name>heap_lib</name>
+    <member refid="namespaceheap__lib_1acc044de6fa67bbe184bc715481033f11" kind="function"><name>print_queue</name></member>
+    <member refid="namespaceheap__lib_1a3fd03760a6ab64fbae704b7c65ab891b" kind="function"><name>print_helper</name></member>
+  </compound>
+  <compound refid="namespacepdf__txt" kind="namespace"><name>pdf_txt</name>
+    <member refid="namespacepdf__txt_1af231e48c44f7beeca5cfdb9c0411f044" kind="variable"><name>doc</name></member>
+    <member refid="namespacepdf__txt_1aec2e64f938da0ee90cb12b579f13794d" kind="variable"><name>n</name></member>
+    <member refid="namespacepdf__txt_1a4afb903b92c658e0b19651654c8e32c7" kind="variable"><name>found</name></member>
+    <member refid="namespacepdf__txt_1a57dc3dc2479b953cab2561bfad973e46" kind="variable"><name>pages_read</name></member>
+    <member refid="namespacepdf__txt_1ab8bc1e42b98abff508a8f2d8fea0c945" kind="variable"><name>page</name></member>
+    <member refid="namespacepdf__txt_1a9300c4c692b43d1d10fa4c87b62426c1" kind="variable"><name>text</name></member>
+  </compound>
+  <compound refid="namespacerotate__useragent" kind="namespace"><name>rotate_useragent</name>
+  </compound>
+  <compound refid="namespacescripts" kind="namespace"><name>scripts</name>
+  </compound>
+  <compound refid="namespacescripts_1_1create__objects" kind="namespace"><name>scripts::create_objects</name>
+    <member refid="namespacescripts_1_1create__objects_1a25847fd1b67b25f786469dfba0a0d540" kind="function"><name>set_connect_info</name></member>
+    <member refid="namespacescripts_1_1create__objects_1ac993f53610e3f58e95988d563a6ed077" kind="function"><name>create_user</name></member>
+    <member refid="namespacescripts_1_1create__objects_1a19983ea52e37a55480a29b3a51482940" kind="function"><name>create_workspace</name></member>
+    <member refid="namespacescripts_1_1create__objects_1a1aa82ff7636811d47487c1ca6a8e414a" kind="function"><name>create_repository</name></member>
+  </compound>
+  <compound refid="namespacescripts_1_1init__test__data" kind="namespace"><name>scripts::init_test_data</name>
+    <member refid="namespacescripts_1_1init__test__data_1a5a7ec663dee57654d09b921d705a9db6" kind="variable"><name>accepted_types</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1a0bc902bd39fbe450b33d03213e52f66d" kind="variable"><name>accepted_methods</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1a8ba9ed8c44fd52bba103ca4a284a99dd" kind="variable"><name>mod</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1a95a28e3ee798d95eb72bb8d998ca393e" kind="variable"><name>filepath</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1ae2f4d12ba96c07c6dee359859fa53441" kind="variable"><name>path</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1a88f730e1caa04cbfd30869dffe739004" kind="variable"><name>line</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1a46a0120600ebeffe038877e66a442f24" kind="variable"><name>cnt</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1a87a546f72d96c8f4c92063fbc6e12f10" kind="variable"><name>invoke_name</name></member>
+    <member refid="namespacescripts_1_1init__test__data_1a951d4570f7692acf06f576cfce7d7193" kind="variable"><name>data</name></member>
+  </compound>
+  <compound refid="namespace_skew_binomial_queue" kind="namespace"><name>SkewBinomialQueue</name>
+    <member refid="namespace_skew_binomial_queue_1a28dde57b11fb743fcd3c1e23e933fd10" kind="variable"><name>tree0</name></member>
+    <member refid="namespace_skew_binomial_queue_1ae8d11426907fcdbfe67b61432ddef543" kind="variable"><name>tree1</name></member>
+    <member refid="namespace_skew_binomial_queue_1a71e6bddc7f3cc9b55c544bed09c6d4eb" kind="variable"><name>tree2</name></member>
+    <member refid="namespace_skew_binomial_queue_1a5379f87f5570ce375c5223dd0c7ba734" kind="variable"><name>tree3</name></member>
+    <member refid="namespace_skew_binomial_queue_1abb8db803b55234ee07aae32f3998ca26" kind="variable"><name>queue0</name></member>
+  </compound>
+  <compound refid="1593844913331_2backend_2log_8txt" kind="file"><name>log.txt</name>
+  </compound>
+  <compound refid="1593845595373_2log_8txt" kind="file"><name>log.txt</name>
+    <member refid="1593845595373_2log_8txt_1a81cf6107131a3583e2b0b762cb9c2862" kind="variable"><name>U</name></member>
+    <member refid="1593845595373_2log_8txt_1a19905d9fd5bd963ad60b559753db8e6d" kind="variable"><name>X</name></member>
+    <member refid="1593845595373_2log_8txt_1a37f525e2b6fc3cb4abd882f708ab80eb" kind="variable"><name>ko</name></member>
+    <member refid="1593845595373_2log_8txt_1ab94294df81d900f2ad0944249ef3842f" kind="variable"><name>x86_64</name></member>
+    <member refid="1593845595373_2log_8txt_1af543162dd6ccae5002628e44c64bbf65" kind="variable"><name>US</name></member>
+    <member refid="1593845595373_2log_8txt_1a3d7bf0e94e20f19a402da5ce47653917" kind="variable"><name>i386</name></member>
+    <member refid="1593845595373_2log_8txt_1af465d1d63f43bbfb8de52662665e7325" kind="variable"><name>WinNT4</name></member>
+    <member refid="1593845595373_2log_8txt_1ab04c432ac370f0ba231bd013597a4693" kind="variable"><name>WOW64</name></member>
+    <member refid="1593845595373_2log_8txt_1a8bb2954228e7732a0f4b2c40f7974c52" kind="variable"><name>Win64</name></member>
+    <member refid="1593845595373_2log_8txt_1a4f1e2655b3d41230a4a43fa305a32670" kind="variable"><name>x64</name></member>
+    <member refid="1593845595373_2log_8txt_1a825b39f2883822a1224d13c66ae984dd" kind="variable"><name>armv7l</name></member>
+    <member refid="1593845595373_2log_8txt_1a4347f6f33f7374d2b31cc7a263e6ba0a" kind="variable"><name>Mobile</name></member>
+    <member refid="1593845595373_2log_8txt_1a647d705fcf570d50c789282772868416" kind="variable"><name>Tablet</name></member>
+    <member refid="1593845595373_2log_8txt_1a7408e54586439d824949e754fd43b26f" kind="variable"><name>MSIE</name></member>
+    <member refid="1593845595373_2log_8txt_1a51f0ff7e59caa7f0f57d932d5ca69bdf" kind="variable"><name>NT</name></member>
+    <member refid="1593845595373_2log_8txt_1a58eb1858f0b30fea5929b1bdd3fbb806" kind="variable"><name>Trident</name></member>
+    <member refid="1593845595373_2log_8txt_1a4ba3667a3a61b189b44fc44f391028e6" kind="variable"><name>CLR</name></member>
+    <member refid="1593845595373_2log_8txt_1a0e76ac249855a6147318864a3cf62978" kind="variable"><name>SV1</name></member>
+    <member refid="1593845595373_2log_8txt_1ac897c54684f15a9fd535a402dbe4ef6b" kind="variable"><name>NETTV</name></member>
+    <member refid="1593845595373_2log_8txt_1ac69dc4368020746ac14bfe8aebaf8a89" kind="variable"><name>SymbOS</name></member>
+    <member refid="1593845595373_2log_8txt_1adfb3c9ed4c01b32f5ec7c7b378e885f9" kind="variable"><name>Mobi</name></member>
+    <member refid="1593845595373_2log_8txt_1a131754b784b9b21b6eb09451f1f556e6" kind="variable"><name>Linux</name></member>
+    <member refid="1593845595373_2log_8txt_1a45215113464ef606f9440c452298a38e" kind="variable"><name>ADR</name></member>
+    <member refid="1593845595373_2log_8txt_1ae29a7b42d415294ff1175e6434f35db7" kind="variable"><name>Mini</name></member>
+    <member refid="1593845595373_2log_8txt_1a354239254bb0bbc70906efd41cd8adc9" kind="variable"><name>nb</name></member>
+    <member refid="1593845595373_2log_8txt_1aba2294ce28119edfbe4e5aac885005f3" kind="variable"><name>OS</name></member>
+    <member refid="1593845595373_2log_8txt_1afe787a7b44ccba77abcc3f106ccda312" kind="variable"><name>BlackBerry</name></member>
+    <member refid="1593845595373_2log_8txt_1a8d89a92a04b0af90a0125d38b9b60354" kind="variable"><name>i686</name></member>
+    <member refid="1593845595373_2log_8txt_1ac071bd38e4c31ed73ec02faa32b52e4a" kind="variable"><name>cs</name></member>
+    <member refid="1593845595373_2log_8txt_1a9f99d68dcf809f640020b713307b5e13" kind="variable"><name>CN</name></member>
+    <member refid="1593845595373_2log_8txt_1a929e178e69241d2b4441b2b3dcf46e9a" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a0afb26eb1049ccd62cf291aa4ccf305c" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a4e943849f734ee01fc34e334feb20905" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ae4cb670aa765eff94c2b7e751cb7f695" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aebcbef547075fb7364f892477d86ca49" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a2c2bd746f8137ec7f066df7c2f691714" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a74ebb6257ac13927d29e65e3cbaed544" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1adc73c5d940607a65d507f9b0da6540b3" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aa69c8a062252c3e3998b39d6b366b75d" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1af9edf6b7861ef51aa0be5ff5f3b49cce" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ab360e0c44db7f455a75bc97be6d52502" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a3e0363abd899be797de0b5a442053e1e" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a9b83774b444e480c3a147c9cb05edf44" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a6421c392a46eec8fc581f2b5db71bc9c" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a1fbf055e59857261ee5188f3923874a4" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a85cf57b500ff1579292205f6d6b90f85" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a1a01a14feb729860f64be2d4527931a9" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a07ee60698fc1b891e133d155b84073cc" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a723be2a29418d560c7df8acf6911d188" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a81afbf9791a5322c5f79bab435c1bd15" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1abe5cdb17e0d923712489465798d8c370" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a185c1126a667e4dc2decb178eafcb15d" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a066d9bb86c28e3e51d40662c3308b0f8" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a03be79a0f5c13a232cf214e36e82b3cc" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a8b9bcbd87badfce1fd0e3b6b66cfd644" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aff07210c203880c9db61e610fbbb90d9" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ab4b0a1f81acd7dea588c3715594b5038" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a38b6b52819f3eef41c0a71b33bac82d9" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ab2b03095fa91f0cece8148bcb1d6f2d9" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a3631b6161515497c796f4eaced372679" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a7c8041b8e3c56a7e47d15c43de9975dd" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aa348cfc27002a3cba72438b6c9db2d32" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aa3b6dcdbbc4b645b3d09f2c40e1b5cf9" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a374c026551cb002eb648e5b71a7786f8" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a1d3a2efd65aa7244b11d1b036d3576a8" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a5dc7775221ad78ae3c762340c1d4f4fe" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a83c3677c9547a89c04943e15ea9dce67" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1abb7e010428098c8056401f683eb31265" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a9c212dd59f9dbf9e28c062099315be94" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1abfdd9c745c6c9df23db63ac6f2f84c98" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ae79d64620bc4eaa73f8e55647337aa72" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1af0ecc34474008ed908cefcc97399003a" kind="function"><name>AppleWebKit</name></member>
+    <member refid="1593845595373_2log_8txt_1a40e5c6b4189d6c83124dd309b3111092" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a4abfb4035dd1818a53d53636a694d808" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a34db5fee8d95965a87bbcbc30f08e4a6" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a7c473b55274c7270314863aa3edfc75b" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a2651de2f690e90cccffe55da4ac70e6e" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a979fe3fb8794d7569abdc81d141f47ec" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ac01f33a96bd79274142fb414ef2359d5" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a1993a2f0032bdb961ebb19db0c283451" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a4a8dbb1f6dbce751ed67c17f91d0d36e" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a23c57a76637f450e31b308d5738cc5bb" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a561053203e203921f0a778719bbf22d4" kind="function"><name>OPR</name></member>
+    <member refid="1593845595373_2log_8txt_1ab530994ce37b4b3cf93a551ba61a3665" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a2de6384827e06dfcd7ffaf14a6ea208f" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a0d4d4ef217c6d474f3bdd15dce1132e4" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1aa741589cd45854ea8d9302bd3e8a5a02" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a9b5744ea21c0c837f4be0c4942c02e01" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1ae67cbd97baac55b20b4c57d37f84cfc3" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a3e3f53d6f2fd10babf4f191fde6cbe31" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ad97e02691f14da9b72e936c91b5d5968" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a303f6c985f05015d3af8cee0782da265" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a81e960c6f81af71bcfc5e1474a043be8" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a9c26085ef67e05e4d68f503f8101ec1e" kind="function"><name>Opera</name></member>
+    <member refid="1593845595373_2log_8txt_1a7f8b6fb0ca5952f335a5d1e3487216f4" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ac84bd0fd185d6efad08f2c0e44e5580d" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a5a65184ca512d3698591a6499294361d" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aa8b383c3a1150b70afab22b3b29a3e34" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aa0645aaf4f07aaf41d1237d894719880" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a6a6dc572ebe5a4f2ac0fb20f3d0164b4" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a4de34fed9e69ac072dcb14e59b042392" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a2f590fa07c918c21d4ad50a0d83cd721" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a3e4e2e4baf71182665adb7e1a6c73f87" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a2a083f43445d696cc56ee2a1573a7467" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a7042eb714c9d147fa8c36f9098ffd91b" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a3977537d03c2c036d88be1b4304fc6de" kind="function"><name>Firefox</name></member>
+    <member refid="1593845595373_2log_8txt_1ae290a0232b75bc84abb6af3c7ec84d6b" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a4bf0626f4f2d15fb046a9bc83ff3f05d" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1afa0a00786903f8bede6cd6e85786d5a0" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ad89c27448c2f110b230047d48bbfb25f" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1acb935ee364ed25f286a937930e19d462" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a5ca34d9c92f6ce70633d617b03ee2a50" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aa656ddb8a0362f304b3810349a46a2ba" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a2ca1977f8df05cac15f59e79f0b4fdb6" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a88eaf48e5a06e085d305797a5b525263" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a5b0cb4245154dcda4edc8c2353e0ea62" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a42941304dd811c1b16a6832dbd06076d" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1a7de592a20d86f35376a2db8d53804c04" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1aacdae7f74b599efbd9efc18a59d9e2d8" kind="function"><name>Mozilla</name></member>
+    <member refid="1593845595373_2log_8txt_1ad7878e50e06c16d0a56f3f094581cf3b" kind="function"><name>Mozilla</name></member>
+  </compound>
+  <compound refid="1593846713309_2backend_2log_8txt" kind="file"><name>log.txt</name>
+  </compound>
+  <compound refid="1593844913331_2frontend_2public_2robots_8txt" kind="file"><name>robots.txt</name>
+  </compound>
+  <compound refid="1593846713309_2frontend_2public_2robots_8txt" kind="file"><name>robots.txt</name>
+  </compound>
+  <compound refid="1593844913331_2_r_e_a_d_m_e_8md" kind="file"><name>README.md</name>
+  </compound>
+  <compound refid="1593846713309_2_r_e_a_d_m_e_8md" kind="file"><name>README.md</name>
+  </compound>
+  <compound refid="1593844913331_2scripts_2____init_____8py" kind="file"><name>__init__.py</name>
+  </compound>
+  <compound refid="1593845595373_2college__data_2____init_____8py" kind="file"><name>__init__.py</name>
+  </compound>
+  <compound refid="1593845595373_2college__data_2spiders_2____init_____8py" kind="file"><name>__init__.py</name>
+  </compound>
+  <compound refid="1593846713309_2scripts_2____init_____8py" kind="file"><name>__init__.py</name>
+  </compound>
+  <compound refid="1593844913331_2scripts_2create__objects_8py" kind="file"><name>create_objects.py</name>
+  </compound>
+  <compound refid="1593846713309_2scripts_2create__objects_8py" kind="file"><name>create_objects.py</name>
+  </compound>
+  <compound refid="1593844913331_2scripts_2init__test__data_8py" kind="file"><name>init_test_data.py</name>
+  </compound>
+  <compound refid="1593846713309_2scripts_2init__test__data_8py" kind="file"><name>init_test_data.py</name>
+  </compound>
+  <compound refid="1593844913331_2scripts_2requirements_8txt" kind="file"><name>requirements.txt</name>
+  </compound>
+  <compound refid="1593846713309_2scripts_2requirements_8txt" kind="file"><name>requirements.txt</name>
+  </compound>
+  <compound refid="1593844913331_2scripts_2test__data__schema_8txt" kind="file"><name>test_data_schema.txt</name>
+  </compound>
+  <compound refid="1593846713309_2scripts_2test__data__schema_8txt" kind="file"><name>test_data_schema.txt</name>
+  </compound>
+  <compound refid="1593844913433_2arby__log__handler_8py" kind="file"><name>arby_log_handler.py</name>
+  </compound>
+  <compound refid="1593846713603_2arby__log__handler_8py" kind="file"><name>arby_log_handler.py</name>
+  </compound>
+  <compound refid="1593844913433_2arby__redis_8py" kind="file"><name>arby_redis.py</name>
+  </compound>
+  <compound refid="1593846713603_2arby__redis_8py" kind="file"><name>arby_redis.py</name>
+  </compound>
+  <compound refid="1593845498737_2_binomial_queue_8py" kind="file"><name>BinomialQueue.py</name>
+  </compound>
+  <compound refid="1593847029748_2_binomial_queue_8py" kind="file"><name>BinomialQueue.py</name>
+  </compound>
+  <compound refid="1593845498737_2heap__lib_8py" kind="file"><name>heap_lib.py</name>
+  </compound>
+  <compound refid="1593847029748_2heap__lib_8py" kind="file"><name>heap_lib.py</name>
+  </compound>
+  <compound refid="1593845498737_2_skew_binomial_queue_8py" kind="file"><name>SkewBinomialQueue.py</name>
+  </compound>
+  <compound refid="1593847029748_2_skew_binomial_queue_8py" kind="file"><name>SkewBinomialQueue.py</name>
+  </compound>
+  <compound refid="0_8txt" kind="file"><name>0.txt</name>
+  </compound>
+  <compound refid="rotate__useragent_8py" kind="file"><name>rotate_useragent.py</name>
+  </compound>
+  <compound refid="items_8py" kind="file"><name>items.py</name>
+  </compound>
+  <compound refid="middlewares_8py" kind="file"><name>middlewares.py</name>
+  </compound>
+  <compound refid="pipelines_8py" kind="file"><name>pipelines.py</name>
+  </compound>
+  <compound refid="settings_8py" kind="file"><name>settings.py</name>
+  </compound>
+  <compound refid="college__data__spider_8py" kind="file"><name>college_data_spider.py</name>
+  </compound>
+  <compound refid="troll_8txt" kind="file"><name>troll.txt</name>
+  </compound>
+  <compound refid="domains_8txt" kind="file"><name>domains.txt</name>
+  </compound>
+  <compound refid="pdf__txt_8py" kind="file"><name>pdf_txt.py</name>
+  </compound>
+  <compound refid="md_git_repos_1593844913331__r_e_a_d_m_e" kind="page"><name>md_git_repos_1593844913331_README</name>
+  </compound>
+  <compound refid="md_git_repos_1593846713309__r_e_a_d_m_e" kind="page"><name>md_git_repos_1593846713309_README</name>
+  </compound>
+  <compound refid="dir_df30282e7f99b319695dacb22f025771" kind="dir"><name>git_repos/1593844913331</name>
+  </compound>
+  <compound refid="dir_6f7459cdeaaaf830873ae8d2af2a3798" kind="dir"><name>git_repos/1593844913433</name>
+  </compound>
+  <compound refid="dir_5f3e48642fe8932eaa6bb35772b1c420" kind="dir"><name>git_repos/1593845498737</name>
+  </compound>
+  <compound refid="dir_6abcc1d85e1894eda5e4081772be1255" kind="dir"><name>git_repos/1593845595373</name>
+  </compound>
+  <compound refid="dir_4047ddf19dde876792523d7808169643" kind="dir"><name>git_repos/1593846713309</name>
+  </compound>
+  <compound refid="dir_dcdf0461d81931ca60dc3653b3b0f3c6" kind="dir"><name>git_repos/1593846713603</name>
+  </compound>
+  <compound refid="dir_4a1b0b80948f997c08f65ce6f66ac029" kind="dir"><name>git_repos/1593847029748</name>
+  </compound>
+  <compound refid="dir_d3719de8952734a2a631fcf5b9726c53" kind="dir"><name>git_repos/1593845595373/college_data</name>
+  </compound>
+  <compound refid="dir_4794e57dba023613212d89caf715a51c" kind="dir"><name>git_repos/1593845595373/college_data/comm</name>
+  </compound>
+  <compound refid="dir_5dee152d769e3176462c52be950d3b7f" kind="dir"><name>git_repos</name>
+  </compound>
+  <compound refid="dir_79b786b25a0d4a2f0ff31abf6a114264" kind="dir"><name>git_repos/1593846713309/scripts</name>
+  </compound>
+  <compound refid="dir_51ea43206ba2fc9787f1d205ba08c726" kind="dir"><name>git_repos/1593844913331/scripts</name>
+  </compound>
+  <compound refid="dir_f974c6260a30509455d16bd2a4e3bc97" kind="dir"><name>git_repos/1593845595373/college_data/spiders</name>
+  </compound>
+</doxygenindex>

@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="namespacescripts_1_1create__objects" kind="namespace">
+    <compoundname>scripts::create_objects</compoundname>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="namespacescripts_1_1create__objects_1a25847fd1b67b25f786469dfba0a0d540" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def scripts::create_objects::set_connect_info</definition>
+        <argsstring></argsstring>
+        <name>set_connect_info</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" line="8" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" bodystart="8" bodyend="15"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacescripts_1_1create__objects_1ac993f53610e3f58e95988d563a6ed077" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def scripts::create_objects::create_user</definition>
+        <argsstring></argsstring>
+        <name>create_user</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" line="16" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" bodystart="16" bodyend="20"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacescripts_1_1create__objects_1a19983ea52e37a55480a29b3a51482940" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def scripts::create_objects::create_workspace</definition>
+        <argsstring></argsstring>
+        <name>create_workspace</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" line="21" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" bodystart="21" bodyend="25"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacescripts_1_1create__objects_1a1aa82ff7636811d47487c1ca6a8e414a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def scripts::create_objects::create_repository</definition>
+        <argsstring></argsstring>
+        <name>create_repository</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" line="26" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" bodystart="26" bodyend="30"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913331/scripts/create_objects.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

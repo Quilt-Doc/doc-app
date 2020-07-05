@@ -70,10 +70,10 @@ const pollQueue = async (cluster) => {
 	sqs.receiveMessage(params)
 	.promise()
 	.then(res => {
-    	console.log("Success", res);
+    	// console.log("Success", res);
     	if (res.Messages) {
-        console.log('Message Attributes: ');
-        console.log(res.Messages[0].MessageAttributes);
+        // console.log('Message Attributes: ');
+        // console.log(res.Messages[0].MessageAttributes);
 	    	// We are only grabbing one message
 	   		var jobType = JSON.parse(res.Messages[0].Body).jobType;
 	   		// Make new env and pass it to a fork call
@@ -163,11 +163,13 @@ else {
   console.log('jobType: ', process.env.jobType);
   var jobData = JSON.parse(process.env.jobData);
   console.log('Condition: ');
-  console.log(process.env.jobType == JOB_UPDATE_SNIPPETS);
-  if(process.env.jobType === JOB_GET_REFS) {
+  console.log(process.env.jobType == JOB_GET_REFS);
+
+  if(process.env.jobType == JOB_GET_REFS) {
     console.log('running get refs job');
-    process.env.repoLink = jobData.repoLink;
-    process.env.apiCallLink = jobData.apiCallLink;
+    process.env.installationId = jobData.installationId;
+    process.env.cloneUrl = jobData.cloneUrl;
+    process.env.repositoryId = jobData.repositoryId;
     parseUtils.getRefs();
   }
 

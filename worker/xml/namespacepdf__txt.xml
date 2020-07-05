@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="namespacepdf__txt" kind="namespace">
+    <compoundname>pdf_txt</compoundname>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="namespacepdf__txt_1af231e48c44f7beeca5cfdb9c0411f044" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple pdf_txt.doc</definition>
+        <argsstring></argsstring>
+        <name>doc</name>
+        <initializer>= fitz.open(&apos;colleges/cornell/1000569.pdf&apos;)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" line="3" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" bodystart="3" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacepdf__txt_1aec2e64f938da0ee90cb12b579f13794d" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int pdf_txt.n</definition>
+        <argsstring></argsstring>
+        <name>n</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" line="4" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" bodystart="4" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacepdf__txt_1a4afb903b92c658e0b19651654c8e32c7" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int pdf_txt.found</definition>
+        <argsstring></argsstring>
+        <name>found</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" line="5" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" bodystart="5" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacepdf__txt_1a57dc3dc2479b953cab2561bfad973e46" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int pdf_txt.pages_read</definition>
+        <argsstring></argsstring>
+        <name>pages_read</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" line="6" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" bodystart="6" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacepdf__txt_1ab8bc1e42b98abff508a8f2d8fea0c945" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple pdf_txt.page</definition>
+        <argsstring></argsstring>
+        <name>page</name>
+        <initializer>= doc.loadPage(n)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" line="8" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" bodystart="8" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacepdf__txt_1a9300c4c692b43d1d10fa4c87b62426c1" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple pdf_txt.text</definition>
+        <argsstring></argsstring>
+        <name>text</name>
+        <initializer>= page.getText(&quot;text&quot;)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" line="9" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" bodystart="9" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/pdf_txt.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

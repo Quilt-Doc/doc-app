@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="dir_d3719de8952734a2a631fcf5b9726c53" kind="dir">
+    <compoundname>git_repos/1593845595373/college_data</compoundname>
+    <innerdir refid="dir_4794e57dba023613212d89caf715a51c">git_repos/1593845595373/college_data/comm</innerdir>
+    <innerdir refid="dir_f974c6260a30509455d16bd2a4e3bc97">git_repos/1593845595373/college_data/spiders</innerdir>
+    <innerfile refid="1593845595373_2college__data_2____init_____8py">__init__.py</innerfile>
+    <innerfile refid="items_8py">items.py</innerfile>
+    <innerfile refid="middlewares_8py">middlewares.py</innerfile>
+    <innerfile refid="pipelines_8py">pipelines.py</innerfile>
+    <innerfile refid="settings_8py">settings.py</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/"/>
+  </compounddef>
+</doxygen>

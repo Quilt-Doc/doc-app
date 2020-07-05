@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="namespacerotate__useragent" kind="namespace">
+    <compoundname>rotate_useragent</compoundname>
+    <innerclass refid="classrotate__useragent_1_1_rotate_user_agent_middleware" prot="public">rotate_useragent::RotateUserAgentMiddleware</innerclass>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

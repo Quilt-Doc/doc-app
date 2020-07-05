@@ -36,23 +36,49 @@ const MEMBER_KINDS = ['define', 'property', 'event', 'variable', 'typedef', 'enu
 'enumvalue', 'function', 'signal', 'prototype', 'friend', 'dcop', 'slot'];
 
 
-getRefs = () => {
+const getParseableTree = async () => {
+
+    var treeReferences = await Reference.find({repository: ObjectId(process.env.repositoryId), kind: 'file'}).catch(err => console.log('Error getting tree references: ', err));
+    var parseLevelLookup = {};
+    var i;
+    for (i = 0; i < treeReferences.length; i++) {
+	var treeReference = treeReferences[i];
+	var newObj = {};
+	var semanticParsed = false;
+	if (treeReference.parseProvider) {
+	    if (treeReference.parseProvider == 'semantic') {
+		semanticParsed = true;
+	   }
+	}
+	parseLevelLookup[treeReference.path] =  semanticParsed;
+    }
+    console.log('parseLevelLookup: ');
+    console.log(parseLevelLookup);
+    return parseLevelLookup
+
+}
+
+
+
+getRefs = async () => {
 
     var worker = require('cluster').worker;
 
     worker.send({receipt: process.env.receipt})
 
-    repoLink = process.env.repoLink;
+    var parseLevelLookup = await getParseableTree();
+
+    var repositoryId = process.env.repositoryId;
     var installToken = await tokenUtils.getInstallToken(process.env.installationId);
 
     var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
 
 
     var timestamp = Date.now().toString();    
-    var repo_disk_path = 'git_repos/' + timestamp +'/';
+    var repoDiskPath = 'git_repos/' + timestamp +'/';
     const { exec, execFile } = require('child_process');
 
-    const child = execFile('git', ['clone', cloneUrl, repo_disk_path], (error, stdout, stderr) => {
+    const child = execFile('git', ['clone', cloneUrl, repoDiskPath], (error, stdout, stderr) => {
         if (error) {
             console.log('getRefs error on execFile: ' + error);
             worker.process.kill(worker.process.pid)
@@ -60,7 +86,7 @@ getRefs = () => {
         }
         console.log('getRefs git clone successful');
         var new_env = process.env;
-        new_env.DOXYGEN_FILE = repo_disk_path;
+        new_env.DOXYGEN_FILE = repoDiskPath;
         new_env.DOXYGEN_XML_DIR = 'git_repos/' + timestamp + '_xml/';
 
         const child = execFile('doxygen', ['Doxyfile'], {env: new_env, maxBuffer: (1024*1024)*50}, (error, stdout, stderr) => {
@@ -121,23 +147,26 @@ getRefs = () => {
                         // console.log(target_files);
 
                         func(target_files)
-                            .then(results =>  {
+                            .then((results) =>  {
                                 // console.log('target file called');
                                 // console.log(res);
-                                results.forEach( function(read_file, file_num) {
+                                results.forEach( async function(read_file, fileNum) {
                                     var xmlDoc = default_parser.parseFromString(read_file.toString(), "text/xml");
                                     var compound_defs = xmlDoc.getElementsByTagName("compounddef");
-
-
-                                    target_refs.forEach(function (i, k) {
+                                    
+				    target_refs.forEach(function (i, k) {
                                         var found_element = xmlDoc.getElementById(i['$']['refid']);
                                         var location = ''
                                         var file = ''
                                         var name = ''
                                         var kind = ''
-
-                                        if (found_element) {
+					
+                                        if (found_element ) {
                                             kind = found_element.getAttribute('kind');
+					    if (kind == 'file' || kind == 'dir') {
+						console.log('skipping doxygen file/dir');
+					    }
+					    else {
                                             if (found_element.tagName === 'compounddef') {
                                                 x = found_element.childNodes;
                                                 // console.log('found compounddef');
@@ -168,10 +197,23 @@ getRefs = () => {
                                             }
                                             // console.log('name, kind, file, location');
                                             // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
-                                            file = file.substring(file.indexOf('/')+1)
-                                            file = file.substring(file.indexOf('/')+1)
-                                            found_refs.push({name: name, kind: kind, file: file, location: location, link: repoLink})
-                                        }
+
+                                            // Remove our local directories where we placed git repo contents
+					    file = file.substring(file.indexOf('git_repos'));
+						
+                                            file = file.substring(file.indexOf('/')+1);
+                                            file = file.substring(file.indexOf('/')+1);
+				    	    console.log('Lookup Key: ', file);
+				            // if not a function or class for a semanticParsed file
+					    if (!(parseLevelLookup[file] && (kind == 'function' || kind == 'class'))) {
+                                                found_refs.push({name: name, kind: kind, path: file, lineNum: location, repository: repositoryId})
+					    }
+					    else {
+						console.log('Skipping ref');
+					    }
+					  }
+
+				        }
                                     })
                                 });
                                 console.log('END FOUND_REFS');
@@ -195,44 +237,50 @@ getRefs = () => {
 
 
 
-createReferences = (ref_list, worker) => {
+createReferences = (refList, worker) => {
 
 
-    if (!typeof ref_list == 'undefined' && ref_list !== null) {
-        console.log('Error: no ref_list provided');
-        return;//  res.json({success: false, error: 'no reference ref_list provided'});
+    if (!typeof refList == 'undefined' && refList !== null) {
+        console.log('Error: no refList provided');
+        return;//  res.json({success: false, error: 'no reference refList provided'});
     }
-    console.log('ref_list');
-    // console.log(ref_list);
-    var ref_obj_list = ref_list.map(ref => {
-        var {name, kind, file, lineNum, link} = ref;
+    console.log('refList');
+    // console.log(refList);
+    var refObjList = refList.map(ref => {
+        var {name, kind, path, lineNum, path, repositoryId} = ref;
         if (!typeof name == 'undefined' && name !== null) {
-            console.log('no `name` in ref_list provided');
+            console.log('no `name` in refList provided');
             worker.process.kill(worker.process.pid);
             return;
         }
-        if (!typeof link == 'undefined' && link !== null) {
-            console.log('no `link` in ref_list provided');
+        if (!typeof path == 'undefined' && path !== null) {
+            console.log('no `path` in refList provided');
+            worker.process.kill(worker.process.pid);
+            return;
+        }
+
+        if (!typeof repositoryId == 'undefined' && path !== null) {
+            console.log('no `repositoryId` in refList provided');
             worker.process.kill(worker.process.pid);
             return;
         }
 
         let reference = new Reference({
             name: name,
-            link: link
+            path: path,
+            repository: ObjectId(repositoryId)
 
         });
 
         if (lineNum) reference.lineNum = lineNum;
         if (kind) reference.kind = kind;
-        if (file) reference.file = file;
-
+	reference.parseProvider = 'doxygen';
         return reference;
     })
 
     console.log('REF OBJ LIST');
-    // console.log(ref_obj_list);
-    Reference.create( ref_obj_list, (err, reference) => {
+    console.log(refObjList);
+    Reference.create( refObjList, (err, reference) => {
         if (err) {
             console.log('Error: ', err);
         }

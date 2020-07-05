@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="classcollege__data_1_1pipelines_1_1_college_data_pipeline" kind="class" prot="public">
+    <compoundname>college_data::pipelines::CollegeDataPipeline</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">object</basecompoundref>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classcollege__data_1_1pipelines_1_1_college_data_pipeline_1ac00a74ead3603105246d647a05280193" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def college_data.pipelines.CollegeDataPipeline.process_item</definition>
+        <argsstring></argsstring>
+        <name>process_item</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/pipelines.py" line="10" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/pipelines.py" bodystart="10" bodyend="12"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="6">
+        <label>college_data.pipelines.CollegeDataPipeline</label>
+        <link refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline"/>
+        <childnode refid="7" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>object</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="8">
+        <label>college_data.pipelines.CollegeDataPipeline</label>
+        <link refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline"/>
+        <childnode refid="9" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="9">
+        <label>object</label>
+      </node>
+    </collaborationgraph>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/pipelines.py" line="9" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/pipelines.py" bodystart="9" bodyend="12"/>
+    <listofallmembers>
+      <member refid="classcollege__data_1_1pipelines_1_1_college_data_pipeline_1ac00a74ead3603105246d647a05280193" prot="public" virt="non-virtual"><scope>college_data::pipelines::CollegeDataPipeline</scope><name>process_item</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

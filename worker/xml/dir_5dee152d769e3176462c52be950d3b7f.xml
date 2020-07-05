@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="dir_5dee152d769e3176462c52be950d3b7f" kind="dir">
+    <compoundname>git_repos</compoundname>
+    <innerdir refid="dir_df30282e7f99b319695dacb22f025771">git_repos/1593844913331</innerdir>
+    <innerdir refid="dir_6f7459cdeaaaf830873ae8d2af2a3798">git_repos/1593844913433</innerdir>
+    <innerdir refid="dir_5f3e48642fe8932eaa6bb35772b1c420">git_repos/1593845498737</innerdir>
+    <innerdir refid="dir_6abcc1d85e1894eda5e4081772be1255">git_repos/1593845595373</innerdir>
+    <innerdir refid="dir_4047ddf19dde876792523d7808169643">git_repos/1593846713309</innerdir>
+    <innerdir refid="dir_dcdf0461d81931ca60dc3653b3b0f3c6">git_repos/1593846713603</innerdir>
+    <innerdir refid="dir_4a1b0b80948f997c08f65ce6f66ac029">git_repos/1593847029748</innerdir>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/"/>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,297 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="class_binomial_queue_1_1binomial__queue" kind="class" prot="public">
+    <compoundname>BinomialQueue::binomial_queue</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="class_binomial_queue_1_1binomial__queue_1aa0481eebd2b33c107e90ae39592266ea" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>BinomialQueue.binomial_queue::rank</definition>
+        <argsstring></argsstring>
+        <name>rank</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="7" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="7" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="class_binomial_queue_1_1binomial__queue_1ad40aefb6bfe5334e848e2f9334c1353e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>BinomialQueue.binomial_queue::children</definition>
+        <argsstring></argsstring>
+        <name>children</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="8" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="8" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a8b177272099be507a8bbb66eb90a71da" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="6" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="6" bodyend="11"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a1b626e6e78364eda4a1089f183288f06" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.get_root</definition>
+        <argsstring></argsstring>
+        <name>get_root</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="12" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="12" bodyend="14"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a76147d4ccfb4d053a52c1dcc6bc708e5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.get_rank</definition>
+        <argsstring></argsstring>
+        <name>get_rank</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="15" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="15" bodyend="17"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a8245feffb04861d30b302c795e4d41c9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.link</definition>
+        <argsstring></argsstring>
+        <name>link</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="18" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="18" bodyend="65"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1af398046f894b6ff5d4232d9215c9b243" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.insert</definition>
+        <argsstring></argsstring>
+        <name>insert</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="66" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="66" bodyend="74"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1acd84e93ac0a8df26963b4c8f29612fb2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.insert_helper</definition>
+        <argsstring></argsstring>
+        <name>insert_helper</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="75" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="75" bodyend="106"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1aa37fba7b64806062b3537e36d2ffb129" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.meld_queue</definition>
+        <argsstring></argsstring>
+        <name>meld_queue</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="107" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="107" bodyend="121"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a440a6b96094ca5b8a01feb5d9548f00b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.get_min</definition>
+        <argsstring></argsstring>
+        <name>get_min</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="122" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="122" bodyend="128"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a3966e7af446242e175e8020dd803ff58" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.extract_min</definition>
+        <argsstring></argsstring>
+        <name>extract_min</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="129" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="129" bodyend="136"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a8b177272099be507a8bbb66eb90a71da" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="6" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="6" bodyend="11"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a1b626e6e78364eda4a1089f183288f06" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.get_root</definition>
+        <argsstring></argsstring>
+        <name>get_root</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="12" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="12" bodyend="14"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a76147d4ccfb4d053a52c1dcc6bc708e5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.get_rank</definition>
+        <argsstring></argsstring>
+        <name>get_rank</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="15" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="15" bodyend="17"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a8245feffb04861d30b302c795e4d41c9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.link</definition>
+        <argsstring></argsstring>
+        <name>link</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="18" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="18" bodyend="65"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1af398046f894b6ff5d4232d9215c9b243" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.insert</definition>
+        <argsstring></argsstring>
+        <name>insert</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="66" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="66" bodyend="74"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1acd84e93ac0a8df26963b4c8f29612fb2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.insert_helper</definition>
+        <argsstring></argsstring>
+        <name>insert_helper</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="75" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="75" bodyend="106"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1aa37fba7b64806062b3537e36d2ffb129" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.meld_queue</definition>
+        <argsstring></argsstring>
+        <name>meld_queue</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="107" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="107" bodyend="121"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a440a6b96094ca5b8a01feb5d9548f00b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.get_min</definition>
+        <argsstring></argsstring>
+        <name>get_min</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="122" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="122" bodyend="128"/>
+      </memberdef>
+      <memberdef kind="function" id="class_binomial_queue_1_1binomial__queue_1a3966e7af446242e175e8020dd803ff58" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def BinomialQueue.binomial_queue.extract_min</definition>
+        <argsstring></argsstring>
+        <name>extract_min</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" line="129" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/BinomialQueue.py" bodystart="129" bodyend="136"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="4" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="4" bodyend="137"/>
+    <listofallmembers>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a8b177272099be507a8bbb66eb90a71da" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>__init__</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a8b177272099be507a8bbb66eb90a71da" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>__init__</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1ad40aefb6bfe5334e848e2f9334c1353e" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>children</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a3966e7af446242e175e8020dd803ff58" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>extract_min</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a3966e7af446242e175e8020dd803ff58" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>extract_min</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a440a6b96094ca5b8a01feb5d9548f00b" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>get_min</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a440a6b96094ca5b8a01feb5d9548f00b" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>get_min</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a76147d4ccfb4d053a52c1dcc6bc708e5" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>get_rank</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a76147d4ccfb4d053a52c1dcc6bc708e5" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>get_rank</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a1b626e6e78364eda4a1089f183288f06" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>get_root</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a1b626e6e78364eda4a1089f183288f06" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>get_root</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1af398046f894b6ff5d4232d9215c9b243" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>insert</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1af398046f894b6ff5d4232d9215c9b243" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>insert</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1acd84e93ac0a8df26963b4c8f29612fb2" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>insert_helper</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1acd84e93ac0a8df26963b4c8f29612fb2" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>insert_helper</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a8245feffb04861d30b302c795e4d41c9" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>link</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1a8245feffb04861d30b302c795e4d41c9" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>link</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1aa37fba7b64806062b3537e36d2ffb129" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>meld_queue</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1aa37fba7b64806062b3537e36d2ffb129" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>meld_queue</name></member>
+      <member refid="class_binomial_queue_1_1binomial__queue_1aa0481eebd2b33c107e90ae39592266ea" prot="public" virt="non-virtual"><scope>BinomialQueue::binomial_queue</scope><name>rank</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

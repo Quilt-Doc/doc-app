@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="namespaceheap__lib" kind="namespace">
+    <compoundname>heap_lib</compoundname>
+    <innerclass refid="classheap__lib_1_1node" prot="public">heap_lib::node</innerclass>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="namespaceheap__lib_1acc044de6fa67bbe184bc715481033f11" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib::print_queue</definition>
+        <argsstring></argsstring>
+        <name>print_queue</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="29" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="29" bodyend="37"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceheap__lib_1a3fd03760a6ab64fbae704b7c65ab891b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib::print_helper</definition>
+        <argsstring></argsstring>
+        <name>print_helper</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="38" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="38" bodyend="45"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="dir_6f7459cdeaaaf830873ae8d2af2a3798" kind="dir">
+    <compoundname>git_repos/1593844913433</compoundname>
+    <innerfile refid="1593844913433_2arby__log__handler_8py">arby_log_handler.py</innerfile>
+    <innerfile refid="1593844913433_2arby__redis_8py">arby_redis.py</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/"/>
+  </compounddef>
+</doxygen>

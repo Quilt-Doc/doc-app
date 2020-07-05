@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="classrotate__useragent_1_1_rotate_user_agent_middleware" kind="class" prot="public">
+    <compoundname>rotate_useragent::RotateUserAgentMiddleware</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">UserAgentMiddleware</basecompoundref>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classrotate__useragent_1_1_rotate_user_agent_middleware_1ae8337ccb2687d2340ad2c264c524118d" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>rotate_useragent.RotateUserAgentMiddleware::user_agent</definition>
+        <argsstring></argsstring>
+        <name>user_agent</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" line="9" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" bodystart="9" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classrotate__useragent_1_1_rotate_user_agent_middleware_1a893ef3255a913a26125baa5b1df9e592" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def rotate_useragent.RotateUserAgentMiddleware.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" line="8" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" bodystart="8" bodyend="10"/>
+      </memberdef>
+      <memberdef kind="function" id="classrotate__useragent_1_1_rotate_user_agent_middleware_1a6a40c12b3f91d4369a6ed3ef0fb837e9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def rotate_useragent.RotateUserAgentMiddleware.process_request</definition>
+        <argsstring></argsstring>
+        <name>process_request</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" line="11" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" bodystart="11" bodyend="15"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="29">
+        <label>UserAgentMiddleware</label>
+      </node>
+      <node id="28">
+        <label>rotate_useragent.RotateUserAgentMiddleware</label>
+        <link refid="classrotate__useragent_1_1_rotate_user_agent_middleware"/>
+        <childnode refid="29" relation="public-inheritance">
+        </childnode>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="31">
+        <label>UserAgentMiddleware</label>
+      </node>
+      <node id="30">
+        <label>rotate_useragent.RotateUserAgentMiddleware</label>
+        <link refid="classrotate__useragent_1_1_rotate_user_agent_middleware"/>
+        <childnode refid="31" relation="public-inheritance">
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" line="7" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/comm/rotate_useragent.py" bodystart="7" bodyend="37"/>
+    <listofallmembers>
+      <member refid="classrotate__useragent_1_1_rotate_user_agent_middleware_1a893ef3255a913a26125baa5b1df9e592" prot="public" virt="non-virtual"><scope>rotate_useragent::RotateUserAgentMiddleware</scope><name>__init__</name></member>
+      <member refid="classrotate__useragent_1_1_rotate_user_agent_middleware_1a6a40c12b3f91d4369a6ed3ef0fb837e9" prot="public" virt="non-virtual"><scope>rotate_useragent::RotateUserAgentMiddleware</scope><name>process_request</name></member>
+      <member refid="classrotate__useragent_1_1_rotate_user_agent_middleware_1ae8337ccb2687d2340ad2c264c524118d" prot="public" virt="non-virtual"><scope>rotate_useragent::RotateUserAgentMiddleware</scope><name>user_agent</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

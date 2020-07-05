@@ -1,0 +1,733 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="classarby__redis_1_1my_websocket_client" kind="class" prot="public">
+    <compoundname>arby_redis::myWebsocketClient</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">object</basecompoundref>
+    <basecompoundref prot="public" virt="non-virtual">object</basecompoundref>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1aabf3556e797aa48ee605083d872c96bd" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::url</definition>
+        <argsstring></argsstring>
+        <name>url</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="217" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="217" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1abe9d241608757d36184f21448e4cdcf1" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::products</definition>
+        <argsstring></argsstring>
+        <name>products</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="218" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="218" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a845dc758ebf3655deb9614748aef5e65" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::channels</definition>
+        <argsstring></argsstring>
+        <name>channels</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="219" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="219" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a08ecd5600f486cfb74e9c32840a3318c" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::type</definition>
+        <argsstring></argsstring>
+        <name>type</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="220" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="220" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a377354d694723c2657ff88be4ba31843" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::stop</definition>
+        <argsstring></argsstring>
+        <name>stop</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="221" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="221" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1aa1243bd15f873bceaededd3ecaf86ccf" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::error</definition>
+        <argsstring></argsstring>
+        <name>error</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="222" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="222" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a8952401b4e9e3f85356747c5dee2f444" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::ws</definition>
+        <argsstring></argsstring>
+        <name>ws</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="223" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="223" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1ad1801fcbc3671ebe8b3c5e2275ba5ea1" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::thread</definition>
+        <argsstring></argsstring>
+        <name>thread</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="224" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="224" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a867d987d96b754b9cfb35e53f1e75187" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::auth</definition>
+        <argsstring></argsstring>
+        <name>auth</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="225" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="225" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1aa83b24a75ebeb8a1524ec65869b30e1a" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::api_key</definition>
+        <argsstring></argsstring>
+        <name>api_key</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="226" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="226" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a0e7ad31963b3d770c78a678f93f823e0" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::api_secret</definition>
+        <argsstring></argsstring>
+        <name>api_secret</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="227" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="227" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1aed1cfd6cccbc1f49b70d1e227f542975" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::api_passphrase</definition>
+        <argsstring></argsstring>
+        <name>api_passphrase</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="228" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="228" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1abfc1764731a2f6f51c82eb94cc9c3a1a" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::redis_db</definition>
+        <argsstring></argsstring>
+        <name>redis_db</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="229" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="229" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1ae5e65a51394659c356e210c9a4c063d3" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::order_limit</definition>
+        <argsstring></argsstring>
+        <name>order_limit</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="230" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="230" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1ae5edbc4135d443cdd6646720f972361e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::orders_received</definition>
+        <argsstring></argsstring>
+        <name>orders_received</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="231" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="231" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a2f6d9c5f41009bc7466c4075bbbffb67" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::message_count</definition>
+        <argsstring></argsstring>
+        <name>message_count</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="276" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="276" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a4ba76d9cc571ef82c151f09e7bbd2ed3" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::msg_queue</definition>
+        <argsstring></argsstring>
+        <name>msg_queue</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="277" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="277" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1aac1e6a3865b3313de8420635bf091a36" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::switched</definition>
+        <argsstring></argsstring>
+        <name>switched</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="278" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="278" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a7734e713dec7892e10389ffca5478252" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::redis_client</definition>
+        <argsstring></argsstring>
+        <name>redis_client</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="279" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="279" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a87768ee45ffe3fd6f554a2b7e97e3c83" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::current_change_order</definition>
+        <argsstring></argsstring>
+        <name>current_change_order</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="280" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="280" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1ab16b1c40fa7a262e9bc8c49d7fb03221" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::socket_manager</definition>
+        <argsstring></argsstring>
+        <name>socket_manager</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="281" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="281" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a23367c59511c124b13438f6b387056a5" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::pipe</definition>
+        <argsstring></argsstring>
+        <name>pipe</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="289" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="289" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classarby__redis_1_1my_websocket_client_1a71b2a9891d8299e50018191f02a6f4fb" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>arby_redis.myWebsocketClient::sequence_num</definition>
+        <argsstring></argsstring>
+        <name>sequence_num</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="290" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="290" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a9a8a862608134fa22a8413427e7c4ab2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="215" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="216" bodyend="232"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a74bf51b429f9f6b33a794c85db42e2e0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.start</definition>
+        <argsstring></argsstring>
+        <name>start</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="233" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="233" bodyend="243"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1ad14a3836571096e27924a1eab3f7afa2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_open</definition>
+        <argsstring></argsstring>
+        <name>on_open</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="275" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="275" bodyend="282"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1ab86d2dff284df6d2856abcee58308dd4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.get_millis</definition>
+        <argsstring></argsstring>
+        <name>get_millis</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="283" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="283" bodyend="285"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a1cbf2ac1fa265daa354e00b2b95cd204" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.start_realtime</definition>
+        <argsstring></argsstring>
+        <name>start_realtime</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="287" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="287" bodyend="291"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1ae5a87e03d54e155d806d8f96ed7b4276" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.update_db</definition>
+        <argsstring></argsstring>
+        <name>update_db</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="292" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="292" bodyend="337"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a79be6a64558cdcd52246f1650acc035f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_message</definition>
+        <argsstring></argsstring>
+        <name>on_message</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="341" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="341" bodyend="394"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a84bde67df7945d3231fcbddc5f728003" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_close</definition>
+        <argsstring></argsstring>
+        <name>on_close</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="395" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="395" bodyend="397"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a8413c9d21d3f88a1420ad788b44eff25" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.close</definition>
+        <argsstring></argsstring>
+        <name>close</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="468" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="468" bodyend="471"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a802ddb00145d7a2586f727b3f7a32a75" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_error</definition>
+        <argsstring></argsstring>
+        <name>on_error</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="472" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="472" bodyend="478"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a9a8a862608134fa22a8413427e7c4ab2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="215" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="216" bodyend="232"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a74bf51b429f9f6b33a794c85db42e2e0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.start</definition>
+        <argsstring></argsstring>
+        <name>start</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="233" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="233" bodyend="243"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1ad14a3836571096e27924a1eab3f7afa2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_open</definition>
+        <argsstring></argsstring>
+        <name>on_open</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="275" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="275" bodyend="282"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1ab86d2dff284df6d2856abcee58308dd4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.get_millis</definition>
+        <argsstring></argsstring>
+        <name>get_millis</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="283" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="283" bodyend="285"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a1cbf2ac1fa265daa354e00b2b95cd204" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.start_realtime</definition>
+        <argsstring></argsstring>
+        <name>start_realtime</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="287" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="287" bodyend="291"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1ae5a87e03d54e155d806d8f96ed7b4276" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.update_db</definition>
+        <argsstring></argsstring>
+        <name>update_db</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="292" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="292" bodyend="337"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a79be6a64558cdcd52246f1650acc035f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_message</definition>
+        <argsstring></argsstring>
+        <name>on_message</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="341" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="341" bodyend="394"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a84bde67df7945d3231fcbddc5f728003" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_close</definition>
+        <argsstring></argsstring>
+        <name>on_close</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="395" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="395" bodyend="397"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a8413c9d21d3f88a1420ad788b44eff25" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.close</definition>
+        <argsstring></argsstring>
+        <name>close</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="468" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="468" bodyend="471"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a802ddb00145d7a2586f727b3f7a32a75" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient.on_error</definition>
+        <argsstring></argsstring>
+        <name>on_error</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="472" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="472" bodyend="478"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-func">
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a2a070d075c2f1a79fe845ea3f631cc1c" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient._connect</definition>
+        <argsstring></argsstring>
+        <name>_connect</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="244" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="244" bodyend="273"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a71b739dc247c0946963a91c67db0e6e9" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient._listen</definition>
+        <argsstring></argsstring>
+        <name>_listen</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="398" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="398" bodyend="458"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a81245cb23a5d8aa9121f6fb0fa46936b" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient._disconnect</definition>
+        <argsstring></argsstring>
+        <name>_disconnect</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="459" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="459" bodyend="467"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a2a070d075c2f1a79fe845ea3f631cc1c" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient._connect</definition>
+        <argsstring></argsstring>
+        <name>_connect</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="244" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="244" bodyend="273"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a71b739dc247c0946963a91c67db0e6e9" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient._listen</definition>
+        <argsstring></argsstring>
+        <name>_listen</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="398" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="398" bodyend="458"/>
+      </memberdef>
+      <memberdef kind="function" id="classarby__redis_1_1my_websocket_client_1a81245cb23a5d8aa9121f6fb0fa46936b" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def arby_redis.myWebsocketClient._disconnect</definition>
+        <argsstring></argsstring>
+        <name>_disconnect</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" line="459" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593846713603/arby_redis.py" bodystart="459" bodyend="467"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="23">
+        <label>object</label>
+      </node>
+      <node id="22">
+        <label>arby_redis.myWebsocketClient</label>
+        <link refid="classarby__redis_1_1my_websocket_client"/>
+        <childnode refid="23" relation="public-inheritance">
+        </childnode>
+        <childnode refid="23" relation="public-inheritance">
+        </childnode>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="25">
+        <label>object</label>
+      </node>
+      <node id="24">
+        <label>arby_redis.myWebsocketClient</label>
+        <link refid="classarby__redis_1_1my_websocket_client"/>
+        <childnode refid="25" relation="public-inheritance">
+        </childnode>
+        <childnode refid="25" relation="public-inheritance">
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" line="213" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593844913433/arby_redis.py" bodystart="213" bodyend="479"/>
+    <listofallmembers>
+      <member refid="classarby__redis_1_1my_websocket_client_1a9a8a862608134fa22a8413427e7c4ab2" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>__init__</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a9a8a862608134fa22a8413427e7c4ab2" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>__init__</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a2a070d075c2f1a79fe845ea3f631cc1c" prot="private" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>_connect</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a2a070d075c2f1a79fe845ea3f631cc1c" prot="private" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>_connect</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a81245cb23a5d8aa9121f6fb0fa46936b" prot="private" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>_disconnect</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a81245cb23a5d8aa9121f6fb0fa46936b" prot="private" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>_disconnect</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a71b739dc247c0946963a91c67db0e6e9" prot="private" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>_listen</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a71b739dc247c0946963a91c67db0e6e9" prot="private" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>_listen</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1aa83b24a75ebeb8a1524ec65869b30e1a" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>api_key</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1aed1cfd6cccbc1f49b70d1e227f542975" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>api_passphrase</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a0e7ad31963b3d770c78a678f93f823e0" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>api_secret</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a867d987d96b754b9cfb35e53f1e75187" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>auth</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a845dc758ebf3655deb9614748aef5e65" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>channels</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a8413c9d21d3f88a1420ad788b44eff25" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>close</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a8413c9d21d3f88a1420ad788b44eff25" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>close</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a87768ee45ffe3fd6f554a2b7e97e3c83" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>current_change_order</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1aa1243bd15f873bceaededd3ecaf86ccf" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>error</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ab86d2dff284df6d2856abcee58308dd4" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>get_millis</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ab86d2dff284df6d2856abcee58308dd4" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>get_millis</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a2f6d9c5f41009bc7466c4075bbbffb67" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>message_count</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a4ba76d9cc571ef82c151f09e7bbd2ed3" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>msg_queue</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a84bde67df7945d3231fcbddc5f728003" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_close</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a84bde67df7945d3231fcbddc5f728003" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_close</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a802ddb00145d7a2586f727b3f7a32a75" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_error</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a802ddb00145d7a2586f727b3f7a32a75" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_error</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a79be6a64558cdcd52246f1650acc035f" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_message</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a79be6a64558cdcd52246f1650acc035f" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_message</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ad14a3836571096e27924a1eab3f7afa2" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_open</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ad14a3836571096e27924a1eab3f7afa2" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>on_open</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ae5e65a51394659c356e210c9a4c063d3" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>order_limit</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ae5edbc4135d443cdd6646720f972361e" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>orders_received</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a23367c59511c124b13438f6b387056a5" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>pipe</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1abe9d241608757d36184f21448e4cdcf1" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>products</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a7734e713dec7892e10389ffca5478252" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>redis_client</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1abfc1764731a2f6f51c82eb94cc9c3a1a" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>redis_db</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a71b2a9891d8299e50018191f02a6f4fb" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>sequence_num</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ab16b1c40fa7a262e9bc8c49d7fb03221" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>socket_manager</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a74bf51b429f9f6b33a794c85db42e2e0" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>start</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a74bf51b429f9f6b33a794c85db42e2e0" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>start</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a1cbf2ac1fa265daa354e00b2b95cd204" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>start_realtime</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a1cbf2ac1fa265daa354e00b2b95cd204" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>start_realtime</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a377354d694723c2657ff88be4ba31843" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>stop</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1aac1e6a3865b3313de8420635bf091a36" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>switched</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ad1801fcbc3671ebe8b3c5e2275ba5ea1" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>thread</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a08ecd5600f486cfb74e9c32840a3318c" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>type</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ae5a87e03d54e155d806d8f96ed7b4276" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>update_db</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1ae5a87e03d54e155d806d8f96ed7b4276" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>update_db</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1aabf3556e797aa48ee605083d872c96bd" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>url</name></member>
+      <member refid="classarby__redis_1_1my_websocket_client_1a8952401b4e9e3f85356747c5dee2f444" prot="public" virt="non-virtual"><scope>arby_redis::myWebsocketClient</scope><name>ws</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="dir_79b786b25a0d4a2f0ff31abf6a114264" kind="dir">
+    <compoundname>git_repos/1593846713309/scripts</compoundname>
+    <innerfile refid="1593846713309_2scripts_2____init_____8py">__init__.py</innerfile>
+    <innerfile refid="1593846713309_2scripts_2create__objects_8py">create_objects.py</innerfile>
+    <innerfile refid="1593846713309_2scripts_2init__test__data_8py">init_test_data.py</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713309/scripts/"/>
+  </compounddef>
+</doxygen>

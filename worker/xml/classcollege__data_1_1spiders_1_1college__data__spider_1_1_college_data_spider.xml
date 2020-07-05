@@ -1,0 +1,320 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider" kind="class" prot="public">
+    <compoundname>college_data::spiders::college_data_spider::CollegeDataSpider</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">Spider</basecompoundref>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a84179ab93a00aa54ea0a7ceb1d8d9bb6" prot="public" static="yes" mutable="no">
+        <type>string</type>
+        <definition>string college_data.spiders.college_data_spider.CollegeDataSpider::name</definition>
+        <argsstring></argsstring>
+        <name>name</name>
+        <initializer>= &quot;college_data&quot;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="41" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ad71203fe26485cc72d42f1a3195ce73c" prot="public" static="yes" mutable="no">
+        <type>int</type>
+        <definition>int college_data.spiders.college_data_spider.CollegeDataSpider::num</definition>
+        <argsstring></argsstring>
+        <name>num</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="42" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1acddf652bc8d8b40c5e96ac27462187cf" prot="public" static="yes" mutable="no">
+        <type>tuple</type>
+        <definition>tuple college_data.spiders.college_data_spider.CollegeDataSpider::domain</definition>
+        <argsstring></argsstring>
+        <name>domain</name>
+        <initializer>= get_domain(response.url)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="318" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="318" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ada3bca652ab1a5ee943af5a539fb8896" prot="public" static="yes" mutable="no">
+        <type>string</type>
+        <definition>string college_data.spiders.college_data_spider.CollegeDataSpider::path</definition>
+        <argsstring></argsstring>
+        <name>path</name>
+        <initializer>= &apos;colleges/&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="328" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="328" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a0c49be25960370885bbf1a2d7ac37367" prot="public" static="yes" mutable="no">
+        <type>string</type>
+        <definition>string college_data.spiders.college_data_spider.CollegeDataSpider::cds</definition>
+        <argsstring></argsstring>
+        <name>cds</name>
+        <initializer>= &apos;Common Data Set&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="333" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="333" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a7daedca148de7132fd6990da85acf950" prot="public" static="yes" mutable="no">
+        <type>string</type>
+        <definition>string college_data.spiders.college_data_spider.CollegeDataSpider::cds2</definition>
+        <argsstring></argsstring>
+        <name>cds2</name>
+        <initializer>= &apos;CDS&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="334" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="334" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a18576da87e3fa667518b59e572354d14" prot="public" static="yes" mutable="no">
+        <type>string</type>
+        <definition>string college_data.spiders.college_data_spider.CollegeDataSpider::factbook</definition>
+        <argsstring></argsstring>
+        <name>factbook</name>
+        <initializer>= &apos;Fact Book&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="335" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="335" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a5c843cb24115f1d5a08cacd635d9a319" prot="public" static="yes" mutable="no">
+        <type>string</type>
+        <definition>string college_data.spiders.college_data_spider.CollegeDataSpider::factbook3</definition>
+        <argsstring></argsstring>
+        <name>factbook3</name>
+        <initializer>= &apos;Factbook&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="337" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="337" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a99c6ec1925b0c961cc491a8ce5bbbc57" prot="public" static="yes" mutable="no">
+        <type>tuple</type>
+        <definition>tuple college_data.spiders.college_data_spider.CollegeDataSpider::doc</definition>
+        <argsstring></argsstring>
+        <name>doc</name>
+        <initializer>= fitz.open(path)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="339" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="339" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a2f0be664b026fe8b404d504bee69a16e" prot="public" static="yes" mutable="no">
+        <type>int</type>
+        <definition>int college_data.spiders.college_data_spider.CollegeDataSpider::n</definition>
+        <argsstring></argsstring>
+        <name>n</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="340" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="340" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a63049991a5b2560a4bff62fc06b51790" prot="public" static="yes" mutable="no">
+        <type>int</type>
+        <definition>int college_data.spiders.college_data_spider.CollegeDataSpider::found</definition>
+        <argsstring></argsstring>
+        <name>found</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="341" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="341" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ab71fae9ff8831c3f73010c10e6ee33a5" prot="public" static="yes" mutable="no">
+        <type>int</type>
+        <definition>int college_data.spiders.college_data_spider.CollegeDataSpider::pages_read</definition>
+        <argsstring></argsstring>
+        <name>pages_read</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="342" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="342" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ac2417003b4452bcde87aa4167b49a095" prot="public" static="yes" mutable="no">
+        <type>tuple</type>
+        <definition>tuple college_data.spiders.college_data_spider.CollegeDataSpider::page</definition>
+        <argsstring></argsstring>
+        <name>page</name>
+        <initializer>= doc.loadPage(n)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="344" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="344" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1abd416c22d9869199e5fd0b0e8fdafb0f" prot="public" static="yes" mutable="no">
+        <type>tuple</type>
+        <definition>tuple college_data.spiders.college_data_spider.CollegeDataSpider::text</definition>
+        <argsstring></argsstring>
+        <name>text</name>
+        <initializer>= page.getText(&quot;text&quot;)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="345" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="345" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1adf107babe9b7d58c7cd33be4097a9b46" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def college_data.spiders.college_data_spider.CollegeDataSpider.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="46" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="46" bodyend="48"/>
+      </memberdef>
+      <memberdef kind="function" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a6bb416160f05c2810e3007b2d2b63a4d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def college_data.spiders.college_data_spider.CollegeDataSpider.spider_closed</definition>
+        <argsstring></argsstring>
+        <name>spider_closed</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="49" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="49" bodyend="57"/>
+      </memberdef>
+      <memberdef kind="function" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a05b43664ae2f13ca416efeb6a31f1a12" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def college_data.spiders.college_data_spider.CollegeDataSpider.start_requests</definition>
+        <argsstring></argsstring>
+        <name>start_requests</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="58" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="58" bodyend="118"/>
+      </memberdef>
+      <memberdef kind="function" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a28d121a47ac85e74cc59a2a1ec4a8829" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def college_data.spiders.college_data_spider.CollegeDataSpider.college_parse</definition>
+        <argsstring></argsstring>
+        <name>college_parse</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="119" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="119" bodyend="310"/>
+      </memberdef>
+      <memberdef kind="function" id="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a44950dcd6a47e3ba363b0a8c0896ce9a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def college_data.spiders.college_data_spider.CollegeDataSpider.save_pdf</definition>
+        <argsstring></argsstring>
+        <name>save_pdf</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="311" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="311" bodyend="314"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="10">
+        <label>college_data.spiders.college_data_spider.CollegeDataSpider</label>
+        <link refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider"/>
+        <childnode refid="11" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="11">
+        <label>scrapy::Spider</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="12">
+        <label>college_data.spiders.college_data_spider.CollegeDataSpider</label>
+        <link refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider"/>
+        <childnode refid="13" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="13">
+        <label>scrapy::Spider</label>
+      </node>
+    </collaborationgraph>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="40" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="40" bodyend="366"/>
+    <listofallmembers>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1adf107babe9b7d58c7cd33be4097a9b46" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>__init__</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a0c49be25960370885bbf1a2d7ac37367" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>cds</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a7daedca148de7132fd6990da85acf950" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>cds2</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a28d121a47ac85e74cc59a2a1ec4a8829" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>college_parse</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a99c6ec1925b0c961cc491a8ce5bbbc57" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>doc</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1acddf652bc8d8b40c5e96ac27462187cf" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>domain</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a18576da87e3fa667518b59e572354d14" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>factbook</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a5c843cb24115f1d5a08cacd635d9a319" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>factbook3</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a63049991a5b2560a4bff62fc06b51790" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>found</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a2f0be664b026fe8b404d504bee69a16e" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>n</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a84179ab93a00aa54ea0a7ceb1d8d9bb6" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>name</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ad71203fe26485cc72d42f1a3195ce73c" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>num</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ac2417003b4452bcde87aa4167b49a095" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>page</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ab71fae9ff8831c3f73010c10e6ee33a5" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>pages_read</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1ada3bca652ab1a5ee943af5a539fb8896" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>path</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a44950dcd6a47e3ba363b0a8c0896ce9a" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>save_pdf</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a6bb416160f05c2810e3007b2d2b63a4d" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>spider_closed</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1a05b43664ae2f13ca416efeb6a31f1a12" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>start_requests</name></member>
+      <member refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider_1abd416c22d9869199e5fd0b0e8fdafb0f" prot="public" virt="non-virtual"><scope>college_data::spiders::college_data_spider::CollegeDataSpider</scope><name>text</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,169 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="namespacecollege__data_1_1spiders_1_1college__data__spider" kind="namespace">
+    <compoundname>college_data::spiders::college_data_spider</compoundname>
+    <innerclass refid="classcollege__data_1_1spiders_1_1college__data__spider_1_1_college_data_spider" prot="public">college_data::spiders::college_data_spider::CollegeDataSpider</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1a792fec6c68b2582d0da390329b55ee59" prot="public" static="no" mutable="no">
+        <type>list</type>
+        <definition>list college_data::spiders::college_data_spider.done_domain</definition>
+        <argsstring></argsstring>
+        <name>done_domain</name>
+        <initializer>= []</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="20" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="20" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1ac40351c8830c525b0682f920f80b2913" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple college_data::spiders::college_data_spider.start_time</definition>
+        <argsstring></argsstring>
+        <name>start_time</name>
+        <initializer>= time.time()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="21" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="21" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1a8ec413b00403b757e8ca3de12f9ec3b0" prot="public" static="no" mutable="no">
+        <type>string</type>
+        <definition>string college_data::spiders::college_data_spider.cds</definition>
+        <argsstring></argsstring>
+        <name>cds</name>
+        <initializer>= &apos;Common Data Set&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="22" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1a432ae77a5ae1e4873f81553a51255ae2" prot="public" static="no" mutable="no">
+        <type>string</type>
+        <definition>string college_data::spiders::college_data_spider.cds2</definition>
+        <argsstring></argsstring>
+        <name>cds2</name>
+        <initializer>= &apos;CDS&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="23" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="23" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1acdb9c7c3144c414a52d465d46ac490f6" prot="public" static="no" mutable="no">
+        <type>string</type>
+        <definition>string college_data::spiders::college_data_spider.factbook</definition>
+        <argsstring></argsstring>
+        <name>factbook</name>
+        <initializer>= &apos;Fact Book&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="24" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="24" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1a808987e37696470415061ca45df6565b" prot="public" static="no" mutable="no">
+        <type>string</type>
+        <definition>string college_data::spiders::college_data_spider.factbook3</definition>
+        <argsstring></argsstring>
+        <name>factbook3</name>
+        <initializer>= &apos;Factbook&apos;</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="26" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="26" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1abaffed981fc2b31750d365f6ac4f8a11" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple college_data::spiders::college_data_spider.df</definition>
+        <argsstring></argsstring>
+        <name>df</name>
+        <initializer>= pd.read_csv(&apos;SuperClean.csv&apos;)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="27" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="27" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1ab089f27716f710a2c4046aaadef5c4f5" prot="public" static="no" mutable="no">
+        <type>list</type>
+        <definition>list college_data::spiders::college_data_spider.domain_list</definition>
+        <argsstring></argsstring>
+        <name>domain_list</name>
+        <initializer>= df[&apos;Institution_Web_Address&apos;]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="28" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="28" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1a34612709329610537eb621e8baea4eab" prot="public" static="no" mutable="no">
+        <type>list</type>
+        <definition>list college_data::spiders::college_data_spider.college_name</definition>
+        <argsstring></argsstring>
+        <name>college_name</name>
+        <initializer>= df[&apos;Institution_Name&apos;]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="29" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="29" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1a3b8c4a544588994fc066682fa47bcc2f" prot="public" static="no" mutable="no">
+        <type>dictionary</type>
+        <definition>dictionary college_data::spiders::college_data_spider.college_dict</definition>
+        <argsstring></argsstring>
+        <name>college_dict</name>
+        <initializer>= {}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="30" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="30" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="namespacecollege__data_1_1spiders_1_1college__data__spider_1a8e05bc89811e73fbaafe892b5988a41e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def college_data.spiders.college_data_spider.get_domain</definition>
+        <argsstring></argsstring>
+        <name>get_domain</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="32" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" bodystart="32" bodyend="39"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/college_data_spider.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

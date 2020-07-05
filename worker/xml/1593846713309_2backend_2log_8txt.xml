@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="1593846713309_2backend_2log_8txt" kind="file">
+    <compoundname>log.txt</compoundname>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="normal">$env:FILE<sp/></highlight></codeline>
+    </programlisting>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593846713309/backend/log.txt"/>
+  </compounddef>
+</doxygen>

@@ -49,12 +49,11 @@ const { exec, execFile, spawnSync } = require('child_process');
 
 
 
-const getRepositoryObject = async (repoLink) => {
-  if (repoLink[repoLink.length - 1] != '/') {
-    repoLink = repoLink + '/';
-  }
+const getRepositoryObject = async () => {
+  
   const getRepositoryResponse = await api.post('/repositories/retrieve', {
-    link: repoLink
+    installationId: process.env.installationId,
+    fullName: process.env.repositoryFullName 
   });
   console.log('getRepositoryResponse: ');
   console.log(getRepositoryResponse.data);

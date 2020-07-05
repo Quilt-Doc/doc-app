@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="namespace_binomial_queue" kind="namespace">
+    <compoundname>BinomialQueue</compoundname>
+    <innerclass refid="class_binomial_queue_1_1binomial__queue" prot="public">BinomialQueue::binomial_queue</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="namespace_binomial_queue_1af8c37a17d863548fd0fdc18250c772d5" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple BinomialQueue::tree0</definition>
+        <argsstring></argsstring>
+        <name>tree0</name>
+        <initializer>= <ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(0, 4, [])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="137" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="137" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespace_binomial_queue_1a9e50cff3158595e883e66aa2aeffca46" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple BinomialQueue::tree1</definition>
+        <argsstring></argsstring>
+        <name>tree1</name>
+        <initializer>= <ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(1, 5, [<ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(0, 6, [])])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="138" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="138" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespace_binomial_queue_1a211cf0c944aca1b3eb4377b82b63b994" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple BinomialQueue::tree2</definition>
+        <argsstring></argsstring>
+        <name>tree2</name>
+        <initializer>= <ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(2, 8, [<ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(1, 10, [<ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(0, 11, [])]), <ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(0, 9, [])])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="139" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="139" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespace_binomial_queue_1a095876af66ed80fdf50b9d7341ec4047" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple BinomialQueue::queue0</definition>
+        <argsstring></argsstring>
+        <name>queue0</name>
+        <initializer>= <ref refid="class_binomial_queue_1_1binomial__queue" kindref="compound">binomial_queue</ref>(3, [tree0, tree1, tree2])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="141" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="141" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespace_binomial_queue_1a38e96ca60f29cf7e8b4223f16f434f22" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple BinomialQueue::tree3</definition>
+        <argsstring></argsstring>
+        <name>tree3</name>
+        <initializer>= <ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(0, 7, [])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="152" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="152" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespace_binomial_queue_1a930af9680f4175e9eae7aa2f74daaef3" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple BinomialQueue::tree4</definition>
+        <argsstring></argsstring>
+        <name>tree4</name>
+        <initializer>= <ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(1, 13, [<ref refid="classheap__lib_1_1node" kindref="compound">node</ref>(0, 17, [])])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="153" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="153" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespace_binomial_queue_1a2be915a582d93f77c7dbaba919cf3b8e" prot="public" static="no" mutable="no">
+        <type>tuple</type>
+        <definition>tuple BinomialQueue::queue1</definition>
+        <argsstring></argsstring>
+        <name>queue1</name>
+        <initializer>= <ref refid="class_binomial_queue_1_1binomial__queue" kindref="compound">binomial_queue</ref>(2, [tree3, tree4])</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="154" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" bodystart="154" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/BinomialQueue.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

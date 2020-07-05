@@ -1,0 +1,257 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="classheap__lib_1_1node" kind="class" prot="public">
+    <compoundname>heap_lib::node</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classheap__lib_1_1node_1a8bc6ff752d2104404b9c40fc7e966797" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>heap_lib.node::val</definition>
+        <argsstring></argsstring>
+        <name>val</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="4" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="4" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classheap__lib_1_1node_1a95fcf351b1716a622d7ee9b4fe883a10" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>heap_lib.node::rank</definition>
+        <argsstring></argsstring>
+        <name>rank</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="5" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="5" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classheap__lib_1_1node_1a30d240b45e24cc6bb373256dde70b024" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>heap_lib.node::children</definition>
+        <argsstring></argsstring>
+        <name>children</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="6" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="6" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classheap__lib_1_1node_1a5cabeb97a9dabf04a3d6da726dbdd641" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>heap_lib.node::parent</definition>
+        <argsstring></argsstring>
+        <name>parent</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="7" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="7" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classheap__lib_1_1node_1a9ba2bc9fc4767de4814b972794c5db6b" prot="private" static="no" mutable="no">
+        <type></type>
+        <definition>heap_lib.node::__dict__</definition>
+        <argsstring></argsstring>
+        <name>__dict__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="16" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classheap__lib_1_1node_1ad53f5f5ebb11f0fa20041a1f9d3db297" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="3" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="3" bodyend="10"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1a6f528f5beafcb2e14a62e7f3ad895882" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.set_parent</definition>
+        <argsstring></argsstring>
+        <name>set_parent</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="11" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="11" bodyend="13"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1aed181238258b0f88806ad3aed19dbd92" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__eq__</definition>
+        <argsstring></argsstring>
+        <name>__eq__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="14" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="14" bodyend="18"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1ac2220bf772963699fecaadd6a1d26685" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__hash__</definition>
+        <argsstring></argsstring>
+        <name>__hash__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="19" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="19" bodyend="21"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1a434da090e9ef7701dcdd433c35633fa0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__repr__</definition>
+        <argsstring></argsstring>
+        <name>__repr__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="22" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="22" bodyend="24"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1a8cb28971906d208254d50c8160b27e34" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__str__</definition>
+        <argsstring></argsstring>
+        <name>__str__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="25" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="25" bodyend="28"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1ad53f5f5ebb11f0fa20041a1f9d3db297" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__init__</definition>
+        <argsstring></argsstring>
+        <name>__init__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" line="3" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" bodystart="3" bodyend="10"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1a6f528f5beafcb2e14a62e7f3ad895882" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.set_parent</definition>
+        <argsstring></argsstring>
+        <name>set_parent</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" line="11" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" bodystart="11" bodyend="13"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1aed181238258b0f88806ad3aed19dbd92" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__eq__</definition>
+        <argsstring></argsstring>
+        <name>__eq__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" line="14" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" bodystart="14" bodyend="18"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1ac2220bf772963699fecaadd6a1d26685" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__hash__</definition>
+        <argsstring></argsstring>
+        <name>__hash__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" line="19" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" bodystart="19" bodyend="21"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1a434da090e9ef7701dcdd433c35633fa0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__repr__</definition>
+        <argsstring></argsstring>
+        <name>__repr__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" line="22" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" bodystart="22" bodyend="24"/>
+      </memberdef>
+      <memberdef kind="function" id="classheap__lib_1_1node_1a8cb28971906d208254d50c8160b27e34" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def heap_lib.node.__str__</definition>
+        <argsstring></argsstring>
+        <name>__str__</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" line="25" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593847029748/heap_lib.py" bodystart="25" bodyend="28"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" line="1" column="1" bodyfile="/home/ec2-user/doc-app/worker/git_repos/1593845498737/heap_lib.py" bodystart="1" bodyend="29"/>
+    <listofallmembers>
+      <member refid="classheap__lib_1_1node_1a9ba2bc9fc4767de4814b972794c5db6b" prot="private" virt="non-virtual"><scope>heap_lib::node</scope><name>__dict__</name></member>
+      <member refid="classheap__lib_1_1node_1aed181238258b0f88806ad3aed19dbd92" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__eq__</name></member>
+      <member refid="classheap__lib_1_1node_1aed181238258b0f88806ad3aed19dbd92" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__eq__</name></member>
+      <member refid="classheap__lib_1_1node_1ac2220bf772963699fecaadd6a1d26685" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__hash__</name></member>
+      <member refid="classheap__lib_1_1node_1ac2220bf772963699fecaadd6a1d26685" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__hash__</name></member>
+      <member refid="classheap__lib_1_1node_1ad53f5f5ebb11f0fa20041a1f9d3db297" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__init__</name></member>
+      <member refid="classheap__lib_1_1node_1ad53f5f5ebb11f0fa20041a1f9d3db297" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__init__</name></member>
+      <member refid="classheap__lib_1_1node_1a434da090e9ef7701dcdd433c35633fa0" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__repr__</name></member>
+      <member refid="classheap__lib_1_1node_1a434da090e9ef7701dcdd433c35633fa0" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__repr__</name></member>
+      <member refid="classheap__lib_1_1node_1a8cb28971906d208254d50c8160b27e34" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__str__</name></member>
+      <member refid="classheap__lib_1_1node_1a8cb28971906d208254d50c8160b27e34" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>__str__</name></member>
+      <member refid="classheap__lib_1_1node_1a30d240b45e24cc6bb373256dde70b024" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>children</name></member>
+      <member refid="classheap__lib_1_1node_1a5cabeb97a9dabf04a3d6da726dbdd641" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>parent</name></member>
+      <member refid="classheap__lib_1_1node_1a95fcf351b1716a622d7ee9b4fe883a10" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>rank</name></member>
+      <member refid="classheap__lib_1_1node_1a6f528f5beafcb2e14a62e7f3ad895882" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>set_parent</name></member>
+      <member refid="classheap__lib_1_1node_1a6f528f5beafcb2e14a62e7f3ad895882" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>set_parent</name></member>
+      <member refid="classheap__lib_1_1node_1a8bc6ff752d2104404b9c40fc7e966797" prot="public" virt="non-virtual"><scope>heap_lib::node</scope><name>val</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

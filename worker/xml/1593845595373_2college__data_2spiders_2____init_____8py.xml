@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.5">
+  <compounddef id="1593845595373_2college__data_2spiders_2____init_____8py" kind="file">
+    <compoundname>__init__.py</compoundname>
+    <innernamespace refid="namespacecollege__data_1_1spiders">college_data::spiders</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">#<sp/>This<sp/>package<sp/>will<sp/>contain<sp/>the<sp/>spiders<sp/>of<sp/>your<sp/>Scrapy<sp/>project</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">#</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">#<sp/>Please<sp/>refer<sp/>to<sp/>the<sp/>documentation<sp/>for<sp/>information<sp/>on<sp/>how<sp/>to<sp/>create<sp/>and<sp/>manage</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">#<sp/>your<sp/>spiders.</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/ec2-user/doc-app/worker/git_repos/1593845595373/college_data/spiders/__init__.py"/>
+  </compounddef>
+</doxygen>
