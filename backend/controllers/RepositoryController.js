@@ -8,7 +8,6 @@ const parseUtils = require('../utils/parse_code');
 const jobs = require('../apis/jobs');
 
 const api = apis.requestClient();
-const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 
 const apiURL = 'https://api.github.com';
 const localURL = 'https://localhost:3001/api'
@@ -21,6 +20,7 @@ const { exec, execFile } = require('child_process');
 
 const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -49,7 +49,7 @@ const JOB_SEMANTIC = 3;
 
 // Needs to use installation token
 createRepository = async (req, res) => {
-    const {fullName, installationId, htmlURL, cloneURL, debugID, icon} = req.body;
+    const {fullName, installationId, htmlUrl, cloneUrl, debugID, icon} = req.body;
 
     if (!typeof fullName == 'undefined' && fullName !== null) return res.json({success: false, error: 'no repository fullName provided'});
     if (!typeof installationId == 'undefined' && installationId !== null) return res.json({success: false, error: 'no repository installationId provided'});
@@ -61,8 +61,8 @@ createRepository = async (req, res) => {
         icon
     });
 
-    if (htmlURL) repository.htmlURL = htmlURL;
-    if (cloneURL) repository.cloneURL = cloneURL;
+    if (htmlUrl) repository.htmlUrl = htmlUrl;
+    if (cloneUrl) repository.cloneUrl = cloneUrl;
 
 
     // Check if user-defined ids allowed
@@ -77,15 +77,24 @@ createRepository = async (req, res) => {
         installationClient.get(`/repos/${fullName}`).then((response) => {
             //console.log("FIRST RESPONSE", response.data)
             // Get all commits from default branch
+            var cloneUrl = response.data.clone_url;
+
+            console.log('repo')
+            
+            repository.cloneUrl = cloneUrl;
+            repository.save();
+
             var runSemanticData = {};
             runSemanticData['fullName'] = response.data.full_name;
             runSemanticData['defaultBranch'] = response.data.default_branch,
-            runSemanticData['cloneUrl'] = response.data.clone_url,
+            runSemanticData['cloneUrl'] = cloneUrl,
             runSemanticData['installationId'] = installationId.toString();
             runSemanticData['jobType'] =  JOB_SEMANTIC;
 
             installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
-    
+                
+                console.log('Latest Commit obj: ');
+                console.log(response.data.commit);
                 // Extract tree SHA from most recent commit
                 let treeSHA = response.data.commit.tree.sha
 
@@ -107,8 +116,8 @@ createRepository = async (req, res) => {
                         
                         let pathSplit = item.path.split('/')
                         let name = pathSplit.slice(pathSplit.length - 1)[0]
-                        let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
-                        let kind = item.type === 'blob' ? 'file' : 'dir'
+                        let path = pathSplit.join('/');
+                        let kind = item.type == 'blob' ? 'file' : 'dir'
                         if (kind === 'file') {
                             // args2.push(`../content/${repoName}/${item.path}`)
                             args2.push(`${item.path}`);
@@ -118,8 +127,13 @@ createRepository = async (req, res) => {
 
                     // Save repository contents as items in our database
                     Reference.insertMany(treeReferences, (errInsertItems, treeReferences) => {
-                        if (errInsertItems) return res.json({ success: false, error: errInsertItems });
-                        return res.json(repository);
+                        if (errInsertItems) {
+                            console.log('Error inserting tree References: ');
+                            console.log(errInsertItems);
+                             return res.json({ success: false, error: errInsertItems });
+                        }
+                        console.log('Success: Inserted treeReferences.length: ', treeReferences.length);
+                        // return res.json(repository);
                         /*repository.populate('workspace', (errPopulation, repository) => {
                             if (errPopulation) return res.json({ success: false, error: errPopulation });
 
@@ -133,13 +147,14 @@ createRepository = async (req, res) => {
                     var runDoxygenData = {
                         'installationId': installationId.toString(),
                         'cloneUrl': cloneUrl,
-                        'jobType': JOB_GET_REFS
+                        'jobType': JOB_GET_REFS.toString(),
+                        'repositoryId': repository._id
                     }
 
                     console.log('RUN DOXYGEN DATA: ');
                     console.log(runDoxygenData);
 
-                    jobs.dispatchDoxygenJob(runDoxygenData, log);
+                    // jobs.dispatchDoxygenJob(runDoxygenData, log);
 
 
 
@@ -354,19 +369,13 @@ deleteRepository = (req, res) => {
 
 
 retrieveRepositories = (req, res) => {
-    const {name, workspaceID, link} = req.body;
+    const {fullName, workspaceId, installationId} = req.body;
     // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
 
     query = Repository.find();
-    if (name) query.where('name').equals(name);
-    if (workspaceID) query.where('workspace').equals(workspaceID);
-
-    if (link) {
-        if (link[link.length - 1] != '/') {
-            link = link + '/'
-        }
-        query.where('link').equals('github.com/' + link);
-    }
+    if (fullName) query.where('fullName').equals(fullName);
+    if (workspaceId) query.where('workspace').equals(workspaceId);
+    if (installationId) query.where('installationId').equals(installationId);
 
     query.populate('workspace').exec((err, repositories) => {
         if (err) return res.json({ success: false, error: err });

@@ -5,12 +5,12 @@ const { ObjectId, Mixed } = Schema.Types;
 // split name into name, owner
 // add default branch
 var repositorySchema = new Schema({
-	name: String,
+	fullName: String,
 	link: String,
 	lastProcessedCommit: { type: String, default: ''},
 	installationId: Number,
-	htmlURL: String,
-	cloneURL: String,
+	htmlUrl: String,
+	cloneUrl: String,
 	created: {type: Date, default: Date.now },
 	icon: Number,
 	references: [{type: ObjectId, ref: 'Reference', index: true}]
