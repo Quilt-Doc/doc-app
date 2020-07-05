@@ -1,7 +1,7 @@
 {
-  "name": "github-app",
+  "name": "worker-semantic",
   "version": "1.0.0",
-  "description": "Github App test",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,11 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.702.0",
-    "axios": "^0.19.2",
+    "aws-sdk": "^2.707.0",
     "dotenv": "^8.2.0",
-    "github-webhook-handler": "^1.0.0",
-    "jsonwebtoken": "^8.5.1",
-    "request": "^2.88.2"
+    "mongoose": "^5.9.20"
   }
 }

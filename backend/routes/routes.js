@@ -50,6 +50,7 @@ router.put('/snippets/attach_folder/:id', snippet_controller.attachFolder);
 router.put('/snippets/remove_folder/:id', snippet_controller.removeFolder);
 router.put('/snippets/attach_document/:id', snippet_controller.attachDocument);
 router.put('/snippets/remove_document/:id', snippet_controller.removeDocument);
+router.post('/snippets/refresh', snippet_controller.refreshSnippets);
 
 const snippet_controller2 = require('../controllers/SnippetController2');
 router.post('/snippets2/create', snippet_controller2.createSnippet);

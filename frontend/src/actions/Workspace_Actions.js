@@ -6,7 +6,7 @@ import {
     WORKSPACE_REMOVE_USER
 } from './types/Workspace_Types';
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 export const createWorkspace = (formValues) => async (dispatch) => {
     const response = await api.post('/workspaces/create', formValues);

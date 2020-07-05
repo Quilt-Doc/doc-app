@@ -6,7 +6,7 @@ import {
     RETRIEVE_COMMENTS
 } from './types/Comment_Types'
 
-import api from '../apis/api';
+import  { api } from '../apis/api';
 
 
 export const createComment = (formValues) => async (dispatch) => {

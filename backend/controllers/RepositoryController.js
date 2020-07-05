@@ -5,9 +5,9 @@ var request = require("request");
 const apis = require('../apis/api');
 const parseUtils = require('../utils/parse_code');
 
+const jobs = require('../apis/jobs');
+
 const api = apis.requestClient();
-const sqs = apis.requestSQSServiceObject();
-const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 
 const apiURL = 'https://api.github.com';
 const localURL = 'https://localhost:3001/api'
@@ -20,6 +20,7 @@ const { exec, execFile } = require('child_process');
 
 const RepositoryItem = require('../models/unused/deprecated/RepositoryItem');
 const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -30,6 +31,11 @@ if (process.env.RUN_AS_REMOTE_BACKEND === 1) {
     log = new EventLogger('DocApp EventLogger Hello!');
 }
 const { v4 } = require('uuid');
+const { json } = require('body-parser');
+
+const JOB_GET_REFS = 1;
+const JOB_UPDATE_SNIPPETS = 2;
+const JOB_SEMANTIC = 3;
 
 /*repositorySearch = (req, res) => {
     console.log(req.body);
@@ -41,6 +47,135 @@ const { v4 } = require('uuid');
     return res.json({status: 'SUCCESS'});
 }*/
 
+// Needs to use installation token
+createRepository = async (req, res) => {
+    const {fullName, installationId, htmlUrl, cloneUrl, debugID, icon} = req.body;
+
+    if (!typeof fullName == 'undefined' && fullName !== null) return res.json({success: false, error: 'no repository fullName provided'});
+    if (!typeof installationId == 'undefined' && installationId !== null) return res.json({success: false, error: 'no repository installationId provided'});
+
+
+    let repository = new Repository({
+        fullName,
+        installationId,
+        icon
+    });
+
+    if (htmlUrl) repository.htmlUrl = htmlUrl;
+    if (cloneUrl) repository.cloneUrl = cloneUrl;
+
+
+    // Check if user-defined ids allowed
+    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
+        if (debugID) repository._id = ObjectId(debugID);
+    }
+
+    repository.save(async (err, repository) => {
+        if (err) return res.json({ success: false, error: err });
+        var installationClient = await apis.requestInstallationClient(installationId);
+
+        installationClient.get(`/repos/${fullName}`).then((response) => {
+            //console.log("FIRST RESPONSE", response.data)
+            // Get all commits from default branch
+            var cloneUrl = response.data.clone_url;
+
+            console.log('repo')
+            
+            repository.cloneUrl = cloneUrl;
+            repository.save();
+
+            var runSemanticData = {};
+            runSemanticData['fullName'] = response.data.full_name;
+            runSemanticData['defaultBranch'] = response.data.default_branch,
+            runSemanticData['cloneUrl'] = cloneUrl,
+            runSemanticData['installationId'] = installationId.toString();
+            runSemanticData['jobType'] =  JOB_SEMANTIC;
+
+            installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
+                
+                console.log('Latest Commit obj: ');
+                console.log(response.data.commit);
+                // Extract tree SHA from most recent commit
+                let treeSHA = response.data.commit.tree.sha
+
+                let args = [
+                    'clone',
+                    `https://github.com/${fullName}.git`,
+                ];
+
+                // let args2 = ["v2-run", "semantic", "parse"]
+                let args2 = [];
+                //"--", "--json-symbols"
+                // Extract contents using tree SHA
+                console.log("REPO NAME OWNER", fullName)
+                let repoName = fullName.split("/").slice(1)[0]
+                console.log(repoName);
+                installationClient.get(`/repos/${fullName}/git/trees/${treeSHA}?recursive=true`).then((response) => {
+                    
+                    let treeReferences = response.data.tree.map(item => {
+                        
+                        let pathSplit = item.path.split('/')
+                        let name = pathSplit.slice(pathSplit.length - 1)[0]
+                        let path = pathSplit.join('/');
+                        let kind = item.type == 'blob' ? 'file' : 'dir'
+                        if (kind === 'file') {
+                            // args2.push(`../content/${repoName}/${item.path}`)
+                            args2.push(`${item.path}`);
+                        }
+                        return {name, path, kind, repository: ObjectId(repository._id)}
+                    })
+
+                    // Save repository contents as items in our database
+                    Reference.insertMany(treeReferences, (errInsertItems, treeReferences) => {
+                        if (errInsertItems) {
+                            console.log('Error inserting tree References: ');
+                            console.log(errInsertItems);
+                             return res.json({ success: false, error: errInsertItems });
+                        }
+                        console.log('Success: Inserted treeReferences.length: ', treeReferences.length);
+                        // return res.json(repository);
+                        /*repository.populate('workspace', (errPopulation, repository) => {
+                            if (errPopulation) return res.json({ success: false, error: errPopulation });
+
+                            // return the repository object
+                            return res.json(repository);
+                        });*/
+                    });
+
+                    //DOXYGEN
+                    // SQS Message Section Start
+                    var runDoxygenData = {
+                        'installationId': installationId.toString(),
+                        'cloneUrl': cloneUrl,
+                        'jobType': JOB_GET_REFS.toString(),
+                        'repositoryId': repository._id
+                    }
+
+                    console.log('RUN DOXYGEN DATA: ');
+                    console.log(runDoxygenData);
+
+                    // jobs.dispatchDoxygenJob(runDoxygenData, log);
+
+
+
+                    // SEMANTIC
+                    // default_branch, fullName, cloneUrl, args_2, installationId 
+
+                    runSemanticData['semanticTargets'] = JSON.stringify({targets: args2});
+                    
+                    jobs.dispatchSemanticJob(runSemanticData, log);
+                
+                })
+            })
+        })
+        
+    });
+}
+
+
+
+
+// Deprecated
 refreshRepositoryPath = (req, res) => {
     console.log(req.body);
     var { repositoryName, repositoryPath} = req.body;
@@ -142,7 +277,7 @@ parseRepositoryFile = (req, res) => {
 
 
 getRepositoryRefs = (req, res) => {
-    
+
     //console.log(process.env);
     if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
         return res.json({success: false, error: 'doxygen disabled on this backend'});
@@ -159,6 +294,7 @@ getRepositoryRefs = (req, res) => {
     var getRefsData = {
         'repoLink': repoLink,
         'apiCallLink': apiCallLink,
+        'jobType': JOB_GET_REFS
     }
     var uuid = v4();
     var sqsRefsData = {
@@ -170,6 +306,10 @@ getRepositoryRefs = (req, res) => {
           "apiCallLink": {
             DataType: "String",
             StringValue: getRefsData.apiCallLink
+          },
+          "jobType": {
+            DataType: "Number",
+            StringValue: JOB_GET_REFS.toString()
           }
         },
         MessageBody: JSON.stringify(getRefsData),
@@ -186,143 +326,15 @@ getRepositoryRefs = (req, res) => {
 
         if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Refs | SUCCESS: ${data.MessageId}`);
         console.log(`Refs | SUCCESS: ${data.MessageId}`);
-        res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
+        // res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
     }).catch((err) => {
         if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Refs | ERROR: ${err}`);
         console.log(`Refs | ERROR: ${err}`);
 
         // Send email to emails API
-        res.json({success: false, msg: "We ran into an error. Please try again."});
+        // res.json({success: false, msg: "We ran into an error. Please try again."});
     });
     // parseUtils.getRefs(repoLink, apiCallLink, res);
-}
-
-
-createRepository = (req, res) => {
-    const {name, workspaceID, link, debugID, icon} = req.body;
-
-    // if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no repository workspace provided'});
-    if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no repository name provided'});
-
-    let repository = new Repository({
-        name,
-        link,
-        icon
-        // workspaceID: ObjectId(workspaceID)
-    });
-
-
-    // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
-        if (debugID) repository._id = ObjectId(debugID);
-    }
-
-    if (workspaceID) repository.workspace = ObjectId(workspaceID)
-
-    let linkItems = link.split('/')
-
-    // looks like pytorch/fairseq
-    let repositoryNameOwner = linkItems.slice(linkItems.length - 3, linkItems.length - 1).join('/')
-
-
-    repository.save((err, repository) => {
-        if (err) return res.json({ success: false, error: err });
-
-        api.get(`${apiURL}/repos/${repositoryNameOwner}`).then((response) => {
-            //console.log("FIRST RESPONSE", response.data)
-            // Get all commits from default branch 
-            api.get(`${apiURL}/repos/${repositoryNameOwner}/commits/${response.data.default_branch}`).then((response) => {
-    
-                // Extract tree SHA from most recent commit
-                let treeSHA = response.data.commit.tree.sha
-
-                let args = [
-                    'clone',
-                    `https://github.com/${repositoryNameOwner}.git`,
-                ];
-
-                let args2 = ["v2-run", "semantic", "parse"]
-                //"--", "--json-symbols"
-                // Extract contents using tree SHA
-                console.log("REP NAME OWNER", repositoryNameOwner)
-                let repoName = repositoryNameOwner.split("/").slice(1)[0]
-                console.log(repoName)
-                api.get(`${apiURL}/repos/${repositoryNameOwner}/git/trees/${treeSHA}?recursive=true`).then((response) => {
-                    let repositoryItems = response.data.tree.map(item => {
-                        
-                        let pathSplit = item.path.split('/')
-                        let name = pathSplit.slice(pathSplit.length - 1)[0]
-                        let path = pathSplit.slice(0, pathSplit.length - 1).join('/')
-                        let kind = item.type === 'blob' ? 'file' : 'dir'
-                        if (kind === 'file') {
-                            args2.push(`../content/${repoName}/${item.path}`)
-                        }
-                        return {name, path, kind, repository: ObjectId(repository._id)}
-                    })
-
-
-                    
-
-                    const getContent = execFile("git", args, 
-                        {cwd: "./semantic/content"}, (error, stdout, stderr) => {
-                        if (error) {
-                            console.log('error during clone call to github: ' + error);
-                            return;
-                        } 
-                        const command = `cabal`
-                        args2.push("--")
-                        args2.push("--json-symbols")
-                        
-                        console.log("ARGS2", args2)
-
-                        const getCallbacks = execFile(command, args2,
-                            {maxBuffer: (1024*1024)*50, cwd: './semantic/semantic/'}, (error, stdout, stderr) => {
-                                if (error) {
-                                    console.log("error during semantic parse:", error)
-                                    return 
-                                }
-                                console.log("STDOUT", stdout)
-                                let output = JSON.parse(stdout.split("Up to date")[1].trim())
-                                
-                                //console.log("OUT BEFORE", output)
-                                console.log(output)
-                                output = output.filter(o => o.nodeType === "REFERENCE" && o.syntaxType === "CALL")
-                                
-                                //console.log(output)
-                                const removeContent = execFile("rm", ["-r", repoName],
-                                    {maxBuffer: (1024*1024)*50, cwd: './semantic/content'}, (error, stdout, stderr) => {
-                                        if (error) {
-                                            console.log("error deleting file after usage:", error)
-                                        }
-                                    console.log("callback retrieval process successfully completed")
-                                })
-
-                                //return res.json(output)
-                                //console.log(output.files[0].symbols)
-                                //console.log("PARSED CONTENT", JSON.parse(output))
-                            }
-                        )
-                    })
-    
-
-
-                    //console.log("REPO ITEMS", repositoryItems)
-                    
-                    // Save repository contents as items in our database
-                    RepositoryItem.insertMany(repositoryItems, (errInsertItems, repositoryItems) => {
-                        if (errInsertItems) return res.json({ success: false, error: errInsertItems });
-                        repository.populate('workspace', (errPopulation, repository) => {
-                            if (errPopulation) return res.json({ success: false, error: errPopulation });
-
-                            // return the repository object
-                            return res.json(repository);
-                        });
-                    })
-                })
-            })
-        })
-        
-    });
 }
 
 getRepository = (req, res) => {
@@ -357,19 +369,13 @@ deleteRepository = (req, res) => {
 
 
 retrieveRepositories = (req, res) => {
-    const {name, workspaceID, link} = req.body;
+    const {fullName, workspaceId, installationId} = req.body;
     // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
 
     query = Repository.find();
-    if (name) query.where('name').equals(name);
-    if (workspaceID) query.where('workspace').equals(workspaceID);
-
-    if (link) {
-        if (link[link.length - 1] != '/') {
-            link = link + '/'
-        }
-        query.where('link').equals('github.com/' + link);
-    }
+    if (fullName) query.where('fullName').equals(fullName);
+    if (workspaceId) query.where('workspace').equals(workspaceId);
+    if (installationId) query.where('installationId').equals(installationId);
 
     query.populate('workspace').exec((err, repositories) => {
         if (err) return res.json({ success: false, error: err });

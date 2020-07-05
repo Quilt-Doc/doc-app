@@ -7,15 +7,15 @@ const JOB_GET_REFS = 1;
 const JOB_UPDATE_SNIPPETS = 2;
 const JOB_SEMANTIC = 3;
 
-
 var mongoose = require('mongoose')
 
-const snippetUtils = require('./commit_compare_test');
+// const snippetUtils = require('./commit_compare_test');
+// const parseUtils = require('./parse_code');
 const semanticUtils = require('./semantic_utils');
 
 var sqs = require('./apis/api').requestSQSServiceObject();
 
-const parseUtils = require('./parse_code');
+
 const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 
 const cluster = require('cluster');
@@ -70,10 +70,10 @@ const pollQueue = async (cluster) => {
 	sqs.receiveMessage(params)
 	.promise()
 	.then(res => {
-    	// console.log("Success", res);
+    	console.log("Success", res);
     	if (res.Messages) {
-        // console.log('Message Attributes: ');
-        // console.log(res.Messages[0].MessageAttributes);
+        console.log('Message Attributes: ');
+        console.log(res.Messages[0].MessageAttributes);
 	    	// We are only grabbing one message
 	   		var jobType = JSON.parse(res.Messages[0].Body).jobType;
 	   		// Make new env and pass it to a fork call
@@ -163,13 +163,12 @@ else {
   console.log('jobType: ', process.env.jobType);
   var jobData = JSON.parse(process.env.jobData);
   console.log('Condition: ');
-  console.log(process.env.jobType == JOB_GET_REFS);
+  console.log(process.env.jobType == JOB_UPDATE_SNIPPETS);
 
-  if(process.env.jobType == JOB_GET_REFS) {
+  /*  if(process.env.jobType === JOB_GET_REFS) {
     console.log('running get refs job');
-    process.env.installationId = jobData.installationId;
-    process.env.cloneUrl = jobData.cloneUrl;
-    process.env.repositoryId = jobData.repositoryId;
+    process.env.repoLink = jobData.repoLink;
+    process.env.apiCallLink = jobData.apiCallLink;
     parseUtils.getRefs();
   }
 
@@ -180,18 +179,17 @@ else {
     process.env.cloneUrl = jobData.cloneUrl;
     process.env.installationId = jobData.installationId;
     snippetUtils.runValidation();
-  }
+  }*/
 
-  else if (process.env.jobType == JOB_SEMANTIC) {
-    console.log('running exec semantic job');
-    // fullName, cloneUrl, semanticTargets, installationId 
-    process.env.fullName = jobData.fullName;
-    process.env.cloneUrl = jobData.cloneUrl;
-    process.env.semanticTargets = jobData.semanticTargets;
-    process.env.installationId = jobData.installationId;
-    semanticUtils.execSemantic();
-}
-  
+  if (process.env.jobType == JOB_SEMANTIC) {
+      console.log('running exec semantic job');
+      // fullName, cloneUrl, semanticTargets, installationId 
+      process.env.fullName = jobData.fullName;
+      process.env.cloneUrl = jobData.cloneUrl;
+      process.env.semanticTargets = jobData.semanticTargets;
+      process.env.installationId = jobData.installationId;
+      semanticUtils.execSemantic();
+  }
 
   console.log(`Worker ${process.pid} started`);
 }

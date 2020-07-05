@@ -6,7 +6,7 @@ import {
     RETRIEVE_USERS
 } from './types/User_Types'
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 
 export const createUser = (formValues) => async (dispatch) => {

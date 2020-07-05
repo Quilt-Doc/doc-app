@@ -6,7 +6,7 @@ import {
     RETRIEVE_TAGS
 } from './types/Tag_Types'
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 
 export const createTag = (formValues) => async (dispatch) => {

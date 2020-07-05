@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-export default axios.create({
-    baseURL: "http://localhost:3001/api"
+var apiEndpoint = process.env.REACT_APP_API_ENDPOINT;
+
+var api = axios.create({
+    baseURL: apiEndpoint
 });
-/*
-export default axios.create({
-    baseURL: "http://54.160.81.133:3001/api"
-});*/
+
+export {api, apiEndpoint}

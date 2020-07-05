@@ -33,6 +33,9 @@ const SNIPPET_STATUS_INVALID = 'INVALID';
 const SNIPPET_STATUS_NEW_REGION = 'NEW_REGION';
 const SNIPPET_STATUS_VALID = 'VALID';
 
+
+const tokenUtils = require('./utils/token_utils');
+
 /*var client = axios.create({
   baseURL: "http://localhost:3001/api"
 });*/
@@ -42,15 +45,19 @@ require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
 
-const getRepositoryObject = async (installationId, fullName) => {
 
+
+
+
+const getRepositoryObject = async () => {
+  
   const getRepositoryResponse = await api.post('/repositories/retrieve', {
-    installationId: installationId,
-    fullName: fullName
+    installationId: process.env.installationId,
+    fullName: process.env.repositoryFullName 
   });
   console.log('getRepositoryResponse: ');
   console.log(getRepositoryResponse.data);
-  var repoCommit = getRepositoryResponse.data.lastProcessedCommit;
+  var repoCommit = getRepositoryResponse.data.last_processed_commit;
   var repoId = getRepositoryResponse.data._id;
   return [repoId, repoCommit];
 };
@@ -58,14 +65,20 @@ const getRepositoryObject = async (installationId, fullName) => {
 const runValidation = async () => {
   var timestamp = Date.now().toString();    
   var repoDiskPath = 'git_repos/' + timestamp +'/';
-  const gitClone = spawnSync('git', ['clone', process.env.cloneUrl, repoDiskPath]);
+
+  var installToken = await tokenUtils.getInstallToken(process.env.installationId);
+
+
+  var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
+
+  const gitClone = spawnSync('git', ['clone', cloneUrl, repoDiskPath]);
 
   // Testing Values:
   // var head_commit = '7774441eb5e8bfaa8c151b2bc3a4f7e72ddc6ce5';
   // var repo_commit = '3a64c575cca6ed3e90bf6464ccc4f5a8814c9693';
   var repoId = '';
   var repoCommit = '';
-  [repoId, repoCommit] = await getRepositoryObject(process.env.installationId, process.env.process.env.repositoryFullName);
+  [repoId, repoCommit] = await getRepositoryObject(process.env.repositoryFullName);
 
   headCommit = process.env.headCommit;
 
@@ -115,9 +128,23 @@ const runValidation = async () => {
     // Iterate through commits and get the state of snippet files at the end
     var trackedFiles = getTrackedFiles(commitObjects, snippetFiles);
 
-    // Now we have the list of tracked files, {ref: path, sha: (commit), deleted: bool}
+    // Now we have the list of tracked files, {ref: path, oldRef (optional), sha: (commit), deleted: bool}
     console.log('Tracked Files');
     console.log(trackedFiles);
+
+    // Update snippet pathInRepository if it's file has moved
+    for(i = 0; i < trackedFiles.length; i++) {
+      if (trackedFiles[i].oldRef) {
+        snippetData = snippetData.map(snippetObj => {
+          if (snippetObj.pathInRepository == trackedFiles[i].oldRef) {
+            console.log('Update file from ', snippetObj.pathInRepository, ' to ', trackedFiles[i].ref);
+            snippetObj.pathInRepository = trackedFiles[i].ref;
+          }
+          return snippetObj;
+        });
+      }
+    }
+
     beginSnippetValidation(snippetData, trackedFiles, repoDiskPath);
 
 
@@ -196,15 +223,21 @@ const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
   */
 
   // Look for new regions for snippets that haven't been successfully validated
-  var snippetsToMove = snippetData.filter(snippetObj => !snippetObj.status);
-  for (i = 0; i < snippetsToMove.length; i++) {
+  // var snippetsToMove = snippetData.filter(snippetObj => snippetObj.status == SNIPPET_STATUS_INVALID);
+  
+  for (i = 0; i < snippetData.length; i++) {
     // {startLine: finalResult.idx, numLines: finalResult.size, status: 'NEW_REGION'}
-    snippetsToMove[i] = findNewSnippetRegion(snippetsToMove[i], lines);
+    if (snippetData[i].status == SNIPPET_STATUS_INVALID) {
+      console.log('Looking for new snippet region, idx: ', i);
+      snippetData[i] = findNewSnippetRegion(snippetData[i], lines);
+    }
   }
 
-  console.log('snippetsToMove: ');
-  console.log(snippetsToMove);
-
+  console.log('final snippetData: ');
+  console.log(snippetData);
+  return snippetData;
+  
+  // _id
 }
 
 module.exports = {

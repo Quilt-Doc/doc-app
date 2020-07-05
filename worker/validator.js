@@ -1,7 +1,7 @@
 const  { diff_match_patch }  = require('./lib/diff_match_patch');
 var dmp = new diff_match_patch();
 
-// Input Needed: Snippet Obj, File Content (Raw String), repository lastProcessedCommit (?? We don't need this here), 
+// Input Needed: Snippet Obj, File Content (Raw String), repository last_processed_commit (?? We don't need this here), 
 
 // TODO - Make sure that only first 3-4 lines of snippets can create a new snippet candidate region
 // TODO - Don't search the whole file for the new snippet regions, instead search some factor of `windowSize` around old region
@@ -182,7 +182,8 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   // We did not find any increasing subsequences
   if (Math.max(...windowMaxes) < 2) {
-    return {status: 'INVALID'};
+    snippetObj.status = SNIPPET_STATUS_INVALID;
+    return snippetObj;
   }
 
   var snippetCenterLine = ((snippetObj.startLine + snippetObj.numLines-1)/2);
@@ -208,7 +209,8 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   // There are no regions that meet threshold
   if (possibleRegions.length < 1) {
-    return { status: 'INVALID' };
+    snippetObj.status = SNIPPET_STATUS_INVALID;
+    return snippetObj;
   }
 
   // Get the region candidate with the best score

@@ -9,19 +9,19 @@ createReferences = (req, res) => {
     console.log('ref_list');
     console.log(ref_list);
     var ref_obj_list = ref_list.map(ref => {
-        var {name, kind, file, lineNum, link} = ref;
+        var {name, kind, path, lineNum, repository} = ref;
         if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no reference name provided'});
-        if (!typeof link == 'undefined' && link !== null) return res.json({success: false, error: 'no reference link provided'});
+        if (!typeof repository == 'undefined' && repository !== null) return res.json({success: false, error: 'no reference repository provided'});
 
         let reference = new Reference({
             name: name,
-            link: link
+            repository: ObjectId(repository)
 
         });
 
         if (lineNum) reference.lineNum = lineNum;
         if (kind) reference.kind = kind;
-        if (file) reference.file = file;
+        if (path) reference.path = path;
 
         return reference;
     })
@@ -36,16 +36,16 @@ createReferences = (req, res) => {
 
 getReferences = (req, res) => {
 
-    const { text, repoLink } = req.body;
+    const { text, repository } = req.body;
     var text_query = text;
 
 
-    if (!typeof repoLink == 'undefined' && repoLink !== null) return res.json({success: false, error: 'no reference repoLink provided'});
+    if (!typeof repository == 'undefined' && repository !== null) return res.json({success: false, error: 'no reference repository provided'});
     if (!(text)) {
         text_query = '';
     }
 
-    console.log('repoLink: ', repoLink);
+    console.log('repository: ', repository);
     console.log('text: ', text);
 
     var re = new RegExp(text, 'i');
@@ -53,8 +53,8 @@ getReferences = (req, res) => {
     Reference.find(
         {
             $and : [
-                { $or: [{ name: { $regex: re } }, { kind: { $regex: re } }, { file: { $regex: re } }] },
-                { link: repoLink }
+                { $or: [{ name: { $regex: re } }, { kind: { $regex: re } }, { path: { $regex: re } }] },
+                { repository: repository }
             ]
         }
         ).sort('kind').exec(function(err, references) {

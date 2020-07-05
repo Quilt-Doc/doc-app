@@ -66,6 +66,43 @@ getSnippet = (req, res) => {
         return res.json(snippet);
     });
 }
+/*
+    code: [String],
+    startLine: Number,
+    type: String,
+    pathInRepository: String,
+    repository: String,
+    status: String,
+*/
+
+/*
+{pathInRepository: ,
+    _id: ,
+    startLineNum: ,
+    numLines: ,
+    firstLine: snippetObj.code[0], endLine: snippetObj.code[snippetObj.code.length-1]
+    }
+*/
+
+
+
+refreshSnippets = (req, res) => {
+    const { updates } = req.body;
+    const bulkOps = updates.map(update => ({
+        updateOne: {
+            filter: { _id: ObjectId(update._id) },
+            // Where field is the field you want to update
+            // startLine, code, 
+            update: { $set: { code: update.code, pathInRepository: update.pathInRepository, startLine: update.startLineNum } },
+            upsert: true
+         }
+     }));
+   // where Model is the name of your model
+   return Snippet.collection
+       .bulkWrite(bulkOps)
+       .then(results => res.json(results))
+       .catch(err => console.log('Error refreshing snippets: ', err));
+  };
 
 editSnippet = (req, res) => {
     const { id } = req.params;
@@ -195,4 +232,4 @@ removeDocument = (req, res) => {
 }
 
 module.exports = { createSnippet, getSnippet, editSnippet, deleteSnippet, 
-    retrieveSnippets, attachDocument, removeDocument, attachFolder, removeFolder }
+    retrieveSnippets, attachDocument, removeDocument, attachFolder, removeFolder, refreshSnippets }
