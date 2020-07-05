@@ -6,7 +6,7 @@ import styled from "styled-components";
 //components
 import TextEditorView from './Text Editor Page/TextEditorView';
 import RepositoryNavigation from './RepositoryNavigation';
-import RepositoryView from './Repository Page/RepositoryView';
+//import RepositoryView from './Repository Page/RepositoryView';
 import SideNavbar from './SideNavbar';
 import DocumentCreationView from './Document Creation Page/DocumentCreationView';
 import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
@@ -45,7 +45,6 @@ class SpaceView extends React.Component {
                         <Switch history = {history}>
                             <Route path = "/request" component = {RequestView} />
                             <Route path = "/coverage" component = {RepositoryCoverageView} />
-                            <Route exact path = "/repository" component = {RepositoryView} />
                             <Route path = "/repository" component = {RepositoryNavigation}/>
                             <Route path = "/document/:documentID" component = { TextEditorView } />
                         </Switch>

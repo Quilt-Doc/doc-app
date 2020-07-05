@@ -6,6 +6,7 @@ import SpaceView from './Space Page/SpaceView';
 import Bucket from './General Components/Top Navbar/Bucket'
 import NavbarProfile from './Top Navbar/NavbarProfile';
 import UserSettingsView from './Settings Pages/UserSettingsView';
+import WorkspaceView from './Workspace Page/WorkspaceView';
 
 //styles
 import styled from "styled-components";
@@ -45,8 +46,9 @@ const Dashboard = () => {
                     goLogout = {goLogout}
                 />
             </TopNav>
+            <WorkspaceView/>
             {/*<UserSettingsView/>*/}
-            <SpaceView/>
+            {/*<SpaceView/>*/}
         </Container>
     )
 }

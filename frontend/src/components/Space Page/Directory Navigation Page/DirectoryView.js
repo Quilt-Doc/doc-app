@@ -104,12 +104,11 @@ class DirectoryView extends React.Component {
         if (true) {
             return (
                     
-                        
                         <DirectoryContainer>
                             <ListToolBar>
                                 <ListName>apis</ListName>
                                 <IconBorder
-                                        marginLeft = {"100rem"}
+                                        marginLeft = {"69rem"}
                                 >
                                     <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
                                 </IconBorder>
@@ -136,16 +135,16 @@ export default withRouter(connect(mapStateToProps, { refreshRepositoryPathNew, g
 
 
 const Container = styled.div`
-    background-color:  white;
+    background-color:  #F7F9FB;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+    padding: 3rem;
 `
 
 const DirectoryContainer = styled.div`
     display: flex;
     flex-direction: column;
     background-color: white;
-    width: 115rem;
-    margin: 0 auto;
+    width: 85rem;
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     padding-bottom: 0.3rem;
     border: 1px solid #DFDFDF;

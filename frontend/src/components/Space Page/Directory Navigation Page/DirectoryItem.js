@@ -158,7 +158,8 @@ const ListItem = styled.div`
     padding-right: 2rem;
     transition: background-color 0.1s ease-in;
     &:hover {
-        background-color: #F4F4F6; 
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+       /* background-color: #F4F4F6; */
     }
     color: #172A4E;
     cursor: pointer;
@@ -177,12 +178,12 @@ const ItemName = styled.div`
 const ProgressContainer = styled.div`
     display: flex;
     flex-direction: column;
-    width: 20rem;
-    margin-right: 35rem;
+    width: 19rem;
+    margin-right: 10rem;
 `
 
 const ProgressBar = styled.div`
-    width: 23rem;
+    width: 17rem;
     height: 0.65rem;
     border-radius: 12rem;
     display: flex;

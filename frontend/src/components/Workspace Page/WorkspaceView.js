@@ -4,17 +4,17 @@ import React from 'react';
 import styled from "styled-components"
 
 //images
-import repoIcon1 from '../../../images/repo1.svg'
-import repoIcon2 from '../../../images/repo2.svg'
-import repoIcon3 from '../../../images/repo3.svg'
-import repoIcon4 from '../../../images/repo4.svg'
-import repoIcon5 from '../../../images/repo5.svg'
-import repoIcon6 from '../../../images/repo6.svg'
-import repoIcon7 from '../../../images/repo7.svg'
-import repoBackground from '../../../images/repoBackground.svg'
+import repoIcon1 from '../../images/repo1.svg'
+import repoIcon2 from '../../images/repo2.svg'
+import repoIcon3 from '../../images/repo3.svg'
+import repoIcon4 from '../../images/repo4.svg'
+import repoIcon5 from '../../images/repo5.svg'
+import repoIcon6 from '../../images/repo6.svg'
+import repoIcon7 from '../../images/repo7.svg'
+import repoBackground from '../../images/repoBackground.svg'
 
 //actions
-import { createRepository, retrieveRepositories, updateRepositoryCommit} from '../../../actions/Repository_Actions'
+import { createRepository, retrieveRepositories, updateRepositoryCommit} from '../../actions/Repository_Actions'
 
 // Old
 // import {getRepositoryRefs} from '../../actions/Repository_Actions';
@@ -26,7 +26,7 @@ import { Link } from 'react-router-dom';
 //misc
 import { connect } from 'react-redux';
 
-class RepositoryView extends React.Component {
+class WorkspaceView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -52,20 +52,20 @@ class RepositoryView extends React.Component {
         let repositoriesJSX = []
         this.props.repositories.map((repository, i) => {
             repositoriesJSX.push(
-                <Link key = {i} to = {this.renderLink(repository._id)}><RepoBox onClick = {() => {console.log(repository.link)}}>
+                <Link key = {i} to = {this.renderLink(repository._id)}><WorkspaceBox onClick = {() => {console.log(repository.link)}}>
                     <StyledIcon src = {icons[repository.icon]}/>
                     {repository.name}
-                </RepoBox></Link>
+                </WorkspaceBox></Link>
             )
             return
         })
 
         this.count = repositoriesJSX.length
 
-        repositoriesJSX.push( <RepoBox opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
-                                <ion-icon style={{'fontSize':'6rem', 'marginBottom': '0.45rem'}} name="add-outline"></ion-icon>
-                                Add New Repository
-                            </RepoBox>
+        repositoriesJSX.push( <WorkspaceBox fd = {"row"} opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
+                                <ion-icon style={{'fontSize':'2rem', 'marginRight': '0.5rem'}} name="add-outline"></ion-icon>
+                                Add Workspace
+                            </WorkspaceBox>
         )
         
         let allJSX = []
@@ -98,27 +98,19 @@ class RepositoryView extends React.Component {
         if (this.props.repositories){
             return (
                 <Container>
-                    <Header>Repositories</Header>
+                    <Header>Workspaces</Header>
                     <RepoContainer>
                         {this.renderRepositories()}
                     </RepoContainer>
                     <ModalBackground onClick = {() => this.clearModal()} display = {this.state.modalDisplay}>
                         <ModalContent onClick = {(e) => e.stopPropagation()}>
-                            <ModalHeader>Link to a Repository</ModalHeader>
-                            <ModalContainer>
-                                <FormsContainer>
-                                    <FormContainer>
-                                        <FormHeader>Repository Address</FormHeader>
-                                        <StyledInput ref={this.addressInput} placeholder = {'github.com/repository-address'}  />
-                                    </FormContainer>
-                                    <FormContainer>
-                                        <FormHeader>Repository Name</FormHeader>
-                                        <StyledInput ref={this.nameInput} placeholder = {'repository-address'}  />
-                                    </FormContainer>
-                                    <SubmitButton onClick = {() => this.createRepository()}>CREATE</SubmitButton>
-                                </FormsContainer>
-                                <ModalImage/>
-                            </ModalContainer>
+                            <ModalHeader>Search for a Workspace</ModalHeader>
+                            <Title>Enter a username and workspace combination </Title>
+                            <SearchbarWrapper>
+                                <ion-icon style = {{'fontSize': '2.2rem', 'marginRight': '1rem'}} name="search-outline"></ion-icon>
+                                <Searchbar placeholder = {"@username/workspace"} />
+                            </SearchbarWrapper>
+                            <SubmitButton width = {"9rem"} marginTop = {"3rem"}>Request</SubmitButton>
                         </ModalContent>
                     </ModalBackground>
                 </Container>
@@ -128,40 +120,79 @@ class RepositoryView extends React.Component {
     }
 }
 
+
 const mapStateToProps = (state) => {
     return {
         repositories: Object.values(state.repositories.repositories)
     }
 }
 
-export default connect(mapStateToProps, {createRepository, retrieveRepositories, updateRepositoryCommit})(RepositoryView);
+export default connect(mapStateToProps, {createRepository, retrieveRepositories, updateRepositoryCommit})(WorkspaceView);
+/*
+ <ModalHeader>Add a Workspace</ModalHeader>
+                            <ModalContainer>
+                                <FormsContainer>
+                                    <WorkspaceOption>
+                                        <ion-icon style = {{'fontSize': '2.2rem', 'marginRight': '1rem'}} name="search-outline"></ion-icon>
+                                        Search for an existing Workspace
+                                    </WorkspaceOption>
+                                    <WorkspaceOption>
+                                        <ion-icon style = {{'fontSize': '2.7rem', 'marginRight': '0.6rem'}} name="add-outline"></ion-icon>
+                                        Create a new Workspace
+                                    </WorkspaceOption>
+                                </FormsContainer>
+                                <ModalImage/>
+                            </ModalContainer>*/
+//VIEW 2
+const SearchbarWrapper = styled.div`
+    height: 4.5rem;
+    padding: 1rem;
+    width: 55rem;
+    border: 2px solid #DFDFDF;
+    border-radius: 0.3rem;
+    display: flex;
+    align-items: center;
+`
 
+const Searchbar = styled.input`
+    outline: none;
+    height: 3rem;
+    font-size: 1.5rem;
+    color: #172A4E;
+    border: none;
+    width: 50rem;
+`
 
+const Title = styled.div`
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    margin-top: 12rem;
+    color: #172A4E;
+`   
+
+//
 const StyledIcon = styled.img`
     width: 5rem;
     margin-bottom: 1.5rem;
 `
 
 const Header = styled.div`
-    font-size: 3.5rem;
+    font-size: 2.5rem;
     color: #172A4E;
-    font-weight: bold;
-    letter-spacing: 0.1rem;
+    margin-bottom: 5rem;
 `
 
 const Container = styled.div`
-    width: 110rem;
     margin: 0 auto;
-    margin-top: 7rem;
+    margin-top: 4rem;
 `
 
 const RepoContainer = styled.div`
-    background-color: rgba(244, 244, 246, 0.7);
+    background-color:  #F7F9FB;
     margin-top: 3rem;
     display: flex;
     flex-direction: column;
     border-radius: 0.3rem;
-    width: 98rem;
     padding-bottom: 4rem;
 `
 
@@ -170,17 +201,18 @@ const RepoRow = styled.div`
     margin-top: 4rem;
 `
 
-const RepoBox = styled.div`
+const WorkspaceBox = styled.div`
     background-color: white;
     margin-left: 4.5rem;
     margin-right: 4rem;
+    position: relative;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 24rem;
-    height: 17rem;
+    width: 21rem;
+    height: 14rem;
     display: flex;
     border-radius: 5px;
     transition: box-shadow 0.1s ease, transform 0.1s ease;
@@ -191,9 +223,10 @@ const RepoBox = styled.div`
     }
     font-size: 1.5rem;
     color: #172A4E;
-    font-weight: bold;
+    
     opacity: ${props => props.opacity};
-`
+    flex-direction: ${props => props.fd};
+`   
 
 
 // Modal
@@ -236,10 +269,8 @@ const ModalImage = styled.div`
     background-size: cover;
 `
 const ModalHeader = styled.div`
-    font-size: 4rem;
+    font-size: 2.5rem;
     color: #172A4E;
-    font-weight:bold;
-    letter-spacing: 0.1rem;
 `
 
 const StyledInput = styled.input`
@@ -275,12 +306,30 @@ const FormHeader = styled.div`
 const FormsContainer = styled.div`
     display: flex;
     flex-direction: column;
-    margin-top: 6rem;
+    margin-top: 16rem;
+`
+
+const WorkspaceOption = styled.div`
+    font-size: 1.6rem;
+    color: #172A4E;
+    height: 3rem;
+    padding: 3rem;
+    border: 1px solid #D7D7D7;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    border-radius: 0.7rem;
+    width: 35rem;
+    cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6;
+    }
+
 `
 
 const SubmitButton = styled.div`
     margin-top: 4.5rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
     width: 7.7rem;
     display: inline-block;
     text-transform: uppercase;
@@ -293,5 +342,6 @@ const SubmitButton = styled.div`
         background-color: #19E5BE;
     }
     cursor: pointer;
-    
+    width: ${props => props.width};
+    margin-top: ${props => props.marginTop};
 `
