@@ -1,4 +1,35 @@
+// MODAL STORAGE
+const ModalBackground = styled.div`
+   
+position: fixed; /* Stay in place */
+z-index: 10000; /* Sit on top */
+left: 0;
+top: 0;
+width: 100%; /* Full width */
+height: 100%; /* Full height */
+overflow: hidden; /* Enable scroll if needed */
+background-color: rgb(0,0,0); /* Fallback color */
+background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+display: ${props => props.display};
+`
 
+/* Modal Content/Box */
+const ModalContent = styled.div`
+background-color: #fefefe;
+margin: 7% auto; /* 15% from the top and centered */
+padding: 5rem;
+padding-bottom: 2rem;
+border: 1px solid #888;
+width: 73vw; /* Could be more or less, depending on screen size */
+height: 50rem;
+border-radius: 5px;
+box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
+display: flex;
+flex-direction: column;
+max-width: 96rem;
+`
+
+//COLOR LINES FUNCTION CODEVIEW STORAGE
     const colorLines = () => {
         const grammar = Prism.languages["python"]
         const identifiers = {

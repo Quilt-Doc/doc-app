@@ -12,6 +12,10 @@ import repoIcon5 from '../../images/repo5.svg'
 import repoIcon6 from '../../images/repo6.svg'
 import repoIcon7 from '../../images/repo7.svg'
 import repoBackground from '../../images/repoBackground.svg'
+import gitlabIcon from '../../images/gitlab.svg'
+
+//components
+import WorkspaceModal from './Add Workspace Modal/WorkspaceModal';
 
 //actions
 import { createRepository, retrieveRepositories, updateRepositoryCommit} from '../../actions/Repository_Actions'
@@ -102,17 +106,10 @@ class WorkspaceView extends React.Component {
                     <RepoContainer>
                         {this.renderRepositories()}
                     </RepoContainer>
-                    <ModalBackground onClick = {() => this.clearModal()} display = {this.state.modalDisplay}>
-                        <ModalContent onClick = {(e) => e.stopPropagation()}>
-                            <ModalHeader>Search for a Workspace</ModalHeader>
-                            <Title>Enter a username and workspace combination </Title>
-                            <SearchbarWrapper>
-                                <ion-icon style = {{'fontSize': '2.2rem', 'marginRight': '1rem'}} name="search-outline"></ion-icon>
-                                <Searchbar placeholder = {"@username/workspace"} />
-                            </SearchbarWrapper>
-                            <SubmitButton width = {"9rem"} marginTop = {"3rem"}>Request</SubmitButton>
-                        </ModalContent>
-                    </ModalBackground>
+                    <WorkspaceModal 
+                        clearModal = {() => this.clearModal()}
+                        modalDisplay = {this.state.modalDisplay}
+                    />
                 </Container>
             )
         }
@@ -128,21 +125,123 @@ const mapStateToProps = (state) => {
 }
 
 export default connect(mapStateToProps, {createRepository, retrieveRepositories, updateRepositoryCommit})(WorkspaceView);
-/*
- <ModalHeader>Add a Workspace</ModalHeader>
-                            <ModalContainer>
-                                <FormsContainer>
-                                    <WorkspaceOption>
-                                        <ion-icon style = {{'fontSize': '2.2rem', 'marginRight': '1rem'}} name="search-outline"></ion-icon>
-                                        Search for an existing Workspace
-                                    </WorkspaceOption>
-                                    <WorkspaceOption>
-                                        <ion-icon style = {{'fontSize': '2.7rem', 'marginRight': '0.6rem'}} name="add-outline"></ion-icon>
-                                        Create a new Workspace
-                                    </WorkspaceOption>
-                                </FormsContainer>
-                                <ModalImage/>
-                            </ModalContainer>*/
+
+
+// VIEW 4
+
+
+/**/
+                                   
+const RepositoryContainer = styled.div`
+    margin: 2rem auto; 
+    width: 30rem;
+    border-radius: 0.3rem;
+    border: 1px solid #D7D7D7;
+    display: flex;
+    flex-direction: column;
+    color: #172A4E;
+`
+
+const ListToolBar = styled.div`
+    height: 4.5rem;
+    display: flex;
+    border-bottom: 1px solid #EDEFF1;
+    align-items: center;
+`
+
+const RepositoryList = styled.div`
+    display: flex; 
+    flex-direction: column;
+    overflow-y: scroll;
+    height: 20rem;
+`
+
+const ListName = styled.div`
+    margin-left: 2rem;
+    color: #172A4E;
+    font-size: 1.7rem;
+    font-weight: 300;
+    margin-right: 13rem;
+`
+
+
+
+const Check_Box_Border = styled.div`
+    height: 4rem;
+    width: 4rem;
+    margin-right: 1rem;
+    &:hover {
+        background-color: #F4F4F6;
+    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+`
+
+const Check_Box = styled.div`
+    height: 1.6rem;
+    width: 1.6rem;
+    background-color: white;
+    border: 1.3px solid ${props => props.border_color};
+    border-radius: 0.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    &:hover {
+
+    }
+`
+
+const Repository = styled.div`
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    color: #172A4E;
+`
+//
+
+//VIEW 3
+
+const FieldName = styled.div`
+    color: #172A4E;
+    margin-top: 4rem;
+    margin-bottom: 1rem;
+    margin-top: ${props => props.marginTop};
+`
+
+const Text = styled.div`
+    margin-top: 0.25rem;
+`
+
+
+
+const ConnectButton = styled.div`
+    border: 1px solid #1BE5BE;
+    color: #172A4E;
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    width: 25rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.7rem;
+
+    &:hover {
+        background-color:  #F7F9FB;
+    }
+`
+
+const IconBorder = styled.div`
+    display: flex;
+    align-items: center;
+    jusify-content: center;
+    width: 3.5rem;
+    height: 3rem;
+    margin-right: 2rem;
+`
 //VIEW 2
 const SearchbarWrapper = styled.div`
     height: 4.5rem;
@@ -268,6 +367,7 @@ const ModalImage = styled.div`
     background-image: url(${repoBackground});
     background-size: cover;
 `
+
 const ModalHeader = styled.div`
     font-size: 2.5rem;
     color: #172A4E;
@@ -330,8 +430,9 @@ const WorkspaceOption = styled.div`
 const SubmitButton = styled.div`
     margin-top: 4.5rem;
     padding: 0.75rem;
-    width: 7.7rem;
+    width: 7.8rem;
     display: inline-block;
+    align-self: flex-end;
     text-transform: uppercase;
     letter-spacing: 2px;
     border-radius: 0.4rem;
