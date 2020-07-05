@@ -4,9 +4,9 @@ const { ObjectId, Mixed } = Schema.Types;
 
 
 var referenceSchema = new Schema({
-	name: String,
-	kind: String,
-	path: String,
+	name: {type: String, index: true, required: true},
+	kind: {type: String, index: true, required: true},
+	path: {type: String, index: true, required: true},
 	description: String,
 	lineNum: Number,
 	position: String,
