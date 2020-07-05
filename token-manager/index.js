@@ -1,4 +1,7 @@
 require('dotenv').config();
+const fs = require('fs');
+var jwt = require('jsonwebtoken');
+
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -52,7 +55,8 @@ createJWTToken = () => {
     
     var newToken = {
         value: jwt.sign(payload, private_key, { algorithm: 'RS256' }),
-        expireTime: expirationTime,
+        // put back into milliseconds
+        expireTime: expirationTime * 1000,
     }
 
     return newToken;
@@ -66,33 +70,43 @@ const insertNewAppToken = () => {
     newToken.status = 'RESOLVED';
     
     newToken = Token(newToken);
+    console.log('save() in insertNewAppToken');
     newToken.save((err, token) => {
         if (err) {
             console.log('Error saving newToken: ', err);
             return token;
         }
     });
+    return newToken;
 }
 
-const updateAppToken = (oldToken) => {
+const updateAppToken = async (oldToken) => {
+    console.log('updateAppToken received: ');
+    console.log(oldToken);
     var newToken = createJWTToken();
 
     oldToken.value = newToken.value;
     oldToken.expireTime = newToken.expireTime;
     oldToken.status = 'RESOLVED';
-
-    oldToken.save(function (err) {
+    console.log('save() in updateAppToken()');
+    return await Token.findOneAndUpdate({ _id: oldToken._id}, {$set: {value: newToken.value, expireTime: newToken.expireTime, status: oldToken.status}});
+    /*oldToken.save(function (err) {
         if(err) {
-            console.error('Error updating expiring app token');
+            console.error('Error updating app token: ');
+            console.error(err);
         }
     });
 
+    console.log('updateAppToken saved: ');
+    console.log(oldToken);*/
+
 }
-const getNewInstallToken = async (tokenModel, config) => {
-    installationApi.post(tokenModel.installationId + "/access_tokens", config)
+const getNewInstallToken = async (tokenModel, installationApi) => {
+    installationApi.post(tokenModel.installationId + "/access_tokens")
         .then((response) => {
             var newToken = response.data;
-            newToken = {token: newToken.token, expireTime: Date.parse(newToken.expires_at)};
+            newToken = {value: newToken.token, expireTime: Date.parse(newToken.expires_at)};
+
             return newToken;
         })
         .catch((error) => {
@@ -101,39 +115,44 @@ const getNewInstallToken = async (tokenModel, config) => {
         });
 }
 
+const getAppToken = async () => {
+    return await Token.findOneAndUpdate({'type': 'APP', 'status': 'RESOLVED'}, {$set: {'status': 'UPDATING'}})
+                .catch(err => {
+                    console.log('Error finding app token: ');
+                    console.log(err);
+                    return;
+                });
+}
 
-cron.schedule('* * * * *', () => {
+
+cron.schedule('* * * * *', async () => {
     console.log('running a task every minute');
 
     // App Token Section START ------
     var retrievedToken = undefined;
     var currentTime = new Date().getTime();
-    curentTime = Math.round(now  / 1000);
+    // curentTime = Math.round(currentTime  / 1000);
 
     var currentAppToken = undefined;
 
-    Token.updateOne({'type': 'APP', 'status': 'RESOLVED'}, {'$set': {"status": "UPDATING"}}, function (err, foundToken) {
-        if (err) {
-            console.log('Error finding app access token: ');
-            console.log(err);
-            return;
-        }
-        retrievedToken = foundToken;
-    });
+    retrievedToken = await getAppToken();
 
     // If app token does not exist.
-    if (typeof retrievedToken == 'undefined') {
+    if (!retrievedToken) {
+        console.log('Inserting new app token')
         currentAppToken = insertNewAppToken();
     }
     else {
-
+        
         // If app token expiring within 3 minutes
-        if ((retrievedToken.expireTime - currentTime) < (60*3)) {
-            currentAppToken = updateAppToken(retrievedToken);
+        if ((retrievedToken.expireTime - currentTime) < (60*3*1000)) {
+            console.log('Updating app token');
+            currentAppToken = await updateAppToken(retrievedToken);
         }
 
         // If the app token is valid
         else {
+            console.log('Did nothing, setting appToken back to valid')
             Token.updateOne({'type': 'APP', 'status': 'UPDATING'}, {'$set': {"status": "RESOLVED"}}, function(err, foundToken) {
                 if (err) {
                     console.log('Error setting app token status back to resolved: ');
@@ -145,45 +164,74 @@ cron.schedule('* * * * *', () => {
             currentAppToken = retrievedToken;
         }
     }
+
+    // replace newlin, carriage-return, etc
+    const regex = /\r?\n|\r/g;
+
+    currentAppToken.value = currentAppToken.value.replace(regex, '');
     // App Token Section END ------
 
     const axios = require('axios');
     var installationApi = axios.create({
         baseURL: "https://api.github.com/installations/",
-    });
-    
-    let config = {
         headers: {
-          Authorization: "Bearer " + currentAppToken,
-          Accept: "application/vnd.github.machine-man-preview+json"
-        }
-    }
+            Authorization: "Bearer " + currentAppToken.value,
+            Accept: "application/vnd.github.machine-man-preview+json"
+          }
+    });
+ 
 
 
     // Find install tokens whose expiration time is less than 3 minutes from now and which are not being updated currently.
-    Token.updateMany({'type': 'INSTALL', 'expireTime': { $lte: (currentTime + (60*3))}, 'status': 'RESOLVED'}, {"$set":{"status": 'UPDATING'}}, function (err, installTokens) {
+    Token.find({'type': 'INSTALL', 'expireTime': { $lte: (currentTime + (60*3*1000))}, 'status': 'RESOLVED'}, async function (err, installTokens) {
         if (err) {
             console.log('Error fetching install tokens');
             console.log(err);
             return;
         }
 
+        var i = 0;
 
-        var newTokens = installTokens.map(tokenModel => {
-            return getNewInstallToken(tokenModel, config);
+        for (i = 0; i < installTokens.length; i++) {
+            installTokens[i].status = 'UPDATING';
+            installTokens[i].save();
+        }
+
+        console.log('installTokens: ');
+        console.log(installTokens);
+        var newTokens = installTokens.map(async (tokenModel) => {
+            return await getNewInstallToken(tokenModel, installationApi);
         });
 
         // Now `newTokens` should have all of our new tokens
-        await Promise.all(newTokens).then((results) => {
+        const results = await Promise.all(newTokens);/*.then((results) => {
             console.log('Token Request Results: ');
             console.log(results);
-        });
+
+        });*/
 
         // TODO: Update DB with new tokens
+        const bulkOps = results.map(tokenObj => ({
+            updateOne: {
+                filter: { installationId: tokenObj.installationId },
+                // Where field is the field you want to update
+                update: { $set: { value: tokebObj.value, expireTime: tokenObj.expireTime, status: 'RESOLVED' } },
+                upsert: true
+                }
+            }));
+           // where Model is the name of your model
+        if (bulkOps.length > 0) {
+            console.log('Bulk writing tokens');
+            return Token.collection
+                .bulkWrite(bulkOps)
+                .then(results => res.json(results))
+                .catch(err => {
+                    console.log('Error refreshing tokens: ', err);
+                    res.json({success: false, error: err});
+                });
+        }
 
-        
-
-        console.log("This shouldn't print before 'Token Request Results.'");
+        console.log("Finished.");
 
     });
 

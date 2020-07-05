@@ -7,7 +7,7 @@ var tokenSchema = new Schema({
     value: String,
     expireTime: Number,
     type: String,
-    status: String,
+    status: {type: String, default: 'RESOLVED'}
 });
 
 var Token = mongoose.model("Token", tokenSchema);
