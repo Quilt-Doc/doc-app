@@ -1,7 +1,7 @@
 const Token = require('../models/Token');
 
 const getInstallToken = async (installationId) => {
-    return await Token.findOne({ installationId })
+    return await Token.findOne({ installationId, type: 'INSTALL' })
     .then( token => {
         return token;
     })

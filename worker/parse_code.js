@@ -36,11 +36,37 @@ const MEMBER_KINDS = ['define', 'property', 'event', 'variable', 'typedef', 'enu
 'enumvalue', 'function', 'signal', 'prototype', 'friend', 'dcop', 'slot'];
 
 
-getRefs = () => {
+const getParseableTree = async () => {
+
+    var treeReferences = await Reference.find({repository: ObjectId(process.env.repositoryId), kind: 'file'}).catch(err => console.log('Error getting tree references: ', err));
+    var parseLevelLookup = {};
+    var i;
+    for (i = 0; i < treeReferences.length; i++) {
+	var treeReference = treeReferences[i];
+	var newObj = {};
+	var semanticParsed = false;
+	if (treeReference.parseProvider) {
+	    if (treeReference.parseProvider == 'semantic') {
+		semanticParsed = true;
+	   }
+	}
+	parseLevelLookup[treeReference.path] =  semanticParsed;
+    }
+    console.log('parseLevelLookup: ');
+    console.log(parseLevelLookup);
+    return parseLevelLookup
+
+}
+
+
+
+getRefs = async () => {
 
     var worker = require('cluster').worker;
 
     worker.send({receipt: process.env.receipt})
+
+    var parseLevelLookup = await getParseableTree();
 
     var repositoryId = process.env.repositoryId;
     var installToken = await tokenUtils.getInstallToken(process.env.installationId);
@@ -121,23 +147,26 @@ getRefs = () => {
                         // console.log(target_files);
 
                         func(target_files)
-                            .then(results =>  {
+                            .then((results) =>  {
                                 // console.log('target file called');
                                 // console.log(res);
-                                results.forEach( function(read_file, file_num) {
+                                results.forEach( async function(read_file, fileNum) {
                                     var xmlDoc = default_parser.parseFromString(read_file.toString(), "text/xml");
                                     var compound_defs = xmlDoc.getElementsByTagName("compounddef");
-
-
-                                    target_refs.forEach(function (i, k) {
+                                    
+				    target_refs.forEach(function (i, k) {
                                         var found_element = xmlDoc.getElementById(i['$']['refid']);
                                         var location = ''
                                         var file = ''
                                         var name = ''
                                         var kind = ''
-
-                                        if (found_element) {
+					
+                                        if (found_element ) {
                                             kind = found_element.getAttribute('kind');
+					    if (kind == 'file' || kind == 'dir') {
+						console.log('skipping doxygen file/dir');
+					    }
+					    else {
                                             if (found_element.tagName === 'compounddef') {
                                                 x = found_element.childNodes;
                                                 // console.log('found compounddef');
@@ -170,12 +199,22 @@ getRefs = () => {
                                             // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
 
                                             // Remove our local directories where we placed git repo contents
+					    file = file.substring(file.indexOf('git_repos'));
+						
                                             file = file.substring(file.indexOf('/')+1);
                                             file = file.substring(file.indexOf('/')+1);
+				    	    console.log('Lookup Key: ', file);
+				            // if not a function or class for a semanticParsed file
+					    if (!(parseLevelLookup[file] && (kind == 'function' || kind == 'class'))) {
+                                                found_refs.push({name: name, kind: kind, path: file, lineNum: location, repository: repositoryId})
+					    }
+					    else {
+						console.log('Skipping ref');
+					    }
+					  }
 
-                                            found_refs.push({name: name, kind: kind, path: file, location: location, repository: repositoryId})
-                                        }
-                                    })
+				        }
+                                    });
                                 });
                                 console.log('END FOUND_REFS');
                                 // console.log(found_refs);
@@ -235,13 +274,12 @@ createReferences = (refList, worker) => {
 
         if (lineNum) reference.lineNum = lineNum;
         if (kind) reference.kind = kind;
-        if (file) reference.file = file;
-
+	reference.parseProvider = 'doxygen';
         return reference;
     })
 
     console.log('REF OBJ LIST');
-    // console.log(refObjList);
+    console.log(refObjList);
     Reference.create( refObjList, (err, reference) => {
         if (err) {
             console.log('Error: ', err);

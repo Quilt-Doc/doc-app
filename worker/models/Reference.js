@@ -5,9 +5,12 @@ const { ObjectId, Mixed } = Schema.Types;
 var referenceSchema = new Schema({
 	name: String,
 	kind: String,
-	file: String,
+	path: String,
 	lineNum: Number,
-	link: String,
+	position: String,
+	description: String,
+	parseProvider: String,
+	repository: {type: ObjectId, ref: 'Repository'},
 	created: {type: Date, default: Date.now }
 });
 
