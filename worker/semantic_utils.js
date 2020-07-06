@@ -10,6 +10,7 @@ const fs = require ('fs');
 const api = require('./apis/api').requestBackendClient();
 const spawn = require('await-spawn')
 const Reference = require('./models/Reference');
+const Repository = require('./models/Repository');
 
 const jobs = require('./apis/jobs');
 
@@ -46,6 +47,12 @@ const getRepositoryObject = async () => {
     // var repoCommit = getRepositoryResponse.data.last_processed_commit;
     // return [repoId, repoCommit];
 };
+
+const updateJobStatus = async (status) => {
+
+    return await Repository.updateOne({installationId: process.env.installationId, fullName: process.env.fullName}, {$set: {semanticJobStatus: status}});
+
+}
 
 const escapeShell = (cmd) => {
         return '"'+cmd.replace('"', '\\"')+'"';//.replace(/(["\s'$`\\])/g,'\\$1')+'"';
@@ -227,8 +234,11 @@ const execSemantic = async () =>  {
                 }
                 
                 if (finalReferenceList.length > 0) {
-                    Reference.insertMany(finalReferenceList)
-                                    .select('kind name')
+                    const insertedIds = await Reference.insertMany(finalReferenceList);
+
+                    console.log('inserted Ids: ');
+                    console.log(insertedIds);
+                                    /*.select('kind name')
                                     .exec(function(err, refList) {
                                         console.log('Semantic successfully inserted found references');
                                         console.log('insertMany refList[0]: ');
@@ -269,7 +279,7 @@ const execSemantic = async () =>  {
                                                 console.log('Error refreshing tokens: ', err);
                                                 console.log({success: false, error: err});
                                             });
-                                    });
+                                    });*/
                 }
 
                 else {
@@ -291,7 +301,6 @@ const execSemantic = async () =>  {
 
         
 
-
                 //DOXYGEN
                 // SQS Message Section Start
                 var runDoxygenData = {
@@ -305,6 +314,8 @@ const execSemantic = async () =>  {
                 console.log(runDoxygenData);
 
                 jobs.dispatchDoxygenJob(runDoxygenData);
+
+                updateJobStatus('FINISHED');
                 
                 //console.log(output)
                 /*const removeContent = execFile("rm", ["-r", repoName],
