@@ -13,10 +13,14 @@ var repositorySchema = new Schema({
 	cloneUrl: String,
 	created: {type: Date, default: Date.now },
 	icon: Number,
-
-	//DEPRECATED
-	references: [{type: ObjectId, ref: 'Reference', index: true}]
+	
+	references: [{type: ObjectId, ref: 'Reference', index: true}],
+	refreshingReferences: {type: Boolean, default: false},
+	// "RUNNING", "FINISHED", "ERROR"
+	doxygenJobStatus: String,
+	semanticJobStatus: String,
 });
+
 
 var Repository = mongoose.model("Repository", repositorySchema);
 

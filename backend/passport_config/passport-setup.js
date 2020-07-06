@@ -40,8 +40,10 @@ passport.use(
                     done(null, user);
                 }
             }
-            let updatedUser = await User.findByIdAndUpdate(currentUser._id, { accessToken, refreshToken }, { new: true })
-            done(null, updatedUser)
+            else {
+                let updatedUser = await User.findByIdAndUpdate(currentUser._id, { accessToken, refreshToken }, { new: true })
+                done(null, updatedUser)
+            }
         }
     )
 )

@@ -193,6 +193,7 @@ const execSemantic = async () =>  {
                     }
                 }
 
+
                 console.log('parsedFiles: ');
                 console.log(parsedFiles);
 
@@ -224,17 +225,72 @@ const execSemantic = async () =>  {
                             console.log({success: false, error: err});
                         });
                 }
+                
+                if (finalReferenceList.length > 0) {
+                    Reference.insertMany(finalReferenceList)
+                                    .select('kind name')
+                                    .exec(function(err, refList) {
+                                        console.log('Semantic successfully inserted found references');
+                                        console.log('insertMany refList[0]: ');
+                                        console.log(refList[0]);
 
-		// insert new references
-                Reference.insertMany(finalReferenceList, (errInsertItems, semanticReferences) => {
+                                        var finalDefinitionList = refList.filter(referenceObj => referenceObj.kind != 'Call');
+                                        var finalCallList = refList.filter(referenceObj => referenceObj.kind == 'Call');
+                                        // Set up initial reference links 
+                                        finalCallList = finalCallList.map(callObj => {
+                                                callObj.definitionReferences = [];
+                                        });
+
+                                        var finalLinkedCallsList = [];
+                        
+                                        for(i = 0; i < finalDefinitionList.length; i++) {
+                                            var currentDefObj = finalDefinitionList[i];
+                                            var relatedCalls = finalCallList.filter(callObj => callObj.name == currentDefObj.name);
+                                            relatedCalls = relatedCalls.map(callObj => {
+                                                callObj.definitionReferences.push(currentDefObj._id.toString());
+                                                return callObj;
+                                            });
+                                            finalLinkedCallsList = finalLinkedCallsList.concat(relatedCalls);
+                                        }
+                                        const bulkLinkOps = finalLinkedCallsList.map( linkedCall => ({
+                                            updateOne: {
+                                                filter: { _id: ObjectId(linkedCall._id)},
+                                                // Where field is the field you want to update
+                                                update: { $set: { definitionReferences: linkedCall.definitionReferences } },
+                                                // don't create a new obj if ours doesn't exist
+                                                upsert: false
+                                                }
+                                            })
+                                        );
+                                        Reference.collection
+                                            .bulkWrite(bulkLinkOps)
+                                            .then(results => console.log(results))
+                                            .catch(err => {
+                                                console.log('Error refreshing tokens: ', err);
+                                                console.log({success: false, error: err});
+                                            });
+                                    });
+                }
+
+                else {
+                    console.log('Semantic: Not inserting any new references');
+                }
+		        // insert new references
+                /*Reference.insertMany(finalReferenceList, (errInsertItems, semanticReferences) => {
                     if (errInsertItems) {
-			console.log('Error inserting references:');
-			console.log(errInsertItems);
-			return;
-		    }
-			console.log('Semantic successfully inserted found references');
+			            console.log('Error inserting references:');
+			            console.log(errInsertItems);
+			            return;
+                    }
+                    
+                    Reference.
+			        console.log('Semantic successfully inserted found references');
                 	return
-		});
+                });*/
+
+
+        
+
 
                 //DOXYGEN
                 // SQS Message Section Start

@@ -18,7 +18,7 @@ const fsPath = require('fs-path');
 
 const { exec, execFile } = require('child_process');
 
-const RepositoryItem = require('../models/unused/deprecated/RepositoryItem');
+const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
@@ -70,9 +70,17 @@ createRepository = async (req, res) => {
         if (debugID) repository._id = ObjectId(debugID);
     }
 
+
+    var installationClient = await apis.requestInstallationClient(installationId);
+    
+    const listCommitResponse = await installationClient.get('/repos/' + fullName + '/commits')
+                                    .catch(err => console.log("Error getting repository commits: ", err));
+    var latestCommitSha = listCommitResponse.data[0]['sha'];
+
+    repository.lastProcessedCommit = latestCommitSha;
+
     repository.save(async (err, repository) => {
         if (err) return res.json({ success: false, error: err });
-        var installationClient = await apis.requestInstallationClient(installationId);
 
         installationClient.get(`/repos/${fullName}`).then((response) => {
             //console.log("FIRST RESPONSE", response.data)
@@ -143,8 +151,7 @@ createRepository = async (req, res) => {
                     });
 
                     //DOXYGEN
-                    // SQS Message Section Start
-                    var runDoxygenData = {
+                    /*var runDoxygenData = {
                         'installationId': installationId.toString(),
                         'cloneUrl': cloneUrl,
                         'jobType': JOB_GET_REFS.toString(),
@@ -154,7 +161,7 @@ createRepository = async (req, res) => {
                     console.log('RUN DOXYGEN DATA: ');
                     console.log(runDoxygenData);
 
-                    // jobs.dispatchDoxygenJob(runDoxygenData, log);
+                    jobs.dispatchDoxygenJob(runDoxygenData, log);*/
 
 
 
@@ -344,7 +351,7 @@ getRepository = (req, res) => {
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
     Repository.findById(id, (err, repository) => {
-		if (err) return res.json({success: false, error: err});
+        if (err) return res.json({success: false, error: err});
         repository.populate('workspace', (err, repository) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(repository);
@@ -358,7 +365,7 @@ deleteRepository = (req, res) => {
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
     Repository.findByIdAndRemove(id, (err, repository) => {
-		if (err) return res.json({success: false, error: err});
+        if (err) return res.json({success: false, error: err});
         repository.populate('workspace', (err, repository) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(repository);
@@ -369,14 +376,14 @@ deleteRepository = (req, res) => {
 
 
 retrieveRepositories = (req, res) => {
-    const {fullName, workspaceId, installationId} = req.body;
+    const {fullName, workspaceId, installationId, ids} = req.body;
     // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
 
     query = Repository.find();
     if (fullName) query.where('fullName').equals(fullName);
     if (workspaceId) query.where('workspace').equals(workspaceId);
     if (installationId) query.where('installationId').equals(installationId);
-
+    if (repositoryIDs) query.where('_id').in(ids)
     query.populate('workspace').exec((err, repositories) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(repositories);
@@ -459,10 +466,23 @@ validateRepositories = async (req, res) => {
 }
 
 
+pollRepositories = async (req, res) => {
+    let repositories = []
+    let ids = Object.keys(req.body.selected)
+    for (let i = 0; i < ids.length; i++) {
+        let id = ids[i]
+        let fullName = req.body.selected[id]
+        let repository = await Repository.findOne({fullName: fullName, installationId: req.body.installationID})
+        if (!repository || repository.doxygenJobStatus !== "FINISHED" || repository.semanticJobStatus !== "FINISHED") {
+            return res.json({finished: false})
+        }
+    }
+    return res.json({finished: true})
+}
 
 module.exports = {
     refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
-    createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories
+    createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories, pollRepositories
 }
 
 

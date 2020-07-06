@@ -8,9 +8,10 @@ import { connect } from 'react-redux';
 import _ from 'lodash';
 
 //actions
-import {validateRepositories} from '../../../../actions/Repository_Actions';
+import {validateRepositories, pollRepositories} from '../../../../actions/Repository_Actions';
 import {checkInstallation, retrieveDomainRepositories} from '../../../../actions/Auth_Actions';
-import { createWorkspace } from '../../../../actions/'
+import { createWorkspace } from '../../../../actions/Workspace_Actions';
+import { retrieveRepositories } from '../../../../actions/Repository_Actions';
 
 class RepositorySelection extends React.Component {
     constructor(props) {
@@ -22,7 +23,7 @@ class RepositorySelection extends React.Component {
             polling: false
         }
 
-       
+       this.nameInput = React.createRef()
     }
 
     // ORG LEVEL BUGS, FIND INSTALLATIONID + FULLNAME MAY BE BUGGY -- which repo to which installation id?
@@ -96,11 +97,15 @@ class RepositorySelection extends React.Component {
     }
 
     pollRepositories(){
-        /*let response = *
-        if response = true:
-            clearInterval(this.interval)
-            createWorkspace
-        this.setState({polling: false})*/
+        this.props.pollRepositories({selected: this.state.selected, installationID: this.state.installationID}).then(({finished}) => {
+            if (finished === true){
+                clearInterval(this.interval)
+                this.props.retrieveRepositories({ids: Object.keys(this.state.selected)}).then(() => {
+                    let repositoryIDs = this.props.repositories.map(repo => repo._id)
+                    this.props.createWorkspace({name: this.nameInput.current.value, creatorID: this.props.user._id, repositoryIDs})
+                })
+            }
+        })
     }
 
 
@@ -108,7 +113,7 @@ class RepositorySelection extends React.Component {
     createWorkspace(){
         this.props.validateRepositories({selected: this.state.selected, 
             installationID: this.state.installationID, accessToken: this.props.user.accessToken}).then((response) => {
-            this.interval = setInterval(pollRepositories, 10000);
+            this.interval = setInterval(pollRepositories, 15000);
         })
     }   
 
@@ -120,7 +125,7 @@ class RepositorySelection extends React.Component {
                     <ModalHeader>Create a Workspace</ModalHeader>
                     <Field>
                         <FieldName>Workspace Name</FieldName>
-                        <FieldInput></FieldInput>
+                        <FieldInput ref = {this.nameInput}></FieldInput>
                     </Field>
                     <RepositoryContainer>
                         <ListToolBar>
@@ -151,11 +156,13 @@ const mapStateToProps = (state) => {
     return {
         user: state.auth.user,
         installations: state.auth.installations,
-        domainRepositories: state.auth.domainRepositories
+        domainRepositories: state.auth.domainRepositories,
+        repositories: state.repositories
     }
 }
 
-export default connect(mapStateToProps, {checkInstallation, retrieveDomainRepositories, validateRepositories})(RepositorySelection);
+export default connect(mapStateToProps, {checkInstallation, retrieveDomainRepositories, 
+    validateRepositories, pollRepositories, createWorkspace, retrieveRepositories})(RepositorySelection);
 
 const ModalHeader = styled.div`
     font-size: 2.5rem;

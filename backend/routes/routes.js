@@ -73,6 +73,7 @@ router.post('/repositories/create', repository_controller.createRepository);
 router.post('/repositories/retrieve', repository_controller.retrieveRepositories);
 router.post('/repositories/update_commit', repository_controller.updateRepositoryCommit);
 router.post('/repositories/validate', repository_controller.validateRepositories);
+router.post('/repositories/poll', repository_controller.pollRepositories);
 router.get('/repositories/get/:id', repository_controller.getRepository);
 router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
 

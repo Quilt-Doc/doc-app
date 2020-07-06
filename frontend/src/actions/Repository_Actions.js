@@ -129,6 +129,12 @@ export const validateRepositories = (formValues) => async () => {
     return response.data
 }
 
+export const pollRepositories = (formValues) => async () => {
+    const response = await api.post('/repositories/poll', formValues);
+    return response.data
+}
+
+
 export const updateRepositoryCommit = (formValues) => async (dispatch) => {
     console.log('repoUpdateCommit formValues: ', formValues);
     const response = await api.post('/repositories/update_commit', formValues);
