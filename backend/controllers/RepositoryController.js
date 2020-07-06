@@ -169,7 +169,8 @@ createRepository = async (req, res) => {
                     // default_branch, fullName, cloneUrl, args_2, installationId 
 
                     runSemanticData['semanticTargets'] = JSON.stringify({targets: args2});
-                    
+                    repository.semanticJobStatus = 'RUNNING';
+                    repository.save();
                     jobs.dispatchSemanticJob(runSemanticData, log);
                 
                 })
