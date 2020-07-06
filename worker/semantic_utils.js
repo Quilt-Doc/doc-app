@@ -97,13 +97,11 @@ const execSemantic = async () =>  {
 
 
         args2 = args2.map((path, idx) => {
-	    if (idx < 3) {
+	        if (idx < 3) {
                 return path
-	    }
-
-	    return escapeShell('../doc-app/worker/' + repoDiskPath + path);
-	    
-	});
+	        }
+	        return escapeShell('../doc-app/worker/' + repoDiskPath + path);
+	    });
 
 	args2.push("--")
         args2.push("--json-symbols")
@@ -130,7 +128,7 @@ const execSemantic = async () =>  {
 	// child.stdout.pipe(writeStream);
 	
 	console.log('Just ran semantic');
-	child.on('exit', (code) => {
+	child.on('exit', async (code) => {
 	
 	// console.log(child.stdout.toString());
 	var stdout = fs.readFileSync(repoDiskPath + "raw_output.txt").toString();
