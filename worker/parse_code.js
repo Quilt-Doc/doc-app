@@ -11,6 +11,7 @@ const api = apis.requestClient();
 
 
 const Reference = require('./models/Reference');
+const Repository = require('./models/Repository');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -58,6 +59,12 @@ const getParseableTree = async () => {
 
 }
 
+const updateJobStatus = async (status) => {
+
+    return await Repository.updateOne({_id: ObjectId(process.env.repositoryId)}, {$set: {doxygenJobStatus: status}});
+
+}
+
 
 
 getRefs = async () => {
@@ -65,6 +72,8 @@ getRefs = async () => {
     var worker = require('cluster').worker;
 
     worker.send({receipt: process.env.receipt})
+
+    await updateJobStatus('RUNNING');
 
     var parseLevelLookup = await getParseableTree();
 
@@ -280,12 +289,21 @@ createReferences = (refList, worker) => {
 
     console.log('REF OBJ LIST');
     console.log(refObjList);
-    Reference.create( refObjList, (err, reference) => {
+    Reference.create( refObjList, async (err, reference) => {
         if (err) {
             console.log('Error: ', err);
         }
         console.log('Created references');
-        worker.process.kill(worker.process.pid);
+        updateJobStatus('FINISHED')
+        .then(ignore => {
+            worker.process.kill(worker.process.pid);
+        })
+        .catch(err =>  {
+            console.log('Doxygen: Error updating job status');
+            worker.process.kill(worker.process.pid);
+        });
+        
+        
         return;
     });
 }
