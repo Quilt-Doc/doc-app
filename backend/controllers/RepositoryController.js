@@ -18,7 +18,7 @@ const fsPath = require('fs-path');
 
 const { exec, execFile } = require('child_process');
 
-const RepositoryItem = require('../models/unused/deprecated/RepositoryItem');
+const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
@@ -70,9 +70,17 @@ createRepository = async (req, res) => {
         if (debugID) repository._id = ObjectId(debugID);
     }
 
+
+    var installationClient = await apis.requestInstallationClient(installationId);
+    
+    const listCommitResponse = await installationClient.get('/repos/' + fullName + '/commits')
+                                    .catch(err => console.log("Error getting repository commits: ", err));
+    var latestCommitSha = listCommitResponse.data[0]['sha'];
+
+    repository.lastProcessedCommit = latestCommitSha;
+
     repository.save(async (err, repository) => {
         if (err) return res.json({ success: false, error: err });
-        var installationClient = await apis.requestInstallationClient(installationId);
 
         installationClient.get(`/repos/${fullName}`).then((response) => {
             //console.log("FIRST RESPONSE", response.data)
@@ -143,8 +151,7 @@ createRepository = async (req, res) => {
                     });
 
                     //DOXYGEN
-                    // SQS Message Section Start
-                    var runDoxygenData = {
+                    /*var runDoxygenData = {
                         'installationId': installationId.toString(),
                         'cloneUrl': cloneUrl,
                         'jobType': JOB_GET_REFS.toString(),
@@ -154,7 +161,7 @@ createRepository = async (req, res) => {
                     console.log('RUN DOXYGEN DATA: ');
                     console.log(runDoxygenData);
 
-                    // jobs.dispatchDoxygenJob(runDoxygenData, log);
+                    jobs.dispatchDoxygenJob(runDoxygenData, log);*/
 
 
 
@@ -344,7 +351,7 @@ getRepository = (req, res) => {
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
     Repository.findById(id, (err, repository) => {
-		if (err) return res.json({success: false, error: err});
+        if (err) return res.json({success: false, error: err});
         repository.populate('workspace', (err, repository) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(repository);
@@ -358,7 +365,7 @@ deleteRepository = (req, res) => {
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
     Repository.findByIdAndRemove(id, (err, repository) => {
-		if (err) return res.json({success: false, error: err});
+        if (err) return res.json({success: false, error: err});
         repository.populate('workspace', (err, repository) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(repository);
