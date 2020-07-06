@@ -2,7 +2,7 @@ import {
     RETRIEVE_CALLBACKS
 } from './types/Semantic_Types';
 
-import api from '../apis/api';
+import { api } from '../apis/api'
 
 var urljoin = require('url-join');
 

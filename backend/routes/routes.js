@@ -18,8 +18,12 @@ router.get('/references/get2/:id', reference_controller.getReference);
 router.put('/references/edit/:id', reference_controller.editReference);
 router.delete('/references/delete/:id', reference_controller.deleteReference);
 router.post('/references/retrieve',  reference_controller.retrieveReferences);
+
+// DEPRECATED
+/*
 router.post('/references/attach_document',  reference_controller.attachDocument);
 router.post('/references/remove_document',  reference_controller.removeDocument);
+*/
 
 const document_controller = require('../controllers/DocumentController');
 router.post('/documents/create', document_controller.createDocument);
@@ -68,9 +72,16 @@ router.post('/repositories/get_refs', repository_controller.getRepositoryRefs);
 router.post('/repositories/create', repository_controller.createRepository);
 router.post('/repositories/retrieve', repository_controller.retrieveRepositories);
 router.post('/repositories/update_commit', repository_controller.updateRepositoryCommit);
+router.post('/repositories/validate', repository_controller.validateRepositories);
 router.get('/repositories/get/:id', repository_controller.getRepository);
 router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
 
+const workspace_controller = require('../controllers/WorkspaceController');
+router.post('/workspaces/create', workspace_controller.createWorkspace);
+router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
+router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
+router.put('/workspaces/add_user/:id', workspace_controller.addUser);
+router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
 
 
 //auth routes
@@ -83,6 +94,9 @@ router.get('/auth/github/redirect', passport.authenticate("github", {
                                         successRedirect: CLIENT_HOME_PAGE_URL,
                                         failureRedirect: "/api/auth/login/failed"
                                     }));
+router.post('/auth/check_installation', auth_controller.checkInstallation);
+router.post('/auth/retrieve_domain_repositories', auth_controller.retrieveDomainRepositories)
+
 
 const user_controller = require('../controllers/authentication/UserController');
 router.post('/users/create', user_controller.createUser);

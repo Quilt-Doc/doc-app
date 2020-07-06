@@ -14,7 +14,7 @@ import Test from './Test'
 const App = () => {
     return (<>
                 <Router history = {history}>
-                  <Route path = "" component = {Dashboard} />
+                  <Route path = "" component = {Home} />
                 </Router>
             </>)
 }

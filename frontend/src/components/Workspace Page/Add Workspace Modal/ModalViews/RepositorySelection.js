@@ -2,83 +2,160 @@ import React from 'react';
 
 import styled from 'styled-components';
 
+//
+import { connect } from 'react-redux';
+
+import _ from 'lodash';
+
+//actions
+import {validateRepositories} from '../../../../actions/Repository_Actions';
+import {checkInstallation, retrieveDomainRepositories} from '../../../../actions/Auth_Actions';
+import { createWorkspace } from '../../../../actions/'
+
 class RepositorySelection extends React.Component {
     constructor(props) {
         super(props)
+
+        this.state = {
+            selected: {},
+            installationID: null, 
+            polling: false
+        }
+
+       
     }
 
-    renderCheck(){
-        return
+    // ORG LEVEL BUGS, FIND INSTALLATIONID + FULLNAME MAY BE BUGGY -- which repo to which installation id?
+    componentDidMount(){
+        this.props.checkInstallation(
+            {accessToken: this.props.user.accessToken,
+             platform: this.props.platform}).then(() => {
+                let installs = this.props.installations.filter(inst => inst.account.type === 'User')
+                if (installs.length === 0) {
+                    return
+                } else {
+                    this.props.retrieveDomainRepositories({accessToken: this.props.user.accessToken})
+                    this.setState({installationID: installs[0].id})
+                }
+        })
     }
+
+    turnCheckOn(id, fullName){
+        if (id in this.state.selected) {
+            this.setState({selected: _.omit(this.state.selected, id)})
+        } else {
+            let selected = {...this.state.selected}
+            selected[id] = fullName;
+            this.setState({selected})
+        }
+    }
+
+    renderCheck(id){
+        let display = id in this.state.selected ? "" : "none"
+        return {'fontSize': "2rem", 'color': '#19E5BE', display}
+    }
+
+    renderCheckAll(){
+        let display = Object.keys(this.state.selected).length === this.props.domainRepositories.length ? "" : "none"
+        return {'fontSize': "2rem", 'color': '#19E5BE', display}
+    }
+
+    turnCheckOnAll(){
+        if ( Object.keys(this.state.selected).length !== this.props.domainRepositories.length){
+            let selected = {}
+            this.props.domainRepositories.map(drepo => selected[drepo.id] = drepo.full_name)
+            this.setState({selected})
+        } else {
+            this.setState({selected: {}})
+        }  
+    }
+
+    renderCheckBoxBorder(id){
+        return id in this.state.selected ? '#19E5BE' : '#D7D7D7';
+    }
+
+    renderCheckBoxBorderColorAll(){
+        return Object.keys(this.state.selected).length === this.props.domainRepositories.length ? '#19E5BE' : '#D7D7D7';
+    }
+
+
+    renderDomainRepositories(){
+        console.log(this.props.domainRepositories)
+        return this.props.domainRepositories.map(drepo => {
+            return (
+                <Repository>
+                    <Check_Box_Border onClick = {() => {this.turnCheckOn(drepo.id, drepo.full_name)}}>
+                        <Check_Box border_color = {this.renderCheckBoxBorder(drepo.id)}>
+                            <ion-icon style={this.renderCheck(drepo.id)} name="checkmark-outline"></ion-icon>
+                        </Check_Box>
+                    </Check_Box_Border>
+                    {drepo.full_name}
+                </Repository>
+            )
+        })
+    }
+
+    pollRepositories(){
+        /*let response = *
+        if response = true:
+            clearInterval(this.interval)
+            createWorkspace
+        this.setState({polling: false})*/
+    }
+
+
+
+    createWorkspace(){
+        this.props.validateRepositories({selected: this.state.selected, 
+            installationID: this.state.installationID, accessToken: this.props.user.accessToken}).then((response) => {
+            this.interval = setInterval(pollRepositories, 10000);
+        })
+    }   
+
 
     render(){
-        return(
-            <>
-                <ModalHeader>Create a Workspace</ModalHeader>
-                <Field>
-                    <FieldName>Workspace Name</FieldName>
-                    <FieldInput></FieldInput>
-                </Field>
-                <RepositoryContainer>
-                    <ListToolBar>
-                        <ListName>Repositories</ListName>
-                        <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
-                            <Check_Box /*border_color = {this.state.check_box_border_color}*/>
-                                <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
-                                </Check_Box>
-                        </Check_Box_Border>
-                    </ListToolBar>
-                    <RepositoryList>
-                        <Repository>
-                            <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
-                                <Check_Box /*border_color = {this.state.check_box_border_color}*/>
-                                    <ion-icon style={this.renderCheck()}name="checkmark-outline"></ion-icon>
-                                </Check_Box>
+        if (this.props.domainRepositories) {
+            return (
+                <>
+                    <ModalHeader>Create a Workspace</ModalHeader>
+                    <Field>
+                        <FieldName>Workspace Name</FieldName>
+                        <FieldInput></FieldInput>
+                    </Field>
+                    <RepositoryContainer>
+                        <ListToolBar>
+                            <ListName>Repositories</ListName>
+                            <Check_Box_Border onClick = {() => {this.turnCheckOnAll()}}>
+                                <Check_Box border_color = {this.renderCheckBoxBorderColorAll()}>
+                                    <ion-icon style={this.renderCheckAll()} name="checkmark-outline"></ion-icon>
+                                    </Check_Box>
                             </Check_Box_Border>
-                            kgodara / doc-app
-                        </Repository>
-                        <Repository>
-                            <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
-                                <Check_Box /*border_color = {this.state.check_box_border_color}*/>
-                                    <ion-icon style={this.renderCheck()}name="checkmark-outline"></ion-icon>
-                                </Check_Box>
-                            </Check_Box_Border>
-                            pytorch / fairseq
-                        </Repository>
-                        <Repository>
-                            <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
-                                <Check_Box /*border_color = {this.state.check_box_border_color}*/>
-                                    <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
-                                </Check_Box>
-                            </Check_Box_Border>
-                            pytorch / fairseq
-                        </Repository>
-                        <Repository>
-                            <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
-                                <Check_Box /*border_color = {this.state.check_box_border_color}*/>
-                                    <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
-                                </Check_Box>
-                            </Check_Box_Border>
-                            pytorch / fairseq
-                        </Repository>
-                        <Repository>
-                            <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
-                                <Check_Box /*border_color = {this.state.check_box_border_color}*/>
-                                    <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
-                                </Check_Box>
-                            </Check_Box_Border>
-                            pytorch / fairseq
-                        </Repository>
-                    </RepositoryList>
-                </RepositoryContainer>
-               
-                <SubmitButton>CREATE</SubmitButton>
-            </>
-        )
+                        </ListToolBar>
+                        <RepositoryList>
+                           {this.renderDomainRepositories()}
+                        </RepositoryList>
+                    </RepositoryContainer>
+                   
+                    <SubmitButton onClick = {() => this.createWorkspace()}>CREATE</SubmitButton>
+                </>
+            )
+        } else {
+            return null
+        }
+        
     }
 }
 
-export default RepositorySelection;
+
+const mapStateToProps = (state) => {
+    return {
+        user: state.auth.user,
+        installations: state.auth.installations,
+        domainRepositories: state.auth.domainRepositories
+    }
+}
+
+export default connect(mapStateToProps, {checkInstallation, retrieveDomainRepositories, validateRepositories})(RepositorySelection);
 
 const ModalHeader = styled.div`
     font-size: 2.5rem;

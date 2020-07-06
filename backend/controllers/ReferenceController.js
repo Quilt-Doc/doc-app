@@ -71,7 +71,7 @@ createReferences2 = (req, res) => {
     if (!typeof references == 'undefined' && references !== null) return res.json({success: false, error: 'no references provided'});
     Reference.insertMany(references, (error, references) => {
         if (error) return res.json({ success: false, error });
-        references.populate('repository').populate('documents', (error, references) => {
+        references.populate('repository', (error, references) => {
             if (error) return res.json({ success: false, error: error });
             return res.json(references);
         });
@@ -83,7 +83,7 @@ getReference = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no reference id provided'});
     Reference.findById(id, (err, reference) => {
 		if (err) return res.json({success: false, error: err});
-        reference.populate('documents').populate('repository', (err, reference) => {
+        reference.populate('repository', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(reference)
         });
@@ -114,7 +114,7 @@ retrieveReferences = (req, res) => {
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
 
-    query.populate('documents').populate('repository').exec((err, references) => {
+    query.populate('repository').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(references);
     });
@@ -131,7 +131,7 @@ editReference = (req, res) => {
     if (kind) update.kind = kind;
     Reference.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, reference) => {
         if (err) return res.json({ success: false, error: err });
-        reference.populate('documents').populate('repository', (err, reference) => {
+        reference.populate('repository', (err, reference) => {
             if (err) return res.json(err);
             return res.json(reference);
         });
@@ -144,13 +144,14 @@ deleteReference = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository item id provided'});
     Reference.findByIdAndRemove(id, (err, reference) => {
 		if (err) return res.json({success: false, error: err});
-        reference.populate('documents').populate('repository', (err, reference) => {
+        reference.populate('repository', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(reference);
         });
     });
 }
 
+/*
 attachDocument = (req, res) => {
     const { referenceIDs, documentID } = req.body;
 
@@ -192,7 +193,7 @@ removeDocument = (req, res) => {
 }
 
 
-
+*/
 
 module.exports =
 {
@@ -206,6 +207,7 @@ module.exports =
     retrieveReferences,
     editReference,
     deleteReference,
+    /*
     attachDocument,
-    removeDocument
+    removeDocument*/
 }

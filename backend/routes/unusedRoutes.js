@@ -5,12 +5,6 @@ const router = express.Router();
 //UNUSED
 
 /*
-const workspace_controller = require('../controllers/WorkspaceController');
-router.post('/workspaces/create', workspace_controller.createWorkspace);
-router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
-router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
-router.put('/workspaces/add_user/:id', workspace_controller.addUser);
-router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
 
 const folder_controller = require('../controllers/FolderController');
 router.post('/folders/create', folder_controller.createFolder);

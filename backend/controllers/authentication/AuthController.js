@@ -1,4 +1,5 @@
 const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
+const client = require("../../apis/api").requestClient();
 
 loginSuccess = (req, res) => {
     if (req.user) {
@@ -29,6 +30,28 @@ logout = (req, res) => {
     res.redirect(CLIENT_HOME_PAGE_URL);
 }
 
+checkInstallation = async (req, res) => {
+    const response = await client.get("/user/installations",  
+        { headers: {
+                Authorization: `token ${req.body.accessToken}`,
+                Accept: 'application/vnd.github.machine-man-preview+json'
+            }
+        })
+    console.log(response.data.installations);
+    return res.json(response.data.installations)
+}   
+
+retrieveDomainRepositories = async (req, res) => {
+    const response = await client.get("/user/repos",  
+    { headers: {
+            Authorization: `token ${req.body.accessToken}`,
+            Accept: 'application/vnd.github.machine-man-preview+json'
+        }
+    })
+    filteredResponse = response.data.filter(item => item.permissions.admin === true)
+    return res.json(filteredResponse)
+}
+
 module.exports = {
-    loginSuccess, loginFailed, logout
+    loginSuccess, loginFailed, logout, checkInstallation, retrieveDomainRepositories
 }

@@ -7,13 +7,19 @@ import styled from "styled-components"
 import gitlabIcon from '../../../../images/gitlab.svg'
 
 class PlatformSelection extends React.Component {
+
+    setConnection() {
+        this.props.setPlatform("Github")
+        this.props.changeMode(4)
+    }
+
     render(){
         return (
             <>
                 <ModalHeader>Select a Platform</ModalHeader>
                 <Container>
                 <FieldName>Find repositories on Github</FieldName>
-                    <ConnectButton onClick = {() => this.props.changeMode(4)}>
+                    <ConnectButton onClick = {() => this.setConnection()}>
                         <IconBorder marginRight = {"2.2rem"} width = {"3.5rem"}>
                             <ion-icon style = {{'fontSize':'3rem',  
                                                 'color': '#172A4E'}} 
@@ -23,7 +29,7 @@ class PlatformSelection extends React.Component {
                         <Text>Github</Text>
                     </ConnectButton>
                 <FieldName marginTop = {"2rem"}>Find repositories on Bitbucket</FieldName>
-                    <ConnectButton onClick = {() => this.props.changeMode(4)}>
+                    <ConnectButton onClick = {() => this.setConnection()}>
                         <IconBorder  marginRight = {"2.2rem"} width = {"3.5rem"}>
                             <ion-icon style = {{'fontSize':'2.5rem',  
                                                 'color': '#172A4E'}} 
@@ -33,7 +39,7 @@ class PlatformSelection extends React.Component {
                         <Text>Bitbucket</Text>
                     </ConnectButton>
                 <FieldName marginTop = {"2rem"}>Find repositories on Gitlab</FieldName>
-                <ConnectButton onClick = {() => this.props.changeMode(4)}>
+                <ConnectButton onClick = {() => this.setConnection()}>
                     <IconBorder marginRight = {"2.2rem"} width = {"3.5rem"}>
                         <img src = {gitlabIcon} style = {{'height': '2.5rem',  
                                             'color': '#172A4E'}} 

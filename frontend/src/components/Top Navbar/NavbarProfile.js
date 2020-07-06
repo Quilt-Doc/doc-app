@@ -10,6 +10,10 @@ class NavbarProfile extends React.Component {
         }
     }
 
+    goLogout = () => {
+        window.open(  `${process.env.REACT_APP_LOCAL_URL}/auth/logout`, "_self");
+    }
+
     render(){
         return  <Container>
                     <ProfileButton onClick = {() => 
@@ -40,7 +44,7 @@ class NavbarProfile extends React.Component {
                         <MenuButton>
                             Settings
                         </MenuButton>
-                        <MenuButton>
+                        <MenuButton onClick = {() => this.goLogout()}>
                             Sign out
                         </MenuButton>
                     </ProfileMenu>

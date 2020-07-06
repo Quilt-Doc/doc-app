@@ -11,7 +11,7 @@ import {
     RETRIEVE_REPOSITORIES
 } from './types/Repository_Types';
 
-import api from '../apis/api';
+import { api } from '../apis/api';
 
 var urljoin = require('url-join');
 
@@ -122,6 +122,11 @@ export const deleteRepository = (id) => async dispatch => {
 export const retrieveRepositories = (formValues) => async dispatch => {
     const response = await api.post('/repositories/retrieve', formValues);
     dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data });
+}
+
+export const validateRepositories = (formValues) => async () => {
+    const response = await api.post('/repositories/validate', formValues);
+    return response.data
 }
 
 export const updateRepositoryCommit = (formValues) => async (dispatch) => {

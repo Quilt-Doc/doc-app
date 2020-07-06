@@ -431,11 +431,38 @@ updateRepositoryCommit = (req, res) => {
 
 }
 
+validateRepositories = async (req, res) => {
+    let repositories = []
+    let ids = Object.keys(req.body.selected)
+    for (let i = 0; i < ids.length; i++){
+        let id = ids[i]
+        let fullName = req.body.selected[id]
+        let repository = await Repository.findOne({fullName: fullName, installationId: req.body.installationID})
+        if (!repository) {
+            repositories.push(fullName)
+            api.put(`/user/installations/${req.body.installationID}/repositories/${id}`, 
+                { headers: {
+                    Authorization: `token ${req.body.accessToken}`,
+                    Accept: 'application/vnd.github.machine-man-preview+json'
+                }
+            })
+        }
+    }
+    /*
+    req.body.fullNames.map(fullName => {
+        let repository = await Repository.findOne({fullName, installationId: req.body.installationID})
+        if (!repository) {
+            repositories.push(fullName)
+        }
+    })*/
+    return res.json(repositories)
+}
+
 
 
 module.exports = {
     refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
-    createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit
+    createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories
 }
 
 

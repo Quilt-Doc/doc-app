@@ -1,16 +1,23 @@
 import {
-    CHECK_LOGIN
+    CHECK_LOGIN, CHECK_INSTALLATION, RETRIEVE_DOMAIN_REPOSITORIES
 } from '../actions/types/Auth_Types'
 
 let initial = {
     authenticated: false,
-    user : {}
+    user : {},
+    installations: [],
+    domainRepositories: []
 }
 
 export default (state = {}, action) => {
     switch (action.type) {
         case CHECK_LOGIN:
-            return {authenticated: action.payload.authenticated, user: action.payload.user}
+            return { ...state, authenticated: action.payload.authenticated, 
+                     user: action.payload.user}
+        case CHECK_INSTALLATION:
+            return { ...state,  installations: action.payload }
+        case RETRIEVE_DOMAIN_REPOSITORIES:
+                return { ...state,  domainRepositories: action.payload }
         default: 
             return state
     }

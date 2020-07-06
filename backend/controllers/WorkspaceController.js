@@ -1,10 +1,10 @@
-/*
+
 const Workspace = require('../../models/Workspace');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createWorkspace = (req, res) => {
-    const {name, creatorID, debugID} = req.body;
+    const {name, creatorID, debugID, repositoryIDS} = req.body;
 
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no workspace name provided'});
     if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no workspace creator ID provided'});
@@ -14,6 +14,8 @@ createWorkspace = (req, res) => {
         creator: ObjectId(creatorID),
         memberUsers: [ObjectId(creatorID)]
     });
+
+    if (repositories) workspace.repositories = repositoryIDS.map(id => ObjectId(id))
 
     // Check if user-defined ids allowed
     if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
@@ -106,4 +108,3 @@ removeUser = (req, res) => {
 
 
 module.exports = {createWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser}
-*/

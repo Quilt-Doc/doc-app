@@ -17,12 +17,17 @@ class WorkspaceModal extends React.Component {
         super(props)
 
         this.state = {
-            'mode': 1
+            'mode': 1,
+            'platform': null,
         }
     }
 
     changeMode = (mode) => {
         this.setState({mode})
+    }
+
+    setPlatform = (platform) => {
+        this.setState({platform})
     }
 
     renderModalContent(){
@@ -31,9 +36,12 @@ class WorkspaceModal extends React.Component {
         } else if (this.state.mode === 2) {
             return <SearchWorkspace changeMode = {this.changeMode}/>
         } else if (this.state.mode === 3) {
-            return <PlatformSelection changeMode = {this.changeMode}/>
+            return <PlatformSelection 
+                        changeMode = {this.changeMode}
+                        setPlatform = {this.setPlatform}
+                    />
         } else if (this.state.mode === 4) {
-            return <RepositorySelection changeMode = {this.changeMode}/>
+            return <RepositorySelection platform = {this.state.platform} changeMode = {this.changeMode}/>
         }
     }
     render(){

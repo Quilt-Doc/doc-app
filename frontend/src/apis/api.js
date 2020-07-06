@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-var apiEndpoint = process.env.REACT_APP_API_ENDPOINT;
+var apiEndpoint = process.env.REACT_APP_LOCAL_URL;
 
 var api = axios.create({
     baseURL: apiEndpoint
