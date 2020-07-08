@@ -1,6 +1,9 @@
 import React from 'react';
 import history from '../history';
 
+//router
+import { Router, Route } from 'react-router-dom';
+
 //components
 import SpaceView from './Space Page/SpaceView';
 import Bucket from './General Components/Top Navbar/Bucket'
@@ -46,7 +49,11 @@ const Dashboard = () => {
                     goLogout = {goLogout}
                 />
             </TopNav>
-            <WorkspaceView/>
+            <Router history = {history}>
+                  <Route exact path = "/workspaces" component = {WorkspaceView} />
+                  <Route path = "/workspaces/*" component = {SpaceView} />
+                  <Route path = "/settings" component = {UserSettingsView} />
+            </Router>
             {/*<UserSettingsView/>*/}
             {/*<SpaceView/>*/}
         </Container>

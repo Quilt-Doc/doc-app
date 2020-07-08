@@ -10,8 +10,7 @@ import { withRouter } from 'react-router';
 import DirectoryItem from './DirectoryItem';
 
 //actions
-import { refreshRepositoryPathNew, getRepositoryRefs } from '../../../actions/Repository_Actions';
-import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
+import { retrieveReferences } from '../../../actions/Reference_Actions';
 //connect
 import { connect } from 'react-redux';
 
@@ -19,64 +18,40 @@ class DirectoryView extends React.Component {
 
     constructor(props) {
         super(props) 
-        this.state = {
-            items: [
-                {_id: "1", name: "java.js", kind: "file"},
-                {_id: "2", name: "backend", kind: "dir"},
-                {_id: "3", name: "apis", kind: "dir"},
-                {_id: "4", name: "models", kind: "dir"},
-                {_id: "5", name: "controllers", kind: "dir"},
-                {_id: "1", name: "index.js", kind: "file"}
-            ]
-        }
+
     }
 
+    // USE PARAMS
     componentDidMount() {
-        // acquires the repository path from the url --- may need to change how this is done (hash, github Oauth)
-        
-        let urlSplit = window.location.pathname.split('/').slice(3)
-        if (urlSplit.slice(urlSplit.length - 1)[0] === '') {
-            urlSplit.pop()
+        let split = window.location.pathname.split('/')
+        if (split.length === 7 || split[7] === ""){
+            return this.props.retrieveReferences({truncatedPath : true, kinds : ['file', 'dir'], repositoryID: split[5]})
         }
-        let path = urlSplit.length > 1 ? urlSplit.slice(1).join('/') : ''
-        this.props.retrieveRepositoryItems({path, repositoryID: urlSplit.slice(0, 1)[0]})
-        /*
-        this.props.refreshRepositoryPathNew({repositoryPath: window.location.pathname.slice(22)}).then(() => {
-            this.props.getRepositoryRefs({
-                repoLink: window.location.pathname.slice(22)
-            });
-        })
-        */
+        let currentDirectoryID = split[7]
+        this.props.retrieveReferences({currentDirectoryID, kinds : ['file', 'dir'],  repositoryID: split[5]})
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.location.pathname !== this.props.location.pathname) {
-            let urlSplit = window.location.pathname.split('/').slice(3)
-            console.log('urlSplit: ', urlSplit);
-            if (urlSplit.slice(urlSplit.length - 1)[0] === '') {
-                urlSplit.pop()
-            }
-            console.log('urlSplit: ', urlSplit);
-            let path = urlSplit.length > 1 ? urlSplit.slice(1).join('/') : ''
-            console.log('path: ', path);
-            console.log('Calling Retrieve 2');
-            this.props.retrieveRepositoryItems({path, repositoryID: urlSplit.slice(0, 1)[0]})
+            let split = window.location.pathname.split('/')
+            let currentDirectoryID = split[7]
+            this.props.retrieveReferences({currentDirectoryID, kinds : ['file', 'dir']})
         }
     }
 
     renderFolders = () => {
-        let directories = this.state.items.filter(repositoryItem => repositoryItem.kind === "dir")
+        let directories = this.props.references.filter(reference => reference.kind === "dir")
 
         if (directories) {
             directories = directories.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
         }
 
         return directories.map((directory, i) => {
-            let borderBottom = i === this.props.repositoryItems.length - 1 ? '1px solid #EDEFF1;' : ''
+            let borderBottom = i === this.props.references.length - 1 ? '1px solid #EDEFF1;' : ''
             return (<DirectoryItem 
                         key = {directory._id} 
                         item = {directory}
-                        type = {'folder'}
+                        type = {'folder-sharp'}
                         borderBottom = {borderBottom}
                     />    
                     )
@@ -84,7 +59,7 @@ class DirectoryView extends React.Component {
     }
 
     renderFiles = () => {
-        let files = this.state.items.filter(repositoryItem => repositoryItem.kind === "file")
+        let files = this.props.references.filter(reference => reference.kind === "file")
 
         if (files) {
             files = files.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
@@ -101,7 +76,7 @@ class DirectoryView extends React.Component {
     }
 
     render() {
-        if (true) {
+        if (this.props.references) {
             return (
                     
                         <DirectoryContainer>
@@ -127,11 +102,11 @@ class DirectoryView extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        repositoryItems: Object.values(state.repositoryItems),
+        references: Object.values(state.references)
     }
 }
 
-export default withRouter(connect(mapStateToProps, { refreshRepositoryPathNew, getRepositoryRefs, retrieveRepositoryItems } )(DirectoryView));
+export default withRouter(connect(mapStateToProps, { retrieveReferences } )(DirectoryView));
 
 
 const Container = styled.div`

@@ -8,60 +8,26 @@ import {
     CREATE_REPOSITORY,
     GET_REPOSITORY,
     DELETE_REPOSITORY,
-    RETRIEVE_REPOSITORIES
+    RETRIEVE_REPOSITORIES,
+    SET_CURRENT_REPOSITORY
 } from '../actions/types/Repository_Types';
 
 
 import _ from 'lodash';
 
-const initialContents = {
-                        pathContents: {},
-                        references: [],
-                        repositories: {}
-                        }
-
-export default (state = initialContents, action) => {
+export default (state = {}, action) => {
     let repositories = state.repositories
     switch (action.type) {
-        case REFRESH_REPOSITORY_PATH:
-            return { 
-                    ...state, repositoryName: action.repositoryName,
-                    repositoryCurrentPath: action.repositoryCurrentPath,
-                    pathContents: action.payload
-                    };
-        case REFRESH_REPOSITORY_PATH_NEW:
-            return { ...state, pathContents: action.payload };
-        case GET_REPOSITORY_FILE:
-            return { 
-                ...state, fileName: action.fileName,
-                fileContents: action.payload
-                };
-        case PARSE_REPOSITORY_FILE:
-            return {
-                ...state, parsedData: action.parsed_data
-            }
-        case CLEAR_REPOSITORY_FILE:
-            return {
-                ...state, fileName: '', fileContents: ''
-            };
-        case UPDATE_REPOSITORY_REFS:
-            return {
-                ...state, references: action.payload
-            }
         case CREATE_REPOSITORY:
-            repositories = {...repositories, [action.payload._id]: action.payload}
-            return { ...state, repositories };
+            return { ...state, [action.payload._id]: action.payload};
         case GET_REPOSITORY:
-            repositories = {...repositories, [action.payload._id]: action.payload}
-            return { ...state, repositories };
+            return { ...state, [action.payload._id]: action.payload};
         case DELETE_REPOSITORY:
-            repositories = {...repositories, [action.payload._id]: action.payload}
-            repositories = _.omit(repositories, action.payload._id);
-            return { ...state, repositories };
+            return _.omit(state, action.payload._id);
         case RETRIEVE_REPOSITORIES:
-            repositories = { ..._.mapKeys(action.payload, '_id') };
-            return { ...state, repositories };
-        
+            return { ..._.mapKeys(action.payload, '_id') };
+        case SET_CURRENT_REPOSITORY:
+            return {[action.payload._id]: action.payload}
         default: 
             return state;
     }

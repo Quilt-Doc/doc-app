@@ -1,10 +1,10 @@
 
-const Workspace = require('../../models/Workspace');
-var mongoose = require('mongoose')
+const Workspace = require('../models/Workspace');
+var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
 createWorkspace = (req, res) => {
-    const {name, creatorID, debugID, repositoryIDS} = req.body;
+    const {name, creatorID, debugID, repositoryIDs, icon, key} = req.body;
 
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no workspace name provided'});
     if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no workspace creator ID provided'});
@@ -12,11 +12,13 @@ createWorkspace = (req, res) => {
     let workspace = new Workspace({
         name: name,
         creator: ObjectId(creatorID),
-        memberUsers: [ObjectId(creatorID)]
+        memberUsers: [ObjectId(creatorID)],
+        key
     });
 
-    if (repositories) workspace.repositories = repositoryIDS.map(id => ObjectId(id))
-
+    if (icon >= 0) workspace.icon = icon;
+    if (repositoryIDs) workspace.repositories = repositoryIDs.map(id => ObjectId(id))
+    
     // Check if user-defined ids allowed
     if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
         if (debugID) workspace._id = ObjectId(debugID);
@@ -24,13 +26,10 @@ createWorkspace = (req, res) => {
 
     workspace.save((err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-        workspace.save((err, workspace) => {
+
+        workspace.populate('repositories').populate('creator').populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
-            workspace.populate('creator')
-            .populate('memberUsers', (err, workspace) => {
-                if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
-            });
+            return res.json(workspace);
         });
     });
 }
@@ -106,5 +105,18 @@ removeUser = (req, res) => {
     });
 }
 
+retrieveWorkspaces = (req, res) => {
+    
+    const {name, creatorID, memberUserIDs} = req.body;
+    query = Workspace.find();
+    if (name) query.where('name').equals(name);
+    if (creatorID) query.where('creator').equals(creatorID);
+    if (memberUserIDs) query.where('memberUsers').in(memberUserIDs)
 
-module.exports = {createWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser}
+    query.populate('repositories').populate('creator').populate('memberUsers').exec((err, workspaces) => {
+        if (err) return res.json({ success: false, error: err });
+        return res.json(workspaces);
+    });
+}
+
+module.exports = {createWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser, retrieveWorkspaces}

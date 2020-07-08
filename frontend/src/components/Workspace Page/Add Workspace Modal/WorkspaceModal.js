@@ -41,12 +41,21 @@ class WorkspaceModal extends React.Component {
                         setPlatform = {this.setPlatform}
                     />
         } else if (this.state.mode === 4) {
-            return <RepositorySelection platform = {this.state.platform} changeMode = {this.changeMode}/>
+            return <RepositorySelection 
+                clearModal = {() => this.props.clearModal()}
+                platform = {this.state.platform} 
+                changeMode = {this.changeMode}/>
         }
     }
+
+    reset(){
+        this.props.clearModal()
+        this.changeMode(1)
+    }
+
     render(){
         return (
-            <ModalBackground onClick = {this.props.clearModal} display = {this.props.modalDisplay}>
+            <ModalBackground onClick = {() => this.reset()} display = {this.props.modalDisplay}>
                 <ModalContent onClick = {(e) => e.stopPropagation()}>
                     {this.renderModalContent()}
                 </ModalContent>
@@ -80,7 +89,7 @@ const ModalContent = styled.div`
     padding-bottom: 2rem;
     border: 1px solid #888;
     width: 44rem; /* Could be more or less, depending on screen size */
-    height: 55rem;
+    height: 62rem;
     border-radius: 5px;
     box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
     display: flex;

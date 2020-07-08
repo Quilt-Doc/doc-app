@@ -5,7 +5,7 @@ import workspaceReducer from './Workspace_Reducer';
 import repositoryReducer from './Repository_Reducer';
 import folderReducer from './Folder_Reducer';
 import repositoryItemReducer from './RepositoryItem_Reducer';
-
+import referenceReducer from './Reference_Reducer';
 import documentReducer from './Document_Reducer';
 import snippetReducer from './Snippet_Reducer';
 import requestReducer from './Request_Reducer';
@@ -32,6 +32,7 @@ export default combineReducers({
     users: userReducer,
     tags: tagReducer,
     selected: selectedReducer,
+    references: referenceReducer,
     repositoryItems: repositoryItemReducer,
     form: formReducer,
     auth: authReducer,

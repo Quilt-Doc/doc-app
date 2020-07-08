@@ -7,7 +7,7 @@ import styled from "styled-components"
 import doc_icon from '../../../images/paper.svg';
 
 //react-router
-import { Link } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 
 //actions
 import { addSelected, deleteSelected } from '../../../actions/Selected_Actions';
@@ -72,6 +72,7 @@ class DirectoryItem extends React.Component {
     }
 
     renderDirectoryLink(item) {
+        /*
         console.log(window.location.pathname)
         let urlItems = window.location.pathname.split('/').slice(3)
         console.log(urlItems)
@@ -80,10 +81,15 @@ class DirectoryItem extends React.Component {
         }
         urlItems.push(item.name)
         let finalURL = urlItems.join('/')
-        if (item.kind === 'dir') {
-            return `/repository/directory/${finalURL}`
+        */
+        let username = this.props.match.params.username
+        let key = this.props.match.params.key
+        let repositoryID = this.props.match.params.repositoryID
+        let pre = `/workspaces/${username}/${key}/repository/${repositoryID}`;
+        if (this.props.item.kind === 'dir') {
+            return `${pre}/dir/${this.props.item._id}`
         }
-        return `/repository/codeview/${finalURL}`
+        return `${pre}/code/${this.props.item._id}`
     }
     /*
     let urlItems = window.location.pathname.split('/')
@@ -98,6 +104,7 @@ class DirectoryItem extends React.Component {
 
     render() {
         return (
+                <Link to = {this.renderDirectoryLink(this.props.item)}>
                 <ListItem>
                     <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
                         <Check_Box border_color = {this.state.check_box_border_color}>
@@ -105,8 +112,8 @@ class DirectoryItem extends React.Component {
                         </Check_Box>
                     </Check_Box_Border>
 
-                    <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', 'marginRight': "2rem"}} name="folder-sharp"></ion-icon>
-                    <ItemName>apis</ItemName>
+                    <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', 'marginRight': "2rem"}} name={this.props.type}></ion-icon>
+                    <ItemName>{this.props.item.name}</ItemName>
                     <ProgressContainer>
                         <ProgressBar>
                             {/*<ProgressPart backgroundColor = { }/>*/}
@@ -130,6 +137,7 @@ class DirectoryItem extends React.Component {
                     <Count>30</Count>
                     </Statistic>
                 </ListItem>
+                </Link>
                )
     }
 
@@ -143,7 +151,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, { addSelected, deleteSelected } )(DirectoryItem);
+export default withRouter(connect(mapStateToProps, { addSelected, deleteSelected } )(DirectoryItem));
 
 /*
 const File_Line = styled.div`

@@ -21,7 +21,11 @@ import history from '../../history';
 import { connect } from 'react-redux';
 
 //actions
+import { retrieveWorkspaces, setCurrentWorkspace } from '../../actions/Workspace_Actions';
+import { setCurrentRepository } from '../../actions/Repository_Actions';
 import { updateRightViewScroll } from '../../actions/UI_Actions';
+import DirectoryView from './Directory Navigation Page/DirectoryView';
+
 
 class SpaceView extends React.Component {
     constructor(props) {
@@ -30,6 +34,27 @@ class SpaceView extends React.Component {
            'modalDisplay': 'none'
         } 
         this.rightViewRef = React.createRef()
+    }
+
+    // SET KEY TO UNIQUE
+    componentDidMount(){
+        this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]}).then(() => {
+            let split = window.location.pathname.split('/')
+            let username = window.location.pathname.split('/')[2]
+            let key = window.location.pathname.split('/')[3]
+            let currentSpace = this.props.workspaces.filter(space => space.key === key && space.creator.username === username)[0]
+            /*
+            this.props.setCurrentWorkspace(currentSpace)
+            if (split.length < 6) {
+                this.props.setCurrentRepository(currentSpace.repositories[0])
+            } else {
+                let repositoryID = split[5]
+                let currentRepository = currentSpace.repositories.filter(repo => {
+                    return repo._id === repositoryID
+                })[0]
+                this.props.setCurrentRepository(currentRepository)  
+            }*/
+        })
     }
 
     onScroll = () => {
@@ -43,14 +68,15 @@ class SpaceView extends React.Component {
                     <SideNavbar  openModal = {() => this.setState({'modalDisplay': ''})}/>
                     <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
                         <Switch history = {history}>
-                            <Route path = "/request" component = {RequestView} />
+                            <Route path = "/workspaces/:username/:key/repository/:repositoryID/dir" component = {RepositoryNavigation} />
+                            <Route path = "/workspaces/:username/:key/repository/:repositoryID/code" component = {RepositoryNavigation} />
                             <Route path = "/coverage" component = {RepositoryCoverageView} />
                             <Route path = "/repository" component = {RepositoryNavigation}/>
                             <Route path = "/document/:documentID" component = { TextEditorView } />
                         </Switch>
                     </RightView>
                 </Container>
-                <DocumentCreationView display = {this.state.modalDisplay} clearModal = {() => this.setState({'modalDisplay':'none'})}/>
+               
             </>
         );
     }
@@ -58,13 +84,14 @@ class SpaceView extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        
+        workspaces: Object.values(state.workspaces.workspaces),
+        user: state.auth.user
     }
 }
 
 
 
-export default connect(mapStateToProps, { updateRightViewScroll })(SpaceView);
+export default connect(mapStateToProps, { updateRightViewScroll, retrieveWorkspaces, setCurrentWorkspace })(SpaceView);
 
 /*  
 <ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>

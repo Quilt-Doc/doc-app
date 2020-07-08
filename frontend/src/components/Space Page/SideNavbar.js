@@ -19,7 +19,7 @@ import { attachDocument } from '../../actions/RepositoryItem_Actions';
 import { clearSelected } from '../../actions/Selected_Actions';
 
 //icons
-import repoIcon3 from '../../images/repo4.svg'
+import repoIcon3 from '../../images/w4.svg'
 
 class SideNavbar extends React.Component {
     constructor(props) {
@@ -251,6 +251,7 @@ const CodeDocumentItem = styled(Link)`
 const mapStateToProps = (state) => {
     return {
         selected : Object.values(state.selected),
+        currentWorkspace: state.workspaces.currentWorkspace,
         repositoryItems: Object.values(state.repositoryItems)
     }
 }

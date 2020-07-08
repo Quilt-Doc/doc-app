@@ -2,6 +2,8 @@ const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+var request = require("request");
+
 // DEPRECATED
 createReferences = (req, res) => {
     const { ref_list } = req.body;
@@ -90,31 +92,90 @@ getReference = (req, res) => {
     });
 }
 
+getContents = async (req, res) => {
 
-retrieveReferences = (req, res) => {
-    let { textQuery, name, path, kind, repositoryID, documentIDs, limit, skip } = req.body;
+    var { referenceID } = req.body;
+    let reference = await Reference.findOne({_id: referenceID}).populate('repository')
+    let defaultBranch = "master"
+
+    let downloadLink = `https://raw.githubusercontent.com/${reference.repository.fullName}/${defaultBranch}/${reference.path}`
+    //https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
+  
+    
+    //console.log('downloadLink: ', downloadLink);
+    request.get(downloadLink).pipe(res);
+}
+
+/*path\/example\/[^\/]+$*/
+
+retrieveCodeReferences = async (req, res) => {
+    let {referenceID} = req.body
+
+    let rootReference = await Reference.findOne({_id: referenceID})
+
+    let query = Reference.find({})
+    query.where('path').equals(rootReference.path)
+    query.where('kind').ne('file')
+    query.where('repository').equals(rootReference.repository)
+
+    query.populate('repository').exec((err, references) => {
+        console.log(err)
+        if (err) return res.json({ success: false, error: err });
+        console.log("REFERENCES", references)
+        return res.json(references);
+        
+    });
+}
+
+retrieveReferences = async (req, res) => {
+    let { textQuery, name, path, truncatedPath, kind, kinds, currentDirectoryID, repositoryID, limit, skip } = req.body;
 
     let filter = {}
     if (kind) filter.kind = kind;
+    
     if (name) filter.name = name;
     if (path || path === '') filter.path = path;
     if (kind) filter.kind = kind;
     if (repositoryID) filter.repository = ObjectId(repositoryID)
 
-    let regex = new RegExp(textQuery, 'i');
-
-    query = Reference.find({
-                                $and : [
-                                    { $or: [{ name: { $regex: regex } }, { path : { $regex: regex } }] },
-                                    filter
-                                ]
-                            });
-
+    let query;
+    if (textQuery || currentDirectoryID || truncatedPath) {
+        let regexQuery;
         
+        if (textQuery) {
+            let regex = new RegExp(textQuery, 'i');
+            regexQuery = [{ name: { $regex: regex } }, { path : { $regex: regex } }]
+        }
+    
+        if (currentDirectoryID) {
+            let currentDir = await Reference.findOne({_id: currentDirectoryID})
+            let dirPath = (currentDir.path + '/').replace('/', '\/')
+            let regex = new RegExp(`^${dirPath}[^\/]+$`, 'i');
+            regexQuery = [{ path : { $regex: regex } }]
+        }
+
+        if (truncatedPath) {
+            let regex = new RegExp(`^[^\/]+$`, 'i');
+            regexQuery = [{ path : { $regex: regex } }]
+        }
+        
+        query =  Reference.find({
+                        $and : [
+                            { $or: regexQuery },
+                            filter
+                        ]
+                    });
+    } else {
+        query = Reference.find({filter})
+    }
+    
+    if (kinds) query.where('kind').in(kinds)
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
 
     query.populate('repository').exec((err, references) => {
+        console.log("REFERENCES", references)
+        console.log(err)
         if (err) return res.json({ success: false, error: err });
         return res.json(references);
     });
@@ -207,6 +268,8 @@ module.exports =
     retrieveReferences,
     editReference,
     deleteReference,
+    getContents,
+    retrieveCodeReferences
     /*
     attachDocument,
     removeDocument*/

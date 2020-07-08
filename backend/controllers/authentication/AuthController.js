@@ -37,7 +37,6 @@ checkInstallation = async (req, res) => {
                 Accept: 'application/vnd.github.machine-man-preview+json'
             }
         })
-    console.log(response.data.installations);
     return res.json(response.data.installations)
 }   
 

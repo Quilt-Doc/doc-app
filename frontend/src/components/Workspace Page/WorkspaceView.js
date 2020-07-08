@@ -4,13 +4,6 @@ import React from 'react';
 import styled from "styled-components"
 
 //images
-import repoIcon1 from '../../images/repo1.svg'
-import repoIcon2 from '../../images/repo2.svg'
-import repoIcon3 from '../../images/repo3.svg'
-import repoIcon4 from '../../images/repo4.svg'
-import repoIcon5 from '../../images/repo5.svg'
-import repoIcon6 from '../../images/repo6.svg'
-import repoIcon7 from '../../images/repo7.svg'
 import repoBackground from '../../images/repoBackground.svg'
 import gitlabIcon from '../../images/gitlab.svg'
 
@@ -18,17 +11,28 @@ import gitlabIcon from '../../images/gitlab.svg'
 import WorkspaceModal from './Add Workspace Modal/WorkspaceModal';
 
 //actions
-import { createRepository, retrieveRepositories, updateRepositoryCommit} from '../../actions/Repository_Actions'
-
-// Old
-// import {getRepositoryRefs} from '../../actions/Repository_Actions';
-
+import { retrieveWorkspaces } from '../../actions/Workspace_Actions';
 
 //react-router
 import { Link } from 'react-router-dom';
 
 //misc
 import { connect } from 'react-redux';
+
+//icons
+import w1 from '../../images/w1.svg';
+import w2 from '../../images/w2.svg';
+import w3 from '../../images/w3.svg';
+import w4 from '../../images/w4.svg';
+import w5 from '../../images/w5.svg';
+import w6 from '../../images/w6.svg';
+import w7 from '../../images/w7.svg';
+import w8 from '../../images/w8.svg';
+import w9 from '../../images/w9.svg';
+import w10 from '../../images/w10.svg';
+import w11 from '../../images/w11.svg';
+import w12 from '../../images/w12.svg';
+
 
 class WorkspaceView extends React.Component {
     constructor(props) {
@@ -37,86 +41,61 @@ class WorkspaceView extends React.Component {
            modalDisplay: 'none',
         }
 
-        this.count = 0
-        this.addressInput = React.createRef();
-        this.nameInput = React.createRef();
+        this.icons = [w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11, w12]
     }
 
     componentDidMount() {
-        this.props.retrieveRepositories()
+        this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]})
     }
 
-    renderLink(id) {
-        return `/repository/directory/${id}`
+    renderLink(workspace) {
+        return `/workspaces/${workspace.creator.username}/${workspace.key}/repository/${workspace.repositories[1]._id}`
     }
 
-    renderRepositories() {
-        let icons = [repoIcon1, repoIcon2, repoIcon3, repoIcon4, repoIcon5, repoIcon6, repoIcon7]
-
-        let repositoriesJSX = []
-        this.props.repositories.map((repository, i) => {
-            repositoriesJSX.push(
-                <Link key = {i} to = {this.renderLink(repository._id)}><WorkspaceBox onClick = {() => {console.log(repository.link)}}>
-                    <StyledIcon src = {icons[repository.icon]}/>
-                    {repository.name}
+    renderWorkspaces() {
+        let workspacesJSX = []
+        console.log(this.props.workspaces)
+        this.props.workspaces.map((workspace, i) => {
+            console.log(workspace)
+            workspacesJSX.push(
+                <Link key = {i} to = {this.renderLink(workspace)}><WorkspaceBox >
+                    <StyledIcon src = {this.icons[workspace.icon]}/>
+                    {workspace.name}
                 </WorkspaceBox></Link>
             )
             return
         })
 
-        this.count = repositoriesJSX.length
-
-        repositoriesJSX.push( <WorkspaceBox fd = {"row"} opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
+        workspacesJSX.push( <WorkspaceBox fd = {"row"} opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
                                 <ion-icon style={{'fontSize':'2rem', 'marginRight': '0.5rem'}} name="add-outline"></ion-icon>
                                 Add Workspace
                             </WorkspaceBox>
         )
-
-        repositoriesJSX.push( <WorkspaceBox fd = {"row"} opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
-                                <ion-icon style={{'fontSize':'2rem', 'marginRight': '0.5rem'}} name="add-outline"></ion-icon>
-                                To Workspace
-                            </WorkspaceBox>
-        )
-
-        repositoriesJSX.push( <WorkspaceBox fd = {"row"} opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
-                                <ion-icon style={{'fontSize':'2rem', 'marginRight': '0.5rem'}} name="add-outline"></ion-icon>
-                                rat Workspace
-                            </WorkspaceBox>
-        )
         
         let allJSX = []
-        for (let i = 0; i < repositoriesJSX.length; i+= 3) {
+        for (let i = 0; i < workspacesJSX.length; i+= 3) {
             allJSX.push(<WorkspaceRow>
-                {repositoriesJSX.slice(i, i + 3).map(repositoryJSX => {
-                    return repositoryJSX
+                {workspacesJSX.slice(i, i + 3).map(workspaceJSX => {
+                    return workspaceJSX
                 })}
             </WorkspaceRow>)
         }
-        
         return allJSX
     }
 
-    createRepository() {
-        this.props.createRepository({name: this.nameInput.current.value, link: this.addressInput.current.value, icon: this.count}).then((repo_data) => {
-            this.props.updateRepositoryCommit({ repo_id: repo_data['_id'], repo_link: repo_data['link']})
-            this.clearModal()
-        })
 
-    }
 
     clearModal() {
         this.setState({modalDisplay: 'none'})
-        //this.nameInput.current.value = "";
-        //this.addressInput.current.value = "";
     }
 
     render() {
-        if (this.props.repositories){
+        if (this.props.workspaces){
             return (
                 <Container>
                     <Header>Workspaces</Header>
                     <WorkspaceContainer>
-                        {this.renderRepositories()}
+                        {this.renderWorkspaces()}
                     </WorkspaceContainer>
                     <WorkspaceModal 
                         clearModal = {() => this.clearModal()}
@@ -132,16 +111,17 @@ class WorkspaceView extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        repositories: Object.values(state.repositories.repositories)
+        workspaces: Object.values(state.workspaces.workspaces),
+        user: state.auth.user
     }
 }
 
-export default connect(mapStateToProps, {createRepository, retrieveRepositories, updateRepositoryCommit})(WorkspaceView);
+export default connect(mapStateToProps, { retrieveWorkspaces })(WorkspaceView);
 
 
 const StyledIcon = styled.img`
     width: 5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.8rem;
 `
 
 const Header = styled.div`

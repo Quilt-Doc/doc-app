@@ -4,7 +4,7 @@ import React from 'react';
 import styled from "styled-components"
 
 //react-router
-import { Router, Route } from 'react-router-dom';
+import { Router, Route, Switch } from 'react-router-dom';
 import history from '../../history';
 
 //components
@@ -40,12 +40,23 @@ class RepositoryNavigation extends React.Component {
                         <MidContainer>
                             <LeftContainer>
                                 
-                                <Router history = {history}>
-                                    <Route path = "/repository/directory/:link" component = { DirectoryView } />
-                                    <Route path = "/repository/codeview/:link" component = { CodeView } />
-                                </Router>
+                                <Switch history = {history}>
+                                    <Route path = "/workspaces/:username/:key/repository/:repositoryID/dir/:referenceID" component = { DirectoryView } />
+                                    <Route path = "/workspaces/:username/:key/repository/:repositoryID/dir/" component = { DirectoryView } />
+                                    <Route path = "/workspaces/:username/:key/repository/:repositoryID/code/:referenceID" component = { CodeView } />
+                                </Switch>
                             </LeftContainer>
-                            <InfoBar>
+                            
+                        </MidContainer>
+                    </Container> 
+                </>
+            );
+    }
+}
+
+export default RepositoryNavigation
+
+/*<InfoBar>
                                 
                                 <InfoBlock>
                                     <InfoHeader>TAGS</InfoHeader>
@@ -65,21 +76,13 @@ class RepositoryNavigation extends React.Component {
                                     </ReferenceContainer>
                                 </InfoBlock>
                                 
-                            </InfoBar>
-                        </MidContainer>
-                    </Container> 
-                </>
-            );
-    }
-}
-
-export default RepositoryNavigation
-
+                            </InfoBar>*/
 // Styled Components
 
 const Container = styled.div`
     margin-left: 8rem;
     margin-right: 8rem;
+    padding-bottom: 4rem;
 `
 
 const MidContainer = styled.div`

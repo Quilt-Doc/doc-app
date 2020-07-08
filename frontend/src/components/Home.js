@@ -42,7 +42,7 @@ class Home extends React.Component {
 
     render(){
         if (this.props.authenticated === undefined){
-            return <div>Nothing here</div>
+            return null
         }
         return(
             <>

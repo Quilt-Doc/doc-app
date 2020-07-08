@@ -18,7 +18,8 @@ router.get('/references/get2/:id', reference_controller.getReference);
 router.put('/references/edit/:id', reference_controller.editReference);
 router.delete('/references/delete/:id', reference_controller.deleteReference);
 router.post('/references/retrieve',  reference_controller.retrieveReferences);
-
+router.post('/references/get_contents', reference_controller.getContents);
+router.post('/references/retrieve_code_references', reference_controller.retrieveCodeReferences);
 // DEPRECATED
 /*
 router.post('/references/attach_document',  reference_controller.attachDocument);
@@ -83,7 +84,7 @@ router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
 router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
 router.put('/workspaces/add_user/:id', workspace_controller.addUser);
 router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
-
+router.post('/workspaces/retrieve', workspace_controller.retrieveWorkspaces);
 
 //auth routes
 const auth_controller = require('../controllers/authentication/AuthController');

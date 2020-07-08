@@ -1,26 +1,44 @@
 import {
     CREATE_WORKSPACE,
     GET_WORKSPACE,
+    RETRIEVE_WORKSPACES,
     WORKSPACE_ADD_USER,
     DELETE_WORKSPACE,
-    WORKSPACE_REMOVE_USER
+    WORKSPACE_REMOVE_USER,
+    SET_CURRENT_WORKSPACE
 } from '../actions/types/Workspace_Types'
 
 import _ from 'lodash';
 
-
-export default (state = {}, action) => {
+let state = {
+    workspaces: {},
+    currentSpace: {}
+}
+// NEED TO UPDATE CURRENT WORKSPACE ON WORKSPACE CHANGE
+export default (state = {workspaces: {}, currentSpace: {}}, action) => {
+    let workspaces;
     switch (action.type) {
+        
         case CREATE_WORKSPACE:
-            return { ...state, [action.payload._id]: action.payload };
+            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
+            return { ...state, workspaces };
         case GET_WORKSPACE:
-            return { ...state, [action.payload._id]: action.payload };
+            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
+            return { ...state, workspaces };
         case DELETE_WORKSPACE:
-            return _.omit(state, action.payload._id);
+            workspaces = _.omit(state.workspaces, action.payload._id); 
+            return { ...state, workspaces };
         case WORKSPACE_ADD_USER:
-            return { ...state, [action.payload._id]: action.payload };
+            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
+            return { ...state, workspaces }
         case WORKSPACE_REMOVE_USER:
-            return { ...state, [action.payload._id]: action.payload };
+            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
+            return { ...state, workspaces }
+        case RETRIEVE_WORKSPACES:
+            workspaces = { ..._.mapKeys(action.payload, '_id') };
+            return { ...state, workspaces }
+        case SET_CURRENT_WORKSPACE:
+            return { ...state, currentSpace: action.payload}
         default: 
             return state;
     }

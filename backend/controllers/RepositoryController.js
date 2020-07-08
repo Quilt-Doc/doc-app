@@ -18,7 +18,6 @@ const fsPath = require('fs-path');
 
 const { exec, execFile } = require('child_process');
 
-const RepositoryItem = require('../models/RepositoryItem')
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
@@ -377,15 +376,18 @@ deleteRepository = (req, res) => {
 
 
 retrieveRepositories = (req, res) => {
-    const {fullName, workspaceId, installationId, ids} = req.body;
+    const {fullName, installationId, fullNames} = req.body;
     // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
+    console.log(fullNames)
+    console.log(installationId)
 
     query = Repository.find();
     if (fullName) query.where('fullName').equals(fullName);
-    if (workspaceId) query.where('workspace').equals(workspaceId);
     if (installationId) query.where('installationId').equals(installationId);
-    if (repositoryIDs) query.where('_id').in(ids)
+    if (fullNames) query.where('fullName').in(fullNames)
+
     query.populate('workspace').exec((err, repositories) => {
+        console.log("REPOSITORIES", repositories)
         if (err) return res.json({ success: false, error: err });
         return res.json(repositories);
     });
@@ -441,19 +443,30 @@ updateRepositoryCommit = (req, res) => {
 
 validateRepositories = async (req, res) => {
     let repositories = []
+
+
     let ids = Object.keys(req.body.selected)
     for (let i = 0; i < ids.length; i++){
         let id = ids[i]
         let fullName = req.body.selected[id]
         let repository = await Repository.findOne({fullName: fullName, installationId: req.body.installationID})
+
         if (!repository) {
             repositories.push(fullName)
-            api.put(`/user/installations/${req.body.installationID}/repositories/${id}`, 
-                { headers: {
-                    Authorization: `token ${req.body.accessToken}`,
-                    Accept: 'application/vnd.github.machine-man-preview+json'
-                }
-            })
+            /*
+            console.log("REPOSITORY ID:", id)
+            console.log("INSTALLATION ID:", req.body.installationID)
+            console.log("ACCESS TOKEN:", req.body.accessToken)
+
+            const response = 
+                await api.put(`/user/installations/${req.body.installationID}/repositories/${id}`, 
+                    { headers: {
+                        Authorization: `token ${req.body.accessToken}`,
+                        Accept: 'application/json'
+                    }
+                })
+            
+            console.log(response)*/
         }
     }
     /*
@@ -468,12 +481,10 @@ validateRepositories = async (req, res) => {
 
 
 pollRepositories = async (req, res) => {
-    let repositories = []
-    let ids = Object.keys(req.body.selected)
-    for (let i = 0; i < ids.length; i++) {
-        let id = ids[i]
-        let fullName = req.body.selected[id]
-        let repository = await Repository.findOne({fullName: fullName, installationId: req.body.installationID})
+    let { fullNames, installationID } = req.body
+    for (let i = 0; i < fullNames.length; i++) {
+        let fullName = fullNames[i]
+        let repository = await Repository.findOne({fullName: fullName, installationId: installationID})
         if (!repository || repository.doxygenJobStatus !== "FINISHED" || repository.semanticJobStatus !== "FINISHED") {
             return res.json({finished: false})
         }

@@ -18,8 +18,12 @@ import _ from 'lodash';
 
 //actions
 import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
+import { getContents, retrieveCodeReferences } from '../../../actions/Reference_Actions';
 import { getRepositoryFile } from '../../../actions/Repository_Actions';
 import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
+
+//router
+import { withRouter } from 'react-router-dom';
 
 //misc
 import { connect } from 'react-redux';
@@ -68,14 +72,28 @@ class CodeView extends React.Component {
 
     componentDidMount() {
         // framework for selecting lines of code in viewer
-        this.createSelection()
+        this.createSelection();
 
         // retrieve snippets using url path 
-        this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        //this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
 
         
         // get contents of code file from database
-        this.getFileContents()
+        let { referenceID }  = this.props.match.params;
+
+        this.props.getContents({referenceID}).then((fileContents) => {
+            this.setState({fileContents});
+
+            this.props.retrieveCodeReferences({ referenceID }).then(() => {
+                const allLinesJSX = this.renderLines(fileContents);
+                this.setState({allLinesJSX});
+            });
+            
+        });
+
+        //this.props.retrieveCodeReferences({ referenceID })
+
+        //this.getFileContents()
 
         // get callback references -- temporary
         
@@ -222,7 +240,7 @@ class CodeView extends React.Component {
         }
     }
     
-    colorLines() {
+    renderLines(fileContents) {
         const grammar = Prism.languages["python"]
         const identifiers = {
             'keyword':{color: '#C679DD', type: ''},
@@ -236,11 +254,11 @@ class CodeView extends React.Component {
             'builtin': {color:'#61AEEE', type: ''},
             'comment': {color: '#5C6370', type: 'italic'}
         }
-        const tokens = Prism.tokenize(this.props.fileContents, grammar)
-
+        const tokens = Prism.tokenize(fileContents, grammar)
+        console.log(this.props.references)
         let allLinesJSX = []
         let currLineJSX = []
-        let callbacks = [...this.props.callbacks].reverse()
+        let callbacks = []/*[...this.props.callbacks].reverse()*/
         let lineNumber = 1
         let offset = 0
         
@@ -343,7 +361,7 @@ class CodeView extends React.Component {
     // render the snippets that are in the database
     renderSnippets() {
         // extract the lines from fileContents
-        //const lines = this.props.fileContents.split("\n");
+        //const lines = this.state.fileContents.split("\n");
         const lines = this.state.allLinesJSX;
         // jsx that will be rendered, store these in an array to render them appropriately later
         let snippetJSX = []
@@ -480,7 +498,7 @@ class CodeView extends React.Component {
         //acquire the startline from the id, find all lines from startline to endline
         let startLine = parseInt(this.state.newSnippetId.split('-').pop())
         let length = _.keys(this.state.selected).length
-        let code = this.props.fileContents.split("\n").slice(startLine, startLine + length)
+        let code = this.state.fileContents.split("\n").slice(startLine, startLine + length)
         let annotation = this.refs['newAnnotationTextarea'].value
         let location = window.location.pathname.slice(20)
         this.deselectItems()
@@ -502,7 +520,7 @@ class CodeView extends React.Component {
     reselectSnippetFunction(elem_key) {
         let startLine = parseInt(elem_key.split('-').pop())
         let length = _.keys(this.state.selected).length
-        let code = this.props.fileContents.split("\n").slice(startLine, startLine + length)
+        let code = this.state.fileContents.split("\n").slice(startLine, startLine + length)
         this.deselectItems()
         this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {startLine, code, status: "VALID"}).then(() => {
             this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
@@ -596,7 +614,7 @@ class CodeView extends React.Component {
     // render function
     render() {
         //console.log("CALLBACKS PREV", this.props.callbacks)
-        if (this.props.fileContents && this.props.callbacks.length > 0) {
+        if (this.state.fileContents) {
             return (
                 <>
                     <Container>
@@ -643,25 +661,23 @@ const mapStateToProps = (state) => {
         fileName: state.repositories.fileName,
         filePath: state.repositories.repositoryCurrentPath + '/' + state.repositories.fileName,
         snippets: state.snippets,
-        callbacks: state.callbacks
+        callbacks: state.callbacks,
+        references: state.references
     }
 }
 
-export default connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, deleteSnippet, getRepositoryFile, retrieveCallbacks})(CodeView);
+export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveCodeReferences})(CodeView));
 
 
 
 //Styled Components
 const Container = styled.div`
-    
-    margin-top: 5rem;
     width: 110rem;
     background-color: #F7F9FB;
     display: flex;
     box-shadow: 0 0 4px 1px rgba(0,0,0,.05), 2px 2px 2px 1px rgba(0,0,0,.05) !important;
     border-radius: 0.4rem !important;
     margin-bottom: 5rem;
-    margin-left: 4rem;
 `
 
 const Toolbar = styled.div`

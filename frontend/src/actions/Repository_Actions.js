@@ -8,7 +8,8 @@ import {
     CREATE_REPOSITORY,
     GET_REPOSITORY,
     DELETE_REPOSITORY,
-    RETRIEVE_REPOSITORIES
+    RETRIEVE_REPOSITORIES, 
+    SET_CURRENT_REPOSITORY
 } from './types/Repository_Types';
 
 import { api } from '../apis/api';
@@ -132,6 +133,10 @@ export const validateRepositories = (formValues) => async () => {
 export const pollRepositories = (formValues) => async () => {
     const response = await api.post('/repositories/poll', formValues);
     return response.data
+}
+
+export const setCurrentRepository = (formValues) => dispatch => {
+    dispatch({ type: SET_CURRENT_REPOSITORY, payload: formValues });
 }
 
 
