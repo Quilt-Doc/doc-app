@@ -1,4 +1,4 @@
-const Snippet = require('../models/Snippet');
+const Snippet = require('../../models/Snippet');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 

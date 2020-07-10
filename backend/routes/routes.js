@@ -51,18 +51,7 @@ router.get('/snippets/get/:id', snippet_controller.getSnippet);
 router.put('/snippets/edit/:id', snippet_controller.editSnippet);
 router.delete('/snippets/delete/:id', snippet_controller.deleteSnippet);
 router.post('/snippets/retrieve', snippet_controller.retrieveSnippets);
-router.put('/snippets/attach_folder/:id', snippet_controller.attachFolder);
-router.put('/snippets/remove_folder/:id', snippet_controller.removeFolder);
-router.put('/snippets/attach_document/:id', snippet_controller.attachDocument);
-router.put('/snippets/remove_document/:id', snippet_controller.removeDocument);
 router.post('/snippets/refresh', snippet_controller.refreshSnippets);
-
-const snippet_controller2 = require('../controllers/SnippetController2');
-router.post('/snippets2/create', snippet_controller2.createSnippet);
-router.get('/snippets2/get/:id', snippet_controller2.getSnippet);
-router.put('/snippets2/edit/:id', snippet_controller2.editSnippet);
-router.delete('/snippets2/delete/:id', snippet_controller2.deleteSnippet);
-router.post('/snippets2/retrieve', snippet_controller2.retrieveSnippets);
 
 const repository_controller = require('../controllers/RepositoryController');
 router.post('/repositories/refresh_path', repository_controller.refreshRepositoryPath)

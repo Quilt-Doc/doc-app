@@ -46,7 +46,7 @@ class RepositoryNavigation extends React.Component {
                                     <Route path = "/workspaces/:username/:key/repository/:repositoryID/code/:referenceID" component = { CodeView } />
                                 </Switch>
                             </LeftContainer>
-                            
+                           
                         </MidContainer>
                     </Container> 
                 </>
@@ -92,8 +92,10 @@ const MidContainer = styled.div`
 `
 
 const LeftContainer = styled.div`
+    /*
     width: 80rem;
-    margin-right: 15rem;
+    margin-right: 5rem;
+    margin-right: 2rem;*/
 `
 
 const RightContainer = styled.div`

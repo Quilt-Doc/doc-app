@@ -122,7 +122,7 @@ retrieveCodeReferences = async (req, res) => {
     query.where('kind').ne('file')
     query.where('repository').equals(rootReference.repository)
 
-    query.exec((err, references) => {
+    query.populate('repository').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
         console.log("REFERENCES", references)
         return res.json(references);

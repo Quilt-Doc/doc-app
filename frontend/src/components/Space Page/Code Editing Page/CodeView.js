@@ -84,43 +84,16 @@ class CodeView extends React.Component {
         this.props.getContents({referenceID}).then((fileContents) => {
             this.setState({fileContents});
             this.props.retrieveCodeReferences({ referenceID }).then(() => {
+                this.props.retrieveSnippets({referenceID}).then(() => {
+                    console.log("SNIPPETS", this.props.snippets)
+                })
                 const allLinesJSX = this.renderLines(fileContents);
                 this.setState({allLinesJSX});
             });
         });
-
-        //this.props.retrieveCodeReferences({ referenceID })
-
-        //this.getFileContents()
-
-        // get callback references -- temporary
-        
-        /*
-        this.props.retrieveCallbacks().then(() =>{
-            console.log("CALLBACKS", this.props.callbacks)
-        })*/
-       
     }
 
 
-    // using url path, extract download link... use download link to get file contents from database
-    getFileContents() {
-        //console.log(window.location.pathname.slice(20));
-        // .slice(1) because starts with a slash
-        
-        var pathInRepo = window.location.pathname.slice(20).split('/').slice(1);
-        var repositoryId = pathInRepo.shift();
-        //console.log('repository Id: ', repositoryId);
-        let fileName = window.location.pathname.slice(20).split('/').pop();
-        //console.log('filename:', fileName)
-        this.props.getRepositoryFile({repositoryId, fileName, pathInRepo: pathInRepo.join('/')}).then(() => {
-            this.props.retrieveCallbacks({repositoryId, fileName, pathInRepo: pathInRepo.join('/')}).then(() => {
-                const allLinesJSX = this.colorLines()
-                this.setState({allLinesJSX})
-            })
-        })
-        
-    }
 
     // translate annotation pane manually if a new snippet is being created 
     componentDidUpdate(){
@@ -195,8 +168,27 @@ class CodeView extends React.Component {
 		});
     }
 
+    calculatePathDifference(basePath, comparePath) {
+        let basePathSplit = basePath.split("/")
+        let comparePathSplit = comparePath.split("/")
+
+        if (comparePathSplit.length < basePathSplit.length) {
+            basePathSplit = comparePath.split("/")
+            comparePathSplit = basePath.split("/")
+        }
+
+        let diff = comparePathSplit.length - basePathSplit.length
+
+        for (let i = 0; i < basePathSplit.length; i+= 1){
+            if (basePathSplit[i] !== comparePathSplit[i]){
+                diff += 1
+            }
+        }
+        return diff
+    }
+
     renderCallbacks(line, callbacks, offset, lineNumber, currLineJSX, tokenType) {
-        const { position, name } =  callbacks.slice(-1)[0];
+        const { position, name, path, definitionReferences } =  callbacks.slice(-1)[0];
         let symbol = name;
         const { start, end } = position;
 
@@ -220,14 +212,27 @@ class CodeView extends React.Component {
             let color = '#61AEEE'
             
             if (tokenType === "class-name") {
-                console.log("ENTERED")
-                console.log(symbol)
                 color = '#E6C07A'
             }
-            currLineJSX.push(<ColoredSpan 
+
+            
+            if (definitionReferences.length !== 0) {
+                definitionReferences.sort((a,b) => {
+                    if (this.calculatePathDifference(path, a.path) > this.calculatePathDifference(path, b.path)){
+                        return 1
+                    } else {
+                        return -1
+                    }
+                })
+                if (definitionReferences[0].kind === 'class') {
+                    color =  '#E6C07A'
+                }
+            }
+
+            currLineJSX.push(<ColoredSpan2
                                 color = {color}>
                                 {line.slice(start.column - offset - 1, last)}
-                             </ColoredSpan>)
+                             </ColoredSpan2>)
             currLineJSX.push(<>{line.slice(last)}</>)
             callbacks.pop()
         } else if (tokenType !== undefined) {
@@ -283,7 +288,6 @@ class CodeView extends React.Component {
         
         let allLinesJSX = []
         let currLineJSX = [] 
-
         let callbacks = this.props.references.filter(ref => 
             {return ref.parseProvider === 'semantic'}).map(ref => {ref.position = 
                 JSON.parse(ref.position); return ref}).sort((a, b) => {
@@ -300,7 +304,7 @@ class CodeView extends React.Component {
                     }
                 })
         
-    
+        callbacks.map(item => console.log(item))
         /*[...this.props.callbacks].reverse()*/
         let lineNumber = 1
         let offset = 0
@@ -323,7 +327,6 @@ class CodeView extends React.Component {
                     }
                     
                     if (currLineJSX.length > 0) {
-                        //console.log("PUSHED")
                         allLinesJSX.push(currLineJSX)
                     } else {
                         allLinesJSX.push([<>{"\n"}</>])
@@ -414,8 +417,8 @@ class CodeView extends React.Component {
         }
     }
 
-    reselectSnippet(startLine) {
-        this.setState({reselectingSnippet: startLine})
+    reselectSnippet(start) {
+        this.setState({reselectingSnippet: start})
     }
 
     deleteSnippet(index) {
@@ -561,10 +564,10 @@ class CodeView extends React.Component {
     // function to create a snippet-annotation pair when the create button is clicked 
     createAnnotationFunction() {
 
-        //acquire the startline from the id, find all lines from startline to endline
-        let startLine = parseInt(this.state.newSnippetId.split('-').pop())
+        //acquire the start from the id, find all lines from start to endline
+        let start = parseInt(this.state.newSnippetId.split('-').pop())
         let length = _.keys(this.state.selected).length
-        let code = this.state.fileContents.split("\n").slice(startLine, startLine + length)
+        let code = this.state.fileContents.split("\n").slice(start, start + length)
         let annotation = this.refs['newAnnotationTextarea'].value
         let location = window.location.pathname.slice(20)
         this.deselectItems()
@@ -572,8 +575,11 @@ class CodeView extends React.Component {
         //createSnippet must handle all state reset, acquire beginning/end line data
         //snippet content, etc and send them over to the action
 
-        this.props.createSnippet({startLine, code, annotation, location, status: "INVALID"}).then(() => {
-            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        this.props.createSnippet({start, code, annotation, 
+            referenceID: this.props.match.params.referenceID, status: "VALID", creator: this.props.user._id }).then(() => {
+            this.props.retrieveSnippets({ referenceID: this.props.match.params.referenceID}).then(() => {
+                console.log("SNIPPETS", this.props.snippets)
+            })
             this.setState({
                 'selected': {},
                 'newSnippetId': '',
@@ -584,11 +590,11 @@ class CodeView extends React.Component {
     }
 
     reselectSnippetFunction(elem_key) {
-        let startLine = parseInt(elem_key.split('-').pop())
+        let start = parseInt(elem_key.split('-').pop())
         let length = _.keys(this.state.selected).length
-        let code = this.state.fileContents.split("\n").slice(startLine, startLine + length)
+        let code = this.state.fileContents.split("\n").slice(start, start + length)
         this.deselectItems()
-        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {startLine, code, status: "VALID"}).then(() => {
+        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {start, code, status: "VALID"}).then(() => {
             this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
             this.setState({
                 'selected': {},
@@ -683,25 +689,26 @@ class CodeView extends React.Component {
         if (this.state.fileContents) {
             return (
                 <>
-                    <Container>
-                        <Toolbar>
-                            <IconBorder 
-                                color = {this.state.selectionMode ? '#19E5BE;' : '#262626'}
-                                opacity = {this.state.selectionMode ? '1' : '0.5'}
-                                onClick = {this.toggleSelection}>
-                                <ion-icon 
-                                    style = {{'fontSize': '1.4rem'}} 
-                                    name="color-wand-outline">
-                                </ion-icon>
-                            </IconBorder>
-                            <IconBorder>
-                                <ion-icon 
-                                    name="hammer-outline"
-                                    style = {{'fontSize': '1.3rem'}} >
-                                </ion-icon>
-                            </IconBorder>
-                        </Toolbar>
-                        {this.renderSnippets()}
+                    <Container >
+                        <ListToolbar> 
+                            <HighlightButton
+                                 onClick = {this.toggleSelection}
+                                 opacity = {this.state.selectionMode ? '1' : '0.7'}
+                                 color = {this.state.selectionMode ? '#19E5BE' : '#172A4E'}
+
+                            >
+                                <IconBorder
+                                    
+                                    >
+                                    <ion-icon style={{'fontSize': '2.2rem'}} name="color-wand-outline"></ion-icon>
+                                    
+                                </IconBorder>
+                                Highlight
+                            </HighlightButton>
+                        </ListToolbar>
+                        <CodeContainer >
+                            {this.renderSnippets()}
+                        </CodeContainer>
                     </Container>
                 </>
                 
@@ -711,7 +718,24 @@ class CodeView extends React.Component {
         }
     }
 }
-
+/*
+<Toolbar>
+<IconBorder 
+    color = {this.state.selectionMode ? '#19E5BE;' : '#262626'}
+    opacity = {this.state.selectionMode ? '1' : '0.5'}
+    onClick = {this.toggleSelection}>
+    <ion-icon 
+        style = {{'fontSize': '1.4rem'}} 
+        name="color-wand-outline">
+    </ion-icon>
+</IconBorder>
+<IconBorder>
+    <ion-icon 
+        name="hammer-outline"
+        style = {{'fontSize': '1.3rem'}} >
+    </ion-icon>
+</IconBorder>
+</Toolbar>*/
 
 // relevant data here is fileContents, which are the lines of data
 const mapStateToProps = (state) => {
@@ -722,6 +746,7 @@ const mapStateToProps = (state) => {
         filePath: state.repositories.repositoryCurrentPath + '/' + state.repositories.fileName,
         snippets: state.snippets,
         callbacks: state.callbacks,
+        user: state.auth.user,
         references: Object.values(state.references)
     }
 }
@@ -731,14 +756,50 @@ export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnip
 
 
 //Styled Components
+
+
+const IconBorder = styled.div`
+    margin-left: ${props => props.marginLeft};
+    margin-right: 0.2rem;
+    display: flex;
+    align-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    cursor: pointer;
+    justify-content: center;
+    transition: all 0.1s ease-in;
+    border-radius: 0.3rem;
+    margin-right: ${props => props.marginRight};
+`
+
 const Container = styled.div`
+
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #DFDFDF;
+    border-radius:0.4rem;
+    
+    
+`
+
+const CodeContainer = styled.div`
     width: 110rem;
     background-color: #F7F9FB;
     display: flex;
-    box-shadow: 0 0 4px 1px rgba(0,0,0,.05), 2px 2px 2px 1px rgba(0,0,0,.05) !important;
-    border-radius: 0.4rem !important;
-    margin-bottom: 5rem;
+    border-top: 1px solid #DFDFDF;
+    border-radius: 0rem 0rem 0.4rem 0.4rem !important;
+    
 `
+
+
+const ListToolbar = styled.div`
+    height: 4.5rem;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 0.4rem 0.4rem 0rem 0rem !important;
+`
+
 
 const Toolbar = styled.div`
     position: absolute;
@@ -756,26 +817,22 @@ const Toolbar = styled.div`
     align-items: center; 
 `
 
-const IconBorder = styled.div`
-    width: 2.3rem;
-    height: 2.3rem;
-    border: 1px solid #262626;
-    color: #262626;
-    margin-top: 0.5rem;
-    border-radius: 50%;
+const HighlightButton = styled.div`
     display: flex;
     align-items: center;
-    justify-content: center;
-    opacity: 0.5;
-    cursor: pointer;
-    transition: all 0.1s ease-out;
-    &:hover {
-        opacity: 1;
-    }
     color: ${props => props.color};
-    border: 1px solid ${props => props.color};
+    font-size: 1.5rem;
     opacity: ${props => props.opacity};
+    &: hover {
+        opacity: 1;
+        background-color: #F4F4F6; 
+    }
+    margin-left : 98rem;
+    padding-right: 0.6rem;
+    cursor: pointer;
+    border-radius: 0.3rem;
 `
+
 
 const Overflow_Wrapper = styled.div`
     overflow:hidden;
@@ -785,7 +842,7 @@ const Overflow_Wrapper = styled.div`
 const CodeText = styled.div`
     width: 77rem;
     padding: 1.5rem;
-    border-right: 1px solid #ECECEF;
+    border-right: 1px solid #DFDFDF;
     display: flex;
     flex-direction: column;
     font-family: 'Roboto Mono', monospace !important;
@@ -923,6 +980,16 @@ const CancelAnnotation = styled.div`
 const ColoredSpan = styled.span`
     color : ${props => props.color};
     font-style: ${props => props.type};
+`
+
+const ColoredSpan2= styled.span`
+    color : ${props => props.color};
+    font-style: ${props => props.type};
+    border-radius: 0.3rem;
+    &:hover {
+        background-color: rgba(25, 230, 192, 0.2);
+        cursor: pointer;
+    }
 `
 
 const ObliqueSpan = styled.span`
