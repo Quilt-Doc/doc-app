@@ -49,8 +49,7 @@ class WorkspaceView extends React.Component {
     }
 
     renderLink(workspace) {
-        console.log(workspace)
-        return `/workspaces/${workspace.creator.username}/${workspace.key}/repository/${workspace.repositories[0]._id}/dir`
+        return `/workspaces/${workspace._id}/repository/${workspace.repositories[0]._id}/dir`
     }
 
     renderWorkspaces() {
@@ -112,7 +111,7 @@ class WorkspaceView extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        workspaces: Object.values(state.workspaces.workspaces),
+        workspaces: Object.values(state.workspaces),
         user: state.auth.user
     }
 }

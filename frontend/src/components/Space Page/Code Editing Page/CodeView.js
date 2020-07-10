@@ -18,7 +18,7 @@ import _ from 'lodash';
 
 //actions
 import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
-import { getContents, retrieveCodeReferences } from '../../../actions/Reference_Actions';
+import { getContents, retrieveCodeReferences, retrieveReferences } from '../../../actions/Reference_Actions';
 import { getRepositoryFile } from '../../../actions/Repository_Actions';
 import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
 
@@ -83,10 +83,8 @@ class CodeView extends React.Component {
 
         this.props.getContents({referenceID}).then((fileContents) => {
             this.setState({fileContents});
-            this.props.retrieveCodeReferences({ referenceID }).then(() => {
-                this.props.retrieveSnippets({referenceID}).then(() => {
-                    console.log("SNIPPETS", this.props.snippets)
-                })
+            this.props.retrieveReferences({ referenceID, notKinds : ['file']}).then(() => {
+                this.props.retrieveSnippets({referenceID})
                 const allLinesJSX = this.renderLines(fileContents);
                 this.setState({allLinesJSX});
             });
@@ -695,26 +693,29 @@ class CodeView extends React.Component {
         if (this.state.fileContents) {
             return (
                 <>
-                    <Container >
-                        <ListToolbar> 
-                            <HighlightButton
-                                 onClick = {this.toggleSelection}
-                                 opacity = {this.state.selectionMode ? '1' : '0.7'}
-                                 color = {this.state.selectionMode ? '#19E5BE' : '#172A4E'}
+                    <Container>
+                        <Header>backend / apis</Header>
+                        <EditorContainer>
+                            <ListToolbar> 
+                                <HighlightButton
+                                    onClick = {this.toggleSelection}
+                                    opacity = {this.state.selectionMode ? '1' : '0.7'}
+                                    color = {this.state.selectionMode ? '#19E5BE' : '#172A4E'}
 
-                            >
-                                <IconBorder
-                                    
-                                    >
-                                    <ion-icon style={{'fontSize': '2.2rem'}} name="color-wand-outline"></ion-icon>
-                                    
-                                </IconBorder>
-                                Highlight
-                            </HighlightButton>
-                        </ListToolbar>
-                        <CodeContainer >
-                            {this.renderSnippets()}
-                        </CodeContainer>
+                                >
+                                    <IconBorder
+                                        
+                                        >
+                                        <ion-icon style={{'fontSize': '2.2rem'}} name="color-wand-outline"></ion-icon>
+                                        
+                                    </IconBorder>
+                                    Highlight
+                                </HighlightButton>
+                            </ListToolbar>
+                            <CodeContainer >
+                                {this.renderSnippets()}
+                            </CodeContainer>
+                        </EditorContainer>
                     </Container>
                 </>
                 
@@ -757,12 +758,23 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveCodeReferences})(CodeView));
+export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveCodeReferences, retrieveReferences})(CodeView));
 
 
 
 //Styled Components
 
+const Header = styled.div`
+    font-size: 2.5rem;
+    color: #172A4E;
+    margin-bottom: 8rem;
+`
+
+const Container = styled.div`
+    margin-left: 8rem;
+    margin-right: 8rem;
+    padding-bottom: 4rem;
+`
 
 const IconBorder = styled.div`
     margin-left: ${props => props.marginLeft};
@@ -778,23 +790,19 @@ const IconBorder = styled.div`
     margin-right: ${props => props.marginRight};
 `
 
-const Container = styled.div`
-
+const EditorContainer = styled.div`
     display: flex;
     flex-direction: column;
     border: 1px solid #DFDFDF;
     border-radius:0.4rem;
-    
-    
+    min-width: 110rem;
 `
 
 const CodeContainer = styled.div`
-    width: 110rem;
     background-color: #F7F9FB;
     display: flex;
     border-top: 1px solid #DFDFDF;
     border-radius: 0rem 0rem 0.4rem 0.4rem !important;
-    
 `
 
 
@@ -833,7 +841,8 @@ const HighlightButton = styled.div`
         opacity: 1;
         background-color: #F4F4F6; 
     }
-    margin-left : 98rem;
+    margin-left : auto;
+    margin-right: 2rem;
     padding-right: 0.6rem;
     cursor: pointer;
     border-radius: 0.3rem;
@@ -843,10 +852,11 @@ const HighlightButton = styled.div`
 const Overflow_Wrapper = styled.div`
     overflow:hidden;
     padding-bottom: 10rem;
+    flex: 0 0 33rem;
 `
 
 const CodeText = styled.div`
-    width: 77rem;
+    flex: 1 1 77rem;
     padding: 1.5rem;
     border-right: 1px solid #DFDFDF;
     display: flex;

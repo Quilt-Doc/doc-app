@@ -5,7 +5,6 @@ import {
     DELETE_WORKSPACE,
     WORKSPACE_REMOVE_USER,
     RETRIEVE_WORKSPACES,
-    SET_CURRENT_WORKSPACE
 } from './types/Workspace_Types';
 
 import { api } from '../apis/api';
@@ -28,13 +27,8 @@ export const deleteWorkspace = (id) => async dispatch => {
 }
 
 export const retrieveWorkspaces = (formValues) => async dispatch => {
-    console.log("FORMVALUES", formValues)
     const response = await api.post(`/workspaces/retrieve`, formValues);
     dispatch({ type: RETRIEVE_WORKSPACES, payload: response.data });
-}
-
-export const setCurrentWorkspace = (currentSpace) => dispatch => {
-    dispatch({ type:  SET_CURRENT_WORKSPACE, payload: currentSpace });
 }
 
 // /workspaces/add_user/:id

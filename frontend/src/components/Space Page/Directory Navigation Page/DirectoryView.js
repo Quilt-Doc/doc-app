@@ -3,9 +3,6 @@ import React from 'react';
 //styles 
 import styled from "styled-components"
 
-//react-router
-import { withRouter } from 'react-router';
-
 //components
 import DirectoryItem from './DirectoryItem';
 
@@ -16,26 +13,21 @@ import { connect } from 'react-redux';
 
 class DirectoryView extends React.Component {
 
-    constructor(props) {
-        super(props) 
-
-    }
-
     // USE PARAMS
     componentDidMount() {
-        let split = window.location.pathname.split('/')
-        if (split.length === 7 || split[7] === ""){
-            return this.props.retrieveReferences({truncatedPath : true, kinds : ['file', 'dir'], repositoryID: split[5]})
+        let { repositoryID, referenceID } = this.props.match.params
+        if (referenceID !== null && referenceID !== undefined) {
+            this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']})
+        } else {
+            this.props.retrieveReferences({repositoryID, truncated: true, kinds : ['file', 'dir']})
         }
-        let currentDirectoryID = split[7]
-        this.props.retrieveReferences({currentDirectoryID, kinds : ['file', 'dir'],  repositoryID: split[5]})
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.location.pathname !== this.props.location.pathname) {
-            let split = window.location.pathname.split('/')
-            let currentDirectoryID = split[7]
-            this.props.retrieveReferences({currentDirectoryID, kinds : ['file', 'dir']})
+            let { repositoryID, referenceID } = this.props.match.params
+            
+            this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']})
         }
     }
 
@@ -75,44 +67,75 @@ class DirectoryView extends React.Component {
         })
     }
 
+    renderHeader(){
+        let name = this.props.currentRepository.fullName.split('/')[1]
+        if (this.props.currentReference !== null && this.props.currentReference !== undefined){
+            let splitPath = this.props.currentReference.path.split('/')
+            let headerItems = [name]
+            splitPath.map(item => {
+                headerItems.push("/");
+                headerItems.push(item);
+            })
+            return headerItems.join(" ")
+        } else {
+            return name
+        }
+    }
+
     render() {
+        console.log("CURRENT REFERENCE", this.props.currentReference)
         if (this.props.references) {
             return (
-                    
-                        <DirectoryContainer>
-                            <ListToolBar>
-                                <ListName>apis</ListName>
-                                <IconBorder
-                                        marginLeft = {"69rem"}
-                                >
-                                    <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
-                                </IconBorder>
-                                <IconBorder marginRight = {"1rem"}>
-                                    <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', }} name="filter-outline"></ion-icon>
-                                </IconBorder>
-                            </ListToolBar>
-                            {this.renderFolders()}
-                            {this.renderFiles()}
-                        </DirectoryContainer>
+                <Container>
+                    <Header>{this.renderHeader()}</Header>
+                    <DirectoryContainer>
+                        <ListToolBar>
+                            <ListName>apis</ListName>
+                            <IconBorder
+                                    marginLeft = {"69rem"}
+                            >
+                                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
+                            </IconBorder>
+                            <IconBorder marginRight = {"1rem"}>
+                                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', }} name="filter-outline"></ion-icon>
+                            </IconBorder>
+                        </ListToolBar>
+                        {this.renderFolders()}
+                        {this.renderFiles()}
+                    </DirectoryContainer>
+                </Container> 
                     
             );
         }
     }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
+    let { workspaceID, repositoryID, referenceID} = ownProps.match.params
+    console.log("WORKSPACE ID", workspaceID)
+    console.log(state.workspaces)
+    console.log("REPO ID", repositoryID)
+    console.log("REPOS", state.workspaces[workspaceID].repositories)
     return {
+        currentRepository: state.workspaces[workspaceID].repositories.filter(repo => repo._id === repositoryID)[0],
+        currentReference: state.references[referenceID],
         references: Object.values(state.references)
     }
 }
 
-export default withRouter(connect(mapStateToProps, { retrieveReferences } )(DirectoryView));
+export default connect(mapStateToProps, { retrieveReferences } )(DirectoryView);
 
+
+const Header = styled.div`
+    font-size: 2.5rem;
+    color: #172A4E;
+    margin-bottom: 8rem;
+`
 
 const Container = styled.div`
-    background-color:  #F7F9FB;
-    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
-    padding: 3rem;
+    margin-left: 8rem;
+    margin-right: 8rem;
+    padding-bottom: 4rem;
 `
 
 const DirectoryContainer = styled.div`

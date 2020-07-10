@@ -4,7 +4,15 @@ const { ObjectId } = mongoose.Types;
 
 var request = require("request");
 
-// DEPRECATED
+
+check = (item) => {
+    if (item !== null && item !== undefined) {
+        return true
+    }
+    return false
+}
+
+//Deprecated
 createReferences = (req, res) => {
     const { ref_list } = req.body;
     if (!typeof ref_list == 'undefined' && ref_list !== null) return res.json({success: false, error: 'no reference ref_list provided'});
@@ -115,8 +123,6 @@ retrieveCodeReferences = async (req, res) => {
     console.log(rootReference)
     let query = Reference.find({})
 
-    console.log(rootReference.path)
-    console.log(rootReference.repository)
 
     query.where('path').equals(rootReference.path)
     query.where('kind').ne('file')
@@ -131,37 +137,39 @@ retrieveCodeReferences = async (req, res) => {
 }
 
 retrieveReferences = async (req, res) => {
-    let { textQuery, name, path, truncatedPath, kind, kinds, currentDirectoryID, repositoryID, limit, skip } = req.body;
+    let { textQuery, name, path, kind, kinds, notKinds, 
+        referenceID, repositoryID, truncated, limit, skip } = req.body;
 
     let filter = {}
-    if (kind) filter.kind = kind;
-    
-    if (name) filter.name = name;
-    if (path || path === '') filter.path = path;
-    if (kind) filter.kind = kind;
-    if (repositoryID) filter.repository = ObjectId(repositoryID)
+
+    if (check(kind)) filter.kind = kind;
+    if (check(name)) filter.name = name;
+    if (check(path)) filter.path = path;
+    if (check(repositoryID)) filter.repository = ObjectId(repositoryID)
+
+    let regexQuery;
+
+    if (check(referenceID)) {
+        let reference = await Reference.findOne({_id: referenceID})
+        let refPath = reference.path.replace('/', '\/')
+        let regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
+        regexQuery = [{ path : { $regex: regex } }]
+    }
+
+    if (check(truncated)) {
+        let regex = new RegExp(`^[^\/]+$`, 'i');
+        regexQuery = [{ path : { $regex: regex } }]
+    }
+
+    if (check(textQuery)) {
+        let regex = new RegExp(textQuery, 'i');
+        regexQuery = [{ name: { $regex: regex } }, { path : { $regex: regex } }]
+    }
+
 
     let query;
-    if (textQuery || currentDirectoryID || truncatedPath) {
-        let regexQuery;
-        
-        if (textQuery) {
-            let regex = new RegExp(textQuery, 'i');
-            regexQuery = [{ name: { $regex: regex } }, { path : { $regex: regex } }]
-        }
-    
-        if (currentDirectoryID) {
-            let currentDir = await Reference.findOne({_id: currentDirectoryID})
-            let dirPath = (currentDir.path + '/').replace('/', '\/')
-            let regex = new RegExp(`^${dirPath}[^\/]+$`, 'i');
-            regexQuery = [{ path : { $regex: regex } }]
-        }
 
-        if (truncatedPath) {
-            let regex = new RegExp(`^[^\/]+$`, 'i');
-            regexQuery = [{ path : { $regex: regex } }]
-        }
-        
+    if (check(regexQuery)) {
         query =  Reference.find({
                         $and : [
                             { $or: regexQuery },
@@ -172,13 +180,12 @@ retrieveReferences = async (req, res) => {
         query = Reference.find({filter})
     }
     
-    if (kinds) query.where('kind').in(kinds)
-    if (limit) query.limit(Number(limit));
-    if (skip) query.skip(Number(skip));
+    if (check(kinds)) query.where('kind').in(kinds)
+    if (check(notKinds)) query.where('kind').nin(notKinds)
+    if (check(limit)) query.limit(Number(limit));
+    if (check(skip)) query.skip(Number(skip));
 
-    query.populate('repository').exec((err, references) => {
-        console.log("REFERENCES", references)
-        console.log(err)
+    query.populate('repository').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(references);
     });

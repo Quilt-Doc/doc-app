@@ -5,13 +5,10 @@ import styled from "styled-components";
 
 //components
 import TextEditorView from './Text Editor Page/TextEditorView';
-import RepositoryNavigation from './RepositoryNavigation';
 //import RepositoryView from './Repository Page/RepositoryView';
 import SideNavbar from './SideNavbar';
-import DocumentCreationView from './Document Creation Page/DocumentCreationView';
-import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
 import RequestView from './Request Page/RequestView';
-
+import CodeView from './Code Editing Page/CodeView';
 
 //react-router
 import { Switch, Route } from 'react-router-dom';
@@ -21,7 +18,7 @@ import history from '../../history';
 import { connect } from 'react-redux';
 
 //actions
-import { retrieveWorkspaces, setCurrentWorkspace } from '../../actions/Workspace_Actions';
+import { retrieveWorkspaces } from '../../actions/Workspace_Actions';
 import { setCurrentRepository } from '../../actions/Repository_Actions';
 import { updateRightViewScroll } from '../../actions/UI_Actions';
 import DirectoryView from './Directory Navigation Page/DirectoryView';
@@ -30,30 +27,16 @@ import DirectoryView from './Directory Navigation Page/DirectoryView';
 class SpaceView extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-           'modalDisplay': 'none'
-        } 
         this.rightViewRef = React.createRef()
+        this.state = {
+            ready: false
+        }
     }
 
     // SET KEY TO UNIQUE
     componentDidMount(){
         this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]}).then(() => {
-            let split = window.location.pathname.split('/')
-            let username = window.location.pathname.split('/')[2]
-            let key = window.location.pathname.split('/')[3]
-            let currentSpace = this.props.workspaces.filter(space => space.key === key && space.creator.username === username)[0]
-            /*
-            this.props.setCurrentWorkspace(currentSpace)
-            if (split.length < 6) {
-                this.props.setCurrentRepository(currentSpace.repositories[0])
-            } else {
-                let repositoryID = split[5]
-                let currentRepository = currentSpace.repositories.filter(repo => {
-                    return repo._id === repositoryID
-                })[0]
-                this.props.setCurrentRepository(currentRepository)  
-            }*/
+            this.setState({ready: true})
         })
     }
 
@@ -62,36 +45,38 @@ class SpaceView extends React.Component {
     }
 
     render() {
-        return (
-            <>
-                <Container>
-                    <SideNavbar  openModal = {() => this.setState({'modalDisplay': ''})}/>
-                    <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
-                        <Switch history = {history}>
-                            <Route path = "/workspaces/:username/:key/repository/:repositoryID/dir" component = {RepositoryNavigation} />
-                            <Route path = "/workspaces/:username/:key/repository/:repositoryID/code" component = {RepositoryNavigation} />
-                            <Route path = "/coverage" component = {RepositoryCoverageView} />
-                            <Route path = "/repository" component = {RepositoryNavigation}/>
-                            <Route path = "/document/:documentID" component = { TextEditorView } />
-                        </Switch>
-                    </RightView>
-                </Container>
-               
-            </>
-        );
+        if (this.state.ready) {
+            return (
+                <>
+                    <Container>
+                        <SideNavbar />
+                        <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
+                            <Switch history = {history}>
+                                <Route path = "/workspaces/:workspaceID/repository/:repositoryID/dir/:referenceID?" component = { DirectoryView } />
+                                <Route path = "/workspaces/:workspaceID/repository/:repositoryID/code/:referenceID" component = { CodeView } />
+                                <Route path = "/workspaces/:workspaceID/repository/:repositoryID/document/:documentID" component = { TextEditorView } />
+                            </Switch>
+                        </RightView>
+                    </Container>
+                   
+                </>
+            );
+        } return null
     }
 }
 
+/*<Route path = "/workspaces/:workspaceID/coverage" component = {} />*/
+
 const mapStateToProps = (state) => {
     return {
-        workspaces: Object.values(state.workspaces.workspaces),
+        workspaces: Object.values(state.workspaces),
         user: state.auth.user
     }
 }
 
 
 
-export default connect(mapStateToProps, { updateRightViewScroll, retrieveWorkspaces, setCurrentWorkspace })(SpaceView);
+export default connect(mapStateToProps, { updateRightViewScroll, retrieveWorkspaces })(SpaceView);
 
 /*  
 <ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>

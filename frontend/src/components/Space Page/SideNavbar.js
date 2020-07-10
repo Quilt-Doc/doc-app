@@ -251,7 +251,6 @@ const CodeDocumentItem = styled(Link)`
 const mapStateToProps = (state) => {
     return {
         selected : Object.values(state.selected),
-        currentWorkspace: state.workspaces.currentWorkspace,
         repositoryItems: Object.values(state.repositoryItems)
     }
 }

@@ -4,41 +4,27 @@ import {
     RETRIEVE_WORKSPACES,
     WORKSPACE_ADD_USER,
     DELETE_WORKSPACE,
-    WORKSPACE_REMOVE_USER,
-    SET_CURRENT_WORKSPACE
+    WORKSPACE_REMOVE_USER
 } from '../actions/types/Workspace_Types'
 
 import _ from 'lodash';
 
-let state = {
-    workspaces: {},
-    currentSpace: {}
-}
+
 // NEED TO UPDATE CURRENT WORKSPACE ON WORKSPACE CHANGE
-export default (state = {workspaces: {}, currentSpace: {}}, action) => {
-    let workspaces;
+export default (state = {}, action) => {
     switch (action.type) {
-        
         case CREATE_WORKSPACE:
-            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
-            return { ...state, workspaces };
+            return { ...state, [action.payload._id]: action.payload };
         case GET_WORKSPACE:
-            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
-            return { ...state, workspaces };
+            return { ...state, [action.payload._id]: action.payload };
         case DELETE_WORKSPACE:
-            workspaces = _.omit(state.workspaces, action.payload._id); 
-            return { ...state, workspaces };
+            return _.omit(state, action.payload._id); 
         case WORKSPACE_ADD_USER:
-            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
-            return { ...state, workspaces }
+            return { ...state, [action.payload._id]: action.payload };
         case WORKSPACE_REMOVE_USER:
-            workspaces = { ...state.workspaces, [action.payload._id]: action.payload }
-            return { ...state, workspaces }
+            return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_WORKSPACES:
-            workspaces = { ..._.mapKeys(action.payload, '_id') };
-            return { ...state, workspaces }
-        case SET_CURRENT_WORKSPACE:
-            return { ...state, currentSpace: action.payload}
+            return { ..._.mapKeys(action.payload, '_id') };
         default: 
             return state;
     }

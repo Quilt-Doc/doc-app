@@ -8,9 +8,9 @@ import { Router, Route, Switch } from 'react-router-dom';
 import history from '../../history';
 
 //components
-import DirectoryView from './Directory Navigation Page/DirectoryView'
-import CodeView from './Code Editing Page/CodeView'
-import TextEditorView from './Text Editor Page/TextEditorView';
+import DirectoryView from '../Space Page/Directory Navigation Page/DirectoryView'
+import CodeView from '../Space Page/Code Editing Page/CodeView'
+import TextEditorView from '../Space Page/Text Editor Page/TextEditorView';
 import Donut from '../General Components/Donut';
 
 //component that holds everything related to repository navigation (directory viewer and code viewer)
@@ -179,3 +179,4 @@ const Header = styled.div`
     color: #172A4E;
     margin-bottom: 8rem;
 `
+

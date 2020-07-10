@@ -53,9 +53,9 @@ class DirectoryItem extends React.Component {
         return {'fontSize': "2rem", 'color': '#19E5BE', 'display': this.state.check_box_check_display}
     }
 
-    turnCheckOn = (item) => {
-        console.log(this.props.selected)
-        console.log("WE HERE")
+    turnCheckOn = (e, item) => {
+        e.stopPropagation()
+        e.preventDefault()
         if (item._id in this.props.selected){
             this.props.deleteSelected(item)
             this.setState({
@@ -72,33 +72,13 @@ class DirectoryItem extends React.Component {
     }
 
     renderDirectoryLink(item) {
-        /*
-        console.log(window.location.pathname)
-        let urlItems = window.location.pathname.split('/').slice(3)
-        console.log(urlItems)
-        if (urlItems.slice(urlItems.length-1)[0] === '') {
-            urlItems.pop()
+        let {workspaceID, repositoryID} = this.props.match.params
+        let preURL = `/workspaces/${workspaceID}/repository/${repositoryID}`;
+        if (item.kind === 'dir') {
+            return `${preURL}/dir/${item._id}`
         }
-        urlItems.push(item.name)
-        let finalURL = urlItems.join('/')
-        */
-        let username = this.props.match.params.username
-        let key = this.props.match.params.key
-        let repositoryID = this.props.match.params.repositoryID
-        let pre = `/workspaces/${username}/${key}/repository/${repositoryID}`;
-        if (this.props.item.kind === 'dir') {
-            return `${pre}/dir/${this.props.item._id}`
-        }
-        return `${pre}/code/${this.props.item._id}`
+        return `${preURL}/code/${item._id}`
     }
-    /*
-    let urlItems = window.location.pathname.split('/')
-            if (urlItems.slice(urlItems.length-1)[0] === '') {
-                urlItems.pop()
-            }
-            urlItems.push(item.name)
-            let finalURL = urlItems.join('/')
-            */
 
     
 
@@ -106,7 +86,7 @@ class DirectoryItem extends React.Component {
         return (
                 <Link to = {this.renderDirectoryLink(this.props.item)}>
                 <ListItem>
-                    <Check_Box_Border onClick = {() => {this.turnCheckOn(this.props.item)}}>
+                    <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
                         <Check_Box border_color = {this.state.check_box_border_color}>
                             <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
                         </Check_Box>

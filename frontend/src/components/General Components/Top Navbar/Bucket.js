@@ -54,8 +54,8 @@ const NavbarButton = styled.div`
     width: 3rem;
     border-radius: 25%;
     background-color: white;
-    margin-top: 2.2rem;
-    margin-left:26.5rem;
+    margin-top: 2rem;
+    margin-left:20rem;
     font-size: 1.5rem;
     letter-spacing: 0.1rem;
     color:  #172A4E;

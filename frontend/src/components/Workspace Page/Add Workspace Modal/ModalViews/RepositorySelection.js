@@ -172,7 +172,7 @@ const mapStateToProps = (state) => {
         installations: state.auth.installations,
         domainRepositories: state.auth.domainRepositories,
         repositories: state.repositories,
-        workspaces: Object.values(state.workspaces.workspaces)
+        workspaces: Object.values(state.workspaces)
     }
 }
 
