@@ -42,8 +42,8 @@ body {
 
 .paragraphPlaceholder:before{
   content:attr(data-ph);
-  color:#262626;
+  color:#172A4E;
   opacity: 0.5;
-  font-weight: 300;
+  font-weight: 400;
   cursor: text;
 }

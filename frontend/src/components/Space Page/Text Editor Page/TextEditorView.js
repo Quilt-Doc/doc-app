@@ -38,6 +38,7 @@ class TextEditorView extends React.Component {
                 ]
             }
         ]
+
         initialValue = [
             {
                 type: 'heading-one',
@@ -116,6 +117,7 @@ class TextEditorView extends React.Component {
                 ],
             }
         ]
+        
         let urlItems = window.location.pathname.split('/')
         if (urlItems.slice(urlItems.length - 1) === '') {
             urlItems.pop()
@@ -173,32 +175,34 @@ class TextEditorView extends React.Component {
             return null
         }
         return(
-            <EditorContainer>
-                <TextContainer>
-                    <Title placeholder = {'Document Title'} value = {this.state.document.title} onChange = {e => this.onTitleChange(e)} />
-                    <DocumentEditor 
-                        markup = {this.state.document.markup} 
-                        setValue = {this.setValue}
-                        scrollTop = {this.props.scrollTop}
-                    />
-                </TextContainer>
-                <InfoBar>
-                    <InfoBlock>
-                        <InfoHeader>Authors</InfoHeader>
-                        <ReferenceContainer>
-                            <Author>JK</Author>
-                        </ReferenceContainer>
-                    </InfoBlock>
-                    <InfoBlock>
-                        <InfoHeader>Relevant Files and Folders</InfoHeader>
-                        <ReferenceContainer>
-                            {this.renderReferences()}
-                        </ReferenceContainer>
-                    </InfoBlock>
+            <Container>
+                <EditorContainer>
+                    <SubContainer>
+                        <Header>Starting the server</Header>
+                        <DocumentEditor 
+                            markup = {this.state.document.markup} 
+                            setValue = {this.setValue}
+                            scrollTop = {this.props.scrollTop}
+                        />
+                    </SubContainer>
+                    <InfoBar>
+                        <InfoBlock>
+                            <InfoHeader>Authors</InfoHeader>
+                            <ReferenceContainer>
+                                <Author>JK</Author>
+                            </ReferenceContainer>
+                        </InfoBlock>
+                        <InfoBlock>
+                            <InfoHeader>Relevant Files and Folders</InfoHeader>
+                            <ReferenceContainer>
+                                {this.renderReferences()}
+                            </ReferenceContainer>
+                        </InfoBlock>
+                        
+                    </InfoBar>
                     
-                </InfoBar>
-                
-            </EditorContainer>
+                </EditorContainer>
+            </Container>
         )
     }
 }
@@ -212,14 +216,29 @@ const mapStateToProps = (state) => {
 
 export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, editDocument })(TextEditorView);
 
+const Header = styled.div`
+    font-size: 3rem;
+    color: #172A4E;
+`
+
+const Container = styled.div`
+    margin-left: 10rem;
+    margin-top: 2rem;
+    margin-right: 8rem;
+    padding-bottom: 4rem;
+`
+
+const SubContainer = styled.div`
+    display: flex;
+    flex-direction:column;
+`
+
 const EditorContainer = styled.div`
     display: flex;
-    margin-top: 4rem;
-    
 `
 const InfoBar = styled.div`
-    padding-left: 1rem;
-    
+    margin-top: 1rem;
+    padding-left: 2rem;
 `
 
 const InfoHeader = styled.div`

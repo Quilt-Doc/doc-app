@@ -75,6 +75,13 @@ router.put('/workspaces/add_user/:id', workspace_controller.addUser);
 router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
 router.post('/workspaces/retrieve', workspace_controller.retrieveWorkspaces);
 
+const tag_controller = require('../controllers/TagController');
+router.post('/tags/create', tag_controller.createTag);
+router.get('/tags/get/:id', tag_controller.getTag);
+router.put('/tags/edit/:id', tag_controller.editTag);
+router.delete('/tags/delete/:id', tag_controller.deleteTag);
+router.post('/tags/retrieve', tag_controller.retrieveTags);
+
 //auth routes
 const auth_controller = require('../controllers/authentication/AuthController');
 router.get('/auth/login/success', auth_controller.loginSuccess);
@@ -104,5 +111,7 @@ router.post('/semantic/callbacks/retrieve', semantic_controller.acquireCallbacks
 //token routes
 const token_controller = require('../controllers/TokenController');
 router.post('/tokens/create', token_controller.createToken);
+
+
 
 module.exports = router;

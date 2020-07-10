@@ -278,7 +278,7 @@ const OptionsMenu = styled.div`
 	background-color: white;
 	border-radius: 3px;
 	margin-top: 16rem;
-	left: -8rem;
+	left: -2rem;
 	z-index: 100;
 	opacity: ${props => props.opacity};
 	display: ${props => props.display};
@@ -322,8 +322,8 @@ const CreateBlockButton = styled.div`
 	align-items: center;
 	justify-content: center;
 	border-radius: 0.3rem;
-	color: #262626;
-	opacity: 0.35;
+	color: #172A4E;
+	opacity: 0.5;
 	cursor: ${props => props.cursor};
 	&:hover {
 		background-color: #DFDFDF;
@@ -360,47 +360,42 @@ const StyledIcon = styled.img`
 //Markup Components
 
 const H1 = styled.div`
-  font-size: 3.5rem;
-  font-weight: 300;
-  letter-spacing: 1.78px;
+  font-size: 3rem;
+  /*letter-spacing: 1.78px;*/
   line-height: 1;
-  margin-top: 3rem;
-  color: #262626;
+  margin-top: 3.5rem;
+  color: #172A4E;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
 `
 
 const H2 = styled.div`
-  font-size: 2.8rem;
-  letter-spacing: 1.33px;
+  font-size: 2.5rem;
+  /*letter-spacing: 1.33px;*/
   line-height: 1;
   text-transform: none;
-  font-weight: 300;
-  color: #262626;
-  margin-top: 2.5rem;
+  color: #172A4E;
+  margin-top: 3rem;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
 `
 
 const H3 = styled.div`
-  font-size: 2.5rem;
-  letter-spacing: -0.25px;
-  line-height: 1;
+  font-size: 1.8rem;
+  /*letter-spacing: -0.25px;*/
+  line-height: 1.6;
   text-transform: none;
   margin-top: 2rem;
-  color: #262626;
-  font-weight: 300;
+  color: #172A4E;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
 `
 
 const P = styled.div`
-  margin-top: 1rem !important;
+  margin-top: 2rem !important;
   font-size: 1.6rem;
   line-height: 1.6;
-  color: #262626;
-  letter-spacing: 0.1px;
-  font-weight: 350;
+  color: #172A4E;
   box-shadow: none;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
@@ -426,7 +421,8 @@ const CodeLine = styled.div`
     font-size: 1.35rem;
     padding: 0.1rem !important;
     boxShadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;
-    white-space: pre-wrap !important;
+	white-space: pre-wrap !important;
+	color: #172A4E;
 `
 
 

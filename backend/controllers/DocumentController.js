@@ -2,29 +2,39 @@ const Document = require('../models/Document');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+checkValid = (item) => {
+    if (item !== undefined && item !== null) {
+        return true
+    }
+    return false
+}
+
 createDocument = (req, res) => {
-    const { authorID, parentIDs, snippetIDs, title, description, uploadFileIDs, tagIDs } = req.body;
+    const { authorID, referenceIDs, repositoryID, workspaceID, title, markup, tagIDs } = req.body;
     
     //if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
     //if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
 
     let document = new Document(
-        /*{
+        {
             author: ObjectId(authorID),
+            repository: ObjectId(repositoryID),
+            workspace: ObjectId(workspaceID),
             title,
-        },*/
+        },
     );
 
-    //if (!typeof author == 'undefined' && author !== null) document.author = ObjectId(authorID)
-    //if (!typeof title == 'undefined' && title !== null ) document.title = ObjectId()
-    //if (snippetIDs) document.snippets = snippetIDs.map(snippetID => ObjectId(snippetID));
-    //if (description) document.description = description;
-    //if (uploadFileIDs) document.uploadFiles = uploadFileIDs.map(snippetID => ObjectId(snippetID));
-    //if (tagIDs) document.tags = tagIDs.map(tagID => ObjectId(tagID))
+    if (checkValid(referenceIDs)) {
+        document.references = referenceIDs.map(referenceID => ObjectId(referenceID))
+    }
+
     document.save((err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('authors', (err, document) => {
+        console.log("ERROR", err)
+        document.populate('author').populate('references').populate('tags', (err, document) => {
+            console.log("ERROR", err)
             if (err) return res.json({ success: false, error: err });
+            console.log("DOCUMENT", document)
             return res.json(document);
         });
     });

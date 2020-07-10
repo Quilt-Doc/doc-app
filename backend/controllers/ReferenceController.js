@@ -5,7 +5,7 @@ const { ObjectId } = mongoose.Types;
 var request = require("request");
 
 
-check = (item) => {
+checkValid = (item) => {
     if (item !== null && item !== undefined) {
         return true
     }
@@ -141,27 +141,28 @@ retrieveReferences = async (req, res) => {
         referenceID, repositoryID, truncated, limit, skip } = req.body;
 
     let filter = {}
-
-    if (check(kind)) filter.kind = kind;
-    if (check(name)) filter.name = name;
-    if (check(path)) filter.path = path;
-    if (check(repositoryID)) filter.repository = ObjectId(repositoryID)
+    
+    if (checkValid(kind)) filter.kind = kind;
+    if (checkValid(name)) filter.name = name;
+    if (checkValid(path)) filter.path = path;
+    if (checkValid(repositoryID)) filter.repository = ObjectId(repositoryID)
 
     let regexQuery;
+    
 
-    if (check(referenceID)) {
+    if (checkValid(referenceID)) {
         let reference = await Reference.findOne({_id: referenceID})
         let refPath = reference.path.replace('/', '\/')
         let regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
         regexQuery = [{ path : { $regex: regex } }]
     }
 
-    if (check(truncated)) {
+    if (checkValid(truncated)) {
         let regex = new RegExp(`^[^\/]+$`, 'i');
         regexQuery = [{ path : { $regex: regex } }]
     }
 
-    if (check(textQuery)) {
+    if (checkValid(textQuery)) {
         let regex = new RegExp(textQuery, 'i');
         regexQuery = [{ name: { $regex: regex } }, { path : { $regex: regex } }]
     }
@@ -169,7 +170,7 @@ retrieveReferences = async (req, res) => {
 
     let query;
 
-    if (check(regexQuery)) {
+    if (checkValid(regexQuery)) {
         query =  Reference.find({
                         $and : [
                             { $or: regexQuery },
@@ -180,13 +181,15 @@ retrieveReferences = async (req, res) => {
         query = Reference.find({filter})
     }
     
-    if (check(kinds)) query.where('kind').in(kinds)
-    if (check(notKinds)) query.where('kind').nin(notKinds)
-    if (check(limit)) query.limit(Number(limit));
-    if (check(skip)) query.skip(Number(skip));
+    if (checkValid(kinds)) query.where('kind').in(kinds)
+    if (checkValid(notKinds)) query.where('kind').nin(notKinds)
+    if (checkValid(limit)) query.limit(Number(limit));
+    if (checkValid(skip)) query.skip(Number(skip));
+    
 
     query.populate('repository').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
+        //console.log("REFERENCES", references)
         return res.json(references);
     });
 }

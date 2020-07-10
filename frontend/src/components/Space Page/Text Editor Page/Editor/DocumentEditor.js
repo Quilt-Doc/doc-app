@@ -244,9 +244,8 @@ const StyledEditable = styled(Editable)`
   color: #46474f;
   font-size: 16px;
   padding-top: 6rem;
-  width: 94rem;
+  width: 80rem;
   padding-top: 0.5rem;
-  padding-left: 14.5rem;
   padding-right: 6rem;
   padding-bottom: 4rem;
   resize: none !important;

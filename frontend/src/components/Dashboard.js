@@ -51,7 +51,7 @@ const Dashboard = () => {
             </TopNav>
             <Router history = {history}>
                   <Route exact path = "/workspaces" component = {WorkspaceView} />
-                  <Route path = "/workspaces/*" component = {SpaceView} />
+                  <Route path = "/workspaces/:workspaceID/repository/:repositoryID" component = {SpaceView} />
                   <Route path = "/settings" component = {UserSettingsView} />
             </Router>
             {/*<UserSettingsView/>*/}

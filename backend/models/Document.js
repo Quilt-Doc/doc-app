@@ -4,13 +4,18 @@ const { ObjectId } = Schema.Types;
 
 let documentSchema = new Schema({
     created: {type: Date, default: Date.now },
-    authors: [{type: ObjectId, ref: 'User'}],
+    author: {type: ObjectId, ref: 'User', required: true},
     title: String,
     markup: String,
-    uploadFiles: [{type: ObjectId, index: true, ref: 'UploadFile'}],
-    tags: [{type: ObjectId, index: true, ref: 'Tag'}],
-    canWrite: [{type: ObjectId, index: true, ref: 'User'}],
-	canRead: [{type: ObjectId, index: true, ref: 'User'}]
+    references: [{type: ObjectId, ref: 'Reference'}],
+    workspace: [{type: ObjectId, ref: 'Workspace'}],
+    repository: [{type: ObjectId, ref: 'Repository'}],
+    tags: [{type: ObjectId, ref: 'Tag'}],
+
+    //NOT USED
+    uploadFiles: [{type: ObjectId, ref: 'UploadFile'}],
+    canWrite: [{type: ObjectId, ref: 'User'}],
+	canRead: [{type: ObjectId, ref: 'User'}]
 });
 
 let Document = mongoose.model("Document", documentSchema);

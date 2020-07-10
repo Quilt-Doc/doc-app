@@ -6,6 +6,9 @@ import styled from "styled-components";
 //redux
 import { connect } from 'react-redux';
 
+//router
+import { withRouter } from 'react-router-dom';
+
 //components
 import Bucket from '../General Components/Top Navbar/Bucket';
 
@@ -30,20 +33,19 @@ class SideNavbar extends React.Component {
     }
 
     createDocumentFromButton() {
-        this.props.createDocument().then(document => {
-            let repositoryItemIDs = this.props.selected.map(item => item._id)
-            this.props.attachDocument({repositoryItemIDs, documentID : document._id}).then(() => {
-                this.props.clearSelected()
-                //let urlItems = window.location.pathname.split('/').slice(0, 2)
-                //urlItems.push('document')
-                //urlItems.push(document._id)
-                //console.log("URL", urlItems.join('/'))
-                history.push(`/document/${document._id}`)
-            })
-
-            /*
-            this.props.attachDocument({})
-            */
+        let {workspaceID, repositoryID} = this.props.match.params
+        
+        this.props.createDocument({authorID: this.props.user._id, 
+            workspaceID, repositoryID,
+            referenceIDs: this.props.selected.map(item => item._id)}).then((document) => {
+            console.log(document)
+            const location = {
+                pathname: `/workspaces/${workspaceID}/repository/${repositoryID}/document/${document._id}`,
+            }
+            this.props.clearSelected()
+            history.push(location)
+            
+            //history.push(`workspaces/${workspaceID}/repository/${repositoryID}/document/${document._id}`)
         })
     }
 
@@ -250,12 +252,13 @@ const CodeDocumentItem = styled(Link)`
 
 const mapStateToProps = (state) => {
     return {
+        user: state.auth.user,
         selected : Object.values(state.selected),
         repositoryItems: Object.values(state.repositoryItems)
     }
 }
 
-export default connect(mapStateToProps, { createDocument, attachDocument, clearSelected })(SideNavbar);
+export default withRouter(connect(mapStateToProps, { createDocument, attachDocument, clearSelected })(SideNavbar));
 
 const Deline = styled.div`
     text-transform: uppercase;
