@@ -126,7 +126,7 @@ class CodeView extends React.Component {
 			boundaries: ['.codetext']
 		}).on('start', ({inst, selected, oe}) => {
             if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
-                this.state.reselectingSnippet) {
+                this.state.reselectingSnippet !== null) {
                 let addedClass = 'selected_code'
                 console.log(addedClass)
                 this.setState({selected: {}})
@@ -139,7 +139,7 @@ class CodeView extends React.Component {
 		}).on('move', ({changed: {removed, added}}) => {
             // Add a custom class to the elements that where selected.
             if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
-                this.state.reselectingSnippet) {
+                this.state.reselectingSnippet !== null) {
                 
                 let addedClass = 'selected_code'
                 console.log("ADDED CLASS", addedClass)
@@ -162,7 +162,7 @@ class CodeView extends React.Component {
             }
 		}).on('stop', ({inst}) => {
             if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
-            this.state.reselectingSnippet) {
+            this.state.reselectingSnippet !== null) {
                 inst.keepSelection();
             }
 		});
@@ -510,11 +510,17 @@ class CodeView extends React.Component {
                 let border = "1.5px solid transparent"
                 let backgroundColor = ""
                 
-                if (this.state.reselectingSnippet && 
+                if (this.state.reselectingSnippet !== null){
+                    console.log(i)
+                    console.log(this.state.reselectingSnippet)
+                    console.log(this.state.reselectingSnippet + this.props.snippets[this.state.reselectingSnippet].code.length)
+                }
+                
+                if (this.state.reselectingSnippet !== null && 
                     i >= this.state.reselectingSnippet &&
                     i < this.state.reselectingSnippet + this.props.snippets[this.state.reselectingSnippet].code.length
                     ) {
-                        
+                        console.log("HERE")
                         border = "1.5px solid #a29bfe"
                         backgroundColor = "#F1F8FF"
                     }
