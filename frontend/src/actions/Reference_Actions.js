@@ -13,7 +13,6 @@ export const retrieveReferences = (formValues) => async dispatch => {
 
 export const getContents = (formValues) => async () => {
     const response = await api.post('/references/get_contents', formValues);
-    console.log(response.data)
     return response.data
 }
 

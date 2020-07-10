@@ -49,7 +49,8 @@ class WorkspaceView extends React.Component {
     }
 
     renderLink(workspace) {
-        return `/workspaces/${workspace.creator.username}/${workspace.key}/repository/${workspace.repositories[1]._id}`
+        console.log(workspace)
+        return `/workspaces/${workspace.creator.username}/${workspace.key}/repository/${workspace.repositories[0]._id}/dir`
     }
 
     renderWorkspaces() {

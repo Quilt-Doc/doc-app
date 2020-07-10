@@ -83,12 +83,10 @@ class CodeView extends React.Component {
 
         this.props.getContents({referenceID}).then((fileContents) => {
             this.setState({fileContents});
-
             this.props.retrieveCodeReferences({ referenceID }).then(() => {
                 const allLinesJSX = this.renderLines(fileContents);
                 this.setState({allLinesJSX});
             });
-            
         });
 
         //this.props.retrieveCodeReferences({ referenceID })
@@ -198,8 +196,10 @@ class CodeView extends React.Component {
     }
 
     renderCallbacks(line, callbacks, offset, lineNumber, currLineJSX) {
-        const { span, symbol } =  callbacks.slice(-1)[0];
-        const { start, end } = span;
+        console.log("ITEM", callbacks.slice(-1)[0]);
+        const { position, name } =  callbacks.slice(-1)[0];
+        let symbol = name;
+        const { start, end } = position;
 
         if (lineNumber === start.line && start.column >= offset && start.column < offset + line.length) {
             let last = end.line === lineNumber ? start.column - offset - 1 + symbol.length : line.length
@@ -255,10 +255,28 @@ class CodeView extends React.Component {
             'comment': {color: '#5C6370', type: 'italic'}
         }
         const tokens = Prism.tokenize(fileContents, grammar)
-        console.log(this.props.references)
+        
         let allLinesJSX = []
-        let currLineJSX = []
-        let callbacks = []/*[...this.props.callbacks].reverse()*/
+        let currLineJSX = [] 
+
+        let callbacks = this.props.references.filter(ref => 
+            {return ref.parseProvider === 'semantic'}).map(ref => {ref.position = 
+                JSON.parse(ref.position); return ref}).sort((a, b) => {
+                    a = a.position.start;
+                    b = b.position.start;
+                    if (a.line > b.line) {
+                        return -1
+                    } else if (a.line < b.line) {
+                        return 1
+                    } else if (a.column > b.column) {
+                        return -1
+                    } else {
+                        return 1
+                    }
+                })
+        
+    
+        /*[...this.props.callbacks].reverse()*/
         let lineNumber = 1
         let offset = 0
         
@@ -268,23 +286,29 @@ class CodeView extends React.Component {
             if (typeof token !== "string" && token.type in identifiers) {
                 for (let i = 0; i < splitContent.length - 1; i++){
                     if (splitContent[i] !== '') {
-                        currLineJSX.push(<ColoredSpan 
-                                            type =  {identifiers[token.type].type} 
-                                            color = {identifiers[token.type].color}>
-                                            {splitContent[i]}
-                                        </ColoredSpan>)
+                        if (false){//callbacks.length > 0) {
+                            this.renderCallbacks(splitContent[i], callbacks, offset, lineNumber, currLineJSX)   
+                        } else {
+                            currLineJSX.push(<ColoredSpan 
+                                                type =  {identifiers[token.type].type} 
+                                                color = {identifiers[token.type].color}>
+                                                {splitContent[i]}
+                                            </ColoredSpan>)
+                        }
                     }
                     
                     if (currLineJSX.length > 0) {
+                        //console.log("PUSHED")
                         allLinesJSX.push(currLineJSX)
                     } else {
-                        allLinesJSX.push([<>{"  "}</>])
+                        allLinesJSX.push([<>{"\n"}</>])
                     }
 
                     offset = 0
                     lineNumber += 1
                     currLineJSX = []   
                 }
+                //console.log("SPLIT CONTENT", splitContent.slice(-1)[0])
                 if (splitContent.slice(-1)[0] !== '') {
                     currLineJSX.push(<ColoredSpan 
                                         type =  {identifiers[token.type].type} 
@@ -293,13 +317,14 @@ class CodeView extends React.Component {
                                     </ColoredSpan>)
                 }
                 offset += splitContent.slice(-1)[0].length
+                
                 if (callbacks.length > 0 && 
-                    (lineNumber > callbacks.slice(-1)[0].span.end.line || 
-                    (lineNumber === callbacks.slice(-1)[0].span.end.line && offset + 1 > callbacks.slice(-1)[0].span.start.column))) {
+                    (lineNumber > callbacks.slice(-1)[0].position.end.line || 
+                    (lineNumber === callbacks.slice(-1)[0].position.end.line && offset + 1 > callbacks.slice(-1)[0].position.start.column))) {
                     callbacks.pop()
                 }
             } else {
-                for (let i = 0; i < splitContent.length - 1; i ++){
+                for (let i = 0; i < splitContent.length - 1; i++){
                     if (splitContent[i] !== '') {
                         if (callbacks.length > 0) {
                             this.renderCallbacks(splitContent[i], callbacks, offset, lineNumber, currLineJSX)   
@@ -311,26 +336,31 @@ class CodeView extends React.Component {
                     if (currLineJSX.length > 0) {
                         allLinesJSX.push(currLineJSX)
                     } else {
-                        allLinesJSX.push([<>{"  "}</>])
+                        allLinesJSX.push([<>{"\n"}</>])
                     }
                     
                     offset = 0
                     lineNumber += 1
                     currLineJSX = []
-                    if (callbacks.length > 0 && lineNumber > callbacks.slice(-1)[0].span.end.line) {
+                    
+                    // MAY BE DEPRECATED
+                    if (callbacks.length > 0 && lineNumber > callbacks.slice(-1)[0].position.end.line) {
                         callbacks.pop()
                     }
                 }
+                //console.log("SPLIT CONTENT", splitContent.slice(-1)[0])
                 if (splitContent.slice(-1)[0] !== '') {
                     if (callbacks.length > 0) {
                         this.renderCallbacks(splitContent.slice(-1)[0], callbacks, offset, lineNumber, currLineJSX)
                     } else {
-                        currLineJSX.push(<>{content}</>)
+                        currLineJSX.push(<>{splitContent.slice(-1)[0]}</>)
                     }
                 }
                 offset += splitContent.slice(-1)[0].length
             }
         })
+
+
         if (currLineJSX.length !== 0) {
             allLinesJSX.push(currLineJSX)
         }
@@ -441,6 +471,7 @@ class CodeView extends React.Component {
                 // render lines that are not snippets, note the id is used to differentiate during selection
                 let border = "1.5px solid transparent"
                 let backgroundColor = ""
+                
                 if (this.state.reselectingSnippet && 
                     i >= this.state.reselectingSnippet &&
                     i < this.state.reselectingSnippet + this.props.snippets[this.state.reselectingSnippet].code.length
@@ -649,12 +680,6 @@ class CodeView extends React.Component {
 
 // relevant data here is fileContents, which are the lines of data
 const mapStateToProps = (state) => {
-    if (typeof state.repositories.fileContents == 'undefined' || state.repositories.fileContents == null){
-        return {
-            fileContents: ''
-        }
-    }
-    //state.callbacks.forEach(c => console.log("ELEM", c))
     return {
         repositories: state.repositories,
         fileContents: state.repositories.fileContents,
@@ -662,7 +687,7 @@ const mapStateToProps = (state) => {
         filePath: state.repositories.repositoryCurrentPath + '/' + state.repositories.fileName,
         snippets: state.snippets,
         callbacks: state.callbacks,
-        references: state.references
+        references: Object.values(state.references)
     }
 }
 
@@ -685,7 +710,7 @@ const Toolbar = styled.div`
     height: 6rem;
     width: 3.3rem;
     top: 29.15rem;
-    left: 36.25rem;
+    left: 30.25rem;
     background-color: black;
     z-index: 5;
     box-shadow: 0 0 4px 1px rgba(0,0,0,.05), 2px 2px 2px 1px rgba(0,0,0,.05) !important;
@@ -729,7 +754,6 @@ const CodeText = styled.div`
     display: flex;
     flex-direction: column;
     font-family: 'Roboto Mono', monospace !important;
-    padding-bottom: 10rem;
     cursor: ${props => props.cursor};
     
 `

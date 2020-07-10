@@ -112,14 +112,17 @@ retrieveCodeReferences = async (req, res) => {
     let {referenceID} = req.body
 
     let rootReference = await Reference.findOne({_id: referenceID})
-
+    console.log(rootReference)
     let query = Reference.find({})
+
+    console.log(rootReference.path)
+    console.log(rootReference.repository)
+
     query.where('path').equals(rootReference.path)
     query.where('kind').ne('file')
     query.where('repository').equals(rootReference.repository)
 
-    query.populate('repository').exec((err, references) => {
-        console.log(err)
+    query.exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
         console.log("REFERENCES", references)
         return res.json(references);
