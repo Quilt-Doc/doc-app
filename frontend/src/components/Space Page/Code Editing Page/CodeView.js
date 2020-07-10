@@ -195,22 +195,47 @@ class CodeView extends React.Component {
 		});
     }
 
-    renderCallbacks(line, callbacks, offset, lineNumber, currLineJSX) {
-        console.log("ITEM", callbacks.slice(-1)[0]);
+    renderCallbacks(line, callbacks, offset, lineNumber, currLineJSX, tokenType) {
         const { position, name } =  callbacks.slice(-1)[0];
         let symbol = name;
         const { start, end } = position;
+
+        const identifiers = {
+            'keyword':{color: '#C679DD', type: ''},
+            'boolean': {color: '#56B6C2', type: ''},
+            'function': {color: '#61AEEE', type: ''},
+            'class-name': {color: '#E6C07A', type: ''},
+            'string': {color: '#98C379', type: ''},
+            'triple-quoted-string': {color: '#98C379', type: ''},
+            'number': {color: '#D19966', type: ''},
+            'decorator': {color: '#61AEEE',type: ''},
+            'builtin': {color:'#61AEEE', type: ''},
+            'comment': {color: '#5C6370', type: 'italic'}
+        }
 
         if (lineNumber === start.line && start.column >= offset && start.column < offset + line.length) {
             let last = end.line === lineNumber ? start.column - offset - 1 + symbol.length : line.length
 
             currLineJSX.push(<>{line.slice(0, start.column - offset - 1)}</>)
+            let color = '#61AEEE'
+            
+            if (tokenType === "class-name") {
+                console.log("ENTERED")
+                console.log(symbol)
+                color = '#E6C07A'
+            }
             currLineJSX.push(<ColoredSpan 
-                                color = {'#61AEEE'}>
+                                color = {color}>
                                 {line.slice(start.column - offset - 1, last)}
                              </ColoredSpan>)
             currLineJSX.push(<>{line.slice(last)}</>)
             callbacks.pop()
+        } else if (tokenType !== undefined) {
+            currLineJSX.push(<ColoredSpan 
+                                type =  {identifiers[tokenType].type} 
+                                color = {identifiers[tokenType].color}>
+                                {line}
+                            </ColoredSpan>)
         } else {
             currLineJSX.push(<>{line}</>)
         }
@@ -286,8 +311,8 @@ class CodeView extends React.Component {
             if (typeof token !== "string" && token.type in identifiers) {
                 for (let i = 0; i < splitContent.length - 1; i++){
                     if (splitContent[i] !== '') {
-                        if (false){//callbacks.length > 0) {
-                            this.renderCallbacks(splitContent[i], callbacks, offset, lineNumber, currLineJSX)   
+                        if (callbacks.length > 0) {
+                            this.renderCallbacks(splitContent[i], callbacks, offset, lineNumber, currLineJSX, token.type)   
                         } else {
                             currLineJSX.push(<ColoredSpan 
                                                 type =  {identifiers[token.type].type} 
@@ -307,22 +332,32 @@ class CodeView extends React.Component {
                     offset = 0
                     lineNumber += 1
                     currLineJSX = []   
+
+                    // MAY BE DEPRECATED
+                    if (callbacks.length > 0 && lineNumber > callbacks.slice(-1)[0].position.end.line) {
+                        callbacks.pop()
+                    }
                 }
                 //console.log("SPLIT CONTENT", splitContent.slice(-1)[0])
+                
                 if (splitContent.slice(-1)[0] !== '') {
-                    currLineJSX.push(<ColoredSpan 
-                                        type =  {identifiers[token.type].type} 
-                                        color = {identifiers[token.type].color}>
-                                        {splitContent.slice(-1)[0]}
-                                    </ColoredSpan>)
+                    if (callbacks.length > 0) {
+                        this.renderCallbacks(splitContent.slice(-1)[0], callbacks, offset, lineNumber, currLineJSX, token.type)
+                    } else {
+                        currLineJSX.push(<ColoredSpan 
+                            type =  {identifiers[token.type].type} 
+                            color = {identifiers[token.type].color}>
+                            {splitContent.slice(-1)[0]}
+                        </ColoredSpan>)
+                    }
                 }
                 offset += splitContent.slice(-1)[0].length
-                
+                /*
                 if (callbacks.length > 0 && 
                     (lineNumber > callbacks.slice(-1)[0].position.end.line || 
                     (lineNumber === callbacks.slice(-1)[0].position.end.line && offset + 1 > callbacks.slice(-1)[0].position.start.column))) {
                     callbacks.pop()
-                }
+                }*/
             } else {
                 for (let i = 0; i < splitContent.length - 1; i++){
                     if (splitContent[i] !== '') {
