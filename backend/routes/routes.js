@@ -34,6 +34,8 @@ router.delete('/documents/delete/:id', document_controller.deleteDocument);
 router.post('/documents/retrieve', document_controller.retrieveDocuments);
 router.put('/documents/attach_tag/:id', document_controller.attachTag);
 router.put('/documents/remove_tag/:id', document_controller.removeTag);
+router.put('/documents/attach_child/:id', document_controller.attachChild);
+router.put('/documents/remove_child/:id', document_controller.removeChild);
 router.put('/documents/attach_snippet/:id', document_controller.attachSnippet);
 router.put('/documents/remove_snippet/:id', document_controller.removeSnippet);
 router.put('/documents/attach_parent/:id', document_controller.attachParent);

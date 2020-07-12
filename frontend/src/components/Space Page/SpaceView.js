@@ -6,7 +6,7 @@ import styled from "styled-components";
 //components
 import TextEditorView from './Text Editor Page/TextEditorView';
 //import RepositoryView from './Repository Page/RepositoryView';
-import SideNavbar from './SideNavbar';
+import SideNavbar from './SideNavbar/SideNavbar';
 import RequestView from './Request Page/RequestView';
 import CodeView from './Code Editing Page/CodeView';
 
@@ -54,7 +54,7 @@ class SpaceView extends React.Component {
                             <Switch history = {history}>
                                 <Route path = "/workspaces/:workspaceID/repository/:repositoryID/dir/:referenceID?" component = { DirectoryView } />
                                 <Route path = "/workspaces/:workspaceID/repository/:repositoryID/code/:referenceID" component = { CodeView } />
-                                <Route path = "/workspaces/:workspaceID/repository/:repositoryID/document/:documentID" component = { TextEditorView } />
+                                <Route path = "/workspaces/:workspaceID/document/:documentID" component = { TextEditorView } />
                             </Switch>
                         </RightView>
                     </Container>

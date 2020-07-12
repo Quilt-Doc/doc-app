@@ -6,41 +6,50 @@ import styled from "styled-components";
 //redux
 import { connect } from 'react-redux';
 
-//router
-import { withRouter } from 'react-router-dom';
-
 //components
-import Bucket from '../General Components/Top Navbar/Bucket';
+import Bucket from '../../General Components/Top Navbar/Bucket';
+import Document from './Document';
+import TextEditorView2 from '../Text Editor Page/TextEditorView2';
 
 //react-router
-import { Link } from 'react-router-dom';
-import history from '../../history';
+import { Link , withRouter } from 'react-router-dom';
+import history from '../../../history';
 
 //actions
-import { createDocument } from '../../actions/Document_Actions';
-import { attachDocument } from '../../actions/RepositoryItem_Actions';
-import { clearSelected } from '../../actions/Selected_Actions';
+import { createDocument, retrieveDocuments } from '../../../actions/Document_Actions';
+import { attachDocument } from '../../../actions/RepositoryItem_Actions';
+import { clearSelected } from '../../../actions/Selected_Actions';
 
 //icons
-import repoIcon3 from '../../images/w4.svg'
+import repoIcon3 from '../../../images/w4.svg'
+import codeIcon from '../../../images/code.svg'
 
 class SideNavbar extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            searchbarBorder: ''
+            searchbarBorder: '',
+            modalDisplay: ''
         }
+    }
+
+    componentDidMount(){
+        let { workspaceID } = this.props.match.params
+        this.props.retrieveDocuments({workspaceID, root: true})
+    }
+
+    renderDocuments(){
+        return this.props.documents.map(document => {return <Document width =  {23} marginLeft = {0} document = {document}/>})
     }
 
     createDocumentFromButton() {
         let {workspaceID, repositoryID} = this.props.match.params
         
-        this.props.createDocument({authorID: this.props.user._id, 
-            workspaceID, repositoryID,
+        this.props.createDocument({authorID: this.props.user._id, title: "Starting the server",
+            workspaceID, repositoryID, root: true,
             referenceIDs: this.props.selected.map(item => item._id)}).then((document) => {
-            console.log(document)
             const location = {
-                pathname: `/workspaces/${workspaceID}/repository/${repositoryID}/document/${document._id}`,
+                pathname: `/workspaces/${workspaceID}/document/${document._id}`,
             }
             this.props.clearSelected()
             history.push(location)
@@ -79,16 +88,26 @@ class SideNavbar extends React.Component {
         })
     }
 
+    renderCodebaseLink(){
+        let repositoryID = this.props.workspace.repositories[0]._id
+        let { workspaceID } = this.props.match.params
+        return `/workspaces/${workspaceID}/repository/${repositoryID}/dir`
+    }
 
+    openModal(){
+        this.setState({modalDisplay: ''})
+    }
+    /*onClick = { () => {this.createDocumentFromButton()}}*/
     render(){
         return(
+            <>
             <SideNavbarContainer>
                 <RepositoryDetail>
                     <RepositoryIcon><StyledIcon src = {repoIcon3}/></RepositoryIcon>
                     <RepositoryName>kgodara/doc-app</RepositoryName>
                 </RepositoryDetail>
                 
-                <DocumentCreateButton onClick = { () => {this.createDocumentFromButton()}} >
+                <DocumentCreateButton onClick = {() => {this.openModal()}} >
                     <ion-icon style={{'color': 'white', 'fontSize': '2.4rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
                     Create Document
                     <Bucket selected = {this.props.selected}/>
@@ -100,6 +119,7 @@ class SideNavbar extends React.Component {
                             name="newspaper-outline"></ion-icon>
                         <PageName>Overview</PageName>
                     </PageSection>
+                   
                     <PageSection>
                         <ion-icon style={{'fontSize': '1.7rem'}} name="analytics-outline"></ion-icon>
                         <PageName>
@@ -118,48 +138,62 @@ class SideNavbar extends React.Component {
                         <PageName>Settings</PageName>
                     </PageSection>
                 </PageSectionContainer>
-                <DocumentationContainer>
+                <Block>
+                    <Deline>Codebase</Deline>
+                    <PageSection2 to = {this.renderCodebaseLink()}>
+                        <StyledIcon2 src={codeIcon} />
+                       
+                        <PageName2>fsanal / test</PageName2>
+                        <CodebaseChevBorder>
+                            <ion-icon style={{'fontSize': '1.7rem', 'marginTop': '0.1rem'}} name="chevron-down-sharp"></ion-icon>
+                        </CodebaseChevBorder>
+                    </PageSection2>
+                </Block>
+                <Block marginTop = {"1rem"}>
                     <Deline>Documents</Deline>
-
-                    <CurrentReference>
-                        <ion-icon style={{'color': '#19E5BE', 'fontSize': '1.8rem', 'marginRight': "1rem"}} name="folder-open-sharp"></ion-icon>
-                        backend
-                    </CurrentReference>
-                    <ChildDocument>
-                        <li>Starting the server</li>
-                    </ChildDocument>
-                    <ChildDocument>
-                        <li>Running Index.js</li>
-                    </ChildDocument>
-                    <CurrentReference>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "1rem"}} name="folder-sharp"></ion-icon>
-                        apis
-                    </CurrentReference>
-                    <CurrentReference>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "1rem"}} name="folder-sharp"></ion-icon>
-                        controllers
-                    </CurrentReference>
-                    <CurrentReference>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "1rem"}} name="folder-sharp"></ion-icon>
-                        models
-                    </CurrentReference>
-                    <CurrentReference>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "1rem"}} name="document-outline"></ion-icon>
-                        index.js
-                    </CurrentReference>
-                    <ChildDocument>
-                        <li>authCheck</li>
-                    </ChildDocument>
-                    <ChildDocument>
-                        <li>mongoose</li>
-                    </ChildDocument>
-                    <ChildDocument>
-                        <li>cors</li>
-                    </ChildDocument>
-                    {this.renderCodeDocumentNavigation()}
-
-                </DocumentationContainer>
+                    <DocumentationContainer>
+                        {this.props.documents.length > 0 && this.renderDocuments()}
+                    </DocumentationContainer>
+                </Block>
+                
             </SideNavbarContainer>
+                <ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>
+                    <ModalContent onClick = {(e) => {e.stopPropagation()}}>
+                        <ModalToolbar>
+                            <ModalToolbarButton>
+                                <ion-icon name="open-outline" style = {{fontSize: "1.7rem", marginTop: "-0.1rem", marginRight: "0.8rem"}}></ion-icon>
+                                <Title>Open Document</Title>
+                            </ModalToolbarButton>
+                            <Divider/>
+                            <ModalToolbarButton opacity = {"1"}>
+                                
+                                <Title  opacity = {"0.7"} marginRight = {"1rem"}>Location: </Title>
+                                <ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', 'color': "#172A4E", marginRight: "0.7rem"}}></ion-icon>
+                                Understanding the backend
+                            </ModalToolbarButton>
+                            <Divider/>
+                            <ModalToolbarButton>
+                                
+                                <ion-icon name="cube-outline" style={{'fontSize': '1.7rem', marginRight: "0.7rem"}}></ion-icon>
+                                3 References
+                            </ModalToolbarButton>
+                            <Divider/>
+                            <ModalToolbarButton>
+                                <ion-icon name="pricetag-outline" style={{ 'fontSize': '1.7rem', marginRight: "0.7rem"}}></ion-icon>
+                                3 Tags
+                            </ModalToolbarButton>
+                            <ModalCreateButton >
+                                Save
+                            </ModalCreateButton>
+                            <ion-icon name="ellipsis-horizontal" style={{ 'fontSize': '2.3rem', marginRight: "0.7rem"}}></ion-icon>
+                        </ModalToolbar>
+                        <ModalEditor>
+                            <TextEditorView2/>
+                        </ModalEditor>
+                        
+                    </ModalContent>
+                </ModalBackground>
+            </>
         )
     }
 }
@@ -250,22 +284,146 @@ const CodeDocumentItem = styled(Link)`
                         
                         */
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
+    let {workspaceID} = ownProps.match.params
     return {
+        documents:  Object.values(state.documents).filter(document => document.root === true),
         user: state.auth.user,
         selected : Object.values(state.selected),
-        repositoryItems: Object.values(state.repositoryItems)
+        repositoryItems: Object.values(state.repositoryItems),
+        workspace: state.workspaces[workspaceID]
     }
 }
 
-export default withRouter(connect(mapStateToProps, { createDocument, attachDocument, clearSelected })(SideNavbar));
+export default withRouter(connect(mapStateToProps, { createDocument, attachDocument, clearSelected, retrieveDocuments })(SideNavbar));
+
+
+const ModalToolbar = styled.div`
+   
+    height: 4rem;
+    padding: 2.7rem 1rem;
+    
+    display: flex;
+    align-items: center;
+
+`
+
+const ModalEditor = styled.div`
+    overflow-y: scroll;
+    padding-top: 5rem;
+`
+
+const Title = styled.div`
+    margin-right: ${props => props.marginRight};
+    color: ${props => props.color};
+    opacity: ${props => props.opacity};
+`
+
+const ModalCreateButton = styled.div`
+   
+    border-radius: 0.5rem;
+    margin-left: auto;
+    margin-right: 3rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    font-size: 1.35rem;
+    color: white;
+    background-color: #19E5BE;
+    cursor: pointer;
+
+    &:hover {
+       box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149); 
+    }
+`
+
+const ModalToolbarButton = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 1.35rem;
+    
+    margin-right: 1rem;
+    border-radius: 0.4rem;
+    padding: 1rem;
+    cursor: pointer;
+    opacity: 0.7;
+    &:hover {
+        background-color: #F4F4F6; 
+        opacity: 1;
+    }
+    opacity: ${props => props.opacity};
+`
+const Divider = styled.div`
+    border-right: 1px solid #172A4E;
+    opacity: 0.5;
+    height: 1.5rem;
+    margin-right: 1rem;
+`
+
+const ModalBackground = styled.div`
+    position: fixed; /* Stay in place */
+    z-index: 10000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: hidden; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+    display: ${props => props.display};
+`
+
+/* Modal Content/Box */
+const ModalContent = styled.div`
+    background-color: #fefefe;
+    margin: 8vh auto; /* 15% from the top and centered */
+    
+
+    border: 1px solid #888;
+    width: 85vw; /* Could be more or less, depending on screen size */
+    height: 84vh;
+    border-radius: 0.4rem;
+    box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
+    display: flex;
+    flex-direction: column;
+    max-width: 98rem;
+`
+
+const StyledIcon2 = styled.img`
+    width: 2.5rem;
+    margin-right: 0.2rem;
+
+`
+
+const IconBorder = styled.div`
+    margin-left: auto;
+    margin-right: 0.2rem;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.3rem;
+    &: hover {
+        opacity: 1;
+        background-color: #F4F4F6; 
+    }
+    cursor: pointer;
+    justify-content: center;
+    transition: all 0.1s ease-in;
+    border: 1px solid #172A4E;
+`
 
 const Deline = styled.div`
+    
     text-transform: uppercase;
     color: #172A4E;
     opacity: 0.5;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
 `
 const ChildDocument = styled.div`
     display: flex;
@@ -281,7 +439,6 @@ const ChildDocument = styled.div`
     height: 3.6rem;
     color: #172A4E;
     cursor: pointer;
-    font-weight: 300;
 `
 
 const DocumentName = styled.div`
@@ -344,6 +501,44 @@ const PageSection = styled.div`
     }
 `
 
+
+const PageSection2 = styled(Link)`
+    text-decoration: none;
+    color: #172A4E;
+    width: 23rem;
+    padding: 1.8rem 1.2rem;
+    border-radius: 0.5rem;
+    height: 3.6rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background-color: white;
+    /*border: 1px solid rgba(136, 147, 165, 0.5);*/
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
+    
+`
+const PageName2= styled.div`
+    margin-left: 1.2rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+`
+
+const CodebaseChevBorder = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-left: auto;
+    border-radius: 0.3rem;
+    &:hover {
+        background-color: white;
+    }
+`
+
 const PageName = styled.div`
     margin-left: 1.2rem;
     font-size: 1.35rem;
@@ -394,13 +589,17 @@ const DocumentCreateButton = styled.div`
     
 `
 
+const Block = styled.div`
+    padding: 1rem 2rem;
+    margin-top: 2rem;
+    margin-top: ${props => props.marginTop};
+`
               
 const DocumentationContainer = styled.div`
-    margin-top: 2rem;
     display: flex;
     flex-direction: column;
-    padding: 1rem 2rem;
-    height: 70rem;
+   
+    height: 30rem;
     overflow-y: scroll;
 
 `

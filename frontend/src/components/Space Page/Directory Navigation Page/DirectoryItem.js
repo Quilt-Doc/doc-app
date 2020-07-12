@@ -11,6 +11,7 @@ import { Link, withRouter } from 'react-router-dom';
 
 //actions
 import { addSelected, deleteSelected } from '../../../actions/Selected_Actions';
+import { retrieveReferences } from '../../../actions/Reference_Actions';
 
 //misc
 import { connect } from 'react-redux';
@@ -72,19 +73,18 @@ class DirectoryItem extends React.Component {
     }
 
     renderDirectoryLink(item) {
-        let {workspaceID, repositoryID} = this.props.match.params
+        let {repositoryID, workspaceID} = this.props.match.params
         let preURL = `/workspaces/${workspaceID}/repository/${repositoryID}`;
-        if (item.kind === 'dir') {
-            return `${preURL}/dir/${item._id}`
-        }
-        return `${preURL}/code/${item._id}`
+            if (item.kind === 'dir') {
+                return `${preURL}/dir/${item._id}`
+            }
+            return `${preURL}/code/${item._id}`
     }
 
-    
 
     render() {
         return (
-                <Link to = {this.renderDirectoryLink(this.props.item)}>
+                <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
                 <ListItem>
                     <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
                         <Check_Box border_color = {this.state.check_box_border_color}>
@@ -117,7 +117,7 @@ class DirectoryItem extends React.Component {
                     <Count>30</Count>
                     </Statistic>
                 </ListItem>
-                </Link>
+                </StyledLink>
                )
     }
 
@@ -127,11 +127,11 @@ class DirectoryItem extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        selected : state.selected
+        selected : state.selected, 
     }
 }
 
-export default withRouter(connect(mapStateToProps, { addSelected, deleteSelected } )(DirectoryItem));
+export default withRouter(connect(mapStateToProps, { addSelected, deleteSelected, retrieveReferences } )(DirectoryItem));
 
 /*
 const File_Line = styled.div`
@@ -139,6 +139,10 @@ const File_Line = styled.div`
     
     align-items: center;
 `*/
+
+const StyledLink = styled(Link)`
+    text-decoration: none;
+`
 
 const ListItem = styled.div`
     height: 4.5rem;
@@ -154,6 +158,7 @@ const ListItem = styled.div`
     align-items: center;
     display: flex;
     font-size: 1.5rem;
+    border-bottom: 1px solid #EDEFF1;
 `
 
 const ItemName = styled.div`

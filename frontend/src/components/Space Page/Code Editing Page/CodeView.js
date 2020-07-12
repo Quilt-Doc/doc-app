@@ -83,7 +83,7 @@ class CodeView extends React.Component {
 
         this.props.getContents({referenceID}).then((fileContents) => {
             this.setState({fileContents});
-            this.props.retrieveReferences({ referenceID, notKinds : ['file']}).then(() => {
+            this.props.retrieveReferences({ referenceID, include: true, notKinds : ['file']}).then(() => {
                 this.props.retrieveSnippets({referenceID})
                 const allLinesJSX = this.renderLines(fileContents);
                 this.setState({allLinesJSX});
@@ -193,13 +193,13 @@ class CodeView extends React.Component {
         const identifiers = {
             'keyword':{color: '#C679DD', type: ''},
             'boolean': {color: '#56B6C2', type: ''},
-            'function': {color: '#61AEEE', type: ''},
-            'class-name': {color: '#E6C07A', type: ''},
+            'function': {color: '#79A9FF', type: ''},
+            'class-name': {color: '#DC4A68', type: ''},
             'string': {color: '#98C379', type: ''},
             'triple-quoted-string': {color: '#98C379', type: ''},
-            'number': {color: '#D19966', type: ''},
-            'decorator': {color: '#61AEEE',type: ''},
-            'builtin': {color:'#61AEEE', type: ''},
+            'number': {color: '#FF8563', type: ''},
+            'decorator': {color: '#79A9FF',type: ''},
+            'builtin': {color:'#79A9FF', type: ''},
             'comment': {color: '#5C6370', type: 'italic'}
         }
 
@@ -207,10 +207,10 @@ class CodeView extends React.Component {
             let last = end.line === lineNumber ? start.column - offset - 1 + symbol.length : line.length
 
             currLineJSX.push(<>{line.slice(0, start.column - offset - 1)}</>)
-            let color = '#61AEEE'
+            let color = '#79A9FF'
             
             if (tokenType === "class-name") {
-                color = '#E6C07A'
+                color = '#DC4A68'
             }
 
             
@@ -223,7 +223,7 @@ class CodeView extends React.Component {
                     }
                 })
                 if (definitionReferences[0].kind === 'class') {
-                    color =  '#E6C07A'
+                    color =  '#DC4A68'
                 }
             }
 
@@ -273,13 +273,13 @@ class CodeView extends React.Component {
         const identifiers = {
             'keyword':{color: '#C679DD', type: ''},
             'boolean': {color: '#56B6C2', type: ''},
-            'function': {color: '#61AEEE', type: ''},
-            'class-name': {color: '#E6C07A', type: ''},
+            'function': {color: '#79A9FF', type: ''},
+            'class-name': {color: '#DC4A68', type: ''},
             'string': {color: '#98C379', type: ''},
             'triple-quoted-string': {color: '#98C379', type: ''},
-            'number': {color: '#D19966', type: ''},
-            'decorator': {color: '#61AEEE',type: ''},
-            'builtin': {color:'#61AEEE', type: ''},
+            'number': {color: '#FF8563', type: ''},
+            'decorator': {color: '#79A9FF',type: ''},
+            'builtin': {color:'#79A9FF', type: ''},
             'comment': {color: '#5C6370', type: 'italic'}
         }
         const tokens = Prism.tokenize(fileContents, grammar)
@@ -877,7 +877,8 @@ const AnnotationBar = styled.div`
 `
 
 const CodeLine = styled.div`
-    font-size: 1.27rem;
+    color: #172A4E;
+	font-size: 1.3rem;
     margin: 0;
     padding: 0.1rem !important;
     background-color: inherit !important;

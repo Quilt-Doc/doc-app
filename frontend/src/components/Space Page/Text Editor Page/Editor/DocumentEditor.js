@@ -238,6 +238,7 @@ const decorate = ([node, path]) => {
 }
 
 
+/*
 const StyledEditable = styled(Editable)`
   line-height: 1.5 !important;
   caret-color: #46474f;
@@ -248,5 +249,13 @@ const StyledEditable = styled(Editable)`
   padding-top: 0.5rem;
   padding-right: 6rem;
   padding-bottom: 4rem;
+  resize: none !important;
+`	*/
+
+const StyledEditable = styled(Editable)`
+  line-height: 1.5 !important;
+  caret-color: #46474f;
+  color: #46474f;
+  font-size: 16px;
   resize: none !important;
 `	

@@ -8,8 +8,10 @@ let documentSchema = new Schema({
     title: String,
     markup: String,
     references: [{type: ObjectId, ref: 'Reference'}],
-    workspace: [{type: ObjectId, ref: 'Workspace'}],
-    repository: [{type: ObjectId, ref: 'Repository'}],
+    workspace: {type: ObjectId, ref: 'Workspace'},
+    repository: {type: ObjectId, ref: 'Repository'},
+    children: [{type: ObjectId, ref:'Document'}],
+    root: {type: Boolean, default: false},
     tags: [{type: ObjectId, ref: 'Tag'}],
 
     //NOT USED

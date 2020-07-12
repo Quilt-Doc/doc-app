@@ -10,6 +10,7 @@ import DirectoryItem from './DirectoryItem';
 import { retrieveReferences } from '../../../actions/Reference_Actions';
 //connect
 import { connect } from 'react-redux';
+import { tomorrowNightEighties } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 class DirectoryView extends React.Component {
 
@@ -24,17 +25,25 @@ class DirectoryView extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
+        /*
         if (prevProps.location.pathname !== this.props.location.pathname) {
             let { repositoryID, referenceID } = this.props.match.params
-            
-            this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']})
-        }
+            if (referenceID !== null && referenceID !== undefined) {
+                this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']})
+            } else {
+                console.log("TRUNCATED BOY")
+                this.props.retrieveReferences({repositoryID, truncated: true, kinds : ['file', 'dir']})
+            }
+           
+        }*/
     }
 
     renderFolders = () => {
-        let directories = this.props.references.filter(reference => reference.kind === "dir")
-
-        if (directories) {
+        //let currID = this.props.currentReference._id
+        //let {referenceID} = this.props.match.params
+        let directories = this.props.references.filter(reference => reference.kind === "dir" && reference._id !== this.props.match.params.referenceID )//&& reference._id !== currID)
+        
+        if (directories.length > 0) {
             directories = directories.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
         }
 
@@ -69,13 +78,16 @@ class DirectoryView extends React.Component {
 
     renderHeader(){
         let name = this.props.currentRepository.fullName.split('/')[1]
-        if (this.props.currentReference !== null && this.props.currentReference !== undefined){
-            let splitPath = this.props.currentReference.path.split('/')
+        if (this.props.references.length > 0){
+            console.log(this.props.references)
+            let splitPath = this.props.references[0].path.split('/')
             let headerItems = [name]
             splitPath.map(item => {
                 headerItems.push("/");
                 headerItems.push(item);
             })
+            headerItems.pop()
+            headerItems.pop()
             return headerItems.join(" ")
         } else {
             return name
@@ -83,16 +95,15 @@ class DirectoryView extends React.Component {
     }
 
     render() {
-        console.log("CURRENT REFERENCE", this.props.currentReference)
-        if (this.props.references) {
+        //console.log("CURRENT REFERENCE", this.props.currentReference)
+        if (this.props.references.length > 0) {
             return (
                 <Container>
                     <Header>{this.renderHeader()}</Header>
                     <DirectoryContainer>
                         <ListToolBar>
-                            <ListName>apis</ListName>
                             <IconBorder
-                                    marginLeft = {"69rem"}
+                                    marginLeft = {"auto"}
                             >
                                 <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
                             </IconBorder>
@@ -106,19 +117,20 @@ class DirectoryView extends React.Component {
                 </Container> 
                     
             );
-        }
+        } return null
     }
 }
 
 const mapStateToProps = (state, ownProps) => {
     let { workspaceID, repositoryID, referenceID} = ownProps.match.params
-    console.log("WORKSPACE ID", workspaceID)
-    console.log(state.workspaces)
-    console.log("REPO ID", repositoryID)
-    console.log("REPOS", state.workspaces[workspaceID].repositories)
+    console.log(referenceID)
+    //console.log("WORKSPACE ID", workspaceID)
+    //console.log(state.workspaces)
+    //console.log("REPO ID", repositoryID)
+    //console.log("REPOS", state.workspaces[workspaceID].repositories)
     return {
         currentRepository: state.workspaces[workspaceID].repositories.filter(repo => repo._id === repositoryID)[0],
-        currentReference: state.references[referenceID],
+       
         references: Object.values(state.references)
     }
 }
@@ -127,14 +139,15 @@ export default connect(mapStateToProps, { retrieveReferences } )(DirectoryView);
 
 
 const Header = styled.div`
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: #172A4E;
-    margin-bottom: 8rem;
+    margin-bottom: 5rem;
 `
 
 const Container = styled.div`
-    margin-left: 8rem;
-    margin-right: 8rem;
+    margin-left: 10rem;
+    margin-top: 2rem;
+    margin-right: 10rem;
     padding-bottom: 4rem;
 `
 

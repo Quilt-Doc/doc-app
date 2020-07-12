@@ -10,7 +10,7 @@ checkValid = (item) => {
 }
 
 createDocument = (req, res) => {
-    const { authorID, referenceIDs, repositoryID, workspaceID, title, markup, tagIDs } = req.body;
+    const { authorID, referenceIDs, childrenIDs, repositoryID, workspaceID, title, root, markup, tagIDs } = req.body;
     
     //if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
     //if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
@@ -28,20 +28,27 @@ createDocument = (req, res) => {
         document.references = referenceIDs.map(referenceID => ObjectId(referenceID))
     }
 
+    if (checkValid(childrenIDs)){
+        document.children = childrenIDs.map(childrenID => ObjectId(childrenID))
+    }
+
+    if (checkValid(root)){
+        console.log(root)
+        document.root = root
+    }
+
+
     document.save((err, document) => {
         if (err) return res.json({ success: false, error: err });
-        console.log("ERROR", err)
-        document.populate('author').populate('references').populate('tags', (err, document) => {
-            console.log("ERROR", err)
+        document.populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            console.log("DOCUMENT", document)
             return res.json(document);
         });
     });
 }
 
 getDocument = (req, res) => {
-    Document.findById(req.params.id).populate('authors').exec(function (err, document) {
+    Document.findById(req.params.id).populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
         return res.json(document);
     });
@@ -78,18 +85,18 @@ deleteDocument = (req, res) => {
 }
 
 retrieveDocuments = (req, res) => {
-    let { textQuery, authorID, parentIDs, snippetIDs, uploadFileIDs, tagIDs, limit, skip } = req.body;
+    let { textQuery, authorID, childrenIDs, workspaceID, repositoryID, referenceIDs, root, tagIDs, limit, skip } = req.body;
     
-    query = Document.find();
-    if (authorID) query.where('author').equals(authorID);
-    if (parentIDs) query.where('parents').all(parentIDs);
-    if (tagIDs) query.where('tags').all(tagIDs);
-    if (snippetIDs) query.where('snippets').all(snippetIDs);
-    if (uploadFileIDs) query.where('uploadFiles').all(uploadFileIDs);
-    if (limit) query.limit(Number(limit));
-    if (skip) query.skip(Number(skip));
-    query.populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-    .populate('tags').exec((err, documents) => {
+    let query = Document.find({});
+    if (checkValid(root)) query.where('root').equals(root);
+    if (checkValid(authorID)) query.where('author').equals(authorID);
+    if (checkValid(workspaceID)) query.where('workspace').equals(workspaceID);
+    if (checkValid(repositoryID)) query.where('repository').equals(repositoryID);
+    if (checkValid(childrenIDs)) query.where('_id').in(childrenIDs);
+    if (checkValid(tagIDs)) query.where('tags').all(tagIDs);
+    if (checkValid(limit)) query.limit(Number(limit));
+    if (checkValid(skip)) query.skip(Number(skip));
+    query.populate('author').populate('workspace').populate('repository').populate('references').populate('tags').exec((err, documents) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(documents);
     });
@@ -112,6 +119,50 @@ attachTag = (req, res) => {
     });
 }
 
+
+removeTag = (req, res) => {
+    const { id } = req.params;
+    const { tagID } = req.body;
+    let update = {};
+    if (tagID) update.tags = ObjectId(tagID);
+    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+        if (err) return res.json({ success: false, error: err });
+        document.populate('author').populate('parents').populate('snippets').populate('uploadFiles')
+        .populate('tags', (err, document) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(document);
+        });
+    });
+}
+
+
+attachChild = (req, res) => {
+    const { id } = req.params;
+    const { childID } = req.body;
+    let update = {};
+    if (childID) update.children = ObjectId(childID);
+    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
+        if (err) return res.json({ success: false, error: err });
+        document.populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(document);
+        });
+    });
+}
+
+removeChild = (req, res) => {
+    const { id } = req.params;
+    const { childID } = req.body;
+    let update = {};
+    if (childID) update.children = ObjectId(childID);
+    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+        if (err) return res.json({ success: false, error: err });
+        document.populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(document);
+        });
+    });
+}
 
 removeTag = (req, res) => {
     const { id } = req.params;
@@ -287,4 +338,4 @@ module.exports = { createDocument, getDocument, editDocument,
     deleteDocument, retrieveDocuments, attachTag, removeTag, 
     attachSnippet, removeSnippet, attachParent, removeParent, 
     attachUploadFile, removeUploadFile, addCanWrite, removeCanWrite, 
-    addCanRead, removeCanRead }
+    addCanRead, removeCanRead, attachChild, removeChild }

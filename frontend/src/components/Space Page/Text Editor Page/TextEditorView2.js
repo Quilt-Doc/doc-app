@@ -179,42 +179,7 @@ class TextEditorView extends React.Component {
                             scrollTop = {this.props.scrollTop}
                         />
                     </SubContainer>
-                    {this.props.showInfoBar == true && 
-                            <InfoBar>
-                            
-                            <InfoBlock>
-                                <InfoHeader>Author</InfoHeader>
-                                <ReferenceContainer>
-                                    <ProfileButton>
-                                        FS
-                                    </ProfileButton>
-                                </ReferenceContainer>
-                            </InfoBlock>
-                            {this.state.document.repository && 
-                                <InfoBlock>
-                                    <InfoHeader>Repository</InfoHeader>
-                                    <ReferenceContainer>
-                                        {this.renderRepository()}
-                                    </ReferenceContainer>
-                                </InfoBlock>
-                            }
-                            { this.state.document.references && this.state.document.references.length > 0 &&
-                                <InfoBlock>
-                                    <InfoHeader>References</InfoHeader>
-                                    <ReferenceContainer>
-                                        {this.renderReferences()}
-                                    </ReferenceContainer>
-                                </InfoBlock>
-                            }
-                            <InfoBlock>
-                                <InfoHeader>Tags</InfoHeader>
-                                <ReferenceContainer>
-                                    {this.renderTags()}
-                                </ReferenceContainer>
-                            </InfoBlock>
-                            
-                        </InfoBar>
-                    }
+                   
                     
                     
                 </EditorContainer>
@@ -235,13 +200,14 @@ export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, 
 const Header = styled.div`
     font-size: 3rem;
     color: #172A4E;
+    margin-bottom: 1rem;
 `
 
 const Container = styled.div`
-    margin-left: 10rem;
-    margin-top: 2rem;
-   
+    margin: 0rem auto;
     padding-bottom: 4rem;
+    padding-left: 12.5rem;
+    padding-right: 12.5rem;
 `
 
 const SubContainer = styled.div`
@@ -251,6 +217,7 @@ const SubContainer = styled.div`
 
 const EditorContainer = styled.div`
     display: flex;
+    
 `
 const InfoBar = styled.div`
     margin-top: 1rem;

@@ -138,7 +138,7 @@ retrieveCodeReferences = async (req, res) => {
 
 retrieveReferences = async (req, res) => {
     let { textQuery, name, path, kind, kinds, notKinds, 
-        referenceID, repositoryID, truncated, limit, skip } = req.body;
+        referenceID, repositoryID, truncated, include, limit, skip } = req.body;
 
     let filter = {}
     
@@ -153,7 +153,13 @@ retrieveReferences = async (req, res) => {
     if (checkValid(referenceID)) {
         let reference = await Reference.findOne({_id: referenceID})
         let refPath = reference.path.replace('/', '\/')
-        let regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
+        let regex;
+        /*if (checkValid(include)) {*/
+            regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
+        //} else {
+            //regex = new RegExp(`^${refPath}\/[^\/]+$`, 'i');
+        //}
+        
         regexQuery = [{ path : { $regex: regex } }]
     }
 

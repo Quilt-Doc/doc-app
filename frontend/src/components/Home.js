@@ -13,7 +13,7 @@ import { checkLogin } from '../actions/Auth_Actions'
 import Dashboard from './Dashboard';
 
 //css -- needs to be thrown later
-import 'antd/dist/antd.css';
+
 
 
 class Home extends React.Component {

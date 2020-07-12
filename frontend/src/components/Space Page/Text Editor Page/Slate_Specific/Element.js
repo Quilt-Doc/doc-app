@@ -360,28 +360,28 @@ const StyledIcon = styled.img`
 //Markup Components
 
 const H1 = styled.div`
-  font-size: 3rem;
+  font-size: 2.8rem;
   /*letter-spacing: 1.78px;*/
   line-height: 1;
-  margin-top: 3.5rem;
+  margin-top: 3rem;
   color: #172A4E;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
 `
 
 const H2 = styled.div`
-  font-size: 2.5rem;
+  font-size: 2.4rem;
   /*letter-spacing: 1.33px;*/
   line-height: 1;
   text-transform: none;
   color: #172A4E;
-  margin-top: 3rem;
+  margin-top: 2.7rem;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
 `
 
 const H3 = styled.div`
-  font-size: 1.8rem;
+  font-size: 2rem;
   /*letter-spacing: -0.25px;*/
   line-height: 1.6;
   text-transform: none;
@@ -420,7 +420,7 @@ const CodeLine = styled.div`
 	font-family: 'Roboto Mono', monospace !important;
     font-size: 1.35rem;
     padding: 0.1rem !important;
-    boxShadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;
+    /*boxShadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;*/
 	white-space: pre-wrap !important;
 	color: #172A4E;
 `
