@@ -877,7 +877,7 @@ const AnnotationBar = styled.div`
 `
 
 const CodeLine = styled.div`
-    color: #172A4E;
+    color: #262626;
 	font-size: 1.3rem;
     margin: 0;
     padding: 0.1rem !important;

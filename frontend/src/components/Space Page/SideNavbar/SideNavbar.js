@@ -19,6 +19,7 @@ import history from '../../../history';
 import { createDocument, retrieveDocuments } from '../../../actions/Document_Actions';
 import { attachDocument } from '../../../actions/RepositoryItem_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
+import { setCreation } from '../../../actions/UI_Actions';
 
 //icons
 import repoIcon3 from '../../../images/w4.svg'
@@ -43,19 +44,28 @@ class SideNavbar extends React.Component {
     }
 
     createDocumentFromButton() {
+        /*
+        this.props.history.push({
+            pathname: '/pathname',
+            search: '?stuff=done'
+          })*/
+        
         let {workspaceID, repositoryID} = this.props.match.params
         
-        this.props.createDocument({authorID: this.props.user._id, title: "Starting the server",
+        this.props.createDocument({authorID: this.props.user._id,
             workspaceID, repositoryID, root: true,
             referenceIDs: this.props.selected.map(item => item._id)}).then((document) => {
-            const location = {
-                pathname: `/workspaces/${workspaceID}/document/${document._id}`,
-            }
+            this.props.setCreation(true)
+            history.push(`?document=${document._id}`)
             this.props.clearSelected()
-            history.push(location)
             
             //history.push(`workspaces/${workspaceID}/repository/${repositoryID}/document/${document._id}`)
         })
+    }
+
+    undoModal(){
+        this.setState({'modalDisplay': 'none'})
+        history.push(history.location.pathname)
     }
 
     renderCodeDocumentNavigation(){
@@ -107,7 +117,7 @@ class SideNavbar extends React.Component {
                     <RepositoryName>kgodara/doc-app</RepositoryName>
                 </RepositoryDetail>
                 
-                <DocumentCreateButton onClick = {() => {this.openModal()}} >
+                <DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
                     <ion-icon style={{'color': 'white', 'fontSize': '2.4rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
                     Create Document
                     <Bucket selected = {this.props.selected}/>
@@ -157,42 +167,7 @@ class SideNavbar extends React.Component {
                 </Block>
                 
             </SideNavbarContainer>
-                <ModalBackground display = {this.state.modalDisplay} onClick = {() => this.setState({'modalDisplay': 'none'})}>
-                    <ModalContent onClick = {(e) => {e.stopPropagation()}}>
-                        <ModalToolbar>
-                            <ModalToolbarButton>
-                                <ion-icon name="open-outline" style = {{fontSize: "1.7rem", marginTop: "-0.1rem", marginRight: "0.8rem"}}></ion-icon>
-                                <Title>Open Document</Title>
-                            </ModalToolbarButton>
-                            <Divider/>
-                            <ModalToolbarButton opacity = {"1"}>
-                                
-                                <Title  opacity = {"0.7"} marginRight = {"1rem"}>Location: </Title>
-                                <ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', 'color': "#172A4E", marginRight: "0.7rem"}}></ion-icon>
-                                Understanding the backend
-                            </ModalToolbarButton>
-                            <Divider/>
-                            <ModalToolbarButton>
-                                
-                                <ion-icon name="cube-outline" style={{'fontSize': '1.7rem', marginRight: "0.7rem"}}></ion-icon>
-                                3 References
-                            </ModalToolbarButton>
-                            <Divider/>
-                            <ModalToolbarButton>
-                                <ion-icon name="pricetag-outline" style={{ 'fontSize': '1.7rem', marginRight: "0.7rem"}}></ion-icon>
-                                3 Tags
-                            </ModalToolbarButton>
-                            <ModalCreateButton >
-                                Save
-                            </ModalCreateButton>
-                            <ion-icon name="ellipsis-horizontal" style={{ 'fontSize': '2.3rem', marginRight: "0.7rem"}}></ion-icon>
-                        </ModalToolbar>
-                        <ModalEditor>
-                            <TextEditorView2/>
-                        </ModalEditor>
-                        
-                    </ModalContent>
-                </ModalBackground>
+
             </>
         )
     }
@@ -286,6 +261,7 @@ const CodeDocumentItem = styled(Link)`
 
 const mapStateToProps = (state, ownProps) => {
     let {workspaceID} = ownProps.match.params
+    console.log(Object.values(state.documents))
     return {
         documents:  Object.values(state.documents).filter(document => document.root === true),
         user: state.auth.user,
@@ -295,7 +271,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, { createDocument, attachDocument, clearSelected, retrieveDocuments })(SideNavbar));
+export default withRouter(connect(mapStateToProps, { createDocument, attachDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
 
 
 const ModalToolbar = styled.div`
@@ -599,7 +575,7 @@ const DocumentationContainer = styled.div`
     display: flex;
     flex-direction: column;
    
-    height: 30rem;
+    height: 38rem;
     overflow-y: scroll;
 
 `

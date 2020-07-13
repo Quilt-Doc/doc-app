@@ -59,7 +59,7 @@ Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-i
 // REFERENCES
 
 const DocumentEditor = (props) => {
-	
+
 	const [value, setValue] = [props.markup, props.setValue]
 	const blocktypes = ["paragraph", "heading-one", "heading-two", "heading-three", "list-item", "code-line", "code-reference"]
 
@@ -108,6 +108,7 @@ const DocumentEditor = (props) => {
 					renderLeaf={renderLeaf}
 					spellCheck="false"
 					decorate={decorate}
+					
 				/>
 			</Slate>
 		</DndProvider>
@@ -197,7 +198,9 @@ const decorate = ([node, path]) => {
 									'class-name': '#E6C07A',
 									'string': '#98C379',
 									'triple-quoted-string': '#98C379',
-									'number': '#D19966'
+									'number': '#D19966',
+									
+
 								 }
 			let start = 0
 			let index = 0
@@ -258,4 +261,5 @@ const StyledEditable = styled(Editable)`
   color: #46474f;
   font-size: 16px;
   resize: none !important;
+  height: 60vh;
 `	

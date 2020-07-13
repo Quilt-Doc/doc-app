@@ -54,6 +54,18 @@ getDocument = (req, res) => {
     });
 }
 
+getParent = (req, res) => {
+    let query = Document.findOne({})
+    
+    query.where('children').equals(req.params.id)
+    query.populate('author').populate('workspace')
+    .populate('repository').populate('references')
+    .populate('tags').exec((err, document) => {
+        if (err) return res.json(err);
+        return res.json(document)
+    })
+}
+
 
 
 editDocument = (req, res) => {
@@ -76,9 +88,10 @@ deleteDocument = (req, res) => {
     const { id } = req.params;
     Document.findByIdAndRemove(id, (err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
+        document.populate('author').populate('repository')
+        .populate('workspace').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
+            console.log("DOCUMENT", document)
             return res.json(document);
         });
     });
@@ -338,4 +351,4 @@ module.exports = { createDocument, getDocument, editDocument,
     deleteDocument, retrieveDocuments, attachTag, removeTag, 
     attachSnippet, removeSnippet, attachParent, removeParent, 
     attachUploadFile, removeUploadFile, addCanWrite, removeCanWrite, 
-    addCanRead, removeCanRead, attachChild, removeChild }
+    addCanRead, removeCanRead, attachChild, removeChild, getParent }

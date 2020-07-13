@@ -17,7 +17,8 @@ import {
     DOCUMENT_ADD_CANREAD,
     DOCUMENT_REMOVE_CANREAD,
     ATTACH_CHILD,
-    REMOVE_CHILD
+    REMOVE_CHILD,
+    GET_PARENT
 } from './types/Document_Types';
 
 import { api } from '../apis/api';
@@ -31,6 +32,11 @@ export const createDocument = (formValues) => async (dispatch) => {
 
 export const createChild = (formValues) => async (dispatch) => {
     const response = await api.post('/documents/create', formValues );
+    return response.data
+}
+export const getParent = id => async dispatch => {
+    const response = await api.get(`/documents/get_parent/${id}`);
+    dispatch({ type: GET_PARENT, payload: response.data });
     return response.data
 }
 
@@ -52,6 +58,7 @@ export const retrieveDocuments = (formValues) => async dispatch => {
 
 export const deleteDocument = id => async dispatch => {
     const response = await api.delete(`/documents/delete/${id}`);
+    console.log("DISPATCHED")
     dispatch({ type: DELETE_DOCUMENT, payload: response.data });
 }
 

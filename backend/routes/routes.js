@@ -29,6 +29,7 @@ router.post('/references/remove_document',  reference_controller.removeDocument)
 const document_controller = require('../controllers/DocumentController');
 router.post('/documents/create', document_controller.createDocument);
 router.get('/documents/get/:id', document_controller.getDocument);
+router.get('/documents/get_parent/:id', document_controller.getParent);
 router.put('/documents/edit/:id', document_controller.editDocument);
 router.delete('/documents/delete/:id', document_controller.deleteDocument);
 router.post('/documents/retrieve', document_controller.retrieveDocuments);

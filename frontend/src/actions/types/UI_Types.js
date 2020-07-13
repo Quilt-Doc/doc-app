@@ -1,1 +1,2 @@
 export const SCROLL_RIGHT_VIEW = "SCROLL_RIGHT_VIEW";
+export const SET_CREATION = "SET_CREATION";

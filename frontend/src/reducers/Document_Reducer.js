@@ -3,7 +3,7 @@ import {
     EDIT_DOCUMENT, DOCUMENT_ATTACH_TAG, DOCUMENT_REMOVE_TAG, DOCUMENT_ATTACH_SNIPPET, 
     DOCUMENT_REMOVE_SNIPPET, DOCUMENT_ATTACH_PARENT, DOCUMENT_REMOVE_PARENT, DOCUMENT_ATTACH_UPLOADFILE, 
     DOCUMENT_REMOVE_UPLOADFILE, DOCUMENT_ADD_CANWRITE, DOCUMENT_REMOVE_CANWRITE, 
-    DOCUMENT_ADD_CANREAD, DOCUMENT_REMOVE_CANREAD, ATTACH_CHILD, REMOVE_CHILD
+    DOCUMENT_ADD_CANREAD, DOCUMENT_REMOVE_CANREAD, ATTACH_CHILD, REMOVE_CHILD, GET_PARENT
 } from '../actions/types/Document_Types'
 
 import _ from 'lodash';
@@ -18,6 +18,10 @@ export default (state = {}, action) => {
         case RETRIEVE_DOCUMENTS:
             return { ...state, ..._.mapKeys(action.payload, '_id') };
         case DELETE_DOCUMENT:
+            console.log("HERE")
+            console.log("BEFORE", state)
+            console.log("ID", action.payload._id)
+            console.log("AFTER", _.omit(state, action.payload._id))
             return _.omit(state, action.payload._id);
         case EDIT_DOCUMENT:
             return { ...state, [action.payload._id]: action.payload };
@@ -49,6 +53,10 @@ export default (state = {}, action) => {
             return { ...state, [action.payload._id]: action.payload };
         case DOCUMENT_REMOVE_CANREAD:
             return { ...state, [action.payload._id]: action.payload };
+        case GET_PARENT:
+            if (action.payload){
+            return { ...state, [action.payload._id]: action.payload };
+            }
         default: 
             return state;
     }

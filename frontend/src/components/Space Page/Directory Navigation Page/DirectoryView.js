@@ -3,6 +3,9 @@ import React from 'react';
 //styles 
 import styled from "styled-components"
 
+//images
+import doc_icon from '../../../images/doc-file.svg';
+
 //components
 import DirectoryItem from './DirectoryItem';
 
@@ -79,7 +82,6 @@ class DirectoryView extends React.Component {
     renderHeader(){
         let name = this.props.currentRepository.fullName.split('/')[1]
         if (this.props.references.length > 0){
-            console.log(this.props.references)
             let splitPath = this.props.references[0].path.split('/')
             let headerItems = [name]
             splitPath.map(item => {
@@ -100,8 +102,37 @@ class DirectoryView extends React.Component {
             return (
                 <Container>
                     <Header>{this.renderHeader()}</Header>
+                    
+                    <InfoBlock>
+                        <InfoHeader>Tags</InfoHeader>
+                        <ReferenceContainer>
+                            <Tag>Utility</Tag>
+                        </ReferenceContainer>
+                    </InfoBlock>
+                    <InfoBlock>
+                        <InfoHeader>Documents</InfoHeader>
+                        <CurrentDocumentationContainer>
+                            <DocumentItem>
+                                    <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                                    Document Metric
+                            </DocumentItem>
+                                
+                            <DocumentItem>
+                                    <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                                    Preet Dark Web
+                            </DocumentItem>
+                            <DocumentItem>
+                                    <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                                    Document Creat..
+                            </DocumentItem>
+                        </CurrentDocumentationContainer>
+                    </InfoBlock>
+                    
                     <DirectoryContainer>
                         <ListToolBar>
+                            <ListName><b>82</b>&nbsp; references</ListName>
+                            <ListName><b>15</b>&nbsp; snippets</ListName>
+                            <ListName><b>8</b>&nbsp; documents</ListName>
                             <IconBorder
                                     marginLeft = {"auto"}
                             >
@@ -121,9 +152,9 @@ class DirectoryView extends React.Component {
     }
 }
 
+
 const mapStateToProps = (state, ownProps) => {
     let { workspaceID, repositoryID, referenceID} = ownProps.match.params
-    console.log(referenceID)
     //console.log("WORKSPACE ID", workspaceID)
     //console.log(state.workspaces)
     //console.log("REPO ID", repositoryID)
@@ -138,15 +169,76 @@ const mapStateToProps = (state, ownProps) => {
 export default connect(mapStateToProps, { retrieveReferences } )(DirectoryView);
 
 
+const InfoHeader = styled.div`
+    font-weight: 400;
+    opacity: 0.8;
+    font-size: 1.1rem;
+    color: #172A4E;
+    text-transform: uppercase;
+`
+
+const InfoBlock = styled.div`
+    margin-bottom: 2.2rem;
+`
+
+const ReferenceContainer = styled.div`
+    margin-top: 1rem;
+
+`
+
+const Tag = styled.div`
+    font-size: 1.25rem;
+    color: #2980b9;
+    padding: 0.4rem 0.8rem;
+    background-color: rgba(51, 152, 219, 0.1);
+    display: inline-block;
+    border-radius: 4px;
+    margin-right: 1rem;
+`
+
 const Header = styled.div`
     font-size: 2rem;
     color: #172A4E;
-    margin-bottom: 5rem;
+    margin-bottom: 3rem;
+`
+
+const CurrentDocumentationContainer = styled.div`
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+`
+
+
+const StyledIcon = styled.img`
+    width: 5rem;
+    align-self: center;
+    margin-top: 1.5rem;
+`
+
+
+const DocumentItem = styled.div`
+    height: 3rem;
+    width: 15rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    /*border: 1px solid #DFDFDF;*/
+    border: 1px solid #D7D7D7;
+    font-size: 1.2rem;
+    margin-right: 2rem;
+    display: flex;
+    align-items: center;
+`
+
+const DocumentItemText = styled.div`
+    font-size: 1rem;
+    display: flex;
 `
 
 const Container = styled.div`
     margin-left: 10rem;
-    margin-top: 2rem;
+    margin-top: 4rem;
     margin-right: 10rem;
     padding-bottom: 4rem;
 `
@@ -155,10 +247,11 @@ const DirectoryContainer = styled.div`
     display: flex;
     flex-direction: column;
     background-color: white;
-    width: 85rem;
+    width: 90rem;
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     border: 1px solid #DFDFDF;
-    border-radius: 0.3rem;
+    border-radius: 0.5rem;
+    margin-top: 4rem;
 `
 
 
@@ -174,7 +267,7 @@ const ListToolBar = styled.div`
 const ListName = styled.div`
     margin-left: 3rem;
     color: #172A4E;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 300;
 `
 

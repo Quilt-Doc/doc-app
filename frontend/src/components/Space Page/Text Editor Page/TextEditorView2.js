@@ -6,9 +6,13 @@ import DocumentEditor from './Editor/DocumentEditor'
 //styles 
 import styled from "styled-components";
 
+//history
+import history from '../../../history';
+
 //actions
 import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
-import { getDocument, editDocument } from '../../../actions/Document_Actions';
+import { getDocument, editDocument, deleteDocument, getParent, removeChild   } from '../../../actions/Document_Actions';
+import { setCreation } from '../../../actions/UI_Actions';
 
 //redux
 import { connect } from 'react-redux';
@@ -27,97 +31,33 @@ class TextEditorView extends React.Component {
 
 
     componentDidMount(){
-        
-        let initialValue = [
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text: 'Click here to start writing'
-                    }
-                ]
-            }
-        ]
 
-        initialValue = [
-            {
-                type: 'heading-two',
-                children: [
-                    {
-                        text:
-                            'Iterable-styled datasets',
-                    },
-                ],
-            },
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text:
-                            'An iterable-style dataset is an instance of a subclass of IterableDataset that implements the __iter__() protocol, and represents an iterable over data samples. This type of datasets is particularly suitable for cases where random reads are expensive or even improbable, and where the batch size depends on the fetched data.',
-                    },
-                ],
-            },
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text:
-                        ''
-                    }
-                ],
-            },
-            {
-                type: 'code-block',
-                children: [
-                    {
-                        type: 'code-line',
-                        children: [{ text: 'import numpy as np' }]
-                    },
-                    {
-                        type: 'code-line',
-                        children: [{ text: '       ' }]
-                    },
-                    {
-                        type: 'code-line',
-                        children: [{ text: '  def pingu(x: int):' }]
-                    }],
-            },
-            {
-                type: 'heading-two',
-                children: [
-                    {
-                        text:
-                            'Map-styled datasets',
-                    },
-                ],
-            },
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text:
-                            'An iterable-style dataset is an instance of a subclass of IterableDataset that implements the __iter__() protocol, and represents an iterable over data samples. This type of datasets is particularly suitable for cases where random reads are expensive or even improbable, and where the batch size depends on the fetched data.',
-                    },
-                ],
-            }
-        ]
-        
-        let urlItems = window.location.pathname.split('/')
-        if (urlItems.slice(urlItems.length - 1) === '') {
-            urlItems.pop()
-        }
-        let documentID = urlItems.slice(urlItems.length - 1)[0]
-
-        this.props.retrieveRepositoryItems({documentIDs:[documentID]})
-
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let documentID = params.get('document') 
+       
         this.props.getDocument(documentID).then((document) =>{
-            if (!document.markup){
-                document.markup = initialValue
-            } else {
-                document.markup = JSON.parse(document.markup)
+            let markup = [{
+                            type: 'paragraph',
+                            children: [
+                            { text: '' },
+                            ],
+                          }]
+            let title = ""
+            if (document.markup){
+                markup = JSON.parse(document.markup)
             }
-            this.setState({document})
+            if (document.title) {
+                title = document.title
+            }
+            this.setState({markup, title})
+            
+            this.props.getParent(documentID).then((parent) => {
+                if (parent) {
+                    this.setState({parentID: parent._id})
+                }
+                
+            })
         })
 
         window.addEventListener('beforeunload', this.saveMarkup, false);
@@ -127,25 +67,37 @@ class TextEditorView extends React.Component {
 
     saveMarkup = () =>{
         
-        if (this.state.document){
-            this.props.editDocument(this.state.document._id, {markup: JSON.stringify(this.state.document.markup)})
+        if (this.props.document){
+            
+            this.props.editDocument(this.props.document._id, {markup: JSON.stringify(this.state.markup)})
         }
     }
 
     setValue(value) {
-        let document = this.state.document
-        document.markup = value
-        this.setState({document})
+        this.setState({markup: value})
     }   
 
     componentWillUnmount() {
-        this.saveMarkup()
+        if (this.props.creating){
+            if (!this.props.document.title
+                && this.state.markup.length === 1 
+                && this.state.markup[0].children[0].text == ''){
+                    
+                    this.props.deleteDocument(this.props.document._id)
+                    if (this.state.parentID){
+                        this.props.removeChild(this.state.parentID, this.props.document._id)
+                    }
+
+            }
+            this.props.setCreation(false)
+        } else {
+            this.saveMarkup()
+        }
         window.removeEventListener('beforeunload', this.saveMarkup, false)
     }
    
     renderReferences(){
-        console.log(this.state.document.references)
-        return this.state.document.references.map((ref) => {
+        return this.props.document.references.map((ref) => {
             return <Reference>{ref.name}</Reference>
         })
     }
@@ -155,52 +107,59 @@ class TextEditorView extends React.Component {
     }
 
     renderRepository(){
-        return <Repository>{this.state.document.repository.fullName}</Repository>
+        return <Repository>{this.props.document.repository.fullName}</Repository>
     }
 
     onTitleChange(e){
-        this.props.editDocument(this.state.document._id, {title: e.target.value}).then(() => {
-            this.props.retrieveRepositoryItems({documentIDs:[this.state.document._id]})
-        })
+        this.setState({title: e.target.value})
+        this.props.editDocument(this.props.document._id, {title: e.target.value})
     }
 
     render(){
-        if (!this.state.document){
+        if (!this.props.document || !this.state.markup){
             return null
         }
         return(
             <Container>
-                <EditorContainer>
-                    <SubContainer>
-                        <Header>Starting the server</Header>
-                        <DocumentEditor 
-                            markup = {this.state.document.markup} 
-                            setValue = {this.setValue}
-                            scrollTop = {this.props.scrollTop}
-                        />
-                    </SubContainer>
-                   
-                    
-                    
-                </EditorContainer>
+                <Header onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
+                <DocumentEditor 
+                    markup = {this.state.markup} 
+                    setValue = {this.setValue}
+                    scrollTop = {this.props.scrollTop}
+                />
             </Container>
         )
     }
 }
 
 const mapStateToProps = (state) => {
+    let search = history.location.search
+    let params = new URLSearchParams(search)
+    let documentID = params.get('document') 
+    let parentID = state.parentID
+    console.log(parentID)
     return {
         scrollTop: state.ui.scrollRightView,
-        repositoryItems: Object.values(state.repositoryItems)
+        repositoryItems: Object.values(state.repositoryItems),
+        creating: state.ui.creating,
+        document: state.documents[documentID],
+        parent: state.documents[parentID]
     }
 }
 
-export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, editDocument })(TextEditorView);
+export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, editDocument, deleteDocument, setCreation, getParent, removeChild})(TextEditorView);
 
-const Header = styled.div`
+const Header = styled.input`
     font-size: 3rem;
     color: #172A4E;
     margin-bottom: 1rem;
+    ::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+    }
+    outline: none;
+    border: none;
+    width: 55vw;
 `
 
 const Container = styled.div`
@@ -211,8 +170,6 @@ const Container = styled.div`
 `
 
 const SubContainer = styled.div`
-    display: flex;
-    flex-direction:column;
 `
 
 const EditorContainer = styled.div`

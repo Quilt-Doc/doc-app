@@ -2,9 +2,13 @@ import React from 'react';
 
 //styles 
 import styled from "styled-components"
+import 'react-slidedown/lib/slidedown.css'
 
 //images
-import doc_icon from '../../../images/paper.svg';
+import doc_icon from '../../../images/doc-file.svg';
+
+//components
+import {SlideDown} from 'react-slidedown'
 
 //react-router
 import { Link, withRouter } from 'react-router-dom';
@@ -23,7 +27,10 @@ class DirectoryItem extends React.Component {
         this.state = {
            'fileItemBackgroundColor': '',
            'check_box_border_color': '#D7D7D7',
-           'check_box_check_display': 'none'
+           'check_box_check_display': 'none',
+           'docHeight': '0rem',
+           'itemHeight': '0rem',
+           'closed': true
            
         }
     }
@@ -84,7 +91,8 @@ class DirectoryItem extends React.Component {
 
     render() {
         return (
-                <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
+                <>
+                {/*<StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>*/}
                 <ListItem>
                     <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
                         <Check_Box border_color = {this.state.check_box_border_color}>
@@ -92,7 +100,7 @@ class DirectoryItem extends React.Component {
                         </Check_Box>
                     </Check_Box_Border>
 
-                    <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', 'marginRight': "2rem"}} name={this.props.type}></ion-icon>
+                    <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'marginRight': "1.5rem"}} name={this.props.type}></ion-icon>
                     <ItemName>{this.props.item.name}</ItemName>
                     <ProgressContainer>
                         <ProgressBar>
@@ -116,10 +124,64 @@ class DirectoryItem extends React.Component {
                     <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cut-outline"></ion-icon>
                     <Count>30</Count>
                     </Statistic>
+                    {(this.props.item.name === ".changeset" || this.props.item.name === "docs")  &&
+                    <ViewDocumentButton onClick = {() => this.setState(prevState => ({closed: !prevState.closed}))}>
+                        <ion-icon name="document-text-outline"></ion-icon>
+                    </ViewDocumentButton>}
                 </ListItem>
-                </StyledLink>
+                {/*</StyledLink>*/}
+                {this.props.item.name === "docs" &&
+                <SlideDown className = {'my-dropdown-slidedown'} closed={this.state.closed}>
+
+                
+                    <DocumentContainer >
+                        <DocumentItem>
+                            <StyledIcon src = {doc_icon}/>
+                            <DocumentItemText>
+                                <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                                Doxygen Callbac..
+                            </DocumentItemText>
+                        </DocumentItem>
+                            
+                        <DocumentItem>
+                            <StyledIcon src = {doc_icon}/>
+                            <DocumentItemText>
+                                <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                                Rendering Seman..
+                            </DocumentItemText>
+                        </DocumentItem>
+                    </DocumentContainer>
+                </SlideDown>
+                }
+                {this.props.item.name === ".changeset" &&
+                <DocumentContainer>
+                     <DocumentItem>
+                        <StyledIcon src = {doc_icon}/>
+                        <DocumentItemText>
+                            <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                            Code Coverage
+                        </DocumentItemText>
+                    </DocumentItem>
+                        
+                    <DocumentItem>
+                        <StyledIcon src = {doc_icon}/>
+                        <DocumentItemText>
+                            <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                            References
+                        </DocumentItemText>
+                    </DocumentItem>
+                    <DocumentItem>
+                        <StyledIcon src = {doc_icon}/>
+                        <DocumentItemText>
+                            <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                           Document Hier..
+                        </DocumentItemText>
+                    </DocumentItem>
+                </DocumentContainer>}
+                </>
                )
     }
+
 
 }
 
@@ -140,29 +202,91 @@ const File_Line = styled.div`
     align-items: center;
 `*/
 
+const StyledIcon = styled.img`
+    width: 5rem;
+    align-self: center;
+    margin-top: 1.5rem;
+    user-select: none;
+`
+
+
+const DocumentItem = styled.div`
+    height: 12rem;
+    width: 15rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    /*border: 1px solid #DFDFDF;*/
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    margin-right: 4rem;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+`
+
+const DocumentItemText = styled.div`
+    margin-top: auto;
+    margin-bottom: 0.3rem;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+`
+
+const DocumentContainer = styled.div`
+    padding-left: 2rem;
+    padding-right: 2rem;
+    height: 16rem;
+    background-color: #F7F9FB;
+    border-bottom: 1px solid #EDEFF1;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease-in;
+    height: ${props => props.height};
+`
+
+const ViewDocumentButton = styled.div`
+    font-size: 1.5rem;
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 50%;
+    color: #172A4E;
+    border: 1px solid #19E5BE;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    background-color: white;
+`
+
 const StyledLink = styled(Link)`
     text-decoration: none;
+  
+    
 `
 
 const ListItem = styled.div`
-    height: 4.5rem;
-    padding-left: 2rem;
+    height: 4rem;
+    padding-left: 1rem;
     padding-right: 2rem;
     transition: background-color 0.1s ease-in;
+    
     &:hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
-       /* background-color: #F4F4F6; */
+        /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
+       background-color: #F4F4F6; 
     }
     color: #172A4E;
     cursor: pointer;
     align-items: center;
     display: flex;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     border-bottom: 1px solid #EDEFF1;
+    z-index: 10;
 `
 
 const ItemName = styled.div`
-    width: 16rem;
+    width: 25rem;
 `
 
 // PROGRESS
@@ -171,17 +295,17 @@ const ItemName = styled.div`
 const ProgressContainer = styled.div`
     display: flex;
     flex-direction: column;
-    width: 19rem;
-    margin-right: 10rem;
+    width: 15rem;
+    margin-right: 8rem;
 `
 
 const ProgressBar = styled.div`
-    width: 17rem;
-    height: 0.65rem;
+    width: 16rem;
+    height: 0.6rem;
     border-radius: 12rem;
     display: flex;
 `
-
+/*#FAFBFC*/
 const ProgressPart = styled.div`
     background-color: ${props => props.backgroundColor};
     width: ${props => props.width};
@@ -199,7 +323,7 @@ const Statistic = styled.div`
     margin-right: 2.5rem;
     font-size: 1.1rem;
     opacity: 0.6; 
-    width: 6rem;
+    width: 4rem;
     transition: all 0.05s ease-in;
     &: hover {
         opacity: 1;
@@ -215,7 +339,7 @@ const Count = styled.div`
 const Check_Box_Border = styled.div`
     height: 4rem;
     width: 4rem;
-    margin-right: 2rem;
+    margin-right: 1rem;
     &:hover {
         background-color: #F4F4F6;
     }

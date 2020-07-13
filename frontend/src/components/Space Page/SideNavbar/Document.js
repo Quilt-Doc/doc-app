@@ -15,7 +15,7 @@ import { connect } from 'react-redux';
 
 //actions
 import { createDocument, retrieveChildren, retrieveDocuments, attachChild, removeChild } from '../../../actions/Document_Actions';
-
+import { setCreation } from '../../../actions/UI_Actions';
 
 //icons
 import docIcon from '../../../images/doc.svg'
@@ -39,8 +39,15 @@ class Document extends Component {
         e.stopPropagation()
         e.preventDefault()
         let {workspaceID} = this.props.match.params
-        this.props.createDocument({ workspaceID, title: "Dropping backend" }).then((child) => {
-            this.props.attachChild(this.props.document._id, child._id)
+        this.props.createDocument({ workspaceID }).then((child) => {
+            this.props.setCreation(true)
+            history.push(`?document=${child._id}`)
+            this.props.attachChild(this.props.document._id, child._id).then(() => {
+                this.props.retrieveDocuments({childrenIDs: this.props.document.children}).then(() => {
+                    this.setState({open: true})
+                })
+            })
+        
         })
         /*
         this.props.createChild({parentID: this.props.document._id, 
@@ -65,13 +72,13 @@ class Document extends Component {
     }
 
     renderTitle() {
-        return <Title>{this.props.document.title}</Title>
+        return this.props.document.title ? <Title>{this.props.document.title}</Title> :  <Title>Untitled</Title>
     }
 
     open(e) {
         e.stopPropagation();
         e.preventDefault();
-        if (this.props.children.length === 0) {
+        if (this.props.children.length !== this.props.document.children.length) {
             this.props.retrieveDocuments({childrenIDs: this.props.document.children}).then(() => {
                 this.setState({open: true})
             })
@@ -164,7 +171,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
             
-const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, retrieveDocuments, attachChild, removeChild })(Document));
+const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, retrieveDocuments, attachChild, removeChild, setCreation })(Document));
 export default  ConnectedDocument;
 
 

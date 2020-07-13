@@ -9,6 +9,7 @@ import TextEditorView from './Text Editor Page/TextEditorView';
 import SideNavbar from './SideNavbar/SideNavbar';
 import RequestView from './Request Page/RequestView';
 import CodeView from './Code Editing Page/CodeView';
+import DocumentModal from './Document Creation Page/DocumentModal';
 
 //react-router
 import { Switch, Route } from 'react-router-dom';
@@ -35,6 +36,7 @@ class SpaceView extends React.Component {
 
     // SET KEY TO UNIQUE
     componentDidMount(){
+        
         this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]}).then(() => {
             this.setState({ready: true})
         })
@@ -43,6 +45,16 @@ class SpaceView extends React.Component {
     onScroll = () => {
         //this.props.updateRightViewScroll(this.rightViewRef.current.scrollTop)
     }
+
+    check = () => {
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let documentID = params.get('document') 
+        if (documentID !== null && documentID !== undefined){
+            return true
+        }
+        return false
+    }   
 
     render() {
         if (this.state.ready) {
@@ -58,7 +70,7 @@ class SpaceView extends React.Component {
                             </Switch>
                         </RightView>
                     </Container>
-                   
+                    {this.check() && <DocumentModal/>}
                 </>
             );
         } return null
