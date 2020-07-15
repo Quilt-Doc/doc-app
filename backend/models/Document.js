@@ -13,6 +13,8 @@ let documentSchema = new Schema({
     children: [{type: ObjectId, ref:'Document'}],
     root: {type: Boolean, default: false},
     tags: [{type: ObjectId, ref: 'Tag'}],
+    parent: {type: ObjectId, ref: 'Document'},
+    path: {type: String, default: ''},
 
     //NOT USED
     uploadFiles: [{type: ObjectId, ref: 'UploadFile'}],
@@ -23,4 +25,6 @@ let documentSchema = new Schema({
 let Document = mongoose.model("Document", documentSchema);
 
 module.exports = Document;
+
+
 
