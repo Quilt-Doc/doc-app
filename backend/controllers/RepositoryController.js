@@ -244,13 +244,35 @@ refreshRepositoryPathNew = (req, res) => {
 }
 
 
-getRepositoryFile = (req, res) => {
-    var { downloadLink} = req.body;
-    if (typeof downloadLink == 'undefined' || downloadLink == null) return res.json({success: false, error: 'no repo downloadLink provided'});
-    // if (typeof repositoryName == 'undefined' || repositoryName == null) return res.json({success: false, error: 'no repo repositoryName provided'});
-    
-    console.log('downloadLink: ', downloadLink);
-    request.get(downloadLink).pipe(res);
+getRepositoryFile = async (req, res) => {
+    var { fullName, installationId, pathInRepo } = req.body;
+    if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
+    if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
+    if (typeof pathInRepo == 'undefined' || pathInRepo == null) return res.json({success: false, error: 'no repo pathInRepo provided'});
+
+
+    var installationClient = await apis.requestInstallationClient(installationId);
+    var fileResponse = await installationClient.get(`/repos/${fullName}/contents/${pathInRepo}`)
+            .catch(err => {
+                return res.json({success: false, error: 'getRepositoryFile error fetching fileSha: ' + err});
+            });
+    if(!fileResponse.data.hasOwnProperty('sha')) {
+        return res.json({success: false, error: 'getRepositoryFile error: provided path did not resolve to a file'});
+    }
+    var fileSha = fileResponse.data.sha;
+    // repos/:username/:reponame/git/blobs/:sha
+    var blobResponse = await installationClient.get(`/repos/${fullName}/git/blobs/${fileSha}`)
+            .catch(err => {
+                return res.json({success: false, error: 'getRepositoryFile error getting file blob'});
+            });
+    if(!blobResponse.data.hasOwnProperty('content')) {
+        return res.json({success: false, error: 'getRepositoryFile error: provided fileSha did not return a blob'});
+    }
+    var blobContent = blobResponse.data.content;
+    var fileContent = Buffer.from(blobContent, 'base64').toString('binary');
+
+    return res.json({success: true, fileContents: fileContent});
+
 }
 
 parseRepositoryFile = (req, res) => {
