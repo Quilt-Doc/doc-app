@@ -81,7 +81,7 @@ createReferences2 = (req, res) => {
     if (!typeof references == 'undefined' && references !== null) return res.json({success: false, error: 'no references provided'});
     Reference.insertMany(references, (error, references) => {
         if (error) return res.json({ success: false, error });
-        references.populate('repository', (error, references) => {
+        references.populate('repository').populate('tags', (error, references) => {
             if (error) return res.json({ success: false, error: error });
             return res.json(references);
         });
@@ -93,7 +93,7 @@ getReference = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no reference id provided'});
     Reference.findById(id, (err, reference) => {
 		if (err) return res.json({success: false, error: err});
-        reference.populate('repository', (err, reference) => {
+        reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(reference)
         });
@@ -130,9 +130,7 @@ retrieveCodeReferences = async (req, res) => {
 
     query.populate('repository').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
-        console.log("REFERENCES", references)
         return res.json(references);
-        
     });
 }
 
@@ -193,7 +191,7 @@ retrieveReferences = async (req, res) => {
     if (checkValid(skip)) query.skip(Number(skip));
     
 
-    query.populate('repository').populate('definitionReferences').exec((err, references) => {
+    query.populate('repository').populate('tags').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
         //console.log("REFERENCES", references)
         return res.json(references);
@@ -204,16 +202,20 @@ retrieveReferences = async (req, res) => {
 
 editReference = (req, res) => {
     const { id } = req.params;
-    const {  name, path, kind } = req.body;
+    const {  name, path, kind, tags } = req.body;
     let update = {};
     if (name) update.name = name;
     if (path) update.path = path;
     if (kind) update.kind = kind;
+    if (tags) update.tags = tags.map(tag => ObjectId(tag));
+    console.log("TAGS", tags)
     Reference.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, reference) => {
         if (err) return res.json({ success: false, error: err });
-        reference.populate('repository', (err, reference) => {
+        reference.populate('repository').populate( 'tags', (err, reference) => {
             if (err) return res.json(err);
+            console.log(reference)
             return res.json(reference);
+
         });
     });
 }
@@ -224,7 +226,7 @@ deleteReference = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository item id provided'});
     Reference.findByIdAndRemove(id, (err, reference) => {
 		if (err) return res.json({success: false, error: err});
-        reference.populate('repository', (err, reference) => {
+        reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(reference);
         });

@@ -5,7 +5,7 @@ const { ObjectId} = Schema.Types;
 var tagSchema = new Schema({
 	created: {type: Date, default: Date.now},
 	folder: {type: ObjectId, ref: 'Folder'},
-	title: String,
+	label: String,
 	color: String,
 });
 

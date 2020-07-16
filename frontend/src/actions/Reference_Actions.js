@@ -1,5 +1,6 @@
 import {
-    RETRIEVE_REFERENCES
+    RETRIEVE_REFERENCES,
+    EDIT_REFERENCE
 } from './types/Reference_Types';
 
 import { api } from '../apis/api';
@@ -7,6 +8,11 @@ import { api } from '../apis/api';
 export const retrieveReferences = (formValues) => async dispatch => {
     const response = await api.post('/references/retrieve', formValues);
     dispatch({ type: RETRIEVE_REFERENCES, payload: response.data });
+}
+
+export const editReference = (id, formValues) => async dispatch => {
+    const response = await api.put(`/references/edit/${id}`, formValues);
+    dispatch({ type: EDIT_REFERENCE, payload: response.data });
 }
 
 // Example download link: https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py

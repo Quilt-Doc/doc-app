@@ -3,6 +3,7 @@ import {
     GET_TAG,
     EDIT_TAG,
     DELETE_TAG,
+    RETRIEVE_TAGS
 } from '../actions/types/Tag_Types'
 
 import _ from 'lodash';
@@ -18,6 +19,8 @@ export default (state = {}, action) => {
             return _.omit(state, action.payload._id);
         case EDIT_TAG:
             return { ...state, [action.payload._id]: action.payload };
+        case RETRIEVE_TAGS:
+            return  { ..._.mapKeys(action.payload, '_id') };
         default:
             return state
     }

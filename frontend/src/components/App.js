@@ -1,5 +1,5 @@
 import React from 'react';
-import { Router, Route } from 'react-router-dom';
+import { Router, Route, Switch } from 'react-router-dom';
 import history from '../history';
 
 
@@ -8,12 +8,15 @@ import Dashboard from './Dashboard';
 import NavbarProfile from './Top Navbar/NavbarProfile'
 import Home from './Home';
 import Test from './Test'
+import TagWrapper from './General Components/TagWrapper';
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
 
 //split markers -- directory, file
 const App = () => {
     return (<>
                 <Router history = {history}>
+
+                  
                   <Route path = "" component = {Home} />
                 </Router>
             </>)

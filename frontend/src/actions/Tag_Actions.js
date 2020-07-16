@@ -12,6 +12,7 @@ import { api } from '../apis/api';
 export const createTag = (formValues) => async (dispatch) => {
     const response = await api.post('/tags/create', formValues );
     dispatch({ type: CREATE_TAG, payload: response.data });
+    return response.data
 }
 
 export const getTag = id => async dispatch => {

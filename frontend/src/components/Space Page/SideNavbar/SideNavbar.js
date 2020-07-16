@@ -53,7 +53,7 @@ class SideNavbar extends React.Component {
         let {workspaceID, repositoryID} = this.props.match.params
         
         this.props.createDocument({authorID: this.props.user._id,
-            workspaceID, repositoryID, root: true,
+            workspaceID,  root: true,
             referenceIDs: this.props.selected.map(item => item._id)}).then((document) => {
             this.props.setCreation(true)
             history.push(`?document=${document._id}`)

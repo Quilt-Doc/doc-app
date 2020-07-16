@@ -8,43 +8,67 @@ import doc_icon from '../../../images/doc-file.svg';
 
 //components
 import DirectoryItem from './DirectoryItem';
+import RotateLoader from "react-spinners/RotateLoader";
+import TagWrapper from '../../General Components/TagWrapper';
+
+//history
+import history from '../../../history';
 
 //actions
-import { retrieveReferences } from '../../../actions/Reference_Actions';
+import { retrieveReferences, editReference } from '../../../actions/Reference_Actions';
+import { retrieveDocuments } from '../../../actions/Document_Actions';
+
+
 //connect
 import { connect } from 'react-redux';
 import { tomorrowNightEighties } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 class DirectoryView extends React.Component {
-
-    // USE PARAMS
-    componentDidMount() {
-        let { repositoryID, referenceID } = this.props.match.params
-        if (referenceID !== null && referenceID !== undefined) {
-            this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']})
-        } else {
-            this.props.retrieveReferences({repositoryID, truncated: true, kinds : ['file', 'dir']})
+    constructor(props){
+        super(props)
+        this.state = {
+            loaded: false,
+            tagMenuOpen: false
         }
     }
 
+    loadResources(){
+        let { repositoryID, referenceID } = this.props.match.params
+        if (referenceID !== null && referenceID !== undefined) {
+            this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']}).then(() => {
+                let referenceIDs = this.props.references.map(ref => ref._id)
+                this.props.retrieveDocuments({referenceIDs}).then(() => {
+                    if (!this.state.loaded) {
+                        this.setState({ loaded:true })
+                    }
+                })
+            })
+        } else {
+            this.props.retrieveReferences({repositoryID, truncated: true, kinds : ['file', 'dir']}).then(() => {
+                let referenceIDs = this.props.references.map(ref => ref._id)
+                this.props.retrieveDocuments({referenceIDs}).then(() => {
+                    if (!this.state.loaded) {
+                        this.setState({ loaded:true })
+                    }
+                })
+            })
+        }
+    }
+    // USE PARAMS
+    componentDidMount() {
+        this.loadResources()
+    }
+
     componentDidUpdate(prevProps) {
-        /*
         if (prevProps.location.pathname !== this.props.location.pathname) {
-            let { repositoryID, referenceID } = this.props.match.params
-            if (referenceID !== null && referenceID !== undefined) {
-                this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']})
-            } else {
-                console.log("TRUNCATED BOY")
-                this.props.retrieveReferences({repositoryID, truncated: true, kinds : ['file', 'dir']})
-            }
-           
-        }*/
+            this.setState({loaded: false})
+            this.loadResources()
+        }
     }
 
     renderFolders = () => {
         //let currID = this.props.currentReference._id
-        //let {referenceID} = this.props.match.params
-        let directories = this.props.references.filter(reference => reference.kind === "dir" && reference._id !== this.props.match.params.referenceID )//&& reference._id !== currID)
+        let directories = this.props.references.filter(reference => reference.kind === "dir")
         
         if (directories.length > 0) {
             directories = directories.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
@@ -79,12 +103,13 @@ class DirectoryView extends React.Component {
         })
     }
 
-    renderHeader(){
+    renderHeader() {
+        
         let name = this.props.currentRepository.fullName.split('/')[1]
-        if (this.props.references.length > 0){
+        if (this.props.references.length > 0) {
             let splitPath = this.props.references[0].path.split('/')
             let headerItems = [name]
-            splitPath.map(item => {
+            splitPath.map( item => {
                 headerItems.push("/");
                 headerItems.push(item);
             })
@@ -96,100 +121,141 @@ class DirectoryView extends React.Component {
         }
     }
 
+    renderTags(){
+        return this.props.currentReference.tags.map(tag => {
+            return <Tag>{tag.label}</Tag>
+        })
+    }
+
+
+
+    renderDocuments(){
+        return this.props.documents.map(doc => {
+            let title = doc.title
+            if (title && title.length > 14) {
+                let title = `${title.slice(0, 14)}..`
+            }
+            return <DocumentItem onClick = {() => history.push(`?document=${doc._id}`)}>
+                        <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                        <Title>{title ? title : "Untitled"}</Title>
+                    </DocumentItem>
+        })
+    }
+
     render() {
-        //console.log("CURRENT REFERENCE", this.props.currentReference)
-        if (this.props.references.length > 0) {
-            return (
-                <Container>
-                    <Header>{this.renderHeader()}</Header>
-                    
-                    <InfoBlock>
-                        <InfoHeader>Tags</InfoHeader>
-                        <ReferenceContainer>
-                            <Tag>Utility</Tag>
-                        </ReferenceContainer>
-                    </InfoBlock>
-                    <InfoBlock>
-                        <InfoHeader>Documents</InfoHeader>
-                        <CurrentDocumentationContainer>
-                            <DocumentItem>
-                                    <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                                    Document Metric
-                            </DocumentItem>
-                                
-                            <DocumentItem>
-                                    <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                                    Preet Dark Web
-                            </DocumentItem>
-                            <DocumentItem>
-                                    <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                                    Document Creat..
-                            </DocumentItem>
-                        </CurrentDocumentationContainer>
-                    </InfoBlock>
-                    
-                    <DirectoryContainer>
-                        <ListToolBar>
-                            <ListName><b>82</b>&nbsp; references</ListName>
-                            <ListName><b>15</b>&nbsp; snippets</ListName>
-                            <ListName><b>8</b>&nbsp; documents</ListName>
-                            <IconBorder
-                                    marginLeft = {"auto"}
-                            >
-                                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
-                            </IconBorder>
-                            <IconBorder marginRight = {"1rem"}>
-                                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', }} name="filter-outline"></ion-icon>
-                            </IconBorder>
-                        </ListToolBar>
-                        {this.renderFolders()}
-                        {this.renderFiles()}
-                    </DirectoryContainer>
-                </Container> 
-                    
-            );
-        } return null
+        let { referenceID, workspaceID, repositoryID } = this.props.match.params
+        if (this.props.currentReference) {
+            console.log(this.props.currentReference.tags)
+        }
+        return (
+            <>
+                { this.state.loaded ?
+                        <Container>
+                            <Header>{this.renderHeader()}</Header>
+                            <InfoBlock>
+                                <InfoHeader>Tags</InfoHeader>
+                                { this.state.tagMenuOpen ?  
+                                    <TagWrapper 
+                                        onChange = {(tags) => this.props.editReference(referenceID, {tags})}
+                                        tags = {this.props.currentReference.tags}
+                                        onBlur =  {() => this.setState({tagMenuOpen: false})}
+                                    /> : 
+                                    <ReferenceContainer onClick = {() => this.setState({tagMenuOpen: true})}>
+                                        {this.renderTags()}
+                                    </ReferenceContainer>}
+                            </InfoBlock>
+                            <InfoBlock>
+                                <InfoHeader>Documents</InfoHeader>
+                                <CurrentDocumentationContainer>
+                                    {this.renderDocuments()}
+                                </CurrentDocumentationContainer>
+                            </InfoBlock>
+                            
+                            <DirectoryContainer>
+                                <ListToolBar>
+                                    <ListName><b>82</b>&nbsp; references</ListName>
+                                    <ListName><b>15</b>&nbsp; snippets</ListName>
+                                    <ListName><b>8</b>&nbsp; documents</ListName>
+                                    <IconBorder
+                                            marginLeft = {"auto"}
+                                    >
+                                        <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
+                                    </IconBorder>
+                                    <IconBorder marginRight = {"1rem"}>
+                                        <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', }} name="filter-outline"></ion-icon>
+                                    </IconBorder>
+                                </ListToolBar>
+                                {this.renderFolders()}
+                                {this.renderFiles()}
+                            </DirectoryContainer>
+                        </Container> 
+                            
+                    : <Container>
+                            <LoaderContainer>
+                                <RotateLoader color = {"#19E5BE"} size = {15} margin={2} />
+                            </LoaderContainer>
+                        </Container>
+                }
+            </>
+        )
     }
 }
 
 
 const mapStateToProps = (state, ownProps) => {
-    let { workspaceID, repositoryID, referenceID} = ownProps.match.params
-    //console.log("WORKSPACE ID", workspaceID)
-    //console.log(state.workspaces)
-    //console.log("REPO ID", repositoryID)
-    //console.log("REPOS", state.workspaces[workspaceID].repositories)
+    let { workspaceID, repositoryID, referenceID } = ownProps.match.params
+    let documents = Object.values(state.documents).filter(doc => doc.references.includes(referenceID))
+    let references = Object.values(state.references).filter(ref => ref._id !== referenceID)
     return {
         currentRepository: state.workspaces[workspaceID].repositories.filter(repo => repo._id === repositoryID)[0],
-       
-        references: Object.values(state.references)
+        documents,
+        references,
+        currentReference : state.references[referenceID]
     }
 }
 
-export default connect(mapStateToProps, { retrieveReferences } )(DirectoryView);
+export default connect(mapStateToProps, { retrieveReferences, editReference, retrieveDocuments } )(DirectoryView);
 
+
+const LoaderContainer = styled.div`
+    display: flex;
+    width: 100%;
+    height:100%;
+    margin-top: 20rem;
+    margin-left: -5rem;
+    align-items: center;
+    justify-content: center;
+`
 
 const InfoHeader = styled.div`
     font-weight: 400;
-    opacity: 0.8;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    font-weight: 600;
     color: #172A4E;
-    text-transform: uppercase;
+  
 `
 
 const InfoBlock = styled.div`
-    margin-bottom: 2.2rem;
+    margin-bottom: 1.5rem;
 `
 
 const ReferenceContainer = styled.div`
-    margin-top: 1rem;
-
+    margin-top: 0.25rem;
+    padding: 0.75rem;
+    cursor: pointer;
+    margin-left: -0.75rem;
+    display: inline-block;
+    min-width: 40rem;
+    border-radius: 0.3rem;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
 `
 
 const Tag = styled.div`
     font-size: 1.25rem;
     color: #2980b9;
-    padding: 0.4rem 0.8rem;
+    padding: 0.6rem 0.8rem;
     background-color: rgba(51, 152, 219, 0.1);
     display: inline-block;
     border-radius: 4px;
@@ -216,6 +282,12 @@ const StyledIcon = styled.img`
     margin-top: 1.5rem;
 `
 
+const Title = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+`
 
 const DocumentItem = styled.div`
     height: 3rem;
@@ -229,6 +301,10 @@ const DocumentItem = styled.div`
     margin-right: 2rem;
     display: flex;
     align-items: center;
+    cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
 `
 
 const DocumentItemText = styled.div`

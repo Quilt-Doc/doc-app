@@ -88,6 +88,8 @@ class TextEditorView extends React.Component {
                         this.props.removeChild(this.state.parentID, this.props.document._id)
                     }
 
+            } else {
+                this.saveMarkup()
             }
             this.props.setCreation(false)
         } else {

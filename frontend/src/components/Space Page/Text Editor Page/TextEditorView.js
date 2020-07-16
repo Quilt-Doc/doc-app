@@ -7,11 +7,13 @@ import DocumentEditor from './Editor/DocumentEditor'
 import styled from "styled-components";
 
 //actions
-import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
-import { getDocument, editDocument } from '../../../actions/Document_Actions';
+import { getDocument, editDocument, getParent } from '../../../actions/Document_Actions';
 
 //redux
 import { connect } from 'react-redux';
+
+//router
+import { withRouter } from 'react-router-dom';
 
 //Change type of markup using toolbar and/or delete markup
 //listen for onscroll events to update dropdown
@@ -22,120 +24,71 @@ class TextEditorView extends React.Component {
 
     constructor(props) {
         super(props)
-        this.state = {}
+        this.state = {
+            loaded: false
+        }
     }
 
 
-    componentDidMount(){
-        
-        let initialValue = [
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text: 'Click here to start writing'
-                    }
-                ]
-            }
-        ]
+    componentDidMount() {
+        this.loadResources()
+    }
 
-        initialValue = [
-            {
-                type: 'heading-two',
-                children: [
-                    {
-                        text:
-                            'Iterable-styled datasets',
-                    },
-                ],
-            },
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text:
-                            'An iterable-style dataset is an instance of a subclass of IterableDataset that implements the __iter__() protocol, and represents an iterable over data samples. This type of datasets is particularly suitable for cases where random reads are expensive or even improbable, and where the batch size depends on the fetched data.',
-                    },
-                ],
-            },
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text:
-                        ''
-                    }
-                ],
-            },
-            {
-                type: 'code-block',
-                children: [
-                    {
-                        type: 'code-line',
-                        children: [{ text: 'import numpy as np' }]
-                    },
-                    {
-                        type: 'code-line',
-                        children: [{ text: '       ' }]
-                    },
-                    {
-                        type: 'code-line',
-                        children: [{ text: '  def pingu(x: int):' }]
-                    }],
-            },
-            {
-                type: 'heading-two',
-                children: [
-                    {
-                        text:
-                            'Map-styled datasets',
-                    },
-                ],
-            },
-            {
-                type: 'paragraph',
-                children: [
-                    {
-                        text:
-                            'An iterable-style dataset is an instance of a subclass of IterableDataset that implements the __iter__() protocol, and represents an iterable over data samples. This type of datasets is particularly suitable for cases where random reads are expensive or even improbable, and where the batch size depends on the fetched data.',
-                    },
-                ],
+    
+    componentDidUpdate(prevProps) {
+        if (prevProps.location.pathname !== this.props.location.pathname) {
+            this.setState({loaded: false})
+            if (prevProps.document){
+                this.props.editDocument(prevProps.document._id, {markup: JSON.stringify(this.state.markup)}).then(() => {
+                    this.loadResources()
+                })
             }
-        ]
-        
-        let urlItems = window.location.pathname.split('/')
-        if (urlItems.slice(urlItems.length - 1) === '') {
-            urlItems.pop()
         }
-        let documentID = urlItems.slice(urlItems.length - 1)[0]
+    }
 
-        this.props.retrieveRepositoryItems({documentIDs:[documentID]})
+    loadResources(){
+        let { documentID } = this.props.match.params
 
         this.props.getDocument(documentID).then((document) =>{
-            if (!document.markup){
-                document.markup = initialValue
-            } else {
-                document.markup = JSON.parse(document.markup)
-            }
-            this.setState({document})
-        })
+            let markup = [{
+                type: 'paragraph',
+                children: [
+                { text: '' },
+                ],
+            }]
+            let title = ""
 
-        window.addEventListener('beforeunload', this.saveMarkup, false);
-        
-        this.setValue = this.setValue.bind(this)
+            if (document.markup){
+                markup = JSON.parse(document.markup)
+            }
+
+            if (document.title) {
+                title = document.title
+            }
+
+            this.setState({markup, title})
+            
+            this.props.getParent(documentID).then((parent) => {
+                if (parent) {
+                    this.setState({parentID: parent._id})
+                }
+                window.addEventListener('beforeunload', this.saveMarkup, false);
+                this.setValue = this.setValue.bind(this)
+                console.log(this.state.markup)
+                this.setState({loaded: true})
+            })
+        })
     }
 
+
     saveMarkup = () =>{
-        
-        if (this.state.document){
-            this.props.editDocument(this.state.document._id, {markup: JSON.stringify(this.state.document.markup)})
+        if (this.props.document){
+            this.props.editDocument(this.props.document._id, {markup: JSON.stringify(this.state.markup)})
         }
     }
 
     setValue(value) {
-        let document = this.state.document
-        document.markup = value
-        this.setState({document})
+        this.setState({markup: value})
     }   
 
     componentWillUnmount() {
@@ -144,8 +97,7 @@ class TextEditorView extends React.Component {
     }
    
     renderReferences(){
-        console.log(this.state.document.references)
-        return this.state.document.references.map((ref) => {
+        return this.props.document.references.map((ref) => {
             return <Reference>{ref.name}</Reference>
         })
     }
@@ -159,98 +111,116 @@ class TextEditorView extends React.Component {
     }
 
     onTitleChange(e){
-        this.props.editDocument(this.state.document._id, {title: e.target.value}).then(() => {
-            this.props.retrieveRepositoryItems({documentIDs:[this.state.document._id]})
-        })
+        console.log("CHANGED?")
+        console.log(e.target.value)
+        this.setState({title: e.target.value})
+        this.props.editDocument(this.props.document._id, {title: e.target.value})
     }
 
     render(){
-        if (!this.state.document){
-            return null
-        }
-        return(
-            <Container>
-                <EditorContainer>
-                    <SubContainer>
-                        <Header>Starting the server</Header>
-                        <DocumentEditor 
-                            markup = {this.state.document.markup} 
-                            setValue = {this.setValue}
-                            scrollTop = {this.props.scrollTop}
-                        />
-                    </SubContainer>
-                    {this.props.showInfoBar == true && 
-                            <InfoBar>
-                            
-                            <InfoBlock>
-                                <InfoHeader>Author</InfoHeader>
-                                <ReferenceContainer>
-                                    <ProfileButton>
-                                        FS
-                                    </ProfileButton>
-                                </ReferenceContainer>
-                            </InfoBlock>
-                            {this.state.document.repository && 
-                                <InfoBlock>
-                                    <InfoHeader>Repository</InfoHeader>
-                                    <ReferenceContainer>
-                                        {this.renderRepository()}
-                                    </ReferenceContainer>
-                                </InfoBlock>
-                            }
-                            { this.state.document.references && this.state.document.references.length > 0 &&
-                                <InfoBlock>
-                                    <InfoHeader>References</InfoHeader>
-                                    <ReferenceContainer>
-                                        {this.renderReferences()}
-                                    </ReferenceContainer>
-                                </InfoBlock>
-                            }
-                            <InfoBlock>
-                                <InfoHeader>Tags</InfoHeader>
-                                <ReferenceContainer>
-                                    {this.renderTags()}
-                                </ReferenceContainer>
-                            </InfoBlock>
-                            
-                        </InfoBar>
-                    }
-                    
-                    
-                </EditorContainer>
-            </Container>
-        )
+        if (this.state.loaded) {
+            return(
+                <Container>
+                        <SubContainer>
+                            <Header onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
+                            <DocumentEditor 
+                                markup = {this.state.markup} 
+                                setValue = {this.setValue}
+                                scrollTop = {this.props.scrollTop}
+                            />
+                        </SubContainer>
+                        
+                        
+                        
+                </Container>
+            )
+        } 
+        return null
     }
 }
 
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (state, ownProps) => {
+    let { documentID } = ownProps.match.params
+    let parentID = state.parentID
+
     return {
         scrollTop: state.ui.scrollRightView,
-        repositoryItems: Object.values(state.repositoryItems)
+        repositoryItems: Object.values(state.repositoryItems),
+        creating: state.ui.creating,
+        document: state.documents[documentID],
+        parent: state.documents[parentID]
     }
 }
+export default withRouter(connect(mapStateToProps, { getDocument, editDocument, getParent })(TextEditorView));
 
-export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, editDocument })(TextEditorView);
 
-const Header = styled.div`
+/*
+{this.props.showInfoBar == true && 
+                                <InfoBar>
+                                
+                                <InfoBlock>
+                                    <InfoHeader>Author</InfoHeader>
+                                    <ReferenceContainer>
+                                        <ProfileButton>
+                                            FS
+                                        </ProfileButton>
+                                    </ReferenceContainer>
+                                </InfoBlock>
+                                {this.state.document.repository && 
+                                    <InfoBlock>
+                                        <InfoHeader>Repository</InfoHeader>
+                                        <ReferenceContainer>
+                                            {this.renderRepository()}
+                                        </ReferenceContainer>
+                                    </InfoBlock>
+                                }
+                                { this.state.document.references && this.state.document.references.length > 0 &&
+                                    <InfoBlock>
+                                        <InfoHeader>References</InfoHeader>
+                                        <ReferenceContainer>
+                                            {this.renderReferences()}
+                                        </ReferenceContainer>
+                                    </InfoBlock>
+                                }
+                                <InfoBlock>
+                                    <InfoHeader>Tags</InfoHeader>
+                                    <ReferenceContainer>
+                                        {this.renderTags()}
+                                    </ReferenceContainer>
+                                </InfoBlock>
+                                
+                            </InfoBar>
+                        }*/
+
+const Header = styled.input`
     font-size: 3rem;
     color: #172A4E;
+    margin-bottom: 1rem;
+    ::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+    }
+    outline: none;
+    border: none;
+    width: 55vw;
 `
 
 const Container = styled.div`
     margin-left: 10rem;
     margin-top: 2rem;
-   
     padding-bottom: 4rem;
+    display: flex;
 `
 
 const SubContainer = styled.div`
     display: flex;
     flex-direction:column;
+    width: 75rem;
 `
 
 const EditorContainer = styled.div`
-    display: flex;
+    
 `
 const InfoBar = styled.div`
     margin-top: 1rem;

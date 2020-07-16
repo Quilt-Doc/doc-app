@@ -16,6 +16,7 @@ import { connect } from 'react-redux';
 //actions
 import { createDocument, retrieveChildren, retrieveDocuments, attachChild, removeChild } from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
+import { clearSelected } from '../../../actions/Selected_Actions';
 
 //icons
 import docIcon from '../../../images/doc.svg'
@@ -39,9 +40,10 @@ class Document extends Component {
         e.stopPropagation()
         e.preventDefault()
         let {workspaceID} = this.props.match.params
-        this.props.createDocument({ workspaceID }).then((child) => {
+        this.props.createDocument({authorID: this.props.user._id, workspaceID, referenceIDs: this.props.selected.map(item => item._id) }).then((child) => {
             this.props.setCreation(true)
             history.push(`?document=${child._id}`)
+            this.props.clearSelected()
             this.props.attachChild(this.props.document._id, child._id).then(() => {
                 this.props.retrieveDocuments({childrenIDs: this.props.document.children}).then(() => {
                     this.setState({open: true})
@@ -72,7 +74,11 @@ class Document extends Component {
     }
 
     renderTitle() {
-        return this.props.document.title ? <Title>{this.props.document.title}</Title> :  <Title>Untitled</Title>
+        let { title } = this.props.document
+        if (!title) {
+            title = "Untitled"
+        }
+        return <Title>{title}</Title>
     }
 
     open(e) {
@@ -167,16 +173,21 @@ const mapStateToProps = (state, ownProps) => {
         children = Object.values(ownProps.document.children.map(childID => state.documents[childID]))
     }
     return {
-        children
+        children,
+        user: state.auth.user,
+        selected : Object.values(state.selected),
     }
 }
             
-const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, retrieveDocuments, attachChild, removeChild, setCreation })(Document));
+const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, retrieveDocuments, attachChild, removeChild, setCreation, clearSelected })(Document));
 export default  ConnectedDocument;
 
 
 const Title = styled.div`
     opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 `
 
 const StyledIcon2 = styled.img`

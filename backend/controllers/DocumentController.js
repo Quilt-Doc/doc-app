@@ -40,7 +40,7 @@ createDocument = (req, res) => {
 
     document.save((err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
+        document.populate('author').populate('repository').populate('workspace').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(document);
         });
@@ -48,7 +48,7 @@ createDocument = (req, res) => {
 }
 
 getDocument = (req, res) => {
-    Document.findById(req.params.id).populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
+    Document.findById(req.params.id).populate('repository').populate('workspace').populate('tags').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
         return res.json(document);
     });
@@ -59,7 +59,7 @@ getParent = (req, res) => {
     
     query.where('children').equals(req.params.id)
     query.populate('author').populate('workspace')
-    .populate('repository').populate('references')
+    .populate('repository')
     .populate('tags').exec((err, document) => {
         if (err) return res.json(err);
         return res.json(document)
@@ -72,8 +72,8 @@ editDocument = (req, res) => {
     const { id } = req.params;
     const { title, markup } = req.body;
     let update = {};
-    if (title) update.title = title;
-    if (markup) update.markup = markup;
+    if (checkValid(title)) update.title = title;
+    if (checkValid(markup)) update.markup = markup;
     Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('author', (err, document) => {
@@ -89,7 +89,7 @@ deleteDocument = (req, res) => {
     Document.findByIdAndRemove(id, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('author').populate('repository')
-        .populate('workspace').populate('references').populate('tags', (err, document) => {
+        .populate('workspace').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             console.log("DOCUMENT", document)
             return res.json(document);
@@ -107,9 +107,10 @@ retrieveDocuments = (req, res) => {
     if (checkValid(repositoryID)) query.where('repository').equals(repositoryID);
     if (checkValid(childrenIDs)) query.where('_id').in(childrenIDs);
     if (checkValid(tagIDs)) query.where('tags').all(tagIDs);
+    if (checkValid(referenceIDs)) query.where('references').in(referenceIDs);
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
-    query.populate('author').populate('workspace').populate('repository').populate('references').populate('tags').exec((err, documents) => {
+    query.populate('author').populate('workspace').populate('repository').populate('tags').exec((err, documents) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(documents);
     });
@@ -156,7 +157,7 @@ attachChild = (req, res) => {
     if (childID) update.children = ObjectId(childID);
     Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
+        document.populate('author').populate('workspace').populate('repository').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(document);
         });
@@ -170,7 +171,7 @@ removeChild = (req, res) => {
     if (childID) update.children = ObjectId(childID);
     Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
+        document.populate('author').populate('workspace').populate('repository').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(document);
         });

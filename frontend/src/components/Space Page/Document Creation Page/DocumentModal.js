@@ -52,10 +52,8 @@ class DocumentModal extends React.Component {
                             <ion-icon name="pricetag-outline" style={{ 'fontSize': '1.7rem', marginRight: "0.7rem"}}></ion-icon>
                             3 Tags
                         </ModalToolbarButton>
-                        <ModalCreateButton >
-                            Save
-                        </ModalCreateButton>
-                        <ion-icon name="ellipsis-horizontal" style={{ 'fontSize': '2.3rem', marginRight: "0.7rem"}}></ion-icon>
+                        
+                        <ion-icon name="ellipsis-horizontal" style={{ 'fontSize': '2.3rem', marginLeft: "auto", marginRight: "0.7rem"}}></ion-icon>
                     </ModalToolbar>
                     <ModalEditor>
                         <TextEditorView2/>

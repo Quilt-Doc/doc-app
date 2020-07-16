@@ -103,6 +103,7 @@ const DocumentEditor = (props) => {
 							dispatch({'type': 'markupMenuOff'})
 						}
 					}}
+					autoFocus
 					onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
 					renderElement={renderElement}
 					renderLeaf={renderLeaf}

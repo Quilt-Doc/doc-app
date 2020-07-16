@@ -2,6 +2,7 @@ import {
     CREATE_DOCUMENT,
     GET_DOCUMENT,
     RETRIEVE_DOCUMENTS,
+    RETRIEVE_MORE_DOCUMENTS,
     DELETE_DOCUMENT,
     EDIT_DOCUMENT,
     DOCUMENT_ATTACH_TAG,
@@ -54,6 +55,11 @@ export const retrieveChildren = (formValues) => async () => {
 export const retrieveDocuments = (formValues) => async dispatch => {
     const response = await api.post(`/documents/retrieve`, formValues );
     dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data });
+}
+
+export const retrieveMoreDocuments = (formValues) => async dispatch => {
+    const response = await api.post(`/documents/retrieve`, formValues );
+    dispatch({ type: RETRIEVE_MORE_DOCUMENTS, payload: response.data });
 }
 
 export const deleteDocument = id => async dispatch => {

@@ -12,7 +12,8 @@ var referenceSchema = new Schema({
 	position: String,
 	parseProvider: String,
 	repository: {type: ObjectId, ref: 'Repository'},
-	created: {type: Date, default: Date.now }
+	created: {type: Date, default: Date.now },
+	tags: [{type: ObjectId, ref: 'Tag'}]
 });
 
 

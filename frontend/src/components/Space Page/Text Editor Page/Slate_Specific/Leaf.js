@@ -9,7 +9,6 @@ const Leaf = ({ attributes, children, leaf }) => {
 
 	let editor = useSlate()
 	let {selection} = editor
-	console.log(children)
 
 	
 	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){

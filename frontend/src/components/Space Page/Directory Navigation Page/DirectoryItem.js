@@ -7,6 +7,9 @@ import 'react-slidedown/lib/slidedown.css'
 //images
 import doc_icon from '../../../images/doc-file.svg';
 
+//history
+import history from '../../../history';
+
 //components
 import {SlideDown} from 'react-slidedown'
 
@@ -58,7 +61,8 @@ class DirectoryItem extends React.Component {
     }
 
     renderCheck = () => {
-        return {'fontSize': "2rem", 'color': '#19E5BE', 'display': this.state.check_box_check_display}
+        let display = this.props.item._id in this.props.selected ? ''  : 'none'
+        return {'fontSize': "2rem", 'color': '#19E5BE', display}
     }
 
     turnCheckOn = (e, item) => {
@@ -88,96 +92,73 @@ class DirectoryItem extends React.Component {
             return `${preURL}/code/${item._id}`
     }
 
+    renderDocuments(){
+        return this.props.documents.map((doc) => {
+            return (
+                    <DocumentItem onClick = {() => history.push(`?document=${doc._id}`)}>
+                        <StyledIcon src = {doc_icon}/>
+                        <DocumentItemText>
+                            <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                            <Title>{doc.title ? doc.title : "Untitled"}</Title>
+                        </DocumentItemText>
+                    </DocumentItem>
+                )
+        })
+    }
+
+
+
 
     render() {
         return (
                 <>
-                {/*<StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>*/}
-                <ListItem>
-                    <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
-                        <Check_Box border_color = {this.state.check_box_border_color}>
-                            <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
-                        </Check_Box>
-                    </Check_Box_Border>
+                <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
+                    <ListItem>
+                        <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
+                            <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}>
+                                <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
+                            </Check_Box>
+                        </Check_Box_Border>
 
-                    <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'marginRight': "1.5rem"}} name={this.props.type}></ion-icon>
-                    <ItemName>{this.props.item.name}</ItemName>
-                    <ProgressContainer>
-                        <ProgressBar>
-                            {/*<ProgressPart backgroundColor = { }/>*/}
-                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'25%'}/>
-                            <ProgressPart backgroundColor = {'#ff4757'} width = {'75%'}/>
-                        </ProgressBar>
-                        <ProgressDescription>
+                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'marginRight': "1.5rem"}} name={this.props.type}></ion-icon>
+                        <ItemName>{this.props.item.name}</ItemName>
+                        <ProgressContainer>
+                            <ProgressBar>
+                                {/*<ProgressPart backgroundColor = { }/>*/}
+                                <ProgressPart backgroundColor = {'#19E5BE' } width = {'25%'}/>
+                                <ProgressPart backgroundColor = {'#ff4757'} width = {'75%'}/>
+                            </ProgressBar>
+                            <ProgressDescription>
 
-                        </ProgressDescription>
-                    </ProgressContainer>
-                    <Statistic>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cube-outline"></ion-icon>
-                        <Count>75</Count>
-                    </Statistic>
-                    <Statistic>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="pencil-outline"></ion-icon>
-                        <Count>25</Count>
-                    </Statistic>
-                    <Statistic>
-                    <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cut-outline"></ion-icon>
-                    <Count>30</Count>
-                    </Statistic>
-                    {(this.props.item.name === ".changeset" || this.props.item.name === "docs")  &&
-                    <ViewDocumentButton onClick = {() => this.setState(prevState => ({closed: !prevState.closed}))}>
-                        <ion-icon name="document-text-outline"></ion-icon>
-                    </ViewDocumentButton>}
-                </ListItem>
-                {/*</StyledLink>*/}
-                {this.props.item.name === "docs" &&
-                <SlideDown className = {'my-dropdown-slidedown'} closed={this.state.closed}>
-
-                
-                    <DocumentContainer >
-                        <DocumentItem>
-                            <StyledIcon src = {doc_icon}/>
-                            <DocumentItemText>
-                                <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                                Doxygen Callbac..
-                            </DocumentItemText>
-                        </DocumentItem>
-                            
-                        <DocumentItem>
-                            <StyledIcon src = {doc_icon}/>
-                            <DocumentItemText>
-                                <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                                Rendering Seman..
-                            </DocumentItemText>
-                        </DocumentItem>
-                    </DocumentContainer>
-                </SlideDown>
+                            </ProgressDescription>
+                        </ProgressContainer>
+                        <Statistic>
+                            <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cube-outline"></ion-icon>
+                            <Count>75</Count>
+                        </Statistic>
+                        <Statistic>
+                            <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="pencil-outline"></ion-icon>
+                            <Count>25</Count>
+                        </Statistic>
+                        <Statistic>
+                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cut-outline"></ion-icon>
+                        <Count>30</Count>
+                        </Statistic>
+                            {this.props.documents.length > 0  &&
+                                <ViewDocumentButton onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState(prevState => ({closed: !prevState.closed}))}}>
+                                    <ion-icon name="document-text-outline"></ion-icon>
+                                </ViewDocumentButton>
+                            }
+                    </ListItem>
+                </StyledLink>
+                {this.props.documents.length > 0 &&
+                    <SlideDown className = {'my-dropdown-slidedown'} closed={this.state.closed}>
+                        <DocumentContainer >
+                            {this.renderDocuments()}
+                        </DocumentContainer>
+                    </SlideDown>
                 }
-                {this.props.item.name === ".changeset" &&
-                <DocumentContainer>
-                     <DocumentItem>
-                        <StyledIcon src = {doc_icon}/>
-                        <DocumentItemText>
-                            <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                            Code Coverage
-                        </DocumentItemText>
-                    </DocumentItem>
-                        
-                    <DocumentItem>
-                        <StyledIcon src = {doc_icon}/>
-                        <DocumentItemText>
-                            <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                            References
-                        </DocumentItemText>
-                    </DocumentItem>
-                    <DocumentItem>
-                        <StyledIcon src = {doc_icon}/>
-                        <DocumentItemText>
-                            <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
-                           Document Hier..
-                        </DocumentItemText>
-                    </DocumentItem>
-                </DocumentContainer>}
+                
                 </>
                )
     }
@@ -187,9 +168,16 @@ class DirectoryItem extends React.Component {
 
 /*to = {this.renderDirectoryLink(this.props.item)}*/
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
+    if (ownProps.item.name === '.changeset'){
+        console.log(state.selected)
+    }
+
+    
+    
     return {
         selected : state.selected, 
+        documents: Object.values(state.documents).filter(doc => doc.references.includes(ownProps.item._id))
     }
 }
 
@@ -218,10 +206,22 @@ const DocumentItem = styled.div`
     border-radius: 0.5rem;
     /*border: 1px solid #DFDFDF;*/
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    margin-top: 2rem;
     margin-right: 4rem;
     display: flex;
     flex-direction: column;
     cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
+`
+
+
+const Title = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 `
 
 const DocumentItemText = styled.div`
@@ -233,16 +233,19 @@ const DocumentItemText = styled.div`
 `
 
 const DocumentContainer = styled.div`
+    padding-bottom: 2rem;
     padding-left: 2rem;
     padding-right: 2rem;
-    height: 16rem;
+    /*height: 16rem;*/
     background-color: #F7F9FB;
     border-bottom: 1px solid #EDEFF1;
     z-index: 1;
     display: flex;
     align-items: center;
     transition: all 0.2s ease-in;
-    height: ${props => props.height};
+    /*height: ${props => props.height};*/
+    flex-wrap: wrap;
+    overflow-y: scroll;
 `
 
 const ViewDocumentButton = styled.div`

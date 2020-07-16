@@ -17,6 +17,7 @@ body {
     color: #172A4E;
     box-sizing: border-box;
     height: 100%;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 }
 
 .react-slidedown.my-dropdown-slidedown {
