@@ -123,7 +123,7 @@ if (cluster.isMaster) {
 
   cluster.on('message', (sendingWorker, message, handle) => {
     if (message.receipt) {
-      workerId = sendingWorker.id;
+      workerId = sendingWorker.process.pid;
       workerReceipts[workerId] = message.receipt;
       console.log('workerReceipts: ', workerReceipts);
     }
@@ -132,7 +132,7 @@ if (cluster.isMaster) {
   cluster.on('disconnect', (worker) => {
     console.log(`The worker #${worker.id} has disconnected`);
 
-    deleteMessageId = worker.id;
+    deleteMessageId = worker.process.pid;
     // console.log('workerReceipts: ', workerReceipts);
     deleteReceipt = workerReceipts[deleteMessageId];
     console.log('deleteReceipt: ', deleteReceipt );
@@ -141,6 +141,8 @@ if (cluster.isMaster) {
         ReceiptHandle : deleteReceipt
     };
     delete workerReceipts[deleteMessageId];
+    console.log('Now deleteParams is: ');
+    console.log(deleteParams);
     sqs.deleteMessage(deleteParams, function(err, data) {
         if (err) {
           console.log(err);
