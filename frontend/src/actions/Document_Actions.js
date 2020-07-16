@@ -73,63 +73,63 @@ export const editDocument = (id, formValues) => async dispatch => {
     dispatch({ type: EDIT_DOCUMENT, payload: response.data });
 }
 
-export const documentAttachTag = (id, tagID) => async (dispatch) => {
-    const response = await api.put(`/documents/attach_tag/${id}`, { tagID });
+export const documentAttachTag = (id, tagId) => async (dispatch) => {
+    const response = await api.put(`/documents/attach_tag/${id}`, { tagId });
     dispatch({ type: DOCUMENT_ATTACH_TAG, payload: response.data });
 }
 
-export const documentRemoveTag = (id, tagID) => async (dispatch) => {
-    const response = await api.put(`/documents/remove_tag/${id}`, { tagID });
+export const documentRemoveTag = (id, tagId) => async (dispatch) => {
+    const response = await api.put(`/documents/remove_tag/${id}`, { tagId });
     dispatch({ type: DOCUMENT_REMOVE_TAG, payload: response.data });
 }
 
 
-export const attachChild = (id, childID) => async (dispatch) => {
-    const response = await api.put(`/documents/attach_child/${id}`, { childID });
+export const attachChild = (id, childId) => async (dispatch) => {
+    const response = await api.put(`/documents/attach_child/${id}`, { childId });
     dispatch({ type: ATTACH_CHILD, payload: response.data });
 }
 
-export const removeChild = (id, childID) => async (dispatch) => {
-    const response = await api.put(`/documents/remove_child/${id}`, { childID });
+export const removeChild = (id, childId) => async (dispatch) => {
+    const response = await api.put(`/documents/remove_child/${id}`, { childId });
     dispatch({ type: REMOVE_CHILD, payload: response.data });
 }
 
-export const documentAttachParent = (id, parentID) => async (dispatch) => {
-    const response = await api.put(`/documents/attach_parent/${id}`, { parentID });
+export const documentAttachParent = (id, parentId) => async (dispatch) => {
+    const response = await api.put(`/documents/attach_parent/${id}`, { parentId });
     dispatch({ type: DOCUMENT_ATTACH_PARENT, payload: response.data });
 }
 
-export const documentRemoveParent = (id, parentID) => async (dispatch) => {
-    const response = await api.put(`/documents/remove_parent/${id}`, { parentID });
+export const documentRemoveParent = (id, parentId) => async (dispatch) => {
+    const response = await api.put(`/documents/remove_parent/${id}`, { parentId });
     dispatch({ type: DOCUMENT_REMOVE_PARENT, payload: response.data });
 }
 
-export const documentAttachUploadFile = (id, uploadFileID) => async (dispatch) => {
-    const response = await api.put(`/documents/attach_uploadfile/${id}`, { uploadFileID });
+export const documentAttachUploadFile = (id, uploadFileId) => async (dispatch) => {
+    const response = await api.put(`/documents/attach_uploadfile/${id}`, { uploadFileId });
     dispatch({ type: DOCUMENT_ATTACH_UPLOADFILE, payload: response.data });
 }
 
-export const documentRemoveUploadFile = (id, uploadFileID) => async (dispatch) => {
-    const response = await api.put(`/documents/remove_uploadfile/${id}`, { uploadFileID });
+export const documentRemoveUploadFile = (id, uploadFileId) => async (dispatch) => {
+    const response = await api.put(`/documents/remove_uploadfile/${id}`, { uploadFileId });
     dispatch({ type: DOCUMENT_REMOVE_UPLOADFILE, payload: response.data });
 }
 
-export const documentAddCanWrite = (id, userID) => async (dispatch) => {
-    const response = await api.put(`/documents/add_canwrite/${id}`, { userID });
+export const documentAddCanWrite = (id, userId) => async (dispatch) => {
+    const response = await api.put(`/documents/add_canwrite/${id}`, { userId });
     dispatch({ type: DOCUMENT_ADD_CANWRITE, payload: response.data });
 }
 
-export const documentRemoveCanWrite = (id, userID) => async (dispatch) => {
-    const response = await api.put(`/documents/remove_canwrite/${id}`, { userID });
+export const documentRemoveCanWrite = (id, userId) => async (dispatch) => {
+    const response = await api.put(`/documents/remove_canwrite/${id}`, { userId });
     dispatch({ type: DOCUMENT_REMOVE_CANWRITE, payload: response.data });
 }
 
-export const documentAddCanRead = (id, userID) => async (dispatch) => {
-    const response = await api.put(`/documents/add_canread/${id}`, { userID });
+export const documentAddCanRead = (id, userId) => async (dispatch) => {
+    const response = await api.put(`/documents/add_canread/${id}`, { userId });
     dispatch({ type: DOCUMENT_ADD_CANREAD, payload: response.data });
 }
 
-export const documentRemoveCanRead = (id, userID) => async (dispatch) => {
-    const response = await api.put(`/documents/remove_canread/${id}`, { userID });
+export const documentRemoveCanRead = (id, userId) => async (dispatch) => {
+    const response = await api.put(`/documents/remove_canread/${id}`, { userId });
     dispatch({ type: DOCUMENT_REMOVE_CANREAD, payload: response.data });
 }

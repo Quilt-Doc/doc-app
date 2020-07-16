@@ -35,8 +35,8 @@ class SideNavbar extends React.Component {
     }
 
     componentDidMount(){
-        let { workspaceID } = this.props.match.params
-        this.props.retrieveDocuments({workspaceID, root: true})
+        let { workspaceId } = this.props.match.params
+        this.props.retrieveDocuments({workspaceId, root: true})
     }
 
     renderDocuments(){
@@ -50,16 +50,16 @@ class SideNavbar extends React.Component {
             search: '?stuff=done'
           })*/
         
-        let {workspaceID, repositoryID} = this.props.match.params
+        let {workspaceId, repositoryId} = this.props.match.params
         
-        this.props.createDocument({authorID: this.props.user._id,
-            workspaceID,  root: true,
-            referenceIDs: this.props.selected.map(item => item._id)}).then((document) => {
+        this.props.createDocument({authorId: this.props.user._id,
+            workspaceId,  root: true,
+            referenceIds: this.props.selected.map(item => item._id)}).then((document) => {
             this.props.setCreation(true)
             history.push(`?document=${document._id}`)
             this.props.clearSelected()
             
-            //history.push(`workspaces/${workspaceID}/repository/${repositoryID}/document/${document._id}`)
+            //history.push(`workspaces/${workspaceId}/repository/${repositoryId}/document/${document._id}`)
         })
     }
 
@@ -99,9 +99,9 @@ class SideNavbar extends React.Component {
     }
 
     renderCodebaseLink(){
-        let repositoryID = this.props.workspace.repositories[0]._id
-        let { workspaceID } = this.props.match.params
-        return `/workspaces/${workspaceID}/repository/${repositoryID}/dir`
+        let repositoryId = this.props.workspace.repositories[0]._id
+        let { workspaceId } = this.props.match.params
+        return `/workspaces/${workspaceId}/repository/${repositoryId}/dir`
     }
 
     openModal(){
@@ -260,14 +260,14 @@ const CodeDocumentItem = styled(Link)`
                         */
 
 const mapStateToProps = (state, ownProps) => {
-    let {workspaceID} = ownProps.match.params
+    let {workspaceId} = ownProps.match.params
     console.log(Object.values(state.documents))
     return {
         documents:  Object.values(state.documents).filter(document => document.root === true),
         user: state.auth.user,
         selected : Object.values(state.selected),
         repositoryItems: Object.values(state.repositoryItems),
-        workspace: state.workspaces[workspaceID]
+        workspace: state.workspaces[workspaceId]
     }
 }
 

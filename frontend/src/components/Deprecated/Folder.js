@@ -35,7 +35,7 @@ class Folder extends React.Component {
     componentDidMount() {
         /*
         const { match: { params } } = this.props;
-        if (params.folderID = this.props.id) {
+        if (params.folderId = this.props.id) {
             this.setState({selected: true})
         }
         */
@@ -96,11 +96,11 @@ class Folder extends React.Component {
 
 
     onSubmit = (formValues) => {
-        this.props.createFolder({parentID: this.props.id, ...formValues}).then(() => {
+        this.props.createFolder({parentId: this.props.id, ...formValues}).then(() => {
             this.openFolder()
             this.setState({modalVisible: false})
         })
-        //this.props.createPost(this.props.match.params.productID, formValues);
+        //this.props.createPost(this.props.match.params.productId, formValues);
     }
 
     renderInput = ({input, label, meta, marginTop, placeholder}) => {
@@ -135,7 +135,7 @@ class Folder extends React.Component {
     render() {
         return (
             <>
-                <StyledLink to = {`/${this.props.match.params.workspaceID}/folders/${this.props.id}`}>
+                <StyledLink to = {`/${this.props.match.params.workspaceId}/folders/${this.props.id}`}>
                     <FolderContainer onClick = {() => {}} >
                         <FolderTitle marginLeft = {`${this.props.marginLeft}rem`}>
                             {this.props.title}

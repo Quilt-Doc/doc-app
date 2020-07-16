@@ -34,13 +34,13 @@ export const editUser = (id, formValues) => async dispatch => {
     dispatch({ type: EDIT_USER, payload: response.data });
 }
 
-export const userAttachWorkspace = (id, workspaceID) => async (dispatch) => {
-    const response = await api.put(`/users/attach_workspace/${id}`, { workspaceID });
+export const userAttachWorkspace = (id, workspaceId) => async (dispatch) => {
+    const response = await api.put(`/users/attach_workspace/${id}`, { workspaceId });
     dispatch({ type: USER_ATTACH_WORKSPACE, payload: response.data });
 }
 
-export const userRemoveWorkspace = (id, workspaceID) => async (dispatch) => {
-    const response = await api.put(`/users/remove_workspace/${id}`, { workspaceID });
+export const userRemoveWorkspace = (id, workspaceId) => async (dispatch) => {
+    const response = await api.put(`/users/remove_workspace/${id}`, { workspaceId });
     dispatch({ type: USER_REMOVE_WORKSPACE, payload: response.data });
 }
 

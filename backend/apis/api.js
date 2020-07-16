@@ -51,7 +51,7 @@ createJWTToken = () => {
       // JWT expiration time (10 minute maximum)
       exp: expirationTime,
       // GitHub App's identifier
-      iss: process.env.GITHUB_APP_ID
+      iss: process.env.GITHUB_APP_Id
     }
 
     var private_key = fs.readFileSync(process.env.GITHUB_APP_PRIVATE_KEY_FILE, 'utf8');

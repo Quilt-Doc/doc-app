@@ -32,13 +32,13 @@ export const retrieveWorkspaces = (formValues) => async dispatch => {
 }
 
 // /workspaces/add_user/:id
-export const workspaceAddUser = (id, userID) => async (dispatch) => {
-    const response = await api.put(`/workspaces/add_user/${id}`, { userID });
+export const workspaceAddUser = (id, userId) => async (dispatch) => {
+    const response = await api.put(`/workspaces/add_user/${id}`, { userId });
     dispatch({ type: WORKSPACE_ADD_USER, payload: response.data });
 }
 
 // /workspaces/remove_user/:id
-export const workspaceRemoveUser = (id, userID) => async (dispatch) => {
-    const response = await api.put(`/workspaces/remove_user/${id}`, { userID });
+export const workspaceRemoveUser = (id, userId) => async (dispatch) => {
+    const response = await api.put(`/workspaces/remove_user/${id}`, { userId });
     dispatch({ type: WORKSPACE_REMOVE_USER, payload: response.data });
 }

@@ -36,6 +36,11 @@ const COMPOUND_KINDS = ["class", "struct", "union", "interface", "protocol", "ca
 const MEMBER_KINDS = ['define', 'property', 'event', 'variable', 'typedef', 'enum',
 'enumvalue', 'function', 'signal', 'prototype', 'friend', 'dcop', 'slot'];
 
+const JOB_STATUS_FINISHED = 'FINISHED';
+const JOB_STATUS_RUNNING = 'RUNNING';
+const JOB_STATUS_ERROR = 'ERROR';
+
+
 
 const getParseableTree = async () => {
 
@@ -54,7 +59,7 @@ const getParseableTree = async () => {
 	parseLevelLookup[treeReference.path] =  semanticParsed;
     }
     console.log('parseLevelLookup: ');
-    console.log(parseLevelLookup);
+    // console.log(parseLevelLookup);
     return parseLevelLookup
 
 }
@@ -65,6 +70,22 @@ const updateJobStatus = async (status) => {
 
 }
 
+const killJob = async (worker, status, msg, err) => {
+    
+    return await updateJobStatus(status)
+	.then(result => {
+	    if (msg) console.log(msg);
+            if (err) console.log(err);
+	    worker.process.kill(worker.process.pid);
+	})
+	.catch(result => {
+	    console.log('Doxygen: error updating job status');
+	    if (msg) console.log(msg);
+            if (err) console.log(err);
+	    worker.process.kill(worker.process.pid);
+	});
+}
+
 
 
 getRefs = async () => {
@@ -73,7 +94,7 @@ getRefs = async () => {
 
     worker.send({receipt: process.env.receipt})
 
-    await updateJobStatus('RUNNING');
+    await updateJobStatus(JOB_STATUS_RUNNING);
 
     var parseLevelLookup = await getParseableTree();
 
@@ -119,7 +140,7 @@ getRefs = async () => {
                         worker.process.kill(worker.process.pid);
                         return;
                     }
-                    parser.parseString(data, function (err, result) {
+                    parser.parseString(data, async function (err, result) {
                         if (err) {
                             console.log('getRefs error on parseString: ' + err);
                             worker.process.kill(worker.process.pid)
@@ -127,12 +148,15 @@ getRefs = async () => {
                         }
                         // console.log(result);
                         console.log('getRefs parseString successful');
-
-                        var compounds = result['doxygenindex']['compound'];
+			
+			var compounds = [];
+                        var compounds = compounds.concat(result['doxygenindex']['compound']);
                         var target_refs = []
+			if (compounds.length > 0) {
                         compounds.forEach(function (item, index) {
                             target_refs.push(item);
-                            var members = item['member'];
+                            // ERROR
+			    var members = item['member'];
                             if (!(typeof members == 'undefined') && !(members == null)) {
 
                                 members.forEach(function (elem, idx) {
@@ -140,7 +164,14 @@ getRefs = async () => {
                                 });
                             }
 
-                        });
+                            });
+			}
+
+			// Didn't find references, kill process, update job status
+			else {
+			    await killJob(worker, JOB_STATUS_FINISHED, 'No references found');
+			}
+			
 
                         default_parser = new DOMParser();
                         var found_refs = [];
@@ -156,7 +187,7 @@ getRefs = async () => {
                         // console.log(target_files);
 
                         func(target_files)
-                            .then((results) =>  {
+                            .then(async (results) =>  {
                                 // console.log('target file called');
                                 // console.log(res);
                                 results.forEach( async function(read_file, fileNum) {
@@ -212,10 +243,10 @@ getRefs = async () => {
 						
                                             file = file.substring(file.indexOf('/')+1);
                                             file = file.substring(file.indexOf('/')+1);
-				    	    console.log('Lookup Key: ', file);
+				    	    // console.log('Lookup Key: ', file);
 				            // if not a function or class for a semanticParsed file
 					    if (!(parseLevelLookup[file] && (kind == 'function' || kind == 'class'))) {
-                                                found_refs.push({name: name, kind: kind, path: file, lineNum: location, repository: repositoryId})
+                                                found_refs.push({name: name, kind: kind, path: file, lineNum: location, repositoryId})
 					    }
 					    else {
 						console.log('Skipping ref');
@@ -228,12 +259,11 @@ getRefs = async () => {
                                 console.log('END FOUND_REFS');
                                 // console.log(found_refs);
                                 
-                                createReferences(found_refs, worker);
+                                await createReferences(found_refs, worker);
                             })
                             //.catch(console.log);
-                            .catch((error) => {
-                                console.error('Error: ', error);
-                                worker.process.kill(worker.process.pid);
+                            .catch(async (error) => {
+				await killJob(worker, JOB_STATUS_ERROR, 'Error parsing references', error);
                                 return;
                             });
                     });
@@ -246,12 +276,11 @@ getRefs = async () => {
 
 
 
-createReferences = (refList, worker) => {
+createReferences = async (refList, worker) => {
 
 
     if (!typeof refList == 'undefined' && refList !== null) {
-        console.log('Error: no refList provided');
-        return;//  res.json({success: false, error: 'no reference refList provided'});
+        await killJob(worker, JOB_STATUS_ERROR, 'no refList provided');
     }
     console.log('refList');
     // console.log(refList);
@@ -274,11 +303,12 @@ createReferences = (refList, worker) => {
             return;
         }
 
+	repositoryId = ObjectId(repositoryId.toString());
+
         let reference = new Reference({
             name: name,
             path: path,
-            repository: ObjectId(repositoryId)
-
+            repository: repositoryId
         });
 
         if (lineNum) reference.lineNum = lineNum;
@@ -288,24 +318,16 @@ createReferences = (refList, worker) => {
     })
 
     console.log('REF OBJ LIST');
-    console.log(refObjList);
-    Reference.create( refObjList, async (err, reference) => {
-        if (err) {
-            console.log('Error: ', err);
-        }
-        console.log('Created references');
-        updateJobStatus('FINISHED')
-        .then(ignore => {
-            worker.process.kill(worker.process.pid);
-        })
-        .catch(err =>  {
-            console.log('Doxygen: Error updating job status');
-            worker.process.kill(worker.process.pid);
-        });
-        
-        
-        return;
-    });
+    // console.log(refObjList);
+    await Reference.insertMany( refObjList )
+		.then(async (reference) => {
+        	    console.log('Created references');
+	            await killJob(worker, JOB_STATUS_FINISHED); 
+                   return;
+    		})
+    		.catch(async (err) => {
+		    await killJob(worker, JOB_STATUS_ERROR, 'Error creating Reference', err);
+    		});
 }
 
 

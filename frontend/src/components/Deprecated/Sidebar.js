@@ -22,7 +22,7 @@ class Sidebar extends React.Component {
 
     componentDidMount() {
         const { match: { params } } = this.props;
-        this.props.retrieveFolders(params.workspaceID, {root: true})
+        this.props.retrieveFolders(params.workspaceId, {root: true})
     }
 
     renderRoots() {

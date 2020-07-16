@@ -47,9 +47,9 @@ class TextEditorView extends React.Component {
     }
 
     loadResources(){
-        let { documentID } = this.props.match.params
+        let { documentId } = this.props.match.params
 
-        this.props.getDocument(documentID).then((document) =>{
+        this.props.getDocument(documentId).then((document) =>{
             let markup = [{
                 type: 'paragraph',
                 children: [
@@ -68,9 +68,9 @@ class TextEditorView extends React.Component {
 
             this.setState({markup, title})
             
-            this.props.getParent(documentID).then((parent) => {
+            this.props.getParent(documentId).then((parent) => {
                 if (parent) {
-                    this.setState({parentID: parent._id})
+                    this.setState({parentId: parent._id})
                 }
                 window.addEventListener('beforeunload', this.saveMarkup, false);
                 this.setValue = this.setValue.bind(this)
@@ -141,15 +141,15 @@ class TextEditorView extends React.Component {
 
 
 const mapStateToProps = (state, ownProps) => {
-    let { documentID } = ownProps.match.params
-    let parentID = state.parentID
+    let { documentId } = ownProps.match.params
+    let parentId = state.parentId
 
     return {
         scrollTop: state.ui.scrollRightView,
         repositoryItems: Object.values(state.repositoryItems),
         creating: state.ui.creating,
-        document: state.documents[documentID],
-        parent: state.documents[parentID]
+        document: state.documents[documentId],
+        parent: state.documents[parentId]
     }
 }
 export default withRouter(connect(mapStateToProps, { getDocument, editDocument, getParent })(TextEditorView));

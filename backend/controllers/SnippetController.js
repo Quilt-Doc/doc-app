@@ -6,20 +6,20 @@ const { ObjectId } = mongoose.Types;
 createSnippet = (req, res) => {
     console.log("ENTERED")
     const { annotation, code, start, 
-        workspaceID, referenceID, status, name, creator } = req.body;
+        workspaceId, referenceId, status, name, creator } = req.body;
     
     console.log("ANNO", annotation)
     console.log("CODE", code)
     console.log("START", start)
-    console.log("WORKSPACE", workspaceID)
-    console.log("REFID", referenceID)
+    console.log("WORKSPACE", workspaceId)
+    console.log("REFId", referenceId)
     console.log("STATUS", status)
     console.log("NAME", name)
     console.log("CREATOR", creator)
     let snippet = new Snippet(
         {       
-           workspace: ObjectId(workspaceID),
-           reference: ObjectId(referenceID),
+           workspace: ObjectId(workspaceId),
+           reference: ObjectId(referenceId),
            code,
            annotation,
            start,
@@ -78,11 +78,11 @@ deleteSnippet = (req, res) => {
 }
 
 retrieveSnippets = (req, res) => {
-    let { referenceID, workspaceID, name, status, limit, skip } = req.body;
+    let { referenceId, workspaceId, name, status, limit, skip } = req.body;
     query = Snippet.find();
 
-    if (workspaceID) query.where('workspace').equals(workspaceID)
-    if (referenceID) query.where('reference').equals(referenceID)
+    if (workspaceId) query.where('workspace').equals(workspaceId)
+    if (referenceId) query.where('reference').equals(referenceId)
     if (name) query.where('name').equals(name)
     if (status) query.where('status').equals(status);
     if (limit) query.limit(Number(limit));

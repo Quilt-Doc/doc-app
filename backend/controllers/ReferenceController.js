@@ -102,8 +102,8 @@ getReference = (req, res) => {
 
 getContents = async (req, res) => {
 
-    var { referenceID } = req.body;
-    let reference = await Reference.findOne({_id: referenceID}).populate('repository')
+    var { referenceId } = req.body;
+    let reference = await Reference.findOne({_id: referenceId}).populate('repository')
     let defaultBranch = "master"
 
     let downloadLink = `https://raw.githubusercontent.com/${reference.repository.fullName}/${defaultBranch}/${reference.path}`
@@ -117,9 +117,9 @@ getContents = async (req, res) => {
 /*path\/example\/[^\/]+$*/
 
 retrieveCodeReferences = async (req, res) => {
-    let {referenceID} = req.body
+    let {referenceId} = req.body
 
-    let rootReference = await Reference.findOne({_id: referenceID})
+    let rootReference = await Reference.findOne({_id: referenceId})
     console.log(rootReference)
     let query = Reference.find({})
 
@@ -136,20 +136,20 @@ retrieveCodeReferences = async (req, res) => {
 
 retrieveReferences = async (req, res) => {
     let { textQuery, name, path, kind, kinds, notKinds, 
-        referenceID, repositoryID, truncated, include, limit, skip } = req.body;
+        referenceId, repositoryId, truncated, include, limit, skip } = req.body;
 
     let filter = {}
     
     if (checkValid(kind)) filter.kind = kind;
     if (checkValid(name)) filter.name = name;
     if (checkValid(path)) filter.path = path;
-    if (checkValid(repositoryID)) filter.repository = ObjectId(repositoryID)
+    if (checkValid(repositoryId)) filter.repository = ObjectId(repositoryId)
 
     let regexQuery;
     
 
-    if (checkValid(referenceID)) {
-        let reference = await Reference.findOne({_id: referenceID})
+    if (checkValid(referenceId)) {
+        let reference = await Reference.findOne({_id: referenceId})
         let refPath = reference.path.replace('/', '\/')
         let regex;
         /*if (checkValid(include)) {*/
@@ -235,12 +235,12 @@ deleteReference = (req, res) => {
 
 /*
 attachDocument = (req, res) => {
-    const { referenceIDs, documentID } = req.body;
+    const { referenceIds, documentId } = req.body;
 
-    let filter = { _id: { $in: referenceIDs }}
+    let filter = { _id: { $in: referenceIds }}
 
     let update = {}
-    if (documentID) update.documents = ObjectId(documentID);
+    if (documentId) update.documents = ObjectId(documentId);
 
     Reference.updateMany(filter, { $push: update }, { new: true }, (err, modified) => {
 
@@ -257,10 +257,10 @@ attachDocument = (req, res) => {
 
 
 removeDocument = (req, res) => {
-    const { referenceIDs, documentID } = req.params;
-    let filter = { _id: { $in: referenceIDs }}
+    const { referenceIds, documentId } = req.params;
+    let filter = { _id: { $in: referenceIds }}
     let update = {}
-    if (documentID) update.documents = ObjectId(documentID);
+    if (documentId) update.documents = ObjectId(documentId);
     Reference.updateMany(filter, { $pull: update }, { new: true }, (err, modified) => {
 
         if (err) return res.json({ success: false, error: err });

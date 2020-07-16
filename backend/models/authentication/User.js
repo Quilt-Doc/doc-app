@@ -6,7 +6,7 @@ let userSchema = new Schema({
     username: String,
     accessToken: String,
     refreshToken: String, 
-    profileID: String,
+    profileId: String,
     email: String,
     created: {type: Date, default: Date.now },
     domain: String,

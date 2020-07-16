@@ -4,14 +4,14 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createUploadFile = (req, res) => {
-    const { documentID, filePath, fileExtension } = req.body;
+    const { documentId, filePath, fileExtension } = req.body;
 
-    if (!typeof documentID == 'undefined' && documentID !== null) return res.json({success: false, error: 'no upload file documentID provided'});
+    if (!typeof documentId == 'undefined' && documentId !== null) return res.json({success: false, error: 'no upload file documentId provided'});
     if (!typeof filePath == 'undefined' && filePath !== null) return res.json({success: false, error: 'no upload title filePath provided'});
 
     let uploadFile = new UploadFile(
         {
-            document: ObjectId(documentID),
+            document: ObjectId(documentId),
             filePath: filePath,
             fileExtension: fileExtension
         },
@@ -34,9 +34,9 @@ getUploadFile = (req, res) => {
 
 editUploadFile = (req, res) => {
     const { id } = req.params;
-    const { documentID, filePath, fileExtension } = req.body;
+    const { documentId, filePath, fileExtension } = req.body;
     let update = {};
-    if (documentID) update.document = ObjectId(documentID);
+    if (documentId) update.document = ObjectId(documentId);
     if (filePath) update.filePath = filePath;
     if (fileExtension) update.fileExtension = fileExtension;
     UploadFile.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, uploadFile) => {
@@ -60,10 +60,10 @@ deleteUploadFile = (req, res) => {
 }
 
 retrieveUploadFiles = (req, res) => {
-    let { documentID, filePath, fileExtension, limit, skip } = req.body;
+    let { documentId, filePath, fileExtension, limit, skip } = req.body;
     
     query = UploadFile.find();
-    if (documentID) query.where('document').equals(documentID);
+    if (documentId) query.where('document').equals(documentId);
     if (filePath) query.where('filePath').equals(filePath);
     if (fileExtension) query.where('fileExtension').equals(fileExtension);
     if (limit) query.limit(Number(limit));

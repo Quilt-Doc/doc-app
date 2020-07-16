@@ -8,18 +8,18 @@ const { ObjectId } = mongoose.Types;
 
 
 createRelationship = (req, res) => {
-    const { creatorID, sourceID, targetID, type, text } = req.body;
+    const { creatorId, sourceId, targetId, type, text } = req.body;
 
-    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no relationship creatorID provided'});
-    if (!typeof sourceID == 'undefined' && sourceID !== null) return res.json({success: false, error: 'no relationship sourceID provided'});
-    if (!typeof targetID == 'undefined' && targetID !== null) return res.json({success: false, error: 'no relationship targetID provided'});
+    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no relationship creatorId provided'});
+    if (!typeof sourceId == 'undefined' && sourceId !== null) return res.json({success: false, error: 'no relationship sourceId provided'});
+    if (!typeof targetId == 'undefined' && targetId !== null) return res.json({success: false, error: 'no relationship targetId provided'});
 
 
     let relationship = new Relationship(
         {
-            creator: ObjectId(creatorID),
-            source: ObjectId(sourceID),
-            target: ObjectId(targetID)
+            creator: ObjectId(creatorId),
+            source: ObjectId(sourceId),
+            target: ObjectId(targetId)
         },
     );
 
@@ -45,10 +45,10 @@ getRelationship = (req, res) => {
 
 editRelationship = (req, res) => {
     const { id } = req.params;
-    const { sourceID, targetID, type, text } = req.body;
+    const { sourceId, targetId, type, text } = req.body;
     let update = {};
-    if (sourceID) update.source = ObjectId(sourceID);
-    if (targetID) update.target = ObjectId(targetID);
+    if (sourceId) update.source = ObjectId(sourceId);
+    if (targetId) update.target = ObjectId(targetId);
     if (type) update.type = type;
     if (text) update.text = text
     Relationship.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, relationship) => {
@@ -73,12 +73,12 @@ deleteRelationship = (req, res) => {
 }
 
 retrieveRelationships = (req, res) => {
-    let { creatorID, sourceID, targetID, textQuery, type, text, limit, skip } = req.body;
+    let { creatorId, sourceId, targetId, textQuery, type, text, limit, skip } = req.body;
     
     query = Relationship.find();
-    if (creatorID) query.where('creator').equals(creatorID);
-    if (sourceID) query.where('source').equals(sourceID);
-    if (targetID) query.where('target').equals(targetID);
+    if (creatorId) query.where('creator').equals(creatorId);
+    if (sourceId) query.where('source').equals(sourceId);
+    if (targetId) query.where('target').equals(targetId);
     if (type) query.where('type').equals(type);
     if (text) query.where('text').equals(text)
     if (limit) query.limit(Number(limit));

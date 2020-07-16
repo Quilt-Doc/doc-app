@@ -4,9 +4,9 @@ const { ObjectId } = mongoose.Types;
 
 
 createSnippet = (req, res) => {
-    const {  name, annotation, code, startLine, path, status, repositoryID } = req.body;
+    const {  name, annotation, code, startLine, path, status, repositoryId } = req.body;
 
-    let snippet = new Snippet( { name, annotation, code, startLine, path, status, repository: repositoryID} );
+    let snippet = new Snippet( { name, annotation, code, startLine, path, status, repository: repositoryId} );
 
     snippet.save((err, snippet) => {
         if (err) return res.json({ success: false, error: err });
@@ -23,7 +23,7 @@ getSnippet = (req, res) => {
 
 editSnippet = (req, res) => {
     const { id } = req.params;
-    const {  name, path, annotation, code, startLine,  status, repositoryID } = req.body;
+    const {  name, path, annotation, code, startLine,  status, repositoryId } = req.body;
     let update = {};
     if (typeof name === "string") update.name = name;
     if (typeof path === "string") update.path = path;
@@ -31,7 +31,7 @@ editSnippet = (req, res) => {
     if (typeof status === "string") update.status = status;
     if (code) update.code = code;
     if (startLine) update.startLine = startLine;
-    if (repositoryID) update.repository = repositoryID;
+    if (repositoryId) update.repository = repositoryId;
 
     Snippet.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, snippet) => {
         if (err) return res.json({ success: false, error: err });
@@ -48,13 +48,13 @@ deleteSnippet = (req, res) => {
 }
 
 retrieveSnippets = (req, res) => {
-    let { textQuery,  name, path,  status, repositoryID, limit, skip } = req.body;
+    let { textQuery,  name, path,  status, repositoryId, limit, skip } = req.body;
     query = Snippet.find();
 
     if (name) query.where('name').equals(name);
     if (path) query.where('path').equals(path);
     if (status) query.where('status').equals(status);
-    if (repositoryID) query.where('repository').equals(repositoryID);
+    if (repositoryId) query.where('repository').equals(repositoryId);
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
 

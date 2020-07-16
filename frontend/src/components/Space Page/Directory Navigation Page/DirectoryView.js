@@ -33,20 +33,20 @@ class DirectoryView extends React.Component {
     }
 
     loadResources(){
-        let { repositoryID, referenceID } = this.props.match.params
-        if (referenceID !== null && referenceID !== undefined) {
-            this.props.retrieveReferences({repositoryID, referenceID, kinds : ['file', 'dir']}).then(() => {
-                let referenceIDs = this.props.references.map(ref => ref._id)
-                this.props.retrieveDocuments({referenceIDs}).then(() => {
+        let { repositoryId, referenceId } = this.props.match.params
+        if (referenceId !== null && referenceId !== undefined) {
+            this.props.retrieveReferences({repositoryId, referenceId, kinds : ['file', 'dir']}).then(() => {
+                let referenceIds = this.props.references.map(ref => ref._id)
+                this.props.retrieveDocuments({referenceIds}).then(() => {
                     if (!this.state.loaded) {
                         this.setState({ loaded:true })
                     }
                 })
             })
         } else {
-            this.props.retrieveReferences({repositoryID, truncated: true, kinds : ['file', 'dir']}).then(() => {
-                let referenceIDs = this.props.references.map(ref => ref._id)
-                this.props.retrieveDocuments({referenceIDs}).then(() => {
+            this.props.retrieveReferences({repositoryId, truncated: true, kinds : ['file', 'dir']}).then(() => {
+                let referenceIds = this.props.references.map(ref => ref._id)
+                this.props.retrieveDocuments({referenceIds}).then(() => {
                     if (!this.state.loaded) {
                         this.setState({ loaded:true })
                     }
@@ -67,7 +67,7 @@ class DirectoryView extends React.Component {
     }
 
     renderFolders = () => {
-        //let currID = this.props.currentReference._id
+        //let currId = this.props.currentReference._id
         let directories = this.props.references.filter(reference => reference.kind === "dir")
         
         if (directories.length > 0) {
@@ -143,7 +143,7 @@ class DirectoryView extends React.Component {
     }
 
     render() {
-        let { referenceID, workspaceID, repositoryID } = this.props.match.params
+        let { referenceId, workspaceId, repositoryId } = this.props.match.params
         if (this.props.currentReference) {
             console.log(this.props.currentReference.tags)
         }
@@ -156,7 +156,7 @@ class DirectoryView extends React.Component {
                                 <InfoHeader>Tags</InfoHeader>
                                 { this.state.tagMenuOpen ?  
                                     <TagWrapper 
-                                        onChange = {(tags) => this.props.editReference(referenceID, {tags})}
+                                        onChange = {(tags) => this.props.editReference(referenceId, {tags})}
                                         tags = {this.props.currentReference.tags}
                                         onBlur =  {() => this.setState({tagMenuOpen: false})}
                                     /> : 
@@ -203,14 +203,14 @@ class DirectoryView extends React.Component {
 
 
 const mapStateToProps = (state, ownProps) => {
-    let { workspaceID, repositoryID, referenceID } = ownProps.match.params
-    let documents = Object.values(state.documents).filter(doc => doc.references.includes(referenceID))
-    let references = Object.values(state.references).filter(ref => ref._id !== referenceID)
+    let { workspaceId, repositoryId, referenceId } = ownProps.match.params
+    let documents = Object.values(state.documents).filter(doc => doc.references.includes(referenceId))
+    let references = Object.values(state.references).filter(ref => ref._id !== referenceId)
     return {
-        currentRepository: state.workspaces[workspaceID].repositories.filter(repo => repo._id === repositoryID)[0],
+        currentRepository: state.workspaces[workspaceId].repositories.filter(repo => repo._id === repositoryId)[0],
         documents,
         references,
-        currentReference : state.references[referenceID]
+        currentReference : state.references[referenceId]
     }
 }
 

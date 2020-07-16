@@ -5,7 +5,7 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
 createUser = (req, res) => {
-    const { username, email, debugID} = req.body;
+    const { username, email, debugId} = req.body;
     if (!typeof username == 'undefined' && name !== null) return res.json({success: false, error: 'no user username provided'});
     if (!typeof email == 'undefined' && email !== null) return res.json({success: false, error: 'no user email provided'});
 
@@ -17,8 +17,8 @@ createUser = (req, res) => {
     );
 
     // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
-        if (debugID) user._id = ObjectId(debugID);
+    if (process.env.DEBUG_CUSTOM_Id && process.env.DEBUG_CUSTOM_Id != 0) {
+        if (debugId) user._id = ObjectId(debugId);
     }
 
     user.save((err, user) => {
@@ -63,13 +63,13 @@ editUser = (req, res) => {
 }
 
 attachWorkspace = (req, res) => {
-    const { workspaceID } = req.body;
+    const { workspaceId } = req.body;
     const { id } = req.params;
 
-    if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no workspaceID to delete provided'});
+    if (!typeof workspaceId == 'undefined' && workspaceId !== null) return res.json({success: false, error: 'no workspaceId to delete provided'});
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
     let update = {}
-    update.workspaces = ObjectId(workspaceID);
+    update.workspaces = ObjectId(workspaceId);
     User.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, user) => {
         if (err) return res.json({ success: false, error: err });
         user.populate('workspaces', (err, user) => {
@@ -81,14 +81,14 @@ attachWorkspace = (req, res) => {
 
 
 removeWorkspace = (req, res) => {
-    const { workspaceID } = req.body;
+    const { workspaceId } = req.body;
     const { id } = req.params;
 
-    if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no workspaceID to delete provided'});
+    if (!typeof workspaceId == 'undefined' && workspaceId !== null) return res.json({success: false, error: 'no workspaceId to delete provided'});
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
 
     let update = {}
-    update.workspaces = ObjectId(workspaceID);
+    update.workspaces = ObjectId(workspaceId);
 
     User.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, user) => {
         if (err) return res.json({ success: false, error: err });

@@ -37,7 +37,7 @@ class SpaceView extends React.Component {
     // SET KEY TO UNIQUE
     componentDidMount(){
         
-        this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]}).then(() => {
+        this.props.retrieveWorkspaces({memberUserIds: [this.props.user._id]}).then(() => {
             this.setState({ready: true})
         })
     }
@@ -49,8 +49,8 @@ class SpaceView extends React.Component {
     check = () => {
         let search = history.location.search
         let params = new URLSearchParams(search)
-        let documentID = params.get('document') 
-        if (documentID !== null && documentID !== undefined){
+        let documentId = params.get('document') 
+        if (documentId !== null && documentId !== undefined){
             return true
         }
         return false
@@ -64,9 +64,9 @@ class SpaceView extends React.Component {
                         <SideNavbar />
                         <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
                             <Switch history = {history}>
-                                <Route path = "/workspaces/:workspaceID/repository/:repositoryID/dir/:referenceID?" component = { DirectoryView } />
-                                <Route path = "/workspaces/:workspaceID/repository/:repositoryID/code/:referenceID" component = { CodeView } />
-                                <Route path = "/workspaces/:workspaceID/document/:documentID" component = { TextEditorView } />
+                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
+                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { CodeView } />
+                                <Route path = "/workspaces/:workspaceId/document/:documentId" component = { TextEditorView } />
                             </Switch>
                         </RightView>
                     </Container>
@@ -77,7 +77,7 @@ class SpaceView extends React.Component {
     }
 }
 
-/*<Route path = "/workspaces/:workspaceID/coverage" component = {} />*/
+/*<Route path = "/workspaces/:workspaceId/coverage" component = {} />*/
 
 const mapStateToProps = (state) => {
     return {

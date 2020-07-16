@@ -79,12 +79,12 @@ class CodeView extends React.Component {
 
         
         // get contents of code file from database
-        let { referenceID }  = this.props.match.params;
+        let { referenceId }  = this.props.match.params;
 
-        this.props.getContents({referenceID}).then((fileContents) => {
+        this.props.getContents({referenceId}).then((fileContents) => {
             this.setState({fileContents});
-            this.props.retrieveReferences({ referenceID, include: true, notKinds : ['file']}).then(() => {
-                this.props.retrieveSnippets({referenceID})
+            this.props.retrieveReferences({ referenceId, include: true, notKinds : ['file']}).then(() => {
+                this.props.retrieveSnippets({referenceId})
                 const allLinesJSX = this.renderLines(fileContents);
                 this.setState({allLinesJSX});
             });
@@ -441,7 +441,7 @@ class CodeView extends React.Component {
         while (i < lines.length) {
             if (this.props.snippets 
                 && i in this.props.snippets 
-                && (this.state.reselectingSnippet !== i || this.props.snippets[i].status === "INVALID")
+                && (this.state.reselectingSnippet !== i || this.props.snippets[i].status === "INVALId")
                 && !deprecatedSeen ) {
                 const annotationRef = 'annotation' + i
                 const snippetRef = 'snippet' + i
@@ -466,7 +466,7 @@ class CodeView extends React.Component {
                                     />
                 snippetJSX.push(snippet)
                 annotationJSX.push(annotation)
-                if (this.props.snippets[i].status !== "INVALID") {
+                if (this.props.snippets[i].status !== "INVALId") {
                     i += this.props.snippets[i].code.length - 1;
                 } else {
                     deprecatedSeen = true
@@ -580,8 +580,8 @@ class CodeView extends React.Component {
         //snippet content, etc and send them over to the action
 
         this.props.createSnippet({start, code, annotation, 
-            referenceID: this.props.match.params.referenceID, status: "VALID", creator: this.props.user._id }).then(() => {
-            this.props.retrieveSnippets({ referenceID: this.props.match.params.referenceID}).then(() => {
+            referenceId: this.props.match.params.referenceId, status: "VALId", creator: this.props.user._id }).then(() => {
+            this.props.retrieveSnippets({ referenceId: this.props.match.params.referenceId}).then(() => {
                 console.log("SNIPPETS", this.props.snippets)
             })
             this.setState({
@@ -598,7 +598,7 @@ class CodeView extends React.Component {
         let length = _.keys(this.state.selected).length
         let code = this.state.fileContents.split("\n").slice(start, start + length)
         this.deselectItems()
-        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {start, code, status: "VALID"}).then(() => {
+        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {start, code, status: "VALId"}).then(() => {
             this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
             this.setState({
                 'selected': {},

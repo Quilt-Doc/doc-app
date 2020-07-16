@@ -84,8 +84,8 @@ class DirectoryItem extends React.Component {
     }
 
     renderDirectoryLink(item) {
-        let {repositoryID, workspaceID} = this.props.match.params
-        let preURL = `/workspaces/${workspaceID}/repository/${repositoryID}`;
+        let {repositoryId, workspaceId} = this.props.match.params
+        let preURL = `/workspaces/${workspaceId}/repository/${repositoryId}`;
             if (item.kind === 'dir') {
                 return `${preURL}/dir/${item._id}`
             }

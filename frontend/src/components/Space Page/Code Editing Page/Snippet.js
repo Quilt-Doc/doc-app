@@ -52,7 +52,7 @@ class Snippet extends React.Component {
                 <SnippetWrapper 
                     backgroundColor = {this.state.backgroundColor} 
                     boxShadow = {this.state.boxShadow}
-                    border = {this.props.status === "INVALID" ?  "1.5px solid #eb3b5a" :  "1.5px solid #5534FF"}
+                    border = {this.props.status === "INVALId" ?  "1.5px solid #eb3b5a" :  "1.5px solid #5534FF"}
                     onMouseEnter = {this.props.scalePane} 
                     onMouseLeave = {this.props.unhoverBoth}
                 >
@@ -88,7 +88,7 @@ class Snippet extends React.Component {
                             </DropdownButton>
                         </MenuDropdown>
                    </MenuContainer>
-                   {this.props.status === "INVALID" ? <Status>Deprecated Snippet</Status> : <></>}
+                   {this.props.status === "INVALId" ? <Status>Deprecated Snippet</Status> : <></>}
                    {this.renderCodeLines()}
                 </SnippetWrapper>
             );

@@ -4,24 +4,24 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
 createWorkspace = (req, res) => {
-    const {name, creatorID, debugID, repositoryIDs, icon, key} = req.body;
+    const {name, creatorId, debugId, repositoryIds, icon, key} = req.body;
 
     if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no workspace name provided'});
-    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no workspace creator ID provided'});
+    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no workspace creator Id provided'});
 
     let workspace = new Workspace({
         name: name,
-        creator: ObjectId(creatorID),
-        memberUsers: [ObjectId(creatorID)],
+        creator: ObjectId(creatorId),
+        memberUsers: [ObjectId(creatorId)],
         key
     });
 
     if (icon >= 0) workspace.icon = icon;
-    if (repositoryIDs) workspace.repositories = repositoryIDs.map(id => ObjectId(id))
+    if (repositoryIds) workspace.repositories = repositoryIds.map(id => ObjectId(id))
     
     // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
-        if (debugID) workspace._id = ObjectId(debugID);
+    if (process.env.DEBUG_CUSTOM_Id && process.env.DEBUG_CUSTOM_Id != 0) {
+        if (debugId) workspace._id = ObjectId(debugId);
     }
 
     workspace.save((err, workspace) => {
@@ -67,13 +67,13 @@ deleteWorkspace = (req, res) => {
 // Population only on returns
 addUser = (req, res) => {
     id = req.params.id;
-    const { userID } = req.body;
+    const { userId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
-    if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no user id provided'});
+    if (!typeof userId == 'undefined' && userId !== null) return res.json({success: false, error: 'no user id provided'});
 
     let update = {};
-    if (userID) update.memberUsers = ObjectId(userID);
+    if (userId) update.memberUsers = ObjectId(userId);
 
     Workspace.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
@@ -87,13 +87,13 @@ addUser = (req, res) => {
 
 removeUser = (req, res) => {
     const { id } = req.params;
-    const { userID } = req.body;
+    const { userId } = req.body;
     
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
-    if (!typeof userID == 'undefined' && userID !== null) return res.json({success: false, error: 'no user id provided'});
+    if (!typeof userId == 'undefined' && userId !== null) return res.json({success: false, error: 'no user id provided'});
 
     let update = {};
-    if (userID) update.memberUsers = ObjectId(userID);
+    if (userId) update.memberUsers = ObjectId(userId);
 
     Workspace.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
@@ -107,11 +107,11 @@ removeUser = (req, res) => {
 
 retrieveWorkspaces = (req, res) => {
     
-    const {name, creatorID, memberUserIDs} = req.body;
+    const {name, creatorId, memberUserIds} = req.body;
     query = Workspace.find();
     if (name) query.where('name').equals(name);
-    if (creatorID) query.where('creator').equals(creatorID);
-    if (memberUserIDs) query.where('memberUsers').in(memberUserIDs)
+    if (creatorId) query.where('creator').equals(creatorId);
+    if (memberUserIds) query.where('memberUsers').in(memberUserIds)
 
     query.populate('repositories').populate('creator').populate('memberUsers').exec((err, workspaces) => {
         if (err) return res.json({ success: false, error: err });

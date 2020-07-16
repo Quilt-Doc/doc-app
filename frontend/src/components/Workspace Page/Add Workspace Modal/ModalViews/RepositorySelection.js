@@ -18,7 +18,7 @@ class RepositorySelection extends React.Component {
 
         this.state = {
             selected: {},
-            installationID: null, 
+            installationId: null, 
             polling: false
         }
 
@@ -26,18 +26,18 @@ class RepositorySelection extends React.Component {
        this.keyInput = React.createRef()
     }
 
-    // ORG LEVEL BUGS, FIND INSTALLATIONID + FULLNAME MAY BE BUGGY -- which repo to which installation id?
+    // ORG LEVEL BUGS, FIND INSTALLATIONId + FULLNAME MAY BE BUGGY -- which repo to which installation id?
     componentDidMount(){
         this.props.checkInstallation(
             {accessToken: this.props.user.accessToken,
              platform: this.props.platform}).then(() => {
                 let installs = this.props.installations.filter(inst => inst.account.type === 'User' 
-                    && inst.account.id == this.props.user.profileID)
+                    && inst.account.id == this.props.user.profileId)
                 if (installs.length === 0) {
                     return
                 } else {
                     this.props.retrieveDomainRepositories({accessToken: this.props.user.accessToken})
-                    this.setState({installationID:
+                    this.setState({installationId:
                          installs[0].id})
                 }
         })
@@ -103,13 +103,13 @@ class RepositorySelection extends React.Component {
     }
 
     pollRepositories(fullNames){
-        this.props.pollRepositories({fullNames, installationID: this.state.installationID}).then(({finished}) => {
+        this.props.pollRepositories({fullNames, installationId: this.state.installationId}).then(({finished}) => {
             if (finished === true){
                 clearInterval(this.interval)
-                this.props.retrieveRepositories({fullNames: Object.values(this.state.selected), installationId: this.state.installationID}).then(() => {
-                    let repositoryIDs = Object.keys(this.props.repositories)
+                this.props.retrieveRepositories({fullNames: Object.values(this.state.selected), installationId: this.state.installationId}).then(() => {
+                    let repositoryIds = Object.keys(this.props.repositories)
                     this.props.createWorkspace({name: this.nameInput.current.value, 
-                        creatorID: this.props.user._id, repositoryIDs, icon: this.props.workspaces.length, 
+                        creatorId: this.props.user._id, repositoryIds, icon: this.props.workspaces.length, 
                         key: this.keyInput.current.value}).then(() => {
                         this.reset()
                     })
@@ -122,7 +122,7 @@ class RepositorySelection extends React.Component {
 
     createWorkspace(){
         this.props.validateRepositories({selected: this.state.selected, 
-            installationID: this.state.installationID, accessToken: this.props.user.accessToken}).then((response) => {
+            installationId: this.state.installationId, accessToken: this.props.user.accessToken}).then((response) => {
             this.interval = setInterval(this.pollRepositories(response), 3000);
         })
     }   

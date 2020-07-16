@@ -34,9 +34,9 @@ class TextEditorView extends React.Component {
 
         let search = history.location.search
         let params = new URLSearchParams(search)
-        let documentID = params.get('document') 
+        let documentId = params.get('document') 
        
-        this.props.getDocument(documentID).then((document) =>{
+        this.props.getDocument(documentId).then((document) =>{
             let markup = [{
                             type: 'paragraph',
                             children: [
@@ -52,9 +52,9 @@ class TextEditorView extends React.Component {
             }
             this.setState({markup, title})
             
-            this.props.getParent(documentID).then((parent) => {
+            this.props.getParent(documentId).then((parent) => {
                 if (parent) {
-                    this.setState({parentID: parent._id})
+                    this.setState({parentId: parent._id})
                 }
                 
             })
@@ -84,8 +84,8 @@ class TextEditorView extends React.Component {
                 && this.state.markup[0].children[0].text == ''){
                     
                     this.props.deleteDocument(this.props.document._id)
-                    if (this.state.parentID){
-                        this.props.removeChild(this.state.parentID, this.props.document._id)
+                    if (this.state.parentId){
+                        this.props.removeChild(this.state.parentId, this.props.document._id)
                     }
 
             } else {
@@ -137,15 +137,15 @@ class TextEditorView extends React.Component {
 const mapStateToProps = (state) => {
     let search = history.location.search
     let params = new URLSearchParams(search)
-    let documentID = params.get('document') 
-    let parentID = state.parentID
-    console.log(parentID)
+    let documentId = params.get('document') 
+    let parentId = state.parentId
+    console.log(parentId)
     return {
         scrollTop: state.ui.scrollRightView,
         repositoryItems: Object.values(state.repositoryItems),
         creating: state.ui.creating,
-        document: state.documents[documentID],
-        parent: state.documents[parentID]
+        document: state.documents[documentId],
+        parent: state.documents[parentId]
     }
 }
 

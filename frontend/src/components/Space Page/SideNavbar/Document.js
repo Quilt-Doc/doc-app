@@ -39,28 +39,28 @@ class Document extends Component {
     createDocument(e){
         e.stopPropagation()
         e.preventDefault()
-        let {workspaceID} = this.props.match.params
-        this.props.createDocument({authorID: this.props.user._id, workspaceID, referenceIDs: this.props.selected.map(item => item._id) }).then((child) => {
+        let {workspaceId} = this.props.match.params
+        this.props.createDocument({authorId: this.props.user._id, workspaceId, referenceIds: this.props.selected.map(item => item._id) }).then((child) => {
             this.props.setCreation(true)
             history.push(`?document=${child._id}`)
             this.props.clearSelected()
             this.props.attachChild(this.props.document._id, child._id).then(() => {
-                this.props.retrieveDocuments({childrenIDs: this.props.document.children}).then(() => {
+                this.props.retrieveDocuments({childrenIds: this.props.document.children}).then(() => {
                     this.setState({open: true})
                 })
             })
         
         })
         /*
-        this.props.createChild({parentID: this.props.document._id, 
-            title: "nk", workspaceID: this.props.document.workspace._id}).then((child) => {
+        this.props.createChild({parentId: this.props.document._id, 
+            title: "nk", workspaceId: this.props.document.workspace._id}).then((child) => {
                 this.setState({children: { ...this.state.children, [child._id]: child }});
             })*/
     }
 
     
     retrieveChildren = () => {
-        this.props.retrieveDocuments({childrenIDs: this.props.document.children})
+        this.props.retrieveDocuments({childrenIds: this.props.document.children})
     }
 
     renderChildren = () => {
@@ -85,7 +85,7 @@ class Document extends Component {
         e.stopPropagation();
         e.preventDefault();
         if (this.props.children.length !== this.props.document.children.length) {
-            this.props.retrieveDocuments({childrenIDs: this.props.document.children}).then(() => {
+            this.props.retrieveDocuments({childrenIds: this.props.document.children}).then(() => {
                 this.setState({open: true})
             })
         } else {
@@ -130,9 +130,9 @@ class Document extends Component {
     }
 
     renderDocumentUrl(){
-        let {workspaceID} = this.props.match.params;
+        let {workspaceId} = this.props.match.params;
         const location = {
-            pathname: `/workspaces/${workspaceID}/document/${this.props.document._id}`,
+            pathname: `/workspaces/${workspaceId}/document/${this.props.document._id}`,
         }
         history.push(location)
     }
@@ -170,7 +170,7 @@ const mapStateToProps = (state, ownProps) => {
     let children = []
     if (ownProps.document && ownProps.document.children 
         && state.documents[ownProps.document.children[0]] !== undefined) {
-        children = Object.values(ownProps.document.children.map(childID => state.documents[childID]))
+        children = Object.values(ownProps.document.children.map(childId => state.documents[childId]))
     }
     return {
         children,

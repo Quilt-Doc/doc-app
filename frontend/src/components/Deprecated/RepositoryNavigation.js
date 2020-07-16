@@ -41,9 +41,9 @@ class RepositoryNavigation extends React.Component {
                             <LeftContainer>
                                 
                                 <Switch history = {history}>
-                                    <Route path = "/workspaces/:username/:key/repository/:repositoryID/dir/:referenceID" component = { DirectoryView } />
-                                    <Route path = "/workspaces/:username/:key/repository/:repositoryID/dir/" component = { DirectoryView } />
-                                    <Route path = "/workspaces/:username/:key/repository/:repositoryID/code/:referenceID" component = { CodeView } />
+                                    <Route path = "/workspaces/:username/:key/repository/:repositoryId/dir/:referenceId" component = { DirectoryView } />
+                                    <Route path = "/workspaces/:username/:key/repository/:repositoryId/dir/" component = { DirectoryView } />
+                                    <Route path = "/workspaces/:username/:key/repository/:repositoryId/code/:referenceId" component = { CodeView } />
                                 </Switch>
                             </LeftContainer>
                            

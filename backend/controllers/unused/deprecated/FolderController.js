@@ -5,30 +5,30 @@ const { ObjectId } = mongoose.Types;
 
 createFolder = (req, res) => {
 
-    const {workspaceID, creatorID, parentID, title, repositoryID, description, canWrite, canRead, debugID} = req.body;
+    const {workspaceId, creatorId, parentId, title, repositoryId, description, canWrite, canRead, debugId} = req.body;
 
-    if (!typeof workspaceID == 'undefined' && workspaceID !== null) return res.json({success: false, error: 'no folder workspaceID provided'});
-    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no folder creatorID provided'});
-    //if (!typeof parentID == 'undefined' && parentID !== null) return res.json({success: false, error: 'no folder parentID provided'});
+    if (!typeof workspaceId == 'undefined' && workspaceId !== null) return res.json({success: false, error: 'no folder workspaceId provided'});
+    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no folder creatorId provided'});
+    //if (!typeof parentId == 'undefined' && parentId !== null) return res.json({success: false, error: 'no folder parentId provided'});
     if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no folder title provided'});
 
     let folder = new Folder({
-        workspace: ObjectId(workspaceID),
-        creator: ObjectId(creatorID),
+        workspace: ObjectId(workspaceId),
+        creator: ObjectId(creatorId),
         title: title,
-        canWrite: [ObjectId(creatorID)],
-        canRead: [ObjectId(creatorID)]
+        canWrite: [ObjectId(creatorId)],
+        canRead: [ObjectId(creatorId)]
     });
 
     // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_ID && process.env.DEBUG_CUSTOM_ID != 0) {
-        if (debugID) folder._id = ObjectId(debugID);
+    if (process.env.DEBUG_CUSTOM_Id && process.env.DEBUG_CUSTOM_Id != 0) {
+        if (debugId) folder._id = ObjectId(debugId);
     }
-    if (parentID)  folder.parent = ObjectId(parentID); else folder.root = true
-    if (repositoryID) folder.repository = ObjectId(repositoryID);
+    if (parentId)  folder.parent = ObjectId(parentId); else folder.root = true
+    if (repositoryId) folder.repository = ObjectId(repositoryId);
     if (description) folder.description = description;
-    if (canWrite) folder.canWrite = folder.canWrite.concat(canWrite.map(creatorID => ObjectId(creatorID)));
-    if (canRead) folder.canRead = folder.canRead.concat(canRead.map(creatorID => ObjectId(creatorID)));
+    if (canWrite) folder.canWrite = folder.canWrite.concat(canWrite.map(creatorId => ObjectId(creatorId)));
+    if (canRead) folder.canRead = folder.canRead.concat(canRead.map(creatorId => ObjectId(creatorId)));
     folder.save((err, folder) => {
         if (err) return res.json({ success: false, error: err });
         return folder.populate('parent')
@@ -42,12 +42,12 @@ createFolder = (req, res) => {
 
 editFolder = (req, res) => {
     const { id } = req.params; 
-    const {parentID, title, description} = req.body;
+    const {parentId, title, description} = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
 
     let update = {}
-    if (parentID) update.parent = ObjectId(parentID);
+    if (parentId) update.parent = ObjectId(parentId);
     if (title) update.title = title;
     if (description) update.description = description;
 
@@ -98,18 +98,18 @@ deleteFolder = (req, res) => {
 }
 
 retrieveFolders = (req, res) => {
-    const {title, workspaceID, parentID, repositoryID, textQuery, tagIDs, snippetsIDs, limit, skip, root} = req.body;
-    // (parentID, repositoryID, textQuery, tagIDs, snippetIDs)
+    const {title, workspaceId, parentId, repositoryId, textQuery, tagIds, snippetsIds, limit, skip, root} = req.body;
+    // (parentId, repositoryId, textQuery, tagIds, snippetIds)
 
     query = Folder.find();
     if (title) query.where('title').equals(title);
-    if (parentID) query.where('parent').equals(parentID);
-    if (repositoryID) query.where('repository').equals(repositoryID);
-    if (workspaceID) query.where('workspace').equals(workspaceID)
-    // if (textQuery) query.where('repository').all(tagIDs);
-    if (tagIDs) query.where('tags').all(tagIDs);
+    if (parentId) query.where('parent').equals(parentId);
+    if (repositoryId) query.where('repository').equals(repositoryId);
+    if (workspaceId) query.where('workspace').equals(workspaceId)
+    // if (textQuery) query.where('repository').all(tagIds);
+    if (tagIds) query.where('tags').all(tagIds);
     if (root) query.where('root').equals(root)
-    if (snippetsIDs) query.where('snippets').all(snippetsIDs);
+    if (snippetsIds) query.where('snippets').all(snippetsIds);
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
 
@@ -126,13 +126,13 @@ retrieveFolders = (req, res) => {
 
 attachSnippet = (req, res) => {
     const { id } = req.params;
-    const { snippetID } = req.body;
+    const { snippetId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof snippetID == 'undefined' && snippetID !== null) return res.json({success: false, error: 'no snippet id provided'});
+    if (!typeof snippetId == 'undefined' && snippetId !== null) return res.json({success: false, error: 'no snippet id provided'});
 
     let update = {}
-    update.snippets = ObjectId(snippetID);
+    update.snippets = ObjectId(snippetId);
 
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
@@ -149,13 +149,13 @@ attachSnippet = (req, res) => {
 
 removeSnippet = (req, res) => {
     const { id } = req.params;
-    const { snippetID } = req.body;
+    const { snippetId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof snippetID == 'undefined' && snippetID !== null) return res.json({success: false, error: 'no snippet id provided'});
+    if (!typeof snippetId == 'undefined' && snippetId !== null) return res.json({success: false, error: 'no snippet id provided'});
 
     let update = {}
-    update.snippets = ObjectId(snippetID);
+    update.snippets = ObjectId(snippetId);
 
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
@@ -173,13 +173,13 @@ removeSnippet = (req, res) => {
 
 attachUploadFile = (req, res) => {
     const { id } = req.params;
-    const { uploadFileID } = req.body;
+    const { uploadFileId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof uploadFileID == 'undefined' && uploadFileID !== null) return res.json({success: false, error: 'no uploadFileID provided'});
+    if (!typeof uploadFileId == 'undefined' && uploadFileId !== null) return res.json({success: false, error: 'no uploadFileId provided'});
 
     let update = {}
-    update.uploadFiles = ObjectId(uploadFileID);
+    update.uploadFiles = ObjectId(uploadFileId);
 
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
@@ -196,13 +196,13 @@ attachUploadFile = (req, res) => {
 
 removeUploadFile = (req, res) => {
     const { id } = req.params;
-    const { uploadFileID } = req.body;
+    const { uploadFileId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof uploadFileID == 'undefined' && uploadFileID !== null) return res.json({success: false, error: 'no uploadFileID provided'});
+    if (!typeof uploadFileId == 'undefined' && uploadFileId !== null) return res.json({success: false, error: 'no uploadFileId provided'});
 
     let update = {}
-    update.uploadFiles = ObjectId(uploadFileID);
+    update.uploadFiles = ObjectId(uploadFileId);
 
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
@@ -220,13 +220,13 @@ removeUploadFile = (req, res) => {
 
 attachTag = (req, res) => {
     const { id } = req.params;
-    const { tagID } = req.body;
+    const { tagId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof tagID == 'undefined' && tagID !== null) return res.json({success: false, error: 'no tagID provided'});
+    if (!typeof tagId == 'undefined' && tagId !== null) return res.json({success: false, error: 'no tagId provided'});
 
     let update = {}
-    update.tags = ObjectId(tagID);
+    update.tags = ObjectId(tagId);
 
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
@@ -243,13 +243,13 @@ attachTag = (req, res) => {
 
 removeTag = (req, res) => {
     const { id } = req.params;
-    const { tagID } = req.body;
+    const { tagId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof tagID == 'undefined' && tagID !== null) return res.json({success: false, error: 'no tagID provided'});
+    if (!typeof tagId == 'undefined' && tagId !== null) return res.json({success: false, error: 'no tagId provided'});
 
     let update = {}
-    update.tags = ObjectId(tagID);
+    update.tags = ObjectId(tagId);
 
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
@@ -266,13 +266,13 @@ removeTag = (req, res) => {
 
 addCanWrite = (req, res) => {
     const { id } = req.params;
-    const { creatorID } = req.body;
+    const { creatorId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no creatorID provided'});
+    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no creatorId provided'});
 
     let update = {}
-    update.canWrite = ObjectId(creatorID);
+    update.canWrite = ObjectId(creatorId);
 
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
@@ -289,13 +289,13 @@ addCanWrite = (req, res) => {
 
 removeCanWrite = (req, res) => {
     const { id } = req.params;
-    const { creatorID } = req.body;
+    const { creatorId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no creatorID provided'});
+    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no creatorId provided'});
 
     let update = {}
-    update.canWrite = ObjectId(creatorID);
+    update.canWrite = ObjectId(creatorId);
 
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});
@@ -312,13 +312,13 @@ removeCanWrite = (req, res) => {
 
 addCanRead = (req, res) => {
     const { id } = req.params;
-    const { creatorID } = req.body;
+    const { creatorId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no creatorID provided'});
+    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no creatorId provided'});
 
     let update = {}
-    update.canRead = ObjectId(creatorID);
+    update.canRead = ObjectId(creatorId);
 
     Folder.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, folder) => {
         if (err) return res.json({ success: false, error: err });
@@ -335,13 +335,13 @@ addCanRead = (req, res) => {
 
 removeCanRead = (req, res) => {
     const { id } = req.params;
-    const { creatorID } = req.body;
+    const { creatorId } = req.body;
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no folder id provided'});
-    if (!typeof creatorID == 'undefined' && creatorID !== null) return res.json({success: false, error: 'no creatorID provided'});
+    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no creatorId provided'});
 
     let update = {}
-    update.canRead = ObjectId(creatorID);
+    update.canRead = ObjectId(creatorId);
 
     Folder.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, folder) => {
 		if (err) return res.json({success: false, error: err});

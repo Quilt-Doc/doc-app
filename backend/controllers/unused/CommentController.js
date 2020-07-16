@@ -4,12 +4,12 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 createComment = (req, res) => {
-    const { creatorID, text, type, targetObjectID} = req.body;
+    const { creatorId, text, type, targetObjectId} = req.body;
     let comment = new Comment(
         {
             type,
-            targetObject: ObjectId(targetObjectID),
-            creator: ObjectId(creatorID),
+            targetObject: ObjectId(targetObjectId),
+            creator: ObjectId(creatorId),
             text: text
         },
     );
@@ -58,12 +58,12 @@ deleteComment = (req, res) => {
 }
 
 retrieveComments = (req, res) => {
-    let { creatorID, text, type, targetObjectID, limit, skip } = req.body;
+    let { creatorId, text, type, targetObjectId, limit, skip } = req.body;
     query = Comment.find();
-    if (creatorID) query.where('creator').equals(creatorID);
+    if (creatorId) query.where('creator').equals(creatorId);
     if (text) query.where('text').equals(text);
     if (type) query.where('type').equals(type);
-    if (targetObjectID) query.where('targetObject').equals(targetObjectID)
+    if (targetObjectId) query.where('targetObject').equals(targetObjectId)
     if (limit) query.limit(Number(limit));
     if (skip) query.skip(Number(skip));
     query.populate('creator').exec((err, comments) => {
