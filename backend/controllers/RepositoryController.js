@@ -245,10 +245,23 @@ refreshRepositoryPathNew = (req, res) => {
 
 
 getRepositoryFile = async (req, res) => {
-    var { fullName, installationId, pathInRepo } = req.body;
+    var { fullName, installationId, pathInRepo, referenceId } = req.body;
     if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
     if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
-    if (typeof pathInRepo == 'undefined' || pathInRepo == null) return res.json({success: false, error: 'no repo pathInRepo provided'});
+    if ((typeof pathInRepo == 'undefined' || pathInRepo == null)
+        && (typeof referenceId == 'undefined' || referenceId == null)) {
+        return res.json({success: false, error: 'no repo pathInRepo and referenceId provided'});
+    }
+
+    var referencePath = null;
+    if (referenceId) {
+        const reference = await Reference.findById(ObjectId(referenceId));
+        referencePath = reference.path;
+    }
+
+    if (referencePath) {
+        pathInRepo = referencePath;
+    }
 
 
     var installationClient = await apis.requestInstallationClient(installationId);
