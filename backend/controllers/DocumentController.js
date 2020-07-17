@@ -28,19 +28,24 @@ createDocument = async (req, res) => {
         parentPath = parentPath + '/';
     }
 
+    var modifiedDocs = [];
+
     
     //if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
     //if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
 
     var workingTitle = '';
+    var emptyTitle = false;
 
     // If we are creating an 'untitled_[0-9]+' document 
     if (!checkValid(title)) {
+        emptyTitle = true;
         workingTitle = 'untitled_';
         var re = new RegExp('^' + parentPath + 'untitled_[0-9]+$', 'i');
         var untitledDocuments = await Document.find({path: {$regex: re}});
         console.log('other untitledDocuments: ');
         console.log(untitledDocuments);
+
 
         if (untitledDocuments.length > 0) {
             var temp = 
@@ -78,7 +83,7 @@ createDocument = async (req, res) => {
             author: ObjectId(authorId),
             repository: ObjectId(repositoryId),
             workspace: ObjectId(workspaceId),
-            title: workingTitle,
+            title: emptyTitle ? '' : workingTitle,
             path: parentPath + workingTitle
         },
     );
@@ -104,21 +109,27 @@ createDocument = async (req, res) => {
     }
 
 
-    document.save((err, document) => {
+    document.save(async (err, document) => {
         if (err) return res.json({ success: false, error: err, result: null });
+        var pushParent = false;
         if (parentId) {
             parent.children.push(ObjectId(document._id));
-            parent.save();
+            await parent.save();
+            pushParent = true;
         }
         document.populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err, result: [document] });
-            return res.json({success: false, result: [document]});
+            modifiedDocs.push(document);
+            if (pushParent) {
+             modifiedDocs.push(parent);
+            }
+            return res.json({success: false, result: modifiedDocs});
         });
     });
 }
 
 getDocument = (req, res) => {
-    Document.findById(req.params.id).populate('repository').populate('workspace').populate('tags').exec(function (err, document) {
+    Document.findById(req.params.id).populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
         return res.json(document);
     });
@@ -129,7 +140,7 @@ getParent = (req, res) => {
     
     query.where('children').equals(req.params.id)
     query.populate('author').populate('workspace')
-    .populate('repository')
+    .populate('repository').populate('references')
     .populate('tags').exec((err, document) => {
         if (err) return res.json(err);
         return res.json(document)
@@ -142,8 +153,8 @@ editDocument = (req, res) => {
     const { id } = req.params;
     const { title, markup } = req.body;
     let update = {};
-    if (checkValid(title)) update.title = title;
-    if (checkValid(markup)) update.markup = markup;
+    if (title) update.title = title;
+    if (markup) update.markup = markup;
     Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('author', (err, document) => {
@@ -420,6 +431,9 @@ moveDocument = async (req, res) => {
     else {
         return res.json({success: false, error: 'moveDocument: error no Documents to move.', result: [oldDocument]});
     }
+
+
+
     // if parentId == '', move to root
 }
 
@@ -433,10 +447,9 @@ retrieveDocuments = (req, res) => {
     if (checkValid(repositoryId)) query.where('repository').equals(repositoryId);
     if (checkValid(childrenIds)) query.where('_id').in(childrenIds);
     if (checkValid(tagIds)) query.where('tags').all(tagIds);
-    if (checkValid(referenceIds)) query.where('references').in(referenceIds);
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
-    query.populate('author').populate('workspace').populate('repository').populate('tags').exec((err, documents) => {
+    query.populate('author').populate('workspace').populate('repository').populate('references').populate('tags').exec((err, documents) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(documents);
     });
@@ -483,7 +496,7 @@ attachChild = (req, res) => {
     if (childId) update.children = ObjectId(childId);
     Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('workspace').populate('repository').populate('tags', (err, document) => {
+        document.populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(document);
         });
@@ -497,7 +510,7 @@ removeChild = (req, res) => {
     if (childId) update.children = ObjectId(childId);
     Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
-        document.populate('author').populate('workspace').populate('repository').populate('tags', (err, document) => {
+        document.populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(document);
         });
