@@ -56,7 +56,8 @@ class SideNavbar extends React.Component {
         
         this.props.createDocument({authorId: this.props.user._id,
             workspaceId, parentId: "", root: true,
-            referenceIds: this.props.selected.map(item => item._id)}).then((document) => {
+            referenceIds: this.props.selected.map(item => item._id)}).then((documents) => {
+            let document = documents[0]
             this.props.setCreation(true)
             history.push(`?document=${document._id}`)
             this.props.clearSelected()
@@ -264,7 +265,6 @@ const CodeDocumentItem = styled(Link)`
 
 const mapStateToProps = (state, ownProps) => {
     let {workspaceId} = ownProps.match.params
-    console.log(Object.values(state.documents))
     return {
         documents:  Object.values(state.documents).filter(document => document.root === true),
         user: state.auth.user,

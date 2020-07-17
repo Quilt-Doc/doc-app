@@ -40,7 +40,8 @@ class Document extends Component {
         e.stopPropagation()
         e.preventDefault()
         let {workspaceId} = this.props.match.params
-        this.props.createDocument({authorId: this.props.user._id, parentId: this.props.document._id, workspaceId, referenceIds: this.props.selected.map(item => item._id) }).then((child) => {
+        this.props.createDocument({authorId: this.props.user._id, parentId: this.props.document._id, workspaceId, referenceIds: this.props.selected.map(item => item._id) }).then((documents) => {
+            let child = documents[0]
             this.props.setCreation(true)
             history.push(`?document=${child._id}`)
             this.props.clearSelected()
