@@ -111,14 +111,18 @@ createDocument = async (req, res) => {
 
     document.save(async (err, document) => {
         if (err) return res.json({ success: false, error: err, result: null });
+        var pushParent = false;
         if (parentId) {
             parent.children.push(ObjectId(document._id));
             await parent.save();
+            pushParent = true;
         }
         document.populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err, result: [document] });
             modifiedDocs.push(document);
-            modifiedDocs.push(parent);
+            if (pushParent) {
+             modifiedDocs.push(parent);
+            }
             return res.json({success: false, result: modifiedDocs});
         });
     });
