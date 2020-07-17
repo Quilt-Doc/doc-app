@@ -262,5 +262,5 @@ const StyledEditable = styled(Editable)`
   color: #46474f;
   font-size: 16px;
   resize: none !important;
-  height: 60vh;
+  padding-bottom: 20vh;
 `	

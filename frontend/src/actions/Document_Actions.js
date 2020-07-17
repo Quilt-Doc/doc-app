@@ -47,6 +47,12 @@ export const getDocument = id => async dispatch => {
     return response.data
 }
 
+export const renameDocument = (formValues) => async dispatch => {
+    const response = await api.put(`/documents/rename`, formValues );
+    console.log("RESPONSE", response.data)
+    dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data });
+}
+
 export const retrieveChildren = (formValues) => async () => {
     const response = await api.post(`/documents/retrieve`, formValues );
     return response.data

@@ -27,7 +27,7 @@ createWorkspace = (req, res) => {
     workspace.save((err, workspace) => {
         if (err) return res.json({ success: false, error: err });
 
-        workspace.populate('repositories').populate('creator').populate('memberUsers', (err, workspace) => {
+        workspace.populate('creator').populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(workspace);
         });
@@ -113,7 +113,7 @@ retrieveWorkspaces = (req, res) => {
     if (creatorId) query.where('creator').equals(creatorId);
     if (memberUserIds) query.where('memberUsers').in(memberUserIds)
 
-    query.populate('repositories').populate('creator').populate('memberUsers').exec((err, workspaces) => {
+    query.populate('creator').populate('memberUsers').exec((err, workspaces) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(workspaces);
     });

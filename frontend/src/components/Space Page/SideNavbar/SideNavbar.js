@@ -35,7 +35,9 @@ class SideNavbar extends React.Component {
     }
 
     componentDidMount(){
+        console.log(this.props.match.params)
         let { workspaceId } = this.props.match.params
+        console.log(workspaceId)
         this.props.retrieveDocuments({workspaceId, root: true})
     }
 
@@ -53,7 +55,7 @@ class SideNavbar extends React.Component {
         let {workspaceId, repositoryId} = this.props.match.params
         
         this.props.createDocument({authorId: this.props.user._id,
-            workspaceId,  root: true,
+            workspaceId, parentId: "", root: true,
             referenceIds: this.props.selected.map(item => item._id)}).then((document) => {
             this.props.setCreation(true)
             history.push(`?document=${document._id}`)
@@ -99,6 +101,7 @@ class SideNavbar extends React.Component {
     }
 
     renderCodebaseLink(){
+
         let repositoryId = this.props.workspace.repositories[0]._id
         let { workspaceId } = this.props.match.params
         return `/workspaces/${workspaceId}/repository/${repositoryId}/dir`

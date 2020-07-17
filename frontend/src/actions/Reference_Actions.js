@@ -7,6 +7,7 @@ import { api } from '../apis/api';
 
 export const retrieveReferences = (formValues) => async dispatch => {
     const response = await api.post('/references/retrieve', formValues);
+    console.log("DATA", response.data)
     dispatch({ type: RETRIEVE_REFERENCES, payload: response.data });
 }
 

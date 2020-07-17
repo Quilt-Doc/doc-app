@@ -11,7 +11,7 @@ import history from '../../../history';
 
 //actions
 import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
-import { getDocument, editDocument, deleteDocument, getParent, removeChild   } from '../../../actions/Document_Actions';
+import { getDocument, renameDocument, deleteDocument, editDocument, getParent, removeChild   } from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 
 //redux
@@ -81,13 +81,8 @@ class TextEditorView extends React.Component {
         if (this.props.creating){
             if (!this.props.document.title
                 && this.state.markup.length === 1 
-                && this.state.markup[0].children[0].text == ''){
-                    
+                && this.state.markup[0].children[0].text == ''){    
                     this.props.deleteDocument(this.props.document._id)
-                    if (this.state.parentId){
-                        this.props.removeChild(this.state.parentId, this.props.document._id)
-                    }
-
             } else {
                 this.saveMarkup()
             }
@@ -114,7 +109,7 @@ class TextEditorView extends React.Component {
 
     onTitleChange(e){
         this.setState({title: e.target.value})
-        this.props.editDocument(this.props.document._id, {title: e.target.value})
+        this.props.renameDocument({documentId: this.props.document._id, title: e.target.value})
     }
 
     render(){
@@ -149,7 +144,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, { getDocument, retrieveRepositoryItems, editDocument, deleteDocument, setCreation, getParent, removeChild})(TextEditorView);
+export default connect(mapStateToProps, { getDocument, editDocument, retrieveRepositoryItems,  deleteDocument, setCreation, getParent, removeChild, renameDocument})(TextEditorView);
 
 const Header = styled.input`
     font-size: 3rem;
@@ -172,6 +167,7 @@ const Container = styled.div`
 `
 
 const SubContainer = styled.div`
+    
 `
 
 const EditorContainer = styled.div`

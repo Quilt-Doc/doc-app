@@ -179,6 +179,8 @@ deleteDocument = async (req, res) => {
 
 renameDocument = async (req, res) => {
     const { documentId, title } = req.body;
+    console.log("TITLE")
+    console.log(title)
     if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.'});
     if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no name provided'});
     var oldDocument = await Document.findById(documentId);
@@ -188,6 +190,21 @@ renameDocument = async (req, res) => {
     var oldPath = oldDocument.path;
     var oldTitle = oldDocument.title;
     var oldPathItemCount = oldPath.split('/').length;
+
+    if (title == oldTitle) {
+        return res.json(oldDocument);
+    }
+
+    var newProposedPath = oldPath.split('/');
+    newProposedPath[newProposedPath.length - 1] = title;
+    newProposedPath = newProposedPath.join('/');
+    var duplicateDocument = await Document.findOne({path: newProposedPath});
+    if (duplicateDocument) {
+        return res.json({success: false, 
+        error: 'renameDocument: error renaming Document, duplicate path - '
+        + newProposedPath});
+    }
+
 
     console.log('oldPath: ', oldPath);
 

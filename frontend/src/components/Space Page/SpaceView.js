@@ -69,6 +69,7 @@ class SpaceView extends React.Component {
                                 <Route path = "/workspaces/:workspaceId/document/:documentId" component = { TextEditorView } />
                             </Switch>
                         </RightView>
+                       
                     </Container>
                     {this.check() && <DocumentModal/>}
                 </>
@@ -107,13 +108,11 @@ const Container = styled.div`
 `
 
 
+
 const RightView = styled.div`
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     background-color: white;
     width: 100%;
-    padding-top: 4rem;
-    padding-left: 0rem;
-    overflow-y: scroll;
     
     height: 92vh;
 

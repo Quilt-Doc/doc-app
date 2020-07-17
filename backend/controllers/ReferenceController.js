@@ -108,7 +108,7 @@ getContents = async (req, res) => {
 
     let downloadLink = `https://raw.githubusercontent.com/${reference.repository.fullName}/${defaultBranch}/${reference.path}`
     //https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
-  
+
     
     //console.log('downloadLink: ', downloadLink);
     request.get(downloadLink).pipe(res);
@@ -135,9 +135,9 @@ retrieveCodeReferences = async (req, res) => {
 }
 
 retrieveReferences = async (req, res) => {
+    
     let { textQuery, name, path, kind, kinds, notKinds, 
-        referenceId, repositoryId, truncated, include, limit, skip } = req.body;
-
+        referenceId, repositoryId, truncated, repositoryIds, include, limit, skip } = req.body;
     let filter = {}
     
     if (checkValid(kind)) filter.kind = kind;
@@ -150,13 +150,16 @@ retrieveReferences = async (req, res) => {
 
     if (checkValid(referenceId)) {
         let reference = await Reference.findOne({_id: referenceId})
-        let refPath = reference.path.replace('/', '\/')
         let regex;
-        /*if (checkValid(include)) {*/
+
+        if (reference.path === "") {
+            regex = new RegExp(`^([^\/]+)?$`, 'i');
+        } else {
+            let refPath = reference.path.replace('/', '\/')
             regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
-        //} else {
-            //regex = new RegExp(`^${refPath}\/[^\/]+$`, 'i');
-        //}
+        }
+       
+        
         
         regexQuery = [{ path : { $regex: regex } }]
     }
@@ -182,19 +185,21 @@ retrieveReferences = async (req, res) => {
                         ]
                     });
     } else {
-        query = Reference.find({filter})
+        query = Reference.find(filter)
     }
     
-    if (checkValid(kinds)) query.where('kind').in(kinds)
-    if (checkValid(notKinds)) query.where('kind').nin(notKinds)
+    if (checkValid(kinds)) query.where('kind').in(kinds);
+    if (checkValid(notKinds)) query.where('kind').nin(notKinds);
+    if (checkValid(repositoryIds)) query.where('repository').in(repositoryIds);
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
-    
 
-    query.populate('repository').populate('tags').populate('definitionReferences').exec((err, references) => {
+
+    query.populate('tags').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
-        //console.log("REFERENCES", references)
+        console.log(references)
         return res.json(references);
+    
     });
 }
 

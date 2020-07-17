@@ -27,7 +27,7 @@ const Dashboard = () => {
             <TopNav>
                 <ion-icon style={{'color': '#19E5BE', 'fontSize': '2.4rem', 'marginLeft': '5rem', 'marginRight': '1.2rem'}} name="book-outline"></ion-icon>
                 <Company>Docapp</Company>
-                <NavbarElement borderBottom = {'4px solid #19E5BE'}>
+                <NavbarElement>
                     Home
                 </NavbarElement>
                 <NavbarElement>
@@ -40,14 +40,7 @@ const Dashboard = () => {
                     People
                 </NavbarElement>
                 
-                
-                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginLeft': '70rem', 'marginRight': '2rem'}} name="search-outline"></ion-icon>
-                <ion-icon   style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="notifications-outline"></ion-icon>
-                <ion-icon  style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="bookmarks-outline"></ion-icon>
-                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="add-outline"></ion-icon>
-                <NavbarProfile
-                    goLogout = {goLogout}
-                />
+               
             </TopNav>
             <Router history = {history}>
                   <Route exact path = "/workspaces" component = {WorkspaceView} />
@@ -59,7 +52,14 @@ const Dashboard = () => {
         </Container>
     )
 }
-
+/* 
+                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginLeft': '70rem', 'marginRight': '2rem'}} name="search-outline"></ion-icon>
+                <ion-icon   style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="notifications-outline"></ion-icon>
+                <ion-icon  style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="bookmarks-outline"></ion-icon>
+                <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="add-outline"></ion-icon>
+                <NavbarProfile
+                    goLogout = {goLogout}
+                />*/
 /*
 
 <SearchbarWrapper>
@@ -97,14 +97,16 @@ export default Dashboard;
 
 const Company = styled.div`
     font-size: 2.2rem;
-    color: #172A4E;
+    color:white;
     font-weight: 300;
     margin-right: 13rem;
 `
 
 const NavbarElement = styled.div`
-    font-size: 1.6rem;
-    color: #172A4E;
+    font-size: 1.3rem;
+    /*color: #172A4E;*/
+    font-weight: 400;
+    letter-spacing: 0.5px;
     margin-right: 3rem;
     height: 8vh;
     display: flex;
@@ -149,13 +151,15 @@ const Searchbar = styled.input`
     width: 25rem;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
-
+//#262848;
 
 const TopNav = styled.div`
     height: 8vh;
     box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+    background-color:#262E49;
+    color:#D6E0EE;
     display: flex;
-    z-index: 4;
+    z-index: 20;
     align-items: center;
 `
 

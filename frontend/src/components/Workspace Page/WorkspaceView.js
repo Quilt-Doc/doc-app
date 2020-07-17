@@ -12,6 +12,7 @@ import WorkspaceModal from './Add Workspace Modal/WorkspaceModal';
 
 //actions
 import { retrieveWorkspaces } from '../../actions/Workspace_Actions';
+import { retrieveReferences } from '../../actions/Reference_Actions';
 
 //react-router
 import { Link } from 'react-router-dom';
@@ -39,17 +40,23 @@ class WorkspaceView extends React.Component {
         super(props);
         this.state = {
            modalDisplay: 'none',
+           loaded: false
         }
 
         this.icons = [w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11, w12]
     }
 
-    componentDidMount() {
-        this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]})
+    async componentDidMount() {
+        await this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]})
+        let repositoryIds = await this.props.workspaces.map(space => space.repositories[0])
+        await this.props.retrieveReferences({repositoryIds, path: ""})
+        this.setState({loaded: true})
     }
 
     renderLink(workspace) {
-        return `/workspaces/${workspace._id}/repository/${workspace.repositories[0]._id}/dir`
+        let reference = this.props.references.filter(reference => reference.repository === workspace.repositories[0])[0]
+        console.log(reference)
+        return `/workspaces/${workspace._id}/repository/${workspace.repositories[0]}/dir/${reference._id}`
     }
 
     renderWorkspaces() {
@@ -58,10 +65,10 @@ class WorkspaceView extends React.Component {
         this.props.workspaces.map((workspace, i) => {
             console.log(workspace)
             workspacesJSX.push(
-                <Link key = {i} to = {this.renderLink(workspace)}><WorkspaceBox >
+                <StyledLink key = {i} to = {this.renderLink(workspace)}><WorkspaceBox >
                     <StyledIcon src = {this.icons[workspace.icon]}/>
                     {workspace.name}
-                </WorkspaceBox></Link>
+                </WorkspaceBox></StyledLink>
             )
             return
         })
@@ -90,7 +97,7 @@ class WorkspaceView extends React.Component {
     }
 
     render() {
-        if (this.props.workspaces){
+        if (this.state.loaded){
             return (
                 <Container>
                     <Header>Workspaces</Header>
@@ -112,11 +119,12 @@ class WorkspaceView extends React.Component {
 const mapStateToProps = (state) => {
     return {
         workspaces: Object.values(state.workspaces),
-        user: state.auth.user
+        user: state.auth.user,
+        references: Object.values(state.references)
     }
 }
 
-export default connect(mapStateToProps, { retrieveWorkspaces })(WorkspaceView);
+export default connect(mapStateToProps, { retrieveWorkspaces, retrieveReferences})(WorkspaceView);
 
 
 const StyledIcon = styled.img`
@@ -177,3 +185,7 @@ const WorkspaceBox = styled.div`
     opacity: ${props => props.opacity};
     flex-direction: ${props => props.fd};
 `  
+
+const StyledLink = styled(Link)`
+    text-decoration: none;
+`

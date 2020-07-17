@@ -17,11 +17,10 @@ import history from '../../../history';
 //actions
 import { retrieveReferences, editReference } from '../../../actions/Reference_Actions';
 import { retrieveDocuments } from '../../../actions/Document_Actions';
-
+import { getRepository } from '../../../actions/Repository_Actions';
 
 //connect
 import { connect } from 'react-redux';
-import { tomorrowNightEighties } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 class DirectoryView extends React.Component {
     constructor(props){
@@ -32,18 +31,19 @@ class DirectoryView extends React.Component {
         }
     }
 
-    loadResources(){
+    async loadResources(){
         let { repositoryId, referenceId } = this.props.match.params
         if (referenceId !== null && referenceId !== undefined) {
-            this.props.retrieveReferences({repositoryId, referenceId, kinds : ['file', 'dir']}).then(() => {
-                let referenceIds = this.props.references.map(ref => ref._id)
-                this.props.retrieveDocuments({referenceIds}).then(() => {
-                    if (!this.state.loaded) {
-                        this.setState({ loaded:true })
-                    }
-                })
-            })
-        } else {
+            await this.props.getRepository(repositoryId)
+            await this.props.retrieveReferences({ repositoryId, referenceId, kinds : ['file', 'dir'] })
+            let referenceIds = this.props.references.map(ref => ref._id)
+            await this.props.retrieveDocuments({ referenceIds })
+            if (!this.state.loaded) {
+                this.setState({ loaded:true })
+            }
+        } 
+        /*
+        else {
             this.props.retrieveReferences({repositoryId, truncated: true, kinds : ['file', 'dir']}).then(() => {
                 let referenceIds = this.props.references.map(ref => ref._id)
                 this.props.retrieveDocuments({referenceIds}).then(() => {
@@ -52,7 +52,7 @@ class DirectoryView extends React.Component {
                     }
                 })
             })
-        }
+        }*/
     }
     // USE PARAMS
     componentDidMount() {
@@ -122,6 +122,7 @@ class DirectoryView extends React.Component {
     }
 
     renderTags(){
+        console.log(this.props.currentReference)
         return this.props.currentReference.tags.map(tag => {
             return <Tag>{tag.label}</Tag>
         })
@@ -206,15 +207,17 @@ const mapStateToProps = (state, ownProps) => {
     let { workspaceId, repositoryId, referenceId } = ownProps.match.params
     let documents = Object.values(state.documents).filter(doc => doc.references.includes(referenceId))
     let references = Object.values(state.references).filter(ref => ref._id !== referenceId)
+
+    console.log("REPOSITORIES", state.repositories)
     return {
-        currentRepository: state.workspaces[workspaceId].repositories.filter(repo => repo._id === repositoryId)[0],
+        currentRepository: state.repositories[repositoryId],
         documents,
         references,
         currentReference : state.references[referenceId]
     }
 }
 
-export default connect(mapStateToProps, { retrieveReferences, editReference, retrieveDocuments } )(DirectoryView);
+export default connect(mapStateToProps, { retrieveReferences, editReference, retrieveDocuments, getRepository } )(DirectoryView);
 
 
 const LoaderContainer = styled.div`

@@ -351,11 +351,10 @@ getRepository = (req, res) => {
 
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
     Repository.findById(id, (err, repository) => {
+        console.log(repository)
         if (err) return res.json({success: false, error: err});
-        repository.populate('workspace', (err, repository) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(repository);
-        });
+        console.log(repository)
+        return res.json(repository)
     });
 }
 
