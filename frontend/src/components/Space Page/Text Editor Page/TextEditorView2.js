@@ -110,7 +110,9 @@ class TextEditorView extends React.Component {
 
     onTitleChange(e){
         this.setState({title: e.target.value})
-        this.props.renameDocument({documentId: this.props.document._id, title: e.target.value})
+        if (e.type === 'blur'){
+            this.props.renameDocument({documentId: this.props.document._id, title: e.target.value})
+        }
     }
 
     render(){
@@ -119,7 +121,7 @@ class TextEditorView extends React.Component {
         }
         return(
             <Container>
-                <Header onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
+                <Header onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
                 <DocumentEditor 
                     markup = {this.state.markup} 
                     setValue = {this.setValue}
