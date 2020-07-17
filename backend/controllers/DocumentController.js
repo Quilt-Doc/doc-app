@@ -19,7 +19,7 @@ createDocument = async (req, res) => {
     if (parentId) {
         parent = await Document.findById(ObjectId(parentId));
         if (!parent) {
-            return res.json({success: false, error: 'createDocument: error getting parent Document - parentId: ' + parentId.toString});
+            return res.json({success: false, error: 'createDocument: error getting parent Document - parentId: ' + parentId.toString, result: null});
         }
         parentPath = parent.path;
     }
@@ -37,15 +37,19 @@ createDocument = async (req, res) => {
     // If we are creating an 'untitled_[0-9]+' document 
     if (!checkValid(title)) {
         workingTitle = 'untitled_';
-        var re = new RegExp(parentPath + 'untitled_[0-9]+', 'i');
+        var re = new RegExp('^' + parentPath + 'untitled_[0-9]+$', 'i');
         var untitledDocuments = await Document.find({path: {$regex: re}});
         console.log('other untitledDocuments: ');
         console.log(untitledDocuments);
 
         if (untitledDocuments.length > 0) {
             var temp = 
-                untitledDocuments.map(docObj => 
-                    docObj.title.match(/\d+$/) == null ? -1 : docObj.title.match(/\d+$/)[0]);
+                untitledDocuments.map(docObj => { 
+                    var tempTitle = docObj.path.split('/');
+                    tempTitle = tempTitle[tempTitle.length-1];
+                    return tempTitle.match(/\d+$/) == null ? -1 : tempTitle.match(/\d+$/)[0];
+                    // return docObj.title.match(/\d+$/) == null ? -1 : docObj.title.match(/\d+$/)[0]
+                });
             console.log('untitledDocuments: ');
             console.log(temp);
             var max = Math.max(...temp);
@@ -65,7 +69,7 @@ createDocument = async (req, res) => {
        if (duplicateDocument) {
            return res.json({success: false, 
             error: 'createDocument: error creating Document, duplicate name - '
-            + parentPath + workingTitle});
+            + parentPath + workingTitle, result: null});
        }
     }
 
@@ -101,14 +105,14 @@ createDocument = async (req, res) => {
 
 
     document.save((err, document) => {
-        if (err) return res.json({ success: false, error: err });
+        if (err) return res.json({ success: false, error: err, result: null });
         if (parentId) {
             parent.children.push(ObjectId(document._id));
             parent.save();
         }
         document.populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            if (err) return res.json({ success: false, error: err, result: [document] });
+            return res.json({success: false, result: [document]});
         });
     });
 }
@@ -153,14 +157,14 @@ editDocument = (req, res) => {
 deleteDocument = async (req, res) => {
     const { documentId } = req.body;
     if (!checkValid(documentId)) {
-        return res.json({success: false, error: 'deleteDocument: error no id passed'});
+        return res.json({success: false, error: 'deleteDocument: error no id passed', result: null});
     }
 
     console.log('documentId: ', documentId);
     console.log(typeof documentId);
     var toDelete = await Document.findById(documentId);
     if (!toDelete) {
-        return res.json({success: false, error: 'deleteDocument: error could not find document to delete'});
+        return res.json({success: false, error: 'deleteDocument: error could not find document to delete', result: null});
     }
     if (toDelete.parent != null) {
        Document.update({_id: ObjectId(toDelete.parent.toString())}, 
@@ -168,45 +172,110 @@ deleteDocument = async (req, res) => {
     }
     var pathToDelete = toDelete.path;
     var re = new RegExp(pathToDelete + '.*', 'i');
+    const deletedDocs = await Document.find({path: {$regex: re}}, '');
     await Document.deleteMany({path: {$regex: re}}, (err) => {
         if (err) {
-            return res.json({ success: false, error: err });
+            return res.json({ success: false, error: err, result: [toDelete] });
         }
         console.log('Delete successful');
-        return res.json({success: true});
+        return res.json({success: true, result: [deletedDocs]});
     });
 }
 
 renameDocument = async (req, res) => {
     const { documentId, title } = req.body;
-    if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.'});
-    if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no name provided'});
+    if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.', result: null});
+    if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no name provided', result: null});
     var oldDocument = await Document.findById(documentId);
     if (!oldDocument) {
-        return res.json({success: false, error: 'renameDocument: error could not find document: ' + documentId});
+        return res.json({success: false, error: 'renameDocument: error could not find document: ' + documentId, result: null});
     }
+
+    var untouchedOldPath = `${oldDocument.path}`;
     var oldPath = oldDocument.path;
     var oldTitle = oldDocument.title;
     var oldPathItemCount = oldPath.split('/').length;
 
+    var modifiedDocs = [];
+
+    if (title == oldTitle) {
+        return res.json({success: false, result: [oldDocument]});
+    }
+
+    var newProposedPath = oldPath.split('/');
+    newProposedPath[newProposedPath.length - 1] = title;// .length > 0 ? title : '';
+    newProposedPath = newProposedPath.join('/');
+    var duplicateDocument = await Document.findOne({path: newProposedPath});
+    if (duplicateDocument) {
+        return res.json({success: false, 
+        error: 'renameDocument: error renaming Document, duplicate path - '
+        + newProposedPath, result: [duplicateDocument]});
+    }
+
+    var temp = oldPath.split('/');
+    console.log('temp for parentPath: ');
+    console.log(temp);
+    var parentPath = temp.slice(0, temp.length - 1).join('/');
+    var workingTitle = 'untitled_';
+    
+
+    if (title == '') {
+        console.log('parentPath: ', parentPath);
+        var re = new RegExp('^' + parentPath + 'untitled_[0-9]+$', 'i');
+        var untitledDocuments = await Document.find({path: {$regex: re}});
+        console.log('other untitledDocuments: ');
+        console.log(untitledDocuments);
+
+        if (untitledDocuments.length > 0) {
+                untitledDocuments.map(docObj => {
+                    var tempTitle = docObj.path.split('/');
+                    tempTitle = tempTitle[tempTitle.length-1];
+                    console.log('tempTitle: ', tempTitle);
+                    return tempTitle.match(/\d+$/) == null ? -1 : tempTitle.match(/\d+$/)[0];
+                });
+            console.log('untitledDocuments: ');
+            console.log(temp);
+            var max = Math.max(...temp);
+            console.log('found max: ', max);
+            workingTitle = workingTitle + (max + 1).toString();
+        }
+        else {
+            console.log('making first untitled');
+            workingTitle = workingTitle + '1';
+        }
+        oldDocument.path = parentPath.length > 1 ? parentPath + "/" + workingTitle : workingTitle;
+        oldDocument.title = title;
+        oldPath = parentPath.length > 1 ? parentPath + "/" + workingTitle : workingTitle;
+        await oldDocument.save();
+        modifiedDocs.push(oldDocument);
+    }
+
     console.log('oldPath: ', oldPath);
 
-    var re = new RegExp(oldPath, 'i');
+
+    var re = new RegExp(untouchedOldPath, 'i');
     var oldPaths = await Document.find({path: {$regex: re}});//.select('name path');
     oldPaths = oldPaths.map( docObj => {
         var pathItems;
         // If this is the oldDocument
-        if (docObj.path == oldPath && docObj.title == oldTitle) {
-            docObj.title = title
+        if (docObj.path == oldDocument.path && docObj.title == oldTitle) {
+            docObj.title = title; // workingTitle.length > 'untitled_'.length ? workingTitle : title;
+            console.log('OLD PATH: ', docObj.path);
+            console.log('workingTitle: ', workingTitle);
         }
         pathItems = docObj.path.split('/');
-        pathItems[oldPathItemCount-1] = title;
+
+        pathItems[oldPathItemCount-1] = workingTitle.length > 'untitled_'.length ? workingTitle : title;
+
         docObj.path = pathItems.join('/');
         return docObj;
     });
 
     // console.log('oldPaths[0]: ');
     // console.log(oldPaths[0]);
+    var modifiedObjIds = oldPaths.map(docObj => {
+        return docObj._id;
+    });
 
 
     // Upsert all of the tree References
@@ -222,28 +291,40 @@ renameDocument = async (req, res) => {
     if (bulkRenameOps.length > 0) {
         await Document.collection
             .bulkWrite(bulkRenameOps)
-            .then(results => {
+            .then(async (results) => {
                 console.log(results);
-                return res.json({success: true});
+                modifiedDocs = modifiedDocs.concat(await Document.find({_id: {$in: modifiedObjIds}}));
+                // var originalDoc = await Document.findById({_id: documentId});
+                // modifiedDocs.push(originalDoc);
+                return res.json({success: true, result: modifiedDocs});
             })
             .catch((err) => {
-                return res.json({success: false, error: 'renameDocument: error bulk renaming Documents: ' + err});
+                return res.json({success: false, error: 'renameDocument: error bulk renaming Documents: ' + err, result: [oldDocument]});
             });
     }
     else {
-        return res.json({success: false, error: 'renameDocument: error no Documents to rename.'});
+        return res.json({success: false, error: 'renameDocument: error no Documents to rename.', result: [oldDocument]});
     }
 }
 
 moveDocument = async (req, res) => {
     const { documentId, parentId } = req.body;
-    if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.'});
-    if (!checkValid(parentId)) return res.json({success: false, error: 'renameDocument: error no parentId provided'});
+    if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.', result: null});
+    if (!checkValid(parentId)) return res.json({success: false, error: 'renameDocument: error no parentId provided', result: null});
     
 
     var oldDocument = await Document.findById(documentId);
     if (!oldDocument) {
-        return res.json({success: false, error: 'moveDocument: error could not find document to move'});
+        return res.json({success: false, error: 'moveDocument: error could not find document to move', result: null});
+    }
+
+    var modifiedDocs = [];
+
+    if (oldDocument.parent != null) {
+        const originalParent = await Document.findOneAndUpdate({_id: ObjectId(oldDocument.parent.toString())}, 
+              { $pull: {children: ObjectId(documentId) }},
+              {new: true});
+        modifiedDocs.push(originalParent);
     }
 
     // set newPath
@@ -251,25 +332,28 @@ moveDocument = async (req, res) => {
     if (parentId != '') {
         var parent = await Document.findById(parentId);
         if (!parent) {
-            return res.json({success: false, error: 'moveDocument: error could not find parent document'});
+            return res.json({success: false, error: 'moveDocument: error could not find parent document', result: [oldDocument]});
         }
-        Document.update({_id: ObjectId(parentId)}, 
-          { $push: {children: ObjectId(documentId) }});
+
+        // Don't allow moving the original document into its own child
+        if (parent.path.includes(oldDocument.path)) {
+            return res.json({success: false, error: 'moveDocument: error cannot move parent into its own child', result: [oldDocument]});
+        }
+
+        const newParent = await Document.findOneAndUpdate({_id: ObjectId(parentId)}, 
+          { $push: {children: ObjectId(documentId) }},
+          { new: true});
         oldDocument.parent = ObjectId(parentId);
+        modifiedDocs.push(newParent);
 
         newPath = parent.path;
-    }
-
-    if (oldDocument.parent != null) {
-        Document.update({_id: ObjectId(oldDocument.parent.toString())}, 
-              { $pull: {children: ObjectId(documentId) }});
     }
 
     if (parentId == '') {
         oldDocument.parent = null;
     }
 
-    oldDocument.save();
+    await oldDocument.save();
 
     var oldPath = oldDocument.path;
     var oldPathItemCount = oldPath.split('/').length;
@@ -318,19 +402,23 @@ moveDocument = async (req, res) => {
                 upsert: false
                 }
             }));
+    var modifiedObjIds = oldPaths.map(docObj => {
+        return docObj._id;
+    })
     if (bulkMoveOps.length > 0) {
         await Document.collection
             .bulkWrite(bulkMoveOps)
-            .then(results => {
+            .then(async (results) => {
                 console.log(results);
-                return res.json({success: true});
+                modifiedDocs = modifiedDocs.concat( await Document.find({_id: {$in: modifiedObjIds}}));
+                return res.json({success: true, result: modifiedDocs});
             })
             .catch((err) => {
-                return res.json({success: false, error: 'moveDocument: error bulk moving Documents: ' + err});
+                return res.json({success: false, error: 'moveDocument: error bulk moving Documents: ' + err, result: [oldDocument]});
             });
     }
     else {
-        return res.json({success: false, error: 'moveDocument: error no Documents to move.'});
+        return res.json({success: false, error: 'moveDocument: error no Documents to move.', result: [oldDocument]});
     }
 
 
