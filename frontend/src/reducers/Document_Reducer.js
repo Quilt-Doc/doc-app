@@ -12,17 +12,14 @@ import _ from 'lodash';
 export default (state = {}, action) => {
     switch (action.type) {
         case CREATE_DOCUMENT:
-            return { ...state, [action.payload._id]: action.payload };
+            return { ...state, ..._.mapKeys(action.payload, '_id') };
         case GET_DOCUMENT:
             return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_DOCUMENTS:
             return { ...state, ..._.mapKeys(action.payload, '_id') };
         case DELETE_DOCUMENT:
-            console.log("HERE")
-            console.log("BEFORE", state)
-            console.log("ID", action.payload._id)
-            console.log("AFTER", _.omit(state, action.payload._id))
-            return _.omit(state, action.payload._id);
+            let ids = action.payload.result.map(result => result._id);
+            return _.omit(state, ids);
         case EDIT_DOCUMENT:
             return { ...state, [action.payload._id]: action.payload };
         case ATTACH_CHILD:
@@ -55,7 +52,7 @@ export default (state = {}, action) => {
             return { ...state, [action.payload._id]: action.payload };
         case GET_PARENT:
             if (action.payload){
-            return { ...state, [action.payload._id]: action.payload };
+                return { ...state, [action.payload._id]: action.payload };
             }
         default: 
             return state;

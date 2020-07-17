@@ -37,6 +37,7 @@ class TextEditorView extends React.Component {
         let documentId = params.get('document') 
        
         this.props.getDocument(documentId).then((document) =>{
+            console.log(document)
             let markup = [{
                             type: 'paragraph',
                             children: [

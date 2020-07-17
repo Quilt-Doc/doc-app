@@ -24,10 +24,12 @@ import {
 
 import { api } from '../apis/api';
 
+//create, move, 
 
 export const createDocument = (formValues) => async (dispatch) => {
     const response = await api.post('/documents/create', formValues );
-    dispatch({ type: CREATE_DOCUMENT, payload: response.data });
+
+    dispatch({ type: CREATE_DOCUMENT, payload: response.data.result });
     return response.data
 }
 
@@ -48,9 +50,8 @@ export const getDocument = id => async dispatch => {
 }
 
 export const renameDocument = (formValues) => async dispatch => {
-    const response = await api.put(`/documents/rename`, formValues );
-    console.log("RESPONSE", response.data)
-    dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data });
+    const response = await api.put(`/documents/rename`, formValues);
+    dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data.result });
 }
 
 export const retrieveChildren = (formValues) => async () => {
@@ -71,7 +72,7 @@ export const retrieveMoreDocuments = (formValues) => async dispatch => {
 export const deleteDocument = id => async dispatch => {
     const response = await api.delete(`/documents/delete/${id}`);
     console.log("DISPATCHED")
-    dispatch({ type: DELETE_DOCUMENT, payload: response.data });
+    dispatch({ type: DELETE_DOCUMENT, payload: response.data.result });
 }
 
 export const editDocument = (id, formValues) => async dispatch => {
