@@ -30,7 +30,7 @@ createDocument = async (req, res) => {
 
     var modifiedDocs = [];
 
-    
+
     //if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
     //if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
 
@@ -319,52 +319,101 @@ renameDocument = async (req, res) => {
 }
 
 moveDocument = async (req, res) => {
-    const { documentId, parentId } = req.body;
+    const { documentId, parentId, order } = req.body;
     if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.', result: null});
     if (!checkValid(parentId)) return res.json({success: false, error: 'renameDocument: error no parentId provided', result: null});
-    
+    if (!checkValid(order)) return res.json({success: false, error: 'renameDocument: error no order provided', result: null});
 
     var oldDocument = await Document.findById(documentId);
     if (!oldDocument) {
         return res.json({success: false, error: 'moveDocument: error could not find document to move', result: null});
     }
 
+    var originalOrder = oldDocument.order;
+    oldDocument.order = order;
+
     var modifiedDocs = [];
+    var usedOldParentId = '';
+    var usedNewParentId = '';
+
+    var originalParent = oldDocument.parent;
 
     if (oldDocument.parent != null) {
-        const originalParent = await Document.findOneAndUpdate({_id: ObjectId(oldDocument.parent.toString())}, 
+        originalParent = await Document.findOneAndUpdate({_id: ObjectId(oldDocument.parent.toString())}, 
               { $pull: {children: ObjectId(documentId) }},
               {new: true});
+        
+        usedOldParentId = originalParent._id;
+    
         modifiedDocs.push(originalParent);
     }
 
     // set newPath
     var newPath = '';
+    var newParent = undefined;
     if (parentId != '') {
-        var parent = await Document.findById(parentId);
-        if (!parent) {
+        newParent = await Document.findById(parentId);
+        if (!newParent) {
             return res.json({success: false, error: 'moveDocument: error could not find parent document', result: [oldDocument]});
         }
 
         // Don't allow moving the original document into its own child
-        if (parent.path.includes(oldDocument.path)) {
+        if (newParent.path.indexOf(oldDocument.path) == 0) {
             return res.json({success: false, error: 'moveDocument: error cannot move parent into its own child', result: [oldDocument]});
         }
 
-        const newParent = await Document.findOneAndUpdate({_id: ObjectId(parentId)}, 
+        newParent = await Document.findOneAndUpdate({_id: ObjectId(parentId)}, 
           { $push: {children: ObjectId(documentId) }},
           { new: true});
         oldDocument.parent = ObjectId(parentId);
+
+
+
+        usedNewParentId = newParent._id;
         modifiedDocs.push(newParent);
 
         newPath = parent.path;
     }
 
-    if (parentId == '') {
+    else {
         oldDocument.parent = null;
     }
 
     await oldDocument.save();
+
+    // If moving within the same directory
+   // if (usedNewParentId == usedNewParentId) {
+        
+
+        // Update the new parent's children
+        // If not root
+        if (usedNewParentId.length > 0) {
+            // Update the new parent's children's (those that are getting moved up) order
+            // Don't update the document that is being moved, it is part of the children already
+            await Document.updateMany({_id: [{$in: newParent.children.map(childObj => ObjectId(childObj.toString()))}, {$ne: ObjectId(documentId)}], order: {$gte: order}},
+            {$inc: {order: 1}});
+        }
+        // If root
+        else {
+            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gte: order} },
+            {$inc: {order: 1}});
+        }
+
+        // Update the old parent's children
+        // This needs to use the original order value
+        // If not root
+        if (originalParent) {
+            // Update the new parent's children's (those that are getting moved up) order
+            // Don't update the document that is being moved, it is part of the children already
+            await Document.updateMany({_id: [{$in: originalParent.children.map(childObj => ObjectId(childObj.toString()))}, {$ne: ObjectId(documentId)}], order: {$gte: originalOrder}},
+            {$inc: {order: -1}});
+        }
+        // If root
+        else {
+            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gte: originalOrder} },
+            {$inc: {order: -1}});
+        }
+    //}
 
     var oldPath = oldDocument.path;
     var oldPathItemCount = oldPath.split('/').length;
