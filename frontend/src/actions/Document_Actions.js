@@ -19,7 +19,8 @@ import {
     DOCUMENT_REMOVE_CANREAD,
     ATTACH_CHILD,
     REMOVE_CHILD,
-    GET_PARENT
+    GET_PARENT,
+    MOVE_DOCUMENT
 } from './types/Document_Types';
 
 import { api } from '../apis/api';
@@ -31,6 +32,13 @@ export const createDocument = (formValues) => async (dispatch) => {
 
     dispatch({ type: CREATE_DOCUMENT, payload: response.data.result });
     return response.data
+}
+
+export const moveDocument = (formValues) => async (dispatch) => {
+    console.log(formValues)
+    const response = await api.put('/documents/move', formValues );
+    console.log(response.data)
+    dispatch({ type: MOVE_DOCUMENT, payload: response.data.result });
 }
 
 export const createChild = (formValues) => async (dispatch) => {

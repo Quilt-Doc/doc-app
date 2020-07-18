@@ -13,8 +13,11 @@ import history from '../../../history';
 //redux
 import { connect } from 'react-redux';
 
+//document
+import DraggableDocument from './DraggableDocument';
+
 //actions
-import { createDocument, retrieveChildren, retrieveDocuments, attachChild, removeChild } from '../../../actions/Document_Actions';
+import { createDocument, moveDocument, retrieveChildren, retrieveDocuments, attachChild, removeChild } from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
 
@@ -36,7 +39,7 @@ class Document extends Component {
         }
     }
 
-    createDocument(e){
+    createDocument = (e) => {
         e.stopPropagation()
         e.preventDefault()
         let {workspaceId} = this.props.match.params
@@ -64,14 +67,15 @@ class Document extends Component {
     renderChildren = () => {
         let children = Object.values(this.props.children)
         return children.map((child) => {
-            return <ConnectedDocument 
-                    width = {this.props.width - 2} 
-                    marginLeft = {this.props.marginLeft + 2} 
-                    document = {child} />
+            return <ConnectedDocument
+                        width = {this.props.width - 2} 
+                        marginLeft = {this.props.marginLeft + 2} 
+                        document = {child} 
+                    />
         })
     }
 
-    renderTitle() {
+    renderTitle = () => {
         let { title } = this.props.document
         if (!title) {
             title = "Untitled"
@@ -79,7 +83,7 @@ class Document extends Component {
         return <Title>{title}</Title>
     }
 
-    open(e) {
+    open = (e) => {
         e.stopPropagation();
         e.preventDefault();
         if (this.props.children.length !== this.props.document.children.length) {
@@ -93,7 +97,7 @@ class Document extends Component {
 
     
 
-    renderLeftIcon(){
+    renderLeftIcon = () =>{
         if (this.props.document.children.length > 0) {
             if (this.state.open === false){
                 return (
@@ -117,17 +121,17 @@ class Document extends Component {
           
         } else {
             return (
-                <IconBorder2>
+                <IconBorder3>
                     <ion-icon 
                         name="ellipse-sharp"
                         style={{'fontSize': '0.4rem', 'color': "#213A81"}}
                     ></ion-icon>
-                </IconBorder2>
+                </IconBorder3>
             )
         }
     }
 
-    renderDocumentUrl(){
+    renderDocumentUrl = () =>{
         let {workspaceId} = this.props.match.params;
         const location = {
             pathname: `/workspaces/${workspaceId}/document/${this.props.document._id}`,
@@ -137,27 +141,19 @@ class Document extends Component {
     /*onClick = {() => {this.retrieveChildren()}}*/
     render() {
         return (
-            
             <>
-                {this.props.document && 
-                    <>
-                        <CurrentReference 
-                            onMouseEnter = {() => {this.setState({createOpacity: '1'})}} 
-                            onMouseLeave = {() => {this.setState({createOpacity: '0'})}} 
-                            
-                            onClick = {() => this.renderDocumentUrl()}
-                            width = {`${this.props.width}rem`} 
-                            marginLeft = {`${this.props.marginLeft}rem`}
-                        >
-                            {this.renderLeftIcon()}
-                            <ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', 'color': "#213A81", marginRight: "0.8rem"}}></ion-icon>
-                            {this.renderTitle()}
-                            <IconBorder opacity = {this.state.createOpacity} onClick = {(e) => {this.createDocument(e)}}>
-                                <ion-icon style={{'fontSize': '1.5rem'}} name="add-outline"></ion-icon>
-                            </IconBorder>
-                        </CurrentReference>
-                        {this.props.children.length !== 0 && this.state.open && this.renderChildren()}
-                    </>
+                { this.props.document && 
+                        < DraggableDocument
+                            {...this.props}
+                            moveDocument = {this.props.moveDocument}
+                            renderDocumentUrl = {this.renderDocumentUrl}
+                            renderLeftIcon = {this.renderLeftIcon}
+                            renderTitle = {this.renderTitle}
+                            createDocument = {this.createDocument}
+                            children = {this.props.children}
+                            open = {this.state.open}
+                            renderChildren = {this.renderChildren}
+                        />
                 }
             </>
         )
@@ -177,7 +173,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
             
-const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, retrieveDocuments, attachChild, removeChild, setCreation, clearSelected })(Document));
+const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, moveDocument, retrieveDocuments, attachChild, removeChild, setCreation, clearSelected })(Document));
 export default  ConnectedDocument;
 
 
@@ -234,13 +230,25 @@ const IconBorder2 = styled.div`
     }
 `
 
+const IconBorder3 = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-right: 0.5rem;
+    border-radius: 0.3rem;
+`
+
 const CurrentReference = styled.div`
     display: flex;
     align-items: center;
     font-size: 1.4rem;
+    background-color: ${props => props.backgroundColor};
     &:hover {
         background-color: #EBECF0;
     }
+    transition: background-color 0.15s ease-out;
     width: ${props => props.width};
     margin-left: ${props => props.marginLeft};
     padding: 1.2rem;

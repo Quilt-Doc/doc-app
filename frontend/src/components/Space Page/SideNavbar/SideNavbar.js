@@ -11,12 +11,16 @@ import Bucket from '../../General Components/Top Navbar/Bucket';
 import Document from './Document';
 import TextEditorView2 from '../Text Editor Page/TextEditorView2';
 
+//react-dnd
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+
 //react-router
 import { Link , withRouter } from 'react-router-dom';
 import history from '../../../history';
 
 //actions
-import { createDocument, retrieveDocuments } from '../../../actions/Document_Actions';
+import { createDocument, retrieveDocuments,  moveDocument } from '../../../actions/Document_Actions';
 import { attachDocument } from '../../../actions/RepositoryItem_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
@@ -42,7 +46,9 @@ class SideNavbar extends React.Component {
     }
 
     renderDocuments(){
-        return this.props.documents.map(document => {return <Document width =  {23} marginLeft = {0} document = {document}/>})
+        
+        return this.props.documents.map(document => {return (
+        <Document width =  {23} marginLeft = {0} document = {document}/>)})
     }
 
     createDocumentFromButton() {
@@ -114,6 +120,7 @@ class SideNavbar extends React.Component {
     }
     /*onClick = { () => {this.createDocumentFromButton()}}*/
     render(){
+        let { workspaceId } = this.props.match.params
         return(
             <>
             <SideNavbarContainer>
@@ -123,10 +130,11 @@ class SideNavbar extends React.Component {
                 </RepositoryDetail>
                 
                 <DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
-                    <ion-icon style={{'color': 'white', 'fontSize': '2.4rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
+                    <ion-icon style={{'color': 'white', 'fontSize': '2rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
                     Create Document
                     <Bucket selected = {this.props.selected}/>
                 </DocumentCreateButton>
+              
                 <PageSectionContainer>
                     <PageSection>
                         <ion-icon 
@@ -135,14 +143,14 @@ class SideNavbar extends React.Component {
                         <PageName>Overview</PageName>
                     </PageSection>
                    
-                    <PageSection>
+                    <PageSection to = {`/workspaces/${workspaceId}/coverage`}>
                         <ion-icon style={{'fontSize': '1.7rem'}} name="analytics-outline"></ion-icon>
-                        <PageName>
+                        <PageName >
                              
                              Track Coverage
                         </PageName>
                     </PageSection>
-                    <PageSection>
+                    <PageSection to = {`/workspaces/${workspaceId}/request`}>
                         <ion-icon style={{'fontSize': '1.7rem'}} name="git-pull-request-outline"></ion-icon>
                         <PageName>
                             Request Documentation
@@ -166,7 +174,7 @@ class SideNavbar extends React.Component {
                 </Block>
                 <Block marginTop = {"1rem"}>
                     <Deline>Documents</Deline>
-                    <DocumentationContainer>
+                    <DocumentationContainer backend={HTML5Backend} >
                         {this.props.documents.length > 0 && this.renderDocuments()}
                     </DocumentationContainer>
                 </Block>
@@ -275,8 +283,27 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, { createDocument, attachDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
+export default withRouter(connect(mapStateToProps, { createDocument, moveDocument, attachDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
 
+
+const AddRequestButton = styled.div`
+    margin-left: auto;
+    margin-right: -0.3rem;
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 1.9rem;
+    height: 1.9rem;
+
+   
+    border-radius: 0.3rem;
+
+    color:   #262E49; 
+    background-color:white;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+`
 
 const ModalToolbar = styled.div`
    
@@ -465,7 +492,8 @@ const PageSectionContainer = styled.div`
     
 `
 
-const PageSection = styled.div`
+const PageSection = styled(Link)`
+    text-decoration: none;
     margin-left: 2rem;
     color: #172A4E;
     width: 23rem;
@@ -541,7 +569,6 @@ const SideNavbarContainer = styled.div`
     background-color: #F7F9FB;
     display: flex;
     flex-direction: column;
-    height: 92vh;
 `
 
 const DocumentCreateButton = styled.div`
@@ -552,17 +579,46 @@ const DocumentCreateButton = styled.div`
     cursor: pointer;
     display: flex;
     align-items: center;
-    background-color: #1BE5BE;
+    background-color:#1BE5BE;
+    /*border: 2px solid #19E5BE;*/
     margin-left: 2rem;
     margin-right: 2rem;
     margin-top: 2rem;
-    border-radius: 0.5rem;
+    border-radius: 0.3rem;
     display: flex;
     align-items: center;
     width: 23rem;
-    height: 3.7rem;
+    height: 3.3rem;
     padding: 0.5rem 1rem;
+    /*
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    */
+    &:hover {
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149); 
+    }
+    
+`
 
+const DocumentRequestButton = styled.div`
+    position: relative;
+    font-size: 1.4rem;
+    font-weight:400;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    background-color: #262E49;
+    /*border: 2px solid #19E5BE;*/
+    margin-left: 2rem;
+    margin-right: 2rem;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    width: 13rem;
+    height: 3.3rem;
+    padding: 0.5rem 1rem;
+    
     &:hover {
         box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149); 
     }
@@ -575,7 +631,7 @@ const Block = styled.div`
     margin-top: ${props => props.marginTop};
 `
               
-const DocumentationContainer = styled.div`
+const DocumentationContainer = styled(DndProvider)`
     display: flex;
     flex-direction: column;
    

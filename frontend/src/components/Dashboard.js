@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useRef, useState, useCallback } from 'react'
 import history from '../history';
 
+//
+
 //router
-import { Router, Route } from 'react-router-dom';
+import { Router, Route, Link } from 'react-router-dom';
 
 //components
 import SpaceView from './Space Page/SpaceView';
@@ -20,25 +22,68 @@ import preetaicon from '../images/preeta.png'
 
 /* <NavbarProfile
                     goLogout = {goLogout}
-                />*/
+                />*//*<Searchbar/>*/
 const Dashboard = () => {
+
+    let [search, setSearch] = useState(false)
+    const inputRef = useRef(null)
+
     return (
         <Container>
             <TopNav>
                 <ion-icon style={{'color': '#19E5BE', 'fontSize': '2.4rem', 'marginLeft': '5rem', 'marginRight': '1.2rem'}} name="book-outline"></ion-icon>
                 <Company>Docapp</Company>
-                <NavbarElement>
-                    Home
+                
+                <NavbarElement onClick = {() => {history.push("/workspaces")}} >
+                    <ion-icon style={{'color': 'white', 
+                                 'fontSize': '2rem', 
+                                 'marginRight': '1rem'
+                                 
+                                  }}  name="planet-outline"></ion-icon>
+                    Spaces
                 </NavbarElement>
-                <NavbarElement>
-                    Workspaces
-                </NavbarElement>
-                <NavbarElement>
-                    Recent
-                </NavbarElement>
-                <NavbarElement>
-                    People
-                </NavbarElement>
+                <div>
+                    <SearchbarWrapper hoverColor = {search ? '#313b5e' : '#39466f'} onClick = {() => setSearch(true)}>
+                        <ion-icon 
+                            style={{'color': 'white', 'cursor': 'pointer', 'fontSize': '2rem'}} 
+                            name="search-outline">
+                        </ion-icon>
+                        <Searchbar ref = {inputRef} onBlur = {(e) => {e.target.blur(); setSearch(false)}} barWidth = {search ? '40rem' : '15rem'} />
+                    </SearchbarWrapper>
+                    
+                    {search && <SearchBubble>
+                                    <SearchHeader>
+                                        
+                                        Recently Searched
+                                    </SearchHeader>
+                                    {["Torch Utils", "Untitled", "Starting the server", "Document Hierarchy", "Requests"].map((query) => {
+                                        return (
+                                                <SearchResult>
+                                                    <ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', 'color': "#213A81", marginRight: "0.8rem"}}></ion-icon>
+                                                    {query}
+                                                </SearchResult>
+                                            )
+                                        })  
+                                
+                                    }
+                                </SearchBubble>
+                    }
+                </div>
+                <Options>
+                    <Option>
+                        <ion-icon name="layers-outline">
+                        </ion-icon>
+                    </Option>
+                   
+                    <Option>
+                        <ion-icon name="notifications-outline">
+                        </ion-icon>
+                    </Option>
+                                  
+                    <NavbarProfile
+                        goLogout = {goLogout}
+                    />
+                </Options>
                 
                
             </TopNav>
@@ -52,6 +97,11 @@ const Dashboard = () => {
         </Container>
     )
 }
+
+/*
+ <ion-icon  style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="bookmarks-outline"></ion-icon>
+                    <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="add-outline"></ion-icon>
+                    */
 /* 
                 <ion-icon style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginLeft': '70rem', 'marginRight': '2rem'}} name="search-outline"></ion-icon>
                 <ion-icon   style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="notifications-outline"></ion-icon>
@@ -95,6 +145,65 @@ const goLogout = () => {
 */
 export default Dashboard;
 
+const SearchHeader = styled.div`
+    height: 2rem;
+    color: #172A4E;
+    opacity: 0.8;
+    font-size: 1.2rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    
+`
+
+const SearchResult = styled.div`
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    color: #172A4E;
+    font-size: 1.3rem;
+    padding: 1.5rem 2rem;
+    cursor: pointer;
+    &:hover {
+        background-color: #EBECF0;
+    }
+`
+
+const SearchBubble = styled.div`
+    width: 50rem;
+    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    position: absolute;
+    border-radius: 0.3rem;
+    background-color: white;
+    top: 5rem;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0.5rem;
+`
+
+const Options = styled.div`
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    margin-right: 15rem;
+`
+
+const Option = styled.div`
+    font-size: 2rem;
+    margin-right: 1rem;
+    height: 3.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.3rem;
+    border-radius: 0.25rem;
+    background-color: #313b5e;
+    cursor: pointer;
+    &:hover {
+        background-color:#39466f
+    }
+`
+
+
 const Company = styled.div`
     font-size: 2.2rem;
     color:white;
@@ -105,56 +214,69 @@ const Company = styled.div`
 const NavbarElement = styled.div`
     font-size: 1.3rem;
     /*color: #172A4E;*/
+    background-color: #313b5e;
+    height: 3.3rem;
+    padding: 0 1rem;
+    border-radius: 0.25rem;
     font-weight: 400;
     letter-spacing: 0.5px;
-    margin-right: 3rem;
-    height: 8vh;
+    margin-right: 1rem;
     display: flex;
     align-items: center;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    margin-top: 4px;
-    border-bottom: 4px solid transparent;
-    border-bottom: ${props => props.borderBottom};
+    cursor: pointer;
+    &:hover {
+        background-color:#39466f
+    }
+    text-decoration: none;
 `
 
 const SearchbarWrapper = styled.div`
     margin-right: 3rem;
-    margin-left: 20rem;
-    border-radius: 0.3rem;
-    border: 1px solid #DFDFDF;
+    border-radius: 0.25rem;
+    cursor: text;
     display: flex;
     align-items: center;
-    width: 37rem;
-    height: 3.8rem;
-    padding: 0.5rem 1.5rem;
-    background-color: #FAFBFC;
     
+    height: 3.3rem;
+    padding: 0.5rem 1.5rem;
+    background-color:#313b5e; /*#39466f*/
+    
+    &:hover {
+        background-color:${props => props.hoverColor};
+    }
+   
+    width: ${props => props.width};
 `
 
 
 const Searchbar = styled.input`
-    background-color: #FAFBFC;
+    background-color:transparent;
     border-radius: 2px;
     border: none;
     padding: 0.4rem 0.4rem;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     outline: none;
-    color: #172A4E;
+    color: white;
     margin-left: 1rem;
     &::placeholder {
-        color: #172A4E;
+        color: white;
         opacity: 0.7;
         font-weight: 400;
     }
-    font-weight: 400;
-    width: 25rem;
+    &:hover {
+        background-color:transparent;
+    }
+    font-weight: 350;
+    height: 3rem;
+    width: ${props => props.barWidth};
+    transition: width 0.2s ease-out;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
 //#262848;
 
 const TopNav = styled.div`
-    height: 8vh;
+    min-height: 5.5rem;
+    max-height: 5.5rem;
     box-shadow: 0 2px 2px rgba(0,0,0,0.1);
     background-color:#262E49;
     color:#D6E0EE;
@@ -166,6 +288,7 @@ const TopNav = styled.div`
 const Container = styled.div`
     display: flex;
     flex-direction:column;
+    height: 100vh;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
 

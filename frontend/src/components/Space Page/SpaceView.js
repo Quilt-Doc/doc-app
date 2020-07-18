@@ -10,6 +10,7 @@ import SideNavbar from './SideNavbar/SideNavbar';
 import RequestView from './Request Page/RequestView';
 import CodeView from './Code Editing Page/CodeView';
 import DocumentModal from './Document Creation Page/DocumentModal';
+import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
 
 //react-router
 import { Switch, Route } from 'react-router-dom';
@@ -67,6 +68,8 @@ class SpaceView extends React.Component {
                                 <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
                                 <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { CodeView } />
                                 <Route path = "/workspaces/:workspaceId/document/:documentId" component = { TextEditorView } />
+                                <Route path = "/workspaces/:workspaceId/request" component = { RequestView } />
+                                <Route path = "/workspaces/:workspaceId/coverage" component = { RepositoryCoverageView } />
                             </Switch>
                         </RightView>
                        
@@ -105,6 +108,7 @@ export default connect(mapStateToProps, { updateRightViewScroll, retrieveWorkspa
 
 const Container = styled.div`
     display: flex;
+    flex: 1;
 `
 
 
@@ -113,9 +117,6 @@ const RightView = styled.div`
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     background-color: white;
     width: 100%;
-    
-    height: 92vh;
-
 `
 
 

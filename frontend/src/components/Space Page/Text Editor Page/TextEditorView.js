@@ -426,12 +426,12 @@ const InfoBarTitle = styled.div`
 
 const AllContainer = styled.div`
     display: flex;
+    height: 100%;
 `
 
 const LeftContainer = styled.div`
     overflow-y: scroll;
-    height: 92vh;
- 
+    height: 94vh;
 `
 
 const RightContainer = styled.div`
@@ -571,7 +571,9 @@ const IconBorder = styled.div`
 `
 
 const Shadow = styled.div`
+    
     box-shadow: 0px 2px 2px 0px rgb(1, 1, 1, 0.1);
+   
     height: 1rem;
     z-index: 1;
     position: -webkit-sticky; /* Safari */
@@ -584,11 +586,11 @@ const Toolbar = styled.div`
     position: sticky;
     top: 0;
     z-index: 10;
-    background-color: white;
+    background-color:white;
     display: flex;
     /*border: 1px solid red;*/
     height: 5rem;
-   
+    /*border-bottom: 1px solid #E0E4E7;*/
     /*border-bottom: 1px solid #DFDFDF;*/
     padding: 7rem;
     padding-top: 4rem;
@@ -633,13 +635,12 @@ const EditorContainer = styled.div`
 `
 const InfoBar = styled.div`
     min-width: 35rem;
-    height: 92vh;
     z-index: 20;
     /*background-color: #F4F4F6; */
-    
+    border-left: 1px solid #E0E4E7;
     padding-left: 3rem;
     padding-right: 3rem;
-    box-shadow: -1px 2px 4px rgba(0,0,0,0.1);
+    /*box-shadow: -1px 2px 4px rgba(0,0,0,0.1);*/
     /*
     margin-top: 1rem;
     padding-left: 2rem;
