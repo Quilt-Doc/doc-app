@@ -15,6 +15,7 @@ let documentSchema = new Schema({
     tags: [{type: ObjectId, ref: 'Tag'}],
     parent: {type: ObjectId, ref: 'Document'},
     path: {type: String, default: ''},
+    order: Number,
 
     //NOT USED
     uploadFiles: [{type: ObjectId, ref: 'UploadFile'}],

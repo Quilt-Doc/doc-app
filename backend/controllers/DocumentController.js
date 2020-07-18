@@ -9,9 +9,17 @@ checkValid = (item) => {
     return false
 }
 
+// TODO: add order validation
 createDocument = async (req, res) => {
     const { authorId, referenceIds, childrenIds, repositoryId, workspaceId,
-        title, root, markup, tagIds, parentId } = req.body;
+        title, root, markup, tagIds, parentId, order } = req.body;
+
+    if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
+    if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
+    if (!checkValid(workspaceId)) return res.json({success: false, error: "createDocument error: no workspaceId provided.", result: null});
+    if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
+    if (!checkValid(order)) return res.json({success: false, error: "createDocument error: no order provided.", result: null});
+
 
     var parentPath = '';
     var parent;
@@ -30,7 +38,7 @@ createDocument = async (req, res) => {
 
     var modifiedDocs = [];
 
-    
+
     //if (!typeof author == 'undefined' && author !== null) return res.json({success: false, error: 'no document author provided'});
     //if (!typeof title == 'undefined' && title !== null) return res.json({success: false, error: 'no document title provided'});
 
@@ -84,7 +92,8 @@ createDocument = async (req, res) => {
             repository: ObjectId(repositoryId),
             workspace: ObjectId(workspaceId),
             title: emptyTitle ? '' : workingTitle,
-            path: parentPath + workingTitle
+            path: parentPath + workingTitle,
+            order
         },
     );
 
@@ -177,10 +186,25 @@ deleteDocument = async (req, res) => {
     if (!toDelete) {
         return res.json({success: false, error: 'deleteDocument: error could not find document to delete', result: null});
     }
+
     if (toDelete.parent != null) {
-       Document.update({_id: ObjectId(toDelete.parent.toString())}, 
-              { $pull: {children: ObjectId(documentId) }});
+
+        await Document.update({_id: ObjectId(toDelete.parent.toString())}, 
+            { $pull: {children: ObjectId(documentId) }});
+        const parentObj = await Document.findById(toDelete.parent);
+        await Document.updateMany({$and: 
+                [
+                    {_id: {$in: parentObj.children.map(childObj => ObjectId(childObj._id.toString()))}},
+                    {_id: {$ne: ObjectId(documentId)}}
+                ],
+                order: {$gt: toDelete.order}},
+                {$inc: {order: -1}});
     }
+    else {
+        await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gt: toDelete.order} },
+            {$inc: {order: -1}});
+    }
+
     var pathToDelete = toDelete.path;
     var re = new RegExp(pathToDelete + '.*', 'i');
     const deletedDocs = await Document.find({path: {$regex: re}}, '');
@@ -319,52 +343,114 @@ renameDocument = async (req, res) => {
 }
 
 moveDocument = async (req, res) => {
-    const { documentId, parentId } = req.body;
-    if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.', result: null});
-    if (!checkValid(parentId)) return res.json({success: false, error: 'renameDocument: error no parentId provided', result: null});
-    
+    const { documentId, parentId, order } = req.body;
+    if (!checkValid(documentId)) return res.json({success: false, error: 'moveDocument: error no documentId provided.', result: null});
+    if (!checkValid(parentId)) return res.json({success: false, error: 'moveDocument: error no parentId provided', result: null});
+    if (!checkValid(order)) return res.json({success: false, error: 'moveDocument: error no order provided', result: null});
 
     var oldDocument = await Document.findById(documentId);
     if (!oldDocument) {
         return res.json({success: false, error: 'moveDocument: error could not find document to move', result: null});
     }
 
+    var originalOrder = oldDocument.order;
+    oldDocument.order = order;
+
     var modifiedDocs = [];
+    var usedOldParentId = '';
+
+    var originalParent = oldDocument.parent;
 
     if (oldDocument.parent != null) {
-        const originalParent = await Document.findOneAndUpdate({_id: ObjectId(oldDocument.parent.toString())}, 
+        originalParent = await Document.findOneAndUpdate({_id: ObjectId(oldDocument.parent.toString())}, 
               { $pull: {children: ObjectId(documentId) }},
               {new: true});
+        
+        usedOldParentId = originalParent._id;
+    
         modifiedDocs.push(originalParent);
     }
 
     // set newPath
     var newPath = '';
+    var newParent = undefined;
     if (parentId != '') {
-        var parent = await Document.findById(parentId);
-        if (!parent) {
+        newParent = await Document.findById(parentId);
+        if (!newParent) {
             return res.json({success: false, error: 'moveDocument: error could not find parent document', result: [oldDocument]});
         }
 
         // Don't allow moving the original document into its own child
-        if (parent.path.includes(oldDocument.path)) {
+        if (newParent.path.indexOf(oldDocument.path) == 0) {
             return res.json({success: false, error: 'moveDocument: error cannot move parent into its own child', result: [oldDocument]});
         }
 
-        const newParent = await Document.findOneAndUpdate({_id: ObjectId(parentId)}, 
+        newParent = await Document.findOneAndUpdate({_id: ObjectId(parentId)}, 
           { $push: {children: ObjectId(documentId) }},
           { new: true});
         oldDocument.parent = ObjectId(parentId);
-        modifiedDocs.push(newParent);
 
-        newPath = parent.path;
+
+        console.log('Found a parent object');
+        modifiedDocs.push(newParent);
+        newPath = newParent.path;
     }
 
-    if (parentId == '') {
+    else {
         oldDocument.parent = null;
     }
 
     await oldDocument.save();
+
+    // If moving within the same directory
+        
+
+        // Update the new parent's children
+        // If not root
+        if (newPath) {
+            console.log('Conditional insert 1');
+            // Update the new parent's children's (those that are getting moved up) order
+            // Don't update the document that is being moved, it is part of the children already
+            await Document.updateMany({$and: 
+                [
+                    {_id: {$in: newParent.children.map(childObj => ObjectId(childObj._id.toString()))}},
+                    {_id: {$ne: ObjectId(documentId)}}
+                ],
+                order: {$gte: order}},
+                {$inc: {order: 1}});
+        }
+        // If root
+        else {
+            console.log('Conditional insert 2');
+            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gte: order} },
+            {$inc: {order: 1}});
+        }
+
+        // Update the old parent's children
+        // This needs to use the original order value
+        // If not root
+        if (originalParent) {
+            console.log('Conditional remove 1');
+            // Update the new parent's children's (those that are getting moved up) order
+            // Don't update the document that is being moved, it is part of the children already
+            console.log('originalOrder: ', originalOrder);
+            // await Document.updateMany({_id: [{$in: originalParent.children.map(childObj => ObjectId(childObj._id.toString()))}, {$ne: ObjectId(documentId)}], order: {$gt: originalOrder}},
+            // {$inc: {order: -1}});
+             await Document.updateMany({$and: 
+                [
+                    {_id: {$in: originalParent.children.map(childObj => ObjectId(childObj._id.toString()))}},
+                    {_id: {$ne: ObjectId(documentId)}}
+                ],
+                order: {$gt: originalOrder}},
+                {$inc: {order: -1}});
+        }
+        // If root
+        else {
+            console.log('Conditional remove 2');
+            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gt: originalOrder} },
+            {$inc: {order: -1}});
+        }
+    //}
 
     var oldPath = oldDocument.path;
     var oldPathItemCount = oldPath.split('/').length;
