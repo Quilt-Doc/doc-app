@@ -64,6 +64,7 @@ class SideNavbar extends React.Component {
             workspaceId, parentId: "", root: true,
             referenceIds: this.props.selected.map(item => item._id)}).then((documents) => {
             console.log("CREATED DOCS", documents)
+            console.log(documents)
             let document = documents.result[0]
             this.props.setCreation(true)
             history.push(`?document=${document._id}`)

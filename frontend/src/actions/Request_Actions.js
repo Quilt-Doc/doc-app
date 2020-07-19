@@ -16,9 +16,7 @@ export const createRequest = (formValues) => async (dispatch) => {
 }
 
 export const getRequest = id => async dispatch => {
-    console.log("HERE, here")
     const response = await api.get(`/document_requests/get/${id}`);
-    console.log(response.data)
     dispatch({ type: GET_REQUEST, payload: response.data });
 }
 
@@ -28,6 +26,7 @@ export const retrieveRequests = (formValues) => async dispatch => {
 }
 
 export const deleteRequest = id => async dispatch => {
+    console.log("ID", id)
     const response = await api.delete(`/document_requests/delete/${id}`);
     dispatch({ type: DELETE_REQUEST, payload: response.data });
 }

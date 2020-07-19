@@ -10,10 +10,10 @@ import history from '../../../history';
 import { withRouter } from 'react-router-dom';
 
 //actions
+import { clearSelected } from '../../../actions/Selected_Actions';
+import { setRequestCreation } from '../../../actions/UI_Actions';
 import { createRequest } from '../../../actions/Request_Actions';
 
-//components
-import RequestModal from './RequestModal';
 
 class RequestView extends React.Component {
     constructor(props) {
@@ -22,8 +22,14 @@ class RequestView extends React.Component {
 
     createRequest() {
         let {workspaceId} = this.props.match.params
-        this.props.createRequest({title: "", workspaceId, authorId: this.props.user._id}).then((request) => {
-            console.log(request)
+        let formValues = {title: "", workspaceId, authorId: this.props.user._id}
+        if (this.props.selected.length > 0) {
+            formValues.referenceIds = this.props.selected.map(sel => sel._id)
+        }
+        this.props.createRequest(formValues).then((request) => {
+            console.log("REQUEST", request)
+            this.props.clearSelected();
+            this.props.setRequestCreation(true)
             history.push(`?request=${request._id}`)
         })
     }
@@ -282,13 +288,14 @@ class RequestView extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        user: state.auth.user
+        user: state.auth.user,
+        selected: Object.values(state.selected)
     }
 }
 
 
 
-export default withRouter(connect(mapStateToProps, { createRequest })(RequestView));
+export default withRouter(connect(mapStateToProps, { createRequest, setRequestCreation, clearSelected })(RequestView));
 
 const CommentInput = styled.input`
     height: 3.7rem;

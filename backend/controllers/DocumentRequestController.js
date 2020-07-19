@@ -195,20 +195,27 @@ editDocumentRequest = (req, res) => {
 deleteDocumentRequest = async (req, res) => {
 	const { id } = req.params;
 	if (!checkValid(id)) return res.json({success: false, error: "deleteDocument error: no id provided.", result: null});
-	return res.json(await DocumentRequest.deleteOne({_id: ObjectId(id)}));
+	return  res.json(await DocumentRequest.deleteOne({_id: ObjectId(id)}).populate('workspace').populate('repository')
+	.populate('references').populate('tags')
+	.populate('mentions').exec());
 }
 
 getDocumentRequest = async (req, res) => {
 	const { id } = req.params
 	if (!checkValid(id)) return res.json({success: false, error: "getDocumentRequest error: no id provided.", result: null});
-	return res.json(await DocumentRequest.findOne({_id: ObjectId(id)}));
+	return res.json(await DocumentRequest.findOne({_id: ObjectId(id)}).populate('workspace').populate('repository')
+	.populate('references').populate('tags')
+	.populate('mentions').exec());
 }
 
 
 retrieveDocumentRequests = async (req, res) => {
 	const { documentRequestIds } = req.body;
 	if (!checkValid(documentRequestIds)) return res.json({success: false, error: "retrieveDocumentRequests error: no docuemntRequestIds provided.", result: null});
-	return res.json(await DocumentRequest.find({_id: {$in: documentRequestIds.map(obj => ObjectId(obj))}}));
+	return res.json(await DocumentRequest.find({_id: {$in: documentRequestIds.map(obj => ObjectId(obj))}})
+	.populate('workspace').populate('repository')
+	.populate('references').populate('tags')
+	.populate('mentions').exec());
 }
 
 

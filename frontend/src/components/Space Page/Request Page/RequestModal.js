@@ -10,7 +10,8 @@ import { withRouter } from 'react-router-dom';
 import history from '../../../history';
 
 //actions
-import { getRequest } from '../../../actions/Request_Actions';
+import { getRequest, editRequest, deleteRequest } from '../../../actions/Request_Actions';
+import { setRequestCreation } from '../../../actions/UI_Actions';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAlignJustify } from '@fortawesome/free-solid-svg-icons'
@@ -18,56 +19,102 @@ import { faAlignJustify } from '@fortawesome/free-solid-svg-icons'
 class RequestModal extends Component {
     constructor(props){
         super(props)
+        this.state = {
+            title: "",
+            description: ""
+        }
     }
 
     componentDidMount(){
         let search = history.location.search
         let params = new URLSearchParams(search)
         let requestId = params.get('request') 
-        
-        this.props.getRequest(requestId)
+        this.props.getRequest(requestId).then(() => {
+            this.setState({title: this.props.request.title, description: this.props.request.markup})
+            window.addEventListener('beforeunload', this.removeTrash, false);
+        })
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('beforeunload', this.removeTrash, false);
+    }
+
+    removeTrash = () => {
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let requestId = params.get('request') 
+        if (this.props.creating) {
+            this.props.deleteRequest(requestId)
+        }
+    }
+
+    undoModal(){
+        history.push(history.location.pathname)
+    }
+
+    editRequestTitle() {
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let requestId = params.get('request') 
+        this.props.editRequest(requestId, {title: this.state.title})
+    }
+
+    renderReferences() {
+
+        this.props.request.references.map((ref) => {
+            return <Reference></Reference>
+        })
     }
 
     render(){
         return (
         <>
             {this.props.request ? 
-                <ModalBackground >
-                        <ModalContent >
-                            <RequestTitle>Explain Semantic 
-                                
-                            </RequestTitle>
-                            
-                            <RequestHighlight>
-                                
-                                <RequestStatusButton>Open</RequestStatusButton>
-                                <RequestTime><b>Faraz Sanal</b> opened this request 24 days ago</RequestTime>
-                                <RequestStat>
-                                    <StatContainer>
-                                        <ion-icon 
-                                            name="caret-up-sharp"
-                                            style = {
-                                                {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
-                                            }
-                                        >
-                                        </ion-icon>
-                                        <Votes>10</Votes>
-                                    </StatContainer>
-                                    <StatContainer>
-                                        <ion-icon 
-                                            name="chatbox-ellipses-outline"
-                                            style = {
-                                                {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
-                                            }
-                                        >
-                                        </ion-icon>
-                                        <Votes>10</Votes>
-                                    </StatContainer>
-                                
-                                </RequestStat>
-                                
-                            </RequestHighlight>
-                        
+                <ModalBackground onClick = {() => {this.removeTrash();this.undoModal();}} >
+                        <ModalContent onClick = {(e) => {e.stopPropagation()}}>
+                            <RequestTitle 
+                                onChange = {(e) => {this.setState({title: e.target.value})}}
+                                onBlur = {() => {this.editRequestTitle()}}
+                                value = {this.state.title} 
+                                placeholder = {"Untitled"}/>
+                                {this.props.creating ? 
+                                    <EmptyContainer>
+                                        <RequestStatusButton  
+                                            opacity = {this.state.title === "" ? 0.4 : 1} 
+                                            cursor = {this.state.title === "" ? "default" : "pointer"}
+                                            marginLeft = {"0rem"}
+                                            onClick = {() => {if (this.state.title) {this.props.setRequestCreation(false)}}}
+                                            >
+                                            Open Request
+                                        </RequestStatusButton>
+                                    </EmptyContainer> :
+                                    <RequestHighlight>
+                                        <RequestStatusButton>Open</RequestStatusButton>
+                                        <RequestTime><b>Faraz Sanal</b> opened this request 24 days ago</RequestTime>
+                                        <RequestStat>
+                                            <StatContainer>
+                                                <ion-icon 
+                                                    name="caret-up-sharp"
+                                                    style = {
+                                                        {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
+                                                    }
+                                                >
+                                                </ion-icon>
+                                                <Votes>10</Votes>
+                                            </StatContainer>
+                                            <StatContainer>
+                                                <ion-icon 
+                                                    name="chatbox-ellipses-outline"
+                                                    style = {
+                                                        {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
+                                                    }
+                                                >
+                                                </ion-icon>
+                                                <Votes>10</Votes>
+                                            </StatContainer>
+                                        </RequestStat>
+                                    </RequestHighlight>
+                                }    
                             <InfoBlock>   
                                 <InfoHeader>
                                     <ion-icon style = {
@@ -76,8 +123,10 @@ class RequestModal extends Component {
                                     References
                                 </InfoHeader>
                                 <ReferenceContainer>
-                                    
-                                    <NoneMessage>None yet</NoneMessage>
+                                    {this.props.request.references && this.props.request.references.length > 0 ? 
+                                        <>{this.renderReferences()}</>
+                                        : <NoneMessage>None yet</NoneMessage>}
+                                   
                                     <AddButton>
                                         <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
                                     </AddButton>
@@ -152,13 +201,22 @@ const mapStateToProps = (state, ownProps) => {
     let requestId = params.get('request') 
 
     return {
-        request : state.requests[requestId]
+        request : state.requests[requestId],
+        creating : state.ui.creatingRequest
     }
 }
 
 
-export default  connect(mapStateToProps, { getRequest })(RequestModal);
+export default  connect(mapStateToProps, { getRequest, editRequest, deleteRequest, setRequestCreation })(RequestModal);
 
+const RequestSaveButton = styled.div`
+    display: inline-flex;
+    font-size: 1.5rem;
+    font-weight: 500;
+
+    color: white;
+    padding: 0.8rem 2rem;
+`
 
 const CommentInput = styled.input`
     height: 3.7rem;
@@ -244,11 +302,18 @@ const ReferenceContainer = styled.div`
 `
 
 
-const RequestTitle = styled.div`
+const RequestTitle = styled.input`
     font-size: 3rem;
     display: flex;
     margin-bottom: 2rem;
     align-items: center;
+    ::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+    }
+    color: #172A4E;
+    outline: none;
+    border: none;
 `
 
 const RequestStatusButton = styled.div`
@@ -264,6 +329,9 @@ const RequestStatusButton = styled.div`
     letter-spacing: 1;
     margin-right: 0.5rem;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    margin-left: ${props => props.marginLeft};
+    opacity: ${props => props.opacity};
+    cursor: ${props => props.cursor};
 `
 
 const RequestTime = styled.div`
@@ -296,6 +364,15 @@ const RequestHighlight = styled.div`
     border-radius: 0.3rem;
     background-color: #F7F9FB;
     border: 1px solid #E0E4E7;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+`
+
+const EmptyContainer = styled.div`
+    min-height: 7rem;
+    border-radius: 0.3rem;
+    background-color: white;
     display: flex;
     align-items: center;
     margin-bottom: 1rem;

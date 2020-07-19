@@ -1,6 +1,7 @@
 import {
     SCROLL_RIGHT_VIEW,
-    SET_CREATION
+    SET_CREATION,
+    SET_REQUEST_CREATION
 } from './types/UI_Types'
 
 
@@ -12,3 +13,6 @@ export const setCreation = (creationMode) => (dispatch) => {
     dispatch({ type: SET_CREATION, payload: creationMode});
 }
 
+export const setRequestCreation = (creationMode) => (dispatch) => {
+    dispatch({ type: SET_REQUEST_CREATION, payload: creationMode});
+}
