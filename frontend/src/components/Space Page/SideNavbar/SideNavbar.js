@@ -125,6 +125,7 @@ class SideNavbar extends React.Component {
         return(
             <>
             <SideNavbarContainer>
+                
                 <RepositoryDetail>
                     <RepositoryIcon><StyledIcon src = {repoIcon3}/></RepositoryIcon>
                     <RepositoryName>kgodara/doc-app</RepositoryName>
