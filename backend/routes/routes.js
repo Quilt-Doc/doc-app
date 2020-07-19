@@ -101,19 +101,20 @@ router.post('/auth/check_installation', auth_controller.checkInstallation);
 router.post('/auth/retrieve_domain_repositories', auth_controller.retrieveDomainRepositories)
 
 const document_request_controller = require('../controllers/DocumentRequestController');
-router.post('/document_request/create', document_request_controller.createDocumentRequest);
-router.post('/document_request/edit', document_request_controller.editDocumentRequest);
-router.post('/document_request/delete', document_request_controller.deleteDocumentRequest);
-router.post('/document_request/get', document_request_controller.getDocumentRequest);
-router.post('/document_request/retrieve', document_request_controller.retrieveDocumentRequests);
-router.post('/document_request/add_tags', document_request_controller.addTags);
-router.post('/document_request/remove_tags', document_request_controller.removeTags);
-router.post('/document_request/add_mentions', document_request_controller.addMentions);
-router.post('/document_request/remove_mentions', document_request_controller.removeMentions);
-router.post('/document_request/add_references', document_request_controller.addReferences);
-router.post('/document_request/remove_references', document_request_controller.removeReferences);
-router.post('/document_request/add_snippets', document_request_controller.addSnippets);
-router.post('/document_request/remove_snippets', document_request_controller.removeSnippets);
+router.post('/document_requests/create', document_request_controller.createDocumentRequest);
+router.put('/document_requests/edit/:id', document_request_controller.editDocumentRequest);
+router.delete('/document_requests/delete/:id', document_request_controller.deleteDocumentRequest);
+router.get('/document_requests/get/:id', document_request_controller.getDocumentRequest);
+router.post('/document_requests/retrieve', document_request_controller.retrieveDocumentRequests);
+router.post('/document_requests/add_tags', document_request_controller.addTags);
+router.post('/document_requests/remove_tags', document_request_controller.removeTags);
+router.post('/document_requests/add_mentions', document_request_controller.addMentions);
+router.post('/document_requests/remove_mentions', document_request_controller.removeMentions);
+router.post('/document_requests/add_references', document_request_controller.addReferences);
+router.post('/document_requests/remove_references', document_request_controller.removeReferences);
+router.post('/document_requests/add_snippets', document_request_controller.addSnippets);
+router.post('/document_requests/remove_snippets', document_request_controller.removeSnippets);
+
 
 
 const user_controller = require('../controllers/authentication/UserController');

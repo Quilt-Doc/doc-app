@@ -182,6 +182,7 @@ const Title = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    font-weight: 500;
 `
 
 const StyledIcon2 = styled.img`

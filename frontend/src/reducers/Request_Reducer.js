@@ -14,6 +14,7 @@ export default (state = {}, action) => {
         case CREATE_REQUEST:
             return { ...state, [action.payload._id]: action.payload };
         case GET_REQUEST:
+            console.log("GET REDUCER", action.payload)
             return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_REQUESTS:
             return { ..._.mapKeys(action.payload, '_id') };

@@ -43,25 +43,26 @@ checkValid = (item) => {
     repository: {type: ObjectId, ref: 'Repository'},
     tags: [{type: ObjectId, ref: 'Tag'}],
     mentions: [{type: ObjectId, ref: 'User'}]
-
 */
 
 createDocumentRequest = (req, res) => {
 	const { authorId, title, markup, referenceIds, 
 		workspaceId, repositoryId, tagIds, mentionIds, snippetIds } = req.body;
+
 	if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
 	if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
 	if (!checkValid(workspaceId)) return res.json({success: false, error: "createDocument error: no workspaceId provided.", result: null});
-	if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
+	//if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
 
 	let documentRequest = new DocumentRequest({
 		author: ObjectId(authorId),
 		title,
 		workspace: ObjectId(workspaceId),
-		repository: ObjectId(repositoryId),
+		
 		status: 'OPEN'
 	});
 
+	if (checkValid(repositoryId)) documentRequest.repository = ObjectId(repositoryId);
 	if (markup) documentRequest.markup = markup;
 	if (referenceIds) documentRequest.references = referenceIds.map(ref => ObjectId(ref));
 	if (tagIds) documentRequest.tags = tagIds.map(tag => ObjectId(tag));
@@ -162,10 +163,11 @@ removeSnippets = async (req, res) => {
     mentions: [{type: ObjectId, ref: 'User'}]
 */
 editDocumentRequest = (req, res) => {
-	const { documentRequestId, title, markup, status,
+	const {id} = req.params
+	const { title, markup, status,
 			referenceIds, snippetIds, workspaceId, repositoryId,
 			tagIds, mentionIds } = req.body;
-	if (!checkValid(documentRequestId)) return res.json({success: false, error: "addSnippets error: no snippetIds provided.", result: null});
+	if (!checkValid(id)) return res.json({success: false, error: "addSnippets error: no snippetIds provided.", result: null});
 
 	let update = {};
 	if (title) update.title = title;
@@ -191,23 +193,22 @@ editDocumentRequest = (req, res) => {
 }
 
 deleteDocumentRequest = async (req, res) => {
-	const { documentRequestId } = req.body;
-	if (!checkValid(documentRequestId)) return res.json({success: false, error: "deleteDocument error: no documentRequestId provided.", result: null});
-	return await DocumentRequest.deleteOne({_id: ObjectId(documentRequestId)});
+	const { id } = req.params;
+	if (!checkValid(id)) return res.json({success: false, error: "deleteDocument error: no id provided.", result: null});
+	return res.json(await DocumentRequest.deleteOne({_id: ObjectId(id)}));
 }
 
 getDocumentRequest = async (req, res) => {
-	const { documentRequestId } = req.body;
-	if (!checkValid(documentRequestId)) return res.json({success: false, error: "getDocumentRequest error: no documentRequestId provided.", result: null});
-	return await DocumentRequest.findOne({_id: ObjectId(documentRequestId)});
-
+	const { id } = req.params
+	if (!checkValid(id)) return res.json({success: false, error: "getDocumentRequest error: no id provided.", result: null});
+	return res.json(await DocumentRequest.findOne({_id: ObjectId(id)}));
 }
 
 
 retrieveDocumentRequests = async (req, res) => {
 	const { documentRequestIds } = req.body;
 	if (!checkValid(documentRequestIds)) return res.json({success: false, error: "retrieveDocumentRequests error: no docuemntRequestIds provided.", result: null});
-	return await DocumentRequest.find({_id: {$in: documentRequestIds.map(obj => ObjectId(obj))}});
+	return res.json(await DocumentRequest.find({_id: {$in: documentRequestIds.map(obj => ObjectId(obj))}}));
 }
 
 

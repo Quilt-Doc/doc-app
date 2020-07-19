@@ -47,7 +47,7 @@ class WorkspaceView extends React.Component {
     }
 
     async componentDidMount() {
-        await this.props.retrieveWorkspaces({memberUserIDs: [this.props.user._id]})
+        await this.props.retrieveWorkspaces({memberUserIds: [this.props.user._id]})
         let repositoryIds = await this.props.workspaces.map(space => space.repositories[0])
         await this.props.retrieveReferences({repositoryIds, path: ""})
         this.setState({loaded: true})

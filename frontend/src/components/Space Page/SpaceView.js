@@ -10,6 +10,7 @@ import SideNavbar from './SideNavbar/SideNavbar';
 import RequestView from './Request Page/RequestView';
 import CodeView from './Code Editing Page/CodeView';
 import DocumentModal from './Document Creation Page/DocumentModal';
+import RequestModal from './Request Page/RequestModal';
 import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
 
 //react-router
@@ -47,7 +48,7 @@ class SpaceView extends React.Component {
         //this.props.updateRightViewScroll(this.rightViewRef.current.scrollTop)
     }
 
-    check = () => {
+    checkDoc = () => {
         let search = history.location.search
         let params = new URLSearchParams(search)
         let documentId = params.get('document') 
@@ -56,6 +57,16 @@ class SpaceView extends React.Component {
         }
         return false
     }   
+
+    checkRequest = () => {
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let requestId = params.get('request') 
+        if (requestId !== null && requestId !== undefined){
+            return true
+        }
+        return false
+    }
 
     render() {
         if (this.state.ready) {
@@ -74,7 +85,7 @@ class SpaceView extends React.Component {
                         </RightView>
                        
                     </Container>
-                    {this.check() && <DocumentModal/>}
+                    {this.checkDoc() ? <DocumentModal/> : this.checkRequest() ? <RequestModal/> : <></>}
                 </>
             );
         } return null

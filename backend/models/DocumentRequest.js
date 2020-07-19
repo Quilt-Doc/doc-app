@@ -6,7 +6,7 @@ const { ObjectId, Mixed } = Schema.Types;
 var documentRequestSchema = new Schema({
     created: {type: Date, default: Date.now },
     author: {type: ObjectId, ref: 'User', required: true},
-    title: {type: String, required: true},
+    title: String, 
     markup: String,
     status: {type: String, required: true},
     references: [{type: ObjectId, ref: 'Reference'}],

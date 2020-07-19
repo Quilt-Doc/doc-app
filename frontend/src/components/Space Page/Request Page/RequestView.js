@@ -2,11 +2,30 @@ import React from 'react';
 
 import styled from 'styled-components';
 
+//redux
+import { connect } from 'react-redux';
+
+//router
+import history from '../../../history';
+import { withRouter } from 'react-router-dom';
+
+//actions
+import { createRequest } from '../../../actions/Request_Actions';
+
+//components
 import RequestModal from './RequestModal';
 
 class RequestView extends React.Component {
     constructor(props) {
         super(props);
+    }
+
+    createRequest() {
+        let {workspaceId} = this.props.match.params
+        this.props.createRequest({title: "", workspaceId, authorId: this.props.user._id}).then((request) => {
+            console.log(request)
+            history.push(`?request=${request._id}`)
+        })
     }
 
 
@@ -21,7 +40,7 @@ class RequestView extends React.Component {
                     
                     <ListToolBar>
                         
-                        <ListName>
+                        <ListName onClick = {() => {this.createRequest()}}>
                             <ion-icon marginLeft = {"0.3rem"} style={{marginTop :"-0.3rem", marginRight :"0.5rem", 'color': '#172A4E', 'fontSize': '2.4rem', }} name="create-outline"></ion-icon>
                             Create Request
                            
@@ -254,7 +273,6 @@ class RequestView extends React.Component {
                     </RequestCard>
                 </RequestContainer>
                 </Container>
-                <RequestModal/>
             </>
         )
         }
@@ -264,13 +282,13 @@ class RequestView extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        
+        user: state.auth.user
     }
 }
 
 
 
-export default RequestView;
+export default withRouter(connect(mapStateToProps, { createRequest })(RequestView));
 
 const CommentInput = styled.input`
     height: 3.7rem;

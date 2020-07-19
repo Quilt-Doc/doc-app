@@ -2,125 +2,162 @@ import React, {Component} from 'react'
 
 import styled from 'styled-components';
 
+import { connect } from 'react-redux';
+
+import { withRouter } from 'react-router-dom';
+
+//history
+import history from '../../../history';
+
+//actions
+import { getRequest } from '../../../actions/Request_Actions';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAlignJustify } from '@fortawesome/free-solid-svg-icons'
 
 class RequestModal extends Component {
+    constructor(props){
+        super(props)
+    }
+
+    componentDidMount(){
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let requestId = params.get('request') 
+        
+        this.props.getRequest(requestId)
+    }
+
     render(){
         return (
-            <ModalBackground >
-                    <ModalContent >
-                        <RequestTitle>Explain Semantic 
+        <>
+            {this.props.request ? 
+                <ModalBackground >
+                        <ModalContent >
+                            <RequestTitle>Explain Semantic 
+                                
+                            </RequestTitle>
                             
-                        </RequestTitle>
+                            <RequestHighlight>
+                                
+                                <RequestStatusButton>Open</RequestStatusButton>
+                                <RequestTime><b>Faraz Sanal</b> opened this request 24 days ago</RequestTime>
+                                <RequestStat>
+                                    <StatContainer>
+                                        <ion-icon 
+                                            name="caret-up-sharp"
+                                            style = {
+                                                {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
+                                            }
+                                        >
+                                        </ion-icon>
+                                        <Votes>10</Votes>
+                                    </StatContainer>
+                                    <StatContainer>
+                                        <ion-icon 
+                                            name="chatbox-ellipses-outline"
+                                            style = {
+                                                {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
+                                            }
+                                        >
+                                        </ion-icon>
+                                        <Votes>10</Votes>
+                                    </StatContainer>
+                                
+                                </RequestStat>
+                                
+                            </RequestHighlight>
                         
-                        <RequestHighlight>
-                            
-                            <RequestStatusButton>Open</RequestStatusButton>
-                            <RequestTime><b>Faraz Sanal</b> opened this request 24 days ago</RequestTime>
-                            <RequestStat>
-                                <StatContainer>
-                                    <ion-icon 
-                                        name="caret-up-sharp"
-                                        style = {
-                                            {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
-                                        }
-                                    >
-                                    </ion-icon>
-                                    <Votes>10</Votes>
-                                </StatContainer>
-                                <StatContainer>
-                                    <ion-icon 
-                                        name="chatbox-ellipses-outline"
-                                        style = {
-                                            {color: "#172A4E", marginLeft: "-0.1rem",marginBottom: "0.3rem", marginTop: "0.2rem", fontSize: "1.7rem"}
-                                        }
-                                    >
-                                    </ion-icon>
-                                    <Votes>10</Votes>
-                                </StatContainer>
-                            
-                            </RequestStat>
-                            
-                        </RequestHighlight>
-                       
-                        <InfoBlock>   
-                            <InfoHeader>
-                                <ion-icon style = {
-                                        {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
-                                    } name="code-outline"></ion-icon>
-                                References
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                
-                                <NoneMessage>None yet</NoneMessage>
-                                <AddButton>
-                                    <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                                </AddButton>
-                            </ReferenceContainer>
-                        </InfoBlock>
-                        <InfoBlock>
-                            <InfoHeader>
-                                <FontAwesomeIcon style = {
-                                            {color: "#172A4E", marginRight: "1.2rem"}
-                                        } icon={faAlignJustify} />
-                                Description
-                            </InfoHeader>
+                            <InfoBlock>   
+                                <InfoHeader>
+                                    <ion-icon style = {
+                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
+                                        } name="code-outline"></ion-icon>
+                                    References
+                                </InfoHeader>
+                                <ReferenceContainer>
+                                    
+                                    <NoneMessage>None yet</NoneMessage>
+                                    <AddButton>
+                                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
+                                    </AddButton>
+                                </ReferenceContainer>
+                            </InfoBlock>
+                            <InfoBlock>
+                                <InfoHeader>
+                                    <FontAwesomeIcon style = {
+                                                {color: "#172A4E", marginRight: "1.2rem"}
+                                            } icon={faAlignJustify} />
+                                    Description
+                                </InfoHeader>
 
-                                <RequestDescription>
-                                    Describe your request
-                                </RequestDescription>
-                        </InfoBlock>
-                        <InfoBlock>
-                            <InfoHeader>
-                                <ion-icon style = {
-                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
-                                        } name="pricetag-outline"></ion-icon>
-                                Labels
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                <Tag>Utility</Tag>
-                                <AddButton>
-                                    <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                                </AddButton>
-                            </ReferenceContainer>
-                        </InfoBlock>
-                        <InfoBlock>
-                            <InfoHeader>
-                                <ion-icon style = {
-                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
-                                    } name="people-outline"></ion-icon>   
-                                Mentions
-                              
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                <NoneMessage>None yet</NoneMessage>
-                                <AddButton>
-                                    <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                                </AddButton>
-                            </ReferenceContainer>
-                        </InfoBlock>
+                                    <RequestDescription>
+                                        Describe your request
+                                    </RequestDescription>
+                            </InfoBlock>
+                            <InfoBlock>
+                                <InfoHeader>
+                                    <ion-icon style = {
+                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
+                                            } name="pricetag-outline"></ion-icon>
+                                    Labels
+                                </InfoHeader>
+                                <ReferenceContainer>
+                                    <Tag>Utility</Tag>
+                                    <AddButton>
+                                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
+                                    </AddButton>
+                                </ReferenceContainer>
+                            </InfoBlock>
+                            <InfoBlock>
+                                <InfoHeader>
+                                    <ion-icon style = {
+                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
+                                        } name="people-outline"></ion-icon>   
+                                    Mentions
                                 
-                       
-                        <InfoBlock>
-                            <InfoHeader>
-                                <ion-icon style = {
-                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
-                                    }name="chatbox-ellipses-outline"></ion-icon>
-                                Comments
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                <ProfileButton2>FS</ProfileButton2><CommentInput placeholder = {"Write a comment.."}/>
-                            </ReferenceContainer>
-                        </InfoBlock>
-                       
-                    </ModalContent>
-                </ModalBackground>
+                                </InfoHeader>
+                                <ReferenceContainer>
+                                    <NoneMessage>None yet</NoneMessage>
+                                    <AddButton>
+                                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
+                                    </AddButton>
+                                </ReferenceContainer>
+                            </InfoBlock>
+                                    
+                        
+                            <InfoBlock>
+                                <InfoHeader>
+                                    <ion-icon style = {
+                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "1rem", fontSize: "2rem"}
+                                        }name="chatbox-ellipses-outline"></ion-icon>
+                                    Comments
+                                </InfoHeader>
+                                <ReferenceContainer>
+                                    <ProfileButton2>FS</ProfileButton2><CommentInput placeholder = {"Write a comment.."}/>
+                                </ReferenceContainer>
+                            </InfoBlock>
+                        
+                        </ModalContent>
+                    </ModalBackground> : null
+                }
+            </>
         )
     }
 }
 
-export default RequestModal;
+const mapStateToProps = (state, ownProps) => {
+    let search = history.location.search
+    let params = new URLSearchParams(search)
+    let requestId = params.get('request') 
+
+    return {
+        request : state.requests[requestId]
+    }
+}
+
+
+export default  connect(mapStateToProps, { getRequest })(RequestModal);
 
 
 const CommentInput = styled.input`
@@ -180,7 +217,7 @@ const RequestDescription = styled.div`
     background-color: #F7F9FB;
     border-radius: 0.5rem;
     padding: 1rem;
-   
+    border: 1px solid #E0E4E7;
     font-size: 1.4rem;
     opacity: 0.7;
 `
@@ -274,8 +311,8 @@ const InfoHeader = styled.div`
 `
 
 const InfoBlock = styled.div`
-    padding-top: 1.9rem;
-    padding-bottom: 1.9rem;
+    padding-top: 2.4rem;
+    padding-bottom: 2.4rem;
     display: ${props => props.display};
     border-bottom: ${props => props.borderBottom};
 `
@@ -303,7 +340,7 @@ const ModalContent = styled.div`
     overflow-y: scroll;
     border: 1px solid #888;
     width: 75rem; /* Could be more or less, depending on screen size */
-    height: 84vh;
+    height: 90vh;
     border-radius: 0.4rem;
     box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
     display: flex;
