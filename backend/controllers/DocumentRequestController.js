@@ -210,10 +210,13 @@ getDocumentRequest = async (req, res) => {
 
 
 retrieveDocumentRequests = async (req, res) => {
-	const { documentRequestIds } = req.body;
-	if (!checkValid(documentRequestIds)) return res.json({success: false, error: "retrieveDocumentRequests error: no docuemntRequestIds provided.", result: null});
-	return res.json(await DocumentRequest.find({_id: {$in: documentRequestIds.map(obj => ObjectId(obj))}})
-	.populate('workspace').populate('repository')
+	let { workspaceId } = req.body;
+    let query = DocumentRequest.find();
+
+	if (checkValid(workspaceId)) query.where('workspace').equals(workspaceId)
+
+
+	return res.json(await query.populate('workspace').populate('repository')
 	.populate('references').populate('tags')
 	.populate('mentions').exec());
 }

@@ -12,13 +12,24 @@ import { withRouter } from 'react-router-dom';
 //actions
 import { clearSelected } from '../../../actions/Selected_Actions';
 import { setRequestCreation } from '../../../actions/UI_Actions';
-import { createRequest } from '../../../actions/Request_Actions';
+import { createRequest, retrieveRequests } from '../../../actions/Request_Actions';
 
 
 class RequestView extends React.Component {
     constructor(props) {
         super(props);
+
+        this.state = {
+            loaded: false
+        }
     }
+
+    componentDidMount(){
+        this.props.retrieveRequests().then(() => {
+            this.setState({loaded: true})
+        })
+    }
+
 
     createRequest() {
         let {workspaceId} = this.props.match.params
@@ -27,261 +38,79 @@ class RequestView extends React.Component {
             formValues.referenceIds = this.props.selected.map(sel => sel._id)
         }
         this.props.createRequest(formValues).then((request) => {
-            console.log("REQUEST", request)
             this.props.clearSelected();
             this.props.setRequestCreation(true)
             history.push(`?request=${request._id}`)
         })
     }
 
+    renderRequests(){
+        return this.props.requests.map(req => {
+            return (
+                <RequestCard onClick = {() => {history.push(`?request=${req._id}`)}}>
+                    <Author>
+                        <ProfileButton>FS</ProfileButton>
+                        <ion-icon 
+                            name="caret-up-sharp"
+                            style = {
+                                {color: "#172A4E", marginLeft: "-0.1rem", marginTop: "1rem", fontSize: "1.7rem"}
+                            }
+                        >
+                        </ion-icon>
+                        <Votes>10</Votes>
+                    </Author>
+                    <RequestBody>
+                        <Title2>{req.title}</Title2>
+                        <RequestContent>
+                            {req.markup}
+                        </RequestContent>
+                        <RequestReferences>
+                            {req.references.map(ref => {
+                                 let icon =  ref.kind === 'dir' ? <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.3rem"}} name="folder-sharp"></ion-icon> 
+                                    : <ion-icon style = {{marginRight: "0.5rem", fontSize: "1rem"}} name="document-outline"></ion-icon>
+                                return <Reference>{icon}{ref.name}</Reference>
+                            })}
+                        </RequestReferences>
+                    </RequestBody>
+                </RequestCard>)
+        }) 
+    }
 
     render() {
         return (
             <>
-                <Header>
-                        Request Documentation
-                </Header>
-                <Container>
-                <RequestContainer>
-                    
-                    <ListToolBar>
-                        
-                        <ListName onClick = {() => {this.createRequest()}}>
-                            <ion-icon marginLeft = {"0.3rem"} style={{marginTop :"-0.3rem", marginRight :"0.5rem", 'color': '#172A4E', 'fontSize': '2.4rem', }} name="create-outline"></ion-icon>
-                            Create Request
-                           
-                        </ListName>
+                { this.state.loaded ?
+                        <>
+                            <Header>
+                                    Request Documentation
+                            </Header>
+                            <Container>
+                                <RequestContainer>
+                                    <ListToolBar>
+                                        
+                                        <ListName onClick = {() => {this.createRequest()}}>
+                                            <ion-icon marginLeft = {"0.3rem"} style={{marginTop :"-0.3rem", marginRight :"0.5rem", 'color': '#172A4E', 'fontSize': '2.4rem', }} name="create-outline"></ion-icon>
+                                            Create Request
+                                        
+                                        </ListName>
 
-                        <IconBorder
-                                marginLeft = {"auto"}
-                        >
-                            <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
-                        </IconBorder>
-                        <IconBorder marginRight = {"1rem"}>
-                            <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', }} name="filter-outline"></ion-icon>
-                        </IconBorder>
-                    </ListToolBar>
-                    <RequestCard>
-                        <Author>
-                            <ProfileButton>FS</ProfileButton>
-                            <ion-icon 
-                                name="caret-up-sharp"
-                                style = {
-                                    {color: "#172A4E", marginLeft: "-0.1rem", marginTop: "1rem", fontSize: "1.7rem"}
-                                }
-                            >
-                            </ion-icon>
-                            <Votes>10</Votes>
-                            
-                        </Author>
-                        <RequestBody>
-                            <Title2>Explain Semantic</Title2>
-                            
-                            <RequestContent>
-                                Could someone highlight this for me? I didn't understand why reference.js is calling. I understand how the slate js backwards call is occurring but that is all.
-                            </RequestContent>
-                            <RequestReferences>
-                                <Reference>
-                                    <ion-icon 
-                                        name="folder-sharp"
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                    >
-                                    
-                                    </ion-icon>
-                                    backend
-                                </Reference>
-                                <Reference>
-                                    <ion-icon 
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                        name="document-outline">
-                                    </ion-icon>
-                                    index.js
-                                </Reference>
-                            </RequestReferences>
-                        </RequestBody>
-
-                    </RequestCard>
-                    <RequestCard>
-                        <Author>
-                            <ProfileButton>FS</ProfileButton>
-                            <ion-icon 
-                                name="caret-up-sharp"
-                                style = {
-                                    {color: "#172A4E", marginLeft: "-0.1rem", marginTop: "0.7rem", fontSize: "1.7rem"}
-                                }
-                            >
-                            </ion-icon>
-                            <Votes>10</Votes>
-                        </Author>
-                        <RequestBody>
-                            <Title2>Explain Semantic</Title2>
-                            
-                            <RequestContent>
-                                Could someone highlight this for me? I didn't understand why reference.js is calling. I understand how the slate js backwards call is occurring but that is all.
-                            </RequestContent>
-                            <RequestReferences>
-                                <Reference>
-                                    <ion-icon 
-                                        name="folder-sharp"
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                    >
-                                    
-                                    </ion-icon>
-                                    backend
-                                </Reference>
-                                <Reference>
-                                    <ion-icon 
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                        name="document-outline">
-                                    </ion-icon>
-                                    index.js
-                                </Reference>
-                            </RequestReferences>
-                        </RequestBody>
-
-                    </RequestCard>
-                    <RequestCard>
-                        <Author>
-                            <ProfileButton>FS</ProfileButton>
-                            <ion-icon 
-                                name="caret-up-sharp"
-                                style = {
-                                    {color: "#172A4E", marginLeft: "-0.1rem", marginTop: "1rem", fontSize: "1.7rem"}
-                                }
-                            >
-                            </ion-icon>
-                            <Votes>10</Votes>
-                        </Author>
-                        <RequestBody>
-                            <Title2>Explain Semantic</Title2>
-                            
-                            <RequestContent>
-                                Could someone highlight this for me? I didn't understand why reference.js is calling. I understand how the slate js backwards call is occurring but that is all.
-                            </RequestContent>
-                            <RequestReferences>
-                                <Reference>
-                                    <ion-icon 
-                                        name="folder-sharp"
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                    >
-                                    
-                                    </ion-icon>
-                                    backend
-                                </Reference>
-                                <Reference>
-                                    <ion-icon 
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                        name="document-outline">
-                                    </ion-icon>
-                                    index.js
-                                </Reference>
-                            </RequestReferences>
-                        </RequestBody>
-
-                    </RequestCard>
-                    <RequestCard>
-                        <Author>
-                            <ProfileButton>FS</ProfileButton>
-                            <ion-icon 
-                                name="caret-up-sharp"
-                                style = {
-                                    {color: "#172A4E", marginLeft: "-0.1rem", marginTop: "1rem", fontSize: "1.7rem"}
-                                }
-                            >
-                            </ion-icon>
-                            <Votes>10</Votes>
-                        </Author>
-                        <RequestBody>
-                            <Title2>Explain Semantic</Title2>
-                            
-                            <RequestContent>
-                                Could someone highlight this for me? I didn't understand why reference.js is calling. I understand how the slate js backwards call is occurring but that is all.
-                            </RequestContent>
-                            <RequestReferences>
-                                <Reference>
-                                    <ion-icon 
-                                        name="folder-sharp"
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                    >
-                                    
-                                    </ion-icon>
-                                    backend
-                                </Reference>
-                                <Reference>
-                                    <ion-icon 
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                        name="document-outline">
-                                    </ion-icon>
-                                    index.js
-                                </Reference>
-                            </RequestReferences>
-                        </RequestBody>
-
-                    </RequestCard>
-                    <RequestCard>
-                        <Author>
-                            <ProfileButton>FS</ProfileButton>
-                            <ion-icon 
-                                name="caret-up-sharp"
-                                style = {
-                                    {color: "#172A4E", marginLeft: "-0.1rem", marginTop: "1rem", fontSize: "1.7rem"}
-                                }
-                            >
-                            </ion-icon>
-                            <Votes>10</Votes>
-                        </Author>
-                        <RequestBody>
-                            <Title2>Explain Semantic</Title2>
-                            
-                            <RequestContent>
-                                Could someone highlight this for me? I didn't understand why reference.js is calling. I understand how the slate js backwards call is occurring but that is all.
-                            </RequestContent>
-                            <RequestReferences>
-                                <Reference>
-                                    <ion-icon 
-                                        name="folder-sharp"
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                    >
-                                    
-                                    </ion-icon>
-                                    backend
-                                </Reference>
-                                <Reference>
-                                    <ion-icon 
-                                        style = {
-                                            {color: "#172A4E", marginRight: "0.5rem"}
-                                        }
-                                        name="document-outline">
-                                    </ion-icon>
-                                    index.js
-                                </Reference>
-                            </RequestReferences>
-                        </RequestBody>
-
-                    </RequestCard>
-                </RequestContainer>
-                </Container>
+                                        <IconBorder
+                                                marginLeft = {"auto"}
+                                        >
+                                            <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem'}} name="search-outline"></ion-icon>
+                                        </IconBorder>
+                                        <IconBorder marginRight = {"1rem"}>
+                                            <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', }} name="filter-outline"></ion-icon>
+                                        </IconBorder>
+                                    </ListToolBar>
+                                    {this.renderRequests()}
+                                </RequestContainer>
+                            </Container>
+                        </> : null 
+                }
             </>
         )
-        }
+    }
 }
 
 
@@ -289,13 +118,14 @@ class RequestView extends React.Component {
 const mapStateToProps = (state) => {
     return {
         user: state.auth.user,
+        requests: Object.values(state.requests),
         selected: Object.values(state.selected)
     }
 }
 
 
 
-export default withRouter(connect(mapStateToProps, { createRequest, setRequestCreation, clearSelected })(RequestView));
+export default withRouter(connect(mapStateToProps, { createRequest, setRequestCreation, clearSelected, retrieveRequests})(RequestView));
 
 const CommentInput = styled.input`
     height: 3.7rem;
@@ -571,19 +401,20 @@ const RequestReferences = styled.div`
     display: flex;
 `
 
-
 const Reference = styled.div`
     font-size: 1.25rem;
-    color: #172A4E;
-    border: 1px solid #1BE5BE;
-    padding: 0.4rem 0.8rem;
-    background-color: white;
-    display: flex;
+    color: #19E5BE;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
+    padding: 0.5rem 0.9rem;
     align-items: center;
-    border-radius: 4px;
+    display: inline-flex;
+    background-color:#262E49;
+    color:#D6E0EE;
+    border-radius: 0.3rem;
+   /* box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     margin-right: 1rem;
-    margin-bottom: 1rem;
 `
+
 
 const RequestContent = styled.div`
     display: flex;

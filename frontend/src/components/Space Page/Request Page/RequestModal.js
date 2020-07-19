@@ -13,6 +13,9 @@ import history from '../../../history';
 import { getRequest, editRequest, deleteRequest } from '../../../actions/Request_Actions';
 import { setRequestCreation } from '../../../actions/UI_Actions';
 
+//components
+import TextareaAutosize from 'react-textarea-autosize';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAlignJustify } from '@fortawesome/free-solid-svg-icons'
 
@@ -21,7 +24,8 @@ class RequestModal extends Component {
         super(props)
         this.state = {
             title: "",
-            description: ""
+            description: "",
+            descriptionOpen: false
         }
     }
 
@@ -30,7 +34,8 @@ class RequestModal extends Component {
         let params = new URLSearchParams(search)
         let requestId = params.get('request') 
         this.props.getRequest(requestId).then(() => {
-            this.setState({title: this.props.request.title, description: this.props.request.markup})
+            let descriptionOpen = this.props.request.markup ? true : false
+            this.setState({title: this.props.request.title, description: this.props.request.markup, descriptionOpen})
             window.addEventListener('beforeunload', this.removeTrash, false);
         })
     }
@@ -59,11 +64,23 @@ class RequestModal extends Component {
         this.props.editRequest(requestId, {title: this.state.title})
     }
 
-    renderReferences() {
+    editRequestContent(){
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let requestId = params.get('request') 
+        this.props.editRequest(requestId, {markup: this.state.description})
+    }
 
-        this.props.request.references.map((ref) => {
-            return <Reference></Reference>
+    renderReferences() {
+        return this.props.request.references.map((ref) => {
+            let icon =  ref.kind === 'dir' ? <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.3rem"}} name="folder-sharp"></ion-icon> 
+                : <ion-icon style = {{marginRight: "0.5rem", fontSize: "1rem"}} name="document-outline"></ion-icon>
+            return <Reference>{icon}{ref.name}</Reference>
         })
+    }
+
+    renderRequests(){
+        
     }
 
     render(){
@@ -139,10 +156,19 @@ class RequestModal extends Component {
                                             } icon={faAlignJustify} />
                                     Description
                                 </InfoHeader>
-
-                                    <RequestDescription>
-                                        Describe your request
-                                    </RequestDescription>
+                                    {this.state.descriptionOpen ? 
+                                        <RequestDescriptionText 
+                                            value = {this.state.description} 
+                                            onChange = {(e) => {this.setState({description: e.target.value})}}
+                                            autoFocus
+                                            onBlur = {() => {if (!this.state.description) 
+                                                            {this.setState({descriptionOpen: false})} else {
+                                                            this.editRequestContent()
+                                                            }}}
+                                        />
+                                        :  <RequestDescription onClick = {() => {this.setState({descriptionOpen:true})}}>
+                                                Describe your request
+                                            </RequestDescription>}
                             </InfoBlock>
                             <InfoBlock>
                                 <InfoHeader>
@@ -242,7 +268,7 @@ const AddButton = styled.div`
     height: 2.3rem;
     background-color: #F7F9FB;
     border: 1px solid #E0E4E7;
-    opacity: 0.3;
+    opacity: 0.4;
     border-radius: 0.2rem;
     display: flex;
     align-items: center;
@@ -273,11 +299,33 @@ const RequestDescription = styled.div`
     margin-top: 0.8rem;
     height: 6rem;
     background-color: #F7F9FB;
-    border-radius: 0.5rem;
+    border-radius: 0.3rem;
     padding: 1rem;
     border: 1px solid #E0E4E7;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     opacity: 0.7;
+    color: #172A4E;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif; 
+    &:hover {
+        background-color: #EBECF0;
+    }
+    cursor: pointer;
+    resize: none;
+`
+
+const RequestDescriptionText = styled(TextareaAutosize)`
+    margin-top: 0.8rem;
+    height: 6rem;
+    border: none;
+    outline: none;
+    background-color: white;
+    border-radius: 0.3rem;
+    width: 63rem;
+    font-size: 1.5rem;
+    color: #172A4E;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif; 
+    cursor: pointer;
+    line-height: 1.8;
 `
 
 const Reference = styled.div`
