@@ -39,9 +39,7 @@ class SideNavbar extends React.Component {
     }
 
     componentDidMount(){
-        console.log(this.props.match.params)
         let { workspaceId } = this.props.match.params
-        console.log(workspaceId)
         this.props.retrieveDocuments({workspaceId, root: true})
     }
 
@@ -79,35 +77,6 @@ class SideNavbar extends React.Component {
         history.push(history.location.pathname)
     }
 
-    renderCodeDocumentNavigation(){
-        let items = this.props.repositoryItems.filter(item => 
-            {return item.documents && item.documents.length > 0}
-        )
-        items = items.sort((a, b) => {
-            if (a.documents.length > b.documents.length) return 1; 
-            else if (a.documents.length > b.documents.length) return -1; 
-            else if (a.name > b.name) return 1;
-            else if (b.name > a.name) return -1;
-            else return 0;
-        })
-        return items.map(item => {
-            return (<CodeDocumentContainer>
-                        <CodeDocumentHeader>
-                            {item.name}
-                        </CodeDocumentHeader>
-                        <CodeDocuments>
-                            {item.documents.map(document => {
-                                return (
-                                    <CodeDocumentItem to ="/documentation">
-                                        {document.title ? document.title : "Untitled"}
-                                    </CodeDocumentItem>
-                                )   
-                            }) }
-                        </CodeDocuments>
-                    </CodeDocumentContainer>
-                    )
-        })
-    }
 
     renderCodebaseLink(){
 
@@ -125,55 +94,50 @@ class SideNavbar extends React.Component {
         return(
             <>
             <SideNavbarContainer>
-                
+        
                 <RepositoryDetail>
                     <RepositoryIcon><StyledIcon src = {repoIcon3}/></RepositoryIcon>
-                    <RepositoryName>kgodara/doc-app</RepositoryName>
+                    <RepositoryName>Customer Feedback</RepositoryName>
                 </RepositoryDetail>
-                
-                <DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
-                    <ion-icon style={{'color': 'white', 'fontSize': '2rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
-                    Create Document
+                {/*<DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
+                    <ion-icon style={{'color': 'white', 'fontSize': '1.8rem', 'margin-right': '0.5rem'}} name="add-outline"></ion-icon>
+                    Create
                     <Bucket selected = {this.props.selected}/>
-                </DocumentCreateButton>
+                </DocumentCreateButton>*/}
               
                 <PageSectionContainer>
+                    <PageSection2>
+                        <ion-icon 
+                            style={{'fontSize': '1.8rem', marginRight: '-0.3rem'}}
+                            name="add-outline"></ion-icon>
+                        <PageName>Create</PageName>
+                    </PageSection2>
                     <PageSection>
                         <ion-icon 
-                            style={{'fontSize': '1.7rem'}}
-                            name="newspaper-outline"></ion-icon>
-                        <PageName>Overview</PageName>
+                            style={{'fontSize': '1.5rem'}}
+                            name="code-outline"></ion-icon>
+                        <PageName>Codebase</PageName>
                     </PageSection>
                    
                     <PageSection to = {`/workspaces/${workspaceId}/coverage`}>
-                        <ion-icon style={{'fontSize': '1.7rem'}} name="analytics-outline"></ion-icon>
+                        <ion-icon style={{'fontSize': '1.5rem'}} name="analytics-outline"></ion-icon>
                         <PageName >
                              
                              Track Coverage
                         </PageName>
                     </PageSection>
                     <PageSection to = {`/workspaces/${workspaceId}/request`}>
-                        <ion-icon style={{'fontSize': '1.7rem'}} name="git-pull-request-outline"></ion-icon>
+                        <ion-icon style={{'fontSize': '1.5rem'}} name="git-pull-request-outline"></ion-icon>
                         <PageName>
                             Request Documentation
                         </PageName>
                     </PageSection>
                     <PageSection>
-                        <ion-icon style={{'fontSize': '1.7rem'}} name="cog-outline"></ion-icon>
+                        <ion-icon style={{'fontSize': '1.5rem'}} name="cog-outline"></ion-icon>
                         <PageName>Settings</PageName>
                     </PageSection>
                 </PageSectionContainer>
-                <Block>
-                    <Deline>Codebase</Deline>
-                    <PageSection2 to = {this.renderCodebaseLink()}>
-                        <StyledIcon2 src={codeIcon} />
-                       
-                        <PageName2>fsanal / test</PageName2>
-                        <CodebaseChevBorder>
-                            <ion-icon style={{'fontSize': '1.7rem', 'marginTop': '0.1rem'}} name="chevron-down-sharp"></ion-icon>
-                        </CodebaseChevBorder>
-                    </PageSection2>
-                </Block>
+               
                 <Block marginTop = {"1rem"}>
                     <Deline>Documents</Deline>
                     <DocumentationContainer backend={HTML5Backend} >
@@ -188,7 +152,31 @@ class SideNavbar extends React.Component {
     }
 }
 
+/* 
+     <DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
+                    <ion-icon style={{'color': 'white', 'fontSize': '2rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
+                    Create Document
+                    <Bucket selected = {this.props.selected}/>
+                </DocumentCreateButton>
+<Block>
+                    <Deline>Codebase</Deline>
+                    <PageSection2 to = {this.renderCodebaseLink()}>
+                        <StyledIcon2 src={codeIcon} />
+                       
+                        <PageName2>fsanal / test</PageName2>
+                        <CodebaseChevBorder>
+                            <ion-icon style={{'fontSize': '1.7rem', 'marginTop': '0.1rem'}} name="chevron-down-sharp"></ion-icon>
+                        </CodebaseChevBorder>
+                    </PageSection2>
+                </Block>*/
 /*
+
+  
+                <DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
+                    <ion-icon style={{'color': 'white', 'fontSize': '2rem', 'margin-right': '1.5rem'}} name="add-outline"></ion-icon>
+                    Create Document
+                    <Bucket selected = {this.props.selected}/>
+                </DocumentCreateButton>
 <SearchbarWrapper 
                     border = {this.state.searchbarBorder}
                     //onFocus = {() => this.setState({searchbarBorder: "1px solid #19E5BE"})} 
@@ -227,15 +215,12 @@ const DocumentationContainer = styled.div`
     padding: 3rem 3rem;
     height: 70rem;
     overflow-y: scroll;
-
 `
-
 const CodeDocumentContainer = styled.div`
     display: flex;
     flex-direction: column;
     margin-bottom: 3rem;
 `
-
 const CodeDocumentHeader = styled.div`
     font-size: 1.6rem;
     color: #262626;
@@ -246,11 +231,8 @@ const CodeDocumentHeader = styled.div`
     }
     
 `
-
 const CodeDocuments = styled.div`
-
 `
-
 const CodeDocumentItem = styled(Link)`
     display: block;
     cursor: pointer;
@@ -268,7 +250,6 @@ const CodeDocumentItem = styled(Link)`
     opacity: 0.6;
     color: black;
 `
-
                         
                         
                         
@@ -281,7 +262,8 @@ const mapStateToProps = (state, ownProps) => {
         user: state.auth.user,
         selected : Object.values(state.selected),
         repositoryItems: Object.values(state.repositoryItems),
-        workspace: state.workspaces[workspaceId]
+        workspace: state.workspaces[workspaceId],
+        /*repositories: state.repostiorei*/
     }
 }
 
@@ -292,16 +274,12 @@ const AddRequestButton = styled.div`
     margin-left: auto;
     margin-right: -0.3rem;
     display: flex;
-
     align-items: center;
     justify-content: center;
-
     width: 1.9rem;
     height: 1.9rem;
-
    
     border-radius: 0.3rem;
-
     color:   #262E49; 
     background-color:white;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
@@ -314,7 +292,6 @@ const ModalToolbar = styled.div`
     
     display: flex;
     align-items: center;
-
 `
 
 const ModalEditor = styled.div`
@@ -329,7 +306,6 @@ const Title = styled.div`
 `
 
 const ModalCreateButton = styled.div`
-   
     border-radius: 0.5rem;
     margin-left: auto;
     margin-right: 3rem;
@@ -341,7 +317,6 @@ const ModalCreateButton = styled.div`
     color: white;
     background-color: #19E5BE;
     cursor: pointer;
-
     &:hover {
        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149); 
     }
@@ -363,6 +338,7 @@ const ModalToolbarButton = styled.div`
     }
     opacity: ${props => props.opacity};
 `
+
 const Divider = styled.div`
     border-right: 1px solid #172A4E;
     opacity: 0.5;
@@ -388,7 +364,6 @@ const ModalContent = styled.div`
     background-color: #fefefe;
     margin: 8vh auto; /* 15% from the top and centered */
     
-
     border: 1px solid #888;
     width: 85vw; /* Could be more or less, depending on screen size */
     height: 84vh;
@@ -402,7 +377,6 @@ const ModalContent = styled.div`
 const StyledIcon2 = styled.img`
     width: 2.5rem;
     margin-right: 0.2rem;
-
 `
 
 const IconBorder = styled.div`
@@ -425,7 +399,7 @@ const IconBorder = styled.div`
 `
 
 const Deline = styled.div`
-    
+    font-weight: 400;
     text-transform: uppercase;
     color: #172A4E;
     opacity: 0.5;
@@ -434,6 +408,7 @@ const Deline = styled.div`
     display: flex;
     align-items: center;
 `
+
 const ChildDocument = styled.div`
     display: flex;
     align-items: center;
@@ -451,7 +426,6 @@ const ChildDocument = styled.div`
 `
 
 const DocumentName = styled.div`
-
 `
 
 const CurrentReference = styled.div`
@@ -472,25 +446,25 @@ const CurrentReference = styled.div`
 const StyledIcon = styled.img`
     width: 2.8rem;
 `
+
 const RepositoryDetail = styled.div`
     display: flex;
     align-items: center;
     margin-left: 2rem;
     margin-top: 2rem;
-    
 `
+
 const RepositoryName = styled.div`
     margin-left: 1.5rem;
     font-size: 1.4rem;
-    font-weight: bold;
+    font-weight: 600;
     color: #172A4E;
 `
-
 
 const PageSectionContainer = styled.div`
     display: flex;
     flex-direction: column;
-    margin-top: 2rem;
+    margin-top: 2.3rem;
     
 `
 
@@ -502,7 +476,7 @@ const PageSection = styled(Link)`
     padding: 1.2rem;
     border-radius: 0.3rem;
     margin-right: 2rem;
-    height: 3.6rem;
+    height: 2.9rem;
     display: flex;
     align-items: center;
     cursor: pointer;
@@ -514,22 +488,28 @@ const PageSection = styled(Link)`
 
 const PageSection2 = styled(Link)`
     text-decoration: none;
+    margin-left: 2rem;
     color: #172A4E;
     width: 23rem;
-    padding: 1.8rem 1.2rem;
-    border-radius: 0.5rem;
-    height: 3.6rem;
+    padding: 1.2rem;
+    border-radius: 0.3rem;
+    margin-right: 2rem;
+    height: 2.9rem;
     display: flex;
     align-items: center;
     cursor: pointer;
-    background-color: white;
-    /*border: 1px solid rgba(136, 147, 165, 0.5);*/
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    &:hover {
-        background-color: #F4F4F6; 
-    }
+    background-color: #5B75E6;/*#00B389 */
+    color: white;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
     
+    
+    &:hover {
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149); 
+    }
+
 `
+
 const PageName2= styled.div`
     margin-left: 1.2rem;
     font-size: 1.4rem;
@@ -550,8 +530,10 @@ const CodebaseChevBorder = styled.div`
 `
 
 const PageName = styled.div`
-    margin-left: 1.2rem;
+    margin-left: 1rem;
     font-size: 1.35rem;
+    font-weight: 400;
+    opacity: 1;
 `
 
 const RepositoryIcon = styled.div`
@@ -573,25 +555,28 @@ const SideNavbarContainer = styled.div`
     flex-direction: column;
 `
 
+
+
 const DocumentCreateButton = styled.div`
     position: relative;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight:400;
+    letter-spacing: 0.5px;
     color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
-    background-color:#1BE5BE;
+    background-color:#19E5BE;
     /*border: 2px solid #19E5BE;*/
     margin-left: 2rem;
-    margin-right: 2rem;
+    margin-right: 1rem;
     margin-top: 2rem;
     border-radius: 0.3rem;
     display: flex;
-    align-items: center;
     width: 23rem;
-    height: 3.3rem;
-    padding: 0.5rem 1rem;
+    align-items: center;
+    height: 2.7rem;
+    padding: 0rem 1rem;
     /*
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     */
@@ -639,7 +624,6 @@ const DocumentationContainer = styled(DndProvider)`
    
     height: 38rem;
     overflow-y: scroll;
-
 `
 
 const CodeDocumentContainer = styled.div`
@@ -660,7 +644,6 @@ const CodeDocumentHeader = styled.div`
 `
 
 const CodeDocuments = styled.div`
-
 `
 
 const CodeDocumentItem = styled(Link)`

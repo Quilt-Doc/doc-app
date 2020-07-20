@@ -104,7 +104,7 @@ class Document extends Component {
                     <IconBorder2 onClick = {(e) => this.open(e)}>
                         <ion-icon 
                             name="chevron-forward-outline"
-                            style={{'fontSize': '1.3rem', 'color': "#213A81"}}
+                            style={{'fontSize': '1.3rem'}}
                         ></ion-icon>
                     </IconBorder2>
                 )
@@ -113,7 +113,7 @@ class Document extends Component {
                     <IconBorder2 onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState({open: false})}}>
                         <ion-icon 
                             name="chevron-down-outline"
-                            style={{'fontSize': '1.3rem', 'color': "#213A81"}}
+                            style={{'fontSize': '1.3rem'}}
                         ></ion-icon>
                     </IconBorder2>
                 )
@@ -124,7 +124,7 @@ class Document extends Component {
                 <IconBorder3>
                     <ion-icon 
                         name="ellipse-sharp"
-                        style={{'fontSize': '0.4rem', 'color': "#213A81"}}
+                        style={{'fontSize': '0.4rem'}}
                     ></ion-icon>
                 </IconBorder3>
             )
@@ -174,6 +174,7 @@ const mapStateToProps = (state, ownProps) => {
 }
             
 const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, moveDocument, retrieveDocuments, attachChild, removeChild, setCreation, clearSelected })(Document));
+
 export default  ConnectedDocument;
 
 
@@ -182,7 +183,7 @@ const Title = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    font-weight: 500;
+    font-weight: 400;
 `
 
 const StyledIcon2 = styled.img`

@@ -31,7 +31,7 @@ const Dashboard = () => {
     return (
         <Container>
             <TopNav>
-                <ion-icon style={{'color': '#19E5BE', 'fontSize': '2.4rem', 'marginLeft': '5rem', 'marginRight': '1.2rem'}} name="book-outline"></ion-icon>
+                <ion-icon style={{'color': '#5B75E6', 'fontSize': '2.4rem', 'marginLeft': '5rem', 'marginRight': '1.2rem'}} name="book-outline"></ion-icon>
                 <Company>Docapp</Company>
                 
                 <NavbarElement onClick = {() => {history.push("/workspaces")}} >
@@ -68,8 +68,13 @@ const Dashboard = () => {
                                     }
                                 </SearchBubble>
                     }
+                     
                 </div>
                 <Options>
+                    <Option>
+                        <ion-icon name="add-outline">
+                        </ion-icon>
+                    </Option>
                     <Option>
                         <ion-icon name="layers-outline">
                         </ion-icon>

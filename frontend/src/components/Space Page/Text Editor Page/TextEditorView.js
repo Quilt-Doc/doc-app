@@ -635,9 +635,10 @@ const EditorContainer = styled.div`
 `
 const InfoBar = styled.div`
     min-width: 35rem;
+    margin-top: 3rem;
     z-index: 20;
     /*background-color: #F4F4F6; */
-    border-left: 1px solid #E0E4E7;
+   /* border-left: 1px solid #E0E4E7;*/
     padding-left: 3rem;
     padding-right: 3rem;
     /*box-shadow: -1px 2px 4px rgba(0,0,0,0.1);*/

@@ -39,7 +39,7 @@ const DraggableDocument = (props) => {
     const [{ isOver, canDrop}, drop] = useDrop({
 		accept: ItemTypes.DOCUMENT,
 		canDrop: (item) => notChild(item, document, false),
-		drop: (item) => {console.log(item); console.log(document)},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
+		drop: (item) => {props.moveDocument({ documentId: item.document._id, parentId: document._id, order: 0} )},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
 		collect: (monitor) => ({
 			  isOver: !!monitor.isOver(),
 			  canDrop: !!monitor.canDrop()
@@ -49,7 +49,10 @@ const DraggableDocument = (props) => {
 	const [{ isOver2, canDrop2}, gapDrop] = useDrop({
 		accept: ItemTypes.DOCUMENT,
 		canDrop: (item) => notChild(item, document, true),
-		drop: (item) => {console.log(item); console.log(document)},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
+		drop: (item) => {
+			let parentId = document.parentId !== null ? document.parentId : ""
+			props.moveDocument({ documentId: item.document._id, parentId, order: document.order} );
+		},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
 		collect: (monitor) => ({
 			  isOver2: !!monitor.isOver(),
 			  canDrop2: !!monitor.canDrop()
@@ -83,7 +86,7 @@ const DraggableDocument = (props) => {
 					marginLeft = {`${props.marginLeft}rem`}
 				>
 					{props.renderLeftIcon()}
-					<ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', 'color': "#213A81", marginRight: "0.8rem"}}></ion-icon>
+					<ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', marginRight: "0.8rem"}}></ion-icon>
 					{props.renderTitle()}
 					<IconBorder opacity = {createOpacity} onClick = {(e) => {props.createDocument(e)}}>
 						<ion-icon style={{'fontSize': '1.5rem'}} name="add-outline"></ion-icon>
@@ -99,7 +102,7 @@ export default DraggableDocument
 
 const Gap = styled.div`
 	height: 0.3rem;
-	border-radius: 0.3rem;
+	border-radius: 0.1rem;
 	background-color: ${props => props.backgroundColor};
 	transition:  background-color 0.05s ease-out;
 `
@@ -137,7 +140,7 @@ const IconBorder = styled.div`
 const CurrentReference = styled.div`
     display: flex;
     align-items: center;
-	font-size: 1.4rem;
+	font-size: 1.35rem;
 	border: none;
     background-color: ${props => props.backgroundColor};
     &:hover {

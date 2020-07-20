@@ -43,12 +43,7 @@ class RequestView extends React.Component {
             history.push(`?request=${request._id}`)
         })
     }
-
-    renderRequests(){
-        return this.props.requests.map(req => {
-            return (
-                <RequestCard onClick = {() => {history.push(`?request=${req._id}`)}}>
-                    <VoteContainer>
+    /* <VoteContainer>
                         <ion-icon 
                                 name="caret-up-sharp"
                                 style = {
@@ -57,20 +52,30 @@ class RequestView extends React.Component {
                             >
                             </ion-icon>
                         <Votes>10</Votes>
-                    </VoteContainer>
+                    </VoteContainer> */
+    renderRequests(){
+        return this.props.requests.map(req => {
+            return (
+                <RequestCard onClick = {() => {history.push(`?request=${req._id}`)}}>
+                   
                     <ProfileButton>FS</ProfileButton>
                     <RequestBody>
                         <Title2>{req.title}</Title2>
-                        <RequestContent>
-                            {req.markup}
-                        </RequestContent>
-                        <RequestReferences>
-                            {req.references.map(ref => {
-                                 let icon =  ref.kind === 'dir' ? <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.3rem"}} name="folder-sharp"></ion-icon> 
-                                    : <ion-icon style = {{marginRight: "0.5rem", fontSize: "1rem"}} name="document-outline"></ion-icon>
-                                return <Reference>{icon}{ref.name}</Reference>
-                            })}
-                        </RequestReferences>
+                        {req.markup && 
+                            <RequestContent>
+                                {req.markup}
+                            </RequestContent>
+                        }
+                        {req.references && req.references.length > 0 && 
+                            <RequestReferences>
+                                {req.references.map(ref => {
+                                    let icon =  ref.kind === 'dir' ? <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.3rem"}} name="folder-sharp"></ion-icon> 
+                                        : <ion-icon style = {{marginRight: "0.5rem", fontSize: "1rem"}} name="document-outline"></ion-icon>
+                                    return <Reference>{icon}{ref.name}</Reference>
+                                })}
+                            </RequestReferences>
+                        }
+                      
                     </RequestBody>
                 </RequestCard>)
         }) 
@@ -160,16 +165,17 @@ const RequestContainer = styled.div`
 `
 
 const RequestCard = styled.div`
-    padding: 1.5rem;
-    padding-left: 9rem;
-    padding-right: 9rem;
+    padding: 1rem 1.5rem;
+    width: 80rem;
     display: flex;
     cursor: pointer;
     border-radius: 0.3rem;
     transition: all 0.1s ease-in;
+    border-bottom: 1px solid #EDEFF1;
     &:hover {
         background-color: #F4F4F6; 
     }
+    align-items: center;
 `
 
 const ProfileButton2 = styled.div`
@@ -196,12 +202,13 @@ const ProfileButton = styled.div`
     border-radius: 0.3rem;
     font-size: 1.4rem;
     color: white;
-    background-color: #19E5BE;
+    background-color:#468DFF;
     cursor: pointer;
 `
 
 const RequestReferences = styled.div`
     display: flex;
+    margin-top: 0.7rem;
 `
 
 const Reference = styled.div`
@@ -224,12 +231,17 @@ const RequestContent = styled.div`
     align-items: center;
     color: #172A4E;
     font-size: 1.5rem;
-    margin-bottom: 1rem;
+    margin-top: 0.7rem;
 `
 
 const RequestBody = styled.div`
+    
     margin-left: 3rem;
     width: 55rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
 `
 
 const Votes = styled.div`
@@ -332,8 +344,7 @@ const Title = styled.div`
 
 
 const Title2= styled.div`
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+    font-weight: 400; 
     color: #172A4E;
 `
