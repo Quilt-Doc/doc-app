@@ -15,7 +15,7 @@ createDocument = async (req, res) => {
         title, root, markup, tagIds, parentId/*, order*/ } = req.body;
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
+    //if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
     if (!checkValid(workspaceId)) return res.json({success: false, error: "createDocument error: no workspaceId provided.", result: null});
     if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
     // if (!checkValid(order)) return res.json({success: false, error: "createDocument error: no order provided.", result: null});
@@ -47,7 +47,7 @@ createDocument = async (req, res) => {
     var emptyTitle = false;
 
     // If we are creating an 'untitled_[0-9]+' document 
-    if (!checkValid(title)) {
+    if (title === "") {
         emptyTitle = true;
         workingTitle = 'untitled_';
         var re = new RegExp('^' + parentPath + 'untitled_[0-9]+$', 'i');
@@ -90,7 +90,6 @@ createDocument = async (req, res) => {
     let document = new Document(
         {
             author: ObjectId(authorId),
-            repository: ObjectId(repositoryId),
             workspace: ObjectId(workspaceId),
             title: emptyTitle ? '' : workingTitle,
             path: parentPath + workingTitle,
@@ -98,6 +97,10 @@ createDocument = async (req, res) => {
         },
     );
 
+    if (repositoryId) {
+        document.repository = ObjectId(repositoryId)
+    }
+    
     if (parentId) {
         document.parent = ObjectId(parentId);
     }
@@ -122,7 +125,7 @@ createDocument = async (req, res) => {
     document.save(async (err, document) => {
         if (err) return res.json({ success: false, error: err, result: null });
         var pushParent = false;
-
+        
         // Increment `order` of parent's children
         if (parent) {
             await Document.updateMany({_id: {$in: parent.children.map(childObj => ObjectId(childObj._id.toString()))},
@@ -130,7 +133,7 @@ createDocument = async (req, res) => {
                     {$inc: {order: 1}});
         }
         else {
-            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gte: order} },
+            await Document.updateMany({ parent: null, _id: {$ne: document._id}, order: {$gte: order} },
                 {$inc: {order: 1}});
         }
 
@@ -191,14 +194,14 @@ editDocument = (req, res) => {
 
 
 deleteDocument = async (req, res) => {
-    const { documentId } = req.body;
-    if (!checkValid(documentId)) {
+    const { id } = req.params
+    if (!checkValid(id)) {
         return res.json({success: false, error: 'deleteDocument: error no id passed', result: null});
     }
 
-    console.log('documentId: ', documentId);
-    console.log(typeof documentId);
-    var toDelete = await Document.findById(documentId);
+    console.log('documentId: ', id);
+    console.log(typeof id);
+    var toDelete = await Document.findById(id);
     if (!toDelete) {
         return res.json({success: false, error: 'deleteDocument: error could not find document to delete', result: null});
     }
@@ -206,18 +209,18 @@ deleteDocument = async (req, res) => {
     if (toDelete.parent != null) {
 
         await Document.update({_id: ObjectId(toDelete.parent.toString())}, 
-            { $pull: {children: ObjectId(documentId) }});
+            { $pull: {children: ObjectId(id) }});
         const parentObj = await Document.findById(toDelete.parent);
         await Document.updateMany({$and: 
                 [
                     {_id: {$in: parentObj.children.map(childObj => ObjectId(childObj._id.toString()))}},
-                    {_id: {$ne: ObjectId(documentId)}}
+                    {_id: {$ne: ObjectId(id)}}
                 ],
                 order: {$gt: toDelete.order}},
                 {$inc: {order: -1}});
     }
     else {
-        await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gt: toDelete.order} },
+        await Document.updateMany({ parent: null, _id: {$ne: ObjectId(id)}, order: {$gt: toDelete.order} },
             {$inc: {order: -1}});
     }
 
@@ -229,7 +232,8 @@ deleteDocument = async (req, res) => {
             return res.json({ success: false, error: err, result: [toDelete] });
         }
         console.log('Delete successful');
-        return res.json({success: true, result: [deletedDocs]});
+        console.log(deletedDocs)
+        return res.json({success: true, result: deletedDocs});
     });
 }
 
@@ -540,10 +544,17 @@ moveDocument = async (req, res) => {
 }
 
 retrieveDocuments = (req, res) => {
-    let { textQuery, authorId, childrenIds, workspaceId, repositoryId, referenceIds, root, tagIds, limit, skip } = req.body;
+    let { textQuery, authorId, childrenIds, workspaceId, repositoryId, referenceIds, parentId, tagIds, limit, skip } = req.body;
     
     let query = Document.find({});
-    if (checkValid(root)) query.where('root').equals(root);
+    if (checkValid(parentId)) {
+        if (parentId == '') {
+            query.where('parent').equals(null);
+        }
+        else {
+            query.where('parent').equals(parentId);
+        }
+    }
     if (checkValid(authorId)) query.where('author').equals(authorId);
     if (checkValid(workspaceId)) query.where('workspace').equals(workspaceId);
     if (checkValid(repositoryId)) query.where('repository').equals(repositoryId);

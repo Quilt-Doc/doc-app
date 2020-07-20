@@ -28,8 +28,9 @@ import { api } from '../apis/api';
 //create, move, 
 
 export const createDocument = (formValues) => async (dispatch) => {
+    console.log("ENTERED HERE")
     const response = await api.post('/documents/create', formValues );
-
+    console.log(response.data)
     dispatch({ type: CREATE_DOCUMENT, payload: response.data.result });
     return response.data
 }
@@ -79,7 +80,6 @@ export const retrieveMoreDocuments = (formValues) => async dispatch => {
 
 export const deleteDocument = id => async dispatch => {
     const response = await api.delete(`/documents/delete/${id}`);
-    console.log("DISPATCHED")
     dispatch({ type: DELETE_DOCUMENT, payload: response.data.result });
 }
 

@@ -40,7 +40,7 @@ class SideNavbar extends React.Component {
 
     componentDidMount(){
         let { workspaceId } = this.props.match.params
-        this.props.retrieveDocuments({workspaceId, root: true})
+        this.props.retrieveDocuments({workspaceId, parentId: ""})
     }
 
     renderDocuments(){
@@ -59,7 +59,7 @@ class SideNavbar extends React.Component {
         let {workspaceId, repositoryId} = this.props.match.params
         
         this.props.createDocument({authorId: this.props.user._id,
-            workspaceId, parentId: "", root: true,
+            workspaceId, parentId: "", title: "",
             referenceIds: this.props.selected.map(item => item._id)}).then((documents) => {
             console.log("CREATED DOCS", documents)
             console.log(documents)
@@ -106,7 +106,7 @@ class SideNavbar extends React.Component {
                 </DocumentCreateButton>*/}
               
                 <PageSectionContainer>
-                    <PageSection2>
+                    <PageSection2 onClick = {() => {this.createDocumentFromButton()}}>
                         <ion-icon 
                             style={{'fontSize': '1.8rem', marginRight: '-0.3rem'}}
                             name="add-outline"></ion-icon>
@@ -258,7 +258,7 @@ const CodeDocumentItem = styled(Link)`
 const mapStateToProps = (state, ownProps) => {
     let {workspaceId} = ownProps.match.params
     return {
-        documents:  Object.values(state.documents).filter(document => document.root === true),
+        documents:  Object.values(state.documents).filter(document => document.parent === null),
         user: state.auth.user,
         selected : Object.values(state.selected),
         repositoryItems: Object.values(state.repositoryItems),

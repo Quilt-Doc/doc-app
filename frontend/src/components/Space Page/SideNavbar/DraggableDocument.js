@@ -17,13 +17,13 @@ const notChild = (item, document, gap) => {
 	let path = item.document.path
 	let path2 = document.path
 	let bool = gap ?  path.length < path2.length : path.length <= path2.length
-
+	/*
 	if (gap) {
 		console.log("\n\n\n\n", "BIG MOVES")
 		console.log(path)
 		console.log(path2)
 		console.log(bool)
-	}
+	}*/
 	if (bool && path2.slice(0, path.length) === path) {
 		return false
 	}
@@ -74,7 +74,6 @@ const DraggableDocument = (props) => {
 		
 			<div ref = {drop}>
 				<CurrentReference 
-
 					backgroundColor = { isDragging ? "#EBECF0" : isOver && canDrop ? "#DEEBFF" : ""}
 					onDrag = {(e) => {  e.target.style.cursor = 'grabbing'; }}
 					onDragEnd = {(e) => {  e.target.style.cursor = ''; }}

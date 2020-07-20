@@ -66,6 +66,13 @@ class Document extends Component {
 
     renderChildren = () => {
         let children = Object.values(this.props.children)
+        children.sort((a, b) => {
+            if (a.order < b.order) {
+                return -1
+            } else {
+                return 1
+            }
+        })
         return children.map((child) => {
             return <ConnectedDocument
                         width = {this.props.width - 2} 

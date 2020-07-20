@@ -19,11 +19,15 @@ export default (state = {}, action) => {
         case RETRIEVE_DOCUMENTS:
             return { ...state, ..._.mapKeys(action.payload, '_id') };
         case DELETE_DOCUMENT:
-            let ids = action.payload.result.map(result => result._id);
+            console.log(action.payload)
+            let ids = action.payload.map(result => result._id);
+            console.log(ids)
             return _.omit(state, ids);
         case EDIT_DOCUMENT:
             return { ...state, [action.payload._id]: action.payload };
         case MOVE_DOCUMENT:
+            console.log("PREVIOUS", state)
+            console.log("RESULT", action.payload)
             return { ...state, ..._.mapKeys(action.payload, '_id') };
         case ATTACH_CHILD:
             return { ...state, [action.payload._id]: action.payload };

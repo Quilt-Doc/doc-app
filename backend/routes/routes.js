@@ -31,7 +31,7 @@ router.post('/documents/create', document_controller.createDocument);
 router.get('/documents/get/:id', document_controller.getDocument);
 router.get('/documents/get_parent/:id', document_controller.getParent);
 router.put('/documents/edit/:id', document_controller.editDocument);
-router.delete('/documents/delete', document_controller.deleteDocument);
+router.delete('/documents/delete/:id', document_controller.deleteDocument);
 router.put('/documents/rename', document_controller.renameDocument);
 router.put('/documents/move', document_controller.moveDocument);
 router.post('/documents/retrieve', document_controller.retrieveDocuments);
