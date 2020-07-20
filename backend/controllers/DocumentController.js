@@ -12,14 +12,14 @@ checkValid = (item) => {
 // TODO: add order validation
 createDocument = async (req, res) => {
     const { authorId, referenceIds, childrenIds, repositoryId, workspaceId,
-        title, root, markup, tagIds, parentId, order } = req.body;
+        title, root, markup, tagIds, parentId/*, order*/ } = req.body;
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
     if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
     if (!checkValid(workspaceId)) return res.json({success: false, error: "createDocument error: no workspaceId provided.", result: null});
     if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
-    if (!checkValid(order)) return res.json({success: false, error: "createDocument error: no order provided.", result: null});
-
+    // if (!checkValid(order)) return res.json({success: false, error: "createDocument error: no order provided.", result: null});
+    var order = 0;
 
     var parentPath = '';
     var parent;
@@ -35,6 +35,7 @@ createDocument = async (req, res) => {
     if (parentPath.length > 0) {
         parentPath = parentPath + '/';
     }
+
 
     var modifiedDocs = [];
 
@@ -121,11 +122,26 @@ createDocument = async (req, res) => {
     document.save(async (err, document) => {
         if (err) return res.json({ success: false, error: err, result: null });
         var pushParent = false;
+
+        // Increment `order` of parent's children
+        if (parent) {
+            await Document.updateMany({_id: {$in: parent.children.map(childObj => ObjectId(childObj._id.toString()))},
+                    order: {$gte: order}},
+                    {$inc: {order: 1}});
+        }
+        else {
+            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gte: order} },
+                {$inc: {order: 1}});
+        }
+
+
         if (parentId) {
             parent.children.push(ObjectId(document._id));
             await parent.save();
             pushParent = true;
         }
+
+
         document.populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err, result: [document] });
             modifiedDocs.push(document);
