@@ -74,6 +74,7 @@ router.delete('/repositories/delete/:id', repository_controller.deleteRepository
 
 const workspace_controller = require('../controllers/WorkspaceController');
 router.post('/workspaces/create', workspace_controller.createWorkspace);
+router.post('/workspaces/search', workspace_controller.searchWorkspace);
 router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
 router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
 router.put('/workspaces/add_user/:id', workspace_controller.addUser);
