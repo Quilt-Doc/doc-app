@@ -3,6 +3,7 @@ import React from 'react';
 //styles 
 import styled from "styled-components"
 import SyntaxHighlighter from 'react-syntax-highlighter';
+import chroma from 'chroma-js';
 
 class Snippet extends React.Component {
     constructor(props) {
@@ -28,7 +29,7 @@ class Snippet extends React.Component {
     }
 
     hover() {
-        this.setState({'backgroundColor': 'white', 'boxShadow': '0 6px 8px rgba(102,119,136,.03), 0 1px 2px rgba(102,119,136,.3)'})
+        this.setState({'backgroundColor': 'white', 'boxShadow': 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px'})
 
         if (this.props.codeViewState.reselectingSnippet === null && !this.props.codeViewState.selectionMode ){
             this.setState({'menuStyle': {top: "", left: "71rem", opacity: "1"}})
@@ -52,7 +53,7 @@ class Snippet extends React.Component {
                 <SnippetWrapper 
                     backgroundColor = {this.state.backgroundColor} 
                     boxShadow = {this.state.boxShadow}
-                    border = {this.props.status === "INVALId" ?  "1.5px solid #eb3b5a" :  "1.5px solid #5534FF"}
+                    border = {this.props.status === "INVALId" ?  "1.5px solid #eb3b5a" :  "1.5px solid #5B75E6"}
                     onMouseEnter = {this.props.scalePane} 
                     onMouseLeave = {this.props.unhoverBoth}
                 >
@@ -101,8 +102,9 @@ export default Snippet;
 
 const SnippetWrapper = styled.div`
     cursor: pointer;
-    padding: 1rem 0rem;
-    background-color: ${props => props.backgroundColor};
+   
+    /*background-color: ${props => props.backgroundColor};*/
+    background-color:  ${chroma("#5B75E6").alpha(0.04)};
     box-shadow: ${props => props.boxShadow};
     margin-bottom: 1.5rem;
     margin-top: 1.5rem;

@@ -11,7 +11,7 @@ import history from '../../history';
 import DirectoryView from '../Space Page/Directory Navigation Page/DirectoryView'
 import CodeView from '../Space Page/Code Editing Page/CodeView'
 import TextEditorView from '../Space Page/Text Editor Page/TextEditorView';
-import Donut from '../General Components/Donut';
+import Donut from '../General/Donut';
 
 //component that holds everything related to repository navigation (directory viewer and code viewer)
 

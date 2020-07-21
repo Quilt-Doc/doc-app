@@ -106,8 +106,8 @@ router.put('/document_requests/edit/:id', document_request_controller.editDocume
 router.delete('/document_requests/delete/:id', document_request_controller.deleteDocumentRequest);
 router.get('/document_requests/get/:id', document_request_controller.getDocumentRequest);
 router.post('/document_requests/retrieve', document_request_controller.retrieveDocumentRequests);
-router.post('/document_requests/add_tags', document_request_controller.addTags);
-router.post('/document_requests/remove_tags', document_request_controller.removeTags);
+router.put('/document_requests/attach_tag/:id', document_request_controller.attachTag);
+router.put('/document_requests/remove_tag/:id', document_request_controller.removeTag);
 router.post('/document_requests/add_mentions', document_request_controller.addMentions);
 router.post('/document_requests/remove_mentions', document_request_controller.removeMentions);
 router.post('/document_requests/add_references', document_request_controller.addReferences);

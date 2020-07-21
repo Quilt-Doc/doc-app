@@ -27,7 +27,7 @@ createWorkspace = (req, res) => {
     workspace.save((err, workspace) => {
         if (err) return res.json({ success: false, error: err });
 
-        workspace.populate('creator').populate('memberUsers', (err, workspace) => {
+        workspace.populate('creator').populate('repositories').populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(workspace);
         });
@@ -40,7 +40,7 @@ getWorkspace = (req, res) => {
     if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
     Workspace.findById(id, (err, workspace) => {
 		if (err) return res.json({success: false, error: err});
-        workspace.populate('creator')
+        workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
@@ -54,7 +54,7 @@ deleteWorkspace = (req, res) => {
 
     Workspace.findByIdAndRemove(id, (err, workspace) => {
 		if (err) return res.json({success: false, error: err});
-        workspace.populate('creator')
+        workspace.populate('creator').populate('repositories')
             .populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
@@ -77,7 +77,7 @@ addUser = (req, res) => {
 
     Workspace.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-        workspace.populate('creator')
+        workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
@@ -97,7 +97,7 @@ removeUser = (req, res) => {
 
     Workspace.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
-        workspace.populate('creator')
+        workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
                 return res.json(workspace);
@@ -113,7 +113,7 @@ retrieveWorkspaces = (req, res) => {
     if (creatorId) query.where('creator').equals(creatorId);
     if (memberUserIds) query.where('memberUsers').in(memberUserIds)
 
-    query.populate('creator').populate('memberUsers').exec((err, workspaces) => {
+    query.populate('creator').populate('memberUsers').populate('repositories').exec((err, workspaces) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(workspaces);
     });

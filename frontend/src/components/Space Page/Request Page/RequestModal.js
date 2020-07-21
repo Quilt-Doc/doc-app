@@ -10,11 +10,13 @@ import { withRouter } from 'react-router-dom';
 import history from '../../../history';
 
 //actions
-import { getRequest, editRequest, deleteRequest } from '../../../actions/Request_Actions';
+import { getRequest, editRequest, deleteRequest, attachTag, removeTag } from '../../../actions/Request_Actions';
 import { setRequestCreation } from '../../../actions/UI_Actions';
 
 //components
 import TextareaAutosize from 'react-textarea-autosize';
+import FileReferenceMenu from '../../General/Menus/FileReferenceMenu';
+import LabelMenu from '../../General/Menus/LabelMenu';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAlignJustify } from '@fortawesome/free-solid-svg-icons'
@@ -25,7 +27,8 @@ class RequestModal extends Component {
         this.state = {
             title: "",
             description: "",
-            descriptionOpen: false
+            descriptionOpen: false,
+            loaded: false
         }
     }
 
@@ -35,12 +38,14 @@ class RequestModal extends Component {
         let requestId = params.get('request') 
         this.props.getRequest(requestId).then(() => {
             let descriptionOpen = this.props.request.markup ? true : false
-            this.setState({title: this.props.request.title, description: this.props.request.markup, descriptionOpen})
+            this.setState({title: this.props.request.title, description: this.props.request.markup, descriptionOpen, loaded: true})
             window.addEventListener('beforeunload', this.removeTrash, false);
         })
     }
 
     componentWillUnmount() {
+        console.log("OUT HERE")
+        this.removeTrash()
         window.removeEventListener('beforeunload', this.removeTrash, false);
     }
 
@@ -49,7 +54,9 @@ class RequestModal extends Component {
         let params = new URLSearchParams(search)
         let requestId = params.get('request') 
         if (this.props.creating) {
-            this.props.deleteRequest(requestId)
+            this.props.deleteRequest(requestId).then(() => {
+                this.props.setRequestCreation(false)
+            })
         }
     }
 
@@ -84,9 +91,13 @@ class RequestModal extends Component {
     }
 
     render(){
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let requestId = params.get('request') 
+        console.log("REQ ID", requestId)
         return (
         <>
-            {this.props.request ? 
+            {this.state.loaded ? 
                 <ModalBackground onClick = {() => {this.removeTrash();this.undoModal();}} >
                         <ModalContent onClick = {(e) => {e.stopPropagation()}}>
                             <RequestTitle 
@@ -143,10 +154,7 @@ class RequestModal extends Component {
                                     {this.props.request.references && this.props.request.references.length > 0 ? 
                                         <>{this.renderReferences()}</>
                                         : <NoneMessage>None yet</NoneMessage>}
-                                   
-                                    <AddButton>
-                                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                                    </AddButton>
+                                    <FileReferenceMenu/>
                                 </ReferenceContainer>
                             </InfoBlock>
                             <InfoBlock>
@@ -179,9 +187,11 @@ class RequestModal extends Component {
                                 </InfoHeader>
                                 <ReferenceContainer>
                                     <Tag>Utility</Tag>
-                                    <AddButton>
-                                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                                    </AddButton>
+                                    <LabelMenu 
+                                        attachTag = {(tagId) => this.props.attachTag(requestId, tagId)}
+                                        removeTag = {(tagId) => this.props.removeTag(requestId, tagId)}
+                                        setTags = {this.props.request.tags}
+                                    />
                                 </ReferenceContainer>
                             </InfoBlock>
                             <InfoBlock>
@@ -233,7 +243,7 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 
-export default  connect(mapStateToProps, { getRequest, editRequest, deleteRequest, setRequestCreation })(RequestModal);
+export default  connect(mapStateToProps, { getRequest, editRequest, deleteRequest, setRequestCreation, attachTag, removeTag })(RequestModal);
 
 const RequestSaveButton = styled.div`
     display: inline-flex;

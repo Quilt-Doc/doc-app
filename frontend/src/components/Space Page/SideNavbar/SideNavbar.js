@@ -7,7 +7,7 @@ import styled from "styled-components";
 import { connect } from 'react-redux';
 
 //components
-import Bucket from '../../General Components/Top Navbar/Bucket';
+import Bucket from '../../General/Top Navbar/Bucket';
 import Document from './Document';
 import TextEditorView2 from '../Text Editor Page/TextEditorView2';
 
@@ -44,7 +44,6 @@ class SideNavbar extends React.Component {
     }
 
     renderDocuments(){
-        
         return this.props.documents.map(document => {return (
         <Document width =  {23} marginLeft = {0} document = {document}/>)})
     }
@@ -79,7 +78,7 @@ class SideNavbar extends React.Component {
 
 
     renderCodebaseLink(){
-
+        console.log("WORKSPACE", this.props.workspace)
         let repositoryId = this.props.workspace.repositories[0]._id
         let { workspaceId } = this.props.match.params
         return `/workspaces/${workspaceId}/repository/${repositoryId}/dir`
@@ -112,7 +111,7 @@ class SideNavbar extends React.Component {
                             name="add-outline"></ion-icon>
                         <PageName>Create</PageName>
                     </PageSection2>
-                    <PageSection>
+                    <PageSection to = {this.renderCodebaseLink()}>
                         <ion-icon 
                             style={{'fontSize': '1.5rem'}}
                             name="code-outline"></ion-icon>
@@ -269,135 +268,6 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { createDocument, moveDocument, attachDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
 
-
-const AddRequestButton = styled.div`
-    margin-left: auto;
-    margin-right: -0.3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.9rem;
-    height: 1.9rem;
-   
-    border-radius: 0.3rem;
-    color:   #262E49; 
-    background-color:white;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-`
-
-const ModalToolbar = styled.div`
-   
-    height: 4rem;
-    padding: 2.7rem 1rem;
-    
-    display: flex;
-    align-items: center;
-`
-
-const ModalEditor = styled.div`
-    overflow-y: scroll;
-    padding-top: 5rem;
-`
-
-const Title = styled.div`
-    margin-right: ${props => props.marginRight};
-    color: ${props => props.color};
-    opacity: ${props => props.opacity};
-`
-
-const ModalCreateButton = styled.div`
-    border-radius: 0.5rem;
-    margin-left: auto;
-    margin-right: 3rem;
-    padding-top: 0.8rem;
-    padding-bottom: 0.8rem;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-    font-size: 1.35rem;
-    color: white;
-    background-color: #19E5BE;
-    cursor: pointer;
-    &:hover {
-       box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149); 
-    }
-`
-
-const ModalToolbarButton = styled.div`
-    display: flex;
-    align-items: center;
-    font-size: 1.35rem;
-    
-    margin-right: 1rem;
-    border-radius: 0.4rem;
-    padding: 1rem;
-    cursor: pointer;
-    opacity: 0.7;
-    &:hover {
-        background-color: #F4F4F6; 
-        opacity: 1;
-    }
-    opacity: ${props => props.opacity};
-`
-
-const Divider = styled.div`
-    border-right: 1px solid #172A4E;
-    opacity: 0.5;
-    height: 1.5rem;
-    margin-right: 1rem;
-`
-
-const ModalBackground = styled.div`
-    position: fixed; /* Stay in place */
-    z-index: 10000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: hidden; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-    display: ${props => props.display};
-`
-
-/* Modal Content/Box */
-const ModalContent = styled.div`
-    background-color: #fefefe;
-    margin: 8vh auto; /* 15% from the top and centered */
-    
-    border: 1px solid #888;
-    width: 85vw; /* Could be more or less, depending on screen size */
-    height: 84vh;
-    border-radius: 0.4rem;
-    box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
-    display: flex;
-    flex-direction: column;
-    max-width: 98rem;
-`
-
-const StyledIcon2 = styled.img`
-    width: 2.5rem;
-    margin-right: 0.2rem;
-`
-
-const IconBorder = styled.div`
-    margin-left: auto;
-    margin-right: 0.2rem;
-    display: flex;
-    align-items: center;
-    opacity: 0.7;
-    width: 1.9rem;
-    height: 1.9rem;
-    border-radius: 0.3rem;
-    &: hover {
-        opacity: 1;
-        background-color: #F4F4F6; 
-    }
-    cursor: pointer;
-    justify-content: center;
-    transition: all 0.1s ease-in;
-    border: 1px solid #172A4E;
-`
-
 const Deline = styled.div`
     font-weight: 400;
     text-transform: uppercase;
@@ -407,40 +277,6 @@ const Deline = styled.div`
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
-`
-
-const ChildDocument = styled.div`
-    display: flex;
-    align-items: center;
-    font-size: 1.35rem;
-    &:hover {
-        background-color: #EBECF0;
-    }
-    margin-left: 2rem;
-    width: 21rem;
-    padding: 1.2rem;
-    border-radius: 0.3rem;
-    height: 3.6rem;
-    color: #172A4E;
-    cursor: pointer;
-`
-
-const DocumentName = styled.div`
-`
-
-const CurrentReference = styled.div`
-    display: flex;
-    align-items: center;
-    font-size: 1.35rem;
-    &:hover {
-        background-color: #EBECF0;
-    }
-    width: 23rem;
-    padding: 1.2rem;
-    border-radius: 0.3rem;
-    height: 3.6rem;
-    color: #172A4E;
-    cursor: pointer;
 `
 
 const StyledIcon = styled.img`
@@ -489,7 +325,7 @@ const PageSection = styled(Link)`
 const PageSection2 = styled(Link)`
     text-decoration: none;
     margin-left: 2rem;
-    color: #172A4E;
+
     width: 23rem;
     padding: 1.2rem;
     border-radius: 0.3rem;

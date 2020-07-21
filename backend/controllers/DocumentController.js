@@ -151,7 +151,7 @@ createDocument = async (req, res) => {
             if (pushParent) {
              modifiedDocs.push(parent);
             }
-            return res.json({success: false, result: modifiedDocs});
+            return res.json({success: true, result: modifiedDocs});
         });
     });
 }
@@ -229,7 +229,7 @@ deleteDocument = async (req, res) => {
     const deletedDocs = await Document.find({path: {$regex: re}}, '');
     await Document.deleteMany({path: {$regex: re}}, (err) => {
         if (err) {
-            return res.json({ success: false, error: err, result: [toDelete] });
+            return res.json({ success: false, error: err, result: toDelete });
         }
         console.log('Delete successful');
         console.log(deletedDocs)
@@ -387,13 +387,17 @@ moveDocument = async (req, res) => {
               {new: true});
         
         usedOldParentId = originalParent._id;
-    
-        modifiedDocs.push(originalParent);
+        //modifiedDocs.push(originalParent);
     }
 
     // set newPath
     var newPath = '';
     var newParent = undefined;
+    var newParentId = undefined;
+
+
+    var parentToSet = undefined;
+
     if (parentId != '') {
         newParent = await Document.findById(parentId);
         if (!newParent) {
@@ -408,19 +412,22 @@ moveDocument = async (req, res) => {
         newParent = await Document.findOneAndUpdate({_id: ObjectId(parentId)}, 
           { $push: {children: ObjectId(documentId) }},
           { new: true});
-        oldDocument.parent = ObjectId(parentId);
+        parentToSet = ObjectId(parentId);
+        // oldDocument.parent = ObjectId(parentId);
 
-
+        newParentId = newParent._id;
         console.log('Found a parent object');
-        modifiedDocs.push(newParent);
+        // modifiedDocs.push(newParent);
         newPath = newParent.path;
     }
 
     else {
-        oldDocument.parent = null;
+        // oldDocument.parent = null;
+        parentToSet = null;
     }
 
-    await oldDocument.save();
+    // await oldDocument.save();
+    await Document.findByIdAndUpdate(oldDocument._id, {$set: {parent: parentToSet}});
 
     // If moving within the same directory
         
@@ -523,23 +530,49 @@ moveDocument = async (req, res) => {
         return docObj._id;
     })
     if (bulkMoveOps.length > 0) {
-        await Document.collection
+        /*await Document.collection
             .bulkWrite(bulkMoveOps)
             .then(async (results) => {
                 console.log(results);
                 modifiedDocs = modifiedDocs.concat( await Document.find({_id: {$in: modifiedObjIds}}));
+
                 return res.json({success: true, result: modifiedDocs});
             })
             .catch((err) => {
                 return res.json({success: false, error: 'moveDocument: error bulk moving Documents: ' + err, result: [oldDocument]});
+            });*/
+
+
+
+            await Document.collection
+            .bulkWrite(bulkMoveOps)
+            .catch((err) => {
+                return res.json({success: false, error: 'moveDocument: error bulk moving Documents: ' + err, result: [oldDocument]});
             });
+
+            modifiedDocs = [];
+
+            if (newPath.length > 0) {
+                modifiedDocs.push(await Document.findById(newParentId));
+            }
+            
+            if (usedOldParentId.length > 0) {
+                modifiedDocs.push(await Document.findById(usedOldParentId));
+            }
+            
+            console.log('LOG #1');
+            console.log(modifiedDocs);
+            console.log(await Document.find({_id: {$in: modifiedObjIds}}));
+            modifiedDocs = modifiedDocs.concat( await Document.find({_id: {$in: modifiedObjIds}}));
+
+            console.log('LOG #2');
+            console.log(modifiedDocs);
+
+            return res.json({success: true, result: modifiedDocs});
     }
     else {
         return res.json({success: false, error: 'moveDocument: error no Documents to move.', result: [oldDocument]});
     }
-
-
-
     // if parentId == '', move to root
 }
 

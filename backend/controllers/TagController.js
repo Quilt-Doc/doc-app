@@ -2,6 +2,14 @@ const Tag = require('../models/Tag');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+checkValid = (item) => {
+    if (item !== null && item !== undefined) {
+        return true
+    }
+    return false
+}
+
+
 createTag = (req, res) => {
     const { label, color } = req.body;
     let tag = new Tag(
@@ -53,7 +61,7 @@ deleteTag = (req, res) => {
 }
 
 retrieveTags = (req, res) => {
-    let { search, label, color, limit, skip } = req.body;
+    let { search, label, color, tagIds, limit, skip } = req.body;
     let query;
     if (search) {
         query = Tag.find({label: { $regex: new RegExp(search, 'i')} })
@@ -61,13 +69,33 @@ retrieveTags = (req, res) => {
         query =  Tag.find();
     }
 
-    if (label) query.where('label').equals(label);
-    if (color) query.where('color').equals(color);
-    if (limit) query.limit(Number(limit));
-    if (skip) query.skip(Number(skip));
+    if (checkValid(tagIds)) query.where('_id').in(tagIds) 
+
+    if (checkValid(label)) query.where('label').equals(label);
+    if (checkValid(color)) query.where('color').equals(color);
+    if (checkValid(limit)) query.limit(Number(limit));
+    if (checkValid(skip)) query.skip(Number(skip));
+    query.sort('-label');
     query.exec((err, tags) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(tags);
+        if (checkValid(tagIds) && checkValid(limit)) {
+            if (tags.length < limit) {
+                let queryNext = Tag.find()
+                queryNext.limit(Number(limit - tags.length))
+                if (tagIds.length !== 0) {
+                    queryNext.where('_id').nin(tagIds)
+                }
+                queryNext.exec((err, nextTags) => {
+                    console.log("TAGS2", nextTags)
+                    if (err) return res.json({ success: false, error: err });
+                    return res.json(tags.concat(nextTags))
+                })
+            } else {
+                return res.json(tags);
+            }
+        } else {
+            return res.json(tags);
+        }
     });
 }
 

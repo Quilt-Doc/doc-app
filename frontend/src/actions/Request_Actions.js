@@ -35,3 +35,15 @@ export const editRequest = (id, formValues) => async dispatch => {
     const response = await api.put(`/document_requests/edit/${id}`, formValues);
     dispatch({ type: EDIT_REQUEST, payload: response.data });
 }
+
+export const attachTag = (id, tagId) => async dispatch => {
+    console.log("REQ ID", id)
+    console.log("TAGID", tagId)
+    const response = await api.put(`/document_requests/attach_tag/${id}`, {tagId});
+    dispatch({ type: EDIT_REQUEST, payload: response.data });
+}
+
+export const removeTag = (id, tagId) => async dispatch => {
+    const response = await api.put(`/document_requests/remove_tag/${id}`, {tagId});
+    dispatch({ type: EDIT_REQUEST, payload: response.data });
+}

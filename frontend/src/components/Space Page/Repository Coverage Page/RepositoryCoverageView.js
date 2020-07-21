@@ -318,6 +318,54 @@ class RepositoryCoverageView extends React.Component {
                                             
                                         </DescriptionContainer>
                                 </ListItem2>
+                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                        'color': '#172A4E', 
+                                                        'fontSize': '3.5rem', 
+                                                        'marginRight': "0.3rem",
+                                                        'marginLeft': "1.6rem"}} name="pencil-outline"></ion-icon>
+
+                                        <DescriptionContainer>
+                                            <RelevantFiles>Building Semantic</RelevantFiles>
+                                            <DescriptionHeader>Reference Relocated</DescriptionHeader>
+                                            <DescriptionContent>
+                                                <Description marginLeft = {"2rem"} >Parser.js</Description>
+                                            </DescriptionContent>
+                                            
+                                        </DescriptionContainer>
+                                </ListItem2>
+                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                        'color': '#172A4E', 
+                                                        'fontSize': '3.5rem', 
+                                                        'marginRight': "0.3rem",
+                                                        'marginLeft': "1.6rem"}} name="pencil-outline"></ion-icon>
+
+                                        <DescriptionContainer>
+                                            <RelevantFiles>Building Semantic</RelevantFiles>
+                                            <DescriptionHeader>Reference Relocated</DescriptionHeader>
+                                            <DescriptionContent>
+                                                <Description marginLeft = {"2rem"} >Parser.js</Description>
+                                            </DescriptionContent>
+                                            
+                                        </DescriptionContainer>
+                                </ListItem2>
+                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                    <ion-icon style={{'opacity': '1', 
+                                                        'color': '#172A4E', 
+                                                        'fontSize': '3.5rem', 
+                                                        'marginRight': "0.3rem",
+                                                        'marginLeft': "1.6rem"}} name="pencil-outline"></ion-icon>
+
+                                        <DescriptionContainer>
+                                            <RelevantFiles>Building Semantic</RelevantFiles>
+                                            <DescriptionHeader>Reference Relocated</DescriptionHeader>
+                                            <DescriptionContent>
+                                                <Description marginLeft = {"2rem"} >Parser.js</Description>
+                                            </DescriptionContent>
+                                            
+                                        </DescriptionContainer>
+                                </ListItem2>
                             </ListItemContainer2>
                             
                         </RightContainer>
@@ -341,6 +389,8 @@ export default RepositoryCoverageView;
 const Header = styled.div`
     color: #172A4E;
     font-size: 2.5rem;
+
+    margin-top: 5rem;
     margin-left: 8rem;
     margin-bottom: 2rem;
 `
@@ -354,6 +404,8 @@ const Container = styled.div`
     padding: 3rem;
     background-color: #F7F9FB;
     width: 112.5rem;
+    border-radius: 0.4rem;
+    border: 1px solid #DFDFDF;
 `
 
 const AllContainer = styled.div`
@@ -489,7 +541,7 @@ const IconBorder = styled.div`
 
 const ListItemContainer2 = styled.div`
     flex-direction:column;
-    height: 57rem;
+    max-height: 75rem;
     width: 36rem;
     overflow-y: scroll;
 `
@@ -502,7 +554,6 @@ const RightContainer = styled.div`
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     width: 36rem;
     border-radius: 0.2rem;
-    height: 62rem;
 `
 
 const ListItem2 = styled.div`

@@ -15,7 +15,7 @@ class Annotation extends React.Component {
 
     hover() {
         this.setState({'backgroundColor': 'white', 
-                       'boxShadow': '0 6px 8px rgba(102,119,136,.03), 0 1px 2px rgba(102,119,136,.3)', 
+                       'boxShadow': 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;', 
                        'opacity': '1'})
     }
 
@@ -52,7 +52,7 @@ const AnnotationCard = styled.div`
     line-height: 1.8;
     letter-spacing: 0.2px;
     padding: 1.6rem 2rem;
-    border-radius: 0.2rem;
+    border-radius: 0.4rem;
     /* font-family: 'Source Sans Pro', sans-serif; */
     opacity: .4;
     cursor: text;

@@ -3,6 +3,7 @@ import React from 'react';
 //styles 
 import styled from "styled-components"
 import 'react-slidedown/lib/slidedown.css'
+import chroma from 'chroma-js';
 
 //images
 import doc_icon from '../../../images/doc-file.svg';
@@ -107,49 +108,53 @@ class DirectoryItem extends React.Component {
     }
 
 
-
+    renderColor() {
+        let x =  Math.round(Math.random() * 3)
+      
+        return x === 2 ? "#19E5BE"  : x === 1 ? '#5352ed' : '#C21D1D';
+    } 
 
     render() {
+        console.log(this.props.documents.length > 0 )
         return (
                 <>
                 <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
-                    <ListItem>
-                        <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
-                            <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}>
-                                <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
-                            </Check_Box>
-                        </Check_Box_Border>
+                    <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
+                        <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}>
+                            <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
+                        </Check_Box>
+                    </Check_Box_Border>
 
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'marginRight': "1.5rem"}} name={this.props.type}></ion-icon>
-                        <ItemName>{this.props.item.name}</ItemName>
-                        <ProgressContainer>
-                            <ProgressBar>
-                                {/*<ProgressPart backgroundColor = { }/>*/}
-                                <ProgressPart backgroundColor = {'#19E5BE' } width = {'25%'}/>
-                                <ProgressPart backgroundColor = {'#ff4757'} width = {'75%'}/>
-                            </ProgressBar>
-                            <ProgressDescription>
+                    <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'min-width': "1.7rem", 'margin-right': "1rem"}} name={this.props.type}></ion-icon>
+                    <ItemName>{this.props.item.name}</ItemName>
+                    <ViewDocumentContainer>
+                        {this.props.documents.length > 0 && 
+                            <ViewDocumentButton 
+                                onClick = {(e) => {e.stopPropagation(); e.preventDefault(); 
+                                    this.setState(prevState => ({closed: !prevState.closed}))}}>
+                                View Documents
+                             </ViewDocumentButton>
+                        }
+                    </ViewDocumentContainer>
+                    
+                  
+                    <ProgressContainer>
+                        <Status color = {this.renderColor()} />
+                       
+                    </ProgressContainer>
+                    <StatisticContainer>
 
-                            </ProgressDescription>
-                        </ProgressContainer>
+                    
                         <Statistic>
-                            <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cube-outline"></ion-icon>
-                            <Count>75</Count>
+                            <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.4rem"}} name="document-text-outline"></ion-icon>
+                            <Count>{Math.round(Math.random() * 50)}</Count>
                         </Statistic>
                         <Statistic>
-                            <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="pencil-outline"></ion-icon>
-                            <Count>25</Count>
+                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.4rem"}} name="cut-outline"></ion-icon>
+                        <Count>{Math.round(Math.random() * 50)}</Count>
                         </Statistic>
-                        <Statistic>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.3rem"}} name="cut-outline"></ion-icon>
-                        <Count>30</Count>
-                        </Statistic>
-                            {this.props.documents.length > 0  &&
-                                <ViewDocumentButton onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState(prevState => ({closed: !prevState.closed}))}}>
-                                    <ion-icon name="document-text-outline"></ion-icon>
-                                </ViewDocumentButton>
-                            }
-                    </ListItem>
+                    </StatisticContainer>
+                  
                 </StyledLink>
                 {this.props.documents.length > 0 &&
                     <SlideDown className = {'my-dropdown-slidedown'} closed={this.state.closed}>
@@ -165,6 +170,34 @@ class DirectoryItem extends React.Component {
 
 
 }
+
+/*  <ListItem>
+                        <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
+                            <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}>
+                                <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
+                            </Check_Box>
+                        </Check_Box_Border>
+
+                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'marginRight': "1rem"}} name={this.props.type}></ion-icon>
+                        <ItemName>{this.props.item.name}</ItemName>
+                        <ProgressContainer>
+                            View Documents
+                        </ProgressContainer>
+                        <Statistic>
+                            <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.4rem"}} name="document-text-outline"></ion-icon>
+                            <Count>{Math.round(Math.random() * 50)}</Count>
+                        </Statistic>
+                        <Statistic>
+                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.4rem"}} name="cut-outline"></ion-icon>
+                        <Count>{Math.round(Math.random() * 50)}</Count>
+                        </Statistic>
+                            {this.props.documents.length > 0  &&
+                                <ViewDocumentButton onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState(prevState => ({closed: !prevState.closed}))}}>
+                                    <ion-icon name="document-text-outline"></ion-icon>
+                                </ViewDocumentButton>
+                            }
+                        <Status color = {this.renderColor()} />
+                    </ListItem>*/
 
 /*to = {this.renderDirectoryLink(this.props.item)}*/
 
@@ -190,6 +223,14 @@ const File_Line = styled.div`
     align-items: center;
 `*/
 
+const Status = styled.div`
+   
+    background-color: ${props => props.color};
+    width: 12rem;
+    height: 0.4rem;
+    border-radius: 0.3rem;
+`
+
 const StyledIcon = styled.img`
     width: 5rem;
     align-self: center;
@@ -206,6 +247,7 @@ const DocumentItem = styled.div`
     border-radius: 0.5rem;
     /*border: 1px solid #DFDFDF;*/
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+
     margin-top: 2rem;
     margin-right: 4rem;
     display: flex;
@@ -216,6 +258,11 @@ const DocumentItem = styled.div`
     }
 `
 
+const StatisticContainer = styled.div`
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+`
 
 const Title = styled.div`
     opacity: 1;
@@ -248,6 +295,25 @@ const DocumentContainer = styled.div`
     overflow-y: scroll;
 `
 
+const ViewDocumentContainer = styled.div`
+    display: flex;
+    align-items: center;
+
+    letter-spacing: 1;
+
+    height: 4rem;
+    align-items: center;
+    flex: 1 1 18rem;
+    justify-content: center;
+`
+
+const ViewDocumentButton = styled.div`
+opacity: 0.6; 
+&:hover {
+    opacity: 1;
+}
+`
+/*
 const ViewDocumentButton = styled.div`
     font-size: 1.5rem;
     width: 2.7rem;
@@ -261,35 +327,41 @@ const ViewDocumentButton = styled.div`
     justify-content: center;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     background-color: white;
-`
-
+`*/
+/*
 const StyledLink = styled(Link)`
     text-decoration: none;
-  
-    
-`
-
-const ListItem = styled.div`
-    height: 4rem;
-    padding-left: 1rem;
-    padding-right: 2rem;
-    transition: background-color 0.1s ease-in;
-    
-    &:hover {
-        /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
-       background-color: #F4F4F6; 
+    border-bottom: 1px solid #EDEFF1;
+    &:last-of-type {
+        border-bottom: none;
     }
+   min-width: 100rem;
+`
+*/
+const StyledLink = styled(Link)`
+    text-decoration: none;
+    padding-right: 1rem;
+    border-bottom: 1px solid #EDEFF1;
+    &:last-of-type {
+        border-bottom: none;
+    }
+    height: 4rem;
+    padding-left: 0.25rem;
+    transition: background-color 0.1s ease-in;
+    &:hover {
+        background-color: #F4F4F6;
+    }
+   
     color: #172A4E;
     cursor: pointer;
     align-items: center;
-    display: flex;
+    display: flex; 
     font-size: 1.4rem;
-    border-bottom: 1px solid #EDEFF1;
     z-index: 10;
 `
 
 const ItemName = styled.div`
-    width: 25rem;
+    flex: 1 1 25rem;
 `
 
 // PROGRESS
@@ -297,9 +369,16 @@ const ItemName = styled.div`
 
 const ProgressContainer = styled.div`
     display: flex;
-    flex-direction: column;
-    width: 15rem;
     margin-right: 8rem;
+    opacity: 0.8; 
+    letter-spacing: 1;
+    &:hover {
+        opacity: 1;
+    }
+    height: 4rem;
+    align-items: center;
+    flex: 1 1 18rem;
+    justify-content: center;
 `
 
 const ProgressBar = styled.div`
@@ -307,6 +386,7 @@ const ProgressBar = styled.div`
     height: 0.6rem;
     border-radius: 12rem;
     display: flex;
+
 `
 /*#FAFBFC*/
 const ProgressPart = styled.div`
@@ -322,7 +402,6 @@ const ProgressDescription = styled.div`
 const Statistic = styled.div`
     display: flex;
     align-items: center;
-    justify-content: center;
     margin-right: 2.5rem;
     font-size: 1.1rem;
     opacity: 0.6; 
@@ -340,11 +419,12 @@ const Count = styled.div`
 
 
 const Check_Box_Border = styled.div`
-    height: 4rem;
-    width: 4rem;
-    margin-right: 1rem;
+    height: 3.5rem;
+    width: 3.5rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
     &:hover {
-        background-color: #F4F4F6;
+        background-color: ${chroma("#5B75E6").alpha(0.1)};
     }
     display: flex;
     align-items: center;

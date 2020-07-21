@@ -11,9 +11,6 @@ import Annotation from './Annotation';
 import Snippet from './Snippet';
 import TextareaAutosize from 'react-textarea-autosize';
 import LabelMenu from '../../General/Menus/LabelMenu';
-import RotateLoader from "react-spinners/RotateLoader";
-
-
 
 //utility
 import Selection from '@simonwep/selection-js';
@@ -198,15 +195,15 @@ class CodeView extends React.Component {
 
 
         const identifiers = {
-            'keyword':{color: '#D73A49', type: ''},
+            'keyword':{color: '#C679DD', type: ''},
             'boolean': {color: '#56B6C2', type: ''},
-            'function': {color: '#6F42C1', type: ''},
+            'function': {color: '#61AEEE', type: ''},
             'class-name': {color: '#DC4A68', type: ''},
-            'string': {color: '#032F62', type: ''},
-            'triple-quoted-string': {color: '#032F62', type: ''},
+            'string': {color: '#98C379', type: ''},
+            'triple-quoted-string': {color: '#98C379', type: ''},
             'number': {color: '#FF8563', type: ''},
-            'decorator': {color: '#6F42C1',type: ''},
-            'builtin': {color:'#6F42C1', type: ''},
+            'decorator': {color: '#61AEEE',type: ''},
+            'builtin': {color:'#61AEEE', type: ''},
             'comment': {color: '#5C6370', type: 'italic'}
         }
 
@@ -214,7 +211,7 @@ class CodeView extends React.Component {
             let last = end.line === lineNumber ? start.column - offset - 1 + symbol.length : line.length
 
             currLineJSX.push(<>{line.slice(0, start.column - offset - 1)}</>)
-            let color = '#6F42C1'
+            let color = '#61AEEE'
             
             if (tokenType === "class-name") {
                 color = '#DC4A68'
@@ -278,15 +275,15 @@ class CodeView extends React.Component {
     renderLines(fileContents) {
         const grammar = Prism.languages["python"]
         const identifiers = {
-            'keyword':{color: '#D73A49', type: ''},
+            'keyword':{color: '#C679DD', type: ''},
             'boolean': {color: '#56B6C2', type: ''},
-            'function': {color: '#6F42C1', type: ''},
+            'function': {color: '#61AEEE', type: ''},
             'class-name': {color: '#DC4A68', type: ''},
-            'string': {color: '#032F62', type: ''},
-            'triple-quoted-string': {color: '#032F62', type: ''},
+            'string': {color: '#98C379', type: ''},
+            'triple-quoted-string': {color: '#98C379', type: ''},
             'number': {color: '#FF8563', type: ''},
-            'decorator': {color: '#6F42C1',type: ''},
-            'builtin': {color:'#6F42C1', type: ''},
+            'decorator': {color: '#61AEEE',type: ''},
+            'builtin': {color:'#61AEEE', type: ''},
             'comment': {color: '#5C6370', type: 'italic'}
         }
         const tokens = Prism.tokenize(fileContents, grammar)
@@ -750,11 +747,9 @@ class CodeView extends React.Component {
                                 />
                             </ReferenceContainer>
                         </InfoBlock>
-                        <EditorContainer2>
+
                         <EditorContainer>
                             <ListToolbar> 
-                                <ListName><b>8</b>&nbsp; documents</ListName>
-                                <ListName><b>15</b>&nbsp; snippets</ListName>
                                 <HighlightButton
                                     onClick = {this.toggleSelection}
                                     opacity = {this.state.selectionMode ? '1' : '0.7'}
@@ -774,17 +769,12 @@ class CodeView extends React.Component {
                                 {this.renderSnippets()}
                             </CodeContainer>
                         </EditorContainer>
-                        </EditorContainer2>
                     </Container>
                 </>
                 
             );
         } else {
-            return <Container>
-                        <LoaderContainer>
-                            <RotateLoader color = {"#19E5BE"} size = {15} margin={2} />
-                        </LoaderContainer>
-                    </Container>
+            return null;
         }
     }
 }
@@ -840,26 +830,6 @@ export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnip
 
 //Styled Components
 
-
-const ListName = styled.div`
-    margin-left: 3rem;
-    color: #172A4E;
-    font-size: 1.5rem;
-    font-weight: 300;
-`
-
-
-
-const EditorContainer2 = styled.div`
-    background-color: #F7F9FB; 
-    padding: 3rem;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #DFDFDF;
-    border-radius:0.4rem;
-    min-width: 110rem;
-    margin-top: 2rem;
-`
 
 const Header = styled.div`
     font-size: 1.8rem;
@@ -967,16 +937,16 @@ const IconBorder = styled.div`
 const EditorContainer = styled.div`
     display: flex;
     flex-direction: column;
-    /*border: 1px solid #DFDFDF;*/
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    border: 1px solid #DFDFDF;
     border-radius:0.4rem;
     min-width: 110rem;
-
+    margin-top: 2rem;
 `
 
 const CodeContainer = styled.div`
-    background-color: /*#F7F9FB;*/ white;
+    background-color: /*#F7F9FB;*/ #fcfcfd;
     display: flex;
+    border-top: 1px solid #DFDFDF;
     border-radius: 0rem 0rem 0.4rem 0.4rem !important;
 `
 
@@ -987,9 +957,6 @@ const ListToolbar = styled.div`
     align-items: center;
     background-color: white;
     border-radius: 0.4rem 0.4rem 0rem 0rem !important;
-    position: sticky; 
-    top: 0;
-    border-bottom: 1px solid #EDEFF1;
 `
 
 
@@ -1014,8 +981,9 @@ const HighlightButton = styled.div`
     align-items: center;
     color: ${props => props.color};
     font-size: 1.5rem;
-  
+    opacity: ${props => props.opacity};
     &: hover {
+        opacity: 1;
         background-color: #F4F4F6; 
     }
     margin-left : auto;
@@ -1030,13 +998,12 @@ const Overflow_Wrapper = styled.div`
     overflow:hidden;
     padding-bottom: 10rem;
     flex: 0 0 33rem;
-    background-color: #F7F9FB;
 `
 
 const CodeText = styled.div`
     flex: 1 1 77rem;
     padding: 1.5rem;
-    border-right: 1px solid #EDEFF1;
+    border-right: 1px solid #DFDFDF;
     display: flex;
     flex-direction: column;
     font-family: 'Roboto Mono', monospace !important;
@@ -1052,11 +1019,10 @@ const AnnotationBar = styled.div`
     width: 33rem;
     transition: transform 0.5s cubic-bezier(0, 0.475, 0.01, 1.035);
     transform: ${props => `translateY(${props.scaleY}px)`};
-   
 `
 
 const CodeLine = styled.div`
-    color: #242A2E;
+    color: #262626;
 	font-size: 1.3rem;
     margin: 0;
     padding: 0.1rem !important;
@@ -1190,14 +1156,4 @@ const ColoredSpan2= styled.span`
 
 const ObliqueSpan = styled.span`
 	font-style: italic;
-`
-
-const LoaderContainer = styled.div`
-    display: flex;
-    width: 100%;
-    height:100%;
-    margin-top: 20rem;
-    margin-left: -5rem;
-    align-items: center;
-    justify-content: center;
 `

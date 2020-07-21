@@ -149,7 +149,13 @@ retrieveReferences = async (req, res) => {
     
 
     if (checkValid(referenceId)) {
-        let reference = await Reference.findOne({_id: referenceId})
+        let reference;
+        if (referenceId !== ""){
+            reference = await Reference.findOne({_id: referenceId})
+        } else {
+            reference = await Reference.findOne({repository: repositoryId, path: ""})
+        }
+        
         let regex;
 
         if (reference.path === "") {
@@ -197,7 +203,7 @@ retrieveReferences = async (req, res) => {
 
     query.populate('tags').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
-        console.log(references)
+        console.log("REFERENCES", references)
         return res.json(references);
     
     });
@@ -213,7 +219,6 @@ editReference = (req, res) => {
     if (path) update.path = path;
     if (kind) update.kind = kind;
     if (tags) update.tags = tags.map(tag => ObjectId(tag));
-    console.log("TAGS", tags)
     Reference.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, reference) => {
         if (err) return res.json({ success: false, error: err });
         reference.populate('repository').populate( 'tags', (err, reference) => {

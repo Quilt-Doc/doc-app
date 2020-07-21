@@ -1,6 +1,7 @@
 import React from 'react';
 
 import styled from 'styled-components';
+import chroma from 'chroma-js';
 
 //redux
 import { connect } from 'react-redux';
@@ -13,6 +14,7 @@ import { withRouter } from 'react-router-dom';
 import { clearSelected } from '../../../actions/Selected_Actions';
 import { setRequestCreation } from '../../../actions/UI_Actions';
 import { createRequest, retrieveRequests } from '../../../actions/Request_Actions';
+
 
 
 class RequestView extends React.Component {
@@ -90,8 +92,7 @@ class RequestView extends React.Component {
                                     Request Documentation
                             </Header>
                             <Container>
-                                <RequestContainer>
-                                    <ListToolBar>
+                                <ListToolBar>
                                         
                                         <ListName onClick = {() => {this.createRequest()}}>
                                             <ion-icon marginLeft = {"0.3rem"} style={{marginTop :"-0.3rem", marginRight :"0.5rem", 'color': '#172A4E', 'fontSize': '2.4rem', }} name="create-outline"></ion-icon>
@@ -107,9 +108,631 @@ class RequestView extends React.Component {
                                         <IconBorder marginRight = {"1rem"}>
                                             <ion-icon style={{'color': '#172A4E', 'fontSize': '2.2rem', }} name="filter-outline"></ion-icon>
                                         </IconBorder>
-                                    </ListToolBar>
-                                    {this.renderRequests()}
-                                </RequestContainer>
+                                </ListToolBar>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
+                                <RequestCard2>
+                                    <RequestToolbar>
+                                        <ProfileButton>FS</ProfileButton>
+                                        <RequestTime>
+                                            <RequestTimeAuthor>Faraz Sanal</RequestTimeAuthor> opened this request 24 days ago
+                                        </RequestTime>
+                                        <RequestStat>
+                                            <StatIconBorder>
+                                                <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                            <StatIconBorder>
+                                                <ion-icon name="thumbs-up-outline"></ion-icon>
+                                            </StatIconBorder>
+                                            <Count2>25</Count2>
+                                        </RequestStat>
+                                        <RequestStatus/>
+                                    </RequestToolbar>
+                                    <RequestContent2>
+                                        <RequestTitle2>Documenting Semantic</RequestTitle2>
+                                        <RequestBody2>Could someone please take a look at these references and explain to me whats going on. I would appreciate having documentation.</RequestBody2>
+                                        <RequestReferences2>
+                                            <ion-icon 
+                                            name="cube-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                            <Reference>
+                                                <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.2rem"}} name="document"></ion-icon>
+                                                backend.js
+                                            </Reference>
+                                        </RequestReferences2>
+                                        <RequestTags2>
+                                            <ion-icon 
+                                            name="pricetag-outline" 
+                                            style = {{fontSize: "2rem", marginRight: "1rem"}}></ion-icon>
+                                            <Tag>
+                                                Utility
+                                            </Tag>
+                                            <Tag>
+                                                Backend
+                                            </Tag>
+                                           
+                                        </RequestTags2>
+                                    </RequestContent2>
+                                </RequestCard2>
                             </Container>
                         </> : null 
                 }
@@ -132,12 +755,132 @@ const mapStateToProps = (state) => {
 
 export default withRouter(connect(mapStateToProps, { createRequest, setRequestCreation, clearSelected, retrieveRequests})(RequestView));
 
-const VoteContainer = styled.div`
+
+const ListToolBar = styled.div`
+    height: 4.5rem;
     display: flex;
-    flex-direction: column;
-    align-self: flex-start;
+    align-items: center;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    width: 80rem;
+    margin-bottom: 2rem;
+    background-color: white;
+    border-radius: 0.4rem;
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+   
+`
+
+const Tag = styled.div`
+    font-size: 1.25rem;
+    color: #2980b9;
+    padding: 0.4rem 0.8rem;
+    background-color: rgba(51, 152, 219, 0.1);
+    display: inline-block;
+    border-radius: 4px;
     margin-right: 1rem;
 `
+
+
+const RequestStat = styled.div`
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    margin-right: 0rem;
+`
+
+const StatIconBorder = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    padding: 0.7rem;
+    border-radius: 50%;
+    margin-right: 0.3rem;
+    &:hover {
+        background-color:  ${chroma("#5B75E6").alpha(0.1)};
+    }
+`
+
+const Count2 = styled.div`
+    font-size: 1.5rem;
+    margin-right: 2.5rem;
+`
+
+
+const RequestTimeAuthor = styled.span`
+    font-weight: 600;
+`
+
+const RequestCard2 = styled.div`
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    width: 80rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    border-radius:0.4rem;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
+    cursor: pointer;
+    transition: all 0.1s ease-in;
+    margin-bottom: 1.5rem;
+`
+
+const RequestToolbar = styled.div`
+    display: flex;
+    border-bottom: 1px solid #EDEFF1;
+    align-items: center;
+    padding: 1.5rem;
+`
+
+const RequestTime = styled.div`
+    margin-left: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 300;
+`
+
+const RequestStatus = styled.div`
+    background-color: #19E5BE;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+`
+
+const RequestContent2 = styled.div`
+    
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+`
+
+const RequestTitle2 = styled.div`
+    font-size: 1.8rem;
+    font-weight: 500;
+`
+
+const RequestBody2 = styled.div`
+    font-size: 1.5rem;
+    margin-top: 1rem;
+`
+
+const RequestReferences2 = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 1.5rem;
+`
+
+
+const RequestTags2 = styled.div`
+    display: flex; 
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 1.5rem;
+`
+
 
 const Header = styled.div`
     color: #172A4E;
@@ -153,6 +896,11 @@ const Container = styled.div`
     margin-left: 8rem;
     margin-right: 8rem;
     padding: 3rem;
+    flex-direction: column;
+    border-radius: 0.4rem;
+    border: 1px solid #DFDFDF;
+    align-items: center;
+    margin-bottom: 2rem;
 `
 
 const RequestContainer = styled.div`
@@ -176,6 +924,7 @@ const RequestCard = styled.div`
         background-color: #F4F4F6; 
     }
     align-items: center;
+    background-color: white;
 `
 
 const ProfileButton2 = styled.div`
@@ -202,7 +951,7 @@ const ProfileButton = styled.div`
     border-radius: 0.3rem;
     font-size: 1.4rem;
     color: white;
-    background-color:#468DFF;
+    background-color:#5B75E6;
     cursor: pointer;
 `
 
@@ -277,14 +1026,6 @@ const ProgressItem = styled.div`
     cursor: pointer;
 `
 
-
-const ListToolBar = styled.div`
-    height: 4.5rem;
-    display: flex;
-    border-bottom: 1px solid #EDEFF1;
-    align-items: center;
-   
-`
 
 const ListName = styled.div`
     margin-left: 2rem;

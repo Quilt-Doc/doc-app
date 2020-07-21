@@ -54,9 +54,7 @@ class WorkspaceView extends React.Component {
     }
 
     renderLink(workspace) {
-        let reference = this.props.references.filter(reference => reference.repository === workspace.repositories[0])[0]
-        console.log(reference)
-        return `/workspaces/${workspace._id}/repository/${workspace.repositories[0]}/dir/${reference._id}`
+        return `/workspaces/${workspace._id}/repository/${workspace.repositories[0]._id}/dir/`
     }
 
     renderWorkspaces() {

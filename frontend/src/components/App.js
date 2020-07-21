@@ -7,8 +7,8 @@ import history from '../history';
 import Dashboard from './Dashboard';
 import NavbarProfile from './Top Navbar/NavbarProfile'
 import Home from './Home';
-import Test from './Test'
-import TagWrapper from './General Components/TagWrapper';
+
+import TagWrapper from './General/TagWrapper';
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
 
 //split markers -- directory, file

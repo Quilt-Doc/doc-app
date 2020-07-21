@@ -82,23 +82,52 @@ createDocumentRequest = (req, res) => {
 
 // tags, mentions, references add, remove in separate calls
 
-addTags = async (req, res) => {
-	const { documentRequestId, tagIds} = req.body;
-	if (!checkValid(documentRequestId)) return res.json({success: false, error: "addTags error: no documentRequestId provided.", result: null});
-	if (!checkValid(tagIds)) return res.json({success: false, error: "addTags error: no tagIds provided.", result: null});
 
-	return await DocumentRequest.findOneAndUpdate({_id: ObjectId(documentRequestId)}, { $push: { tags: tagIds.map(tag => ObjectId(tag)) } });
 
+attachTag = (req, res) => {
+	const { id } = req.params
+	const { tagId } = req.body;
+	if (!checkValid(id)) return res.json({success: false, error: "attachTag error: no id provided.", result: null});
+	if (!checkValid(tagId)) return res.json({success: false, error: "attachTag error: no tagIds provided.", result: null});
+
+	let update = {}
+	update.tags = ObjectId(tagId);
+	
+	DocumentRequest.findOneAndUpdate({_id: id}, { $push: update}, { new: true }, (err, request) => {
+		if (err) return res.json({ success: false, error: err });
+		request.populate('workspace').populate('repository')
+        .populate('references').populate('tags')
+        .populate('mentions', (err, request) => {
+			if (err) return res.json(err);
+			//console.log(request)
+			console.log(id)
+			console.log(request)
+            return res.json(request);
+        });
+	})
 }
 
-removeTags = async (req, res) => {
-	const { documentRequestId, tagIds} = req.body;
-	if (!checkValid(documentRequestId)) return res.json({success: false, error: "removeTags error: no documentRequestId provided.", result: null});
-	if (!checkValid(tagIds)) return res.json({success: false, error: "removeTags error: no tagIds provided.", result: null});
+removeTag = (req, res) => {
+	const { id } = req.params
+	const { tagId } = req.body;
+	if (!checkValid(id)) return res.json({success: false, error: "removeTag error: no id provided.", result: null});
+	if (!checkValid(tagId)) return res.json({success: false, error: "removeTag error: no tagIds provided.", result: null});
 
-	return await DocumentRequest.findOneAndUpdate({_id: ObjectId(documentRequestId)}, { $pull: { tags: tagIds.map(tag => ObjectId(tag)) } });
-
+	let update = {}
+	update.tags = ObjectId(tagId);
+	
+	DocumentRequest.findOneAndUpdate({_id: id}, { $pull: update}, { new: true }, (err, request) => {
+		if (err) return res.json({ success: false, error: err });
+		request.populate('workspace').populate('repository')
+        .populate('references').populate('tags')
+        .populate('mentions', (err, request) => {
+            if (err) return res.json(err);
+            return res.json(request);
+        });
+	})
 }
+
+
 
 addMentions = async (req, res) => {
 	const { documentRequestId, mentionIds} = req.body;
@@ -223,7 +252,7 @@ retrieveDocumentRequests = async (req, res) => {
 
 
 module.exports = {
-	createDocumentRequest, addTags, removeTags, addMentions, removeMentions,
+	createDocumentRequest, attachTag, removeTag, addMentions, removeMentions,
 	addReferences, removeReferences, addSnippets, removeSnippets,
 	editDocumentRequest, deleteDocumentRequest, getDocumentRequest, retrieveDocumentRequests
 }

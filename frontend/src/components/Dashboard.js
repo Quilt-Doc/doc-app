@@ -8,7 +8,7 @@ import { Router, Route, Link } from 'react-router-dom';
 
 //components
 import SpaceView from './Space Page/SpaceView';
-import Bucket from './General Components/Top Navbar/Bucket'
+import Bucket from './General/Top Navbar/Bucket'
 import NavbarProfile from './Top Navbar/NavbarProfile';
 import UserSettingsView from './Settings Pages/UserSettingsView';
 import WorkspaceView from './Workspace Page/WorkspaceView';

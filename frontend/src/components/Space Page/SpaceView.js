@@ -128,6 +128,8 @@ const RightView = styled.div`
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     background-color: white;
     width: 100%;
+    overflow-y: scroll;
+    height: calc(100vh - 5.5rem);
 `
 
 
