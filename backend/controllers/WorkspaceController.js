@@ -1,7 +1,26 @@
 
 const Workspace = require('../models/Workspace');
+const Reference = require('../models/Reference');
+const Document = require('../models/Document');
+const Tag = require('../models/Tag');
+
+
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
+
+const PAGE_SIZE = 10;
+
+checkValid = (item) => {
+    if (item !== undefined && item !== null) {
+        return true
+    }
+    return false
+}
+
+escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
 
 createWorkspace = (req, res) => {
     const {name, creatorId, debugId, repositoryIds, icon, key} = req.body;
@@ -46,6 +65,63 @@ getWorkspace = (req, res) => {
                 return res.json(workspace);
             });
     });
+}
+
+searchWorkspace = async (req, res) => {
+    const { workspaceId, userQuery, repositoryId, tagIds,
+            returnReferences, returnDocuments, requestedPageSize, requestedPageNumber} = req.body;
+
+    // for the `returnReferences`, `returnDocuments` params, put a string "true" if you want to do it
+    if (!checkValid(workspaceId)) return res.json({success: false, result: null, error: 'searchWorkspace: error no workspaceId provided.'});
+    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'searchWorkspace: error no userQuery provided.'});
+    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnReferences provided.'});
+    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnDocuments provided.'});
+
+    var searchResults = [];
+
+    var pageSize = checkValid(requestedPageSize) ? parseInt(requestedPageSize) : PAGE_SIZE;
+    var pageNumber = checkValid(requestedPageNumber) ? parseInt(requestedPageNumber) : 0;
+
+
+    var re = new RegExp(escapeRegExp(userQuery), 'i');
+
+    var documentFilter;
+    if (tagIds) {
+        documentFilter = {title: {$regex: re}, workspace: workspaceId, tags: {$in: tagIds.map(tag => ObjectId(tag))}};
+    }
+    else {
+        documentFilter = {title: {$regex: re}, workspace: workspaceId};
+    }
+    var referenceFilter;
+
+    if (!repositoryId) {
+        var searchableRepositories = await Workspace.findById(workspaceId);
+        searchableRepositories = searchableRepositories.repositories.map(repositoryObj => repositoryObj._id.toString());
+
+        referenceFilter = {
+            repository: { $in:  searchableRepositories.map(obj => ObjectId(obj))},
+            name: { $regex: re}
+        };
+    }
+
+    else {
+        referenceFilter = {
+            repository: ObjectId(repositoryId),
+            name: { $regex: re}
+        };
+    }
+
+    var temp;
+    if (returnReferences == 'true') {
+        temp = await Reference.find(referenceFilter).skip(pageNumber*pageSize).limit(pageSize).exec();
+        searchResults.push(...temp);
+    }
+    if (returnDocuments == 'true') {
+        temp = await Document.find(documentFilter).skip(pageNumber*pageSize).limit(pageSize).exec();
+        searchResults.push(...temp);
+    }
+
+    return res.json({success: true, result: searchResults});
 }
 
 deleteWorkspace = (req, res) => {
@@ -119,4 +195,4 @@ retrieveWorkspaces = (req, res) => {
     });
 }
 
-module.exports = {createWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser, retrieveWorkspaces}
+module.exports = {createWorkspace, searchWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser, retrieveWorkspaces}
