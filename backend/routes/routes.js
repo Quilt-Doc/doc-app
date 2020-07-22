@@ -17,6 +17,8 @@ router.post('/references/create2', reference_controller.createReferences2);
 router.get('/references/get2/:id', reference_controller.getReference);
 router.put('/references/edit/:id', reference_controller.editReference);
 router.delete('/references/delete/:id', reference_controller.deleteReference);
+router.put('/references/attach_tag/:id', reference_controller.attachTag);
+router.put('/references/remove_tag/:id', reference_controller.removeTag);
 router.post('/references/retrieve',  reference_controller.retrieveReferences);
 router.post('/references/get_contents', reference_controller.getContents);
 router.post('/references/retrieve_code_references', reference_controller.retrieveCodeReferences);

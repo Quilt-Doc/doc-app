@@ -132,125 +132,116 @@ class TextEditorView extends React.Component {
         if (this.state.loaded) {
             return(
                 <AllContainer>
-                <LeftContainer>
-                <BarSpace/>
-                <Toolbar>
-                    <IconBlock>
-                        <IconBorder>
-                            <IconBold>B</IconBold>
-                        </IconBorder>
-                        <IconBorder>
-                            <IconItalic>i</IconItalic>
-                        </IconBorder>
-                        <IconBorder>
-                            <IconUnderline>U</IconUnderline>
-                        </IconBorder>
-                    </IconBlock>
-                    <IconBlock>
-                        <IconBorder>
-                            <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignLeft} />
-                        </IconBorder>
-                        <IconBorder>
-                            <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignCenter} />
-                        </IconBorder>
-                        <IconBorder>
-                            <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignRight} />
-                        </IconBorder>
-                    </IconBlock>
-                    <IconBlock>
-                        <IconBorder>
-                            <ion-icon style = {{fontSize: "1.7rem", borderBottom: "2px solid #172A4E"}} name="color-palette-outline"></ion-icon>
-                        </IconBorder>
-                        <IconBorder>
-                            <ion-icon style = {{fontSize: "1.7rem"}}  name="color-wand-outline"></ion-icon>
-                        </IconBorder>
-                    </IconBlock>
-                    <IconBlock>
-                        <IconBorder>
-                            <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListUl}/>
-                        </IconBorder>
-                        <IconBorder>
-                            <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListOl}/>
-                        </IconBorder>
-                    </IconBlock>
-                    <IconBlock>
-                        <IconBorder>
-                            <IconBold>H1</IconBold>
-                        </IconBorder>
-                        <IconBorder>
-                            <IconBold>H2</IconBold>
-                        </IconBorder>
-                        <IconBorder>
-                            <IconBold>H3</IconBold>
-                        </IconBorder>
-                        
-                    </IconBlock>
-                    <IconBlock>
-                        <IconBorder>
-                            <ion-icon style = {{marginTop: "0.25rem", fontSize: "1.7rem"}} name="code-slash-sharp"></ion-icon>
-                        </IconBorder>
-                        <IconBorder>
-                            <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="grid-outline"></ion-icon>  
-                        </IconBorder>
-                        <IconBorder>
-                            <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="checkbox-outline"></ion-icon>
-                        </IconBorder>
-                    </IconBlock>
-                </Toolbar>
-                <Shadow/>
-                <BarSpace2/>
-                <Container>
-                        <SubContainer>
-                            <Header ref = {this.headerRef} onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
-                            <DocumentEditor 
-                                markup = {this.state.markup} 
-                                setValue = {this.setValue}
-                                scrollTop = {this.props.scrollTop}
-                            />
-                        </SubContainer>
-                </Container>
-                </LeftContainer>
-                
-                <InfoBar>
-                    
-                    <InfoBlock >
+                    <BarSpace/>
+                    <Toolbar>
+                        <IconBlock>
+                            <IconBorder>
+                                <IconBold>B</IconBold>
+                            </IconBorder>
+                            <IconBorder>
+                                <IconItalic>i</IconItalic>
+                            </IconBorder>
+                            <IconBorder>
+                                <IconUnderline>U</IconUnderline>
+                            </IconBorder>
+                        </IconBlock>
+                        <IconBlock>
+                            <IconBorder>
+                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignLeft} />
+                            </IconBorder>
+                            <IconBorder>
+                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignCenter} />
+                            </IconBorder>
+                            <IconBorder>
+                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignRight} />
+                            </IconBorder>
+                        </IconBlock>
+                        <IconBlock>
+                            <IconBorder>
+                                <ion-icon style = {{fontSize: "1.7rem", borderBottom: "2px solid #172A4E"}} name="color-palette-outline"></ion-icon>
+                            </IconBorder>
+                            <IconBorder>
+                                <ion-icon style = {{fontSize: "1.7rem"}}  name="color-wand-outline"></ion-icon>
+                            </IconBorder>
+                        </IconBlock>
+                        <IconBlock>
+                            <IconBorder>
+                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListUl}/>
+                            </IconBorder>
+                            <IconBorder>
+                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListOl}/>
+                            </IconBorder>
+                        </IconBlock>
+                        <IconBlock>
+                            <IconBorder>
+                                <IconBold>H1</IconBold>
+                            </IconBorder>
+                            <IconBorder>
+                                <IconBold>H2</IconBold>
+                            </IconBorder>
+                            <IconBorder>
+                                <IconBold>H3</IconBold>
+                            </IconBorder>
+                            
+                        </IconBlock>
+                        <IconBlock>
+                            <IconBorder>
+                                <ion-icon style = {{marginTop: "0.25rem", fontSize: "1.7rem"}} name="code-slash-sharp"></ion-icon>
+                            </IconBorder>
+                            <IconBorder>
+                                <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="grid-outline"></ion-icon>  
+                            </IconBorder>
+                            <IconBorder>
+                                <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="checkbox-outline"></ion-icon>
+                            </IconBorder>
+                        </IconBlock>
+                           
                         <Settings><ion-icon name="settings-outline"></ion-icon></Settings>
-                        <ProfileContent>
-
-                        
-                        <ProfileButton>FS</ProfileButton>
-                        <ProfileInfo>
-                            <div style = {{marginBottom: "0.3rem"}}>Created by <b>Faraz Sanal</b></div>
-                            <div>June 8th, 2016</div>
-                        </ProfileInfo>
-                        </ProfileContent>
-                    </InfoBlock>     
-                     <InfoBlock>
-                        <InfoHeader>< ion-icon name="menu-sharp" style = {{ fontSize: '1.5rem', marginRight: "0.7rem"}}></ion-icon>Shortcuts</InfoHeader>
-                        <ReferenceContainer>
-                            <Shortcut>+ Iterable-styled datasets</Shortcut>
-                            <Shortcut>+ Map-styled datasets</Shortcut>
-                        </ReferenceContainer>
-                    </InfoBlock>     
-                    <InfoBlock>
-                        <InfoHeader>< ion-icon name="code-slash-outline" style = {{ fontSize: '1.5rem', marginRight: "0.7rem"}}></ion-icon>References</InfoHeader>
-                        <ReferenceContainer>
-                            <Reference ><ion-icon style = {{marginRight: "0.4rem"}} name="document-outline"></ion-icon>{"backend.js"}</Reference>
-                        </ReferenceContainer>
-                    </InfoBlock>
-                    <InfoBlock>
-                        <InfoHeader>< ion-icon name="pricetag-outline" style = {{ fontSize: '1.5rem', marginRight: "0.7rem"}}></ion-icon>Labels</InfoHeader>
-                        <ReferenceContainer>
-                            <Tag>utility</Tag>
-                        </ReferenceContainer>
-                    </InfoBlock>
-                    <InfoBlock borderBottom = {"none"}>
-                        <InfoHeader>< ion-icon name="chatbubble-ellipses-outline" style = {{ fontSize: '1.5rem', marginRight: "0.7rem"}}></ion-icon>Comments</InfoHeader>
-                        <ReferenceContainer>
-                            <CommentInput placeholder = {"Write a comment.."}/>
-                        </ReferenceContainer>
-                    </InfoBlock>
-                </InfoBar>
+                    </Toolbar>
+                    <Shadow/>
+                    <BarSpace2/>
+                    <Container>
+                            <SubContainer>
+                                <Header ref = {this.headerRef} onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
+                                <DocumentEditor 
+                                    markup = {this.state.markup} 
+                                    setValue = {this.setValue}
+                                    scrollTop = {this.props.scrollTop}
+                                />
+                            </SubContainer>
+                            
+                        <InfoBar>
+                             
+                            <InfoBlock>
+                                <InfoHeader>< ion-icon name="menu-sharp" style = {{color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}}></ion-icon>Shortcuts</InfoHeader>
+                                <ShortcutContainer flexDirection = "column">
+                                    <Shortcut>+ Iterable-styled datasets</Shortcut>
+                                    <Shortcut>+ Map-styled datasets</Shortcut>
+                                </ShortcutContainer>
+                            </InfoBlock>     
+                            <InfoBlock>
+                                <InfoHeader>< ion-icon name="cube-outline" style = {{color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}}></ion-icon>References</InfoHeader>
+                                <ReferenceContainer>
+                                    <Reference ><ion-icon style = {{marginRight: "0.4rem"}} name="document-outline"></ion-icon>{"backend.js"}</Reference>
+                                </ReferenceContainer>
+                            </InfoBlock>
+                            <InfoBlock>
+                                <InfoHeader><ion-icon style = {
+                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
+                                    } name="pricetag-outline"></ion-icon>Labels</InfoHeader>
+                                <ReferenceContainer>
+                                    <Tag>utility</Tag>
+                                </ReferenceContainer>
+                            </InfoBlock>
+                            <InfoBlock borderBottom = {"none"}>
+                                <InfoHeader>< ion-icon name="chatbox-ellipses-outline" style = {{ fontSize: '1.8rem', marginRight: "0.7rem"}}></ion-icon>Comments</InfoHeader>
+                                <ReferenceContainer>
+                                    <CommentInput placeholder = {"Write a comment.."}/>
+                                </ReferenceContainer>
+                            </InfoBlock>
+                        </InfoBar>
+                    </Container>
+             
                 </AllContainer>
             )
         } 
@@ -361,6 +352,26 @@ export default withRouter(connect(mapStateToProps, { getDocument, editDocument, 
 //table <ion-icon name="grid-outline"></ion-icon>
 //checklist <ion-icon name="checkbox-outline"></ion-icon>
 //code <ion-icon name="code-slash"></ion-icon>
+const Segment = styled.div`
+    font-size: 1.3rem;
+    margin-left: 27rem;
+    opacity: 0.6;
+`
+
+const ProfileButton = styled.div`
+    width: 3.5rem;
+    height: 3.5rem;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    border-radius: 0.3rem;
+    font-size: 1.4rem;
+    color: white;
+    background-color:#5B75E6;
+    cursor: pointer;
+    margin-right: 1rem;
+`
+
 const BarSpace = styled.div`
     height: 3rem;
     z-index: 40;
@@ -381,7 +392,7 @@ const CommentInput = styled.input`
     outline: none;
     padding: 1rem;
     border-radius: 0.3rem;
-    border: 2px solid #E0E4E7;
+    border: 1px solid #E0E4E7;
     &::placeholder { 
         color: #172A4E;
         opacity: 0.7;
@@ -393,9 +404,9 @@ const CommentInput = styled.input`
 
 const Settings = styled.div`
     display: flex;
-    height: 3rem;
     font-size: 2rem;
-    justify-content: flex-end;
+    align-items: center;
+    margin-left: auto;
 `
 
 const ProfileInfo = styled.div`
@@ -405,7 +416,7 @@ const ProfileInfo = styled.div`
 
 const Shortcut = styled.div`
     font-size: 300;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     margin-bottom: 0.5rem;
     &:last-of-type {
         margin-bottom: 0rem;
@@ -426,13 +437,11 @@ const InfoBarTitle = styled.div`
 
 const AllContainer = styled.div`
     display: flex;
-    height: 100%;
+    flex-direction: column;
+    
 `
 
-const LeftContainer = styled.div`
-    overflow-y: scroll;
-    height: 94vh;
-`
+
 
 const RightContainer = styled.div`
 
@@ -518,6 +527,7 @@ const H2 = styled.div`
 const ProfileContent = styled.div`
     display: flex;
     align-items: center;
+    font-size: 1.5rem;
 `
 
 const H3 = styled.div`
@@ -626,8 +636,7 @@ const SubContainer = styled.div`
     width: 80rem;
    
     margin-left: 12rem;
-    margin-right: 12rem;
-    
+    margin-right: 8rem;
 `
 
 const EditorContainer = styled.div`
@@ -636,16 +645,15 @@ const EditorContainer = styled.div`
 const InfoBar = styled.div`
     min-width: 35rem;
     margin-top: 3rem;
-    z-index: 20;
-    /*background-color: #F4F4F6; */
-   /* border-left: 1px solid #E0E4E7;*/
-    padding-left: 3rem;
-    padding-right: 3rem;
+
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
     /*box-shadow: -1px 2px 4px rgba(0,0,0,0.1);*/
-    /*
-    margin-top: 1rem;
-    padding-left: 2rem;
-    */
+
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    align-self: flex-start;
+    top: 15rem;
 `
 
 const TagHeader = styled.div`
@@ -654,28 +662,45 @@ const TagHeader = styled.div`
     margin-bottom: 1rem;
 `
 
+
 const InfoHeader = styled.div`
     display: flex;
     align-items: center;
     font-weight: 500;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     color: #172A4E;
     margin-bottom: 1.5rem;
 `
 
 const InfoBlock = styled.div`
-    padding-top: 2.2rem;
-    padding-bottom: 2.2rem;
-    
-    border-bottom: 1px solid #E0E4E7;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
     display: ${props => props.display};
     border-bottom: ${props => props.borderBottom};
+    border-bottom: 1px solid #E0E4E7;
+    &: last-of-type {
+        border-bottom: none;
+    }
+
+    &: first-of-type {
+        padding-top: 0rem;
+    }
 `
+
+
+const ShortcutContainer = styled.div`
+    margin-top: 0.8rem;
+    display: flex;
+    flex-direction:column;
+`
+
 
 const ReferenceContainer = styled.div`
     margin-top: 0.8rem;
-
+    display: flex;
+    align-items: center;
 `
+
 
 const Repository = styled.div`
     color: #172A4E;
@@ -743,18 +768,5 @@ const Title = styled.input`
     }
 `
 
-const ProfileButton = styled.div`
-    width: 3rem;
-    height: 3rem;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    border-radius: 0.3rem;
-    font-size: 1.4rem;
-    color: white;
-    background-color: #19E5BE;
-    cursor: pointer;
-    margin-right: 1rem
-`
 
 /*#1BE5BE*/

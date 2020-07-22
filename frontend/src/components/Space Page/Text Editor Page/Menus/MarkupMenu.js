@@ -18,11 +18,11 @@ const MarkupMenu = (props) => {
 	const typeMapping = {
 							"paragraph": {name: "Text", icon: "text-outline", description: "Paragraph style text markup"},
 							"heading-one": {name: "Heading 1", icon: "filter-outline", description: "Large sized header for titles"},
-							"heading-two": {name: "Heading 2", icon: "filter-outline", description: "Medium sized header to delineate sections"},
+							"heading-two": {name: "Heading 2", icon: "filter-outline", description: "Medium sized header"},
 							"heading-three": {name: "Heading 3", icon: "filter-outline", description: "Subheader to delineate sections"},
-							"list-item": {name: "Bullet list", icon: "list-outline", description: "Bulleted list to order items and text"},
+							"list-item": {name: "Bullet list", icon: "list-outline", description: "Bulleted list to order items"},
 							"code-line": {name: "Code snippet", icon: "code-slash-outline", description: "Block of inline, editable code"},
-							"code-reference": {name: "Code reference", icon: "code-slash-outline", description: "Pointer to repository declarations"}
+							"code-reference": {name: "Code reference", icon: "cube-outline", description: "Pointer to repository declarations"}
 						}
 
 
@@ -73,6 +73,9 @@ const MarkupMenu = (props) => {
 
 	const renderMenu = () => {
 		return props.state.blocktypes.map((type, i) => {
+			let icon = type === "paragraph" ? "Aa" : type === "heading-one" ? "H1" 
+				: type === "heading-two" ? "H2" : type === "heading-three" ? "H3" : 
+				<ion-icon  name= {typeMapping[type].icon} style= {{ 'fontSize': '2rem !important' }} ></ion-icon>
 			return (
 				<MenuButton  
 					onMouseEnter = {() => props.dispatch({type: 'setHovered', payload: {position: i, ui: 'mouse'}})}
@@ -80,10 +83,7 @@ const MarkupMenu = (props) => {
 					onClick={(e) => { toggleBlock(e, editor, props, type) }}
 				>
 					<IconBorder>
-						<ion-icon 
-							style={{ 'fontSize': '20px !important' }} 
-							name={typeMapping[type].icon}>
-						</ion-icon>
+						{icon}
 					</IconBorder>
 					<MenuButtonText>
 						<MenuButtonTitle>{typeMapping[type].name}</MenuButtonTitle>
@@ -96,8 +96,10 @@ const MarkupMenu = (props) => {
 	
 		
 	return (<Menu ref={ref}>
-		<MenuHeader>Insert Blocks</MenuHeader>
-			{renderMenu()}
+		  <HeaderContainer>Add Markup</HeaderContainer>
+		  	<ListItemContainer>
+			  {renderMenu()}
+			</ListItemContainer>
 			{checkScroll(ref, props.state.hovered)}
 		</Menu>
 	)
@@ -129,10 +131,17 @@ const getScrollParent = (node) => {
 
 export default MarkupMenu
 
+const ListItemContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	padding: 0rem 1rem;
+	max-height: 31.5rem;
+	overflow-y: scroll;
+	padding-bottom: 1rem;
+`
 
 const Menu = styled.div`
-    width: 37rem;
-    max-height: 31.5rem;
+	width: 32rem;
     position: absolute;
     z-index: 1;
     top: -10000px;
@@ -140,15 +149,23 @@ const Menu = styled.div`
     margin-top: -6px;
     opacity: 0;
     background-color: white;
-    border-radius: 3px;
+	border-radius: 0.3rem;
     transition: opacity 0.75s;
     display: flex;
     flex-direction: column;
+	box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+	color:  #172A4e;
+`
+
+
+
+const HeaderContainer = styled.div`
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    font-size: 1.3rem;
     padding: 1rem;
-    box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
-	overflow-y: scroll;
-	font-weight: 300;
-	color:  #262626;
+    color: #172A4E;
 `
 
 const MenuHeader = styled.div`
@@ -166,8 +183,9 @@ const MenuButtonText = styled.div`
 `
 
 const MenuButtonTitle = styled.div`
-	font-size: 1.45rem;
-	margin-bottom: 0.2rem;
+	font-size: 1.5rem;
+	margin-bottom: 0.5rem;
+	font-weight: 500;
 `
 
 const MenuButtonDescription = styled.div`
@@ -176,17 +194,15 @@ const MenuButtonDescription = styled.div`
 `
 
 const IconBorder = styled.div`
-    border-radius: 7px;
+    border-radius: 0.4rem;
     width: 4.5rem;
     height: 4.5rem;
     background-color: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 1rem;
-    padding-left: 1.5rem;
-	padding-right: 1.5rem;
-	border: 1px solid #DFDFDF;
+	border: 1px solid #EDEFF1;
+	font-size: 2rem;
     /*box-shadow: 0 3px 6px 0 rgba(0,0,0,.1), 0 1px 3px 0 rgba(0,0,0,.08);*/
 `
 

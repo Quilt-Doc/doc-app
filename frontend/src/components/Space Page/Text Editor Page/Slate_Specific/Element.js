@@ -6,9 +6,12 @@ import { Editor, Node, Transforms } from 'slate'
 
 //styles
 import styled from 'styled-components'
+import chroma from 'chroma-js';
 
 //icons
 import menu_editor from '../../../../images/menu_editor.svg'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBars } from '@fortawesome/free-solid-svg-icons'
 
 //reactdnd
 import {ItemTypes} from '../Drag_Types';
@@ -205,8 +208,12 @@ const BlockTool = (props) => {
 				<CreateBlockButton onClick = {() => {insertBlock()}}>
 					<ion-icon style = {{'fontSize': '2rem'}}name="add-outline" ></ion-icon>
 				</CreateBlockButton>
-				<CreateBlockButton ref={props.drag} onClick = {() => {dropdownOpacity === 1 ? setDropdownOpacity(0) : setDropdownOpacity(1)}}>
-					<ion-icon  style = {{'fontSize': '2rem'}} name="reorder-four-outline"></ion-icon>
+				<CreateBlockButton 
+					marginLeft = {"0.5rem"} marginRight = {"0.5rem"}
+					ref={props.drag} onClick = {() => {dropdownOpacity === 1 ? setDropdownOpacity(0) : setDropdownOpacity(1)}}>
+					<FontAwesomeIcon style = {
+                                                {fontSize: "1.5rem", color: "#172A4E"}
+                                            } icon={faBars} />
 				</CreateBlockButton>
 				<OptionsMenu 
 							contentEditable={false} 
@@ -323,15 +330,14 @@ const CreateBlockButton = styled.div`
 	justify-content: center;
 	border-radius: 0.3rem;
 	color: #172A4E;
-	opacity: 0.5;
 	cursor: ${props => props.cursor};
 	&:hover {
-		background-color: #DFDFDF;
-		opacity: 0.42;
+		background-color: ${chroma("#5B75E6").alpha(0.1)};
 		cursor: pointer;
 	}
 		/*border: 1px solid #262626;*/
-	
+	margin-left: ${props => props.marginLeft};
+	margin-right: ${props => props.marginRight};
 `
 
 const Wrapper = styled.div`

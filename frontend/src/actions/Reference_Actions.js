@@ -16,6 +16,17 @@ export const editReference = (id, formValues) => async dispatch => {
     dispatch({ type: EDIT_REFERENCE, payload: response.data });
 }
 
+export const attachTag = (id, tagId) => async dispatch => {
+    const response = await api.put(`/references/attach_tag/${id}`, {tagId});
+    dispatch({ type: EDIT_REFERENCE, payload: response.data });
+}
+
+export const removeTag = (id, tagId) => async dispatch => {
+    const response = await api.put(`/references/remove_tag/${id}`, {tagId});
+    dispatch({ type: EDIT_REFERENCE, payload: response.data });
+}
+
+
 // Example download link: https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
 
 export const getContents = (formValues) => async () => {

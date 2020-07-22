@@ -15,7 +15,6 @@ import styled from "styled-components";
 
 //actions
 import { retrieveTags, createTag } from '../../../actions/Tag_Actions';
-import { object } from 'prop-types';
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";

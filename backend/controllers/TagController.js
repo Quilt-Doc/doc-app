@@ -1,4 +1,5 @@
 const Tag = require('../models/Tag');
+const Workspace = require('../models/Workspace');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -10,11 +11,15 @@ checkValid = (item) => {
 }
 
 
-createTag = (req, res) => {
-    const { label, color } = req.body;
+createTag = async (req, res) => {
+    const { label,  workspaceId } = req.body;
+    
+    let color = await Tag.count({workspace: workspaceId})
+
     let tag = new Tag(
         {
             label,
+            workspace: ObjectId(workspaceId),
             color
         },
     );

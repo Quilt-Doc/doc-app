@@ -243,6 +243,45 @@ deleteReference = (req, res) => {
     });
 }
 
+
+attachTag = (req, res) => {
+	const { id } = req.params
+	const { tagId } = req.body;
+	if (!checkValid(id)) return res.json({success: false, error: "attachTag error: no id provided.", result: null});
+	if (!checkValid(tagId)) return res.json({success: false, error: "attachTag error: no tagIds provided.", result: null});
+
+	let update = {}
+	update.tags = ObjectId(tagId);
+	
+	Reference.findOneAndUpdate({_id: id}, { $push: update}, { new: true }, (err, reference) => {
+		if (err) return res.json({ success: false, error: err });
+		reference.populate('repository').populate('tags', (err, reference) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(reference);
+        });
+	})
+}
+
+
+removeTag = (req, res) => {
+	const { id } = req.params
+	const { tagId } = req.body;
+	if (!checkValid(id)) return res.json({success: false, error: "removeTag error: no id provided.", result: null});
+	if (!checkValid(tagId)) return res.json({success: false, error: "removeTag error: no tagIds provided.", result: null});
+
+	let update = {}
+	update.tags = ObjectId(tagId);
+	
+	Reference.findOneAndUpdate({_id: id}, { $pull: update}, { new: true }, (err, reference) => {
+		if (err) return res.json({ success: false, error: err });
+		reference.populate('repository').populate('tags', (err, reference) => {
+            if (err) return res.json({ success: false, error: err });
+            return res.json(reference);
+        });
+	})
+}
+
+
 /*
 attachDocument = (req, res) => {
     const { referenceIds, documentId } = req.body;
@@ -292,7 +331,6 @@ module.exports =
     // DEPRECATED
     createReferences,
     getReferences,
-
     // NEW
     createReferences2,
     getReference,
@@ -300,7 +338,9 @@ module.exports =
     editReference,
     deleteReference,
     getContents,
-    retrieveCodeReferences
+    retrieveCodeReferences,
+    attachTag, 
+    removeTag
     /*
     attachDocument,
     removeDocument*/

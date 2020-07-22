@@ -286,7 +286,6 @@ const DocumentContainer = styled.div`
     /*height: 16rem;*/
     background-color: #F7F9FB;
     border-bottom: 1px solid #EDEFF1;
-    z-index: 1;
     display: flex;
     align-items: center;
     transition: all 0.2s ease-in;
@@ -357,7 +356,6 @@ const StyledLink = styled(Link)`
     align-items: center;
     display: flex; 
     font-size: 1.4rem;
-    z-index: 10;
 `
 
 const ItemName = styled.div`
@@ -419,8 +417,8 @@ const Count = styled.div`
 
 
 const Check_Box_Border = styled.div`
-    height: 3.5rem;
-    width: 3.5rem;
+    min-height: 3.5rem;
+    min-width: 3.5rem;
     margin-left: 0.5rem;
     margin-right: 0.5rem;
     &:hover {

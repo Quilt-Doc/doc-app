@@ -7,6 +7,7 @@ var tagSchema = new Schema({
 	folder: {type: ObjectId, ref: 'Folder'},
 	label: String,
 	color: String,
+	workspace: {type: ObjectId, ref: 'Workspace'}
 });
 
 var Tag = mongoose.model("Tag", tagSchema);

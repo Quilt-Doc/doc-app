@@ -22,7 +22,7 @@ import _ from 'lodash';
 //actions
 import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
 import { retrieveDocuments } from '../../../actions/Document_Actions';
-import { getContents, retrieveCodeReferences, retrieveReferences } from '../../../actions/Reference_Actions';
+import { getContents, retrieveCodeReferences, retrieveReferences, attachTag, removeTag } from '../../../actions/Reference_Actions';
 import { getRepositoryFile, getRepository } from '../../../actions/Repository_Actions';
 
 import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
@@ -411,6 +411,17 @@ class CodeView extends React.Component {
         return allLinesJSX
     }
 
+    renderTags(){
+        let colors = ['#5352ed', 
+        '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
+        ]
+
+        return this.props.currentReference.tags.map(tag => {
+            let color = tag.color < colors.length ? colors[tag.color] : colors[colors.length % tag.color];
+            return <Tag color = {color} backgroundColor = {chroma(color).alpha(0.2)}>{tag.label}</Tag>
+        })
+    }
+
 
     getContent = (token) => {
         if (typeof token === 'string') {
@@ -726,11 +737,12 @@ class CodeView extends React.Component {
                                 Labels
                             </InfoHeader>
                             <ReferenceContainer>
-                                {this.props.currentReference.tags ? <Tag>Utility</Tag> : <NoneMessage>None yet</NoneMessage>}
+                                {this.props.currentReference.tags && this.props.currentReference.tags.length > 0  ? this.renderTags() : <NoneMessage>None yet</NoneMessage>}
                                 <LabelMenu 
-                                    attachTag = {(tagId) => console.log(tagId)}//this.props.attachTag(requestId, tagId)}
-                                    removeTag = {(tagId) => console.log(tagId)}//this.props.removeTag(requestId, tagId)}
-                                    setTags = {[]}//this.props.request.tags}
+                                    attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                                    removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                                    setTags = {this.props.currentReference.tags}//this.props.request.tags}
+                                    marginTop = {"1rem"}
                                 />
                             </ReferenceContainer>
                         </InfoBlock>
@@ -834,7 +846,7 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, 
     deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveDocuments,
-    retrieveCodeReferences, retrieveReferences, getRepository})(CodeView));
+    retrieveCodeReferences, retrieveReferences, getRepository, attachTag, removeTag})(CodeView));
 
 
 
@@ -922,9 +934,9 @@ const InfoHeader = styled.div`
 
 const Tag = styled.div`
     font-size: 1.25rem;
-    color: #2980b9;
+    color: ${props => props.color}; 
     padding: 0.4rem 0.8rem;
-    background-color: rgba(51, 152, 219, 0.1);
+    background-color: ${props => props.backgroundColor}; 
     display: inline-block;
     border-radius: 4px;
     margin-right: 1rem;
@@ -990,6 +1002,7 @@ const ListToolbar = styled.div`
     position: sticky; 
     top: 0;
     border-bottom: 1px solid #EDEFF1;
+    z-index: 1;
 `
 
 

@@ -17,7 +17,7 @@ import LabelMenu from '../../General/Menus/LabelMenu'
 import history from '../../../history';
 
 //actions
-import { retrieveReferences, editReference } from '../../../actions/Reference_Actions';
+import { retrieveReferences, editReference, attachTag, removeTag} from '../../../actions/Reference_Actions';
 import { retrieveDocuments } from '../../../actions/Document_Actions';
 import { getRepository } from '../../../actions/Repository_Actions';
 
@@ -114,9 +114,13 @@ class DirectoryView extends React.Component {
     }
 
     renderTags(){
-        console.log(this.props.currentReference)
+        let colors = ['#5352ed', 
+        '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
+        ]
+
         return this.props.currentReference.tags.map(tag => {
-            return <Tag>{tag.label}</Tag>
+            let color = tag.color < colors.length ? colors[tag.color] : colors[colors.length % tag.color];
+            return <Tag color = {color} backgroundColor = {chroma(color).alpha(0.2)}>{tag.label}</Tag>
         })
     }
 
@@ -137,14 +141,14 @@ class DirectoryView extends React.Component {
 //{this.renderHeader()}
     render() {
         let { referenceId, workspaceId, repositoryId } = this.props.match.params
-        if (this.props.currentReference) {
-            console.log(this.props.currentReference.tags)
+        if (!referenceId){
+            referenceId = ""
         }
         return (
             <>
                 { this.state.loaded ?
                         <Container>
-                            <Header><RepositoryButton>
+                            <Header><RepositoryButton >
                                 <ion-icon name="git-network-outline" style = {{marginRight: "0.7rem"}}></ion-icon>
                                 {this.props.currentRepository.fullName.split("/")[1]}
                                 <ion-icon name="chevron-down-sharp" style = {{marginLeft: "0.7rem", fontSize: "1.5rem"}}></ion-icon>
@@ -159,11 +163,14 @@ class DirectoryView extends React.Component {
                                     Labels
                                 </InfoHeader>
                                 <ReferenceContainer>
-                                    {this.props.currentReference.tags ? <Tag>Utility</Tag> : <NoneMessage>None yet</NoneMessage>}
+                                    {this.props.currentReference.tags && this.props.currentReference.tags.length > 0 ? 
+                                        this.renderTags() : 
+                                        <NoneMessage>None yet</NoneMessage>}
                                     <LabelMenu 
-                                        attachTag = {(tagId) => console.log(tagId)}//this.props.attachTag(requestId, tagId)}
-                                        removeTag = {(tagId) => console.log(tagId)}//this.props.removeTag(requestId, tagId)}
-                                        setTags = {[]}//this.props.request.tags}
+                                        attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                                        removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                                        setTags = {this.props.currentReference.tags}//this.props.request.tags}
+                                        marginTop = {"1rem"}
                                     />
                                 </ReferenceContainer>
                             </InfoBlock>
@@ -220,7 +227,7 @@ class DirectoryView extends React.Component {
 const mapStateToProps = (state, ownProps) => {
     let { workspaceId, repositoryId, referenceId } = ownProps.match.params
     let documents = Object.values(state.documents).filter(doc => doc.references.includes(referenceId))
-    let references = Object.values(state.references).filter(ref => ref._id !== referenceId)
+    let references = Object.values(state.references).filter(ref => ref._id !== referenceId && ref.path !== "")
     let currentReference;
     if (referenceId) {
         currentReference = state.references[referenceId]
@@ -236,7 +243,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default connect(mapStateToProps, { retrieveReferences, editReference, retrieveDocuments, getRepository } )(DirectoryView);
+export default connect(mapStateToProps, { retrieveReferences, editReference, retrieveDocuments, getRepository, attachTag, removeTag } )(DirectoryView);
 
 const Slash = styled.div`
     margin-left: 1rem;
@@ -325,9 +332,9 @@ const ReferenceContainer = styled.div`
 
 const Tag = styled.div`
     font-size: 1.25rem;
-    color: #2980b9;
+    color: ${props => props.color}; 
     padding: 0.4rem 0.8rem;
-    background-color: rgba(51, 152, 219, 0.1);
+    background-color: ${props => props.backgroundColor}; 
     display: inline-block;
     border-radius: 4px;
     margin-right: 1rem;
