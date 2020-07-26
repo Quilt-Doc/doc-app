@@ -5,8 +5,8 @@ import {
     RETRIEVE_MORE_DOCUMENTS,
     DELETE_DOCUMENT,
     EDIT_DOCUMENT,
-    DOCUMENT_ATTACH_TAG,
-    DOCUMENT_REMOVE_TAG,
+    ATTACH_TAG,
+    REMOVE_TAG,
     DOCUMENT_ATTACH_SNIPPET,
     DOCUMENT_REMOVE_SNIPPET,
     DOCUMENT_ATTACH_PARENT,
@@ -28,9 +28,7 @@ import { api } from '../apis/api';
 //create, move, 
 
 export const createDocument = (formValues) => async (dispatch) => {
-    console.log("ENTERED HERE")
     const response = await api.post('/documents/create', formValues );
-    console.log(response.data)
     dispatch({ type: CREATE_DOCUMENT, payload: response.data.result });
     return response.data
 }
@@ -70,6 +68,7 @@ export const retrieveChildren = (formValues) => async () => {
 
 export const retrieveDocuments = (formValues) => async dispatch => {
     const response = await api.post(`/documents/retrieve`, formValues );
+    console.log("RESPONSE", response.data)
     dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data });
 }
 
@@ -81,6 +80,10 @@ export const retrieveMoreDocuments = (formValues) => async dispatch => {
 export const deleteDocument = id => async dispatch => {
     const response = await api.delete(`/documents/delete/${id}`);
     dispatch({ type: DELETE_DOCUMENT, payload: response.data.result });
+    if (response.data.edited){
+        dispatch({type: EDIT_DOCUMENT, payload: response.data.edited})
+    }
+   
 }
 
 export const editDocument = (id, formValues) => async dispatch => {
@@ -88,16 +91,26 @@ export const editDocument = (id, formValues) => async dispatch => {
     dispatch({ type: EDIT_DOCUMENT, payload: response.data });
 }
 
-export const documentAttachTag = (id, tagId) => async (dispatch) => {
+export const attachTag = (id, tagId) => async (dispatch) => {
     const response = await api.put(`/documents/attach_tag/${id}`, { tagId });
-    dispatch({ type: DOCUMENT_ATTACH_TAG, payload: response.data });
+    dispatch({ type: ATTACH_TAG, payload: response.data });
 }
 
-export const documentRemoveTag = (id, tagId) => async (dispatch) => {
+export const removeTag = (id, tagId) => async (dispatch) => {
     const response = await api.put(`/documents/remove_tag/${id}`, { tagId });
-    dispatch({ type: DOCUMENT_REMOVE_TAG, payload: response.data });
+    dispatch({ type: REMOVE_TAG, payload: response.data });
 }
 
+
+export const attachReference = (id, referenceId) =>  async (dispatch) => {
+    const response = await api.put(`/documents/attach_reference/${id}`, { referenceId });
+    dispatch({ type: EDIT_DOCUMENT, payload: response.data });
+}
+
+export const removeReference = (id, referenceId) =>  async (dispatch) => {
+    const response = await api.put(`/documents/remove_reference/${id}`, { referenceId });
+    dispatch({ type: EDIT_DOCUMENT, payload: response.data });
+}
 
 export const attachChild = (id, childId) => async (dispatch) => {
     const response = await api.put(`/documents/attach_child/${id}`, { childId });

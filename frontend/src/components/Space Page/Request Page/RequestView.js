@@ -764,7 +764,7 @@ const ListToolBar = styled.div`
     width: 80rem;
     margin-bottom: 2rem;
     background-color: white;
-    border-radius: 0.4rem;
+    border-radius: 0.1rem;
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;

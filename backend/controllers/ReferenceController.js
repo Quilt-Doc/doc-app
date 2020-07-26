@@ -134,9 +134,11 @@ retrieveCodeReferences = async (req, res) => {
     });
 }
 
+retrieveReferencesFromPath = 
+
 retrieveReferences = async (req, res) => {
     
-    let { textQuery, name, path, kind, kinds, notKinds, 
+    let { textQuery, paths, name, path, kind, kinds, notKinds, 
         referenceId, repositoryId, truncated, repositoryIds, include, limit, skip } = req.body;
     let filter = {}
     

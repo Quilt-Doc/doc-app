@@ -63,7 +63,7 @@ class DirectoryItem extends React.Component {
 
     renderCheck = () => {
         let display = this.props.item._id in this.props.selected ? ''  : 'none'
-        return {'fontSize': "2rem", 'color': '#19E5BE', display}
+        return {'fontSize': "2rem", 'color': 'white', display}
     }
 
     turnCheckOn = (e, item) => {
@@ -115,12 +115,14 @@ class DirectoryItem extends React.Component {
     } 
 
     render() {
-        console.log(this.props.documents.length > 0 )
         return (
                 <>
                 <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
                     <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
-                        <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}>
+                        <Check_Box 
+                            border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}
+                            backgroundColor =  {this.props.item._id in this.props.selected ? '#19E5BE'  : 'white'}
+                        >
                             <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
                         </Check_Box>
                     </Check_Box_Border>
@@ -202,15 +204,19 @@ class DirectoryItem extends React.Component {
 /*to = {this.renderDirectoryLink(this.props.item)}*/
 
 const mapStateToProps = (state, ownProps) => {
-    if (ownProps.item.name === '.changeset'){
-        console.log(state.selected)
-    }
+    let documents = Object.values(state.documents).filter(doc => 
+        {
+            for (let i = 0; i < doc.references.length; i++){
+                if (doc.references[i]._id === ownProps.item._id) {
+                    return true
+                }
+            } return false
+        }
+    )
 
-    
-    
     return {
         selected : state.selected, 
-        documents: Object.values(state.documents).filter(doc => doc.references.includes(ownProps.item._id))
+        documents
     }
 }
 
@@ -434,7 +440,7 @@ const Check_Box_Border = styled.div`
 const Check_Box = styled.div`
     height: 1.6rem;
     width: 1.6rem;
-    background-color: white;
+    background-color: ${props => props.backgroundColor};
     border: 1.3px solid ${props => props.border_color};
     border-radius: 0.2rem;
     display: flex;

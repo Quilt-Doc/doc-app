@@ -58,7 +58,7 @@ Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-i
 // FIX TOOLBAR
 // REFERENCES
 
-const DocumentEditor = (props) => {
+const DocumentEditorModal = (props) => {
 
 	const [value, setValue] = [props.markup, props.setValue]
 	const blocktypes = ["paragraph", "heading-one", "heading-two", "heading-three", "list-item", "code-line", "code-reference"]
@@ -116,7 +116,7 @@ const DocumentEditor = (props) => {
 	)
 }
 
-export default DocumentEditor
+export default DocumentEditorModal
 
 
 // helper functions
@@ -181,7 +181,6 @@ const getContent = (token) => {
 	}
 }
 
-
 const decorate = ([node, path]) => {
 	const ranges = []
 	if (node.type == 'code-block') {
@@ -194,13 +193,13 @@ const decorate = ([node, path]) => {
 			const grammar = Prism.languages["python"]
 			const tokens = Prism.tokenize(string, grammar).reverse()
 			const identifiers = {
-									'keyword':'#D73A49',
+									'keyword':'#C679DD',
 									'boolean': '#56B6C2',
-									'function': '#6F42C1',
-									'class-name': '#E36208',
-									'string': '#032F62',
-									'triple-quoted-string': '#032F62',
-									'number': '#005DC5',
+									'function': '#61AEEE',
+									'class-name': '#E6C07A',
+									'string': '#98C379',
+									'triple-quoted-string': '#98C379',
+									'number': '#D19966',
 									
 
 								 }
@@ -263,9 +262,5 @@ const StyledEditable = styled(Editable)`
   color: #46474f;
   font-size: 16px;
   resize: none !important;
-  padding-bottom: 7rem;
-  padding-left: 8.5rem;
-  padding-right: 8.5rem;
-  width: 90rem;
-  min-height: 65rem;
-`	
+  padding-bottom: 20vh;
+`

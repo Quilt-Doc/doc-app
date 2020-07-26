@@ -4,6 +4,9 @@ import React from 'react';
 // react-redux
 import { connect } from 'react-redux';
 
+//components
+import { CSSTransition } from 'react-transition-group';
+
 //router
 import {withRouter} from 'react-router-dom';
 
@@ -38,13 +41,7 @@ class LabelMenu extends React.Component {
         this.menuRef = React.createRef();
     }
 
-    componentDidMount() {
-        document.addEventListener('mousedown', this.handleClickOutside, false);
-        let ids = this.props.setTags.map(tag => tag._id)
-        this.props.retrieveTags({limit: 9, tagIds: ids}).then(() => {
-            this.setState({loaded: true})
-        })
-    }
+
 
 
     /**
@@ -65,17 +62,17 @@ class LabelMenu extends React.Component {
         
         let ids = this.props.setTags.map(tag => tag._id)
        
-
+        let {workspaceId} = this.props.match.params
         this.setState({
            search: event.target.value,
            typing: false,
            typingTimeout: setTimeout(() => {
                 if ( this.state.search === ""){
-                    this.props.retrieveTags({limit: 9, tagIds: ids}).then(() => {
+                    this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId}).then(() => {
                         this.setState({create: "", position: -1})
                     })
                 } else {
-                    this.props.retrieveTags({search: this.state.search, limit: 9}).then(() => {
+                    this.props.retrieveTags({search: this.state.search, limit: 9, workspaceId}).then(() => {
                         let labels = this.props.tags.map(tag => tag.label)
                         if (labels.includes(this.state.search)) {
                             this.setState({create: "", position: -1})
@@ -95,7 +92,7 @@ class LabelMenu extends React.Component {
         this.props.createTag({label: this.state.search, workspaceId: this.props.workspace._id}).then((tag) => {
             this.props.attachTag(tag._id).then(() => {
                 let ids = this.props.setTags.map(tag => tag._id)
-                this.props.retrieveTags({limit: 9, tagIds: ids}).then(() => {
+                this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
                     this.setState({loaded: true, search: ''})
                 })
             })
@@ -136,7 +133,7 @@ class LabelMenu extends React.Component {
                 this.setState({loaded: false, create: ""})
                 await this.handleSelect(this.props.setTags.map(tag => tag.label).includes(tag.label), tag._id)
                 let ids = this.props.setTags.map(tag => tag._id)
-                this.props.retrieveTags({limit: 9, tagIds: ids}).then(() => {
+                this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
                     this.setState({loaded: true, search: ''})
                 })
             }
@@ -157,7 +154,7 @@ class LabelMenu extends React.Component {
             }
         } else {
             if (e.keyCode === 38) {
-                if (this.state.position === 0){
+                if (this.state.position <= 0){
                     this.setState({position: this.props.tags.length})
                 } else {
                     this.setState({position: this.state.position - 1})
@@ -177,10 +174,11 @@ class LabelMenu extends React.Component {
             let labelBool = objectLabels.includes(tag.label)
                 //let icon =  ref.kind === 'dir' ? <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.3rem"}} name="folder-sharp"></ion-icon> 
             //: <ion-icon style = {{marginRight: "0.5rem", fontSize: "1rem"}} name="document-outline"></ion-icon>; 
-            let color = tag.color < this.colors.length ? this.colors[tag.color] : this.colors[this.colors.length % tag.color];
+            let color = tag.color < this.colors.length ? this.colors[tag.color] : 
+                this.colors[tag.color - Math.floor(tag.color/this.colors.length) * this.colors.length];
             let border = this.state.position === i ? `1px solid ${color}` : '';
             let shadow = this.state.position === i ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :'';
-           
+            console.log("COLORES", color)
             return(
                 <ListItem 
                     onClick = {() => {this.handleSelect(labelBool, tag._id)}} 
@@ -202,7 +200,7 @@ class LabelMenu extends React.Component {
     openMenu(){
         document.addEventListener('mousedown', this.handleClickOutside, false);
         let ids = this.props.setTags.map(tag => tag._id)
-        this.props.retrieveTags({limit: 9, tagIds: ids}).then(() => {
+        this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
             this.setState({loaded: true, open:true})
         })
     }
@@ -223,14 +221,27 @@ class LabelMenu extends React.Component {
         this.colors = ['#5352ed', 
         '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
         ]
+        console.log("TAGS", this.props.setTags)
         let objectLabels = this.props.setTags.map(tag => tag.label)
         return(
             <MenuContainer  >
-                <AddButton ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
-                    <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                </AddButton>
+                {!this.props.modalButton ?
+                    <AddButton ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
+                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
+                    </AddButton> :
+                    <ModalToolbarButton onClick = {() => this.openMenu()}>
+                        <ion-icon name="pricetag-outline" style={{ 'fontSize': '2.3rem', 'marginRight': '0.7rem'}}></ion-icon> 
+                        {this.props.setTags.length}  
+                    </ModalToolbarButton>
+                }
                 {this.state.open && 
-                    <Container marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
+                    <CSSTransition
+                        in={true}
+                        appear = {true}
+                        timeout={100}
+                        classNames="menu"
+                    >
+                    <Container marginLeft = {this.props.marginLeft} marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
                         <HeaderContainer>Add labels</HeaderContainer>
                         <SearchbarContainer>
                             <Searchbar 
@@ -255,6 +266,7 @@ class LabelMenu extends React.Component {
                             }
                         </ListContainer>
                     </Container>
+                    </CSSTransition>
                 }
             </MenuContainer>
         )
@@ -279,6 +291,26 @@ const mapStateToProps = (state, ownProps) => {
 
 
 export default withRouter(connect(mapStateToProps, { retrieveTags, createTag })(LabelMenu));
+
+
+const ModalToolbarButton = styled.div`
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem;
+    font-size: 1.4rem;
+    
+    margin-right: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6; 
+        opacity: 1;
+    }
+    margin-left: ${props => props.marginLeft};
+    opacity: ${props => props.opacity};
+`
 
 const MenuContainer = styled.div`
 `
@@ -313,6 +345,7 @@ const Container = styled.div`
     z-index: 2;
     background-color: white;
     margin-top: ${props => props.marginTop};
+    margin-left: ${props => props.marginLeft};
 `
 
 const SearchbarContainer = styled.div`

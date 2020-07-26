@@ -56,3 +56,32 @@ body {
   font-weight: 400;
   cursor: text;
 }
+
+.sidenav-appear {
+  transform: translateX(-26rem);
+}
+
+.sidenav-appear.sidenav-appear-active {
+  transform: translateX(0);
+  transition: transform 500ms;
+}
+
+.modal-appear {
+  transform: translateY(-5rem);
+  opacity: 0;
+}
+
+.modal-appear.modal-appear-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 300ms;
+}
+
+.menu-appear {
+  opacity: 0;
+}
+
+.menu-appear.menu-appear-active {
+  opacity: 1;
+  transition: all 100ms;
+}

@@ -11,6 +11,8 @@ import Bucket from '../../General/Top Navbar/Bucket';
 import Document from './Document';
 import TextEditorView2 from '../Text Editor Page/TextEditorView2';
 
+import { CSSTransition } from 'react-transition-group';
+
 //react-dnd
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -60,8 +62,6 @@ class SideNavbar extends React.Component {
         this.props.createDocument({authorId: this.props.user._id,
             workspaceId, parentId: "", title: "",
             referenceIds: this.props.selected.map(item => item._id)}).then((documents) => {
-            console.log("CREATED DOCS", documents)
-            console.log(documents)
             let document = documents.result[0]
             this.props.setCreation(true)
             history.push(`?document=${document._id}`)
@@ -91,19 +91,13 @@ class SideNavbar extends React.Component {
     render(){
         let { workspaceId } = this.props.match.params
         return(
-            <>
             <SideNavbarContainer>
-        
                 <RepositoryDetail>
                     <RepositoryIcon><StyledIcon src = {repoIcon3}/></RepositoryIcon>
                     <RepositoryName>Customer Feedback</RepositoryName>
                 </RepositoryDetail>
-                {/*<DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
-                    <ion-icon style={{'color': 'white', 'fontSize': '1.8rem', 'margin-right': '0.5rem'}} name="add-outline"></ion-icon>
-                    Create
-                    <Bucket selected = {this.props.selected}/>
-                </DocumentCreateButton>*/}
-              
+
+            
                 <PageSectionContainer>
                     <PageSection2 onClick = {() => {this.createDocumentFromButton()}}>
                         <ion-icon 
@@ -117,12 +111,12 @@ class SideNavbar extends React.Component {
                             name="code-outline"></ion-icon>
                         <PageName>Codebase</PageName>
                     </PageSection>
-                   
+                
                     <PageSection to = {`/workspaces/${workspaceId}/coverage`}>
                         <ion-icon style={{'fontSize': '1.5rem'}} name="analytics-outline"></ion-icon>
                         <PageName >
-                             
-                             Track Coverage
+                            
+                            Track Coverage
                         </PageName>
                     </PageSection>
                     <PageSection to = {`/workspaces/${workspaceId}/request`}>
@@ -136,17 +130,14 @@ class SideNavbar extends React.Component {
                         <PageName>Settings</PageName>
                     </PageSection>
                 </PageSectionContainer>
-               
+            
                 <Block marginTop = {"1rem"}>
                     <Deline>Documents</Deline>
                     <DocumentationContainer backend={HTML5Backend} >
                         {this.props.documents.length > 0 && this.renderDocuments()}
                     </DocumentationContainer>
                 </Block>
-                
             </SideNavbarContainer>
-
-            </>
         )
     }
 }
@@ -256,6 +247,8 @@ const CodeDocumentItem = styled(Link)`
 
 const mapStateToProps = (state, ownProps) => {
     let {workspaceId} = ownProps.match.params
+    console.log("WORKSPACES", state.workspaces)
+    console.log("WORKSPACEID", workspaceId)
     return {
         documents:  Object.values(state.documents).filter(document => document.parent === null),
         user: state.auth.user,
@@ -269,10 +262,10 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, { createDocument, moveDocument, attachDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
 
 const Deline = styled.div`
-    font-weight: 400;
+    font-weight: 500;
     text-transform: uppercase;
     color: #172A4E;
-    opacity: 0.5;
+    opacity: 0.7;
     font-size: 1.15rem;
     margin-bottom: 1rem;
     display: flex;
@@ -293,7 +286,7 @@ const RepositoryDetail = styled.div`
 const RepositoryName = styled.div`
     margin-left: 1.5rem;
     font-size: 1.4rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #172A4E;
 `
 
@@ -319,6 +312,7 @@ const PageSection = styled(Link)`
     &:hover {
         background-color: #EBECF0
     }
+    
 `
 
 
@@ -368,7 +362,7 @@ const CodebaseChevBorder = styled.div`
 const PageName = styled.div`
     margin-left: 1rem;
     font-size: 1.35rem;
-    font-weight: 400;
+    font-weight: 500;
     opacity: 1;
 `
 
@@ -378,7 +372,7 @@ const RepositoryIcon = styled.div`
     justify-content: center;
     width: 5.5rem;
     height: 4rem;
-    background-color: white;
+    background-color:white;
     border-radius: 0.5rem;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     

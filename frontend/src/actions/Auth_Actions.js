@@ -8,9 +8,7 @@ import { api, apiEndpoint } from '../apis/api';
 
 
 export const checkLogin = () => async (dispatch) => {
-    console.log('apiEndpoint: ', apiEndpoint);
     const response = await api.get('/auth/login/success', { withCredentials: true })
-    console.log('response: ', response)
     dispatch({ type: CHECK_LOGIN, payload: response.data });
 }
 

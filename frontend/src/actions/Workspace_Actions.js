@@ -5,9 +5,15 @@ import {
     DELETE_WORKSPACE,
     WORKSPACE_REMOVE_USER,
     RETRIEVE_WORKSPACES,
+    SEARCH_WORKSPACE
 } from './types/Workspace_Types';
 
 import { api } from '../apis/api';
+
+export const searchWorkspace = (formValues) => async () => {
+    const response = await api.post('/workspaces/search', formValues );
+    return response.data
+}
 
 export const createWorkspace = (formValues) => async (dispatch) => {
     const response = await api.post('/workspaces/create', formValues);

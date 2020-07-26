@@ -3,6 +3,7 @@ import React from 'react';
 //styles 
 import styled from "styled-components";
 
+
 //components
 import TextEditorView from './Text Editor Page/TextEditorView';
 //import RepositoryView from './Repository Page/RepositoryView';
@@ -12,6 +13,7 @@ import CodeView from './Code Editing Page/CodeView';
 import DocumentModal from './Document Creation Page/DocumentModal';
 import RequestModal from './Request Page/RequestModal';
 import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
+import { CSSTransition } from 'react-transition-group';
 
 //react-router
 import { Switch, Route } from 'react-router-dom';
@@ -72,6 +74,12 @@ class SpaceView extends React.Component {
         if (this.state.ready) {
             return (
                 <>
+                <CSSTransition
+                    in={true}
+                    appear = {true}
+                    timeout={500}
+                    classNames="sidenav"
+                >
                     <Container>
                         <SideNavbar />
                         <RightView ref = {this.rightViewRef} onScroll = {this.onScroll}>
@@ -85,6 +93,7 @@ class SpaceView extends React.Component {
                         </RightView>
                        
                     </Container>
+                    </CSSTransition>
                     {this.checkDoc() ? <DocumentModal/> : this.checkRequest() ? <RequestModal/> : <></>}
                 </>
             );

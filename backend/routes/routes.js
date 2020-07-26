@@ -39,6 +39,10 @@ router.put('/documents/move', document_controller.moveDocument);
 router.post('/documents/retrieve', document_controller.retrieveDocuments);
 router.put('/documents/attach_tag/:id', document_controller.attachTag);
 router.put('/documents/remove_tag/:id', document_controller.removeTag);
+
+router.put('/documents/attach_reference/:id', document_controller.attachReference);
+router.put('/documents/remove_reference/:id', document_controller.removeReference);
+
 router.put('/documents/attach_child/:id', document_controller.attachChild);
 router.put('/documents/remove_child/:id', document_controller.removeChild);
 router.put('/documents/attach_snippet/:id', document_controller.attachSnippet);

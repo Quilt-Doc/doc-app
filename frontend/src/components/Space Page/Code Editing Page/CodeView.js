@@ -12,8 +12,12 @@ import Snippet from './Snippet';
 import TextareaAutosize from 'react-textarea-autosize';
 import LabelMenu from '../../General/Menus/LabelMenu';
 import RotateLoader from "react-spinners/RotateLoader";
+import Loader from 'react-loader-spinner'
+import RepositoryMenu from '../../General/Menus/RepositoryMenu';
+import DocumentMenu from '../../General/Menus/DocumentMenu';
 
-
+//history
+import history from '../../../history';
 
 //utility
 import Selection from '@simonwep/selection-js';
@@ -22,7 +26,7 @@ import _ from 'lodash';
 //actions
 import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
 import { retrieveDocuments } from '../../../actions/Document_Actions';
-import { getContents, retrieveCodeReferences, retrieveReferences, attachTag, removeTag } from '../../../actions/Reference_Actions';
+import { getContents, retrieveCodeReferences, getReferenceFromPath,  retrieveReferences, attachTag, removeTag } from '../../../actions/Reference_Actions';
 import { getRepositoryFile, getRepository } from '../../../actions/Repository_Actions';
 
 import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
@@ -86,12 +90,12 @@ class CodeView extends React.Component {
 
         
         // get contents of code file from database
-        let { referenceId, repositoryId}  = this.props.match.params;
+        let { referenceId, repositoryId, workspaceId}  = this.props.match.params;
         await this.props.getRepository(repositoryId)
         let fileContents = await this.props.getContents({referenceId})
         await this.props.retrieveReferences({ referenceId })
-        await this.props.retrieveSnippets({referenceId})
-        await this.props.retrieveDocuments({ referenceIds: [referenceId]})
+        await this.props.retrieveSnippets({referenceId, workspaceId})
+        await this.props.retrieveDocuments({ referenceIds: [referenceId], workspaceId})
         const allLinesJSX = this.renderLines(fileContents);
         this.setState({fileContents, allLinesJSX, loaded: true});
     }
@@ -309,7 +313,6 @@ class CodeView extends React.Component {
                     }
                 })
         
-        callbacks.map(item => console.log(item))
         /*[...this.props.callbacks].reverse()*/
         let lineNumber = 1
         let offset = 0
@@ -703,30 +706,49 @@ class CodeView extends React.Component {
         annotation.unhover()
     }
 
+    async redirectPath(path) {
+        let {workspaceId, repositoryId} = this.props.match.params
+        let ref = await this.props.getReferenceFromPath({path, repositoryId})
+        history.push(`/workspaces/${workspaceId}/repository/${repositoryId}/dir/${ref[0]._id}`)
+    }
+
     renderHeaderPath() {
         if (this.props.currentReference && this.props.currentReference.path !== "") {
             let splitPath = this.props.currentReference.path.split("/")
-            return splitPath.map((sp) => {
-                return(<><Slash>/</Slash><RepositoryPath>{sp}</RepositoryPath></>)
+            return splitPath.map((sp, i) => {
+                let reLocate = splitPath.slice(0, i + 1).join("/");
+                return(<><Slash>/</Slash><RepositoryPath onClick = {() => {this.redirectPath(reLocate)}}>{sp}</RepositoryPath></>)
             })
         }
+    }
+
+    renderDocuments(){
+        return this.props.documents.map(doc => {
+            let title = doc.title
+            if (title && title.length > 14) {
+                title = `${title.slice(0, 14)}..`
+            }
+            return <DocumentItem onClick = {() => history.push(`?document=${doc._id}`)}>
+                        <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                        <Title>{title && title !== "" ? title : "Untitled"}</Title>
+                    </DocumentItem>
+        })
     }
 
     
 
     // render function
     render() {
+        console.log(this.props.currentReference)
         //console.log("CALLBACKS PREV", this.props.callbacks)
         if (this.state.loaded) {
             return (
                 <>
                     <Container>
                     <Header>
-                        <RepositoryButton>
-                                <ion-icon name="git-network-outline" style = {{marginRight: "0.7rem"}}></ion-icon>
-                                {this.props.currentRepository.fullName.split("/")[1]}
-                                <ion-icon name="chevron-down-sharp" style = {{marginLeft: "0.7rem", fontSize: "1.5rem"}}></ion-icon>
-                        </RepositoryButton>
+                        <RepositoryMenu 
+                                    name = {this.props.currentRepository.fullName.split("/")[1]}
+                                />
                         {this.renderHeaderPath()}
                         </Header>
                         <InfoBlock>
@@ -755,10 +777,10 @@ class CodeView extends React.Component {
                             </InfoHeader>
                             <ReferenceContainer>
                                 {this.props.documents && this.props.documents.length > 0 ? this.renderDocuments() : <NoneMessage>None yet</NoneMessage>}
-                                <LabelMenu 
-                                    attachTag = {(tagId) => console.log(tagId)}//this.props.attachTag(requestId, tagId)}
-                                    removeTag = {(tagId) => console.log(tagId)}//this.props.removeTag(requestId, tagId)}
-                                    setTags = {[]}//this.props.request.tags}
+                                <DocumentMenu
+                                        setDocuments = {this.props.documents}
+                                        marginTop = {"1rem"}
+                                        reference = {this.props.currentReference}
                                 />
                             </ReferenceContainer>
                         </InfoBlock>
@@ -793,9 +815,14 @@ class CodeView extends React.Component {
             );
         } else {
             return <Container>
-                        <LoaderContainer>
-                            <RotateLoader color = {"#19E5BE"} size = {15} margin={2} />
-                        </LoaderContainer>
+                        <Loader
+                                type="ThreeDots"
+                                color="#5B75E6"
+                                height={50}
+                                width={50}
+                                //3 secs
+                        
+                            />
                     </Container>
         }
     }
@@ -822,11 +849,22 @@ class CodeView extends React.Component {
 // relevant data here is fileContents, which are the lines of data
 const mapStateToProps = (state, ownProps) => {
     let { workspaceId, repositoryId, referenceId } = ownProps.match.params
-    let documents = Object.values(state.documents).filter(doc => doc.references.includes(referenceId))
     let references = Object.values(state.references).filter(ref => ref._id !== referenceId)
     let currentReference;
     if (referenceId) {
         currentReference = state.references[referenceId]
+    }
+    let documents = []
+    if (currentReference) {
+        documents = Object.values(state.documents).filter(doc => 
+            {
+                for (let i = 0; i < doc.references.length; i++){
+                    if (doc.references[i]._id === currentReference._id) {
+                        return true
+                    }
+                } return false
+            }
+        )
     }
     return {
         documents, 
@@ -846,11 +884,36 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, 
     deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveDocuments,
-    retrieveCodeReferences, retrieveReferences, getRepository, attachTag, removeTag})(CodeView));
+    retrieveCodeReferences, retrieveReferences, getRepository, attachTag, removeTag, getReferenceFromPath})(CodeView));
 
 
 
 //Styled Components
+const DocumentItem = styled.div`
+    height: 3rem;
+    width: 15rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 0.3rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    /*border: 1px solid #DFDFDF;*/
+    /*border: 1px solid #E0E4E7;*/
+    font-size: 1.2rem;
+    margin-right: 2rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6; 
+    }
+`
+
+const Title = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+`
 
 
 const ListName = styled.div`

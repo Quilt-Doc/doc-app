@@ -401,7 +401,7 @@ const P = styled.div`
   margin-top: 2rem !important;
   font-size: 1.6rem;
   line-height: 1.6;
-  color: #172A4E;
+  color: rgb(9, 30, 66);
   box-shadow: none;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};

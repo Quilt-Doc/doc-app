@@ -5,12 +5,17 @@ import styled from "styled-components"
 
 //router
 import history from '../../../history';
+import {withRouter} from 'react-router-dom';
 
 //misc
 import { connect } from 'react-redux';
 
 //components
 import TextEditorView2 from '../Text Editor Page/TextEditorView2';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faAlignLeft, faAlignRight, faAlignCenter, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import { CSSTransition } from 'react-transition-group';
+
 
 class DocumentModal extends React.Component {
     constructor(props){
@@ -28,10 +33,24 @@ class DocumentModal extends React.Component {
     render(){
         return(
             <ModalBackground onClick = {() => {this.undoModal()}}>
-                <ModalContent onClick = {(e) => {e.stopPropagation()}}>
-                    <ModalToolbar>
+                <CSSTransition
+                    in={true}
+                    appear = {true}
+                    timeout={300}
+                    classNames="modal"
+                >   
+                    <ModalContent onClick = {(e) => {e.stopPropagation()}}>
+                        <TextEditorView2/>
+                    </ModalContent>
+                </CSSTransition>
+            </ModalBackground>
+        )
+    }
+}
+
+/* <ModalToolbar>
                         <ModalToolbarButton>
-                            <ion-icon name="open-outline" style = {{fontSize: "1.7rem", marginTop: "-0.1rem", marginRight: "0.8rem"}}></ion-icon>
+                            <ion-icon name="open" style = {{color: "#5B75E6", fontSize: "1.7rem", marginTop: "-0.1rem", marginRight: "0.8rem"}}></ion-icon>
                             <Title>Open Document</Title>
                         </ModalToolbarButton>
                         <Divider/>
@@ -54,20 +73,55 @@ class DocumentModal extends React.Component {
                         </ModalToolbarButton>
                         
                         <ion-icon name="ellipsis-horizontal" style={{ 'fontSize': '2.3rem', marginLeft: "auto", marginRight: "0.7rem"}}></ion-icon>
-                    </ModalToolbar>
-                    <ModalEditor>
-                        <TextEditorView2/>
-                    </ModalEditor>
-                    
-                </ModalContent>
-            </ModalBackground>
-        )
+                    </ModalToolbar>*/
+
+
+export default withRouter(DocumentModal)
+
+
+const IconBold = styled.div`
+    font-size: 1.5rem;
+`
+
+const IconItalic = styled.div`
+    font-style: italic;
+    font-size: 1.5rem;
+`
+
+const IconUnderline = styled.div`
+    text-decoration: underline;
+    font-size: 1.5rem;
+`
+
+const IconBlock = styled.div`
+    display: flex;
+    padding-left: 1.3rem;
+    padding-right: 1rem;
+    border-right: 2px solid #F4F4F6; 
+    align-items: center;
+    height: 2.3rem;
+`
+
+const IconBorder = styled.div`
+    margin-left: ${props => props.marginLeft};
+    margin-right: 0.3rem;
+    display: flex;
+    font-size: 1.3rem;
+    align-items: center;
+    justify-content: center;
+
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 0.3rem;
+      
+    &:hover {
+        opacity: 1;
+        background-color: #F4F4F6; 
     }
-}
 
-
-export default DocumentModal
-
+    cursor: pointer;
+    transition: all 0.1s ease-in;
+`
 
 const ModalToolbar = styled.div`
     height: 4rem;
@@ -107,15 +161,14 @@ const ModalContent = styled.div`
     background-color: #fefefe;
     margin: 8vh auto; /* 15% from the top and centered */
     
-
-    border: 1px solid #888;
     width: 85vw; /* Could be more or less, depending on screen size */
     height: 84vh;
-    border-radius: 0.4rem;
+    border-radius: 0.2rem;
     box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
     display: flex;
     flex-direction: column;
     max-width: 98rem;
+    padding: 0.1rem 1rem;
 `
 
 const StyledIcon2 = styled.img`
@@ -145,18 +198,20 @@ const ModalCreateButton = styled.div`
 
 const ModalToolbarButton = styled.div`
     display: flex;
+    cursor: pointer;
     align-items: center;
-    font-size: 1.35rem;
+    justify-content: center;
+    padding: 0.8rem;
+    font-size: 1.4rem;
     
     margin-right: 1rem;
-    border-radius: 0.4rem;
-    padding: 1rem;
+    border-radius: 0.5rem;
     cursor: pointer;
-    opacity: 0.7;
     &:hover {
         background-color: #F4F4F6; 
         opacity: 1;
     }
+    margin-left: ${props => props.marginLeft};
     opacity: ${props => props.opacity};
 `
 

@@ -2,6 +2,7 @@ import React from 'react'
 
 //components
 import DocumentEditor from './Editor/DocumentEditor'
+import LabelMenu from '../../General/Menus/LabelMenu';
 
 //styles 
 import styled from "styled-components";
@@ -9,6 +10,7 @@ import styled from "styled-components";
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAlignLeft, faAlignRight, faAlignCenter, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+
 
 
 //actions
@@ -132,122 +134,169 @@ class TextEditorView extends React.Component {
         if (this.state.loaded) {
             return(
                 <AllContainer>
-                    <BarSpace/>
-                    <Toolbar>
-                        <IconBlock>
-                            <IconBorder>
-                                <IconBold>B</IconBold>
-                            </IconBorder>
-                            <IconBorder>
-                                <IconItalic>i</IconItalic>
-                            </IconBorder>
-                            <IconBorder>
-                                <IconUnderline>U</IconUnderline>
-                            </IconBorder>
-                        </IconBlock>
-                        <IconBlock>
-                            <IconBorder>
-                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignLeft} />
-                            </IconBorder>
-                            <IconBorder>
-                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignCenter} />
-                            </IconBorder>
-                            <IconBorder>
-                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignRight} />
-                            </IconBorder>
-                        </IconBlock>
-                        <IconBlock>
-                            <IconBorder>
-                                <ion-icon style = {{fontSize: "1.7rem", borderBottom: "2px solid #172A4E"}} name="color-palette-outline"></ion-icon>
-                            </IconBorder>
-                            <IconBorder>
-                                <ion-icon style = {{fontSize: "1.7rem"}}  name="color-wand-outline"></ion-icon>
-                            </IconBorder>
-                        </IconBlock>
-                        <IconBlock>
-                            <IconBorder>
-                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListUl}/>
-                            </IconBorder>
-                            <IconBorder>
-                                <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListOl}/>
-                            </IconBorder>
-                        </IconBlock>
-                        <IconBlock>
-                            <IconBorder>
-                                <IconBold>H1</IconBold>
-                            </IconBorder>
-                            <IconBorder>
-                                <IconBold>H2</IconBold>
-                            </IconBorder>
-                            <IconBorder>
-                                <IconBold>H3</IconBold>
-                            </IconBorder>
+                    
+                <LeftContainer>
+                    <SubContainer>
+                        <Toolbar>
+                            <IconBlock>
+                                <IconBorder>
+                                    <IconBold>B</IconBold>
+                                </IconBorder>
+                                <IconBorder>
+                                    <IconItalic>i</IconItalic>
+                                </IconBorder>
+                                <IconBorder>
+                                    <IconUnderline>U</IconUnderline>
+                                </IconBorder>
+                            </IconBlock>
+                            <IconBlock>
+                                <IconBorder>
+                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignLeft} />
+                                </IconBorder>
+                                <IconBorder>
+                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignCenter} />
+                                </IconBorder>
+                                <IconBorder>
+                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignRight} />
+                                </IconBorder>
+                            </IconBlock>
+                            <IconBlock>
+                                <IconBorder>
+                                    <ion-icon style = {{fontSize: "1.7rem", borderBottom: "2px solid #172A4E"}} name="color-palette-outline"></ion-icon>
+                                </IconBorder>
+                                <IconBorder>
+                                    <ion-icon style = {{fontSize: "1.7rem"}}  name="color-wand-outline"></ion-icon>
+                                </IconBorder>
+                            </IconBlock>
+                            <IconBlock>
+                                <IconBorder>
+                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListUl}/>
+                                </IconBorder>
+                                <IconBorder>
+                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListOl}/>
+                                </IconBorder>
+                            </IconBlock>
+                            <IconBlock>
+                                <IconBorder>
+                                    <IconBold>H1</IconBold>
+                                </IconBorder>
+                                <IconBorder>
+                                    <IconBold>H2</IconBold>
+                                </IconBorder>
+                                <IconBorder>
+                                    <IconBold>H3</IconBold>
+                                </IconBorder>
+                                
+                            </IconBlock>
+                            <IconBlock>
+                                <IconBorder>
+                                    <ion-icon style = {{marginTop: "0.25rem", fontSize: "1.7rem"}} name="code-slash-sharp"></ion-icon>
+                                </IconBorder>
+                                <IconBorder>
+                                    <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="grid-outline"></ion-icon>  
+                                </IconBorder>
+                                <IconBorder>
+                                    <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="checkbox-outline"></ion-icon>
+                                </IconBorder>
+                            </IconBlock>
+                            {/*  <Settings><ion-icon name="settings-outline"></ion-icon></Settings>*/}
+                        </Toolbar>
+                        <Header ref = {this.headerRef} onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
+                        <DocumentEditor 
+                            markup = {this.state.markup} 
+                            setValue = {this.setValue}
+                            scrollTop = {this.props.scrollTop}
+                        />
+                    </SubContainer>
+                </LeftContainer>
+                <InfoBar>
+                    
+                    {/*<InfoBlock >
+    
+                            <ProfileContent>
+    
                             
-                        </IconBlock>
-                        <IconBlock>
-                            <IconBorder>
-                                <ion-icon style = {{marginTop: "0.25rem", fontSize: "1.7rem"}} name="code-slash-sharp"></ion-icon>
-                            </IconBorder>
-                            <IconBorder>
-                                <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="grid-outline"></ion-icon>  
-                            </IconBorder>
-                            <IconBorder>
-                                <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="checkbox-outline"></ion-icon>
-                            </IconBorder>
-                        </IconBlock>
-                           
-                        <Settings><ion-icon name="settings-outline"></ion-icon></Settings>
-                    </Toolbar>
-                    <Shadow/>
-                    <BarSpace2/>
-                    <Container>
-                            <SubContainer>
-                                <Header ref = {this.headerRef} onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
-                                <DocumentEditor 
-                                    markup = {this.state.markup} 
-                                    setValue = {this.setValue}
-                                    scrollTop = {this.props.scrollTop}
-                                />
-                            </SubContainer>
-                            
-                        <InfoBar>
-                             
-                            <InfoBlock>
-                                <InfoHeader>< ion-icon name="menu-sharp" style = {{color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}}></ion-icon>Shortcuts</InfoHeader>
-                                <ShortcutContainer flexDirection = "column">
-                                    <Shortcut>+ Iterable-styled datasets</Shortcut>
-                                    <Shortcut>+ Map-styled datasets</Shortcut>
-                                </ShortcutContainer>
-                            </InfoBlock>     
-                            <InfoBlock>
-                                <InfoHeader>< ion-icon name="cube-outline" style = {{color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}}></ion-icon>References</InfoHeader>
-                                <ReferenceContainer>
-                                    <Reference ><ion-icon style = {{marginRight: "0.4rem"}} name="document-outline"></ion-icon>{"backend.js"}</Reference>
-                                </ReferenceContainer>
-                            </InfoBlock>
-                            <InfoBlock>
-                                <InfoHeader><ion-icon style = {
+                            <ProfileButton>FS</ProfileButton>
+                            <ProfileInfo>
+                                <div style = {{marginBottom: "0.3rem"}}>Created by <span style = {{fontWeight: "600"}}>Faraz Sanal</span></div>
+                                <div>June 8th, 2016</div>
+                            </ProfileInfo>
+                            </ProfileContent>
+                    </InfoBlock>  */}   
+                         <InfoBlock>
+                            <InfoHeader>< ion-icon name="menu-outline"  style = {
                                                 {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
-                                    } name="pricetag-outline"></ion-icon>Labels</InfoHeader>
-                                <ReferenceContainer>
-                                    <Tag>utility</Tag>
-                                </ReferenceContainer>
-                            </InfoBlock>
-                            <InfoBlock borderBottom = {"none"}>
-                                <InfoHeader>< ion-icon name="chatbox-ellipses-outline" style = {{ fontSize: '1.8rem', marginRight: "0.7rem"}}></ion-icon>Comments</InfoHeader>
-                                <ReferenceContainer>
-                                    <CommentInput placeholder = {"Write a comment.."}/>
-                                </ReferenceContainer>
-                            </InfoBlock>
-                        </InfoBar>
-                    </Container>
-             
+                                        }></ion-icon>Shortcuts</InfoHeader>
+                            <ShortcutContainer>
+                                <Shortcut>+ Iterable-styled datasets</Shortcut>
+                                <Shortcut>+ Map-styled datasets</Shortcut>
+                            </ShortcutContainer>
+                        </InfoBlock>
+                        <InfoBlock>
+                            <InfoHeader>
+                                <ion-icon  style = {
+                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.65rem"}
+                                        } name="pricetag-outline"></ion-icon>
+                                Labels
+                            </InfoHeader>
+                            <ReferenceContainer>
+                                <NoneMessage>None yet</NoneMessage>
+                                {/*this.props.currentReference.tags && this.props.currentReference.tags.length > 0  ? this.renderTags() : */}
+                                <LabelMenu 
+                                    attachTag = {(tagId) => console.log(tagId)}//this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                                    removeTag = {(tagId) => console.log(tagId)}//this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                                    setTags = {[]}//{this.props.currentReference.tags}//this.props.request.tags}
+                                    marginTop = {"1rem"}
+                                />
+                            </ReferenceContainer>
+                        </InfoBlock>     
+                        <InfoBlock>
+                            <InfoHeader>< ion-icon name="cube-outline"  style = {
+                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.65rem"}
+                                        }></ion-icon>References</InfoHeader>
+                                        
+                            <ReferenceContainer>
+                                <Reference>
+                                    <ion-icon name="document-outline"
+                                    style = {
+                                        {color: "#172A4E", marginRight: "0.5rem", fontSize: "1.4rem"}}></ion-icon>
+                                    backend.js
+                                </Reference>
+                                <Reference2>
+                                    <ion-icon name="folder"
+                                    style = {
+                                        {color: "#172A4E", marginRight: "0.5rem", fontSize: "1.4rem"}}></ion-icon>
+                                    backend.js
+                                </Reference2>
+                                {/*<NoneMessage>None yet</NoneMessage>*/}
+                                <LabelMenu 
+                                    attachTag = {(tagId) => console.log(tagId)}//this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                                    removeTag = {(tagId) => console.log(tagId)}//this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                                    setTags = {[]}//{this.props.currentReference.tags}//this.props.request.tags}
+                                    marginTop = {"1rem"}
+                                />
+                            </ReferenceContainer>
+                        </InfoBlock>
+                        <InfoBlock borderBottom = {"none"}>
+                            <InfoHeader>< ion-icon name="chatbox-ellipses-outline" style = {{ fontSize: '1.65rem', marginRight: "0.7rem"}}></ion-icon>Comments</InfoHeader>
+                            <ReferenceContainer>
+                                <CommentInput placeholder = {"Write a comment.."}/>
+                            </ReferenceContainer>
+                        </InfoBlock>
+                     
+                    </InfoBar>
+                
                 </AllContainer>
             )
         } 
         return null
     }
-}
+}/*   <InfoBlock borderBottom = {"none"}>
+                        <InfoHeader>< ion-icon name="chatbox-ellipses-outline" style = {{ fontSize: '1.8rem', marginRight: "0.7rem"}}></ion-icon>Comments</InfoHeader>
+                        <ReferenceContainer>
+                            <CommentInput placeholder = {"Write a comment.."}/>
+                        </ReferenceContainer>
+                    </InfoBlock>*/
 
 /*<InfoBlock>
                         <InfoHeader>Creator</InfoHeader>
@@ -352,26 +401,6 @@ export default withRouter(connect(mapStateToProps, { getDocument, editDocument, 
 //table <ion-icon name="grid-outline"></ion-icon>
 //checklist <ion-icon name="checkbox-outline"></ion-icon>
 //code <ion-icon name="code-slash"></ion-icon>
-const Segment = styled.div`
-    font-size: 1.3rem;
-    margin-left: 27rem;
-    opacity: 0.6;
-`
-
-const ProfileButton = styled.div`
-    width: 3.5rem;
-    height: 3.5rem;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    border-radius: 0.3rem;
-    font-size: 1.4rem;
-    color: white;
-    background-color:#5B75E6;
-    cursor: pointer;
-    margin-right: 1rem;
-`
-
 const BarSpace = styled.div`
     height: 3rem;
     z-index: 40;
@@ -386,36 +415,51 @@ const BarSpace2 = styled.div`
     z-index: 3;
 `
 
+
 const CommentInput = styled.input`
+    width: 26rem;
     height: 3.5rem;
-    width: 29rem;
-    outline: none;
-    padding: 1rem;
-    border-radius: 0.3rem;
-    border: 1px solid #E0E4E7;
-    &::placeholder { 
-        color: #172A4E;
-        opacity: 0.7;
-    }
+    border: 1px solid  #E0E4E7;
+    background-color: #F7F9FB;
+    border-radius: 0.4rem;
+    padding: 1.5rem;
     &:focus {
-        border: 2px solid #19E5BE;
+        background-color: white;
+        border: 2px solid #2684FF;
+
     }
+    &::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+    }
+    outline: none;
+    font-size: 1.4rem;
+    color: #172A4E;
+    
 `
+
+
+const NoneMessage = styled.div`
+    font-size: 1.3rem;
+    margin-right: 1rem;
+    opacity: 0.5;
+`
+
 
 const Settings = styled.div`
     display: flex;
+    height: 3rem;
     font-size: 2rem;
-    align-items: center;
-    margin-left: auto;
+    justify-content: flex-end;
 `
 
 const ProfileInfo = styled.div`
-    opacity: 0.8;
-    font-size: 1.2rem;
+    opacity: 1;
+    font-size: 1.4rem;
+    font-weight: 400;
 `
 
 const Shortcut = styled.div`
-    font-size: 300;
     font-size: 1.3rem;
     margin-bottom: 0.5rem;
     &:last-of-type {
@@ -437,10 +481,20 @@ const InfoBarTitle = styled.div`
 
 const AllContainer = styled.div`
     display: flex;
-    flex-direction: column;
-    
 `
 
+const LeftContainer = styled.div`
+    background-color: #F7F9FB; 
+    border: 1px solid #DFDFDF;
+    margin-top: 5rem;
+    margin-left: 5rem;
+    margin-right: 4rem;
+    border-radius:0.4rem;
+    padding: 3rem;
+    margin-bottom: 3rem;
+    display: flex;
+    flex-direction: column;
+`
 
 
 const RightContainer = styled.div`
@@ -527,7 +581,6 @@ const H2 = styled.div`
 const ProfileContent = styled.div`
     display: flex;
     align-items: center;
-    font-size: 1.5rem;
 `
 
 const H3 = styled.div`
@@ -591,35 +644,47 @@ const Shadow = styled.div`
     top: 7rem;
 `
 
-const Toolbar = styled.div`
-    position: -webkit-sticky; /* Safari */
-    position: sticky;
+
+const ListToolbar = styled.div`
+    height: 4.5rem;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 0.4rem 0.4rem 0rem 0rem !important;
+    position: sticky; 
     top: 0;
-    z-index: 10;
+    border-bottom: 1px solid #EDEFF1;
+    z-index: 1;
+`
+
+const Toolbar = styled.div`
+    position: sticky; 
+    top: 0;
+    height: 4.5rem;
+    align-items: center;
+    z-index: 1;
     background-color:white;
     display: flex;
-    /*border: 1px solid red;*/
-    height: 5rem;
-    /*border-bottom: 1px solid #E0E4E7;*/
-    /*border-bottom: 1px solid #DFDFDF;*/
-    padding: 7rem;
-    padding-top: 4rem;
-    padding-bottom: 4rem;
-    padding-left: 10rem;
+    border-bottom: 1px solid #EDEFF1;
     align-items: center;
+    border-radius: 0.4rem 0.4rem 0rem 0rem !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
 `
 
 const Header = styled.input`
     font-size: 3rem;
     color: #172A4E;
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
     ::placeholder {
         color: #172A4E;
         opacity: 0.4;
     }
     outline: none;
     border: none;
-    width: 55vw;
+    padding-left: 8.5rem;
+    padding-right: 8.5rem;
+    margin-top: 5rem;
 `
 
 const Container = styled.div`
@@ -631,29 +696,36 @@ const Container = styled.div`
 const SubContainer = styled.div`
     display: flex;
     flex-direction:column;
-    padding-top: 2rem;
     padding-bottom: 2rem;
-    width: 80rem;
-   
-    margin-left: 12rem;
-    margin-right: 8rem;
+    background-color: white;
+    
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    border-radius:0.2rem;
+    
 `
 
 const EditorContainer = styled.div`
     
 `
 const InfoBar = styled.div`
-    min-width: 35rem;
-    margin-top: 3rem;
-
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
-    /*box-shadow: -1px 2px 4px rgba(0,0,0,0.1);*/
-
-    position: -webkit-sticky; /* Safari */
+    min-width: 28rem;
+    margin-top: 0rem;
+    margin-left: 1rem;
+    z-index: 20;
+    /*background-color: #F4F4F6; */
+   /* border-left: 1px solid #E0E4E7;*/
+    padding-left: 3rem;
+    padding-right: 3rem;
+    /*box-shadow: 2px 2px 4px rgba(0,0,0,0.1);*/
+    /*
+    margin-top: 1rem;
+    padding-left: 2rem;
+    */
+    position: -webkit-sticky; /* for Safari */
     position: sticky;
+    top: 9rem;
+    width: 30rem;
     align-self: flex-start;
-    top: 15rem;
 `
 
 const TagHeader = styled.div`
@@ -662,45 +734,44 @@ const TagHeader = styled.div`
     margin-bottom: 1rem;
 `
 
-
 const InfoHeader = styled.div`
     display: flex;
     align-items: center;
     font-weight: 500;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     color: #172A4E;
     margin-bottom: 1.5rem;
 `
 
+
 const InfoBlock = styled.div`
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
     display: ${props => props.display};
     border-bottom: ${props => props.borderBottom};
-    border-bottom: 1px solid #E0E4E7;
-    &: last-of-type {
+    &:first-of-type {
+        /*padding-bottom: 6rem;*/
+    }
+    &:last-of-type {
+        padding-top: 6rem;
         border-bottom: none;
     }
-
-    &: first-of-type {
-        padding-top: 0rem;
-    }
-`
-
-
-const ShortcutContainer = styled.div`
-    margin-top: 0.8rem;
-    display: flex;
-    flex-direction:column;
 `
 
 
 const ReferenceContainer = styled.div`
     margin-top: 0.8rem;
     display: flex;
+    flex-wrap: wrap;
+    margin:-0.7rem;
     align-items: center;
 `
 
+const ShortcutContainer = styled.div`
+    margin-top: 0.8rem;
+    display: flex;
+    flex-direction: column;
+`
 
 const Repository = styled.div`
     color: #172A4E;
@@ -711,16 +782,37 @@ const Repository = styled.div`
 
 const Reference = styled.div`
     font-size: 1.25rem;
-    color: #19E5BE;
+    color: #172A4E;
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
-    padding: 0.5rem 0.9rem;
+    padding: 0.55rem 1rem;
     align-items: center;
     display: inline-flex;
-    background-color:#262E49;
-    color:#D6E0EE;
-    border-radius: 0.5rem;
-   /* box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+    /*background-color:#262E49;*/
+    /*color:#D6E0EE;*/
+    border-left: 3.5px solid #19E5BE;
+    background-color: #F7F9FB;
+    border-radius: 0.3rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+   
+    margin: 0.7rem;
+`
+
+
+const Reference2 = styled.div`
+    font-size: 1.25rem;
+    color: #172A4E;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
+    padding: 0.55rem 1rem;
+    align-items: center;
+    display: inline-flex;
+    /*background-color:#262E49;*/
+    /*color:#D6E0EE;*/
+    border-left: 3.5px solid #5B75E6;
+    background-color: #F7F9FB;
+    border-radius: 0.3rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     margin-right: 1rem;
+    margin: 0.7rem;
 `
 
 const Tag = styled.div`
@@ -766,6 +858,20 @@ const Title = styled.input`
         color: #262626;
         opacity: 0.3;
     }
+`
+
+const ProfileButton = styled.div`
+    width: 3.3rem;
+    height: 3.3rem;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    border-radius: 0.25rem;
+    font-size: 1.4rem;
+    color: white;
+    background-color:#5B75E6;
+    cursor: pointer;
+    margin-right: 1.25rem;
 `
 
 

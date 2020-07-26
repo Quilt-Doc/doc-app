@@ -1,7 +1,10 @@
 import React from 'react'
 
 //components
-import DocumentEditor from './Editor/DocumentEditor'
+import DocumentEditorModal  from './Editor/DocumentEditorModal';
+import DocumentMenu2 from '../../General/Menus/DocumentMenu2';
+import LabelMenu from '../../General/Menus/LabelMenu';
+import FileReferenceMenu from '../../General/Menus/FileReferenceMenu';
 
 //styles 
 import styled from "styled-components";
@@ -11,7 +14,7 @@ import history from '../../../history';
 
 //actions
 import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
-import { getDocument, renameDocument, deleteDocument, editDocument, getParent, removeChild   } from '../../../actions/Document_Actions';
+import { getDocument, renameDocument, deleteDocument, editDocument, getParent, removeChild, attachTag, removeTag   } from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 
 //redux
@@ -119,15 +122,58 @@ class TextEditorView extends React.Component {
         if (!this.props.document || !this.state.markup){
             return null
         }
+
         return(
-            <Container>
-                <Header onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
-                <DocumentEditor 
-                    markup = {this.state.markup} 
-                    setValue = {this.setValue}
-                    scrollTop = {this.props.scrollTop}
-                />
-            </Container>
+            <>
+                <ModalToolbar>
+                    <ModalToolbarButton onClick = {() => {history.push(`/workspaces/${this.props.document.workspace._id}/document/${this.props.document._id}`)}}>
+                        <ion-icon name="open-outline" style = {{ color: "#172A4E", 'marginRight': '0.7rem', fontSize: "2.3rem"}}></ion-icon>
+                        Open Document
+                    </ModalToolbarButton>
+                    <DocumentMenu2
+                        marginTop = {"1rem"}
+                        parent = {this.props.document.parent} document = {this.props.document}
+                    />
+                    <FileReferenceMenu
+                         modalButton = {true}
+                         setReferences = {this.props.document.references }//this.props.request.tags}
+                         marginTop = {"1rem"}
+                         document = {this.props.document}
+                    />
+                 
+                    <LabelMenu
+                        modalButton = {true}
+                        attachTag = {(tagId) => this.props.attachTag(this.props.document._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                        removeTag = {(tagId) => this.props.removeTag(this.props.document._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                        setTags = {this.props.document.tags  }//this.props.request.tags}
+                        marginTop = {"1rem"}
+                        marginLeft = {"-22rem"}
+                        
+                    />
+                    {/*
+                    <FileReferenceMenu
+                         modalButton = {true}
+                         setReferences = {this.props.document.references}
+                         marginTop = {"1rem"}
+                         document = {this.props.document}
+                    />*/
+                    }
+                    <ModalToolbarButton marginLeft= "2rem" opacity = {"1"}>
+                        <ion-icon name="ellipsis-horizontal-outline" style={{'fontSize': '3rem', 'color': "#172A4E"}}></ion-icon>
+                    </ModalToolbarButton>
+                </ModalToolbar>
+                <ModalEditor>
+                    <Container>
+                        <Header onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
+                        <DocumentEditorModal  
+                            markup = {this.state.markup} 
+                            setValue = {this.setValue}
+                            scrollTop = {this.props.scrollTop}
+                        />
+                    </Container>
+                </ModalEditor>
+            </>
+           
         )
     }
 }
@@ -137,7 +183,6 @@ const mapStateToProps = (state) => {
     let params = new URLSearchParams(search)
     let documentId = params.get('document') 
     let parentId = state.parentId
-    console.log(parentId)
     return {
         scrollTop: state.ui.scrollRightView,
         repositoryItems: Object.values(state.repositoryItems),
@@ -147,7 +192,39 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, { getDocument, editDocument, retrieveRepositoryItems,  deleteDocument, setCreation, getParent, removeChild, renameDocument})(TextEditorView);
+export default connect(mapStateToProps, { getDocument, editDocument, attachTag, removeTag, retrieveRepositoryItems,  deleteDocument, setCreation, getParent, removeChild, renameDocument})(TextEditorView);
+
+
+const ModalToolbarButton = styled.div`
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem;
+    font-size: 1.4rem;
+    
+    margin-right: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6; 
+        opacity: 1;
+    }
+    margin-left: ${props => props.marginLeft};
+    opacity: ${props => props.opacity};
+`
+
+const ModalToolbar = styled.div`
+    height: 4rem;
+    padding: 2.7rem 1rem;
+    display: flex;
+    align-items: center;
+`
+
+const ModalEditor = styled.div`
+    overflow-y: scroll;
+    padding-top: 6rem;
+`
 
 const Header = styled.input`
     font-size: 3rem;
@@ -165,8 +242,8 @@ const Header = styled.input`
 const Container = styled.div`
     margin: 0rem auto;
     padding-bottom: 4rem;
-    padding-left: 12.5rem;
-    padding-right: 12.5rem;
+    padding-left: 9rem;
+    padding-right: 9rem;
 `
 
 const SubContainer = styled.div`

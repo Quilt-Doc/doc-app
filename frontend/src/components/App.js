@@ -9,6 +9,7 @@ import NavbarProfile from './Top Navbar/NavbarProfile'
 import Home from './Home';
 
 import TagWrapper from './General/TagWrapper';
+import ReferenceMenu from './Space Page/Text Editor Page/Menus/ReferenceMenu';
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
 
 //split markers -- directory, file
