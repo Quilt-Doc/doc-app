@@ -12,6 +12,9 @@ import {withRouter, Link} from 'react-router-dom';
 //chroma
 import chroma from 'chroma-js';
 
+//actions
+import {editDocument} from '../../../actions/Document_Actions';
+
 //components
 import { CSSTransition } from 'react-transition-group';
 
@@ -38,18 +41,17 @@ class RepositoryMenu extends React.Component {
      */
     handleClickOutside = (event) => {
         if (this.node && !this.node.contains(event.target)) {
-            console.log("HERE")
             this.closeMenu()
         }
     }
 
     renderListItems(){
-        let {workspaceId} = this.props.match.params
         return this.props.repositories.map((repo, i) => {
-            const location = `/workspaces/${workspaceId}/repository/${repo._id}/dir`;
             return(
                 <ListItem 
-                    onClick = {() => {history.push(location); this.closeMenu()}} 
+                    onClick = {() => {
+                        this.props.editDocument(this.props.document._id, {repositoryId: repo._id}); 
+                        this.closeMenu()}} 
                 >
                     <ion-icon 
                         style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
@@ -76,19 +78,13 @@ class RepositoryMenu extends React.Component {
     }
 
     render() {
-        let {repositoryId, workspaceId} = this.props.match.params;
+        let repo = this.props.document.repository
         return(
             <MenuContainer >
-                <RepositoryButton to = {`/workspaces/${workspaceId}/repository/${repositoryId}/dir`}>
-                    <ion-icon name="git-network-outline" style = {{marginRight: "0.7rem"}}></ion-icon>
-                    {this.props.name /*.fullName.split("/")[1]*/}
-                    
-                    <DropButton onClick = {(e) => 
-                        {this.openMenu(e)}
-                    }>
-                        <ion-icon name="caret-down-sharp" style = {{fontSize: "1.3rem"}}></ion-icon>
-                    </DropButton>
-                </RepositoryButton>
+                <ModalToolbarButton onClick = {(e) => {this.openMenu(e)}}>
+                    <ion-icon name="git-network-outline" style={{ color: "#172A4E",  'marginRight': '0.7rem', fontSize: "1.5rem" }}></ion-icon>
+                    {repo ? <RepoName>{repo.fullName}</RepoName> : <NoneMessage>Select a repository</NoneMessage> }
+                </ModalToolbarButton>
                 {this.state.open && 
                     <CSSTransition
                     in={true}
@@ -106,8 +102,7 @@ class RepositoryMenu extends React.Component {
                 }
             </MenuContainer>
         )
-    }
-    
+    } 
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -120,7 +115,36 @@ const mapStateToProps = (state, ownProps) => {
 
 
 
-export default withRouter(connect( mapStateToProps )(RepositoryMenu));
+export default withRouter(connect( mapStateToProps, {editDocument} )(RepositoryMenu));
+
+const RepoName = styled.div`
+    font-weight: 500;
+`
+
+const NoneMessage = styled.div`
+    font-size: 1.3rem;
+    opacity: 0.5;
+`
+
+
+const ModalToolbarButton = styled.div`
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem;
+    font-size: 1.3rem;
+    
+    margin-right: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6; 
+        opacity: 1;
+    }
+    margin-left: ${props => props.marginLeft};
+    opacity: ${props => props.opacity};
+`
 
 const MenuContainer = styled.div`
 `

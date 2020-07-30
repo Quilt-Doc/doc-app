@@ -230,8 +230,8 @@ class LabelMenu extends React.Component {
                         <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
                     </AddButton> :
                     <ModalToolbarButton onClick = {() => this.openMenu()}>
-                        <ion-icon name="pricetag-outline" style={{ 'fontSize': '2.3rem', 'marginRight': '0.7rem'}}></ion-icon> 
-                        {this.props.setTags.length}  
+                        <ion-icon name="pricetag-outline" style={{ 'fontSize': '1.8rem', 'marginRight': '0.7rem'}}></ion-icon> 
+                        {this.props.setTags.length} Labels
                     </ModalToolbarButton>
                 }
                 {this.state.open && 
@@ -299,7 +299,7 @@ const ModalToolbarButton = styled.div`
     align-items: center;
     justify-content: center;
     padding: 0.8rem;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     
     margin-right: 1rem;
     border-radius: 0.5rem;

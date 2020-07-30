@@ -57,7 +57,7 @@ class FileReferenceMenu extends React.Component {
            clearTimeout(this.state.typingTimeout);
         }
 
-        let { repositoryId } =  this.props.match.params
+        let repositoryId  =  this.props.document.repository._id
         let setIds = this.props.setReferences.map(ref => ref._id)
 
         this.setState({
@@ -98,7 +98,7 @@ class FileReferenceMenu extends React.Component {
 
     async setPosition(e) {
         // UP
-        let { repositoryId } = this.props.match.params;
+        let repositoryId = this.props.document.repository._id;
         if (e.key === "Enter" && this.state.position >= 0) {
             let ref = this.state.references[this.state.position]
             this.setState({loaded: false})
@@ -155,7 +155,7 @@ class FileReferenceMenu extends React.Component {
     openMenu(){
         document.addEventListener('mousedown', this.handleClickOutside, false);
         let ids = this.props.setReferences.map(ref => ref._id)
-        let { workspaceId, repositoryId } = this.props.match.params
+        let repositoryId = this.props.document.repository._id
         this.props.localRetrieveReferences({limit: 9, referenceIds: ids, repositoryId}).then((references) => {
             this.setState({references, loaded: true, open:true})
         })
@@ -177,10 +177,13 @@ class FileReferenceMenu extends React.Component {
         let setIds = this.props.setReferences.map(ref => ref._id)
         return(
             <MenuContainer  >
-                {this.props.modalButton ?  
+                {this.props.modalButton ?  this.props.document.repository ?
                     <ModalToolbarButton  onClick = {() => this.openMenu()}>
-                        <ion-icon name="cube-outline" style={{'fontSize': '2.3rem', 'marginRight': '0.7rem'}}></ion-icon>
-                        {setIds.length}
+                        <ion-icon name="cube-outline" style={{'fontSize': '1.8rem', 'marginRight': '0.7rem'}}></ion-icon>
+                        {setIds.length} References
+                    </ModalToolbarButton> :  <ModalToolbarButton style = {{opacity: 0.5}}>
+                        <ion-icon name="cube-outline" style={{'fontSize': '1.8rem', 'marginRight': '0.7rem'}}></ion-icon>
+                        {setIds.length} References
                     </ModalToolbarButton>
                     : <AddButton ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
                         <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
@@ -240,7 +243,7 @@ const ModalToolbarButton = styled.div`
     align-items: center;
     justify-content: center;
     padding: 0.8rem;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     
     margin-right: 1rem;
     border-radius: 0.5rem;

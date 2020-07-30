@@ -139,7 +139,7 @@ class DirectoryView extends React.Component {
             let color = tag.color < colors.length ? colors[tag.color] : 
                 colors[tag.color - Math.floor(tag.color/colors.length) * colors.length];
 
-            return <Tag color = {color} backgroundColor = {chroma(color).alpha(0.2)}>{tag.label}</Tag>
+            return <Tag color = {color} backgroundColor = {chroma(color).alpha(0.15)}>{tag.label}</Tag>
         })
     }
 
@@ -176,7 +176,7 @@ class DirectoryView extends React.Component {
                             <InfoBlock>
                                 <InfoHeader>
                                     <ion-icon style = {
-                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
+                                                {color: "#172A4E", marginRight: "0.7rem", fontSize: "1.8rem"}
                                     } name="pricetag-outline"></ion-icon>
                                     Labels
                                 </InfoHeader>
@@ -196,7 +196,7 @@ class DirectoryView extends React.Component {
                             <InfoBlock>
                                 <InfoHeader>
                                     <ion-icon style = {
-                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
+                                                {color: "#172A4E",  marginRight: "0.7rem", fontSize: "1.8rem"}
                                         } name="document-text-outline"></ion-icon>
                                     Documents
                                 </InfoHeader>

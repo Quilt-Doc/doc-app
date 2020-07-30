@@ -171,6 +171,7 @@ const SearchResult = styled.div`
     &:hover {
         background-color: #EBECF0;
     }
+    font-weight: 500;
 `
 
 const SearchBubble = styled.div`

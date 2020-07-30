@@ -29,6 +29,10 @@ const Leaf = ({ attributes, children, leaf }) => {
 	if (leaf.underlined) {
 		children = <u>{children}</u>
 	}
+
+	if (leaf.backColor) {
+		children = <BackColoredSpan backColor = {leaf.backColor}>{children}</BackColoredSpan>
+	}
 	
 	if (leaf.color) {
 		children = <ColoredSpan color = {leaf.color}>{children}</ColoredSpan>
@@ -41,6 +45,10 @@ const Leaf = ({ attributes, children, leaf }) => {
 }
 
 export default Leaf;
+
+const BackColoredSpan = styled.span`
+	background-color: ${props => props.backColor};
+`
 
 const ColoredSpan = styled.span`
 	color : ${props => props.color};

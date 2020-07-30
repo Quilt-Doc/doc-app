@@ -182,8 +182,9 @@ class DocumentMenu2 extends React.Component {
         return (
             <MenuContainer  >
                 <ModalToolbarButton  marginLeft= "1rem"  onClick = {() => this.openMenu()}>
-                    <ion-icon name="compass-outline" style={{'fontSize': '2.5rem',  'marginRight': '0.7rem', 'color': "#172A4E"}}></ion-icon>
-                    {this.props.parent ? this.props.parent.title : <NoneMessage>None yet</NoneMessage>}
+                <ion-icon name="document-text-outline" style={{ color: "#172A4E",  'marginRight': '0.7rem', fontSize: "1.5rem" }}></ion-icon>
+                    {this.props.parent ? 
+                        <Parent>{this.props.parent.title}</Parent> : <NoneMessage>Select a parent</NoneMessage>}
                 </ModalToolbarButton>
                 {this.state.open && 
                     <CSSTransition
@@ -233,8 +234,12 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { moveDocument, retrieveChildren })(DocumentMenu2));
 
+const Parent = styled.div`
+    font-weight: 500;
+`
+
 const NoneMessage = styled.div`
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     opacity: 0.5;
 `
 
@@ -244,7 +249,7 @@ const ModalToolbarButton = styled.div`
     align-items: center;
     justify-content: center;
     padding: 0.8rem;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     
     margin-right: 1rem;
     border-radius: 0.5rem;

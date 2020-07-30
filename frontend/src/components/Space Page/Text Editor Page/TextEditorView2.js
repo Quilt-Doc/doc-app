@@ -1,10 +1,11 @@
 import React from 'react'
 
 //components
-import DocumentEditorModal  from './Editor/DocumentEditorModal';
+import DocumentEditorModal from './Editor/DocumentEditorModal';
 import DocumentMenu2 from '../../General/Menus/DocumentMenu2';
 import LabelMenu from '../../General/Menus/LabelMenu';
 import FileReferenceMenu from '../../General/Menus/FileReferenceMenu';
+import { CSSTransition } from 'react-transition-group';
 
 //styles 
 import styled from "styled-components";
@@ -14,11 +15,12 @@ import history from '../../../history';
 
 //actions
 import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
-import { getDocument, renameDocument, deleteDocument, editDocument, getParent, removeChild, attachTag, removeTag   } from '../../../actions/Document_Actions';
+import { getDocument, renameDocument, deleteDocument, editDocument, getParent, removeChild, attachTag, removeTag } from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 
 //redux
 import { connect } from 'react-redux';
+import RepositoryMenu2 from '../../General/Menus/RepositoryMenu2';
 
 //Change type of markup using toolbar and/or delete markup
 //listen for onscroll events to update dropdown
@@ -29,64 +31,67 @@ class TextEditorView extends React.Component {
 
     constructor(props) {
         super(props)
-        this.state = {}
+        this.state = {
+
+            "editorON": true
+        }
     }
 
 
-    componentDidMount(){
+    componentDidMount() {
 
         let search = history.location.search
         let params = new URLSearchParams(search)
-        let documentId = params.get('document') 
-       
-        this.props.getDocument(documentId).then((document) =>{
+        let documentId = params.get('document')
+
+        this.props.getDocument(documentId).then((document) => {
             console.log(document)
             let markup = [{
-                            type: 'paragraph',
-                            children: [
-                            { text: '' },
-                            ],
-                          }]
+                type: 'paragraph',
+                children: [
+                    { text: '' },
+                ],
+            }]
             let title = ""
-            if (document.markup){
+            if (document.markup) {
                 markup = JSON.parse(document.markup)
             }
             if (document.title) {
                 title = document.title
             }
-            this.setState({markup, title})
-            
+            this.setState({ markup, title })
+
             this.props.getParent(documentId).then((parent) => {
                 if (parent) {
-                    this.setState({parentId: parent._id})
+                    this.setState({ parentId: parent._id })
                 }
-                
+
             })
         })
 
         window.addEventListener('beforeunload', this.saveMarkup, false);
-        
+
         this.setValue = this.setValue.bind(this)
     }
 
-    saveMarkup = () =>{
-        
-        if (this.props.document){
-            
-            this.props.editDocument(this.props.document._id, {markup: JSON.stringify(this.state.markup)})
+    saveMarkup = () => {
+
+        if (this.props.document) {
+
+            this.props.editDocument(this.props.document._id, { markup: JSON.stringify(this.state.markup) })
         }
     }
 
     setValue(value) {
-        this.setState({markup: value})
-    }   
+        this.setState({ markup: value })
+    }
 
     componentWillUnmount() {
-        if (this.props.creating){
+        if (this.props.creating) {
             if (!this.props.document.title
-                && this.state.markup.length === 1 
-                && this.state.markup[0].children[0].text == ''){    
-                    this.props.deleteDocument(this.props.document._id)
+                && this.state.markup.length === 1
+                && this.state.markup[0].children[0].text == '') {
+                this.props.deleteDocument(this.props.document._id)
             } else {
                 this.saveMarkup()
             }
@@ -96,84 +101,89 @@ class TextEditorView extends React.Component {
         }
         window.removeEventListener('beforeunload', this.saveMarkup, false)
     }
-   
-    renderReferences(){
+
+    renderReferences() {
         return this.props.document.references.map((ref) => {
             return <Reference>{ref.name}</Reference>
         })
     }
 
-    renderTags(){
+    renderTags() {
         return <Tag>utility</Tag>
     }
 
-    renderRepository(){
+    renderRepository() {
         return <Repository>{this.props.document.repository.fullName}</Repository>
     }
 
-    onTitleChange(e){
-        this.setState({title: e.target.value})
-        if (e.type === 'blur'){
-            this.props.renameDocument({documentId: this.props.document._id, title: e.target.value})
+    onTitleChange(e) {
+        this.setState({ title: e.target.value })
+        if (e.type === 'blur') {
+            this.props.renameDocument({ documentId: this.props.document._id, title: e.target.value })
         }
     }
 
-    render(){
-        if (!this.props.document || !this.state.markup){
+    render() {
+        if (!this.props.document || !this.state.markup) {
             return null
         }
 
-        return(
+        return (
+
             <>
                 <ModalToolbar>
-                    <ModalToolbarButton onClick = {() => {history.push(`/workspaces/${this.props.document.workspace._id}/document/${this.props.document._id}`)}}>
-                        <ion-icon name="open-outline" style = {{ color: "#172A4E", 'marginRight': '0.7rem', fontSize: "2.3rem"}}></ion-icon>
+                    <ModalToolbarButton onClick={() => { history.push(`/workspaces/${this.props.document.workspace._id}/document/${this.props.document._id}`) }}>
+                        <ion-icon name="open-outline" style={{ color: "#172A4E", 'marginRight': '0.7rem', fontSize: "1.7rem" }}></ion-icon>
                         Open Document
-                    </ModalToolbarButton>
+                                </ModalToolbarButton>
                     <DocumentMenu2
-                        marginTop = {"1rem"}
-                        parent = {this.props.document.parent} document = {this.props.document}
+                        marginTop={"1rem"}
+                        parent={this.props.document.parent} document={this.props.document}
                     />
+                    <RepositoryMenu2
+                        document={this.props.document}
+                    />
+
                     <FileReferenceMenu
-                         modalButton = {true}
-                         setReferences = {this.props.document.references }//this.props.request.tags}
-                         marginTop = {"1rem"}
-                         document = {this.props.document}
+                        modalButton={true}
+                        setReferences={this.props.document.references}//this.props.request.tags}
+                        marginTop={"1rem"}
+                        document={this.props.document}
                     />
-                 
+
                     <LabelMenu
-                        modalButton = {true}
-                        attachTag = {(tagId) => this.props.attachTag(this.props.document._id, tagId)}//this.props.attachTag(requestId, tagId)}
-                        removeTag = {(tagId) => this.props.removeTag(this.props.document._id, tagId)}//this.props.removeTag(requestId, tagId)}
-                        setTags = {this.props.document.tags  }//this.props.request.tags}
-                        marginTop = {"1rem"}
-                        marginLeft = {"-22rem"}
-                        
+                        modalButton={true}
+                        attachTag={(tagId) => this.props.attachTag(this.props.document._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                        removeTag={(tagId) => this.props.removeTag(this.props.document._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                        setTags={this.props.document.tags}//this.props.request.tags}
+                        marginTop={"1rem"}
+                        marginLeft={"-22rem"}
+
                     />
                     {/*
-                    <FileReferenceMenu
-                         modalButton = {true}
-                         setReferences = {this.props.document.references}
-                         marginTop = {"1rem"}
-                         document = {this.props.document}
-                    />*/
+                                <FileReferenceMenu
+                                    modalButton = {true}
+                                    setReferences = {this.props.document.references}
+                                    marginTop = {"1rem"}
+                                    document = {this.props.document}
+                                />*/
                     }
-                    <ModalToolbarButton marginLeft= "2rem" opacity = {"1"}>
-                        <ion-icon name="ellipsis-horizontal-outline" style={{'fontSize': '3rem', 'color': "#172A4E"}}></ion-icon>
+                    <ModalToolbarButton marginLeft="2rem" opacity={"1"}>
+                        <ion-icon name="ellipsis-horizontal-outline" style={{ 'fontSize': '3rem', 'color': "#172A4E" }}></ion-icon>
                     </ModalToolbarButton>
                 </ModalToolbar>
                 <ModalEditor>
                     <Container>
-                        <Header onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
-                        <DocumentEditorModal  
-                            markup = {this.state.markup} 
-                            setValue = {this.setValue}
-                            scrollTop = {this.props.scrollTop}
+                        <Header onBlur={(e) => this.onTitleChange(e)} onChange={(e) => this.onTitleChange(e)} placeholder={"Untitled"} value={this.state.title} />
+                        <DocumentEditorModal
+                            markup={this.state.markup}
+                            setValue={this.setValue}
+                            scrollTop={this.props.scrollTop}
                         />
                     </Container>
                 </ModalEditor>
+
             </>
-           
         )
     }
 }
@@ -181,7 +191,7 @@ class TextEditorView extends React.Component {
 const mapStateToProps = (state) => {
     let search = history.location.search
     let params = new URLSearchParams(search)
-    let documentId = params.get('document') 
+    let documentId = params.get('document')
     let parentId = state.parentId
     return {
         scrollTop: state.ui.scrollRightView,
@@ -192,7 +202,24 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, { getDocument, editDocument, attachTag, removeTag, retrieveRepositoryItems,  deleteDocument, setCreation, getParent, removeChild, renameDocument})(TextEditorView);
+export default connect(mapStateToProps, { getDocument, editDocument, attachTag, removeTag, retrieveRepositoryItems, deleteDocument, setCreation, getParent, removeChild, renameDocument })(TextEditorView);
+
+
+const Placeholder = styled.div`
+    border: 1px solid black;
+    align-self: center;
+    margin-top: 20rem;
+    font-size: 2rem;
+    height: 5rem;
+    cursor: pointer;
+
+`
+
+
+const NoneMessage = styled.div`
+    font-size: 1.3rem;
+    opacity: 0.5;
+`
 
 
 const ModalToolbarButton = styled.div`
@@ -201,7 +228,7 @@ const ModalToolbarButton = styled.div`
     align-items: center;
     justify-content: center;
     padding: 0.8rem;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     
     margin-right: 1rem;
     border-radius: 0.5rem;

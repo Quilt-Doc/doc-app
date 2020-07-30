@@ -6,11 +6,7 @@ import LabelMenu from '../../General/Menus/LabelMenu';
 
 //styles 
 import styled from "styled-components";
-
-//icons
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAlignLeft, faAlignRight, faAlignCenter, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
-
+import chroma from 'chroma-js';
 
 
 //actions
@@ -34,7 +30,7 @@ class TextEditorView extends React.Component {
         this.state = {
             loaded: false
         }
-        this.headerRef = React.createRef()
+        //this.headerRef = React.createRef()
     }
 
 
@@ -119,7 +115,7 @@ class TextEditorView extends React.Component {
     }
 
     
-    onTitleChange(e){
+    onTitleChange = (e) => {
         console.log("BLUR EVENT", e.type)
         console.log("BLUR EVENT TARGET VAL", e.target.value)
         
@@ -137,72 +133,9 @@ class TextEditorView extends React.Component {
                     
                 <LeftContainer>
                     <SubContainer>
-                        <Toolbar>
-                            <IconBlock>
-                                <IconBorder>
-                                    <IconBold>B</IconBold>
-                                </IconBorder>
-                                <IconBorder>
-                                    <IconItalic>i</IconItalic>
-                                </IconBorder>
-                                <IconBorder>
-                                    <IconUnderline>U</IconUnderline>
-                                </IconBorder>
-                            </IconBlock>
-                            <IconBlock>
-                                <IconBorder>
-                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignLeft} />
-                                </IconBorder>
-                                <IconBorder>
-                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignCenter} />
-                                </IconBorder>
-                                <IconBorder>
-                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon={faAlignRight} />
-                                </IconBorder>
-                            </IconBlock>
-                            <IconBlock>
-                                <IconBorder>
-                                    <ion-icon style = {{fontSize: "1.7rem", borderBottom: "2px solid #172A4E"}} name="color-palette-outline"></ion-icon>
-                                </IconBorder>
-                                <IconBorder>
-                                    <ion-icon style = {{fontSize: "1.7rem"}}  name="color-wand-outline"></ion-icon>
-                                </IconBorder>
-                            </IconBlock>
-                            <IconBlock>
-                                <IconBorder>
-                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListUl}/>
-                                </IconBorder>
-                                <IconBorder>
-                                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListOl}/>
-                                </IconBorder>
-                            </IconBlock>
-                            <IconBlock>
-                                <IconBorder>
-                                    <IconBold>H1</IconBold>
-                                </IconBorder>
-                                <IconBorder>
-                                    <IconBold>H2</IconBold>
-                                </IconBorder>
-                                <IconBorder>
-                                    <IconBold>H3</IconBold>
-                                </IconBorder>
-                                
-                            </IconBlock>
-                            <IconBlock>
-                                <IconBorder>
-                                    <ion-icon style = {{marginTop: "0.25rem", fontSize: "1.7rem"}} name="code-slash-sharp"></ion-icon>
-                                </IconBorder>
-                                <IconBorder>
-                                    <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="grid-outline"></ion-icon>  
-                                </IconBorder>
-                                <IconBorder>
-                                    <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="checkbox-outline"></ion-icon>
-                                </IconBorder>
-                            </IconBlock>
-                            {/*  <Settings><ion-icon name="settings-outline"></ion-icon></Settings>*/}
-                        </Toolbar>
-                        <Header ref = {this.headerRef} onBlur = {(e) => this.onTitleChange(e)} onChange = {(e) => this.onTitleChange(e)} placeholder = {"Untitled"} value = {this.state.title} />
                         <DocumentEditor 
+                            onTitleChange = {this.onTitleChange}
+                            title = {this.state.title}
                             markup = {this.state.markup} 
                             setValue = {this.setValue}
                             scrollTop = {this.props.scrollTop}
@@ -235,6 +168,47 @@ class TextEditorView extends React.Component {
                         <InfoBlock>
                             <InfoHeader>
                                 <ion-icon  style = {
+                                                {color: "#172A4E",marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.65rem"}
+                                        } name="git-network-outline"></ion-icon>
+                                Repository
+                            </InfoHeader>
+                            <ReferenceContainer>
+                                <RepositoryButton> <ion-icon  style = {
+                                                { marginRight: "0.5rem", fontSize: "1.4rem"}
+                                        } name="git-network-outline"></ion-icon>
+                                        fsanal / FinanceNewsApp</RepositoryButton>
+                            </ReferenceContainer>
+                        </InfoBlock> 
+                        <InfoBlock>
+                            <InfoHeader>< ion-icon name="cube-outline"  style = {
+                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.65rem"}
+                                        }></ion-icon>References</InfoHeader>
+                                        
+                            <ReferenceContainer2>
+                                <Reference>
+                                    <ion-icon name="document-outline"
+                                    style = {
+                                        {color: "#172A4E", marginRight: "0.7rem", fontSize: "1.4rem"}}></ion-icon>
+                                    backend.js
+                                </Reference>
+                                <Reference2>
+                                    <ion-icon name="folder"
+                                    style = {
+                                        {color: "#172A4E", marginRight: "0.7rem", fontSize: "1.4rem"}}></ion-icon>
+                                    Semantic
+                                </Reference2>
+                                {/*<NoneMessage>None yet</NoneMessage>*/}
+                                <LabelMenu 
+                                    attachTag = {(tagId) => console.log(tagId)}//this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                                    removeTag = {(tagId) => console.log(tagId)}//this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                                    setTags = {[]}//{this.props.currentReference.tags}//this.props.request.tags}
+                                    marginTop = {"1rem"}
+                                />
+                            </ReferenceContainer2>
+                        </InfoBlock>
+                        <InfoBlock>
+                            <InfoHeader>
+                                <ion-icon  style = {
                                                 {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.65rem"}
                                         } name="pricetag-outline"></ion-icon>
                                 Labels
@@ -250,33 +224,7 @@ class TextEditorView extends React.Component {
                                 />
                             </ReferenceContainer>
                         </InfoBlock>     
-                        <InfoBlock>
-                            <InfoHeader>< ion-icon name="cube-outline"  style = {
-                                                {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.65rem"}
-                                        }></ion-icon>References</InfoHeader>
-                                        
-                            <ReferenceContainer>
-                                <Reference>
-                                    <ion-icon name="document-outline"
-                                    style = {
-                                        {color: "#172A4E", marginRight: "0.5rem", fontSize: "1.4rem"}}></ion-icon>
-                                    backend.js
-                                </Reference>
-                                <Reference2>
-                                    <ion-icon name="folder"
-                                    style = {
-                                        {color: "#172A4E", marginRight: "0.5rem", fontSize: "1.4rem"}}></ion-icon>
-                                    backend.js
-                                </Reference2>
-                                {/*<NoneMessage>None yet</NoneMessage>*/}
-                                <LabelMenu 
-                                    attachTag = {(tagId) => console.log(tagId)}//this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
-                                    removeTag = {(tagId) => console.log(tagId)}//this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
-                                    setTags = {[]}//{this.props.currentReference.tags}//this.props.request.tags}
-                                    marginTop = {"1rem"}
-                                />
-                            </ReferenceContainer>
-                        </InfoBlock>
+                      
                         <InfoBlock borderBottom = {"none"}>
                             <InfoHeader>< ion-icon name="chatbox-ellipses-outline" style = {{ fontSize: '1.65rem', marginRight: "0.7rem"}}></ion-icon>Comments</InfoHeader>
                             <ReferenceContainer>
@@ -401,6 +349,25 @@ export default withRouter(connect(mapStateToProps, { getDocument, editDocument, 
 //table <ion-icon name="grid-outline"></ion-icon>
 //checklist <ion-icon name="checkbox-outline"></ion-icon>
 //code <ion-icon name="code-slash"></ion-icon>
+
+
+const RepositoryButton = styled.div`
+    background-color: ${chroma("#5B75E6").alpha(0.1)}; 
+    color: #5B75E6;
+    font-weight: 500;
+    padding: 0.75rem;
+    display: inline-flex;
+    border-radius: 0.4rem;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+    align-items: center;
+    cursor: pointer;
+    &: hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    }
+    letter-spacing: 1;
+    font-size: 1.3rem;
+`
+
 const BarSpace = styled.div`
     height: 3rem;
     z-index: 40;
@@ -487,8 +454,8 @@ const LeftContainer = styled.div`
     background-color: #F7F9FB; 
     border: 1px solid #DFDFDF;
     margin-top: 5rem;
-    margin-left: 5rem;
-    margin-right: 4rem;
+    margin-left: 4rem;
+    margin-right: 1.5rem;
     border-radius:0.4rem;
     padding: 3rem;
     margin-bottom: 3rem;
@@ -589,49 +556,8 @@ const H3 = styled.div`
 `
 
 
-const IconBold = styled.div`
-    font-size: 1.5rem;
-`
 
-const IconItalic = styled.div`
-    font-style: italic;
-    font-size: 1.5rem;
-`
 
-const IconUnderline = styled.div`
-    text-decoration: underline;
-    font-size: 1.5rem;
-`
-
-const IconBlock = styled.div`
-    display: flex;
-    padding-left: 1.3rem;
-    padding-right: 1rem;
-    border-right: 2px solid #F4F4F6; 
-    align-items: center;
-    height: 2.3rem;
-`
-
-const IconBorder = styled.div`
-    margin-left: ${props => props.marginLeft};
-    margin-right: 0.3rem;
-    display: flex;
-    font-size: 1.3rem;
-    align-items: center;
-    justify-content: center;
-
-    width: 2.8rem;
-    height: 2.8rem;
-    border-radius: 0.3rem;
-      
-    &:hover {
-        opacity: 1;
-        background-color: #F4F4F6; 
-    }
-
-    cursor: pointer;
-    transition: all 0.1s ease-in;
-`
 
 const Shadow = styled.div`
     
@@ -655,21 +581,6 @@ const ListToolbar = styled.div`
     top: 0;
     border-bottom: 1px solid #EDEFF1;
     z-index: 1;
-`
-
-const Toolbar = styled.div`
-    position: sticky; 
-    top: 0;
-    height: 4.5rem;
-    align-items: center;
-    z-index: 1;
-    background-color:white;
-    display: flex;
-    border-bottom: 1px solid #EDEFF1;
-    align-items: center;
-    border-radius: 0.4rem 0.4rem 0rem 0rem !important;
-    padding-left: 1rem;
-    padding-right: 1rem;
 `
 
 const Header = styled.input`
@@ -710,7 +621,6 @@ const EditorContainer = styled.div`
 const InfoBar = styled.div`
     min-width: 28rem;
     margin-top: 0rem;
-    margin-left: 1rem;
     z-index: 20;
     /*background-color: #F4F4F6; */
    /* border-left: 1px solid #E0E4E7;*/
@@ -763,7 +673,16 @@ const ReferenceContainer = styled.div`
     margin-top: 0.8rem;
     display: flex;
     flex-wrap: wrap;
-    margin:-0.7rem;
+   
+    align-items: center;
+`
+
+const ReferenceContainer2 = styled.div`
+    margin-top: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    margin: -0.7rem;
+    margin-bottom: 0rem;
     align-items: center;
 `
 
@@ -784,7 +703,8 @@ const Reference = styled.div`
     font-size: 1.25rem;
     color: #172A4E;
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
-    padding: 0.55rem 1rem;
+    padding: 0.55rem 0.7rem;
+    padding-right: 0.9rem;
     align-items: center;
     display: inline-flex;
     /*background-color:#262E49;*/

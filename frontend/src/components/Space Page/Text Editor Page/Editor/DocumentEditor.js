@@ -2,7 +2,7 @@ import React, { useReducer, useMemo, useCallback } from 'react'
 
 // slate
 import { Slate, Editable, withReact } from 'slate-react'
-import { Node, createEditor } from 'slate'
+import { Editor, Transforms, Node, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import withFunctionality from '../Slate_Specific/WithFunctionality'
 
@@ -26,11 +26,11 @@ import ReferenceMenu from '../Menus/ReferenceMenu';
 //react dnd
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-
 //prism
 import Prism from 'prismjs'
+import EditorToolbar from './EditorToolbar/Toolbar';
 // eslint-disable-next-line
-Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-interpolation":{pattern:/(?:f|rf|fr)(?:("""|''')[\s\S]*?\1|("|')(?:\\.|(?!\2)[^\\\r\n])*\2)/i,greedy:!0,inside:{interpolation:{pattern:/((?:^|[^{])(?:{{)*){(?!{)(?:[^{}]|{(?!{)(?:[^{}]|{(?!{)(?:[^{}])+})+})+}/,lookbehind:!0,inside:{"format-spec":{pattern:/(:)[^:(){}]+(?=}$)/,lookbehind:!0},"conversion-option":{pattern:/![sra](?=[:}]$)/,alias:"punctuation"},rest:null}},string:/[\s\S]+/}},"triple-quoted-string":{pattern:/(?:[rub]|rb|br)?("""|''')[\s\S]*?\1/i,greedy:!0,alias:"string"},string:{pattern:/(?:[rub]|rb|br)?("|')(?:\\.|(?!\1)[^\\\r\n])*\1/i,greedy:!0},function:{pattern:/((?:^|\s)def[ \t]+)[a-zA-Z_]\w*(?=\s*\()/g,lookbehind:!0},"class-name":{pattern:/(\bclass\s+)\w+/i,lookbehind:!0},decorator:{pattern:/(^\s*)@\w+(?:\.\w+)*/im,lookbehind:!0,alias:["annotation","punctuation"],inside:{punctuation:/\./}},keyword:/\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|print|raise|return|try|while|with|yield)\b/,builtin:/\b(?:__import__|abs|all|any|apply|ascii|basestring|bin|bool|buffer|bytearray|bytes|callable|chr|classmethod|cmp|coerce|compile|complex|delattr|dict|dir|divmod|enumerate|eval|execfile|file|filter|float|format|frozenset|getattr|globals|hasattr|hash|help|hex|id|input|int|intern|isinstance|issubclass|iter|len|list|locals|long|map|max|memoryview|min|next|object|oct|open|ord|pow|property|range|raw_input|reduce|reload|repr|reversed|round|set|setattr|slice|sorted|staticmethod|str|sum|super|tuple|type|unichr|unicode|vars|xrange|zip)\b/,boolean:/\b(?:True|False|None)\b/,number:/(?:\b(?=\d)|\B(?=\.))(?:0[bo])?(?:(?:\d|0x[\da-f])[\da-f]*\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/i,operator:/[-+%=]=?|!=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/,punctuation:/[{}[\];(),.:]/},Prism.languages.python["string-interpolation"].inside.interpolation.inside.rest=Prism.languages.python,Prism.languages.py=Prism.languages.python;
+Prism.languages.python = { comment: { pattern: /(^|[^\\])#.*/, lookbehind: !0 }, "string-interpolation": { pattern: /(?:f|rf|fr)(?:("""|''')[\s\S]*?\1|("|')(?:\\.|(?!\2)[^\\\r\n])*\2)/i, greedy: !0, inside: { interpolation: { pattern: /((?:^|[^{])(?:{{)*){(?!{)(?:[^{}]|{(?!{)(?:[^{}]|{(?!{)(?:[^{}])+})+})+}/, lookbehind: !0, inside: { "format-spec": { pattern: /(:)[^:(){}]+(?=}$)/, lookbehind: !0 }, "conversion-option": { pattern: /![sra](?=[:}]$)/, alias: "punctuation" }, rest: null } }, string: /[\s\S]+/ } }, "triple-quoted-string": { pattern: /(?:[rub]|rb|br)?("""|''')[\s\S]*?\1/i, greedy: !0, alias: "string" }, string: { pattern: /(?:[rub]|rb|br)?("|')(?:\\.|(?!\1)[^\\\r\n])*\1/i, greedy: !0 }, function: { pattern: /((?:^|\s)def[ \t]+)[a-zA-Z_]\w*(?=\s*\()/g, lookbehind: !0 }, "class-name": { pattern: /(\bclass\s+)\w+/i, lookbehind: !0 }, decorator: { pattern: /(^\s*)@\w+(?:\.\w+)*/im, lookbehind: !0, alias: ["annotation", "punctuation"], inside: { punctuation: /\./ } }, keyword: /\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|print|raise|return|try|while|with|yield)\b/, builtin: /\b(?:__import__|abs|all|any|apply|ascii|basestring|bin|bool|buffer|bytearray|bytes|callable|chr|classmethod|cmp|coerce|compile|complex|delattr|dict|dir|divmod|enumerate|eval|execfile|file|filter|float|format|frozenset|getattr|globals|hasattr|hash|help|hex|id|input|int|intern|isinstance|issubclass|iter|len|list|locals|long|map|max|memoryview|min|next|object|oct|open|ord|pow|property|range|raw_input|reduce|reload|repr|reversed|round|set|setattr|slice|sorted|staticmethod|str|sum|super|tuple|type|unichr|unicode|vars|xrange|zip)\b/, boolean: /\b(?:True|False|None)\b/, number: /(?:\b(?=\d)|\B(?=\.))(?:0[bo])?(?:(?:\d|0x[\da-f])[\da-f]*\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/i, operator: /[-+%=]=?|!=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/, punctuation: /[{}[\];(),.:]/ }, Prism.languages.python["string-interpolation"].inside.interpolation.inside.rest = Prism.languages.python, Prism.languages.py = Prism.languages.python;
 
 
 //PREVENT SCROLL IF ACTIVE
@@ -58,18 +58,27 @@ Prism.languages.python={comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},"string-i
 // FIX TOOLBAR
 // REFERENCES
 
+const HOTKEYS = {
+	'mod+b': 'bold',
+	'mod+i': 'italic',
+	'mod+u': 'underline',
+	'mod+`': 'code',
+}
+
+const LIST_TYPES = ['numbered-list', 'bulleted-list']
+
 const DocumentEditor = (props) => {
 
 	const [value, setValue] = [props.markup, props.setValue]
 	const blocktypes = ["paragraph", "heading-one", "heading-two", "heading-three", "list-item", "code-line", "code-reference"]
 
-	const initialState = { 
-		markupMenuActive: false, 
-		text: '', 
-		rect: null, 
-		hovered: {position: 0, ui: 'mouse'}, 
+	const initialState = {
+		markupMenuActive: false,
+		text: '',
+		rect: null,
+		hovered: { position: 0, ui: 'mouse' },
 		blocktypes,
-		scrollTop:0
+		scrollTop: 0
 	}
 
 	const [state, dispatch] = useReducer(
@@ -86,8 +95,8 @@ const DocumentEditor = (props) => {
 	const renderLeaf = useCallback(props => <Leaf {...props} />, [])
 
 	const editor = useMemo(() => withFunctionality(withHistory(withReact(createEditor())), dispatch, props.scrollTop), [])
-/*<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>*/
-	
+	/*<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>*/
+
 	let range = { anchor: state.anchor, focus: state.focus }
 
 	updateMarkupType(state, dispatch, range, blocktypes, editor)
@@ -95,12 +104,17 @@ const DocumentEditor = (props) => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Slate editor={editor} value={value} onChange={value => setValue(value)}>
-				<MarkupMenu dispatch = {dispatch} range = {range} state = {state} scrollTop = {props.scrollTop}/>
-				
+				<MarkupMenu dispatch={dispatch} range={range} state={state} scrollTop={props.scrollTop} />
+				<EditorToolbar 
+					isMarkActive = {isMarkActive} 
+					toggleMark = {toggleMark}
+					toggleColor = {toggleColor}
+				/>
+				<Header onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
 				<StyledEditable
-					onClick = {() => {
-						if (state.markupMenuActive){
-							dispatch({'type': 'markupMenuOff'})
+					onClick={() => {
+						if (state.markupMenuActive) {
+							dispatch({ 'type': 'markupMenuOff' })
 						}
 					}}
 					autoFocus
@@ -109,7 +123,7 @@ const DocumentEditor = (props) => {
 					renderLeaf={renderLeaf}
 					spellCheck="false"
 					decorate={decorate}
-					
+
 				/>
 			</Slate>
 		</DndProvider>
@@ -123,16 +137,16 @@ export default DocumentEditor
 
 const updateMarkupType = (state, dispatch, range, blocktypes, editor) => {
 	let mapping = {
-						"paragraph": "Text", 
-						"heading-one": "Heading 1", 
-						"heading-two": "Heading 2", 
-						"heading-three": "Heading 3", 
-						"list-item": "Bullet list", 
-						"code-line":  "Code snippet", 
-						"code-reference":  "Code reference"
-					}
+		"paragraph": "Text",
+		"heading-one": "Heading 1",
+		"heading-two": "Heading 2",
+		"heading-three": "Heading 3",
+		"list-item": "Bullet list",
+		"code-line": "Code snippet",
+		"code-reference": "Code reference"
+	}
 	if (state.markupMenuActive) {
-		for (let t of Node.texts(editor, {from: range.anchor.path, to: range.anchor.path})){
+		for (let t of Node.texts(editor, { from: range.anchor.path, to: range.anchor.path })) {
 			let filter = t[0].text.slice(range.anchor.offset + 1, range.focus.offset + 1)
 			blocktypes = blocktypes.filter(type => {
 				return mapping[type].toLowerCase().includes(filter.toLowerCase())
@@ -140,7 +154,7 @@ const updateMarkupType = (state, dispatch, range, blocktypes, editor) => {
 		}
 	}
 	if (blocktypes.length !== state.blocktypes.length) {
-		dispatch({type: "setBlockTypes", payload: blocktypes})
+		dispatch({ type: "setBlockTypes", payload: blocktypes })
 	}
 	if (blocktypes.length === 0) {
 		dispatch({ type: 'markupMenuOff' })
@@ -154,19 +168,19 @@ const onKeyDownHelper = (event, state, dispatch, editor, range) => {
 	} else if (event.key === "Enter") {
 		if (state.markupMenuActive) {
 			event.preventDefault()
-			editor.insertBlock({type: state.blocktypes[state.hovered.position]}, range)
+			editor.insertBlock({ type: state.blocktypes[state.hovered.position] }, range)
 		} else {
 			editor.insertDefaultEnter(event)
 		}
 	} else if (state.markupMenuActive && event.keyCode === 40) {
 		event.preventDefault()
 		if (state.hovered.position + 1 < state.blocktypes.length) {
-			dispatch({type: 'setHovered', payload: {position: state.hovered.position + 1, ui: 'key'}})
+			dispatch({ type: 'setHovered', payload: { position: state.hovered.position + 1, ui: 'key' } })
 		}
 	} else if (state.markupMenuActive && event.keyCode === 38) {
 		event.preventDefault()
 		if (state.hovered.position !== 0) {
-			dispatch({type: 'setHovered', payload: {position: state.hovered.position - 1, ui: 'key'}})
+			dispatch({ type: 'setHovered', payload: { position: state.hovered.position - 1, ui: 'key' } })
 		}
 	}
 }
@@ -186,7 +200,7 @@ const decorate = ([node, path]) => {
 	const ranges = []
 	if (node.type == 'code-block') {
 		let childTexts = []
-		for (let child of Node.texts(node)) { 
+		for (let child of Node.texts(node)) {
 			childTexts.push(child[0].text)
 		}
 		if (childTexts !== []) {
@@ -194,16 +208,16 @@ const decorate = ([node, path]) => {
 			const grammar = Prism.languages["python"]
 			const tokens = Prism.tokenize(string, grammar).reverse()
 			const identifiers = {
-									'keyword':'#D73A49',
-									'boolean': '#56B6C2',
-									'function': '#6F42C1',
-									'class-name': '#E36208',
-									'string': '#032F62',
-									'triple-quoted-string': '#032F62',
-									'number': '#005DC5',
-									
+				'keyword': '#D73A49',
+				'boolean': '#56B6C2',
+				'function': '#6F42C1',
+				'class-name': '#E36208',
+				'string': '#032F62',
+				'triple-quoted-string': '#032F62',
+				'number': '#005DC5',
 
-								 }
+
+			}
 			let start = 0
 			let index = 0
 
@@ -242,20 +256,71 @@ const decorate = ([node, path]) => {
 	return ranges
 }
 
+const toggleBlock = (editor, format) => {
+	const isActive = isBlockActive(editor, format)
+	const isList = LIST_TYPES.includes(format)
 
-/*
-const StyledEditable = styled(Editable)`
-  line-height: 1.5 !important;
-  caret-color: #46474f;
-  color: #46474f;
-  font-size: 16px;
-  padding-top: 6rem;
-  width: 80rem;
-  padding-top: 0.5rem;
-  padding-right: 6rem;
-  padding-bottom: 4rem;
-  resize: none !important;
-`	*/
+	Transforms.unwrapNodes(editor, {
+		match: n => LIST_TYPES.includes(n.type),
+		split: true,
+	})
+
+	Transforms.setNodes(editor, {
+		type: isActive ? 'paragraph' : isList ? 'list-item' : format,
+	})
+
+	if (!isActive && isList) {
+		const block = { type: format, children: [] }
+		Transforms.wrapNodes(editor, block)
+	}
+}
+
+const toggleMark = (editor, format) => {
+	const isActive = isMarkActive(editor, format)
+
+	if (isActive) {
+		Editor.removeMark(editor, format)
+	} else {
+		Editor.addMark(editor, format, true)
+	}
+}
+
+const toggleColor = (editor, color, back) => {
+	if (back) {
+		Editor.addMark(editor, "backColor", color)
+	} else {
+		Editor.addMark(editor, "color", color)
+	}	
+}
+
+const isBlockActive = (editor, format) => {
+	const [match] = Editor.nodes(editor, {
+		match: n => n.type === format,
+	})
+
+	return !!match
+}
+
+const isMarkActive = (editor, format) => {
+	const marks = Editor.marks(editor)
+	return marks ? marks[format] === true : false
+}
+
+
+const Header = styled.input`
+    font-size: 3rem;
+    color: #172A4E;
+    margin-bottom: 2rem;
+    ::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+    }
+    outline: none;
+    border: none;
+    padding-left: 8.5rem;
+    padding-right: 8.5rem;
+    margin-top: 5rem;
+`
 
 const StyledEditable = styled(Editable)`
   line-height: 1.5 !important;

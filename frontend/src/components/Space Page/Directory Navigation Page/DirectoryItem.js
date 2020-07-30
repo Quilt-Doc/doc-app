@@ -275,6 +275,7 @@ const Title = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    font-weight: 500;
 `
 
 const DocumentItemText = styled.div`
@@ -366,6 +367,7 @@ const StyledLink = styled(Link)`
 
 const ItemName = styled.div`
     flex: 1 1 25rem;
+    font-weight: 400;
 `
 
 // PROGRESS

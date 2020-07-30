@@ -85,3 +85,14 @@ body {
   opacity: 1;
   transition: all 100ms;
 }
+
+.editormodal-appear {
+  transform: translateX(-5rem);
+  opacity: 0;
+}
+
+.editormodal-appear.editormodal-appear-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 300ms;
+}

@@ -65,8 +65,9 @@ const DraggableDocument = (props) => {
 			isDragging: !!monitor.isDragging()
 		}),
 	})
-	
+	console.log(document.path)
     return (
+		
 		<DocContainer >	
 			<div ref = {gapDrop}>
 				<Gap backgroundColor = { isOver2 && canDrop2 ? "#DEEBFF" : ""}/>
@@ -85,7 +86,10 @@ const DraggableDocument = (props) => {
 					marginLeft = {`${props.marginLeft}rem`}
 				>
 					{props.renderLeftIcon()}
-					<ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', marginRight: "0.8rem"}}></ion-icon>
+					{document.path === "FinanceNewsApp" || document.path === "CIS 522 Project" || document.path === "Optical Learning" ? <ion-icon name="git-network-outline" style={{'fontSize': '1.7rem', marginRight: "0.8rem"}}></ion-icon> :
+						<ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', marginRight: "0.8rem"}}></ion-icon>
+					}
+					
 					{props.renderTitle()}
 					<IconBorder opacity = {createOpacity} onClick = {(e) => {props.createDocument(e)}}>
 						<ion-icon style={{'fontSize': '1.5rem'}} name="add-outline"></ion-icon>

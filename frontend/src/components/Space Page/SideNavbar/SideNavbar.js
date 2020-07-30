@@ -319,11 +319,11 @@ const PageSection = styled(Link)`
 const PageSection2 = styled(Link)`
     text-decoration: none;
     margin-left: 2rem;
-
+    margin-right: 2rem;
     width: 23rem;
     padding: 1.2rem;
     border-radius: 0.3rem;
-    margin-right: 2rem;
+
     height: 2.9rem;
     display: flex;
     align-items: center;

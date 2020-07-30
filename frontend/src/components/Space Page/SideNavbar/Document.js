@@ -111,7 +111,7 @@ class Document extends Component {
                 return (
                     <IconBorder2 onClick = {(e) => this.open(e)}>
                         <ion-icon 
-                            name="chevron-forward-outline"
+                            name="caret-forward"
                             style={{'fontSize': '1.3rem'}}
                         ></ion-icon>
                     </IconBorder2>
@@ -120,7 +120,7 @@ class Document extends Component {
                 return (
                     <IconBorder2 onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState({open: false})}}>
                         <ion-icon 
-                            name="chevron-down-outline"
+                            name="caret-down"
                             style={{'fontSize': '1.3rem'}}
                         ></ion-icon>
                     </IconBorder2>
@@ -130,10 +130,7 @@ class Document extends Component {
         } else {
             return (
                 <IconBorder3>
-                    <ion-icon 
-                        name="ellipse-sharp"
-                        style={{'fontSize': '0.4rem'}}
-                    ></ion-icon>
+                   
                 </IconBorder3>
             )
         }
@@ -231,6 +228,7 @@ const IconBorder2 = styled.div`
     align-items: center;
     width: 1.7rem;
     height: 1.7rem;
+    margin-left: -0.8rem;
     margin-right: 0.5rem;
     border-radius: 0.3rem;
     transition: all 0.05s ease-out;
@@ -246,6 +244,7 @@ const IconBorder3 = styled.div`
     align-items: center;
     width: 1.7rem;
     height: 1.7rem;
+    margin-left: -0.8rem;
     margin-right: 0.5rem;
     border-radius: 0.3rem;
 `

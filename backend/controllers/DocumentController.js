@@ -179,10 +179,11 @@ getParent = (req, res) => {
 
 editDocument = (req, res) => {
     const { id } = req.params;
-    const { title, markup } = req.body;
+    const { title, markup, repositoryId } = req.body;
     let update = {};
     if (title) update.title = title;
     if (markup) update.markup = markup;
+    if (repositoryId) update.repository = repositoryId
     Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace')
