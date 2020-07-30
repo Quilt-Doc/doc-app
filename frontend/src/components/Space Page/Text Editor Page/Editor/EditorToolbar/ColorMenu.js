@@ -4,8 +4,7 @@ import React from 'react';
 import styled from "styled-components";
 import chroma from 'chroma-js';
 
-import { Editor } from 'slate'
-
+import { Editor } from 'slate';
 //icons
 import { faTintSlash, faHighlighter  } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -111,7 +110,7 @@ class ColorMenu extends React.Component {
             <IconBorder active = {this.state.open} onMouseDown = {(e) => {this.openMenu(e)}} > 
                 {this.props.back ? 
                     <IconColor color = {this.findActiveColor()}>
-                        <FontAwesomeIcon  style = {{fontSize: "1.3rem", marginTop: "0.2rem", marginBottom: "0.35rem"}} icon={faHighlighter} />
+                        <FontAwesomeIcon  style = {{fontSize: "1.3rem", marginTop: "0.2rem", marginBottom: "0.27rem"}} icon={faHighlighter} />
                     </IconColor> : 
                     <IconColor color = {this.findActiveColor()}>A</IconColor>}
                 {this.state.open && 
@@ -159,7 +158,7 @@ const IconBorder = styled.div`
 `
 
 const IconColor = styled.div`
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     width: 1.8rem;
     display: flex;
     justify-content: center;

@@ -14,7 +14,22 @@ const Leaf = ({ attributes, children, leaf }) => {
 	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){
 		children = <Container>
 						{children}
-						<div className = 'paragraphPlaceholder' data-ph = {"Type '/' to insert markup"}/>
+						<span 
+							style = {{position: "absolute",  pointerEvents: "none", whiteSpace: "nowrap", opacity: 0.6,
+							fontWeight: 400 }}
+							contentEditable = {false}>
+							Type 
+							<span style = {{ fontWeight: 500,
+											padding: "0.25rem 0.9rem",
+											borderRadius: "0.3rem",
+											cursor: "text",
+											marginLeft: "0.5rem",
+											marginRight: "0.5rem",
+											backgroundColor: "#E7EAFC" }}>/</span>
+							for quick markup
+						</span>
+					
+
 					</Container>
 	}
 
@@ -61,3 +76,7 @@ const ObliqueSpan = styled.span`
 const Container = styled.div`
 	display : flex;
 `
+
+const SubContainer = styled.div`
+	display: flex;
+`	

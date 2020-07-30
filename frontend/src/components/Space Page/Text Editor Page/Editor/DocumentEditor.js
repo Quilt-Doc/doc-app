@@ -1,7 +1,8 @@
-import React, { useReducer, useMemo, useCallback } from 'react'
+import React, { useReducer, useMemo, useCallback, useState } from 'react'
 
 // slate
-import { Slate, Editable, withReact } from 'slate-react'
+import { Slate, Editable, withReact, useEditor, useSlate, ReactEditor
+		 } from 'slate-react'
 import { Editor, Transforms, Node, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import withFunctionality from '../Slate_Specific/WithFunctionality'
@@ -9,6 +10,8 @@ import withFunctionality from '../Slate_Specific/WithFunctionality'
 //components
 import Leaf from '../Slate_Specific/Leaf';
 import Element from '../Slate_Specific/Element';
+import InfoBar from '../InfoBar';
+import Sidebar from './Sidebar';
 
 //reducer
 import editorReducer from './EditorReducer';
@@ -18,10 +21,17 @@ import _ from 'lodash'
 
 //styles
 import styled from "styled-components";
+import chroma from 'chroma-js';
+
+//icons
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faAngleDoubleRight, faPen, faEllipsisH  } from '@fortawesome/free-solid-svg-icons'
+
 
 //components
 import MarkupMenu from '../Menus/MarkupMenu';
 import ReferenceMenu from '../Menus/ReferenceMenu';
+import { CSSTransition } from 'react-transition-group';
 
 //react dnd
 import { DndProvider } from 'react-dnd'
@@ -70,6 +80,7 @@ const LIST_TYPES = ['numbered-list', 'bulleted-list']
 const DocumentEditor = (props) => {
 
 	const [value, setValue] = [props.markup, props.setValue]
+	const [write, setWrite] = useState(false)
 	const blocktypes = ["paragraph", "heading-one", "heading-two", "heading-three", "list-item", "code-line", "code-reference"]
 
 	const initialState = {
@@ -100,31 +111,95 @@ const DocumentEditor = (props) => {
 	let range = { anchor: state.anchor, focus: state.focus }
 
 	updateMarkupType(state, dispatch, range, blocktypes, editor)
-
+	
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Slate editor={editor} value={value} onChange={value => setValue(value)}>
-				<MarkupMenu dispatch={dispatch} range={range} state={state} scrollTop={props.scrollTop} />
-				<EditorToolbar 
-					isMarkActive = {isMarkActive} 
-					toggleMark = {toggleMark}
-					toggleColor = {toggleColor}
-				/>
-				<Header onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
-				<StyledEditable
-					onClick={() => {
-						if (state.markupMenuActive) {
-							dispatch({ 'type': 'markupMenuOff' })
-						}
-					}}
-					autoFocus
-					onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
-					renderElement={renderElement}
-					renderLeaf={renderLeaf}
-					spellCheck="false"
-					decorate={decorate}
-
-				/>
+				<CSSTransition
+					in={write}
+					unmountOnExit
+				
+					enter = {true}
+					exit = {true}
+					timeout={150}
+					classNames="editortoolbar"
+				>
+				
+					<EditorToolbar 
+						isMarkActive = {isMarkActive} 
+						toggleMark = {toggleMark}
+					/>
+				
+				</CSSTransition>
+				<Container>
+					<KeyToolbar>
+						<KeyBorder active = {write} onClick = {() => {setWrite(!write)}}>
+							<FontAwesomeIcon 
+								
+								style = {{ fontSize: "1.7rem"}} icon={faPen} 
+							/>
+						</KeyBorder>
+						<KeyBorder>
+							<ion-icon style = {{ fontSize: "2.1rem"}} name="chatbox-outline"></ion-icon>
+						</KeyBorder>
+						<KeyBorder>
+							<ion-icon style = {{ fontSize: "2.1rem"}} name="ellipsis-horizontal"></ion-icon>
+						</KeyBorder>
+					</KeyToolbar>
+					<Sidebar/>
+					<EditorContainer>
+						<DataContainer>
+							<RepositoryButton> <ion-icon  style = {
+										{ marginRight: "0.5rem", fontSize: "1.4rem"}
+								} name="git-network-outline"></ion-icon>
+								fsanal / FinanceNewsApp
+							</RepositoryButton>
+							<ReferenceContainer>
+								
+								<Reference>
+                                    <ion-icon name="document-outline"
+                                    style = {
+                                        {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
+                                    backend.js
+                                </Reference>
+                                <Reference>
+                                    <ion-icon name="folder"
+                                    style = {
+                                        {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
+                                    Semantic
+                                </Reference>
+								<Reference>
+                                    <ion-icon name="document-outline"
+                                    style = {
+                                        {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
+                                    DocumentController.js
+                                </Reference>
+                            </ReferenceContainer>
+							<ReferenceContainer>
+								<Tag color = {'#20bf6b'}>Utility</Tag>
+								<Tag color = {'#1e90ff'}>Backend</Tag>
+								<Tag color = {'#1e3799'}>DocHierarchy</Tag>
+                            </ReferenceContainer>
+						</DataContainer>
+						<MarkupMenu dispatch={dispatch} range={range} state={state} scrollTop={props.scrollTop} />
+						<Header onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
+						<AuthorNote>Created by Faraz Sanal, Apr 25, 2016</AuthorNote>
+						<StyledEditable
+							onClick={() => {
+								if (state.markupMenuActive) {
+									dispatch({ 'type': 'markupMenuOff' })
+								}
+							}}
+							readOnly = {!write}
+							autoFocus = {write}
+							onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
+							renderElement={renderElement}
+							renderLeaf={renderLeaf}
+							spellCheck="false"
+							decorate={decorate}
+						/>
+					</EditorContainer>
+				</Container>
 			</Slate>
 		</DndProvider>
 	)
@@ -285,14 +360,6 @@ const toggleMark = (editor, format) => {
 	}
 }
 
-const toggleColor = (editor, color, back) => {
-	if (back) {
-		Editor.addMark(editor, "backColor", color)
-	} else {
-		Editor.addMark(editor, "color", color)
-	}	
-}
-
 const isBlockActive = (editor, format) => {
 	const [match] = Editor.nodes(editor, {
 		match: n => n.type === format,
@@ -307,6 +374,126 @@ const isMarkActive = (editor, format) => {
 }
 
 
+
+const AuthorNote = styled.div`
+	padding-left: 10rem;
+	padding-right: 10rem;
+	font-size: 1.25rem;
+	opacity: 0.5;
+	margin-bottom: 1rem;
+`
+
+
+
+const RepositoryButton = styled.div`
+    background-color: ${chroma("#5B75E6").alpha(0.1)}; 
+    color: #172A4E;
+    font-weight: 500;
+    padding: 0.75rem;
+    display: inline-flex;
+    border-radius: 0.4rem;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+    align-items: center;
+    cursor: pointer;
+    &: hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    }
+    letter-spacing: 1;
+    font-size: 1.3rem;
+`
+
+const DataContainer = styled.div`
+	margin-top: 4rem;
+	padding-left: 10rem;
+    padding-right: 10rem;
+`
+
+const ReferenceContainer = styled.div`
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+   
+    align-items: center;
+`
+
+const Tag = styled.div`
+    font-size: 1.25rem;
+    color: ${props => props.color}; 
+    padding: 0.4rem 0.8rem;
+    background-color: ${props => chroma(props.color).alpha(0.15)};
+    display: inline-block;
+    border-radius: 4px;
+    margin-right: 1rem;
+`
+
+const Reference = styled.div`
+    font-size: 1.25rem;
+    color: #172A4E;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
+    padding: 0.55rem 0.7rem;
+	padding-right: 0.9rem;
+	padding-left: 0rem;
+    align-items: center;
+    display: inline-flex;
+    /*background-color:#262E49;*/
+    /*color:#D6E0EE;*/
+	font-weight: 500;
+    
+    border-radius: 0.3rem;
+   /* box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+	margin-right: 1.2rem;
+`
+
+
+
+const KeyBorder = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 3.3rem;
+	height: 3.3rem;
+	margin-top: 1.2rem;
+	&:hover {
+		background-color: ${chroma("#5B75E6").alpha(0.7)};
+	}
+
+	background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.7) : chroma("#5B75E6").alpha(0.15)};
+	cursor: pointer;
+	margin-left: 1rem;
+	border-radius: 0.3rem;
+`
+
+const KeyToolbar = styled.div`
+	display: flex;
+	flex-direction: column;
+	width: 7rem;
+	align-items: center;
+	padding-top: 3rem;
+	align-self: flex-start;
+	top: 3.5rem;
+	padding-bottom: 3rem;
+	margin-right: auto;
+	background-color: white;
+	position: -webkit-sticky; /* for Safari */
+	position: sticky;
+	
+`
+
+
+const Container = styled.div`
+	display: flex;	
+
+	justify-content: center;
+`
+
+const EditorContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	margin-right: auto;
+	width: 94rem;
+	margin-left: -7.5rem;
+`
+
 const Header = styled.input`
     font-size: 3rem;
     color: #172A4E;
@@ -317,20 +504,21 @@ const Header = styled.input`
     }
     outline: none;
     border: none;
-    padding-left: 8.5rem;
-    padding-right: 8.5rem;
-    margin-top: 5rem;
+    padding-left: 10rem;
+    padding-right: 10rem;
+	margin-top: 5rem;
 `
+
 
 const StyledEditable = styled(Editable)`
   line-height: 1.5 !important;
-  caret-color: #46474f;
-  color: #46474f;
+  caret-color: #172A4E;
+  color: #172A4E;
   font-size: 16px;
   resize: none !important;
   padding-bottom: 7rem;
-  padding-left: 8.5rem;
-  padding-right: 8.5rem;
-  width: 90rem;
+  padding-left: 10rem;
+  padding-right: 10rem;
+  
   min-height: 65rem;
 `	

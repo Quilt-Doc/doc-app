@@ -106,7 +106,7 @@ const ElementWrapper = ({children, attributes, element}) => {
 				onMouseLeave = {() => changeStyles({...styles, opacity: 0})}
 			>
 				<LeftNav  opacity = {renderOpacity()}  contentEditable = {false} /*opacity = {this.state.opacity}*/>
-					<BlockTool drag = {drag} element = {element}/>
+					
 				</LeftNav>
 				<div ref = {preview}>
 					{getCorrectElement(borderTop, element, attributes, children)}
@@ -146,7 +146,7 @@ const getCorrectElement = (borderTop, element, attributes, children) => {
 
 
 
-
+/*
 const BlockTool = (props) => {
 	let editor = useSlate()
 	let [dropdownOpacity, setDropdownOpacity] = useState(0)
@@ -204,43 +204,9 @@ const BlockTool = (props) => {
 
 
 	return (
-			<ToolbarContainer>
-				<CreateBlockButton onClick = {() => {insertBlock()}}>
-					<ion-icon style = {{'fontSize': '2rem'}}name="add-outline" ></ion-icon>
-				</CreateBlockButton>
-				<CreateBlockButton 
-					marginLeft = {"0.5rem"} marginRight = {"0.5rem"}
-					ref={props.drag} onClick = {() => {dropdownOpacity === 1 ? setDropdownOpacity(0) : setDropdownOpacity(1)}}>
-					<FontAwesomeIcon style = {
-                                                {fontSize: "1.5rem", color: "#172A4E"}
-                                            } icon={faBars} />
-				</CreateBlockButton>
-				<OptionsMenu 
-							contentEditable={false} 
-							opacity = {dropdownOpacity}
-							display = {dropdownOpacity === 1 ? '' : 'none'}
-							style={{ userSelect: "none" }}
-							>
-					<OptionHeader 
-						marginBottom = {'0.2rem'}
-						borderBottom = {'1px solid #DFDFDF'}
-						padding = {'1.5rem'}
-						color = {'#ff4757'}
-						hoverColor = {'#F7F9FB'}
-						pointer = {'pointer'}
-						onClick = {() => removeNode()}
-						>	<ion-icon style ={{'fontSize': '1.4rem', 'marginRight': '0.5rem', 'width': '1.5rem'}} name="trash-outline"></ion-icon>
-							Remove
-						</OptionHeader>
-					<OptionHeader padding = {'1.5rem'}>
-						<ion-icon style ={{'fontSize': '1.4rem', 'marginRight': '0.5rem', 'width': '1.5rem'}} name="pencil-outline"></ion-icon>
-						Set Markup
-						</OptionHeader>
-					{renderOptionsButtons()}
-				</OptionsMenu>
-			</ToolbarContainer>
+		
 	)
-}
+}*/
 
 const OptionHeader = styled.div`
 	height: 1.3rem;

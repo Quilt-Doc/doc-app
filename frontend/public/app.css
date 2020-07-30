@@ -52,9 +52,24 @@ body {
 .paragraphPlaceholder:before{
   content:attr(data-ph);
   color:#172A4E;
-  opacity: 0.5;
+  opacity: 0.4;
   font-weight: 400;
   cursor: text;
+}
+
+
+
+.paragraphPlaceholderSlash:before{
+  content:attr(data-ph);
+  color:#172A4E;
+  opacity: 0.6;
+  font-weight: 500;
+  padding: 0.25rem 0.9rem;
+  border-radius: 0.3rem;
+  cursor: text;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  background-color: #E7EAFC;
 }
 
 .sidenav-appear {
@@ -65,6 +80,31 @@ body {
   transform: translateX(0);
   transition: transform 500ms;
 }
+
+.editortoolbar-enter {
+  transform: translateY(-3rem);
+  opacity: 0;
+  /*transform: translateY(-2rem);*/
+}
+
+.editortoolbar-enter.editortoolbar-enter-active {
+  /*transform: translateX(0);*/
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 150ms;
+}
+
+.editortoolbar-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.editortoolbar-exit.editortoolbar-exit-active {
+  transform: translateY(-3rem);
+  opacity: 0;
+   transition: all 150ms;
+}
+
 
 .modal-appear {
   transform: translateY(-5rem);

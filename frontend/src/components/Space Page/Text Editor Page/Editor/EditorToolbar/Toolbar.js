@@ -6,19 +6,29 @@ import chroma from 'chroma-js';
 
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAlignLeft, faAlignRight, faAlignCenter, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import { faBold, faTable, faImage,  faRemoveFormat, faLink,  faItalic, faUnderline, faStrikethrough, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
 
 //slate
-import { useSlate } from 'slate-react';
+import {Node, Editor} from 'slate'
+import { useSlate, useEditor, useFocused, useSelected, ReactEditor } from 'slate-react';
 
 //menus
 import ColorMenu from './ColorMenu';
 
 const EditorToolbar = (props) => {
     let editor = useSlate()
-    console.log(props.isMarkActive(editor, "bold"))
+   
     return(
         <ToolbarContainer>
+            <IconBlock>
+                <BlockType>
+                    Normal text
+                    <ion-icon 
+                        style = {{marginLeft: "0.8rem"}} 
+                        name="chevron-down">
+                    </ion-icon>
+                </BlockType>
+            </IconBlock>
             <IconBlock>
                 <IconBorder
                     active={props.isMarkActive(editor, "bold")}
@@ -27,7 +37,7 @@ const EditorToolbar = (props) => {
                         props.toggleMark(editor, "bold")
                     }}
                 >
-                    <IconBold>B</IconBold>
+                    <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faBold} />
                 </IconBorder>
                 <IconBorder
                      active={props.isMarkActive(editor, "italic")}
@@ -36,27 +46,30 @@ const EditorToolbar = (props) => {
                          props.toggleMark(editor, "italic")
                      }}
                 >
-                    <IconItalic>i</IconItalic>
+                     <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faItalic} />
                 </IconBorder>
                 <IconBorder active={props.isMarkActive(editor, "underlined")}
                      onMouseDown={event => {
                          event.preventDefault()
                          props.toggleMark(editor, "underlined")
                      }}>
-                    <IconUnderline>U</IconUnderline>
+                   <FontAwesomeIcon style = {{marginTop: "0.2rem"}} icon={faUnderline} />
+                </IconBorder>
+                <IconBorder active={props.isMarkActive(editor, "strike")}
+                     onMouseDown={event => {
+                         event.preventDefault()
+                         props.toggleMark(editor, "strike")
+                     }}>
+                   <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faStrikethrough} />
+                </IconBorder>
+                <IconBorder>
+                    <ion-icon style = {{fontSize: "1.4rem"}} name="code-sharp"></ion-icon>
+                </IconBorder>
+                <IconBorder>
+                    <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faRemoveFormat} />
                 </IconBorder>
             </IconBlock>
-            <IconBlock>
-                <IconBorder>
-                    <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faAlignLeft} />
-                </IconBorder>
-                <IconBorder>
-                    <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faAlignCenter} />
-                </IconBorder>
-                <IconBorder>
-                    <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faAlignRight} />
-                </IconBorder>
-            </IconBlock>
+
             <IconBlock>
                 <ColorMenu
                     editor = {editor}
@@ -67,32 +80,24 @@ const EditorToolbar = (props) => {
             </IconBlock>
             <IconBlock>
                 <IconBorder>
-                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListUl}/>
+                    <FontAwesomeIcon style = {{fontSize: "1.5rem"}} icon = {faListUl}/>
                 </IconBorder>
                 <IconBorder>
-                    <FontAwesomeIcon style = {{marginTop: "0.25rem"}} icon = {faListOl}/>
-                </IconBorder>
-            </IconBlock>
-            <IconBlock>
-                <IconBorder>
-                    <IconBold>H1</IconBold>
-                </IconBorder>
-                <IconBorder>
-                    <IconBold>H2</IconBold>
-                </IconBorder>
-                <IconBorder>
-                    <IconBold>H3</IconBold>
+                    <FontAwesomeIcon style = {{fontSize: "1.5rem"}} icon = {faListOl}/>
                 </IconBorder>
             </IconBlock>
             <IconBlock>
                 <IconBorder>
-                    <ion-icon style = {{marginTop: "0.25rem", fontSize: "1.7rem"}} name="code-slash-sharp"></ion-icon>
+                    <ion-icon  style = {{ fontSize: "1.5rem"}} name="checkbox"></ion-icon>
+                </IconBorder> 
+                <IconBorder>
+                    <FontAwesomeIcon style = {{fontSize: "1.5rem"}} icon = {faLink}/>
                 </IconBorder>
                 <IconBorder>
-                    <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="grid-outline"></ion-icon>  
+                    <FontAwesomeIcon style = {{fontSize: "1.5rem"}} icon = {faTable}/>
                 </IconBorder>
                 <IconBorder>
-                    <ion-icon  style = {{marginTop: "0.25rem",  fontSize: "1.7rem"}} name="checkbox-outline"></ion-icon>
+                    <FontAwesomeIcon style = {{fontSize: "1.5rem"}} icon = {faImage}/>
                 </IconBorder>
             </IconBlock>
         </ToolbarContainer>
@@ -106,27 +111,39 @@ export default EditorToolbar;
 const ToolbarContainer = styled.div`
     position: sticky; 
     top: 0;
-    height: 4.5rem;
+    height: 6rem;
     align-items: center;
     z-index:1;
     background-color:white;
     display: flex;
-    border-bottom: 1px solid #EDEFF1;
+    
     align-items: center;
     border-radius: 0.4rem 0.4rem 0rem 0rem !important;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 12rem;
+    padding-right: 4rem;
+    box-shadow: 0 2px 2px rgba(0,0,0,0.1);
 `
 
 const IconBlock = styled.div`
     display: flex;
     padding-left: 1.3rem;
-    padding-right: 1rem;
-    border-right: 2px solid #F4F4F6; 
+    padding-right: 1.3rem;
+    border-right: 1px solid #e7edf3;
     align-items: center;
-    height: 2.3rem;
+    height: 2.6rem;
+
+    &:last-of-type {
+        border-right:none;
+    }
 `
 
+const BlockType = styled.div`
+    font-size: 1.35rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+`
 
 const IconColor = styled.div`
     font-size: 1.5rem;
@@ -162,24 +179,24 @@ const IconColorChoice = styled.div`
 
 
 const IconBold = styled.div`
-    font-size: 1.5rem;
+    font-size: 1.4rem;
 `
 
 const IconItalic = styled.div`
     font-style: italic;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
 `
 
 const IconUnderline = styled.div`
     text-decoration: underline;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
 `
 
 const IconBorder = styled.div`
     margin-left: ${props => props.marginLeft};
     margin-right: 0.3rem;
     display: flex;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     align-items: center;
     justify-content: center;
    
