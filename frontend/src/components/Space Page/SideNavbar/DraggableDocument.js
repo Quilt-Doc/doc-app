@@ -65,7 +65,7 @@ const DraggableDocument = (props) => {
 			isDragging: !!monitor.isDragging()
 		}),
 	})
-	console.log(document.path)
+	//console.log(document.path)
     return (
 		
 		<DocContainer >	

@@ -81,6 +81,31 @@ body {
   transition: transform 500ms;
 }
 
+.dropmenu-enter {
+  transform: translateY(-3rem);
+  opacity: 0;
+  /*transform: translateY(-2rem);*/
+}
+
+.dropmenu-enter.dropmenu-enter-active {
+  /*transform: translateX(0);*/
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 150ms;
+}
+
+.dropmenu-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.dropmenu-exit.dropmenu-exit-active {
+  transform: translateY(-3rem);
+  opacity: 0;
+  transition: all 150ms;
+}
+
+
 .editortoolbar-enter {
   transform: translateY(-3rem);
   opacity: 0;

@@ -100,18 +100,7 @@ const ElementWrapper = ({children, attributes, element}) => {
 	
 
 	return (
-		<Wrapper 
-				ref={drop}
-				onMouseEnter = {() => changeStyles({...styles, opacity: 1})}
-				onMouseLeave = {() => changeStyles({...styles, opacity: 0})}
-			>
-				<LeftNav  opacity = {renderOpacity()}  contentEditable = {false} /*opacity = {this.state.opacity}*/>
-					
-				</LeftNav>
-				<div ref = {preview}>
-					{getCorrectElement(borderTop, element, attributes, children)}
-				</div>
-		</Wrapper>
+		<>{getCorrectElement(borderTop, element, attributes, children)}</>
 	)
 }
 

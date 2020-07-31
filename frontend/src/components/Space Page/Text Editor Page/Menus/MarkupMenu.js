@@ -62,9 +62,10 @@ const MarkupMenu = (props) => {
 			el.removeAttribute('style')
 			return
 		}
-
+		//- props.state.scrollTop + props.state.prevScrollTop + window.pageYOffset
+		console.log("OFFSET", window.pageYOffset);
 		el.style.opacity = 1
-		el.style.top = `${props.state.rect.top - props.state.scrollTop + props.state.prevScrollTop + window.pageYOffset + 15 + props.state.rect.height}px`
+		el.style.top = `${props.state.rect.top  + 15 + props.state.rect.height}px`
 		el.style.left = `${props.state.rect.left + window.pageXOffset + 2.5}px`
 	})
 

@@ -146,7 +146,7 @@ const DocumentEditor = (props) => {
 							<ion-icon style = {{ fontSize: "2.1rem"}} name="ellipsis-horizontal"></ion-icon>
 						</KeyBorder>
 					</KeyToolbar>
-					<Sidebar/>
+					<Sidebar toggleBlock = {(format) => toggleBlock2(editor, format)}/>
 					<EditorContainer>
 						<DataContainer>
 							<RepositoryButton> <ion-icon  style = {
@@ -191,7 +191,7 @@ const DocumentEditor = (props) => {
 								}
 							}}
 							readOnly = {!write}
-							autoFocus = {write}
+						
 							onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
 							renderElement={renderElement}
 							renderLeaf={renderLeaf}
@@ -350,6 +350,24 @@ const toggleBlock = (editor, format) => {
 	}
 }
 
+const toggleBlock2 = (editor, format) => {
+	const isList = LIST_TYPES.includes(format)
+
+	Transforms.unwrapNodes(editor, {
+		match: n => LIST_TYPES.includes(n.type),
+		split: true,
+	})
+
+	Transforms.setNodes(editor, {
+		type: isList ? 'list-item' : format,
+	})
+
+	if (isList) {
+		const block = { type: format, children: [] }
+		Transforms.wrapNodes(editor, block)
+	}
+}
+
 const toggleMark = (editor, format) => {
 	const isActive = isMarkActive(editor, format)
 
@@ -364,7 +382,6 @@ const isBlockActive = (editor, format) => {
 	const [match] = Editor.nodes(editor, {
 		match: n => n.type === format,
 	})
-
 	return !!match
 }
 
@@ -519,6 +536,6 @@ const StyledEditable = styled(Editable)`
   padding-bottom: 7rem;
   padding-left: 10rem;
   padding-right: 10rem;
-  
   min-height: 65rem;
+  cursor: text;
 `	

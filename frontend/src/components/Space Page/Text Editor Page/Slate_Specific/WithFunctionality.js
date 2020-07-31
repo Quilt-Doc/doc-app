@@ -50,13 +50,17 @@ const withFunctionality = (editor, dispatch, scrollTop) => {
 
 	editor.insertDefaultEnter = (event) => { 
 		const { selection } = editor
+
 		const match = Editor.above(editor, {
 			match: n => Editor.isBlock(editor, n),
 		})
+
 		const [block, path] = match
 
 		if (block.type !== 'code-line' && block.type !== 'list-item' && Range.isCollapsed(selection)) {
+			
 			event.preventDefault()
+
 			const end = Editor.end(editor, path)
 			const start = Editor.start(editor, path)
 			if (Point.equals(selection.anchor, end)) {

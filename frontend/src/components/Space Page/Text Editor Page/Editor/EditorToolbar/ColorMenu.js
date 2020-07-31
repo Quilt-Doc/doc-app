@@ -47,8 +47,6 @@ class ColorMenu extends React.Component {
         const marks = Editor.marks(this.props.editor)
         if (marks){
             if (this.props.back) {
-                console.log(marks["backColor"] )
-                console.log(typeof marks["backColor"])
                 return marks["backColor"] 
                     && typeof marks["backColor"] === "string" ? marks["backColor"] : "#ffffff" 
             }
