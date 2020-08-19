@@ -2,6 +2,7 @@ const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 const client = require("../../apis/api").requestClient();
 
 loginSuccess = (req, res) => {
+    console.log("REQ USER", req.user)
     if (req.user) {
         return res.json({
             success: true,

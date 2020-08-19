@@ -34,9 +34,7 @@ export const createDocument = (formValues) => async (dispatch) => {
 }
 
 export const moveDocument = (formValues) => async (dispatch) => {
-    console.log(formValues)
     const response = await api.put('/documents/move', formValues );
-    console.log(response.data)
     dispatch({ type: MOVE_DOCUMENT, payload: response.data.result });
 }
 
@@ -80,10 +78,6 @@ export const retrieveMoreDocuments = (formValues) => async dispatch => {
 export const deleteDocument = id => async dispatch => {
     const response = await api.delete(`/documents/delete/${id}`);
     dispatch({ type: DELETE_DOCUMENT, payload: response.data.result });
-    if (response.data.edited){
-        dispatch({type: EDIT_DOCUMENT, payload: response.data.edited})
-    }
-   
 }
 
 export const editDocument = (id, formValues) => async dispatch => {

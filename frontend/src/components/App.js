@@ -7,11 +7,12 @@ import history from '../history';
 import Dashboard from './Dashboard';
 import NavbarProfile from './Top Navbar/NavbarProfile'
 import Home from './Home';
+import Landing from './Landing/Landing';
 
 import TagWrapper from './General/TagWrapper';
 import ReferenceMenu from './Space Page/Text Editor Page/Menus/ReferenceMenu';
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
-
+import ExtensionDemo from './Extension/ExtensionDemo';
 //split markers -- directory, file
 const App = () => {
     return (<>

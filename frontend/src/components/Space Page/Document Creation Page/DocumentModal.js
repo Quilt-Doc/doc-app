@@ -159,16 +159,15 @@ const ModalBackground = styled.div`
 /* Modal Content/Box */
 const ModalContent = styled.div`
     background-color: #fefefe;
-    margin: 8vh auto; /* 15% from the top and centered */
+    margin: 7vh auto; /* 15% from the top and centered */
     
     width: 85vw; /* Could be more or less, depending on screen size */
-    height: 84vh;
+    height: 87vh;
     border-radius: 0.2rem;
     box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
     display: flex;
     flex-direction: column;
-    max-width: 98rem;
-    padding: 0.1rem 1rem;
+    max-width: 94rem;
 `
 
 const StyledIcon2 = styled.img`

@@ -14,20 +14,20 @@ import { useSlate, useEditor, useFocused, useSelected, ReactEditor } from 'slate
 
 //menus
 import ColorMenu from './ColorMenu';
+import BlockTypeMenu from './BlockTypeMenu';
 
 const EditorToolbar = (props) => {
     let editor = useSlate()
-   
+    let path;
+    let type;
+    if (editor.selection && editor.selection.anchor) {
+        path =  [editor.selection.anchor.path[0]]
+        type = Node.get(editor, path).type
+    }
     return(
-        <ToolbarContainer>
-            <IconBlock>
-                <BlockType>
-                    Normal text
-                    <ion-icon 
-                        style = {{marginLeft: "0.8rem"}} 
-                        name="chevron-down">
-                    </ion-icon>
-                </BlockType>
+        <ToolbarContainer modal = {props.modal} id = "toolbarcontainer" onMouseDown = {(e) => e.preventDefault()}>
+            <IconBlock >
+                <BlockTypeMenu toggleBlock = {props.toggleBlock} type = {type}/>
             </IconBlock>
             <IconBlock>
                 <IconBorder
@@ -62,10 +62,21 @@ const EditorToolbar = (props) => {
                      }}>
                    <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faStrikethrough} />
                 </IconBorder>
-                <IconBorder>
+                <IconBorder   
+                    onMouseDown={event => {
+                         event.preventDefault()
+                         props.toggleMark(editor, "code")
+                    }}
+                    active={props.isMarkActive(editor, "code")}
+                >
                     <ion-icon style = {{fontSize: "1.4rem"}} name="code-sharp"></ion-icon>
                 </IconBorder>
-                <IconBorder>
+                <IconBorder
+                    onMouseDown={event => {
+                        event.preventDefault()
+                        props.removeMarks()
+                   }}
+                >
                     <FontAwesomeIcon style = {{marginTop: "0rem"}} icon={faRemoveFormat} />
                 </IconBorder>
             </IconBlock>
@@ -79,10 +90,22 @@ const EditorToolbar = (props) => {
                     back = {true}/>
             </IconBlock>
             <IconBlock>
-                <IconBorder>
+                <IconBorder
+                    active = {type ? type === "bulleted-list" : false}
+                    onMouseDown = {event => {
+                        event.preventDefault()
+                        props.toggleBlockActive("bulleted-list")
+                    }}
+                >
                     <FontAwesomeIcon style = {{fontSize: "1.5rem"}} icon = {faListUl}/>
                 </IconBorder>
-                <IconBorder>
+                <IconBorder
+                    active = {type ? type === "numbered-list" : false}
+                    onMouseDown = {event => {
+                        event.preventDefault()
+                        props.toggleBlockActive("numbered-list")
+                    }}
+                >
                     <FontAwesomeIcon style = {{fontSize: "1.5rem"}} icon = {faListOl}/>
                 </IconBorder>
             </IconBlock>
@@ -113,15 +136,17 @@ const ToolbarContainer = styled.div`
     top: 0;
     height: 6rem;
     align-items: center;
-    z-index:1;
+    z-index:2;
     background-color:white;
     display: flex;
     
     align-items: center;
-    border-radius: 0.4rem 0.4rem 0rem 0rem !important;
-    padding-left: 12rem;
+    
+    padding-left: ${props => props.modal ? "4rem" : "12rem"};
     padding-right: 4rem;
-    box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+    box-shadow: ${props => props.modal ? "none" : '0 2px 2px rgba(0,0,0,0.1)'};
+    border-top:  ${props => props.modal ? '3px solid #70EAE1' : ''};
+    border-bottom: ${props => props.modal ? '1px solid #E0E4E7': ''};
 `
 
 const IconBlock = styled.div`
@@ -142,7 +167,12 @@ const BlockType = styled.div`
     font-weight: 500;
     display: flex;
     align-items: center;
-    margin-right: 0.5rem;
+    &:hover {
+        background-color: #F4F4F6;
+    }
+    cursor: pointer;
+    padding: 0.7rem;
+    border-radius: 0.3rem;
 `
 
 const IconColor = styled.div`

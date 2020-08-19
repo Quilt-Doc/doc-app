@@ -18,6 +18,9 @@ import {editDocument} from '../../../actions/Document_Actions';
 //components
 import { CSSTransition } from 'react-transition-group';
 
+//icons
+import {RiGitRepositoryLine} from 'react-icons/ri'
+
 //styles
 import styled from "styled-components";
 
@@ -39,11 +42,7 @@ class RepositoryMenu extends React.Component {
     /**
      * Alert if clicked on outside of element
      */
-    handleClickOutside = (event) => {
-        if (this.node && !this.node.contains(event.target)) {
-            this.closeMenu()
-        }
-    }
+    
 
     renderListItems(){
         return this.props.repositories.map((repo, i) => {
@@ -63,13 +62,9 @@ class RepositoryMenu extends React.Component {
     }
 
     openMenu(e) {
-        e.stopPropagation(); 
         e.preventDefault(); 
-        if (!this.state.open) {
-            document.addEventListener('mousedown', this.handleClickOutside, false);
-            this.setState({ open: true })
-        }
-        
+        document.addEventListener('mousedown', this.handleClickOutside, false);
+        this.setState({ open: true })
     }
 
     closeMenu() {
@@ -77,29 +72,46 @@ class RepositoryMenu extends React.Component {
         this.setState({ open: false })
     }
 
+    handleClickOutside = (event) => {
+        if (this.node && !this.node.contains(event.target)) {
+            this.closeMenu()
+        }
+    }
+
+    renderFullName(){
+        let split = this.props.document.repository.fullName.split("/")
+        return `${split[0]} / ${split[1]}`
+    }
+
     render() {
-        let repo = this.props.document.repository
         return(
             <MenuContainer >
-                <ModalToolbarButton onClick = {(e) => {this.openMenu(e)}}>
-                    <ion-icon name="git-network-outline" style={{ color: "#172A4E",  'marginRight': '0.7rem', fontSize: "1.5rem" }}></ion-icon>
-                    {repo ? <RepoName>{repo.fullName}</RepoName> : <NoneMessage>Select a repository</NoneMessage> }
-                </ModalToolbarButton>
-                {this.state.open && 
-                    <CSSTransition
-                    in={true}
-                    appear = {true}
-                    timeout={100}
-                    classNames="menu"
-                    >
+                
+                <RepositoryButton onClick = {(e) => {this.openMenu(e)}}> 
+                    <RiGitRepositoryLine style = {
+                                    { marginRight: "0.5rem", fontSize: "1.4rem"}
+                    }/>
+                    {this.props.document.repository ? this.renderFullName() : "Select a repository to add references"}
+                     <ion-icon 
+                        style = {{fontSize: "1.2rem", marginTop: "0.2rem", marginLeft: "0.8rem"}} 
+                        name="caret-down">
+                    </ion-icon>
+                </RepositoryButton>
+                <CSSTransition
+                    in={this.state.open}
+                    unmountOnExit
+                    enter = {true}
+                    exit = {true}
+                    timeout = {150}
+                    classNames = "dropmenu"
+                >
                     <Container  ref = {node => this.node = node}>
                         <HeaderContainer>Select a repository</HeaderContainer>
                         <ListContainer>
                             {this.renderListItems()}
                         </ListContainer>
                     </Container>
-                    </CSSTransition>
-                }
+                </CSSTransition>
             </MenuContainer>
         )
     } 
@@ -116,6 +128,25 @@ const mapStateToProps = (state, ownProps) => {
 
 
 export default withRouter(connect( mapStateToProps, {editDocument} )(RepositoryMenu));
+
+
+const RepositoryButton = styled.div`
+    background-color:#414758;
+    color: white;
+    font-weight: 500;
+    padding: 0.75rem;
+    display: inline-flex;
+    border-radius: 0.4rem;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+    align-items: center;
+    cursor: pointer;
+    &: hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    }
+    letter-spacing: 1;
+    font-size: 1.3rem;
+    margin-bottom: 2.5rem;
+`
 
 const RepoName = styled.div`
     font-weight: 500;
@@ -163,31 +194,15 @@ const DropButton = styled.div`
     }
 `
 
-const RepositoryButton = styled(Link)`
-    text-decoration: none;
-    background-color: ${chroma("#5B75E6").alpha(0.15)}; 
-    color: #5B75E6;
-    font-weight: 500;
-    padding: 0.75rem;
-    display: inline-flex;
-    border-radius: 0.4rem;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
-    align-items: center;
-    cursor: pointer;
-    &: hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    }
-    letter-spacing: 1;
-`
 
 const Container = styled.div`
     width: 24rem;
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
-    border-radius: 0.3rem;
+    border-radius: 0.2rem;
     font-size: 1.4rem;
     margin-top: 2rem;
     z-index: 2;
@@ -241,6 +256,7 @@ const HeaderContainer = styled.div`
     font-size: 1.3rem;
     padding: 1rem;
     color: #172A4E;
+    font-weight: 500;
 `
 
 const ListHeader = styled.div`
@@ -275,6 +291,7 @@ const ListItem = styled.div`
     &:hover {
         background-color: #F4F4F6;
     }
+    font-weight: 500;
    
     cursor: pointer;
     color: ${props => props.color};

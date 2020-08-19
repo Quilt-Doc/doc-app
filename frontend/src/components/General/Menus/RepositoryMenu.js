@@ -18,6 +18,11 @@ import { CSSTransition } from 'react-transition-group';
 //styles
 import styled from "styled-components";
 
+//icons
+import {RiGitRepositoryLine} from 'react-icons/ri'
+import {AiOutlineCaretDown} from 'react-icons/ri'
+import { AiFillCaretDown } from 'react-icons/ai';
+
 class RepositoryMenu extends React.Component {
     
     constructor(props) {
@@ -80,13 +85,13 @@ class RepositoryMenu extends React.Component {
         return(
             <MenuContainer >
                 <RepositoryButton to = {`/workspaces/${workspaceId}/repository/${repositoryId}/dir`}>
-                    <ion-icon name="git-network-outline" style = {{marginRight: "0.7rem"}}></ion-icon>
+                    <RiGitRepositoryLine style = {{ marginRight: "0.7rem", fontSize: "1.5rem"}}/>
                     {this.props.name /*.fullName.split("/")[1]*/}
                     
                     <DropButton onClick = {(e) => 
                         {this.openMenu(e)}
                     }>
-                        <ion-icon name="caret-down-sharp" style = {{fontSize: "1.3rem"}}></ion-icon>
+                        <AiFillCaretDown/>
                     </DropButton>
                 </RepositoryButton>
                 {this.state.open && 
@@ -127,32 +132,35 @@ const MenuContainer = styled.div`
 
 
 const DropButton = styled.div`
-    width: 2.5rem;
-    height: 2.5rem;
-    margin-left: 1rem;
-    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-left: 0.6rem;
+    margin-top: 0.4rem;
+    border-radius: 0.3rem;
     display: flex;
     align-items: center;
     justify-content:  center;
     &:hover {
         background-color: white;
     }
+    font-size: 1rem;
 `
 
 const RepositoryButton = styled(Link)`
     text-decoration: none;
-    background-color: ${chroma("#5B75E6").alpha(0.15)}; 
-    color: #5B75E6;
+    background-color:#414758; /* ${chroma("#5B75E6").alpha(0.15)}; */
+    color: white;/*#5B75E6;*/
     font-weight: 500;
-    padding: 0.75rem;
+    padding: 0.8rem 0.9rem;
     display: inline-flex;
-    border-radius: 0.4rem;
+    border-radius: 0.3rem;
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     align-items: center;
     cursor: pointer;
     &: hover {
         box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     }
+    height: 3.4rem;
     letter-spacing: 1;
 `
 

@@ -71,16 +71,9 @@ class TextEditorView extends React.Component {
             }
 
             this.setState({markup, title})
-            
-            this.props.getParent(documentId).then((parent) => {
-                if (parent) {
-                    this.setState({parentId: parent._id})
-                }
-                window.addEventListener('beforeunload', this.saveMarkup, false);
-                this.setValue = this.setValue.bind(this)
-                console.log(this.state.markup)
-                this.setState({loaded: true})
-            })
+            window.addEventListener('beforeunload', this.saveMarkup, false);
+            this.setValue = this.setValue.bind(this)
+            this.setState({loaded: true})
         })
     }
 
@@ -116,20 +109,15 @@ class TextEditorView extends React.Component {
 
     
     onTitleChange = (e) => {
-        console.log("BLUR EVENT", e.type)
-        console.log("BLUR EVENT TARGET VAL", e.target.value)
-        
         this.setState({title: e.target.value})
         if (e.type === "blur") {
             this.props.renameDocument({documentId: this.props.document._id, title: e.target.value})
         }
-        
     }
 
     render(){
         if (this.state.loaded) {
             return(
-                <Container>
                     <SubContainer>
                         <DocumentEditor 
                             onTitleChange = {this.onTitleChange}
@@ -139,7 +127,6 @@ class TextEditorView extends React.Component {
                             scrollTop = {this.props.scrollTop}
                         />
                     </SubContainer>
-                </Container>
             )
         } 
         return null
@@ -198,14 +185,12 @@ class TextEditorView extends React.Component {
 
 const mapStateToProps = (state, ownProps) => {
     let { documentId } = ownProps.match.params
-    let parentId = state.parentId
 
     return {
         scrollTop: state.ui.scrollRightView,
         repositoryItems: Object.values(state.repositoryItems),
         creating: state.ui.creating,
         document: state.documents[documentId],
-        parent: state.documents[parentId]
     }
 }
 export default withRouter(connect(mapStateToProps, { getDocument, editDocument, renameDocument, getParent })(TextEditorView));
@@ -352,7 +337,7 @@ const InfoBarTitle = styled.div`
 `
 
 const Container = styled.div`
-    background-color: white;
+    background-color:green;
     border-radius:0.4rem;
     display: flex;
     flex-direction: column;
@@ -498,7 +483,7 @@ const SubContainer = styled.div`
     display: flex;
     flex-direction:column;
     padding-bottom: 2rem;
-    background-color: white;
+    background-color: hsla(210, 33%, 97.5%, 1);
     
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     border-radius:0.2rem;

@@ -13,27 +13,33 @@ import { faParagraph,faCode, faPlus ,faTrash, faQuoteLeft, faBold, faTable, faIm
 
 const Sidebar = (props) => {
     let editor = useSlate()
-    let [rect, changeRect] = useState(null)
+    let [top, changeTop] = useState(null)
     let selection = editor.selection
+    let type;
+    let path;
+    if (editor.selection && editor.selection.anchor) {
+        path =  [editor.selection.anchor.path[0]]
+        type = Node.get(editor, path).type
+    }
 
     useEffect(() => {
         if (selection) {
             let path = [selection.anchor.path[0]]
-            changeRect(ReactEditor.toDOMRange(editor, 
-                {anchor: {offset: 0, path}, 
-                focus: {offset: 0, path }}).getBoundingClientRect())
+            let rect = ReactEditor.toDOMRange(editor, 
+                              {anchor: {offset: 0, path}, 
+                focus: {offset: 0, path }}).getBoundingClientRect()
+            changeTop(document.getElementById("rightView").scrollTop + rect.top - 155 + rect.height/2)
         }
     }
-    , [selection])
+    , [selection, type])
 
     
     return (
         <SidebarContainer>
-            {rect && 
+            {(top && ReactEditor.isFocused(editor)) &&
                 <ToolIcon 
-                    rect = {rect} 
+                    top = {top} 
                     toggleBlock = {props.toggleBlock}
-                    changeRect = {changeRect}
                     editor = {editor}
                 />
             }
@@ -75,13 +81,6 @@ class ToolIcon extends React.Component {
         e.stopPropagation()
         this.props.toggleBlock(type);
         this.closeMenu()
-        let selection = this.props.editor.selection
-        if (selection) {
-            let path = selection.anchor.path
-            setTimeout(() => {this.props.changeRect(ReactEditor.toDOMRange(this.props.editor, 
-                {anchor: {offset: 0, path}, 
-                focus: {offset: 0, path }}).getBoundingClientRect())}, 10)
-        }
     }
 
     renderBlockIcon = (type) => {
@@ -93,12 +92,15 @@ class ToolIcon extends React.Component {
                     return <BlockIcon>H2</BlockIcon>
                 case "heading-three":
                     return <BlockIcon>H3</BlockIcon>
+                case "quote":
+                    return <FontAwesomeIcon icon = {faQuoteLeft}/>
                 case "bulleted-list":
                     return <FontAwesomeIcon icon={faListUl}/>
                 case "numbered-list":
                     return <FontAwesomeIcon icon={faListOl}/>
                 case "code-block":
                     return <FontAwesomeIcon icon={faCode}/>
+                
                 default:
                     return  <FontAwesomeIcon icon={faParagraph}/>
             }
@@ -116,7 +118,7 @@ class ToolIcon extends React.Component {
     }
 
     render(){
-        let {rect, editor} = this.props
+        let {top, editor} = this.props
         let {open} = this.state
         let type;
         let path;
@@ -124,13 +126,11 @@ class ToolIcon extends React.Component {
             path =  [editor.selection.anchor.path[0]]
             type = Node.get(editor, path).type
         }
-       console.log(path && path[0] == 0)
+
         return(
             <BlockTool 
                 onMouseDown = {(e) => {this.openMenu(e)}} 
-                height = {rect.height} 
-                top = {rect ? document.getElementById("rightView").scrollTop +  
-                    rect.top - 125 + rect.height/2 : 0}
+                top = {top ? top : 0}
                 active = {open}
             > 
             {this.renderBlockIcon(type)}
@@ -148,7 +148,9 @@ class ToolIcon extends React.Component {
                     <SmallHeaderContainer  
                         onClick = {() => this.insertNode(path)}
                         hoverColor = {"#F4F4F6"}>Insert Block Below
-                        <FontAwesomeIcon style = {{marginLeft: "auto"}} icon={faPlus}/>
+                        <ion-icon style = {{marginLeft: "auto", fontSize: "1.7rem"}} name = {"add-outline"}>
+
+                        </ion-icon>
                     </SmallHeaderContainer>
                     { (path && path[0] !== 0) &&
                         <HeaderContainer onClick = {() => {
@@ -259,9 +261,8 @@ const IntoText = styled.div`
 const SidebarContainer = styled.div`
 	display: flex;
 	flex-direction: column;
-	width: 5rem;
-    align-items: center;
-   
+	min-width: 7rem;
+    align-items: flex-end;
 `
 
 const TopHeaderContainer = styled.div`
@@ -310,7 +311,7 @@ const BlockMenu = styled.div`
     position: absolute;
     background-color: white;
 
-    z-index: 2;
+    z-index: 0;
     box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     margin-top: 30rem;
     margin-left: -14rem;

@@ -15,6 +15,10 @@ import styled from "styled-components";
 //components
 import { CSSTransition } from 'react-transition-group';
 
+//icons
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCube, faPlus } from '@fortawesome/free-solid-svg-icons'
+
 //actions
 import { attachReference, removeReference } from '../../../actions/Document_Actions';
 import { localRetrieveReferences } from '../../../actions/Reference_Actions';
@@ -140,9 +144,12 @@ class FileReferenceMenu extends React.Component {
                    
                     backgroundColor = {this.state.position === i ? '#F4F4F6' : ""}
                 >
-                    <ion-icon 
+                    {ref.kind === "file" ? <ion-icon 
                         style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
-                        name="document-text-outline"></ion-icon>
+                        name="document-outline"></ion-icon> : 
+                        <ion-icon 
+                        style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
+                        name="folder"></ion-icon>}
                     {ref.name ? ref.name : "Untitled"}
                     {setBool && <ion-icon 
                         style = {{marginLeft: "auto", fontSize: "1.5rem"}} 
@@ -152,12 +159,15 @@ class FileReferenceMenu extends React.Component {
         })
     }
 
-    openMenu(){
+    openMenu(e){
+        e.preventDefault()
         document.addEventListener('mousedown', this.handleClickOutside, false);
+        this.setState({open: true})
         let ids = this.props.setReferences.map(ref => ref._id)
         let repositoryId = this.props.document.repository._id
+
         this.props.localRetrieveReferences({limit: 9, referenceIds: ids, repositoryId}).then((references) => {
-            this.setState({references, loaded: true, open:true})
+            this.setState({references, loaded: true })
         })
     }
 
@@ -177,50 +187,44 @@ class FileReferenceMenu extends React.Component {
         let setIds = this.props.setReferences.map(ref => ref._id)
         return(
             <MenuContainer  >
-                {this.props.modalButton ?  this.props.document.repository ?
-                    <ModalToolbarButton  onClick = {() => this.openMenu()}>
-                        <ion-icon name="cube-outline" style={{'fontSize': '1.8rem', 'marginRight': '0.7rem'}}></ion-icon>
-                        {setIds.length} References
-                    </ModalToolbarButton> :  <ModalToolbarButton style = {{opacity: 0.5}}>
-                        <ion-icon name="cube-outline" style={{'fontSize': '1.8rem', 'marginRight': '0.7rem'}}></ion-icon>
-                        {setIds.length} References
-                    </ModalToolbarButton>
-                    : <AddButton ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
-                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                    </AddButton>
-                }
-               
-                {this.state.open && 
+                    <AddBigButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
+                        <FontAwesomeIcon 
+                            icon={faCube}
+                            style = {{marginRight: "0.5rem"}}
+                        />
+                        Add References
+                    </AddBigButton> 
                     <CSSTransition
-                        in={true}
-                        appear = {true}
-                        timeout={100}
-                        classNames="menu"
+                         in = {this.state.open}
+                         unmountOnExit
+                         enter = {true}
+                         exit = {true}       
+                         timeout = {150}
+                         classNames = "dropmenu"
                     >
-                    <Container marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
-                        <HeaderContainer>Attach References</HeaderContainer>
-                        <SearchbarContainer>
-                            <SearchbarWrapper 
-                                backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
-                                border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
-                            >
-                                 <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
-                                <Searchbar 
-                                    onFocus = {() => {this.setState({focused: true})}} 
-                                    onBlur = {() => {this.setState({focused: false})}} 
-                                    onKeyDown = {(e) => this.setPosition(e)}  
-                                    onChange = {(e) => {this.searchReferences(e)}} 
-                                    value = {this.state.search}
-                                    autoFocus 
-                                    placeholder = {"Find references..."}/>
-                            </SearchbarWrapper>
-                        </SearchbarContainer>
-                        <ListContainer>
-                            {this.state.loaded ?  this.renderListItems(setIds) : <MoonLoader size = {12}/>}
-                        </ListContainer>
-                    </Container>
+                        <Container marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
+                            <HeaderContainer>Add References</HeaderContainer>
+                            <SearchbarContainer>
+                                <SearchbarWrapper 
+                                    backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
+                                    border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
+                                >
+                                    <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
+                                    <Searchbar 
+                                        onFocus = {() => {this.setState({focused: true})}} 
+                                        onBlur = {() => {this.setState({focused: false})}} 
+                                        onKeyDown = {(e) => this.setPosition(e)}  
+                                        onChange = {(e) => {this.searchReferences(e)}} 
+                                        value = {this.state.search}
+                                        autoFocus 
+                                        placeholder = {"Find references..."}/>
+                                </SearchbarWrapper>
+                            </SearchbarContainer>
+                            <ListContainer>
+                                {this.state.loaded ?  this.renderListItems(setIds) : <MoonLoader size = {12}/>}
+                            </ListContainer>
+                        </Container>
                     </CSSTransition>
-                }
             </MenuContainer>
         )
     }
@@ -237,25 +241,40 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { attachReference, removeReference, localRetrieveReferences })(FileReferenceMenu));
 
-const ModalToolbarButton = styled.div`
+
+const AddBigButton = styled.div`
+    background-color: #f4f7fa;
     display: flex;
-    cursor: pointer;
     align-items: center;
-    justify-content: center;
-    padding: 0.8rem;
-    font-size: 1.3rem;
-    
-    margin-right: 1rem;
-    border-radius: 0.5rem;
+    display: inline-flex;
+    font-weight: 500;
+    font-size: 1.25rem;
+    border-radius: 4px;
+    padding: 0.5rem 0.8rem;
     cursor: pointer;
     &:hover {
-        background-color: #F4F4F6; 
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
         opacity: 1;
     }
-    margin-left: ${props => props.marginLeft};
-    opacity: ${props => props.opacity};
+    opacity: 1;
 `
 
+
+const AddButton = styled.div`
+    width: 2.3rem;
+    height: 2.3rem;
+    background-color: #f4f7fa;
+    border-radius: 0.2rem;
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    &:hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    }
+    color: #172A4E;
+`
 
 const NoneMessage = styled.div`
     font-size: 1.4rem;
@@ -265,41 +284,22 @@ const NoneMessage = styled.div`
 
 
 const MenuContainer = styled.div`
-    margin-left : auto
-   
 `
 
-const AddButton = styled.div`
-    width: 2.3rem;
-    height: 2.3rem;
-    background-color: #F7F9FB;
-    border: 1px solid #E0E4E7;
-    opacity: 0.4;
-    border-radius: 0.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    &:hover {
-        opacity: 1
-    }
-    color: #172A4E;
-`
 
 const Container = styled.div`
     width: 24rem;
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
-    border-radius: 0.3rem;
+    border-radius: 0.2rem;
     font-size: 1.4rem;
     margin-top: -5rem;
     z-index: 2;
     background-color: white;
     margin-top: ${props => props.marginTop};
-    margin-left: 1rem;
 `
 
 const SearchbarContainer = styled.div`
@@ -349,6 +349,7 @@ const HeaderContainer = styled.div`
     padding: 1rem;
     color: #172A4E;
     border-bottom: 1px solid #E0E4E7;
+    font-weight: 500;
 `
 
 const ListHeader = styled.div`

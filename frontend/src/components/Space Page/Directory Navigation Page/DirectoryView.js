@@ -4,8 +4,10 @@ import React from 'react';
 import styled from "styled-components"
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css"
 import chroma from 'chroma-js';
-//images
+
+//images and icons
 import doc_icon from '../../../images/doc-file.svg';
+import { FiFileText } from 'react-icons/fi';
 
 //components
 import DirectoryItem from './DirectoryItem';
@@ -148,11 +150,8 @@ class DirectoryView extends React.Component {
     renderDocuments(){
         return this.props.documents.map(doc => {
             let title = doc.title
-            if (title && title.length > 14) {
-                title = `${title.slice(0, 14)}..`
-            }
             return <DocumentItem onClick = {() => history.push(`?document=${doc._id}`)}>
-                        <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                        <FiFileText style = {{fontSize: "1.35rem", 'marginRight': '0.55rem'}}/>
                         <Title>{title && title !== "" ? title : "Untitled"}</Title>
                     </DocumentItem>
         })
@@ -166,80 +165,72 @@ class DirectoryView extends React.Component {
         return (
             <>
                 { this.state.loaded && this.props.currentReference ?
-                        <Container>
-                            <Header>
-                                <RepositoryMenu 
-                                    name = {this.props.currentRepository.fullName.split("/")[1]}
-                                />
-                                {this.renderHeaderPath()}
-                            </Header>
-                            <InfoBlock>
-                                <InfoHeader>
-                                    <ion-icon style = {
-                                                {color: "#172A4E", marginRight: "0.7rem", fontSize: "1.8rem"}
-                                    } name="pricetag-outline"></ion-icon>
-                                    Labels
-                                </InfoHeader>
+                        <>
+                            <Info>
+                                <Header>
+                                    <RepositoryMenu 
+                                        name = {this.props.currentRepository.fullName.split("/")[1]}
+                                    />
+                                    {this.renderHeaderPath()}
+                                </Header>
                                 <ReferenceContainer>
                                     {this.props.currentReference && this.props.currentReference.tags && this.props.currentReference.tags.length > 0 ? 
-                                        this.renderTags() : 
-                                        <NoneMessage>None yet</NoneMessage>}
-                                    <LabelMenu 
-                                        attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
-                                        removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
-                                        setTags = {this.props.currentReference.tags}//this.props.request.tags}
-                                        marginTop = {"1rem"}
-                                        
-                                    />
+                                        this.renderTags() : <></>}
                                 </ReferenceContainer>
-                            </InfoBlock>
-                            <InfoBlock>
-                                <InfoHeader>
-                                    <ion-icon style = {
-                                                {color: "#172A4E",  marginRight: "0.7rem", fontSize: "1.8rem"}
-                                        } name="document-text-outline"></ion-icon>
-                                    Documents
-                                </InfoHeader>
                                 <ReferenceContainer>
                                     {this.props.documents && this.props.documents.length > 0 ? this.renderDocuments() : <NoneMessage>None yet</NoneMessage>}
-                                    <DocumentMenu
-                                        setDocuments = {this.props.documents}
-                                        marginTop = {"1rem"}
-                                        reference = {this.props.currentReference}
-                                    />
+                                    
                                 </ReferenceContainer>
-                            </InfoBlock>
-                            
+                           
+                            </Info>
                                 <DirContainer>
-
-                             
-                                <DirectoryContainer>
-                                    <ListToolBar>
-                                        <ListName><b>8</b>&nbsp; documents</ListName>
-                                        <ListName><b>15</b>&nbsp; snippets</ListName>
-                                    </ListToolBar>
-                                    {this.renderFolders()}
-                                    {this.renderFiles()}
-                                </DirectoryContainer>
+                                    <DirectoryContainer>
+                                        <ListToolBar>
+                                            <ListName><b>8</b>&nbsp; documents</ListName>
+                                            <ListName><b>15</b>&nbsp; snippets</ListName>
+                                        </ListToolBar>
+                                        {this.renderFolders()}
+                                        {this.renderFiles()}
+                                    </DirectoryContainer>
                                 </DirContainer>
-                        </Container> 
+                            </>
                             
-                    : <Container>
+                    : <>
                             <Loader
                                 type="ThreeDots"
                                 color="#5B75E6"
                                 height={50}
                                 width={50}
                                 //3 secs
-                        
+                                style = {{marginLeft: "8rem", marginTop: "5rem"}}
                             />
-                        </Container>
+                        </>
                 }
             </>
         )
     }
 }
+/*
+<LabelMenu 
+attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+setTags = {this.props.currentReference.tags}//this.props.request.tags}
+marginTop = {"1rem"}
 
+/>*/
+
+/* <DocumentMenu
+                                            setDocuments = {this.props.documents}
+                                            marginTop = {"1rem"}
+                                            reference = {this.props.currentReference}
+                                        />*/
+
+/* <InfoHeader>
+                                    <ion-icon style = {
+                                                {color: "#172A4E", marginRight: "0.7rem", fontSize: "1.8rem"}
+                                    } name="pricetag-outline"></ion-icon>
+                                    Labels
+                                </InfoHeader>*/
 /* <ListToolBar>
                                         <ListName><b>8</b>&nbsp; documents</ListName>
                                         <ListName><b>15</b>&nbsp; snippets</ListName>
@@ -316,16 +307,21 @@ const RepositoryButton = styled.div`
     letter-spacing: 1;
 `
 
+const Info = styled.div`
+    padding: 3.5rem 8rem;
+    padding-bottom: 1.7rem;
+    z-index: 1;
+`
+
 const DirContainer = styled.div`
     align-items: center;
-    padding: 3rem;
+    padding: 3rem 8rem;
     background-color:  #F7F9FB;
-    margin-top: 2rem;
     display: flex;
     flex-direction: column;
-    border: 1px solid #DFDFDF;
-    border-radius:0.4rem;
-    min-width: 86rem;
+    /*border: 1px solid #DFDFDF;*/
+    border-top: 1px solid #E0E4E7;
+    z-index: 0;
 `
 
 const NoneMessage = styled.div`
@@ -349,41 +345,38 @@ const InfoHeader = styled.div`
     display: flex;
     align-items: center;
     font-weight: 500;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     color: #172A4E;
     margin-bottom: 1.5rem;
 `
 
-const InfoBlock = styled.div`
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    display: ${props => props.display};
-    border-bottom: ${props => props.borderBottom};
-`
-
-
 
 const ReferenceContainer = styled.div`
-    margin-top: 0.8rem;
+    margin-bottom: 2.7rem;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    &:last-of-type {
+        margin-bottom: 1.5rem;
+    }
 `
-
 
 const Tag = styled.div`
     font-size: 1.25rem;
     color: ${props => props.color}; 
-    padding: 0.4rem 0.8rem;
-    background-color: ${props => props.backgroundColor}; 
+    padding: 0.45rem 0.8rem;
+    background-color: ${props => chroma(props.color).alpha(0.15)};
     display: inline-block;
-    border-radius: 4px;
-    margin-right: 1rem;
+    border-radius: 0.3rem;
+	margin-right: 1.35rem;
+	font-weight: 500;
 `
 
+
 const Header = styled.div`
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     color: #172A4E;
-    margin-bottom: 3rem;
+    margin-bottom: 2.7rem;
     display: flex;
     align-items: center;
 `
@@ -404,27 +397,22 @@ const StyledIcon = styled.img`
 
 const Title = styled.div`
     opacity: 1;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
+    
 `
 
 const DocumentItem = styled.div`
-    height: 3rem;
-    width: 15rem;
-    padding: 1rem;
-    background-color: white;
+    /*width: 15rem;*/
+    
     border-radius: 0.4rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     /*border: 0.1px solid #D7D7D7;*/
     /*border: 1px solid #E0E4E7;*/
-    font-size: 1.2rem;
-    margin-right: 2rem;
+    font-size: 1.25rem;
+    margin-right: 1.8rem;
     display: flex;
-    align-items: center;
     cursor: pointer;
     &:hover {
-        background-color: #F4F4F6; 
+        color: #1E90FF;
     }
     font-weight: 500;
 `
@@ -446,7 +434,8 @@ const DirectoryContainer = styled.div`
     display: flex;
     flex-direction: column;
     background-color: white;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     min-height: 5rem;
     /*border: 1px solid #DFDFDF;*/
@@ -454,7 +443,7 @@ const DirectoryContainer = styled.div`
     padding-bottom: 0.1rem;
     align-self: stretch;
     
-    /*border: 1px solid #E0E4E7;*/
+
     min-width: 80rem;
 `
 
@@ -463,14 +452,14 @@ const ListToolBar = styled.div`
    
     height: 4.5rem;
     display: flex;
-    border-bottom: 1px solid #EDEFF1;
+   
     align-items: center;
+    border-bottom: 1px solid #EDEFF1;
    
 `
 
 const ListName = styled.div`
     margin-left: 3rem;
-    color: #172A4E;
     font-size: 1.5rem;
     font-weight: 300;
 `

@@ -35,7 +35,10 @@ console.log(dbRoute);
 
 
 //mongoose.connect('mongodb://localhost:27017/myDatabase');
+
+
 mongoose.connect(dbRoute, { useNewUrlParser: true });
+
 
 let db = mongoose.connection;
 
@@ -68,7 +71,8 @@ app.use(cors());
 */
 app.use(
     cors({
-            origin: "http://localhost:3000", // allow server to accept request from different origin
+            // allow server to accept request from different origin
+            origin: true,
             methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
             credentials: true // allow session cookie from browser to pass through
         })

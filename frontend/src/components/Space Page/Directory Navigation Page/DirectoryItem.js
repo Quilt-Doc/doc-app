@@ -21,6 +21,11 @@ import { Link, withRouter } from 'react-router-dom';
 import { addSelected, deleteSelected } from '../../../actions/Selected_Actions';
 import { retrieveReferences } from '../../../actions/Reference_Actions';
 
+//icons
+import { RiScissorsLine } from 'react-icons/ri'
+import {FiFileText, FiChevronsDown} from 'react-icons/fi'
+import { MdViewDay } from 'react-icons/md';
+
 //misc
 import { connect } from 'react-redux';
 
@@ -111,10 +116,11 @@ class DirectoryItem extends React.Component {
     renderColor() {
         let x =  Math.round(Math.random() * 3)
       
-        return x === 2 ? "#19E5BE"  : x === 1 ? '#5352ed' : '#C21D1D';
+        return x === 2 ? "#17cfad"  : x === 1 ? '#5A75E6' : '#FF6373';
     } 
 
     render() {
+        let statusColor = this.renderColor()
         return (
                 <>
                 <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
@@ -129,34 +135,33 @@ class DirectoryItem extends React.Component {
 
                     <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'min-width': "1.7rem", 'margin-right': "1rem"}} name={this.props.type}></ion-icon>
                     <ItemName>{this.props.item.name}</ItemName>
-                    <ViewDocumentContainer>
-                        {this.props.documents.length > 0 && 
-                            <ViewDocumentButton 
-                                onClick = {(e) => {e.stopPropagation(); e.preventDefault(); 
-                                    this.setState(prevState => ({closed: !prevState.closed}))}}>
-                                View Documents
-                             </ViewDocumentButton>
-                        }
-                    </ViewDocumentContainer>
+                    
                     
                   
                     <ProgressContainer>
-                        <Status color = {this.renderColor()} />
+                        
+                        <Status color = {statusColor} >
+                            {statusColor === "#17cfad" 
+                                ? "Excellent" : 
+                                statusColor === '#5A75E6' ? "Satisfactory" 
+                                : 'Inadequate'}
+                        </Status>
                        
                     </ProgressContainer>
                     <StatisticContainer>
-
-                    
                         <Statistic>
-                            <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.4rem"}} name="document-text-outline"></ion-icon>
+                            <FiFileText style={{'color': '#172A4E', 'fontSize': '1.55rem', 'marginRight': "0.6rem"}}/>
                             <Count>{Math.round(Math.random() * 50)}</Count>
                         </Statistic>
                         <Statistic>
-                        <ion-icon style={{'color': '#172A4E', 'fontSize': '1.8rem', 'marginRight': "0.4rem"}} name="cut-outline"></ion-icon>
-                        <Count>{Math.round(Math.random() * 50)}</Count>
+                            <RiScissorsLine style={{'color': '#172A4E', 'fontSize': '1.55rem', 'marginRight': "0.6rem"}}/>
+                            <Count>{Math.round(Math.random() * 50)}</Count>
                         </Statistic>
                     </StatisticContainer>
-                  
+                    <ViewBorder active = {this.props.documents.length > 0}>
+                        <FiChevronsDown/>
+                    </ViewBorder>
+                    
                 </StyledLink>
                 {this.props.documents.length > 0 &&
                     <SlideDown className = {'my-dropdown-slidedown'} closed={this.state.closed}>
@@ -173,6 +178,15 @@ class DirectoryItem extends React.Component {
 
 }
 
+/*<ViewDocumentContainer>
+                        {this.props.documents.length > 0 && 
+                            <ViewDocumentButton 
+                                onClick = {(e) => {e.stopPropagation(); e.preventDefault(); 
+                                    this.setState(prevState => ({closed: !prevState.closed}))}}>
+                                View Documents
+                             </ViewDocumentButton>
+                        }
+                    </ViewDocumentContainer>*/
 /*  <ListItem>
                         <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
                             <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}>
@@ -229,12 +243,32 @@ const File_Line = styled.div`
     align-items: center;
 `*/
 
-const Status = styled.div`
-   
-    background-color: ${props => props.color};
-    width: 12rem;
-    height: 0.4rem;
+const ViewBorder = styled.div`
+    font-size: 1.5rem;
+    margin-left: 12rem;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.5rem;
+    width: 2.5rem;
+    background-color:#ebf0f5;
     border-radius: 0.3rem;
+    opacity: ${props => props.active ? 1.2 : 0.3};
+`
+
+const Status = styled.div`
+    border: 1px solid ${props => props.color};
+    background-color: ${props => chroma(props.color).alpha(0.13)};
+    border-radius: 0.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+   
+    color: ${props => props.color};
+    padding: 0.4rem 0.6rem ;
+    font-weight: 500;
+    font-size: 1.15rem;
 `
 
 const StyledIcon = styled.img`
@@ -265,7 +299,6 @@ const DocumentItem = styled.div`
 `
 
 const StatisticContainer = styled.div`
-    margin-left: auto;
     display: flex;
     align-items: center;
 `
@@ -366,7 +399,7 @@ const StyledLink = styled(Link)`
 `
 
 const ItemName = styled.div`
-    flex: 1 1 25rem;
+    flex: 1 1 15rem;
     font-weight: 400;
 `
 
@@ -375,17 +408,16 @@ const ItemName = styled.div`
 
 const ProgressContainer = styled.div`
     display: flex;
-    margin-right: 8rem;
-    opacity: 0.8; 
+    margin-right: 0rem;
     letter-spacing: 1;
     &:hover {
         opacity: 1;
     }
     height: 4rem;
     align-items: center;
-    flex: 1 1 18rem;
-    justify-content: center;
+    flex: 1 1 10rem;
 `
+
 
 const ProgressBar = styled.div`
     width: 16rem;
@@ -410,7 +442,6 @@ const Statistic = styled.div`
     align-items: center;
     margin-right: 2.5rem;
     font-size: 1.1rem;
-    opacity: 0.6; 
     width: 4rem;
     transition: all 0.05s ease-in;
     &: hover {

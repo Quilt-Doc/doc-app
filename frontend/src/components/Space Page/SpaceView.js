@@ -28,6 +28,9 @@ import { setCurrentRepository } from '../../actions/Repository_Actions';
 import { updateRightViewScroll } from '../../actions/UI_Actions';
 import DirectoryView from './Directory Navigation Page/DirectoryView';
 
+//icons
+import {FiFileText, FiGitPullRequest} from 'react-icons/fi'
+import {RiScissors2Line,RiSettings5Line, RiCodeSLine, RiPencilLine, RiPieChart2Line} from 'react-icons/ri'
 
 class SpaceView extends React.Component {
     constructor(props) {
@@ -81,7 +84,8 @@ class SpaceView extends React.Component {
                     classNames="sidenav"
                 >
                     <Container>
-                        <SideNavbar />
+                        <SideNavbar/>
+                        
                         <RightView id = {"rightView"} ref = {this.rightViewRef} onScroll = {this.onScroll}>
                             <Switch history = {history}>
                                 <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
@@ -126,6 +130,57 @@ export default connect(mapStateToProps, { updateRightViewScroll, retrieveWorkspa
 
 //Styled Components
 
+const NavbarIcon2 = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 5rem;
+    width: 5rem;
+    font-size: 1.8rem;
+    margin-bottom: 2.5rem;
+    background-color: #323B5D;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    border-radius: 50%;
+    &:hover {
+        background-color: ${props => props.emph };
+    }
+    border: 1px solid #5B75E6;
+   
+    position: relative;
+`
+
+const NavbarIcon = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 4rem;
+    width: 4rem;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    background-color: #323B5D;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    /*
+    &:hover {
+        background-color: ${props => props.emph };
+    }*/
+    border-bottom: ${props => props.active ? '2px solid #5B75E6' : "" };
+
+`
+
+
+const LeftMostNav = styled.div`
+    width: 27rem;
+    background-color: #272F49;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 2rem;
+    color: white;
+    border-right: 4.5px solid #5B75E6;
+`
+
 const Container = styled.div`
     display: flex;
     flex: 1;
@@ -134,11 +189,11 @@ const Container = styled.div`
 
 
 const RightView = styled.div`
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    background-color: white;
+    /*box-shadow: 0 2px 4px rgba(0,0,0,0.1);*/
     width: 100%;
     overflow-y: scroll;
     height: calc(100vh - 5.5rem);
+    z-index: 1;
 `
 
 
