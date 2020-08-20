@@ -85,7 +85,7 @@ const runValidation = async () => {
   const child = execFile('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H',
     repoCommit + '..' + headCommit],
     { cwd: './' + repoDiskPath },
-  (error, stdout, stderr) => {
+    async (error, stdout, stderr) => {
     console.log('stdout: ');
     console.log(stdout.toString());
     // Output starts with the latest commit and goes back in time
@@ -102,13 +102,16 @@ const runValidation = async () => {
     // console.log('commitObjects: ');
     // console.log(commitObjects);
 
+    var repoReferences = await api.post('/references/retrieve', {repositoryId: repoId, kind: "file"});
+    repoReferences = repoReferences.data.map(referenceObj => {
+      return referenceObj._id.toString();
+    });
 
-    api.post('/snippets/retrieve', {
-      repository: repoId,
-//      pathInRepository: 'post_commit.py'
-    })
-    .then(function (response) {
-      console.log(response.data);
+    
+
+    var response = await api.post('/snippets/retrieve', {workspaceId: process.env.workspaceId, referenceIdList: repoReferences});
+    
+    console.log(response.data);
 
     // List of each unique file with snippets attached
     // Strip out branch name
@@ -147,11 +150,6 @@ const runValidation = async () => {
 
     beginSnippetValidation(snippetData, trackedFiles, repoDiskPath);
 
-
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
 
   });
 

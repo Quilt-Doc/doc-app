@@ -125,10 +125,7 @@ const DraggableDocument = (props) => {
 					
 					<Title  >{extractTitle(document)}</Title>
 					<IconContainer>
-						<DocumentOptions 
-							on = {createDisplay}
-							document = {document}
-						/>
+						
 						<IconBorder display = {createDisplay} onClick = {(e) => {props.createDocument(e)}}>
 							<ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
 						</IconBorder>

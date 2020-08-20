@@ -134,8 +134,6 @@ retrieveCodeReferences = async (req, res) => {
     });
 }
 
-retrieveReferencesFromPath = 
-
 retrieveReferences = async (req, res) => {
     
     let { textQuery, search, paths, name, path, kind, kinds, notKinds, 

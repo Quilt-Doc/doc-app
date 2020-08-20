@@ -23,6 +23,7 @@ export const getSnippet = id => async dispatch => {
 
 export const retrieveSnippets = (formValues) => async dispatch => {
     const response = await api.post(`/snippets/retrieve`, formValues );
+    console.log("SNIPPET RESPONSE", response)
     dispatch({ type: RETRIEVE_SNIPPETS, payload: response.data });
 }
 

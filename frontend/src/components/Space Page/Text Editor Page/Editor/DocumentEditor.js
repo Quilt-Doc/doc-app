@@ -612,7 +612,7 @@ const StyledEditable = styled(Editable)`
   font-size: 16px;
   resize: none !important;
   padding-bottom: 7rem;
-  min-height: 65rem;
+  min-height: 75rem;
   cursor: ${props => props.cursortype ? "text" : "default"};
   padding-left: ${props => props.paddingLeft};
   padding-right: 10rem;

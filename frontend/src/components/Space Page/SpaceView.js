@@ -194,6 +194,7 @@ const RightView = styled.div`
     overflow-y: scroll;
     height: calc(100vh - 5.5rem);
     z-index: 1;
+    background-color: #f7f9fb;
 `
 
 

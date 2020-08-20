@@ -181,6 +181,7 @@ else {
     process.env.repositoryFullName = jobData.repositoryFullName;
     process.env.cloneUrl = jobData.cloneUrl;
     process.env.installationId = jobData.installationId;
+    process.env.workspaceId = jobData.workspaceId;
     snippetUtils.runValidation();
   }
 

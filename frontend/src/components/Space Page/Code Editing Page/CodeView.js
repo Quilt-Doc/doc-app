@@ -97,6 +97,7 @@ class CodeView extends React.Component {
         let fileContents = await this.props.getContents({referenceId})
         await this.props.retrieveReferences({ referenceId })
         await this.props.retrieveSnippets({referenceId, workspaceId})
+        console.log("SNIPPETS", this.props.snippets)
         await this.props.retrieveDocuments({ referenceIds: [referenceId], workspaceId})
         const allLinesJSX = this.renderLines(fileContents);
         this.setState({fileContents, allLinesJSX, loaded: true});
@@ -601,10 +602,10 @@ class CodeView extends React.Component {
 
         //createSnippet must handle all state reset, acquire beginning/end line data
         //snippet content, etc and send them over to the action
-
+        let {referenceId, workspaceId} = this.props.match.params
         this.props.createSnippet({start, code, annotation, 
-            referenceId: this.props.match.params.referenceId, status: "VALId", creator: this.props.user._id }).then(() => {
-            this.props.retrieveSnippets({ referenceId: this.props.match.params.referenceId}).then(() => {
+            workspaceId, referenceId, status: "VALID", creator: this.props.user._id }).then(() => {
+            this.props.retrieveSnippets({ referenceId, workspaceId }).then(() => {
                 console.log("SNIPPETS", this.props.snippets)
             })
             this.setState({
@@ -934,7 +935,8 @@ const Tag = styled.div`
 
 const EditorBackground = styled.div`
     background-color: #F7F9FB; 
-    padding: 3rem 8rem;
+    padding: 3rem 4rem;
+    justify-content: center;
     display: flex;
     flex-direction: column;
     border-top: 1px solid #E0E4E7;

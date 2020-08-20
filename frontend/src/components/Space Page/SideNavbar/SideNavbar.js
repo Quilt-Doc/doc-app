@@ -32,9 +32,10 @@ import repoIcon3 from '../../../images/w4.svg'
 import codeIcon from '../../../images/code.svg'
 
 //icons
-import {FiFileText, FiGitPullRequest} from 'react-icons/fi'
-import {RiScissors2Line, RiAddLine,  RiLayoutMasonryLine, RiSettings5Line, RiCodeSLine, RiPencilLine, RiPieChart2Line} from 'react-icons/ri'
+import {FiFileText, FiGitPullRequest, FiTrash} from 'react-icons/fi'
+import {RiScissors2Line, RiAddLine,  RiLayoutMasonryLine, RiPencilRuler2Line, RiSettings5Line, RiCodeSLine, RiPencilLine, RiPieChart2Line} from 'react-icons/ri'
 import { BsLayoutWtf } from 'react-icons/bs'
+import { HiDownload } from 'react-icons/hi'
 
 class SideNavbar extends React.Component {
     constructor(props) {
@@ -142,7 +143,35 @@ class SideNavbar extends React.Component {
                         {this.props.documents.length > 0 && this.renderDocuments()}
                     </DocumentationContainer>
                </Section>
-               
+               <Section margin = {"2rem"}>
+                    <NavbarButton2>
+                        <IconBorder2/>
+                        <RiLayoutMasonryLine style = 
+                        {{ fontSize: "1.7rem",
+                            marginRight: "0.9rem",
+                            width: "1.6rem"
+                        }}/>
+                        Templates
+                    </NavbarButton2>
+                    <NavbarButton2>
+                        <IconBorder2/>
+                        <HiDownload style = 
+                        {{ fontSize: "1.7rem",
+                            marginRight: "0.9rem",
+                            width: "1.6rem"
+                        }}/>
+                        Import    
+                    </NavbarButton2>
+                    <NavbarButton2>
+                        <IconBorder2/>
+                        <FiTrash style = 
+                        {{ fontSize: "1.5rem",
+                            marginRight: "0.9rem",
+                            width: "1.6rem"
+                        }}/>
+                        Trash
+                    </NavbarButton2>
+               </Section>
                 
             </SideNavbarContainer>
            
@@ -337,6 +366,21 @@ export default withRouter(connect(mapStateToProps, { createDocument, moveDocumen
 //#222437; #2f314c;
 //#3F3B4D; 
 //#F7F9FB;/
+
+
+const IconBorder2 = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 1.7rem;
+    min-height: 1.7rem;
+    margin-left: -0.3rem;
+    margin-right: 0.5rem;
+    font-size: 1.3rem;
+    opacity: 0.9;
+    border-radius: 0.3rem;
+`
+
 const SideNavbarContainer = styled.div`
     
     background-color:#2B2F3A; 
@@ -404,6 +448,24 @@ const NavbarButton = styled(Link)`
     color: white;
     padding-top: 0.4rem;
     padding-bottom: 0.4rem;
+    margin-bottom: 0.4rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    &:hover {
+        background-color: #414858;
+    }
+    background-color: ${props => props.active ? '#414858' : ""};
+`
+
+
+const NavbarButton2 = styled(Link)`
+    display: flex;
+    align-items: center;
+    font-size: 1.3rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: white;
+    height: 2.9rem;
     margin-bottom: 0.4rem;
     padding-left: 2rem;
     padding-right: 2rem;
