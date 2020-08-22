@@ -84,12 +84,8 @@ class SpaceView extends React.Component {
                     classNames="sidenav"
                 >
                     <Container>
-<<<<<<< HEAD
-                        <SideNavbar />
-=======
                         <SideNavbar/>
                         
->>>>>>> 0d528e190e5c692eb4c623cd2da7450f9ff4aa72
                         <RightView id = {"rightView"} ref = {this.rightViewRef} onScroll = {this.onScroll}>
                             <Switch history = {history}>
                                 <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
