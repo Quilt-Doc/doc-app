@@ -17,6 +17,7 @@ checkValid = (item) => {
 }
 
 loginSuccess = (req, res) => {
+    console.log("REQ USER", req.user)
     if (req.user) {
         return res.json({
             success: true,

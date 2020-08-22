@@ -22,7 +22,6 @@ export const getTag = id => async dispatch => {
 
 export const retrieveTags = (formValues) => async dispatch => {
     const response = await api.post(`/tags/retrieve`, formValues );
-    console.log("RESPONSE", response.data)
     dispatch({ type: RETRIEVE_TAGS, payload: response.data });
 }
 

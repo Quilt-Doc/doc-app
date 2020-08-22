@@ -115,8 +115,12 @@ const getCorrectElement = (borderTop, element, attributes, children) => {
 			return <H3 borderTop = {borderTop} {...attributes}>{children}</H3>
 		case 'bulleted-list':
 			return <UL borderTop = {borderTop} {...attributes}>{children}</UL>
+		case 'numbered-list':
+			return <OL borderTop = {borderTop} {...attributes}>{children}</OL>
 		case 'code-block':
 			return <CodeBlock borderTop = {borderTop} {...attributes}>{children}</CodeBlock>
+		case 'quote':
+			return <Quote {...attributes}>{children}</Quote>
 		case 'code-reference':
 			return (
 						<CodeReference  
@@ -196,6 +200,13 @@ const BlockTool = (props) => {
 		
 	)
 }*/
+const Quote = styled.div`
+	font-size: 1.7rem;
+	padding: 1rem;
+	border-left: 2px solid #DFDFDF;
+	margin-top: 2rem !important;
+	color: ${chroma('#172A4E').alpha(0.6)}
+`
 
 const OptionHeader = styled.div`
 	height: 1.3rem;
@@ -363,6 +374,14 @@ const P = styled.div`
 `
 
 const UL = styled.ul`
+	margin-top: 2rem !important;
+	margin-left: 2rem;
+	border-top: 2px solid transparent;
+  	border-top: ${props => props.borderTop};
+`
+
+const OL = styled.ol`
+	margin-top: 2rem !important;
 	margin-left: 2rem;
 	border-top: 2px solid transparent;
   	border-top: ${props => props.borderTop};

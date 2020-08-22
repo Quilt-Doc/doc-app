@@ -2,7 +2,10 @@
 // slate
 import { Node, Editor, Transforms, Range, Point } from 'slate'
 import { ReactEditor } from 'slate-react';
-		
+	
+const LIST_TYPES = ['numbered-list', 'bulleted-list']
+const CODE_TYPES = ['code-block']
+
 const withFunctionality = (editor, dispatch, scrollTop) => {
 	
 	const { deleteBackward, insertText, isVoid } = editor
@@ -13,9 +16,14 @@ const withFunctionality = (editor, dispatch, scrollTop) => {
 	}
 
 	editor.insertBlock = (attributes, range) => {
-		let text = Array.from(Node.texts(editor, {from: range.anchor.path, to: range.anchor.path}))[0][0].text.trim()
+		let text = Array.from(Node.texts(editor, {from: range.anchor.path, to: range.anchor.path}))[0][0].text
+		
+		const isList = LIST_TYPES.includes(attributes.type)
+		const isCode = CODE_TYPES.includes(attributes.type)
+
 		if (text !== '') {
 			let node = { ...attributes, children: [] }
+			node.type = isList ? "list-item" : isCode ? "code-line" : node.type
 			Transforms.insertNodes(
 				editor,
 				node,
@@ -25,23 +33,20 @@ const withFunctionality = (editor, dispatch, scrollTop) => {
 		} else {
 			Transforms.setNodes(
 				editor,
-				attributes,
+				{...attributes, type: isList ? "list-item" : isCode ? "code-line" : attributes.type},
 				{ match: n => Editor.isBlock(editor, n) }
 			)
 		}
 
-		if (attributes.type === 'code-line') {
-			const block = { type: 'code-block', children: [] }
-			Transforms.wrapNodes(editor, block, {
-				match: n => n.type === 'code-line',
-			})
+
+		if (isList) {
+			const block = { type: attributes.type, children: [] }
+			Transforms.wrapNodes(editor, block)
 		}
 
-		if (attributes.type === 'list-item') {
-			const list = { type: 'bulleted-list', children: [] }
-			Transforms.wrapNodes(editor, list, {
-				match: n => n.type === 'list-item',
-			})
+		if (isCode) {
+			const block = { type: attributes.type, children: [] }
+			Transforms.wrapNodes(editor, block)
 		}
 
 		dispatch({type: 'markupMenuOff'})
@@ -68,7 +73,7 @@ const withFunctionality = (editor, dispatch, scrollTop) => {
 				Transforms.insertNodes(editor, node, {at: end})
 				Transforms.select(editor, [end.path[0] + 1, 0])
 			} else if (Point.equals(selection.anchor, start))  { 
-				const node = { type: "paragraph", children: [] }
+				const node = { type: "paragraph", children: [{text: ""}] }
 				Transforms.insertNodes(editor, node, {at: start})
 			} else {
 				Transforms.splitNodes(editor)
@@ -91,6 +96,7 @@ const withFunctionality = (editor, dispatch, scrollTop) => {
 
 		let [block, path] = match
 
+		// you are updating focus before insertion of text, which is the issue
 		dispatch({ type: 'update_focus', payload: selection.focus })
 
 		dispatch({ type: 'addText', payload: text })
@@ -200,11 +206,8 @@ const SHORTCUTS = {
 	'*': 'code-line',
 	'-': 'list-item',
 	'+': 'list-item',
-	'>': 'block-quote',
+	'>': 'quote',
 	'#': 'heading-one',
 	'##': 'heading-two',
 	'###': 'heading-three',
-	'####': 'heading-four',
-	'#####': 'heading-five',
-	'######': 'heading-six',
 }

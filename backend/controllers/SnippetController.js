@@ -24,15 +24,16 @@ createSnippet = (req, res) => {
            annotation,
            start,
            status,
-           creator
+           
         },
     );
+
+    if (creator) snippet.creator = creator
 
     if (name) snippet.name = name;
 
     snippet.save((err, snippet) => {
         if (err) return res.json({ success: false, error: err });
-        console.log("ERROR", err)
         snippet.populate('workspace').populate('reference', (err, snippet) => {
             if (err) return res.json({ success: false, error: err });
             return res.json(snippet);

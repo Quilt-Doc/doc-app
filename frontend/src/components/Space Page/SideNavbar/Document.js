@@ -28,7 +28,8 @@ import doc2Icon from '../../../images/doc2.svg'
 import doc3Icon from '../../../images/doc3.svg'
 import doc4Icon from '../../../images/doc4.svg'
 
-
+import { AiOutlineCaretRight} from 'react-icons/ai';
+import { FiChevronRight, FiChevronDown } from 'react-icons/fi';
 
 class Document extends Component {
     constructor(props){
@@ -88,8 +89,9 @@ class Document extends Component {
         if (!title) {
             title = "Untitled"
         }
-        return <Title>{title}</Title>
+        return <Title width = {this.props.width - 7} >{title}</Title>
     }
+    
 
     open = (e) => {
         e.stopPropagation();
@@ -110,28 +112,22 @@ class Document extends Component {
             if (this.state.open === false){
                 return (
                     <IconBorder2 onClick = {(e) => this.open(e)}>
-                        <ion-icon 
-                            name="caret-forward"
-                            style={{'fontSize': '1.3rem'}}
-                        ></ion-icon>
+                        <FiChevronRight/>
                     </IconBorder2>
                 )
             } else {
                 return (
                     <IconBorder2 onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState({open: false})}}>
-                        <ion-icon 
-                            name="caret-down"
-                            style={{'fontSize': '1.3rem'}}
-                        ></ion-icon>
+                         <FiChevronDown/>
                     </IconBorder2>
                 )
             }
           
         } else {
             return (
-                <IconBorder3>
+                <IconBorder2 notActive = {true}>
                    
-                </IconBorder3>
+                </IconBorder2>
             )
         }
     }
@@ -158,6 +154,7 @@ class Document extends Component {
                             children = {this.props.children}
                             open = {this.state.open}
                             renderChildren = {this.renderChildren}
+                            width = {this.props.width}
                         />
                 }
             </>
@@ -226,27 +223,17 @@ const IconBorder2 = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 1.7rem;
-    height: 1.7rem;
-    margin-left: -0.8rem;
+    min-width: 1.7rem;
+    min-height: 1.7rem;
+    margin-left: -0.3rem;
     margin-right: 0.5rem;
+    font-size: 1.3rem;
+    opacity: 0.9;
     border-radius: 0.3rem;
     transition: all 0.05s ease-out;
     &:hover {
-        background-color: white;
-        
+        background-color: ${props => props.notActive ? "" : "#2B2F3A"};
     }
-`
-
-const IconBorder3 = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 1.7rem;
-    height: 1.7rem;
-    margin-left: -0.8rem;
-    margin-right: 0.5rem;
-    border-radius: 0.3rem;
 `
 
 const CurrentReference = styled.div`

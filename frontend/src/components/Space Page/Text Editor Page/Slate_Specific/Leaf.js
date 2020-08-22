@@ -10,12 +10,12 @@ const Leaf = ({ attributes, children, leaf }) => {
 	let editor = useSlate()
 	let {selection} = editor
 
-	
+	{/*
 	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){
 		children = <Container>
 						{children}
 						<span 
-							style = {{position: "absolute",  pointerEvents: "none", whiteSpace: "nowrap", opacity: 0.6,
+							style = {{position: "absolute",  pointerEvents: "none", whiteSpace: "nowrap", opacity: 0.5,
 							fontWeight: 400 }}
 							contentEditable = {false}>
 							Type 
@@ -26,12 +26,12 @@ const Leaf = ({ attributes, children, leaf }) => {
 											marginLeft: "0.5rem",
 											marginRight: "0.5rem",
 											backgroundColor: "#E7EAFC" }}>/</span>
-							for quick markup
+							for quick commands
 						</span>
 					
 
 					</Container>
-	}
+	}*/}
 
 	if (leaf.bold) {
 		children = <strong>{children}</strong>
@@ -43,6 +43,14 @@ const Leaf = ({ attributes, children, leaf }) => {
 
 	if (leaf.underlined) {
 		children = <u>{children}</u>
+	}
+
+	if (leaf.strike) {
+		children = <strike>{children}</strike>
+	}
+
+	if (leaf.code) {
+		children = <Code>{children}</Code>
 	}
 
 	if (leaf.backColor) {
@@ -80,3 +88,11 @@ const Container = styled.div`
 const SubContainer = styled.div`
 	display: flex;
 `	
+
+const Code = styled.span`
+	font-family: 'Roboto Mono', monospace !important;
+	background-color: #F7F9FB;
+	padding: 0.2rem 0.4rem;
+	border-radius: 0.3rem;
+	font-size: 1.4rem;
+`

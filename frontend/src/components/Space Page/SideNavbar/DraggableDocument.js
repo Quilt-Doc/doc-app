@@ -7,9 +7,21 @@ import {ItemTypes} from './Drag_Types';
 //document
 import Document from './Document';
 
-//styles
-import styled from 'styled-components'
+//components
+import DocumentOptions from './DocumentOptions';
 
+//history
+import history from '../../../history';
+
+//styles
+import styled from 'styled-components';
+import chroma from 'chroma-js';
+//icons
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTag, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FiFileText, FiTrash } from 'react-icons/fi';
+import { GrMore } from 'react-icons/gr';
+import { IoIosMore } from 'react-icons/io';
 // find children and see lowest one -- only show that one
 // put the ref on current reference, put style on children
 
@@ -30,10 +42,27 @@ const notChild = (item, document, gap) => {
 	return true
 }
 
-const DraggableDocument = (props) => {
+const checkActive = (document) => {
+	let path = history.location.pathname.split("/")
+	if (path.length > 4) {
+		if (path[4] === document._id) {
+			return true;
+		} 
+	}
+	return false;
+}
 
+const extractTitle = (document) => {
+	let { title } = document
+	if (!title) {
+		title = "Untitled"
+	}
+	return title 
+}
+
+const DraggableDocument = (props) => {
 	let [opacity, setOpacity] = useState(1)
-	let [createOpacity, setCreateOpacity] = useState('0')
+	let [createDisplay, setCreate] = useState(false)
 
 	let document = props.document;
     const [{ isOver, canDrop}, drop] = useDrop({
@@ -50,7 +79,9 @@ const DraggableDocument = (props) => {
 		accept: ItemTypes.DOCUMENT,
 		canDrop: (item) => notChild(item, document, true),
 		drop: (item) => {
-			let parentId = document.parentId !== null ? document.parentId : ""
+			console.log("ITEM", item);
+			console.log("DOCUMENT", document);
+			let parentId = document.parent !== null ? document.parent._id : ""
 			props.moveDocument({ documentId: item.document._id, parentId, order: document.order} );
 		},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
 		collect: (monitor) => ({
@@ -65,47 +96,66 @@ const DraggableDocument = (props) => {
 			isDragging: !!monitor.isDragging()
 		}),
 	})
+<<<<<<< HEAD
 	//console.log(document.path)
+=======
+
+>>>>>>> 0d528e190e5c692eb4c623cd2da7450f9ff4aa72
     return (
 		
-		<DocContainer >	
+		<>
 			<div ref = {gapDrop}>
-				<Gap backgroundColor = { isOver2 && canDrop2 ? "#DEEBFF" : ""}/>
+				<Gap backgroundColor = { isOver2 && canDrop2 ? "#5B75E6" : ""}/>
 			</div>
 		
 			<div ref = {drop}>
 				<CurrentReference 
-					backgroundColor = { isDragging ? "#EBECF0" : isOver && canDrop ? "#DEEBFF" : ""}
+					border = { isDragging ? "#EBECF0" : isOver && canDrop ? "2px solid #5B75E6" : ""}
 					onDrag = {(e) => {  e.target.style.cursor = 'grabbing'; }}
 					onDragEnd = {(e) => {  e.target.style.cursor = ''; }}
 					ref = {drag} 
-					onMouseEnter = {() => { setCreateOpacity('1') } } 
-					onMouseLeave = {() => { setCreateOpacity('0') }} 
+					onMouseEnter = {() => { setCreate(true) } } 
+					onMouseLeave = {() => { setCreate(false) }} 
 					onClick = {() => props.renderDocumentUrl()}
-					width = {`${props.width}rem`} 
 					marginLeft = {`${props.marginLeft}rem`}
+					active = {checkActive(document)}
+					opacity = {isDragging ? "0.3": ""}
 				>
 					{props.renderLeftIcon()}
-					{document.path === "FinanceNewsApp" || document.path === "CIS 522 Project" || document.path === "Optical Learning" ? <ion-icon name="git-network-outline" style={{'fontSize': '1.7rem', marginRight: "0.8rem"}}></ion-icon> :
-						<ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', marginRight: "0.8rem"}}></ion-icon>
-					}
 					
-					{props.renderTitle()}
-					<IconBorder opacity = {createOpacity} onClick = {(e) => {props.createDocument(e)}}>
-						<ion-icon style={{'fontSize': '1.5rem'}} name="add-outline"></ion-icon>
-					</IconBorder>
+					<IconBorder3>
+						<FiFileText style = {{marginRight: "1rem"}}/>
+					</IconBorder3>
+					
+					<Title  >{extractTitle(document)}</Title>
+					<IconContainer>
+						
+						<IconBorder display = {createDisplay} onClick = {(e) => {props.createDocument(e)}}>
+							<ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
+						</IconBorder>
+					</IconContainer>
 				</CurrentReference>
 			</div>
 			{props.children.length !== 0 && props.open && props.renderChildren()}
-		</DocContainer>
+		</>
 	)
 }
 
 export default DraggableDocument
 
+const Title = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+	font-weight: 500;
+	width: ${props => props.width}rem;
+
+`
+
+
 const Gap = styled.div`
 	height: 0.3rem;
-	border-radius: 0.1rem;
 	background-color: ${props => props.backgroundColor};
 	transition:  background-color 0.05s ease-out;
 `
@@ -114,30 +164,59 @@ const DocContainer = styled.div`
 	background-color: ${props => props.backgroundColor}
 `
 
+const IconContainer = styled.div`
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	padding-left: 0.5rem;
+`
+
 const IconBorder = styled.div`
-    margin-left: auto;
-    margin-right: -0.3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
     width: 1.9rem;
     height: 1.9rem;
 
    
-    border-radius: 0.3rem;
+    border-radius: 0.2rem;
 
-    color: #213A81;
-    background-color: white;
-    
-    opacity: ${props => props.opacity};
-    /*transition: all 0.05s ease-out;*/
-    /*background-color: white;*/
-    cursor: pointer;
+	display: ${props => props.display ? "flex": "none"};
+    opacity: 0.8;
+	align-items: center;
+    justify-content: center;
+	background-color: #2B2F3A;
+	cursor: pointer;
+	
     &: hover {
         opacity: 1;
-        background-color: #F4F4F6; 
+        
     }
+`
+
+const IconBorder2 = styled.div`
+  
+
+
+    width: 1.9rem;
+    height: 1.9rem;
+	margin-right: 0.5rem;
+	font-size: 1.3rem;
+    border-radius: 0.2rem;
+	color: white;
+	display: ${props => props.display ? "flex": "none"};
+	align-items: center;
+    justify-content: center;
+	background-color: #2B2F3A;
+	cursor: pointer;
+	/*
+    &: hover {
+		
+    }*/
+`
+
+const IconBorder3 = styled.div`
+	display: flex;
+	align-item: center;
+	justify-content: center;
 `
 
 const CurrentReference = styled.div`
@@ -145,16 +224,19 @@ const CurrentReference = styled.div`
     align-items: center;
 	font-size: 1.35rem;
 	border: none;
-    background-color: ${props => props.backgroundColor};
+
     &:hover {
-        background-color: #EBECF0;
-    }
+        background-color: #414858;
+	}
+	background-color: ${props => props.active ? "#414858" : ""};
+
     transition: background-color 0.05s ease-out;
-    width: ${props => props.width};
-    margin-left: ${props => props.marginLeft};
-    padding: 1.2rem;
-    border-radius: 0.3rem;
+    padding-left: ${props => props.marginLeft};
+    padding-right: 2rem;
     height: 2.9rem;
-    color: #172A4E;
 	cursor: pointer;
+	font-weight: 500;
+	border: ${props => props.border};
+	opacity: ${props => props.opacity};
+	width: 100%;
 `

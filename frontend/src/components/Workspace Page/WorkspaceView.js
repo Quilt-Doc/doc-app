@@ -16,6 +16,7 @@ import { retrieveReferences } from '../../actions/Reference_Actions';
 
 //react-router
 import { Link } from 'react-router-dom';
+import history from '../../history';
 
 //misc
 import { connect } from 'react-redux';
@@ -39,7 +40,7 @@ class WorkspaceView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-           modalDisplay: 'none',
+           modalDisplay: '',
            loaded: false
         }
 
@@ -48,8 +49,6 @@ class WorkspaceView extends React.Component {
 
     async componentDidMount() {
         await this.props.retrieveWorkspaces({memberUserIds: [this.props.user._id]})
-        let repositoryIds = await this.props.workspaces.map(space => space.repositories[0])
-        await this.props.retrieveReferences({repositoryIds, path: ""})
         this.setState({loaded: true})
     }
 
@@ -59,9 +58,7 @@ class WorkspaceView extends React.Component {
 
     renderWorkspaces() {
         let workspacesJSX = []
-        console.log(this.props.workspaces)
         this.props.workspaces.map((workspace, i) => {
-            console.log(workspace)
             workspacesJSX.push(
                 <StyledLink key = {i} to = {this.renderLink(workspace)}><WorkspaceBox >
                     <StyledIcon src = {this.icons[workspace.icon]}/>
@@ -73,7 +70,7 @@ class WorkspaceView extends React.Component {
 
         workspacesJSX.push( <WorkspaceBox fd = {"row"} opacity = {0.5} onClick = {() => this.setState({modalDisplay: ''})}>
                                 <ion-icon style={{'fontSize':'2rem', 'marginRight': '0.5rem'}} name="add-outline"></ion-icon>
-                                Add Workspace
+                                Create Workspace
                             </WorkspaceBox>
         )
         
@@ -94,19 +91,33 @@ class WorkspaceView extends React.Component {
         this.setState({modalDisplay: 'none'})
     }
 
+    checkCreate = () => {
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let creating = params.get('create') 
+        if (creating !== undefined && creating !== null){
+            return true
+        }
+        return false
+    }   
+
     render() {
         if (this.state.loaded){
             return (
-                <Container>
-                    <Header>Workspaces</Header>
-                    <WorkspaceContainer>
-                        {this.renderWorkspaces()}
-                    </WorkspaceContainer>
-                    <WorkspaceModal 
-                        clearModal = {() => this.clearModal()}
-                        modalDisplay = {this.state.modalDisplay}
-                    />
-                </Container>
+                <>
+                    <Container>
+                        <Header>Workspaces</Header>
+                        <WorkspaceContainer>
+                            {this.renderWorkspaces()}
+                        </WorkspaceContainer>
+                    </Container>
+                    {this.checkCreate() &&
+                        <WorkspaceModal 
+                            clearModal = {() => this.clearModal()}
+                            modalDisplay = {this.state.modalDisplay}
+                        />
+                    }
+                </>
             )
         }
         return null
@@ -179,7 +190,7 @@ const WorkspaceBox = styled.div`
     }
     font-size: 1.5rem;
     color: #172A4E;
-    
+    font-weight: 500;
     opacity: ${props => props.opacity};
     flex-direction: ${props => props.fd};
 `  

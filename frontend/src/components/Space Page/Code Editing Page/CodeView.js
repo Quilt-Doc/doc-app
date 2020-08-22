@@ -1,10 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-
 //styles
 import styled, { keyframes } from "styled-components";
 import chroma from 'chroma-js';
+
+//icons
+import { FiFileText } from 'react-icons/fi';
 
 //components
 import Annotation from './Annotation';
@@ -95,6 +97,7 @@ class CodeView extends React.Component {
         let fileContents = await this.props.getContents({referenceId})
         await this.props.retrieveReferences({ referenceId })
         await this.props.retrieveSnippets({referenceId, workspaceId})
+        console.log("SNIPPETS", this.props.snippets)
         await this.props.retrieveDocuments({ referenceIds: [referenceId], workspaceId})
         const allLinesJSX = this.renderLines(fileContents);
         this.setState({fileContents, allLinesJSX, loaded: true});
@@ -599,10 +602,10 @@ class CodeView extends React.Component {
 
         //createSnippet must handle all state reset, acquire beginning/end line data
         //snippet content, etc and send them over to the action
-
+        let {referenceId, workspaceId} = this.props.match.params
         this.props.createSnippet({start, code, annotation, 
-            referenceId: this.props.match.params.referenceId, status: "VALId", creator: this.props.user._id }).then(() => {
-            this.props.retrieveSnippets({ referenceId: this.props.match.params.referenceId}).then(() => {
+            workspaceId, referenceId, status: "VALID", creator: this.props.user._id }).then(() => {
+            this.props.retrieveSnippets({ referenceId, workspaceId }).then(() => {
                 console.log("SNIPPETS", this.props.snippets)
             })
             this.setState({
@@ -729,7 +732,7 @@ class CodeView extends React.Component {
                 title = `${title.slice(0, 14)}..`
             }
             return <DocumentItem onClick = {() => history.push(`?document=${doc._id}`)}>
-                        <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                        <FiFileText style = {{fontSize: "1.35rem", 'marginRight': '0.55rem'}}/>
                         <Title>{title && title !== "" ? title : "Untitled"}</Title>
                     </DocumentItem>
         })
@@ -744,74 +747,59 @@ class CodeView extends React.Component {
         if (this.state.loaded) {
             return (
                 <>
-                    <Container>
-                    <Header>
-                        <RepositoryMenu 
-                                    name = {this.props.currentRepository.fullName.split("/")[1]}
-                                />
-                        {this.renderHeaderPath()}
-                        </Header>
-                        <InfoBlock>
-                            <InfoHeader>
-                                <ion-icon style = {
-                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
-                                } name="pricetag-outline"></ion-icon>
-                                Labels
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                {this.props.currentReference.tags && this.props.currentReference.tags.length > 0  ? this.renderTags() : <NoneMessage>None yet</NoneMessage>}
-                                <LabelMenu 
-                                    attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
-                                    removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
-                                    setTags = {this.props.currentReference.tags}//this.props.request.tags}
-                                    marginTop = {"1rem"}
-                                />
-                            </ReferenceContainer>
-                        </InfoBlock>
-                        <InfoBlock>
-                            <InfoHeader>
-                                <ion-icon style = {
-                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
-                                    } name="document-text-outline"></ion-icon>
-                                Documents
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                {this.props.documents && this.props.documents.length > 0 ? this.renderDocuments() : <NoneMessage>None yet</NoneMessage>}
-                                <DocumentMenu
+                        <Info>
+                                <Header>
+                                    <RepositoryMenu 
+                                        name = {this.props.currentRepository.fullName.split("/")[1]}
+                                    />
+                                    {this.renderHeaderPath()}
+                                </Header>
+                                <ReferenceContainer>
+                                    {this.props.currentReference && this.props.currentReference.tags && this.props.currentReference.tags.length > 0 ? 
+                                        this.renderTags() : <></>}
+                                    {/*<LabelMenu 
+                                        attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                                        removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                                        setTags = {this.props.currentReference.tags}//this.props.request.tags}
+                                        marginTop = {"1rem"}
+                                    />*/}
+                                </ReferenceContainer>
+                                <ReferenceContainer>
+                                    {(this.props.documents && this.props.documents.length > 0) && this.renderDocuments()}
+                                    {/* <DocumentMenu
                                         setDocuments = {this.props.documents}
                                         marginTop = {"1rem"}
                                         reference = {this.props.currentReference}
-                                />
-                            </ReferenceContainer>
-                        </InfoBlock>
-                        <EditorContainer2>
-                        <EditorContainer>
-                            <ListToolbar> 
-                                <ListName><b>8</b>&nbsp; documents</ListName>
-                                <ListName><b>15</b>&nbsp; snippets</ListName>
-                                <HighlightButton
-                                    onClick = {this.toggleSelection}
-                                    opacity = {this.state.selectionMode ? '1' : '0.7'}
-                                    color = {this.state.selectionMode ? '#19E5BE' : '#172A4E'}
+                                    />*/}
+                                </ReferenceContainer>
+                           
+                        </Info>
+                        <EditorBackground>
+                            <EditorContainer>
+                                <ListToolbar> 
+                                    <ListName><b>8</b>&nbsp; documents</ListName>
+                                    <ListName><b>15</b>&nbsp; snippets</ListName>
+                                    <HighlightButton
+                                        onClick = {this.toggleSelection}
+                                        opacity = {this.state.selectionMode ? '1' : '0.7'}
+                                        color = {this.state.selectionMode ? '#19E5BE' : '#172A4E'}
 
-                                >
-                                    <IconBorder
-                                        
-                                        >
-                                        <ion-icon style={{'fontSize': '2.2rem'}} name="color-wand-outline"></ion-icon>
-                                        
-                                    </IconBorder>
-                                    Highlight
-                                </HighlightButton>
-                            </ListToolbar>
-                            <CodeContainer >
-                                {this.renderSnippets()}
-                            </CodeContainer>
-                        </EditorContainer>
-                        </EditorContainer2>
-                    </Container>
+                                    >
+                                        <IconBorder
+                                            
+                                            >
+                                            <ion-icon style={{'fontSize': '2.2rem'}} name="color-wand-outline"></ion-icon>
+                                            
+                                        </IconBorder>
+                                        Highlight
+                                    </HighlightButton>
+                                </ListToolbar>
+                                <CodeContainer >
+                                    {this.renderSnippets()}
+                                </CodeContainer>
+                            </EditorContainer>
+                        </EditorBackground>
                 </>
-                
             );
         } else {
             return <Container>
@@ -889,23 +877,34 @@ export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnip
 
 
 //Styled Components
+const Info = styled.div`
+    padding: 3.5rem 8rem;
+    padding-bottom: 1.7rem;
+    z-index: 1;
+`
+
+
+
+
+
+
+
+
 const DocumentItem = styled.div`
-    height: 3rem;
-    width: 15rem;
-    padding: 1rem;
-    background-color: white;
-    border-radius: 0.3rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    /*border: 1px solid #DFDFDF;*/
+    /*width: 15rem;*/
+    
+    border-radius: 0.4rem;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+    /*border: 0.1px solid #D7D7D7;*/
     /*border: 1px solid #E0E4E7;*/
-    font-size: 1.2rem;
-    margin-right: 2rem;
+    font-size: 1.25rem;
+    margin-right: 1.8rem;
     display: flex;
-    align-items: center;
     cursor: pointer;
     &:hover {
-        background-color: #F4F4F6; 
+        color: #1E90FF;
     }
+    font-weight: 500;
 `
 
 const Title = styled.div`
@@ -923,27 +922,33 @@ const ListName = styled.div`
     font-weight: 300;
 `
 
+const Tag = styled.div`
+    font-size: 1.25rem;
+    color: ${props => props.color}; 
+    padding: 0.45rem 0.8rem;
+    background-color: ${props => chroma(props.color).alpha(0.15)};
+    display: inline-block;
+    border-radius: 0.3rem;
+	margin-right: 1.35rem;
+	font-weight: 500;
+`
 
-
-const EditorContainer2 = styled.div`
+const EditorBackground = styled.div`
     background-color: #F7F9FB; 
-    padding: 3rem;
+    padding: 3rem 4rem;
+    justify-content: center;
     display: flex;
     flex-direction: column;
-    border: 1px solid #DFDFDF;
-    border-radius:0.4rem;
-    min-width: 110rem;
-    margin-top: 2rem;
+    border-top: 1px solid #E0E4E7;
 `
 
 const Header = styled.div`
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     color: #172A4E;
-    margin-bottom: 3rem;
+    margin-bottom: 2.7rem;
     display: flex;
     align-items: center;
 `
-
 
 const Slash = styled.div`
     margin-left: 1rem;
@@ -995,15 +1000,6 @@ const InfoHeader = styled.div`
     margin-bottom: 1.5rem;
 `
 
-const Tag = styled.div`
-    font-size: 1.25rem;
-    color: ${props => props.color}; 
-    padding: 0.4rem 0.8rem;
-    background-color: ${props => props.backgroundColor}; 
-    display: inline-block;
-    border-radius: 4px;
-    margin-right: 1rem;
-`
 
 const NoneMessage = styled.div`
     font-size: 1.3rem;
@@ -1019,9 +1015,13 @@ const InfoBlock = styled.div`
 `
 
 const ReferenceContainer = styled.div`
-    margin-top: 0.8rem;
+    margin-bottom: 2.7rem;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    &:last-of-type {
+        margin-bottom: 1.5rem;
+    }
 `
 
 
@@ -1043,10 +1043,9 @@ const EditorContainer = styled.div`
     display: flex;
     flex-direction: column;
     /*border: 1px solid #DFDFDF;*/
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
     border-radius:0.4rem;
     min-width: 110rem;
-
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 `
 
 const CodeContainer = styled.div`

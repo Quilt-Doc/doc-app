@@ -1,4 +1,8 @@
 const Document = require('../models/Document');
+
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -580,17 +584,20 @@ moveDocument = async (req, res) => {
     // if parentId == '', move to root
 }
 
+
+retrieveDocumentsExtension = async (req, res) => {
+    let {repositoryFullName, workspaceId, referencePath} = req.body;
+    let repository = await Repository.findOne({fullName})
+}
+
 retrieveDocuments = (req, res) => {
     let { search, sort, authorId, childrenIds, workspaceId, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
-    
     let query;
-    
     if (search) {
         query = Document.find({title: { $regex: new RegExp(search, 'i')} })
     } else {
         query =  Document.find();
     }
-
 
     if (checkValid(parentId)) {
         if (parentId == '') {
@@ -614,7 +621,6 @@ retrieveDocuments = (req, res) => {
     if (checkValid(sort)) query.sort(sort);
     query.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags').exec((err, documents) => {
         if (err) return res.json({ success: false, error: err });
-        
         if (checkValid(documentIds) && checkValid(limit)) {
             if (documents.length < limit) {
                 let queryNext = Document.find()
@@ -631,8 +637,6 @@ retrieveDocuments = (req, res) => {
                 return res.json(documents)
             }
         } else {
-            console.log("SEARCH", search)
-            console.log("DOCS", documents)
             return res.json(documents);
         }
     });
@@ -641,7 +645,6 @@ retrieveDocuments = (req, res) => {
 attachReference = (req, res) => {
     const { id } = req.params;
     const { referenceId } = req.body;
-    console.log("REFID", referenceId)
     let update = {};
     if (referenceId) update.references = ObjectId(referenceId);
     Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {

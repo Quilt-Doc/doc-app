@@ -1,6 +1,6 @@
 // TODO: Add Workspace, Repository Delete Routes and methods 
 const passport = require("passport");
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000/workspaces";
 
 const express = require('express');
 const router = express.Router();
@@ -100,10 +100,17 @@ router.get('/auth/login/success', auth_controller.loginSuccess);
 router.get('/auth/login/failed', auth_controller.loginFailed);
 router.get('/auth/logout', auth_controller.logout);
 router.get('/auth/github', passport.authenticate("github"));
-router.get('/auth/github/redirect', passport.authenticate("github", {
-                                        successRedirect: CLIENT_HOME_PAGE_URL,
-                                        failureRedirect: "/api/auth/login/failed"
-                                    }));
+router.get('/auth/github2', function(req, res, next) { 
+    console.log("REQUEST", req.headers);
+    
+});
+router.get('/auth/github/redirect', passport.authenticate("github"), function(req, res){
+                                            if (req.query.state === "installing") {
+                                                res.redirect(`${CLIENT_HOME_PAGE_URL}?create=true`);
+                                            } else {
+                                                res.redirect(CLIENT_HOME_PAGE_URL);
+                                            }
+                                        })
 router.post('/auth/check_installation', auth_controller.checkInstallation);
 router.post('/auth/retrieve_domain_repositories', auth_controller.retrieveDomainRepositories)
 router.get('/auth/start_jira_auth', auth_controller.startJiraAuthRequest);

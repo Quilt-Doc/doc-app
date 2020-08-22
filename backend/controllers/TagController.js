@@ -66,6 +66,7 @@ deleteTag = (req, res) => {
 }
 
 retrieveTags = (req, res) => {
+
     let { search, label, color, tagIds, limit, skip } = req.body;
     let query;
     if (search) {
@@ -82,6 +83,7 @@ retrieveTags = (req, res) => {
     if (checkValid(skip)) query.skip(Number(skip));
     query.sort('-label');
     query.exec((err, tags) => {
+        console.log("ENTERED HERE", err)
         if (err) return res.json({ success: false, error: err });
         if (checkValid(tagIds) && checkValid(limit)) {
             if (tags.length < limit) {

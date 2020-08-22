@@ -11,7 +11,7 @@ let snippetSchema = new Schema({
     status: {type: String, required: true},
     workspace: {type: ObjectId, ref: 'Workspace'},
     reference: {type: ObjectId, ref: 'Reference', required: true},
-    creator: {type: ObjectId, ref: 'User', required: true},
+    creator: {type: ObjectId, ref: 'User'},
     
     // DEPRECATED 
     startLine: {type: Number},
