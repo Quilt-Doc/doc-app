@@ -1,0 +1,36 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "backend of DocApp",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.699.0",
+    "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "cookie-session": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
+    "fs-path": "0.0.24",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.8.7",
+    "morgan": "^1.9.1",
+    "nodemon": "^2.0.2",
+    "passport": "^0.4.1",
+    "passport-github2": "^0.1.12",
+    "request": "^2.88.0",
+    "uuid": "^8.1.0",
+    "xml2js": "^0.4.23",
+    "xmldom": "^0.3.0"
+  },
+  "optionalDependencies": {
+    "node-windows": "^1.0.0-beta.1"
+  }
+}

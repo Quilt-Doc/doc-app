@@ -1,0 +1,3 @@
+export const ADD_SELECTED = 'ADD_SELECTED';
+export const DELETE_SELECTED= 'DELETE_SELECTED';
+export const CLEAR_SELECTED = 'CLEAR_SELECTED';
