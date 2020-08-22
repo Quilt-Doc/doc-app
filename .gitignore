@@ -3,6 +3,9 @@
 **/_DS_Store
 **/.swp
 
+# Don't include build artifacts
+**/build*
+backend/semantic*
 # Don't include credentials
 **/.env
 
