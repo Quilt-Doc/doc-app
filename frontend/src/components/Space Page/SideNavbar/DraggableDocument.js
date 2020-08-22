@@ -96,11 +96,6 @@ const DraggableDocument = (props) => {
 			isDragging: !!monitor.isDragging()
 		}),
 	})
-<<<<<<< HEAD
-	//console.log(document.path)
-=======
-
->>>>>>> 0d528e190e5c692eb4c623cd2da7450f9ff4aa72
     return (
 		
 		<>
