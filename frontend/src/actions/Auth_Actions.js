@@ -11,7 +11,11 @@ import Cookies from 'js-cookie';
 export const checkLogin = () => async (dispatch) => {
     console.log('User-JWT Cookie: ');
     console.log(Cookies.get('user-jwt'));
-
+    
+    console.log('apiEndpoint: ', apiEndpoint);
+    console.log('api: ');
+    console.log(api);
+    
     const response = await api.get('/auth/login/success', { withCredentials: true });
 
     console.log('Headers: ');
