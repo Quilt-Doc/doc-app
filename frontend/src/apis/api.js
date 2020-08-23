@@ -4,6 +4,7 @@ var apiEndpoint;
 
 if(process.env.NETLIFY_API_URL) { 
     apiEndpoint = process.env.NETLIFY_API_URL;
+    console.log('Using Netlify URL');
 }
 else { 
    apiEndpoint = process.env.REACT_APP_LOCAL_URL;

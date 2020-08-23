@@ -176,12 +176,13 @@ router.get('/auth/github2', function(req, res, next) {
     console.log("REQUEST", req.headers);
 });
 router.get('/auth/github/redirect', passport.authenticate("github"), function(req, res){
+                                            console.log('Request Host: ', req.get('host'));
                                             if (req.query.state === "installing") {
                                                 res.redirect(`${CLIENT_HOME_PAGE_URL}?create=true`);
                                             } else {
                                                 res.redirect(CLIENT_HOME_PAGE_URL);
                                             }
-                                        })
+                                        });
 router.post('/auth/check_installation', auth_controller.checkInstallation);
 router.post('/auth/retrieve_domain_repositories', auth_controller.retrieveDomainRepositories)
 router.get('/auth/start_jira_auth', auth_controller.startJiraAuthRequest);
