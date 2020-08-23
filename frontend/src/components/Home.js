@@ -21,7 +21,7 @@ import { api, apiEndpoint } from '../apis/api';
 class Home extends React.Component {
 
     componentDidMount(){
-        this.props.checkLogin()
+        // this.props.checkLogin()
     }
     
     goLogin = () => {
