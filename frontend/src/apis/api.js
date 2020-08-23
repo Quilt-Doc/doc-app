@@ -2,14 +2,16 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 var apiEndpoint;
 
-if(process.env.NETLIFY_API_URL) { 
-    apiEndpoint = process.env.NETLIFY_API_URL;
+console.log('Running!');
+if(process.env.REACT_APP_NETLIFY_API_URL) { 
+    apiEndpoint = process.env.REACT_APP_NETLIFY_API_URL;
     console.log('Using Netlify URL');
 }
 else { 
+   console.log('SET');
    apiEndpoint = process.env.REACT_APP_LOCAL_URL;
 }
-
+console.log('apiEndpoint: ', apiEndpoint);
 
 var api = axios.create({
     baseURL: apiEndpoint,
