@@ -3,7 +3,6 @@ const url = require('url');
 var request = require("request");
 
 const apis = require('../apis/api');
-const parseUtils = require('../utils/parse_code');
 
 const jobs = require('../apis/jobs');
 
@@ -288,35 +287,6 @@ getRepositoryFile = async (req, res) => {
 
 }
 
-parseRepositoryFile = (req, res) => {
-    
-    //console.log(process.env);
-    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
-        return res.json({success: false, error: 'doxygen disabled on this backend'});
-    }
-
-    var { fileContents, fileName } = req.body;
-    console.log('parseRepositoryFile received content: ', req.body);
-    if (typeof fileContents == 'undefined' || fileContents == null) return res.json({success: false, error: 'no repo fileContents provided'});
-    if (typeof fileName == 'undefined' || fileName == null) return res.json({success: false, error: 'no repo fileName provided'});
-
-    fileName = Date.now() + '_' + fileName;
-
-    fsPath.writeFile('doxygen_input/' + fileName, fileContents, function (err) {
-        if (err) return console.log(err);
-        console.log('File written to: ', fileName);
-        var dir = './doxygen_xml';
-
-        if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
-        }
-
-        parseUtils.parseCode(fileName, res);
-
-    });
-
-}
-
 
 getRepositoryRefs = (req, res) => {
 
@@ -527,7 +497,7 @@ pollRepositories = async (req, res) => {
 }
 
 module.exports = {
-    refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
+    refreshRepositoryPath, getRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
     createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories, pollRepositories
 }
 

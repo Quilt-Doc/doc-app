@@ -144,7 +144,7 @@ const requestNewInstallationToken = async (appToken, installationId) => {
         console.log(response);
         var newToken = response.data;
         newToken = {value: newToken.token, expireTime: Date.parse(newToken.expires_at)}
-        
+
         newToken.installationId = installationId;
         newToken.type = 'INSTALL';
         newToken.status = 'RESOLVED';

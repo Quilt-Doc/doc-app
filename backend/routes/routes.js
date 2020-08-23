@@ -4,6 +4,79 @@ const CLIENT_HOME_PAGE_URL = "http://localhost:3000/workspaces";
 
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+
+var jwt = require('jsonwebtoken');
+/*
+router.get('/auth/login/success', auth_controller.loginSuccess);
+router.get('/auth/login/failed', auth_controller.loginFailed);
+router.get('/auth/logout', auth_controller.logout);
+router.get('/auth/github', passport.authenticate("github"));
+router.get('/auth/github2', function(req, res, next) { 
+    console.log("REQUEST", req.headers);
+});
+*/
+const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/auth/github2', '/auth/github/redirect',
+                      '/auth/login/success/', '/auth/login/failed/', '/auth/github/', '/auth/github2/', '/auth/github/redirect/'];
+
+
+/*router.use(function (req, res, next) {
+    console.log('Time:', Date.now());
+    console.log('REQ.PATH: ', req.path);
+    console.log('Req Headers: ');
+    console.log(req.headers);
+
+    const authHeader = req.headers.authorization;
+
+    if (nonAuthPaths.indexOf(req.path) > -1) {
+        console.log('nonAuth path detected');
+        next();
+        return;
+    }
+    else {
+        console.log('Auth path');
+    }
+
+    console.log('Cookies: ');
+    console.log(req.cookies);
+
+    // Get token
+    var token = undefined;
+    if (authHeader) {
+        token = authHeader.split(' ')[1];
+    }
+    else if (req.cookies['user-jwt']) {
+        token = req.cookies['user-jwt'];
+    }
+
+    else {
+        console.log('No JWT provided');
+        return res.status(401).json({
+            authenticated: false,
+            message: "user has not been authenticated"
+        });
+    }
+
+    var cert = fs.readFileSync('docapp-test.pem', 'utf8');
+    try {
+        console.log('About to decode JWT');
+        var decoded = jwt.verify(token, cert);
+        console.log('decoded JWT: ');
+        console.log(decoded);
+    }
+    catch(err) {
+        console.log('JWT Verify Failed');
+        return res.status(403);
+    }
+
+    console.log('successfully authenticated');
+    next();
+});*/
+
+
+
+const authenticateJWT = (req, res, next) => {
+};
 
 //base routes
 
@@ -68,7 +141,6 @@ const repository_controller = require('../controllers/RepositoryController');
 router.post('/repositories/refresh_path', repository_controller.refreshRepositoryPath)
 router.post('/repositories/refresh_path_new', repository_controller.refreshRepositoryPathNew);
 router.post('/repositories/get_file', repository_controller.getRepositoryFile);
-router.post('/repositories/parse_file', repository_controller.parseRepositoryFile);
 router.post('/repositories/get_refs', repository_controller.getRepositoryRefs);
 router.post('/repositories/create', repository_controller.createRepository);
 router.post('/repositories/retrieve', repository_controller.retrieveRepositories);
@@ -102,7 +174,6 @@ router.get('/auth/logout', auth_controller.logout);
 router.get('/auth/github', passport.authenticate("github"));
 router.get('/auth/github2', function(req, res, next) { 
     console.log("REQUEST", req.headers);
-    
 });
 router.get('/auth/github/redirect', passport.authenticate("github"), function(req, res){
                                             if (req.query.state === "installing") {

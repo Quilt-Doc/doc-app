@@ -4,6 +4,8 @@ const client = require("../../apis/api").requestClient();
 const AuthRequest = require('../../models/authentication/AuthRequest');
 const querystring = require('querystring');
 
+const { createJWTToken } = require('../../utils/jwt');
+
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -19,6 +21,20 @@ checkValid = (item) => {
 loginSuccess = (req, res) => {
     console.log("REQ USER", req.user)
     if (req.user) {
+        console.log('req.user: ');
+        console.log(req.user);
+        
+        // If they don't have a JWT yet, let's make one for them
+        if (!req.cookies['user-jwt']) {
+            
+        }
+        // res.cookie('token', {"backend-cookie": "cookie-magic"}, { httpOnly: true });
+
+       var jwtToken = createJWTToken(req.user.username, req.user.profileId);
+
+       res.cookie('user-jwt', jwtToken, { httpOnly: true });
+
+        // req.cookies['token'] = {"user-jwt": jwtToken};
         return res.json({
             success: true,
             authenticated: true,
@@ -26,7 +42,7 @@ loginSuccess = (req, res) => {
             user: req.user,
             cookies: req.cookies
         });
-    } 
+    }
     return res.json({
         success: false,
         authenticated: false,

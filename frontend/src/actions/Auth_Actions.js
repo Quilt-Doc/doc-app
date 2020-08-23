@@ -5,10 +5,19 @@ import {
 } from './types/Auth_Types';
 
 import { api, apiEndpoint } from '../apis/api';
+import Cookies from 'js-cookie';
 
 
 export const checkLogin = () => async (dispatch) => {
-    const response = await api.get('/auth/login/success', { withCredentials: true })
+    console.log('User-JWT Cookie: ');
+    console.log(Cookies.get('user-jwt'));
+
+    const response = await api.get('/auth/login/success', { withCredentials: true });
+
+    console.log('Headers: ');
+    console.log(response.headers);
+    console.log(response.data);
+
     dispatch({ type: CHECK_LOGIN, payload: response.data });
 }
 
