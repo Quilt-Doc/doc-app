@@ -36,7 +36,6 @@ const requestSQSServiceObject = () => {
 
 
 createJWTToken = () => {
-    
     const now = new Date().getTime();
     //Get timestamp in seconds
     const timeNow = Math.round(now / 1000);
@@ -51,7 +50,7 @@ createJWTToken = () => {
       // JWT expiration time (10 minute maximum)
       exp: expirationTime,
       // GitHub App's identifier
-      iss: process.env.GITHUB_APP_Id
+      iss: process.env.GITHUB_APP_ID
     }
 
     var private_key = fs.readFileSync(process.env.GITHUB_APP_PRIVATE_KEY_FILE, 'utf8');
@@ -60,7 +59,9 @@ createJWTToken = () => {
         value: jwt.sign(payload, private_key, { algorithm: 'RS256' }),
         expireTime: expirationTime,
     }
-
+    // return {token: newToken};
+    console.log('createJWTToken Returning: ');
+    console.log(newToken);
     return newToken;
 
 }
@@ -83,9 +84,11 @@ const requestAppToken = async () => {
         if (!token) {
             console.log('Creating new token');
             token = createJWTToken();
+            console.log('Trying to save token: ', token);
             token.installationId = -1;
             token.type = 'APP';
             token.status = 'RESOLVED';
+            console.log('Trying to save token: ', token);
             tokenToSave = new Token(token);
             tokenToSave.save((err, savedToken) => {
                 if (err) {

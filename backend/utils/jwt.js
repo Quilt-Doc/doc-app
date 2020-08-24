@@ -2,7 +2,7 @@ var jwt = require('jsonwebtoken');
 
 const fs = require('fs');
 
-createJWTToken = (username, profileId) => {
+createUserJWTToken = (username, profileId) => {
 
     const now = new Date().getTime();
     const timeNow = Math.round(now / 1000);
@@ -24,5 +24,5 @@ createJWTToken = (username, profileId) => {
 }
 
 module.exports = {
-    createJWTToken
+  createUserJWTToken
 }

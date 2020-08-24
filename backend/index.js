@@ -86,15 +86,12 @@ app.use(function (req, res, next) {
   console.log('Time:', Date.now());
   req.path = req.path.trim();
   console.log('REQ.PATH:' + req.path);
-  console.log('Req Headers: ');
-  console.log(req.headers);
 
   const authHeader = req.headers.authorization;
 
   var isNonAuthPath = false;
   var i;
   for (i = 0; i < nonAuthPaths.length; i++) {
-    console.log('Comparing nonAuthPaths[i]: ', nonAuthPaths[i]);
     if (req.path.includes(nonAuthPaths[i])) {
       isNonAuthPath = true;
       break;
@@ -110,8 +107,8 @@ app.use(function (req, res, next) {
       console.log('Auth path');
   }
 
-  console.log('Cookies: ');
-  console.log(req.cookies);
+  // console.log('Cookies: ');
+  // console.log(req.cookies);
 
   // Get token
   var token = undefined;
@@ -130,10 +127,10 @@ app.use(function (req, res, next) {
           message: "user has not been authenticated"
       });
   }
-  console.log('TOKEN: ', token);
+  // console.log('TOKEN: ', token);
 
   var publicKey = fs.readFileSync('docapp-test-public.pem', 'utf8');
-  console.log('publicKey: ', publicKey);
+  // console.log('publicKey: ', publicKey);
   try {
       console.log('About to decode JWT');
       var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });

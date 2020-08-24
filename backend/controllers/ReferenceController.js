@@ -68,8 +68,8 @@ getReferences = (req, res) => {
             ]
         }
         ).sort('kind').exec(function(err, references) {
-        console.log('results: ')
-        console.log(references);
+        // console.log('results: ')
+        // console.log(references);
         res.json(references);
     });
 }
@@ -203,7 +203,7 @@ retrieveReferences = async (req, res) => {
 
     query.populate('tags').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
-        console.log("REFERENCES", references)
+        // console.log("REFERENCES", references)
         return res.json(references);
     
     });

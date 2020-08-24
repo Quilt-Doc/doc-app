@@ -245,8 +245,8 @@ refreshRepositoryPathNew = (req, res) => {
 
 getRepositoryFile = async (req, res) => {
     var { fullName, installationId, pathInRepo, referenceId } = req.body;
-    if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
-    if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
+    // if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
+    // if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
     if ((typeof pathInRepo == 'undefined' || pathInRepo == null)
         && (typeof referenceId == 'undefined' || referenceId == null)) {
         return res.json({success: false, error: 'no repo pathInRepo and referenceId provided'});
@@ -254,16 +254,16 @@ getRepositoryFile = async (req, res) => {
 
     var referencePath = null;
     if (referenceId) {
-        const reference = await Reference.findById(ObjectId(referenceId));
+        const reference = await Reference.findOne({_id: referenceId}).populate('repository');
         referencePath = reference.path;
-    }
-
-    if (referencePath) {
         pathInRepo = referencePath;
+        fullName = reference.repository.fullName;
+        installationId = reference.repository.installationId;
     }
 
 
-    var installationClient = await apis.requestInstallationClient(installationId);
+    // var installationClient = await apis.requestInstallationClient(installationId);
+    var installationClient = await apis.requestInstallationClient(11148646);
     var fileResponse = await installationClient.get(`/repos/${fullName}/contents/${pathInRepo}`)
             .catch(err => {
                 return res.json({success: false, error: 'getRepositoryFile error fetching fileSha: ' + err});

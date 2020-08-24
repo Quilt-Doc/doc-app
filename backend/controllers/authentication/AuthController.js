@@ -4,7 +4,7 @@ const client = require("../../apis/api").requestClient();
 const AuthRequest = require('../../models/authentication/AuthRequest');
 const querystring = require('querystring');
 
-const { createJWTToken } = require('../../utils/jwt');
+const { createUserJWTToken } = require('../../utils/jwt');
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -30,7 +30,7 @@ loginSuccess = (req, res) => {
         }
         // res.cookie('token', {"backend-cookie": "cookie-magic"}, { httpOnly: true });
 
-       var jwtToken = createJWTToken(req.user.username, req.user.profileId);
+       var jwtToken = createUserJWTToken(req.user.username, req.user.profileId);
 
        res.cookie('user-jwt', jwtToken, { httpOnly: true });
 
