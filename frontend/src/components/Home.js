@@ -14,6 +14,9 @@ import Dashboard from './Dashboard';
 import CreateWorkspaceView from "../components/Workspace Page/CreateWorkspaceView";
 import OnboardingView from '../components/Onboarding Page/OnboardingView';
 import LoginView from '../components/Login Page/LoginView';
+
+import { api, apiEndpoint } from '../apis/api';
+
 //css -- needs to be thrown later
 
 
@@ -25,7 +28,7 @@ class Home extends React.Component {
     }
     
     goLogin = () => {
-        window.open("http://localhost:3001/api/auth/github", "_self");
+        window.open(apiEndpoint + "/auth/github", "_self");
     }
 
     renderLoginModal() {

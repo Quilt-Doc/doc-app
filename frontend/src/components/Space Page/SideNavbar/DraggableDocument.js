@@ -97,7 +97,6 @@ const DraggableDocument = (props) => {
 			isDragging: !!monitor.isDragging()
 		}),
 	})
-
     return (
 		
 		<>

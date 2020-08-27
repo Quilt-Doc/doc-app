@@ -3,7 +3,6 @@ const url = require('url');
 var request = require("request");
 
 const apis = require('../apis/api');
-const parseUtils = require('../utils/parse_code');
 
 const jobs = require('../apis/jobs');
 
@@ -246,8 +245,8 @@ refreshRepositoryPathNew = (req, res) => {
 
 getRepositoryFile = async (req, res) => {
     var { fullName, installationId, pathInRepo, referenceId } = req.body;
-    if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
-    if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
+    // if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
+    // if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
     if ((typeof pathInRepo == 'undefined' || pathInRepo == null)
         && (typeof referenceId == 'undefined' || referenceId == null)) {
         return res.json({success: false, error: 'no repo pathInRepo and referenceId provided'});
@@ -255,16 +254,16 @@ getRepositoryFile = async (req, res) => {
 
     var referencePath = null;
     if (referenceId) {
-        const reference = await Reference.findById(ObjectId(referenceId));
+        const reference = await Reference.findOne({_id: referenceId}).populate('repository');
         referencePath = reference.path;
-    }
-
-    if (referencePath) {
         pathInRepo = referencePath;
+        fullName = reference.repository.fullName;
+        installationId = reference.repository.installationId;
     }
 
 
-    var installationClient = await apis.requestInstallationClient(installationId);
+    // var installationClient = await apis.requestInstallationClient(installationId);
+    var installationClient = await apis.requestInstallationClient(11148646);
     var fileResponse = await installationClient.get(`/repos/${fullName}/contents/${pathInRepo}`)
             .catch(err => {
                 return res.json({success: false, error: 'getRepositoryFile error fetching fileSha: ' + err});
@@ -285,35 +284,6 @@ getRepositoryFile = async (req, res) => {
     var fileContent = Buffer.from(blobContent, 'base64').toString('binary');
 
     return res.json({success: true, fileContents: fileContent});
-
-}
-
-parseRepositoryFile = (req, res) => {
-    
-    //console.log(process.env);
-    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
-        return res.json({success: false, error: 'doxygen disabled on this backend'});
-    }
-
-    var { fileContents, fileName } = req.body;
-    console.log('parseRepositoryFile received content: ', req.body);
-    if (typeof fileContents == 'undefined' || fileContents == null) return res.json({success: false, error: 'no repo fileContents provided'});
-    if (typeof fileName == 'undefined' || fileName == null) return res.json({success: false, error: 'no repo fileName provided'});
-
-    fileName = Date.now() + '_' + fileName;
-
-    fsPath.writeFile('doxygen_input/' + fileName, fileContents, function (err) {
-        if (err) return console.log(err);
-        console.log('File written to: ', fileName);
-        var dir = './doxygen_xml';
-
-        if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
-        }
-
-        parseUtils.parseCode(fileName, res);
-
-    });
 
 }
 
@@ -539,7 +509,8 @@ retrieveInstallationRepositories = async (req, res) => {
 
 module.exports = {
     retrieveInstallationRepositories, 
-    refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
+    parseRepositoryFile, refreshRepositoryPathNew,
+    refreshRepositoryPath, getRepositoryFile, getRepositoryRefs,
     createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories, pollRepositories
 }
 
