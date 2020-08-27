@@ -10,8 +10,8 @@ export const retrieveReferences = (formValues) => async dispatch => {
     dispatch({ type: RETRIEVE_REFERENCES, payload: response.data });
 }
 
-export const localRetrieveReferences = (formValues) => async dispatch => {
-    const response = await api.post('/references/retrieve', formValues);
+export const localRetrieveReferences = (formValues) => async () => {
+    const response = await api.post('/references/retrieve_references_dropdown', formValues);
     return response.data;
 }
 

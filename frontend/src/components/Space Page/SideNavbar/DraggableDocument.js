@@ -20,6 +20,7 @@ import chroma from 'chroma-js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTag, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FiFileText, FiTrash } from 'react-icons/fi';
+import { RiFileList2Line, RiFileList2Fill } from 'react-icons/ri';
 import { GrMore } from 'react-icons/gr';
 import { IoIosMore } from 'react-icons/io';
 // find children and see lowest one -- only show that one
@@ -120,7 +121,7 @@ const DraggableDocument = (props) => {
 					{props.renderLeftIcon()}
 					
 					<IconBorder3>
-						<FiFileText style = {{marginRight: "1rem"}}/>
+						<RiFileList2Line style = {{fontSize: "1.5rem", marginRight: "1rem"}}/>
 					</IconBorder3>
 					
 					<Title  >{extractTitle(document)}</Title>

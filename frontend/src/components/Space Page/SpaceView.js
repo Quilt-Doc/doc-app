@@ -6,13 +6,16 @@ import styled from "styled-components";
 
 //components
 import TextEditorView from './Text Editor Page/TextEditorView';
+import ConnectView from './Connect Page/ConnectView';
 //import RepositoryView from './Repository Page/RepositoryView';
 import SideNavbar from './SideNavbar/SideNavbar';
 import RequestView from './Request Page/RequestView';
+import InsightsView from './Insights Page/InsightsView';
 import CodeView from './Code Editing Page/CodeView';
 import DocumentModal from './Document Creation Page/DocumentModal';
 import RequestModal from './Request Page/RequestModal';
 import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
+import TopNavbar from './TopNavbar';
 import { CSSTransition } from 'react-transition-group';
 
 //react-router
@@ -31,6 +34,7 @@ import DirectoryView from './Directory Navigation Page/DirectoryView';
 //icons
 import {FiFileText, FiGitPullRequest} from 'react-icons/fi'
 import {RiScissors2Line,RiSettings5Line, RiCodeSLine, RiPencilLine, RiPieChart2Line} from 'react-icons/ri'
+
 
 class SpaceView extends React.Component {
     constructor(props) {
@@ -85,16 +89,17 @@ class SpaceView extends React.Component {
                 >
                     <Container>
                         <SideNavbar/>
-                        
-                        <RightView id = {"rightView"} ref = {this.rightViewRef} onScroll = {this.onScroll}>
-                            <Switch history = {history}>
-                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
-                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { CodeView } />
-                                <Route path = "/workspaces/:workspaceId/document/:documentId" component = { TextEditorView } />
-                                <Route path = "/workspaces/:workspaceId/request" component = { RequestView } />
-                                <Route path = "/workspaces/:workspaceId/coverage" component = { RepositoryCoverageView } />
-                            </Switch>
-                        </RightView>
+
+                                <RightView id = {"rightView"} ref = {this.rightViewRef} onScroll = {this.onScroll}>
+                                    <Switch history = {history}>
+                                        <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
+                                        <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { CodeView } />
+                                        <Route path = "/workspaces/:workspaceId/document/:documentId" component = { TextEditorView } />
+                                        <Route path = "/workspaces/:workspaceId/insights" component = { InsightsView } />
+                                        <Route path = "/workspaces/:workspaceId/coverage" component = { RepositoryCoverageView } />
+                                        <Route path = "/workspaces/:workspaceId/connect" component = { ConnectView } />
+                                    </Switch>
+                                </RightView>
                        
                     </Container>
                     </CSSTransition>
@@ -194,7 +199,7 @@ const RightView = styled.div`
     overflow-y: scroll;
     height: calc(100vh - 5.5rem);
     z-index: 1;
-    background-color: #f7f9fb;
+  
 `
 
 

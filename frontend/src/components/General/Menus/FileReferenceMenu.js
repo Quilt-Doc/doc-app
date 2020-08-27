@@ -18,6 +18,8 @@ import { CSSTransition } from 'react-transition-group';
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCube, faPlus } from '@fortawesome/free-solid-svg-icons'
+import {RiCheckFill, RiGitRepositoryLine, RiFileFill, RiFileLine} from 'react-icons/ri'
+import {AiFillFolder} from 'react-icons/ai';
 
 //actions
 import { attachReference, removeReference } from '../../../actions/Document_Actions';
@@ -25,6 +27,7 @@ import { localRetrieveReferences } from '../../../actions/Reference_Actions';
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
+import { BiCube } from 'react-icons/bi';
 
 class FileReferenceMenu extends React.Component {
     
@@ -82,22 +85,33 @@ class FileReferenceMenu extends React.Component {
     }
 
     renderMarginTop() {
+        /*
         if (this.props.marginTop){
             return this.props.marginTop
         } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
             return "-30rem"
         } else {
             return "-5rem"
-        }
+        }*/
+        return 0;
     }
 
-    handleSelect(setBool, referenceId){
-        let documentId = this.props.document._id
-        if (setBool) {
-            this.props.removeReference(documentId, referenceId)
+    handleSelect(setBool, referenceId, reference){
+        if (!this.props.form){
+            let documentId = this.props.document._id
+            if (setBool) {
+                this.props.removeReference(documentId, referenceId)
+            } else {
+                this.props.attachReference(documentId, referenceId)
+            }
         } else {
-            this.props.attachReference(documentId, referenceId)
+            if (setBool) {
+                this.props.formRemoveReference(reference)
+            } else {
+                this.props.formAttachReference(reference)
+            }
         }
+     
     }
 
     async setPosition(e) {
@@ -107,7 +121,7 @@ class FileReferenceMenu extends React.Component {
             let ref = this.state.references[this.state.position]
             this.setState({loaded: false})
             let referenceIds = this.props.setReferences.map(reference => reference._id)
-            await this.handleSelect(referenceIds.includes(ref._id), ref._id)
+            await this.handleSelect(referenceIds.includes(ref._id), ref._id, ref)
             this.props.localRetrieveReferences({limit: 9, referenceIds, repositoryId}).then((references) => {
                 this.setState({loaded: true, search: '', references})
             })
@@ -128,41 +142,88 @@ class FileReferenceMenu extends React.Component {
         } 
     }
 
+    renderFolders(){
+
+    }
+
     renderListItems(setIds){
-        return this.state.references.map((ref, i) => {
+        let references = [...this.state.references];
+        references.sort((a, b) => {
+            if (a.name > b.name){
+                return 1
+            } else {
+                return -1
+            }
+        })
+
+        console.log("REFS", references);
+        let dirs = references.filter((ref) => {
+            return ref.kind === "dir"
+        })
+        let files = references.filter((ref) => {
+            return ref.kind === "file"
+        })
+
+        let jsx = []
+        let i = 0;
+        dirs.map((ref) => {
             let setBool = setIds.includes(ref._id)
-                //let icon =  ref.kind === 'dir' ? <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.3rem"}} name="folder-sharp"></ion-icon> 
-            //: <ion-icon style = {{marginRight: "0.5rem", fontSize: "1rem"}} name="document-outline"></ion-icon>; 
-            //let color = tag.color < this.colors.length ? this.colors[tag.color] : this.colors[this.colors.length % tag.color];
-            //let border = this.state.position === i ? `1px solid ${color}` : '';
-            //let shadow = this.state.position === i ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :'';
-           
-            return(
+            let temp = i
+            jsx.push(            
                 <ListItem 
-                    onClick = {() => {this.handleSelect(setBool, ref._id)}} 
-                    onMouseEnter = {() => {this.setState({position: i})}}
-                   
-                    backgroundColor = {this.state.position === i ? '#F4F4F6' : ""}
-                >
-                    {ref.kind === "file" ? <ion-icon 
-                        style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
-                        name="document-outline"></ion-icon> : 
-                        <ion-icon 
-                        style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
-                        name="folder"></ion-icon>}
+                    onClick = {() => {this.handleSelect(setBool, ref._id, ref)}} 
+                    onMouseEnter = {() => {this.setState({position: temp})}}
+                
+                    backgroundColor = {this.state.position === temp ? '#F4F4F6' : ""}
+                 >
+                    <AiFillFolder
+                        style = {{fontSize: "1.5rem", marginRight: "1rem"}} 
+                    />
                     {ref.name ? ref.name : "Untitled"}
-                    {setBool && <ion-icon 
-                        style = {{marginLeft: "auto", fontSize: "1.5rem"}} 
-                        name="checkmark-outline"></ion-icon>}
+                    {setBool && 
+                        <RiCheckFill
+                            style = {{ color: "#19e5be", marginLeft: "auto", fontSize: "2rem"}} 
+                        />
+                    }
                 </ListItem>
             )
+            i += 1;
         })
+
+        files.map((ref) => {
+            let setBool = setIds.includes(ref._id)
+            let temp = i
+            jsx.push(
+                <ListItem 
+                    onClick = {() => {this.handleSelect(setBool, ref._id, ref)}} 
+                    onMouseEnter = {() => {this.setState({position: temp})}}
+                
+                    backgroundColor = {this.state.position === temp ? '#F4F4F6' : ""}
+                 >
+                     <RiFileLine
+                            style = {{fontSize: "1.5rem", marginRight: "1rem"}}
+                    />
+                    {ref.name ? ref.name : "Untitled"}
+                    {setBool && 
+                        <RiCheckFill
+                            style = {{ color: "#19e5be", marginLeft: "auto", fontSize: "2rem"}} 
+                        />
+                    }
+                </ListItem>
+            )
+            i += 1;
+        })
+        return jsx;
     }
 
     openMenu(e){
         e.preventDefault()
         document.addEventListener('mousedown', this.handleClickOutside, false);
-        this.setState({open: true})
+        this.setState({
+            open: true, 
+            left: this.renderLeft(),
+            top: this.renderTop()
+        })
         let ids = this.props.setReferences.map(ref => ref._id)
         let repositoryId = this.props.document.repository._id
 
@@ -183,17 +244,43 @@ class FileReferenceMenu extends React.Component {
             position: -1})
     }
 
+
+    renderTop = () => {
+        if (this.addButton){
+            let {top, height} = this.addButton.getBoundingClientRect();
+            console.log(top + height - 100);
+            return top + height + 10;
+        }
+        return 0;
+    }
+
+    renderLeft = () => {
+        if (this.addButton){
+            let {left} = this.addButton.getBoundingClientRect();
+            
+            return left;
+        }
+        return 0;
+    }
+
     render() {
         let setIds = this.props.setReferences.map(ref => ref._id)
         return(
             <MenuContainer  >
-                    <AddBigButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
-                        <FontAwesomeIcon 
-                            icon={faCube}
-                            style = {{marginRight: "0.5rem"}}
-                        />
-                        Add References
-                    </AddBigButton> 
+                    {this.props.form ?
+                        <AddButton  onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
+                           <BiCube style = {{fontSize: "1.4rem", marginRight: "0.5rem"}}/>
+                           <Title>Add references</Title>
+                        </AddButton> :
+                        <AddBigButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
+                            <FontAwesomeIcon 
+                                icon={faCube}
+                                style = {{marginRight: "0.5rem"}}
+                            />
+                            Add References
+                        </AddBigButton> 
+                    }
+                   
                     <CSSTransition
                          in = {this.state.open}
                          unmountOnExit
@@ -202,14 +289,20 @@ class FileReferenceMenu extends React.Component {
                          timeout = {150}
                          classNames = "dropmenu"
                     >
-                        <Container marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
+                        <Container 
+                            
+                            top = {this.state.top}
+                            left = {this.state.left}
+                            marginTop = {this.renderMarginTop()} 
+                            ref = {node => this.node = node}
+                        >
                             <HeaderContainer>Add References</HeaderContainer>
                             <SearchbarContainer>
                                 <SearchbarWrapper 
                                     backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
                                     border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
                                 >
-                                    <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
+                                  
                                     <Searchbar 
                                         onFocus = {() => {this.setState({focused: true})}} 
                                         onBlur = {() => {this.setState({focused: false})}} 
@@ -241,6 +334,27 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { attachReference, removeReference, localRetrieveReferences })(FileReferenceMenu));
 
+const Title = styled.div`
+    font-weight: 500;
+`
+
+const AddButton = styled.div`
+    background-color: #363b49;
+    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
+    border-radius: 0.2rem;
+    font-size: 1.3rem;
+    padding: 0.4rem 1rem;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    &:hover {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    cursor: pointer;
+    
+`
+
 
 const AddBigButton = styled.div`
     background-color: #f4f7fa;
@@ -252,14 +366,16 @@ const AddBigButton = styled.div`
     border-radius: 4px;
     padding: 0.5rem 0.8rem;
     cursor: pointer;
+    
     &:hover {
         box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
         opacity: 1;
     }
     opacity: 1;
+    margin-bottom: 1rem;
 `
 
-
+/*
 const AddButton = styled.div`
     width: 2.3rem;
     height: 2.3rem;
@@ -274,7 +390,7 @@ const AddButton = styled.div`
         box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     }
     color: #172A4E;
-`
+`*/
 
 const NoneMessage = styled.div`
     font-size: 1.4rem;
@@ -288,7 +404,7 @@ const MenuContainer = styled.div`
 
 
 const Container = styled.div`
-    width: 24rem;
+    width: 30rem;
     display: flex;
     flex-direction: column;
     color: #172A4E;
@@ -296,10 +412,10 @@ const Container = styled.div`
     position: absolute;
     border-radius: 0.2rem;
     font-size: 1.4rem;
-    margin-top: -5rem;
     z-index: 2;
     background-color: white;
-    margin-top: ${props => props.marginTop};
+    top: ${props => props.top}px;
+    left: ${props => props.left}px;
 `
 
 const SearchbarContainer = styled.div`
@@ -311,7 +427,7 @@ const SearchbarContainer = styled.div`
 `
 
 const SearchbarWrapper = styled.div`
-    width: 22rem;
+    width: 28rem;
     height: 3.5rem;
     border: 1px solid  #E0E4E7;
     background-color: ${props => props.backgroundColor};
@@ -325,7 +441,6 @@ const SearchbarWrapper = styled.div`
 
 const Searchbar = styled.input`
     width: 18rem;
-    margin-left: 0.9rem;
     &::placeholder {
         color: #172A4E;
         opacity: 0.4;

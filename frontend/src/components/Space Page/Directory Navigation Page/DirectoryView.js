@@ -7,7 +7,7 @@ import chroma from 'chroma-js';
 
 //images and icons
 import doc_icon from '../../../images/doc-file.svg';
-import { FiFileText } from 'react-icons/fi';
+import { FiFileText, FiCode } from 'react-icons/fi';
 
 //components
 import DirectoryItem from './DirectoryItem';
@@ -17,6 +17,7 @@ import TagWrapper from '../../General/TagWrapper';
 import LabelMenu from '../../General/Menus/LabelMenu'
 import DocumentMenu from '../../General/Menus/DocumentMenu';
 import RepositoryMenu from '../../General/Menus/RepositoryMenu';
+import CodeInfo from './CodeInfo';
 
 //history
 import history from '../../../history';
@@ -28,6 +29,9 @@ import { getRepository } from '../../../actions/Repository_Actions';
 
 //connect
 import { connect } from 'react-redux';
+import { RiCodeSLine, RiFileCodeLine, RiCodeFill, RiFileCodeFill } from 'react-icons/ri';
+import { BiCode } from 'react-icons/bi';
+import {GoFileCode} from 'react-icons/go'
 
 class DirectoryView extends React.Component {
     constructor(props){
@@ -91,7 +95,7 @@ class DirectoryView extends React.Component {
             return (<DirectoryItem 
                         key = {directory._id} 
                         item = {directory}
-                        type = {'folder-sharp'}
+                        kind = {'dir'}
                         borderBottom = {borderBottom}
                     />    
                     )
@@ -109,7 +113,7 @@ class DirectoryView extends React.Component {
             return (<DirectoryItem 
                         key = {file._id} 
                         item = {file}
-                        type = {'document-outline'} 
+                        kind = {'file'}
                         borderBottom = {borderBottom}
                     />)
         })
@@ -156,6 +160,28 @@ class DirectoryView extends React.Component {
                     </DocumentItem>
         })
     }
+
+    renderLabelMenu = () => {
+        
+        return(
+            <LabelMenu 
+                attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                setTags = {this.props.currentReference.tags}//this.props.request.tags}
+                marginTop = {"1rem"}
+                dirview = {true}
+            />
+        )
+    }
+
+    renderDocumentMenu = () => {
+        return(
+            < DocumentMenu
+                setDocuments = {this.props.documents}
+                reference = {this.props.currentReference}
+            />
+        )
+    }
 //{this.renderHeader()}
     render() {
         let { referenceId, workspaceId, repositoryId } = this.props.match.params
@@ -165,35 +191,30 @@ class DirectoryView extends React.Component {
         return (
             <>
                 { this.state.loaded && this.props.currentReference ?
-                        <>
-                            <Info>
-                                <Header>
-                                    <RepositoryMenu 
-                                        name = {this.props.currentRepository.fullName.split("/")[1]}
-                                    />
-                                    {this.renderHeaderPath()}
-                                </Header>
-                                <ReferenceContainer>
-                                    {this.props.currentReference && this.props.currentReference.tags && this.props.currentReference.tags.length > 0 ? 
-                                        this.renderTags() : <></>}
-                                </ReferenceContainer>
-                                <ReferenceContainer>
-                                    {this.props.documents && this.props.documents.length > 0 ? this.renderDocuments() : <NoneMessage>None yet</NoneMessage>}
-                                    
-                                </ReferenceContainer>
-                           
-                            </Info>
-                                <DirContainer>
-                                    <DirectoryContainer>
-                                        <ListToolBar>
-                                            <ListName><b>8</b>&nbsp; documents</ListName>
-                                            <ListName><b>15</b>&nbsp; snippets</ListName>
-                                        </ListToolBar>
-                                        {this.renderFolders()}
-                                        {this.renderFiles()}
-                                    </DirectoryContainer>
-                                </DirContainer>
-                            </>
+                        <Background>
+                            <CodeInfo
+                                currentRepository = {this.props.currentRepository}
+                                currentReference = {this.props.currentReference }
+                                documents = {this.props.documents }
+                                renderLabelMenu = {this.renderLabelMenu}
+                                renderDocumentMenu = {this.renderDocumentMenu}
+                                redirectPath = {(path) => this.redirectPath(path)}
+                            />
+                            <DirectoryContainer>
+                                <ListToolBar>
+                                    <GoFileCode
+                                        style= {{
+                                            fontSize: "1.8rem", marginRight: "0.7rem"}} />
+                                    backend.js
+                                    <Statistics>
+                                        <ListName><b>8</b>&nbsp; documents</ListName>
+                                        <ListName><b>15</b>&nbsp; snippets</ListName>
+                                    </Statistics>
+                                </ListToolBar>
+                                {this.renderFolders()}
+                                {this.renderFiles()}
+                            </DirectoryContainer>
+                        </Background>
                             
                     : <>
                             <Loader
@@ -275,6 +296,15 @@ const mapStateToProps = (state, ownProps) => {
 
 export default connect(mapStateToProps, { retrieveReferences, editReference, retrieveDocuments, getRepository, getReferenceFromPath, attachTag, removeTag } )(DirectoryView);
 
+const Background = styled.div`
+    background-color:#f7f9fb;
+    min-height: 100%;
+    padding-bottom: 5rem;
+    /*
+    padding-left: 8rem;
+    padding-right: 8rem;
+    */
+`
 
 const Slash = styled.div`
     margin-left: 1rem;
@@ -320,7 +350,7 @@ const DirContainer = styled.div`
     display: flex;
     flex-direction: column;
     /*border: 1px solid #DFDFDF;*/
-    border-top: 1px solid #E0E4E7;
+   /* border-top: 1px solid #E0E4E7;*/
     z-index: 0;
 `
 
@@ -442,20 +472,28 @@ const DirectoryContainer = styled.div`
     border-radius: 0.4rem;
     padding-bottom: 0.1rem;
     align-self: stretch;
-    
+   
 
     min-width: 80rem;
+    margin-left: 8rem;
+    margin-right: 8rem;
 `
 
 
 const ListToolBar = styled.div`
-   
+    font-size: 1.5rem;
     height: 4.5rem;
     display: flex;
-   
+    font-weight: 500;
     align-items: center;
     border-bottom: 1px solid #EDEFF1;
-   
+    padding: 0rem 3rem;
+`
+
+const Statistics = styled.div`
+    margin-left: auto; 
+    display: flex;
+    align-items: center;
 `
 
 const ListName = styled.div`

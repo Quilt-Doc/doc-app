@@ -22,6 +22,11 @@ var urljoin = require('url-join');
     dispatch({ type: REPO_SEARCH, payload: response.data });
 }*/
 
+export const retrieveInstallationRepositories = (formValues) => async () => {
+    const response = await api.post('/repositories/retrieve_installed', formValues );
+    return response.data
+}
+
 export const refreshRepositoryPath = (formValues) => async (dispatch) => {
     console.log('formValues: ', formValues);
     const response = await api.post('/repositories/refresh_path', formValues );

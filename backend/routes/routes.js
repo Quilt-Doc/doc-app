@@ -22,6 +22,7 @@ router.put('/references/remove_tag/:id', reference_controller.removeTag);
 router.post('/references/retrieve',  reference_controller.retrieveReferences);
 router.post('/references/get_contents', reference_controller.getContents);
 router.post('/references/retrieve_code_references', reference_controller.retrieveCodeReferences);
+router.post('/references/retrieve_references_dropdown', reference_controller.retrieveReferencesDropdown);
 // DEPRECATED
 /*
 router.post('/references/attach_document',  reference_controller.attachDocument);
@@ -77,6 +78,8 @@ router.post('/repositories/validate', repository_controller.validateRepositories
 router.post('/repositories/poll', repository_controller.pollRepositories);
 router.get('/repositories/get/:id', repository_controller.getRepository);
 router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
+router.post('/repositories/retrieve_installed', repository_controller.retrieveInstallationRepositories);
+
 
 const workspace_controller = require('../controllers/WorkspaceController');
 router.post('/workspaces/create', workspace_controller.createWorkspace);
@@ -106,7 +109,7 @@ router.get('/auth/github2', function(req, res, next) {
 });
 router.get('/auth/github/redirect', passport.authenticate("github"), function(req, res){
                                             if (req.query.state === "installing") {
-                                                res.redirect(`${CLIENT_HOME_PAGE_URL}?create=true`);
+                                                res.redirect(`http://localhost:3000/installed`);
                                             } else {
                                                 res.redirect(CLIENT_HOME_PAGE_URL);
                                             }

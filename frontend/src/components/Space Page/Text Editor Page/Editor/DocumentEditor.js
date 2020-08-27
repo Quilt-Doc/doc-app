@@ -7,13 +7,14 @@ import { Editor, Transforms, Node, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import withFunctionality from '../Slate_Specific/WithFunctionality'
 import scrollIntoView from 'scroll-into-view-if-needed'
+import TextareaAutosize from 'react-textarea-autosize'
 
 //components
 import Leaf from '../Slate_Specific/Leaf';
 import Element from '../Slate_Specific/Element';
-import InfoBar from '../InfoBar';
 import Sidebar from './Sidebar';
 import DocumentInfo from './DocumentInfo';
+import DocumentOptionsMenu from '../../../General/Menus/DocumentOptionsMenu';
 
 //reducer
 import editorReducer from './EditorReducer';
@@ -186,15 +187,18 @@ const DocumentEditor = (props) => {
 									<KeyBorder active = {write} onClick = {() => {setWrite(!write)}}>
 										<RiPencilLine/>
 									</KeyBorder>
-									
-									<KeyBorder2>
-										<GrMore/>
-									</KeyBorder2>
+									<DocumentOptionsMenu document = {props.document}/>
 								</KeyToolbar>
 									 <DocumentInfo write  = {write} />
 									<MarkupMenu dispatch={dispatch} range={range} state={state} scrollTop={props.scrollTop} />
-									<Header  paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
-									<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>
+									{write ? 
+										<Header autoFocus paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
+										:
+										<HeaderDiv active = {props.title} paddingLeft = {"10rem"}>{props.title ? props.title : "Untitled"}</HeaderDiv>
+									}
+									
+									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}
+									
 									<StyledEditable
 										onClick={() => {
 											if (state.markupMenuActive) {
@@ -209,7 +213,10 @@ const DocumentEditor = (props) => {
 										renderLeaf={renderLeaf}
 										spellCheck="false"
 										decorate={decorate}
+										
+										readOnly = {!props.write}
 									/>
+									
 							</EditorContainer2>
 					</EditorContainer>
 				</Container>
@@ -523,7 +530,27 @@ const Reference = styled.div`
 `
 
 
+const KeyBorder = styled.div`
+	
+	width: 3rem;
+	height: 3rem;
+	margin-left: ${props => props.margin ? "auto": "0.5rem"};
+	display: flex;
+	align-items: center;
+	border-radius: 0.3rem;
+	justify-content: center;
+	font-size: 2.1rem;
+	cursor: pointer;
 
+	
+    &:hover {
+        background-color: #eeeef1;
+    }
+    background-color: ${props => props.active ? "#eeeef1": ""};
+	
+`
+
+/*
 const KeyBorder = styled.div`
 	display: flex;
 	align-items: center;
@@ -539,19 +566,23 @@ const KeyBorder = styled.div`
 	cursor: pointer;
 	margin-left: 1.5rem;
 	border-radius: 0.3rem;
-`
+`*/
 
 const KeyBorder2 = styled.div`
+	width: 3rem;
+	height: 3rem;
+	background-color: #f7f9fb;
+	margin-left: ${props => props.margin ? "auto": "0.5rem"};
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 3rem;
-	height: 3rem;
+
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 	font-size: 1.9rem;
+
 	&:hover {
 		background-color: #eeeef1;
 	}
-
 	
 	cursor: pointer;
 	margin-left: 1rem;
@@ -563,7 +594,7 @@ const KeyToolbar = styled.div`
 	align-items: center;
 	margin-left: auto;
 	background-color: white;
-	padding: 1.5rem 1.5rem;
+	padding: 2rem 2rem;
 	
 `
 
@@ -589,11 +620,42 @@ const EditorContainer = styled.div`
 	border-radius: 0.2rem;
 `
 
-const Header = styled.input`
-    font-size: 3rem;
+const HeaderDiv = styled.div`
+	font-size: 3.3rem;
+	color: #172A4E;
+	margin-bottom: 2rem;
+	margin-top: 3.5rem;
+	padding-left: ${props => props.paddingLeft};
+	padding-right: 10rem;
+	font-weight: 500;
+	opacity: ${props => props.active ?  1 : 0.4};
+	line-height: 4rem;
+`
+
+const Header = styled(TextareaAutosize)`
+	font-size: 3.3rem;
     color: #172A4E;
     margin-bottom: 2rem;
-    ::placeholder {
+    &::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+	}
+	resize: none;
+    outline: none;
+    border: none;
+	margin-top: 3.5rem;
+	padding-left: ${props => props.paddingLeft};
+	padding-right: 10rem;
+	font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+	line-height: 4rem;
+	font-weight: 500;
+`
+/*
+const Header = styled.input`
+    font-size: 3.3rem;
+    color: #172A4E;
+    margin-bottom: 0.5rem;
+    &::placeholder {
         color: #172A4E;
         opacity: 0.4;
     }
@@ -601,9 +663,10 @@ const Header = styled.input`
     border: none;
 	margin-top: 3.5rem;
 	padding-left: ${props => props.paddingLeft};
-  	padding-right: 10rem;
+	padding-right: 10rem;
+	font-weight: 500;
 `
-
+*/
 
 const StyledEditable = styled(Editable)`
   line-height: 1.5 !important;

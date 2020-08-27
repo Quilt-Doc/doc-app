@@ -117,6 +117,30 @@ class ToolIcon extends React.Component {
         this.closeMenu() 
     }
 
+    convertRemToPixels = (rem) => {    
+		return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    }
+    
+    renderMarginTop = () => {
+        if (this.tool) {
+            if (this.tool.getBoundingClientRect().top + this.convertRemToPixels(14) 
+                > window.innerHeight
+            ) {
+                return -20
+            }
+        }
+    }
+
+    renderMarginLeft = () => { 
+        if (this.tool) {
+            if (this.tool.getBoundingClientRect().left - this.convertRemToPixels(18) 
+                < document.getElementById("sidenavbar").clientWidth
+            ) {
+                return -1
+            }
+        }
+    }
+
     render(){
         let {top, editor} = this.props
         let {open} = this.state
@@ -129,6 +153,7 @@ class ToolIcon extends React.Component {
 
         return(
             <BlockTool 
+                ref = {tool => this.tool = tool}
                 onMouseDown = {(e) => {this.openMenu(e)}} 
                 top = {top ? top : 0}
                 active = {open}
@@ -143,7 +168,11 @@ class ToolIcon extends React.Component {
                 classNames = "dropmenu"
                 >
                     
-                <BlockMenu  ref = {node => this.node = node}>
+                <BlockMenu 
+                    marginTop = {this.renderMarginTop()}
+                    marginLeft = {this.renderMarginLeft()}
+                    ref = {node => this.node = node}
+                >
                    
                     <SmallHeaderContainer  
                         onClick = {() => this.insertNode(path)}
@@ -314,10 +343,13 @@ const BlockMenu = styled.div`
     z-index: 0;
     box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     margin-top: 30rem;
-    margin-left: -14rem;
+    margin-left: -15.5rem;
+    margin-left: ${props => {return props.marginLeft}}rem;
+    margin-top: ${props => props.marginTop}rem;
     border-radius: 0.2rem;
     overflow-y: scroll;
     padding-bottom: 1rem;
+
 `
 
 const BlockTool = styled.div`

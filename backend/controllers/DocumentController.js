@@ -116,6 +116,10 @@ createDocument = async (req, res) => {
         document.references = referenceIds.map(referenceId => ObjectId(referenceId))
     }
 
+    if (checkValid(tagIds)) {
+        document.tags = tagIds.map(tagId => ObjectId(tagId))
+    }
+
     if (checkValid(childrenIds)){
         document.children = childrenIds.map(childrenId => ObjectId(childrenId))
     }

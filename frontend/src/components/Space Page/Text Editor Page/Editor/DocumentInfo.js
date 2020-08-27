@@ -19,7 +19,8 @@ import { connect } from 'react-redux';
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCube, faTag} from '@fortawesome/free-solid-svg-icons'
-import {RiGitRepositoryLine} from 'react-icons/ri'
+import {RiGitRepositoryLine, RiFileFill} from 'react-icons/ri'
+import {AiFillFolder} from 'react-icons/ai';
 
 //router
 import { withRouter } from 'react-router-dom';
@@ -33,7 +34,7 @@ class DocumentInfo extends React.Component {
     renderFullName(){
         console.log(this.props.document.repository)
         let split = this.props.document.repository.fullName.split("/")
-        return `${split[0]} / ${split[1]}`
+        return `${split[1]}`
        
     }
 
@@ -47,10 +48,8 @@ class DocumentInfo extends React.Component {
 
         return directories.map((directory, i) => {
             return ( <Reference>
-                            <ion-icon name="folder"
-                            style = {
-                                {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
-                            {directory.name}
+                            <AiFillFolder style = {{marginRight: "0.5rem"}}/>
+                            <Title>{directory.name}</Title>
                     </Reference>
                     )
         })
@@ -66,10 +65,8 @@ class DocumentInfo extends React.Component {
         return files.map((file, i) => {
             return (
                 <Reference>
-                    <ion-icon name="document-outline"
-                    style = {
-                        {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
-                   {file.name}
+                    <RiFileFill style = {{width: "1rem", fontSize: "1.1rem" ,marginRight: "0.5rem"}}/>
+                   <Title>{file.name}</Title>
                 </Reference>
             )
         })
@@ -92,46 +89,38 @@ class DocumentInfo extends React.Component {
                 paddingLeft = {this.props.write ? "3rem" : "10rem"}>
             {!this.props.write ? 
                 <>
-                    {this.props.document.repository && 
-                    
+                    { this.props.document.repository &&
                         <RepositoryButton> 
                             <RiGitRepositoryLine style = {
-                                    { marginRight: "0.5rem", fontSize: "1.4rem"}
+                                    { marginRight: "0.65rem", fontSize: "1.7rem"}
                                     }/>
                             {this.renderFullName()}
                         </RepositoryButton>
                     }
-                     {(this.props.document.tags && this.props.document.tags.length > 0) &&
-                        <ReferenceContainer>
-                            {this.renderTags()}
-                        </ReferenceContainer>
-                    }
                     {(this.props.document.references && this.props.document.references.length > 0) &&
-                        <ReferenceContainer>
+                        <InfoList2>
                             {this.renderFolders()}
                             {this.renderFiles()}
-                        </ReferenceContainer>
+                        </InfoList2>
                     }
+                
                    
+                    {/*(this.props.document.tags && this.props.document.tags.length > 0) &&
+                        <InfoList>
+                            {this.renderTags()}
+                        </InfoList>*/
+                    }
+                    
                 </>
                  :
                     <>
                         <RepositoryMenu2
                             document={this.props.document}
                         />
-                        <ReferenceContainer>
-                            {this.props.document.tags && this.renderTags()}
-                            <LabelMenu
-                                emptyButton={!this.props.document.tags || this.props.document.tags.length === 0}
-                                attachTag={(tagId) => this.props.attachTag(this.props.document._id, tagId)}//this.props.attachTag(requestId, tagId)}
-                                removeTag={(tagId) => this.props.removeTag(this.props.document._id, tagId)}//this.props.removeTag(requestId, tagId)}
-                                setTags={this.props.document.tags}//this.props.request.tags}
-                                marginTop={"1rem"}
-                            />
-                        </ReferenceContainer>
+                      
                         {   
                             this.props.document.repository &&
-                                <ReferenceContainer>
+                                <InfoList2>
                                     { this.props.document.references &&
                                         <>
                                             {this.renderFolders()}
@@ -141,12 +130,22 @@ class DocumentInfo extends React.Component {
                                     <FileReferenceMenu
                                             emptyButton = {!this.props.document.references || this.props.document.references.length === 0}
                                             setReferences={this.props.document.references}//this.props.request.tags}
-                                            marginTop={"1rem"}
+                                            marginTop={"-1rem"}
+                                            
                                             document={this.props.document}
                                     />
-                                </ReferenceContainer>
+                                </InfoList2>
                         }
-                      
+                        <InfoList>
+                            {this.props.document.tags && this.renderTags()}
+                            <LabelMenu
+                                emptyButton={!this.props.document.tags || this.props.document.tags.length === 0}
+                                attachTag={(tagId) => this.props.attachTag(this.props.document._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                                removeTag={(tagId) => this.props.removeTag(this.props.document._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                                setTags={this.props.document.tags}//this.props.request.tags}
+                                marginTop={"1rem"}
+                            />
+                        </InfoList>
                     </>
             }
             </DataContainer>
@@ -172,8 +171,36 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, { 
     getDocument, editDocument, renameDocument, getParent, attachTag, removeTag })(DocumentInfo));
 
+const InfoList = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0.5rem;
+`
 
+const InfoList2 = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0.9rem;
+`
 
+const Reference = styled.div`
+    background-color: ${chroma("#5B75E6").alpha(0.12)};
+    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
+    border-radius: 0.3rem;
+    font-size: 1.3rem;
+    padding: 0.4rem 0.6rem;
+    margin-right: 1.35rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+`
+
+const Title = styled.div`
+    color: #172A4e;
+    font-weight: 500;
+`
 
 const DataContainer = styled.div`
     padding-left: ${props => props.paddingLeft};
@@ -181,22 +208,33 @@ const DataContainer = styled.div`
 `
 
 const RepositoryButton = styled.div`
-    background-color: #414758;
-    color: white;
-    font-weight: 500;
-    padding: 0.75rem;
+    /*background-color: #f4f7fa;*/
+    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
+   
+   
+    border-radius: 0.3rem;
+    font-size: 1.5rem;
+    /*padding: 0.5rem 1rem;*/
+    margin-right: 1.35rem;
     display: inline-flex;
-    border-radius: 0.4rem;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     align-items: center;
-    cursor: pointer;
-    &: hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    }
-    letter-spacing: 1;
-    font-size: 1.3rem;
-    margin-bottom: 2.2rem;
+    margin-bottom: 2rem;
+  /*  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    font-weight: 600;
 `
+/*
+
+const RepositoryButton = styled.div`
+    font-size: 1.5rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    background-color: #f7f9fb;
+    padding: 0.6rem 1rem;
+    border-radius: 0.3rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+`*/
 
 const ReferenceContainer = styled.div`
     margin-bottom: 2rem;
@@ -205,6 +243,7 @@ const ReferenceContainer = styled.div`
     align-items: center;
 `
 
+/*
 const Reference = styled.div`
     font-size: 1.25rem;
     color: #172A4E;
@@ -215,15 +254,19 @@ const Reference = styled.div`
 	font-weight: 500;
 	margin-right: 1.5rem;
 `
-
+*/
 
 const Tag = styled.div`
-    font-size: 1.25rem;
-    color: ${props => props.color}; 
-    padding: 0.45rem 0.8rem;
+    font-size: 1.35rem;
+    color: ${props => props.color};
+    padding: 0.2rem 0.8rem;
     background-color: ${props => chroma(props.color).alpha(0.15)};
-    display: inline-block;
+    border: 1px solid ${props => props.color};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 0.3rem;
-	margin-right: 1.35rem;
-	font-weight: 500;
+	margin-right: 1rem;
+    font-weight: 500;
+    margin-bottom:1rem;
 `

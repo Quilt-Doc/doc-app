@@ -526,7 +526,19 @@ pollRepositories = async (req, res) => {
     return res.json({finished: true})
 }
 
+retrieveInstallationRepositories = async (req, res) => {
+    let { installationId } = req.body;
+    console.log("INSTALLATIONID", installationId);
+    const apis = require('../apis/api');
+    var installationClient = await apis.requestInstallationClient(installationId);
+    
+    const repositories = await installationClient.get('/installation/repositories')
+                                    .catch(err => console.log("Error getting installed repositories ", err));
+    console.log("REPOS", repositories)
+}
+
 module.exports = {
+    retrieveInstallationRepositories, 
     refreshRepositoryPath, getRepositoryFile, parseRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
     createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories, pollRepositories
 }

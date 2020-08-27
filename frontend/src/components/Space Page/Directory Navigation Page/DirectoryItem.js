@@ -22,9 +22,12 @@ import { addSelected, deleteSelected } from '../../../actions/Selected_Actions';
 import { retrieveReferences } from '../../../actions/Reference_Actions';
 
 //icons
-import { RiScissorsLine } from 'react-icons/ri'
-import {FiFileText, FiChevronsDown} from 'react-icons/fi'
+import { RiScissorsLine, RiCheckFill, RiFileList2Line } from 'react-icons/ri'
+import {FiFileText, FiChevronsDown, FiChevronsUp} from 'react-icons/fi'
 import { MdViewDay } from 'react-icons/md';
+import { RiFileLine } from 'react-icons/ri';
+import { AiFillFolder } from 'react-icons/ai';
+
 
 //misc
 import { connect } from 'react-redux';
@@ -35,11 +38,11 @@ class DirectoryItem extends React.Component {
         super(props);
         this.state = {
            'fileItemBackgroundColor': '',
-           'check_box_border_color': '#D7D7D7',
+           'check_box_border_color': '#E0E4E7',
            'check_box_check_display': 'none',
            'docHeight': '0rem',
            'itemHeight': '0rem',
-           'closed': true
+           'closed':true
            
         }
     }
@@ -119,8 +122,23 @@ class DirectoryItem extends React.Component {
         return x === 2 ? "#17cfad"  : x === 1 ? '#5A75E6' : '#FF6373';
     } 
 
+    
+    renderTags(){
+        let colors = ['#5352ed', 
+        '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
+        ]
+
+        return this.props.item.tags.map(tag => {
+            let color = tag.color < colors.length ? colors[tag.color] : 
+                colors[tag.color - Math.floor(tag.color/colors.length) * colors.length];
+
+            return <Tag color = {color} backgroundColor = {chroma(color).alpha(0.15)}>{tag.label}</Tag>
+        })
+    }
+
     render() {
         let statusColor = this.renderColor()
+        
         return (
                 <>
                 <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
@@ -129,38 +147,52 @@ class DirectoryItem extends React.Component {
                             border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}
                             backgroundColor =  {this.props.item._id in this.props.selected ? '#19E5BE'  : 'white'}
                         >
-                            <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
+                            <RiCheckFill style={this.renderCheck()} />
+                       
                         </Check_Box>
                     </Check_Box_Border>
 
-                    <ion-icon style={{'color': '#172A4E', 'fontSize': '1.7rem', 'min-width': "1.7rem", 'margin-right': "1rem"}} name={this.props.type}></ion-icon>
+                    {this.props.kind === 'file' ? 
+                        <RiFileLine  style={{'color': '#172A4E', 'fontSize': '1.6rem', 'min-width': "1.7rem", 'margin-right': "1rem"}} />
+                        : <AiFillFolder style={{'color': '#172A4E', 'fontSize': '1.75rem', 'min-width': "1.7rem", 'margin-right': "1rem"}}
+                            />
+                    }
                     <ItemName>{this.props.item.name}</ItemName>
                     
                     
                   
                     <ProgressContainer>
                         
-                        <Status color = {statusColor} >
-                            {statusColor === "#17cfad" 
-                                ? "Excellent" : 
-                                statusColor === '#5A75E6' ? "Satisfactory" 
-                                : 'Inadequate'}
-                        </Status>
+                       {this.renderTags()}
                        
                     </ProgressContainer>
-                    <StatisticContainer>
+                    
+                    <RightContainer>
                         <Statistic>
-                            <FiFileText style={{'color': '#172A4E', 'fontSize': '1.55rem', 'marginRight': "0.6rem"}}/>
+                            <RiFileList2Line style={{'color': '#172A4E', 'fontSize': '1.55rem', 'marginRight': "0.6rem"}}/>
                             <Count>{Math.round(Math.random() * 50)}</Count>
                         </Statistic>
                         <Statistic>
                             <RiScissorsLine style={{'color': '#172A4E', 'fontSize': '1.55rem', 'marginRight': "0.6rem"}}/>
                             <Count>{Math.round(Math.random() * 50)}</Count>
                         </Statistic>
-                    </StatisticContainer>
-                    <ViewBorder active = {this.props.documents.length > 0}>
-                        <FiChevronsDown/>
-                    </ViewBorder>
+                        <ViewBorder 
+                            onClick = {(e) => {
+                                 e.preventDefault();
+                                 e.stopPropagation();
+                                 this.setState({closed: !this.state.closed})}} 
+                            active = {this.props.documents.length > 0
+                            }
+                        >
+                            {this.state.closed ?
+                                 <FiChevronsDown/> :
+                                 <FiChevronsUp/>
+                            }
+                            
+                           
+                        </ViewBorder>
+                    </RightContainer>
+                 
                     
                 </StyledLink>
                 {this.props.documents.length > 0 &&
@@ -243,9 +275,31 @@ const File_Line = styled.div`
     align-items: center;
 `*/
 
+const RightContainer = styled.div`
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+`
+
+
+const Tag = styled.div`
+    font-size: 1.35rem;
+    color: ${props => props.color};
+    padding: 0.2rem 0.8rem;
+    background-color: ${props => chroma(props.color).alpha(0.15)};
+    border: 1px solid ${props => props.color};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.3rem;
+	margin-right: 1.35rem;
+    font-weight: 500;
+    
+`
+
 const ViewBorder = styled.div`
     font-size: 1.5rem;
-    margin-left: 12rem;
+    margin-left: 2rem;
     margin-right: 1rem;
     display: flex;
     align-items: center;
@@ -254,7 +308,10 @@ const ViewBorder = styled.div`
     width: 2.5rem;
     background-color:#ebf0f5;
     border-radius: 0.3rem;
-    opacity: ${props => props.active ? 1.2 : 0.3};
+    opacity: ${props => props.active ? 1.2 : 0};
+    &:hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    }
 `
 
 const Status = styled.div`
@@ -324,7 +381,8 @@ const DocumentContainer = styled.div`
     padding-left: 2rem;
     padding-right: 2rem;
     /*height: 16rem;*/
-    background-color: #F7F9FB;
+    background-color: #F9FAFE;
+    
     border-bottom: 1px solid #EDEFF1;
     display: flex;
     align-items: center;
@@ -386,7 +444,7 @@ const StyledLink = styled(Link)`
     }
     height: 4rem;
     padding-left: 0.25rem;
-    transition: background-color 0.1s ease-in;
+    transition: background-color 0.05s ease-in;
     &:hover {
         background-color: #F4F4F6;
     }
@@ -399,8 +457,8 @@ const StyledLink = styled(Link)`
 `
 
 const ItemName = styled.div`
-    flex: 1 1 15rem;
-    font-weight: 400;
+    flex: 1 1 4rem;
+    font-weight: 500;
 `
 
 // PROGRESS
@@ -416,6 +474,7 @@ const ProgressContainer = styled.div`
     height: 4rem;
     align-items: center;
     flex: 1 1 10rem;
+    
 `
 
 
@@ -440,7 +499,7 @@ const ProgressDescription = styled.div`
 const Statistic = styled.div`
     display: flex;
     align-items: center;
-    margin-right: 2.5rem;
+    margin-right: 2rem;
     font-size: 1.1rem;
     width: 4rem;
     transition: all 0.05s ease-in;
@@ -456,8 +515,8 @@ const Count = styled.div`
 
 
 const Check_Box_Border = styled.div`
-    min-height: 3.5rem;
-    min-width: 3.5rem;
+    min-height: 4rem;
+    min-width: 4rem;
     margin-left: 0.5rem;
     margin-right: 0.5rem;
     &:hover {
@@ -474,7 +533,7 @@ const Check_Box = styled.div`
     height: 1.6rem;
     width: 1.6rem;
     background-color: ${props => props.backgroundColor};
-    border: 1.3px solid ${props => props.border_color};
+    border: 1.5px solid ${props => props.border_color};
     border-radius: 0.2rem;
     display: flex;
     justify-content: center;

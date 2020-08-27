@@ -32,11 +32,13 @@ import repoIcon3 from '../../../images/w4.svg'
 import codeIcon from '../../../images/code.svg'
 
 //icons
-import {FiFileText, FiGitPullRequest, FiTrash} from 'react-icons/fi'
-import {RiScissors2Line, RiAddLine,  RiLayoutMasonryLine, RiPencilRuler2Line, RiSettings5Line, RiCodeSLine, RiPencilLine, RiPieChart2Line} from 'react-icons/ri'
-import { BsLayoutWtf } from 'react-icons/bs'
-import { HiDownload } from 'react-icons/hi'
-
+import {FiFileText, FiGrid, FiGitPullRequest, FiTrash} from 'react-icons/fi'
+import {RiScissors2Line, RiLayoutGridLine, RiAddLine,  RiLayoutMasonryLine, RiPencilRuler2Line, RiSettings5Line, RiCodeSLine, RiPencilLine, RiPieChart2Line, RiStackLine} from 'react-icons/ri'
+import { BsLayoutWtf, BsFillGridFill, BsGridFill} from 'react-icons/bs'
+import { VscLink } from 'react-icons/vsc';
+import { HiDownload } from 'react-icons/hi';
+import {BiGridAlt} from 'react-icons/bi';
+import { CgComponents } from 'react-icons/cg'
 class SideNavbar extends React.Component {
     constructor(props) {
         super(props)
@@ -84,10 +86,19 @@ class SideNavbar extends React.Component {
 
 
     renderCodebaseLink(){
-        console.log("WORKSPACE", this.props.workspace)
         let repositoryId = this.props.workspace.repositories[0]._id
         let { workspaceId } = this.props.match.params
         return `/workspaces/${workspaceId}/repository/${repositoryId}/dir`
+    }
+
+    renderInsightsLink(){
+        let { workspaceId } = this.props.match.params
+        return `/workspaces/${workspaceId}/insights`;
+    }
+
+    renderConnectLink(){
+        let { workspaceId } = this.props.match.params
+        return `/workspaces/${workspaceId}/connect`;
     }
 
     openModal(){
@@ -102,28 +113,33 @@ class SideNavbar extends React.Component {
         let { workspaceId } = this.props.match.params
         return(
 
-            <SideNavbarContainer>
+            <SideNavbarContainer id = {"sidenavbar"}>
                 
                  <RepositoryDetail>
                     <RepositoryIcon>PS</RepositoryIcon>
                     <RepositoryName>Pegasus</RepositoryName>
                 </RepositoryDetail>
                 <Section>
+                    <NavbarButton
+                        active = {history.location.pathname.split("/")[3] === "insights"}
+                        to = {this.renderInsightsLink()}
+                    >
+                        <NavbarIcon><BiGridAlt/></NavbarIcon>
+                        Dashboard
+                    </NavbarButton>
                     <NavbarButton 
                         active = {history.location.pathname.split("/")[3] === "repository"}
                         to = {this.renderCodebaseLink()}
                     >
                         <NavbarIcon active = {true}><RiCodeSLine/></NavbarIcon>  
                         Codebase    
-                        
                     </NavbarButton>
-                    <NavbarButton>
-                        <NavbarIcon><RiPieChart2Line/></NavbarIcon> 
-                        Track      
-                    </NavbarButton>
-                    <NavbarButton>
-                        <NavbarIcon><FiGitPullRequest/></NavbarIcon>
-                        Request         
+                    <NavbarButton
+                        active = {history.location.pathname.split("/")[3] === "connect"}
+                        to = {this.renderConnectLink()}
+                    >
+                        <NavbarIcon><RiStackLine/></NavbarIcon>
+                        Infobank
                     </NavbarButton>
                     <NavbarButton>
                         <NavbarIcon><RiSettings5Line/></NavbarIcon>  
@@ -382,7 +398,7 @@ const IconBorder2 = styled.div`
 `
 
 const SideNavbarContainer = styled.div`
-    
+  
     background-color:#2B2F3A; 
     display: flex;
     flex-direction: column;
