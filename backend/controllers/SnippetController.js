@@ -4,18 +4,27 @@ const { ObjectId } = mongoose.Types;
 
 
 createSnippet = (req, res) => {
-    console.log("ENTERED")
     const { annotation, code, start, 
-        workspaceId, referenceId, status, name, creator } = req.body;
+        status, name, creator } = req.body;
     
-    console.log("ANNO", annotation)
-    console.log("CODE", code)
-    console.log("START", start)
-    console.log("WORKSPACE", workspaceId)
-    console.log("REFId", referenceId)
-    console.log("STATUS", status)
-    console.log("NAME", name)
-    console.log("CREATOR", creator)
+    const workspaceId = req.workspaceObj._id.toString();
+    const referenceId = req.referenceObj._id.toString();
+    
+    var referenceRepository = req.referenceObj.repository.toString();
+    var workspaceRepositories = req.workspaceObj.repositories.map(repositoryObj => {repositoryObj.toString()});
+
+    if (workspaceRepositories.indexOf(referenceRepository) == -1) {
+        return res.json({success: false, error: "createSnippet Error: request on repository user does not have access to."});
+    }
+
+    // DONE: Verify creator matches user in req.tokenPayload
+    if (creator) {
+        if (req.tokenPayload.userId.toString() != creator) {
+            return res.json({success: false, error: "createSnippet Error: JWT does not match `creator`."});
+        }
+    }
+
+
     let snippet = new Snippet(
         {       
            workspace: ObjectId(workspaceId),
@@ -41,15 +50,19 @@ createSnippet = (req, res) => {
     });
 }
 
+
 getSnippet = (req, res) => {
-    Snippet.findById(req.params.id).populate('workspace').populate('reference').exec((err, snippet) => {
+    const snippetId = req.snippetObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+    Snippet.findOne({_id: snippetId, workspace: workspaceId}).populate('workspace').populate('reference').exec((err, snippet) => {
         if (err) return res.json({ success: false, error: err });
         return res.json(snippet);
     });
 }
 
 editSnippet = (req, res) => {
-    const { id } = req.params;
+    const snippetId = req.snippetObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
     const { name, status, code, start} = req.body;
     
     let update = {};
@@ -58,7 +71,7 @@ editSnippet = (req, res) => {
     if (code) update.code = code;
     if (start) update.start = start;
 
-    Snippet.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, snippet) => {
+    Snippet.findOneAndUpdate({_id: snippetId, workspace: workspaceId}, { $set: update }, { new: true }, (err, snippet) => {
         if (err) return res.json({ success: false, error: err });
         snippet.populate('workspace').populate('reference', (err, snippet) => {
             if (err) return res.json(err);
@@ -68,8 +81,9 @@ editSnippet = (req, res) => {
 }
 
 deleteSnippet = (req, res) => {
-    const { id } = req.params;
-    Snippet.findByIdAndRemove(id, (err, snippet) => {
+    const snippetId = req.snippetObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+    Snippet.findOneAndRemove({_id: snippetId, workspace: workspaceId}, (err, snippet) => {
         if (err) return res.json({ success: false, error: err });
         snippet.populate('workspace').populate('reference', (err, snippet) => {
             if (err) return res.json({ success: false, error: err });
@@ -79,10 +93,12 @@ deleteSnippet = (req, res) => {
 }
 
 retrieveSnippets = (req, res) => {
-    let { referenceId, workspaceId, name, status, limit, skip } = req.body;
+    let { referenceId, name, status, limit, skip } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
     query = Snippet.find();
 
-    if (workspaceId) query.where('workspace').equals(workspaceId)
+    query.where('workspace').equals(workspaceId)
+
     if (referenceId) query.where('reference').equals(referenceId)
     if (name) query.where('name').equals(name)
     if (status) query.where('status').equals(status);
@@ -98,17 +114,17 @@ retrieveSnippets = (req, res) => {
 
 
 refreshSnippets = (req, res) => {
+    const workspaceId = req.workspaceObj._id.toString();
     const { updates } = req.body;
     const bulkOps = updates.map(update => ({
         updateOne: {
-            filter: { _id: ObjectId(update._id) },
+            filter: { _id: ObjectId(update._id), workspace: workspaceId },
             // Where field is the field you want to update
             // startLine, code, 
             update: { $set: { code: update.code, pathInRepository: update.pathInRepository, startLine: update.startLineNum } },
             upsert: true
          }
      }));
-   // where Model is the name of your model
    return Snippet.collection
        .bulkWrite(bulkOps)
        .then(results => res.json(results))

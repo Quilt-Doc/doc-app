@@ -9,8 +9,6 @@ import {
     REMOVE_TAG,
     DOCUMENT_ATTACH_SNIPPET,
     DOCUMENT_REMOVE_SNIPPET,
-    DOCUMENT_ATTACH_PARENT,
-    DOCUMENT_REMOVE_PARENT,
     DOCUMENT_ATTACH_UPLOADFILE,
     DOCUMENT_REMOVE_UPLOADFILE,
     DOCUMENT_ADD_CANWRITE,
@@ -65,7 +63,7 @@ export const retrieveChildren = (formValues) => async () => {
 }
 
 export const retrieveDocuments = (formValues) => async dispatch => {
-    const response = await api.post(`/documents/retrieve`, formValues );
+    const response = await api.post(`/documents/5f2f52f42ed9aa0704f7c805/retrieve`, formValues );
     console.log("RESPONSE", response.data)
     dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data });
 }
@@ -114,16 +112,6 @@ export const attachChild = (id, childId) => async (dispatch) => {
 export const removeChild = (id, childId) => async (dispatch) => {
     const response = await api.put(`/documents/remove_child/${id}`, { childId });
     dispatch({ type: REMOVE_CHILD, payload: response.data });
-}
-
-export const documentAttachParent = (id, parentId) => async (dispatch) => {
-    const response = await api.put(`/documents/attach_parent/${id}`, { parentId });
-    dispatch({ type: DOCUMENT_ATTACH_PARENT, payload: response.data });
-}
-
-export const documentRemoveParent = (id, parentId) => async (dispatch) => {
-    const response = await api.put(`/documents/remove_parent/${id}`, { parentId });
-    dispatch({ type: DOCUMENT_REMOVE_PARENT, payload: response.data });
 }
 
 export const documentAttachUploadFile = (id, uploadFileId) => async (dispatch) => {

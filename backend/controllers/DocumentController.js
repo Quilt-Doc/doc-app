@@ -29,9 +29,11 @@ removeDuplicates = (modifiedDocs) => {
 }
 
 // TODO: add order validation
+// Assumption: referenceIds only consists of valid references
 createDocument = async (req, res) => {
-    const { authorId, referenceIds, childrenIds, repositoryId, workspaceId,
+    const { authorId, referenceIds, childrenIds, repositoryId,
         title, root, markup, tagIds, parentId/*, order*/ } = req.body;
+    const { workspaceId } = req.params;
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
     if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
@@ -136,6 +138,8 @@ createDocument = async (req, res) => {
         console.log(root)
         document.root = root
     }
+
+    document.status = 'valid';
 
 
     document.save(async (err, document) => {
@@ -730,12 +734,14 @@ moveDocument = async (req, res) => {
 
 
 retrieveDocumentsExtension = async (req, res) => {
-    let {repositoryFullName, workspaceId, referencePath} = req.body;
+    let {repositoryFullName, referencePath} = req.body;
+    const { workspaceId } = req.params;
     let repository = await Repository.findOne({fullName})
 }
 
 retrieveDocuments = (req, res) => {
-    let { search, sort, authorId, childrenIds, workspaceId, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
+    let { search, sort, authorId, childrenIds, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
+    const { workspaceId } = req.params;
     let query;
     if (search) {
         query = Document.find({title: { $regex: new RegExp(search, 'i')} })
@@ -847,35 +853,6 @@ removeTag = (req, res) => {
 }
 
 
-attachChild = (req, res) => {
-    const { id } = req.params;
-    const { childId } = req.body;
-    let update = {};
-    if (childId) update.children = ObjectId(childId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
-        });
-    });
-}
-
-removeChild = (req, res) => {
-    const { id } = req.params;
-    const { childId } = req.body;
-    let update = {};
-    if (childId) update.children = ObjectId(childId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
-        });
-    });
-}
-
-
 attachSnippet = (req, res) => {
     const { id } = req.params;
     const { snippetId } = req.body;
@@ -897,38 +874,6 @@ removeSnippet = (req, res) => {
     const { snippetId } = req.body;
     let update = {};
     if (snippetId) update.snippets = ObjectId(snippetId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
-        });
-    });
-}
-
-
-attachParent = (req, res) => {
-    const { id } = req.params;
-    const { parentId } = req.body;
-    let update = {};
-    if (parentId) update.parents = ObjectId(parentId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
-        });
-    });
-}
-
-
-removeParent = (req, res) => {
-    const { id } = req.params;
-    const { parentId } = req.body;
-    let update = {};
-    if (parentId) update.parents = ObjectId(parentId);
     Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
@@ -1031,9 +976,8 @@ removeCanRead = (req, res) => {
 }
 
 
-module.exports = { createDocument, getDocument, editDocument, 
-    deleteDocument, retrieveDocuments, attachTag, removeTag, 
-    attachSnippet, removeSnippet, attachParent, removeParent, 
-    attachUploadFile, removeUploadFile, addCanWrite, removeCanWrite, 
-    addCanRead, removeCanRead, attachChild, removeChild, getParent,
+module.exports = { createDocument, getDocument, editDocument, deleteDocument,
+    retrieveDocuments, attachTag, removeTag, attachSnippet,
+    removeSnippet, attachUploadFile, removeUploadFile, addCanWrite,
+    removeCanWrite, addCanRead, removeCanRead, getParent,
     renameDocument, moveDocument, attachReference, removeReference }

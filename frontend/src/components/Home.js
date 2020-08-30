@@ -23,7 +23,7 @@ class Home extends React.Component {
     componentDidMount(){
         this.props.checkLogin()
     }
-    
+
     goLogin = () => {
         window.open(apiEndpoint + "/auth/github", "_self");
     }

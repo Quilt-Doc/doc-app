@@ -31,9 +31,6 @@ if (process.env.RUN_AS_REMOTE_BACKEND === 1) {
 const { v4 } = require('uuid');
 const { json } = require('body-parser');
 
-const JOB_GET_REFS = 1;
-const JOB_UPDATE_SNIPPETS = 2;
-const JOB_SEMANTIC = 3;
 
 /*repositorySearch = (req, res) => {
     console.log(req.body);
@@ -167,7 +164,7 @@ createRepository = async (req, res) => {
                     // default_branch, fullName, cloneUrl, args_2, installationId 
 
                     runSemanticData['semanticTargets'] = JSON.stringify({targets: args2});
-                    repository.semanticJobStatus = 'RUNNING';
+                    repository.semanticJobStatus = jobs.JOB_STATUS_RUNNING;
                     repository.save();
                     jobs.dispatchSemanticJob(runSemanticData, log);
                 
@@ -176,70 +173,6 @@ createRepository = async (req, res) => {
         })
         
     });
-}
-
-
-
-
-// Deprecated
-refreshRepositoryPath = (req, res) => {
-    console.log(req.body);
-    var { repositoryName, repositoryPath} = req.body;
-    if (!typeof repositoryName == 'undefined' && repositoryName !== null) return res.json({success: false, error: 'no repo repositoryName provided'});
-    if (typeof repositoryPath == 'undefined') repositoryPath = '';
-    
-    var reposCreate = url.resolve(apiURL, '/repos/create');
-    console.log(reposCreate);
-    
-    var reposContents = url.resolve(url.resolve(reposCreate, repositoryName), 'contents/');
-    console.log(reposContents);
-
-    const reqURL = url.resolve(reposContents, repositoryPath);
-    console.log('FINAL REQ URL: ', reqURL);
-
-    api.get(reqURL)
-    .then(function (response) {
-        return res.json(response.data);
-      })
-      .catch(function (err) {
-        return res.json({ success: false, error: err });
-      });
-}
-
-refreshRepositoryPathNew = (req, res) => {
-    console.log(req.body);
-    var {repositoryPath} = req.body;
-    if (!typeof repositoryPath == 'undefined' && repositoryPath !== null) return res.json({success: false, error: 'no repo repositoryPath provided'});
-    
-    if (repositoryPath[repositoryPath.length - 1] !== '/') {
-        repositoryPath = repositoryPath + '/';
-    }
-    
-    var secondNameFirst = repositoryPath.substring(repositoryPath.indexOf('/')+1);
-    var secondName = secondNameFirst.substring(0, secondNameFirst.indexOf('/')+1);
-
-    var repositoryName = repositoryPath.substring(0, repositoryPath.indexOf('/')+1) + secondName;
-    //repositoryName = repositoryPath.substring(0,repositoryPath.indexOf('/')+1) + 
-
-    repositoryPath = repositoryPath.substring(repositoryPath.indexOf(repositoryName)+repositoryName.length);
-
-
-    var reposCreate = url.resolve(apiURL, '/repos/create');
-    console.log(reposCreate);
-    
-    var reposContents = url.resolve(url.resolve(reposCreate, repositoryName), 'contents/');
-    console.log(reposContents);
-
-    const reqURL = url.resolve(reposContents, repositoryPath);
-    console.log('FINAL REQ URL: ', reqURL);
-
-    api.get(reqURL)
-    .then(function (response) {
-        return res.json(response.data);
-      })
-      .catch(function (err) {
-        return res.json({ success: false, error: err });
-      });
 }
 
 
@@ -287,67 +220,6 @@ getRepositoryFile = async (req, res) => {
 
 }
 
-
-getRepositoryRefs = (req, res) => {
-
-    //console.log(process.env);
-    if (!(parseInt(process.env.CALL_DOXYGEN, 10))) {
-        return res.json({success: false, error: 'doxygen disabled on this backend'});
-    }
-
-    var { repoLink } = req.body;
-    console.log('getRepositoryRefs received content: ', req.body);
-    if (typeof repoLink == 'undefined' || repoLink == null) return res.json({success: false, error: 'no repo repoLink provided'});
-
-    var timestamp = Date.now().toString();
-    // log.info('Timestamp: ', timestamp);
-    var apiCallLink = url.resolve(repoBaseURL, repoLink);
-
-    var getRefsData = {
-        'repoLink': repoLink,
-        'apiCallLink': apiCallLink,
-        'jobType': JOB_GET_REFS
-    }
-    var uuid = v4();
-    var sqsRefsData = {
-        MessageAttributes: {
-          "repoLink": {
-            DataType: "String",
-            StringValue: getRefsData.repoLink
-          },
-          "apiCallLink": {
-            DataType: "String",
-            StringValue: getRefsData.apiCallLink
-          },
-          "jobType": {
-            DataType: "Number",
-            StringValue: JOB_GET_REFS.toString()
-          }
-        },
-        MessageBody: JSON.stringify(getRefsData),
-        MessageDeduplicationId: timestamp,
-        MessageGroupId: "getRefRequest_" + timestamp,
-        QueueUrl: queueUrl
-    };
-    if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Refs | MessageDeduplicationId: ${timestamp}`);
-    if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Refs | MessageGroupId: getRefRequest_${timestamp}`);
-    // Send the refs data to the SQS queue
-    let sendSqsMessage = sqs.sendMessage(sqsRefsData).promise();
-
-    sendSqsMessage.then((data) => {
-
-        if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Refs | SUCCESS: ${data.MessageId}`);
-        console.log(`Refs | SUCCESS: ${data.MessageId}`);
-        // res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
-    }).catch((err) => {
-        if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Refs | ERROR: ${err}`);
-        console.log(`Refs | ERROR: ${err}`);
-
-        // Send email to emails API
-        // res.json({success: false, msg: "We ran into an error. Please try again."});
-    });
-    // parseUtils.getRefs(repoLink, apiCallLink, res);
-}
 
 getRepository = (req, res) => {
     // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
@@ -489,18 +361,124 @@ pollRepositories = async (req, res) => {
     for (let i = 0; i < fullNames.length; i++) {
         let fullName = fullNames[i]
         let repository = await Repository.findOne({fullName: fullName, installationId: installationId})
-        if (!repository || repository.doxygenJobStatus !== "FINISHED" || repository.semanticJobStatus !== "FINISHED") {
+        if (!repository || repository.doxygenJobStatus !== jobs.JOB_STATUS_FINISHED || repository.semanticJobStatus !== jobs.JOB_STATUS_FINISHED) {
             return res.json({finished: false})
         }
     }
     return res.json({finished: true})
 }
 
-module.exports = {
-    refreshRepositoryPath, getRepositoryFile, refreshRepositoryPathNew, getRepositoryRefs,
-    createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories, pollRepositories
+
+updateRepository = async (req, res) => {
+    const {eventType, fullName, installationId, headCommit, cloneUrl} = req.body;
+    if (typeof eventType == 'undefined' || eventType !== null) return res.json({success: false, error: 'updateRepository: no eventType provided'});
+    if (typeof fullName == 'undefined' || fullName !== null) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
+    if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
+
+    // This conditional determines if we run snippet job and outdate old treeReferences
+    if (eventType == 'push') {
+        if (typeof headCommit == 'undefined' || headCommit == null) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
+        if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});    
+
+
+        var repository = await Repository.find({fullName, installationId})
+                                .catch(err => {
+                                    return res.json({ success: false, error: 'Error updateRepository could not find repository: ' + err });
+                                });
+
+        repository.snippetJobStatus = jobs.JOB_STATUS_RUNNING;
+        await repository.save()
+                .catch(err => {
+                    return res.json({success: false, error: 'Error setting repository snippetJobStatus = JOB_STATUS_RUNNING ' + err});
+                });
+
+        var runSnippetData = {};
+        runSnippetData['fullName'] = fullName;
+        runSnippetData['installationId'] = installationId;
+        runSnippetData['headCommit'] = headCommit;
+        runSnippetData['cloneUrl'] = cloneUrl;
+        runSnippetData['jobType'] = jobs.JOB_UPDATE_SNIPPETS.toString();
+
+        repository.updateSnippetJobStatus = jobs.JOB_STATUS_RUNNING;
+        repository.save();
+        jobs.dispatchSemanticJob(runSnippetData, log);
+
+        // 
+
+        var runReferencesData = {};
+        runReferencesData['fullName'] = fullName;
+        runReferenceData['installationId'] = installationId;
+        runReferencesData['headCommit'] = headCommit;
+        runReferencesData['jobType'] = jobs.JOB_UPDATE_REFERENCES.toString();
+
+        repository.updateReferencesJobStatus = jobs.JOB_STATUS_RUNNING;
+        repository.save();
+        jobs.dispatchUpdateReferencesJob(runReferencesData, log);
+
+
+
+        /*
+        var treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${headCommit}?recursive=true`)
+                                    .catch(err => {
+                                        return res.json({success: false, error: 'updateRepository: error getting repository tree: ', err});
+                                    });
+
+        let treeReferences = response.data.tree.map(item => {        
+            let pathSplit = item.path.split('/')
+            let name = pathSplit.slice(pathSplit.length - 1)[0]
+            let path = pathSplit.join('/');
+            let kind = item.type == 'blob' ? 'file' : 'dir'
+            return {name, path, kind, repository: ObjectId(repository._id), lastProcessedCommit: headCommit}
+        });
+
+        // Upsert all of the tree References
+        const bulkRefreshOps = treeReferences.map(refObj => ({
+       
+            updateOne: {
+                    filter: { name: refObj.name, path: refObj.path, kind: refObj.kind,
+                        repository: refObj.repository },
+                    // Where field is the field you want to update
+                    update: { $set: { status: 'VALID', lastProcessedCommit: headCommit } },
+                    upsert: true
+                    }
+                }));
+        if (bulkRefreshOps.length > 0) {
+            await Reference.collection
+                .bulkWrite(bulkRefreshOps)
+                .then(results => console.log(results))
+                .catch((err) => {
+                    return res.json({success: false, error: 'Error bulk updating References on push: ' + err});
+                });
+        }
+
+        // Mark all old untouched treeReferences as invalid
+        const bulkInvalidateOps = treeReferences.map(refObj => ({
+            updateOne: {
+                    filter: { lastProcessedCommit: { $ne: headCommit } },
+                    // Where field is the field you want to update
+                    update: { $set: { status: 'INVALID' } },
+                    upsert: false
+                    }
+                }));
+        if (bulkInvalidateOps.length > 0) {
+            Reference.collection
+                .bulkWrite(bulkRefreshOps)
+                .then(results => console.log(results))
+                .catch((err) => {
+                    return res.json({success: false, error: 'Error bulk invalidating References on push: ' + err});
+                });
+        }
+        */
+
+    }
+
+    return res.json({success: true});
+
+
 }
 
-
-
-///
+module.exports = {
+    getRepositoryFile, createRepository, getRepository,
+    deleteRepository, retrieveRepositories, updateRepositoryCommit,
+    validateRepositories, pollRepositories, updateRepository
+}

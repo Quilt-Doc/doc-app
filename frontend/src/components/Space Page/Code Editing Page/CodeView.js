@@ -94,7 +94,9 @@ class CodeView extends React.Component {
         // get contents of code file from database
         let { referenceId, repositoryId, workspaceId}  = this.props.match.params;
         await this.props.getRepository(repositoryId)
-        let fileContents = await this.props.getContents({referenceId})
+        let fileContents = await this.props.getContents({referenceId});
+        console.log('Code View fileContents');
+        console.log(fileContents);
         await this.props.retrieveReferences({ referenceId })
         await this.props.retrieveSnippets({referenceId, workspaceId})
         console.log("SNIPPETS", this.props.snippets)
@@ -299,9 +301,11 @@ class CodeView extends React.Component {
         const tokens = Prism.tokenize(fileContents, grammar)
         
         let allLinesJSX = []
-        let currLineJSX = [] 
+        let currLineJSX = []
         let callbacks = this.props.references.filter(ref => 
-            {return ref.parseProvider === 'semantic' && ref._id !== this.props.match.params.referenceId}).map(ref => {ref.position = 
+            {return ref.parseProvider === 'semantic' && ref._id !== this.props.match.params.referenceId}).map(ref => {
+                console.log('ref: ', ref);
+                ref.position = 
                 JSON.parse(ref.position); return ref}).sort((a, b) => {
                     a = a.position.start;
                     b = b.position.start;

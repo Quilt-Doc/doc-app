@@ -2,6 +2,8 @@ const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 const client = require("../../apis/api").requestClient();
 
 const AuthRequest = require('../../models/authentication/AuthRequest');
+const User = require('../../models/authentication/User');
+
 const querystring = require('querystring');
 
 const { createUserJWTToken } = require('../../utils/jwt');
@@ -18,30 +20,38 @@ checkValid = (item) => {
     return false
 }
 
-loginSuccess = (req, res) => {
+loginSuccess = async (req, res) => {
     console.log("REQ USER", req.user)
     if (req.user) {
         console.log('req.user: ');
         console.log(req.user);
         
+        
+        /*
+        // Apparently standard practice is to run a new JWT on every sign-in
         // If they don't have a JWT yet, let's make one for them
         if (!req.cookies['user-jwt']) {
             
         }
-        // res.cookie('token', {"backend-cookie": "cookie-magic"}, { httpOnly: true });
+        */
+        
+        // Check if req.user is an actual user, normally we would be using username/password to authenticate req.user
+        // Since we don't have this, this is the current stopgap
+        var requestUser = await User.findOne({ _id: req.user._id, domain: req.user.domain, username: req.user.username, profileId: req.user.profileId });
+        if (requestUser) {
+            var jwtToken = createUserJWTToken(req.user._id, req.user.role);
 
-       var jwtToken = createUserJWTToken(req.user.username, req.user.profileId);
+            res.cookie('user-jwt', jwtToken, { httpOnly: true });
 
-       res.cookie('user-jwt', jwtToken, { httpOnly: true });
-
-        // req.cookies['token'] = {"user-jwt": jwtToken};
-        return res.json({
-            success: true,
-            authenticated: true,
-            message: "user has successfully authenticated",
-            user: req.user,
-            cookies: req.cookies
-        });
+            // req.cookies['token'] = {"user-jwt": jwtToken};
+            return res.json({
+                success: true,
+                authenticated: true,
+                message: "user has successfully authenticated",
+                user: req.user,
+                cookies: req.cookies
+            });
+        }
     }
     return res.json({
         success: false,

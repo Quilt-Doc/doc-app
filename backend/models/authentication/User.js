@@ -10,7 +10,9 @@ let userSchema = new Schema({
     email: String,
     created: {type: Date, default: Date.now },
     domain: String,
-    workspaces: [{type: ObjectId, index: true, ref: 'Workspace'}]
+    workspaces: [{type: ObjectId, index: true, ref: 'Workspace'}],
+    // 'dev', 'user'
+    role: {type: String, required: true, default: 'user'}
 });
 
 let User = mongoose.model("User", userSchema);

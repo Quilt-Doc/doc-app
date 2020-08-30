@@ -12,73 +12,19 @@ checkValid = (item) => {
     return false
 }
 
-//Deprecated
-createReferences = (req, res) => {
-    const { ref_list } = req.body;
-    if (!typeof ref_list == 'undefined' && ref_list !== null) return res.json({success: false, error: 'no reference ref_list provided'});
-    console.log('ref_list');
-    console.log(ref_list);
-    var ref_obj_list = ref_list.map(ref => {
-        var {name, kind, path, lineNum, repository} = ref;
-        if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no reference name provided'});
-        if (!typeof repository == 'undefined' && repository !== null) return res.json({success: false, error: 'no reference repository provided'});
-
-        let reference = new Reference({
-            name: name,
-            repository: ObjectId(repository)
-
-        });
-
-        if (lineNum) reference.lineNum = lineNum;
-        if (kind) reference.kind = kind;
-        if (path) reference.path = path;
-
-        return reference;
-    })
-
-    console.log('REF OBJ LIST');
-    console.log(ref_obj_list);
-    Reference.create( ref_obj_list, (err, reference) => {
-        if (err) return res.json({ success: false, error: err });
-        return res.json(reference);
-    });
-}
-
-getReferences = (req, res) => {
-
-    const { text, repository } = req.body;
-    var text_query = text;
-
-
-    if (!typeof repository == 'undefined' && repository !== null) return res.json({success: false, error: 'no reference repository provided'});
-    if (!(text)) {
-        text_query = '';
-    }
-
-    console.log('repository: ', repository);
-    console.log('text: ', text);
-
-    var re = new RegExp(text, 'i');
-
-    Reference.find(
-        {
-            $and : [
-                { $or: [{ name: { $regex: re } }, { kind: { $regex: re } }, { path: { $regex: re } }] },
-                { repository: repository }
-            ]
-        }
-        ).sort('kind').exec(function(err, references) {
-        // console.log('results: ')
-        // console.log(references);
-        res.json(references);
-    });
-}
-
 // NEW CONTROLLER METHODS
 
-createReferences2 = (req, res) => {
+createReferences = (req, res) => {
     const { references } = req.body;
-    if (!typeof references == 'undefined' && references !== null) return res.json({success: false, error: 'no references provided'});
+    if (!checkValid(references)) return res.json({success: false, error: 'no references provided'});
+
+    var i;
+    for (i = 0; i < references.lengt; i++) {
+        var currentRef = references[i];
+        if (!checkValid(currentRef.name)) return res.json({success: false, error: 'no reference name provided'});
+        if (!checkValid(currentRef.repository)) return res.json({success: false, error: 'no reference repository provided'});
+    }
+
     Reference.insertMany(references, (error, references) => {
         if (error) return res.json({ success: false, error });
         references.populate('repository').populate('tags', (error, references) => {
@@ -89,9 +35,14 @@ createReferences2 = (req, res) => {
 }
 
 getReference = (req, res) => {
-    const { id } = req.params;
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no reference id provided'});
-    Reference.findById(id, (err, reference) => {
+    // const { id } = req.params;
+    // if (!checkValid(id)) return res.json({success: false, error: 'no reference id provided'});
+    
+    // NEW
+    const referenceId = req.referenceObj._id.toString();
+    const repositoryIds = req.workspaceObj.repositories.map(repositoryObj => ObjectId(repositoryObj.toString()));
+    
+    Reference.findOne({_id: referenceId, repository: {$in: repositoryIds}}, (err, reference) => {
 		if (err) return res.json({success: false, error: err});
         reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
@@ -100,26 +51,19 @@ getReference = (req, res) => {
     });
 }
 
-getContents = async (req, res) => {
-
-    var { referenceId } = req.body;
-    let reference = await Reference.findOne({_id: referenceId}).populate('repository')
-    let defaultBranch = "master"
-
-    let downloadLink = `https://raw.githubusercontent.com/${reference.repository.fullName}/${defaultBranch}/${reference.path}`
-    //https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
-
-    
-    //console.log('downloadLink: ', downloadLink);
-    request.get(downloadLink).pipe(res);
-}
-
 /*path\/example\/[^\/]+$*/
 
 retrieveCodeReferences = async (req, res) => {
-    let {referenceId} = req.body
+    // let {referenceId} = req.body
 
-    let rootReference = await Reference.findOne({_id: referenceId})
+    // let rootReference = await Reference.findOne({_id: referenceId})
+    const rootReference = req.referenceObj;
+    var repositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+    if (repositoryIds.indexof(rootReference._id.toString()) == -1 ) {
+        return res.json({success: false, error: "retrieveCodeReferences Error: request on repository user does not have access to."});
+    }
+
+
     console.log(rootReference)
     let query = Reference.find({})
 
@@ -135,27 +79,47 @@ retrieveCodeReferences = async (req, res) => {
 }
 
 retrieveReferences = async (req, res) => {
-    
+
     let { textQuery, search, paths, name, path, kind, kinds, notKinds, 
         referenceId, repositoryId, truncated, repositoryIds, include, limit, skip } = req.body;
     let filter = {}
+
+    var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+
+    var singleRepositoryFilter = false;
+    var multipleRepositoryFilter = false;
     
     if (checkValid(kind)) filter.kind = kind;
     if (checkValid(name)) filter.name = name;
     if (checkValid(path)) filter.path = path;
-    if (checkValid(repositoryId)) filter.repository = ObjectId(repositoryId)
+    if (checkValid(repositoryId)) {
+        
+        // DONE: check that this repositoryId is valid
+        if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
+            return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
+        }
+        filter.repository = ObjectId(repositoryId);
+    }
 
     let regexQuery;
-    
+
 
     if (checkValid(referenceId)) {
         let reference;
         if (referenceId !== ""){
-            reference = await Reference.findOne({_id: referenceId})
+            reference = await Reference.findOne({_id: referenceId});
+            // DONE: verify Reference repository field is valid for workspace
+            if (validRepositoryIds.indexOf(reference.repository.toString()) == -1) {
+                return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
+            }
         } else {
             reference = await Reference.findOne({repository: repositoryId, path: ""})
+            // DONE: verify repositoryId is valid for workspace
+            if (validRepositoryIds.indexOf(reference.repository.toString()) == -1) {
+                return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
+            }
         }
-        
+
         let regex;
 
         if (reference.path === "") {
@@ -164,9 +128,7 @@ retrieveReferences = async (req, res) => {
             let refPath = reference.path.replace('/', '\/')
             regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
         }
-       
-        
-        
+
         regexQuery = [{ path : { $regex: regex } }]
     }
 
@@ -184,42 +146,86 @@ retrieveReferences = async (req, res) => {
     let query;
 
     if (checkValid(regexQuery)) {
-        query =  Reference.find({
-                        $and : [
-                            { $or: regexQuery },
-                            filter
-                        ]
-                    });
+        if (filter.repository) {
+            query =  Reference.find({
+                            $and : [
+                                { $or: regexQuery },
+                                filter
+                            ]
+                        });
+        }
+        // DONE: add an $in operator on searchable repositories here, if filter does not contain repository
+        else {
+            query = Reference.find({
+                            $and : [
+                                { $or: regexQuery},
+                                filter,
+                                { repository: {$in: validRepositoryIds} }
+                            ]
+            })
+        }
     } else {
-        query = Reference.find(filter)
+        if (filter.repository) {
+            query = Reference.find(filter);
+        }
+        // DONE: if repository field not set in filter add an $in operator from workspace repositories
+        else {
+            query = Reference.find({
+                $and : [
+                    filter,
+                    { repository: {$in: validRepositoryIds} }
+                ]
+            });
+        }
     }
-    
+
     if (checkValid(kinds)) query.where('kind').in(kinds);
     if (checkValid(notKinds)) query.where('kind').nin(notKinds);
-    if (checkValid(repositoryIds)) query.where('repository').in(repositoryIds);
+    // DONE: check that these repositoryIds are all in workspace repositories
+    if (checkValid(repositoryIds)) {
+        var i;
+        for (i = 0; i < repositoryIds.length; i++) {
+            if (validRepositoryIds.indexOf(repositoryIds[i].toString()) == -1) {
+                return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
+            }
+        }
+        multipleRepositoryFilter = true;
+        query.where('repository').in(repositoryIds);
+    }
+    else {
+        query.where('repository').in(validRepositoryIds);
+    }
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
 
-
+    // DONE?: If at this point repositoryIds AND repositoryId have not been set, add an query.where('repository').in(repositories in workspace);
     query.populate('tags').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
         // console.log("REFERENCES", references)
         return res.json(references);
-    
+
     });
 }
 
 
 
 editReference = (req, res) => {
-    const { id } = req.params;
+
+    const referenceId = req.referenceObj._id;
+    var repositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+
+    if (repositoryIds.indexof(referenceId) == -1 ) {
+        return res.json({success: false, error: "editReference Error: request on repository user does not have access to."});
+    }
+
+
     const {  name, path, kind, tags } = req.body;
     let update = {};
     if (name) update.name = name;
     if (path) update.path = path;
     if (kind) update.kind = kind;
     if (tags) update.tags = tags.map(tag => ObjectId(tag));
-    Reference.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, reference) => {
+    Reference.findByIdAndUpdate(referenceId, { $set: update }, { new: true }, (err, reference) => {
         if (err) return res.json({ success: false, error: err });
         reference.populate('repository').populate( 'tags', (err, reference) => {
             if (err) return res.json(err);
@@ -232,9 +238,16 @@ editReference = (req, res) => {
 
 
 deleteReference = (req, res) => {
-    const { id } = req.params;
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository item id provided'});
-    Reference.findByIdAndRemove(id, (err, reference) => {
+    // const { id } = req.params;
+
+    const referenceId = req.referenceObj._id;
+    var repositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+
+    if (repositoryIds.indexof(referenceId) == -1 ) {
+        return res.json({success: false, error: "deleteReference Error: request on repository user does not have access to."});
+    }
+
+    Reference.findByIdAndRemove(referenceId, (err, reference) => {
 		if (err) return res.json({success: false, error: err});
         reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
@@ -245,15 +258,18 @@ deleteReference = (req, res) => {
 
 
 attachTag = (req, res) => {
-	const { id } = req.params
-	const { tagId } = req.body;
-	if (!checkValid(id)) return res.json({success: false, error: "attachTag error: no id provided.", result: null});
-	if (!checkValid(tagId)) return res.json({success: false, error: "attachTag error: no tagIds provided.", result: null});
+	// const { id } = req.params
+	// const { tagId } = req.body;
+	// if (!checkValid(id)) return res.json({success: false, error: "attachTag error: no id provided.", result: null});
+    // if (!checkValid(tagId)) return res.json({success: false, error: "attachTag error: no tagIds provided.", result: null});
+    
+    const referenceId = req.referenceObj._id.toString();
+    const tagId = req.tagObj._id.toString();
 
 	let update = {}
 	update.tags = ObjectId(tagId);
 	
-	Reference.findOneAndUpdate({_id: id}, { $push: update}, { new: true }, (err, reference) => {
+	Reference.findOneAndUpdate({_id: referenceId}, { $push: update}, { new: true }, (err, reference) => {
 		if (err) return res.json({ success: false, error: err });
 		reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
@@ -264,15 +280,21 @@ attachTag = (req, res) => {
 
 
 removeTag = (req, res) => {
-	const { id } = req.params
+    /*
+    const { id } = req.params
 	const { tagId } = req.body;
 	if (!checkValid(id)) return res.json({success: false, error: "removeTag error: no id provided.", result: null});
 	if (!checkValid(tagId)) return res.json({success: false, error: "removeTag error: no tagIds provided.", result: null});
+    */
 
-	let update = {}
+    const referenceId = req.referenceObj._id.toString();
+    const tagId = req.tagObj._id.toString();
+
+
+    let update = {}
 	update.tags = ObjectId(tagId);
 	
-	Reference.findOneAndUpdate({_id: id}, { $pull: update}, { new: true }, (err, reference) => {
+	Reference.findOneAndUpdate({_id: referenceId}, { $pull: update}, { new: true }, (err, reference) => {
 		if (err) return res.json({ success: false, error: err });
 		reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
@@ -282,66 +304,15 @@ removeTag = (req, res) => {
 }
 
 
-/*
-attachDocument = (req, res) => {
-    const { referenceIds, documentId } = req.body;
-
-    let filter = { _id: { $in: referenceIds }}
-
-    let update = {}
-    if (documentId) update.documents = ObjectId(documentId);
-
-    Reference.updateMany(filter, { $push: update }, { new: true }, (err, modified) => {
-
-        if (err) return res.json({ success: false, error: err });
-        console.log("MODIFIED STATUS", modified)
-
-        let query =  Reference.find(filter);
-        query.populate('repository').populate('documents').exec((err, references) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(references)
-        })
-    })
-}
-
-
-removeDocument = (req, res) => {
-    const { referenceIds, documentId } = req.params;
-    let filter = { _id: { $in: referenceIds }}
-    let update = {}
-    if (documentId) update.documents = ObjectId(documentId);
-    Reference.updateMany(filter, { $pull: update }, { new: true }, (err, modified) => {
-
-        if (err) return res.json({ success: false, error: err });
-        console.log("MODIFIED STATUS", modified)
-
-        let query =  Reference.find(filter);
-        query.populate('repository').populate('documents').exec((err, references) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(references)
-        })
-    })
-}
-
-
-*/
-
 module.exports =
 {
-    // DEPRECATED
+
     createReferences,
-    getReferences,
-    // NEW
-    createReferences2,
     getReference,
     retrieveReferences,
+    retrieveCodeReferences,
     editReference,
     deleteReference,
-    getContents,
-    retrieveCodeReferences,
     attachTag, 
     removeTag
-    /*
-    attachDocument,
-    removeDocument*/
 }

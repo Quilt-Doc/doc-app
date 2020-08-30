@@ -1,9 +1,7 @@
 import {
     GET_REPOSITORY_FILE,
-    REFRESH_REPOSITORY_PATH,
     PARSE_REPOSITORY_FILE,
     CLEAR_REPOSITORY_FILE,
-    REFRESH_REPOSITORY_PATH_NEW,
     UPDATE_REPOSITORY_REFS,
     CREATE_REPOSITORY,
     GET_REPOSITORY,
@@ -21,30 +19,6 @@ var urljoin = require('url-join');
     const response = await api.post('/repositories/search', formValues );
     dispatch({ type: REPO_SEARCH, payload: response.data });
 }*/
-
-export const refreshRepositoryPath = (formValues) => async (dispatch) => {
-    console.log('formValues: ', formValues);
-    const response = await api.post('/repositories/refresh_path', formValues );
-    console.log('refreshRepositoryPath response: ', response);
-    
-    var current_path = '';
-
-    if ('repositoryPath' in formValues) {
-        current_path = formValues.repositoryPath;
-    }
-
-    console.log(response);
-    dispatch({ type: REFRESH_REPOSITORY_PATH, payload: response.data, repositoryName: formValues.repositoryName, repositoryCurrentPath: current_path });
-}
-
-export const refreshRepositoryPathNew = (formValues) => async (dispatch) => {
-    console.log('formValues: ', formValues);
-    const response = await api.post('/repositories/refresh_path_new', formValues );
-    console.log('refreshRepositoryPath response: ', response);
-    
-    console.log(response);
-    dispatch({ type: REFRESH_REPOSITORY_PATH_NEW, payload: response.data });
-}
 
 // Example download link: https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
 export const getRepositoryFile = (file_desc) => async (dispatch) => {

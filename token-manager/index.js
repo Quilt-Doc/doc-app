@@ -165,7 +165,7 @@ cron.schedule('* * * * *', async () => {
         }
     }
 
-    // replace newlin, carriage-return, etc
+    // replace newline, carriage-return, etc
     const regex = /\r?\n|\r/g;
 
     currentAppToken.value = currentAppToken.value.replace(regex, '');
