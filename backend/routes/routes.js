@@ -87,12 +87,12 @@ router.put('/documents/:workspaceId/remove_canread/:id', authorizationMiddleware
 
 // Validate workspace membership for calling user; all methods
 const snippet_controller = require('../controllers/SnippetController');
-router.post('/snippets/:workspaceId/:referenceId/create', snippet_controller.createSnippet); // DONE
-router.get('/snippets/:workspaceId/get/:snippetId', snippet_controller.getSnippet); // DONE
-router.put('/snippets/:workspaceId/edit/:snippetId', snippet_controller.editSnippet); // DONE
-router.delete('/snippets/:workspaceId/delete/:snippetId', snippet_controller.deleteSnippet); // DONE
-router.post('/snippets/:workspaceId/retrieve', snippet_controller.retrieveSnippets); // DONE
-router.post('/snippets/:workspaceId/refresh', snippet_controller.refreshSnippets); // DONE
+router.post('/snippets/:workspaceId/:referenceId/create', authorizationMiddleware.snippetMiddleware, snippet_controller.createSnippet); // DONE
+router.get('/snippets/:workspaceId/get/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.getSnippet); // DONE
+router.put('/snippets/:workspaceId/edit/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.editSnippet); // DONE
+router.delete('/snippets/:workspaceId/delete/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.deleteSnippet); // DONE
+router.post('/snippets/:workspaceId/retrieve', authorizationMiddleware.snippetMiddleware, snippet_controller.retrieveSnippets); // DONE
+router.post('/snippets/:workspaceId/refresh', authorizationMiddleware.snippetMiddleware, snippet_controller.refreshSnippets); // DONE
 
 // create - dev role only
 // update_commit - dev role only
