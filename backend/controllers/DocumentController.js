@@ -28,18 +28,31 @@ removeDuplicates = (modifiedDocs) => {
     return finalResults;
 }
 
-// TODO: add order validation
 // Assumption: referenceIds only consists of valid references
 createDocument = async (req, res) => {
     const { authorId, referenceIds, childrenIds, repositoryId,
-        title, root, markup, tagIds, parentId/*, order*/ } = req.body;
-    const { workspaceId } = req.params;
+        title, root, markup, tagIds, parentId} = req.body;
+    
+    const workspaceId = req.workspaceObj._id.toString();
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
     if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
-    if (!checkValid(workspaceId)) return res.json({success: false, error: "createDocument error: no workspaceId provided.", result: null});
     if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
-    // if (!checkValid(order)) return res.json({success: false, error: "createDocument error: no order provided.", result: null});
+
+    var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+    const workspaceId = req.workspaceObj._id.toString();
+    
+    // Check that repositoryId is in accessible workspace
+    if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
+        return res.json({success: false, error: "createDocument Error: request on repository user does not have access to."});
+    }
+    
+    // Check that authorId matches the userId in the JWT (only the user can create a document for themselves)
+    if (authorId != req.tokenPayload.userId) {
+        return res.json({success: false, error: "createDocument Error: userId in JWT doesn't match authorId."});
+    }
+
+
     var order = 0;
 
     var parentPath = '';
@@ -202,7 +215,9 @@ createDocument = async (req, res) => {
 }
 
 getDocument = (req, res) => {
-    Document.findById(req.params.id).populate('parent').populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    Document.findOne({_id: documentId, workspace: workspaceId}).populate('parent').populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
         return res.json(document);
     });
@@ -210,8 +225,12 @@ getDocument = (req, res) => {
 
 getParent = (req, res) => {
     let query = Document.findOne({})
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
     
-    query.where('children').equals(req.params.id)
+    query.where('children').equals(documentId);
+    query.where('workspace').equals(workspaceId);
     query.populate('parent').populate('author').populate('workspace')
     .populate('repository').populate('references')
     .populate('tags').exec((err, document) => {
@@ -223,13 +242,25 @@ getParent = (req, res) => {
 
 
 editDocument = (req, res) => {
-    const { id } = req.params;
     const { title, markup, repositoryId } = req.body;
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+
+    var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+    
+    // Check that repositoryId is in accessible workspace
+    if (repositoryId) {
+        if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
+            return res.json({success: false, error: "editDocument Error: request on repository user does not have access to."});
+        }
+    }
+
     let update = {};
     if (title) update.title = title;
     if (markup) update.markup = markup;
     if (repositoryId) update.repository = repositoryId
-    Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace')
         .populate('repository').populate('references')
@@ -242,7 +273,10 @@ editDocument = (req, res) => {
 
 
 deleteDocument = async (req, res) => {
-    const { documentId } = req.body;
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+
     if (!checkValid(documentId)) {
         return res.json({success: false, error: 'deleteDocument: error no id passed', result: null});
     }
@@ -251,7 +285,7 @@ deleteDocument = async (req, res) => {
 
     console.log('documentId: ', documentId);
     console.log(typeof documentId);
-    var toDelete = await Document.findById(documentId);
+    var toDelete = await Document.findOne({_id: documentId, workspace: workspaceId});
     if (!toDelete) {
         return res.json({success: false, error: 'deleteDocument: error could not find document to delete', result: null});
     }
@@ -308,10 +342,13 @@ deleteDocument = async (req, res) => {
 }
 
 renameDocument = async (req, res) => {
-    const { documentId, title } = req.body;
-    if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.', result: null});
+    const { title } = req.body;
     if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no name provided', result: null});
-    var oldDocument = await Document.findById(documentId);
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+
+    var oldDocument = await Document.findOne({_id: documentId, workspace: workspaceId});
     if (!oldDocument) {
         return res.json({success: false, error: 'renameDocument: error could not find document: ' + documentId, result: null});
     }
@@ -435,14 +472,15 @@ renameDocument = async (req, res) => {
 }
 
 moveDocument = async (req, res) => {
-    var { documentId, parentId, order } = req.body;
-    if (!checkValid(documentId)) return res.json({success: false, error: 'moveDocument: error no documentId provided.', result: null});
+    var {parentId, order } = req.body;
     if (!checkValid(parentId)) return res.json({success: false, error: 'moveDocument: error no parentId provided', result: null});
     if (!checkValid(order)) return res.json({success: false, error: 'moveDocument: error no order provided', result: null});
+    const documentId = req.documentObj._id.toString();
+
 
     order = parseInt(order);
 
-    var oldDocument = await Document.findById(documentId);
+    var oldDocument = req.documentObj;
     if (!oldDocument) {
         return res.json({success: false, error: 'moveDocument: error could not find document to move', result: null});
     }
@@ -481,6 +519,10 @@ moveDocument = async (req, res) => {
         newParent = await Document.findById(parentId);
         if (!newParent) {
             return res.json({success: false, error: 'moveDocument: error could not find parent document', result: [oldDocument]});
+        }
+        // Make sure both the new parent and the doc to move are in the same workspace
+        if (newParent.workspace.toString() != oldDocument.workspace.toString()) {
+            return res.json({success: false, error: "moveDocument: error parent doc not in same workspace as doc to move."});
         }
 
         // Don't allow moving the original document into its own child
@@ -741,10 +783,10 @@ retrieveDocumentsExtension = async (req, res) => {
 
 retrieveDocuments = (req, res) => {
     let { search, sort, authorId, childrenIds, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
-    const { workspaceId } = req.params;
+    const { workspaceId } = req.documentObj.workspace.toString();
     let query;
     if (search) {
-        query = Document.find({title: { $regex: new RegExp(search, 'i')} })
+        query = Document.find({ title: { $regex: new RegExp(search, 'i')}, workspace: workspaceId });
     } else {
         query =  Document.find();
     }
@@ -758,10 +800,10 @@ retrieveDocuments = (req, res) => {
         }
     }
 
+    query.where('workspace').equals(workspaceId);
     if (checkValid(referenceIds)) query.where('references').in(referenceIds);
     if (checkValid(documentIds)) query.where('_id').in(documentIds);
     if (checkValid(authorId)) query.where('author').equals(authorId);
-    if (checkValid(workspaceId)) query.where('workspace').equals(workspaceId);
     if (checkValid(repositoryId)) query.where('repository').equals(repositoryId);
     if (checkValid(childrenIds)) query.where('_id').in(childrenIds);
     if (checkValid(tagIds)) query.where('tags').all(tagIds);
@@ -793,11 +835,12 @@ retrieveDocuments = (req, res) => {
 }
 
 attachReference = (req, res) => {
-    const { id } = req.params;
-    const { referenceId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const referenceId = req.referenceObj._id.toString();
     let update = {};
-    if (referenceId) update.references = ObjectId(referenceId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
+    update.references = ObjectId(referenceId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
@@ -808,11 +851,12 @@ attachReference = (req, res) => {
 }
 
 removeReference = (req, res) => {
-    const { id } = req.params;
-    const { referenceId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const referenceId = req.referenceObj._id.toString();
     let update = {};
-    if (referenceId) update.references = ObjectId(referenceId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+    update.references = ObjectId(referenceId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
@@ -822,11 +866,13 @@ removeReference = (req, res) => {
 }
 
 attachTag = (req, res) => {
-    const { id } = req.params;
-    const { tagId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const tagId = req.tagObj._id.toString();
+
     let update = {};
-    if (tagId) update.tags = ObjectId(tagId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
+    update.tags = ObjectId(tagId);
+    Document.findByOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
@@ -837,14 +883,14 @@ attachTag = (req, res) => {
 
 
 removeTag = (req, res) => {
-    const { id } = req.params;
-    const { tagId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const tagId = req.tagObj._id.toString();
     let update = {};
-    if (tagId) update.tags = ObjectId(tagId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+    update.tags = ObjectId(tagId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
-            
             if (err) return res.json({ success: false, error: err });
             console.log("DOC", document)
             return res.json(document);
@@ -854,11 +900,12 @@ removeTag = (req, res) => {
 
 
 attachSnippet = (req, res) => {
-    const { id } = req.params;
-    const { snippetId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const snippetId = req.snippetObj._id.toString();
     let update = {};
-    if (snippetId) update.snippets = ObjectId(snippetId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
+    update.snippets = ObjectId(snippetId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
@@ -870,11 +917,12 @@ attachSnippet = (req, res) => {
 
 
 removeSnippet = (req, res) => {
-    const { id } = req.params;
-    const { snippetId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const snippetId = req.snippetObj._id.toString();
     let update = {};
-    if (snippetId) update.snippets = ObjectId(snippetId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+    update.snippets = ObjectId(snippetId);
+    Document.findByIdAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
