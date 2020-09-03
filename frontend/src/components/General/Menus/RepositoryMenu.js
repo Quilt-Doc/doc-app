@@ -22,6 +22,7 @@ import styled from "styled-components";
 import {RiGitRepositoryLine} from 'react-icons/ri'
 import {AiOutlineCaretDown} from 'react-icons/ri'
 import { AiFillCaretDown } from 'react-icons/ai';
+import { FiChevronDown } from 'react-icons/fi';
 
 class RepositoryMenu extends React.Component {
     
@@ -43,7 +44,6 @@ class RepositoryMenu extends React.Component {
      */
     handleClickOutside = (event) => {
         if (this.node && !this.node.contains(event.target)) {
-            console.log("HERE")
             this.closeMenu()
         }
     }
@@ -56,9 +56,7 @@ class RepositoryMenu extends React.Component {
                 <ListItem 
                     onClick = {() => {history.push(location); this.closeMenu()}} 
                 >
-                    <ion-icon 
-                        style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
-                        name="git-network-outline"></ion-icon>
+                    <RiGitRepositoryLine style = {{marginRight: "0.7rem"}}/>
                     {repo.fullName}
                 </ListItem>
             )
@@ -80,35 +78,32 @@ class RepositoryMenu extends React.Component {
         this.setState({ open: false })
     }
 
+
+
     render() {
         let {repositoryId, workspaceId} = this.props.match.params;
         return(
             <MenuContainer >
-                <RepositoryButton to = {`/workspaces/${workspaceId}/repository/${repositoryId}/dir`}>
-                    <RiGitRepositoryLine style = {{ marginRight: "0.7rem", fontSize: "1.5rem"}}/>
-                    {this.props.name /*.fullName.split("/")[1]*/}
-                    
-                    <DropButton onClick = {(e) => 
-                        {this.openMenu(e)}
-                    }>
-                        <AiFillCaretDown/>
-                    </DropButton>
-                </RepositoryButton>
-                {this.state.open && 
-                    <CSSTransition
-                    in={true}
-                    appear = {true}
-                    timeout={100}
-                    classNames="menu"
-                    >
+                <PageIcon active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
+                    <RiGitRepositoryLine style = {{marginRight: "0.7rem"}}/>
+                    <Title>{this.props.repoName}</Title>
+                    <FiChevronDown style = {{fontSize: "1.3rem", marginTop: "0.3rem"}}/>
+                </PageIcon>
+                <CSSTransition
+                    in={this.state.open }
+                    enter = {true}
+                    exit = {true}
+                    unmountOnExit = {true}
+                    timeout={150}
+                    classNames="dropmenu"
+                >
                     <Container  ref = {node => this.node = node}>
                         <HeaderContainer>Select a repository</HeaderContainer>
                         <ListContainer>
                             {this.renderListItems()}
                         </ListContainer>
                     </Container>
-                    </CSSTransition>
-                }
+                </CSSTransition>
             </MenuContainer>
         )
     }
@@ -126,6 +121,32 @@ const mapStateToProps = (state, ownProps) => {
 
 
 export default withRouter(connect( mapStateToProps )(RepositoryMenu));
+
+const Title = styled.div`
+    font-size: 1.3rem;
+    margin-right: 0.3rem;
+`
+
+
+
+const PageIcon = styled.div`
+    margin-right: 1.5rem;
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+   
+   /*color: white;*/
+    /*background-color: #4c5367;*/
+   /* opacity: 0.8;*/
+   padding: 0.5rem 1rem;
+    &:hover {
+        background-color: #F4F4F6;
+        
+    }
+    cursor: pointer;
+    border-radius: 0.3rem;
+    background-color: ${props => props.active ? "#F4F4F6" : ""};
+`
 
 const MenuContainer = styled.div`
 `
@@ -169,14 +190,14 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
     border-radius: 0.3rem;
     font-size: 1.4rem;
     margin-top: 2rem;
     z-index: 2;
     background-color: white;
-    margin-top: ${props => props.marginTop};
+    margin-top: 0.5rem;
 `
 
 const SearchbarContainer = styled.div`
@@ -225,6 +246,8 @@ const HeaderContainer = styled.div`
     font-size: 1.3rem;
     padding: 1rem;
     color: #172A4E;
+    font-weight: 500;
+    border-bottom: 1px solid #E0E4E7;
 `
 
 const ListHeader = styled.div`

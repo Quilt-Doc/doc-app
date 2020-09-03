@@ -13,11 +13,14 @@ import NavbarProfile from './Top Navbar/NavbarProfile';
 import UserSettingsView from './Settings Pages/UserSettingsView';
 import WorkspaceView from './Workspace Page/WorkspaceView';
 import CreateButton from './Top Navbar/CreateButton';
+import ConnectButton from './Top Navbar/ConnectButton';
+import TopNavbar from './Space Page/TopNavbar';
 
 //styles
 import styled from "styled-components";
 import {RiPencilLine} from 'react-icons/ri'
-
+import {RiNotification3Line} from 'react-icons/ri';
+import {IoMdNotificationsOutline} from 'react-icons/io'
 //images
 import logo from '../images/logo.svg'
 
@@ -33,10 +36,12 @@ const Dashboard = () => {
 
     return ( 
         <Container>
+            {/*
             <TopNav>
                 <StyledIcon src = {logo} />
                 <Company>quilt</Company>
                 <CreateButton/>
+                <ConnectButton/>
                 <div>
                     <SearchbarWrapper hoverColor = {search ? '#313b5e' : '#39466f'} onClick = {() => setSearch(true)}>
                         <ion-icon 
@@ -65,10 +70,16 @@ const Dashboard = () => {
                     }
                      
                 </div>
-               
+                <Options>
+                    <Option>
+                        <IoMdNotificationsOutline/>
+                    </Option>
+                    <NavbarProfile/>
+                </Options>
                 
                
-            </TopNav>
+                </TopNav>*/}
+            <TopNavbar/>
             <Router history = {history}>
                   <Route exact path = "/workspaces" component = {WorkspaceView} />
                   <Route path = "/workspaces/:workspaceId" component = {SpaceView} />
@@ -251,7 +262,7 @@ const Options = styled.div`
     margin-left: auto;
     display: flex;
     align-items: center;
-    margin-right: 15rem;
+    margin-right: 10rem;
 `
 
 const Option = styled.div`
@@ -262,13 +273,16 @@ const Option = styled.div`
     align-items: center;
     justify-content: center;
     width: 3.3rem;
-    border-radius: 0.25rem;
+    border-radius: 0.4rem;
     background-color:  #323B5D;;
     cursor: pointer;
     color: white;
     &:hover {
         background-color:#39466f
     }
+    padding: 0.5;
+    background-color: #414758; 
+    border: 1px solid #414758;
 `
 
 
@@ -312,7 +326,7 @@ const SearchbarWrapper = styled.div`
     height: 3.3rem;
     padding: 0.5rem 1.5rem;
     background-color: #414758; /*#39466f*/
-    
+    border: 1px solid #414758;
     
    
     width: ${props => props.width};
@@ -339,7 +353,7 @@ const Searchbar = styled.input`
     font-weight: 350;
     height: 3rem;
     width: ${props => props.barWidth};
-    transition: width 0.2s ease-out;
+    transition: width 0.15s ease-out;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
 //#262848;
@@ -351,7 +365,7 @@ const TopNav = styled.div`
     background-color:#343946;
     color:#D6E0EE;
     display: flex;
-    z-index: 20;
+    z-index: 5;
     align-items: center;
 `
 

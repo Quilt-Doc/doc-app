@@ -128,6 +128,7 @@ class TextEditorView extends React.Component {
                             markup = {this.state.markup} 
                             setValue = {this.setValue}
                             scrollTop = {this.props.scrollTop}
+                            document = {this.props.document}
                         />
                     </SubContainer>
             )

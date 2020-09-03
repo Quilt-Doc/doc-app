@@ -209,10 +209,22 @@ class MenuContents extends React.Component {
 			document.removeEventListener('mousedown', this.handleClickOutside, false);
             this.props.dispatch({type: "markupMenuOff"})
         }
-    }
+	}
+	
+	convertRemToPixels = (rem) => {    
+		return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+	}
 
 	render(){
 		let {open, renderMenu, rect} = this.props
+		if (rect){
+			let height = this.convertRemToPixels(40);
+			if (rect.top + height - 100 > window.innerHeight){
+				rect = {top: rect.top - height , left: rect.left, height: rect.height}
+				//rect.top = rect.top - height - rect.height;
+			}	
+		}
+		
 		return(
 			<CSSTransition
 				in = {open}
@@ -223,7 +235,6 @@ class MenuContents extends React.Component {
 				classNames = "dropmenu"
 			>
 				<Menu 
-					
 					ref = {node => this.node = node}
 					style = {{
 						top: rect ?  rect.top + rect.height/2 : 0, 

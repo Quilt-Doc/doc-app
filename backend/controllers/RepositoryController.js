@@ -318,7 +318,6 @@ pollRepositories = async (req, res) => {
     return res.json({success: true, result: true})
 }
 
-
 updateRepository = async (req, res) => {
     const {eventType, headCommit, cloneUrl} = req.body;
 

@@ -17,9 +17,21 @@ var urljoin = require('url-join');
     dispatch({ type: REPO_SEARCH, payload: response.data });
 }*/
 
+<<<<<<< HEAD
 export const getRepositoryFile = (fileDesc) => async (dispatch) => {
 
     console.log('fileDesc: ', fileDesc);
+=======
+export const retrieveInstallationRepositories = (formValues) => async () => {
+    const response = await api.post('/repositories/retrieve_installed', formValues );
+    return response.data
+}
+
+export const refreshRepositoryPath = (formValues) => async (dispatch) => {
+    console.log('formValues: ', formValues);
+    const response = await api.post('/repositories/refresh_path', formValues );
+    console.log('refreshRepositoryPath response: ', response);
+>>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
     
     const workspaceId = fileDesc.workspaceId;
     const repositoryId = fileDesc.repositoryId;

@@ -208,6 +208,46 @@ retrieveReferences = async (req, res) => {
 }
 
 
+retrieveReferencesDropdown = (req, res) => {
+    let {limit, referenceIds, repositoryId,  sort, search} = req.body;
+    
+    let query;
+
+    if (checkValid(search)) {
+        query = Reference.find({name: { $regex: new RegExp(search, 'i')} })
+    } else {
+        query =  Reference.find();
+    }
+
+
+    if (checkValid(referenceIds)) query.where('_id').in(referenceIds);
+    if (checkValid(repositoryId)) query.where('repository').equals(repositoryId);
+
+    if (checkValid(limit)) query.limit(limit);
+    //if (checkValid(sort)) query.sort(sort);
+    
+    query.populate('repository').populate('tags').exec((err, references) => {
+        if (err) return res.json({ success: false, error: err });
+        if ((checkValid(limit)) && checkValid(referenceIds) && referenceIds.length < limit){
+            let query2;
+            if (checkValid(search)) {
+                query2 = Reference.find({name: { $regex: new RegExp(search, 'i')} })
+            } else {
+                query2 =  Reference.find();
+            }
+            if (checkValid(repositoryId)) query2.where('repository').equals(repositoryId);
+            query2.limit(limit - referenceIds.length)
+            query2.where('_id').nin(referenceIds);
+            query2.populate('repository').populate('tags').exec((err, references2) => {
+                references = [...references, ...references2];
+                return res.json(references)
+            })
+        } else {
+            return res.json(references);
+        }
+    })
+}
+
 
 editReference = (req, res) => {
 
@@ -314,5 +354,9 @@ module.exports =
     editReference,
     deleteReference,
     attachTag, 
-    removeTag
+    removeTag,
+    retrieveReferencesDropdown
+    /*
+    attachDocument,
+    removeDocument*/
 }

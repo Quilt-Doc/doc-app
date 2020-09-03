@@ -17,6 +17,10 @@ html {
   cursor: grab;
 }
 
+.marker-mode{
+  cursor: grab;
+}
+
 body {
     color: #172A4E;
     box-sizing: border-box;
@@ -33,7 +37,7 @@ body {
 }
 
 .selected_code {
-  background-color: rgba(25, 229, 190, 0.05)!important;
+  background-color: rgba(25, 229, 190, 0.05) !important;
   border-left: 1.5px solid #19E5BE !important;
   /*box-shadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;*/
 }
@@ -197,3 +201,41 @@ body {
   opacity: 1;
   transition: all 300ms;
 }
+
+
+.slidepane-appear {
+  transform: translateX(-5rem);
+  opacity: 0;
+}
+
+.slidepane-appear.slidepane-appear-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 300ms;
+}
+
+
+.slidepane-enter {
+  transform: translateX(-5rem);
+  opacity: 0;
+  /*transform: translateY(-2rem);*/
+}
+
+.slidepane-enter.slidepane-enter-active {
+  /*transform: translateX(0);*/
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 300ms;
+}
+
+.slidepane-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.slidepane-exit.slidepane-exit-active {
+  transform: translateX(5rem);
+  opacity: 0;
+  transition: all 300ms;
+}
+

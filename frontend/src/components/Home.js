@@ -11,6 +11,9 @@ import { checkLogin } from '../actions/Auth_Actions'
 
 //components
 import Dashboard from './Dashboard';
+import CreateWorkspaceView from "../components/Workspace Page/CreateWorkspaceView";
+import OnboardingView from '../components/Onboarding Page/OnboardingView';
+import LoginView from '../components/Login Page/LoginView';
 
 import { api, apiEndpoint } from '../apis/api';
 
@@ -29,17 +32,12 @@ class Home extends React.Component {
     }
 
     renderLoginModal() {
-        return (<LoginBoxContainer>
-                    <LoginBox>
-                        <LoginHeader>Sign in to Docapp</LoginHeader>
-                       
-                        <LoginButton onClick = {() => this.goLogin()}><ion-icon style = {{'fontSize':'2.3rem', 'marginRight': '0.7rem'}} name="logo-github"></ion-icon>Continue with Github</LoginButton>
-                    </LoginBox>
-                </LoginBoxContainer>)
+        return (<LoginView/>)
     }
 
     renderDashboard() {
-        return <Dashboard/>
+        return <Dashboard/>/* <OnboardingView/>*/
+        //<Dashboard/>return <CreateWorkspaceView/>/*<Dashboard/>*/
     }   
 
     render(){

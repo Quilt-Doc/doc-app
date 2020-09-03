@@ -20,6 +20,7 @@ import { CSSTransition } from 'react-transition-group';
 
 //icons
 import {RiGitRepositoryLine} from 'react-icons/ri'
+import {FiFileText, FiChevronDown} from 'react-icons/fi'
 
 //styles
 import styled from "styled-components";
@@ -42,6 +43,16 @@ class RepositoryMenu extends React.Component {
     /**
      * Alert if clicked on outside of element
      */
+
+    selectRepository(repo){
+        if (this.props.form){
+            this.props.selectRepository(repo)
+            this.closeMenu()
+        } else {
+            this.props.editDocument(this.props.document._id, {repositoryId: repo._id}); 
+            this.closeMenu()
+        }
+    }
     
 
     renderListItems(){
@@ -49,13 +60,19 @@ class RepositoryMenu extends React.Component {
             return(
                 <ListItem 
                     onClick = {() => {
+<<<<<<< HEAD
                         let { workspaceId } = this.props.match.params;
                         this.props.editDocument({workspaceId, documentId: this.props.document._id, repositoryId: repo._id}); 
                         this.closeMenu()}} 
+=======
+                        this.selectRepository(repo)
+                    }} 
+>>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
                 >
-                    <ion-icon 
-                        style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
-                        name="git-network-outline"></ion-icon>
+                    <RiGitRepositoryLine style = {
+                        {fontSize: "1.5rem", marginRight: "0.7rem"}
+                        }
+                    />
                     {repo.fullName}
                 </ListItem>
             )
@@ -81,23 +98,36 @@ class RepositoryMenu extends React.Component {
 
     renderFullName(){
         let split = this.props.document.repository.fullName.split("/")
-        return `${split[0]} / ${split[1]}`
+        return `${split[1]}`
+    }
+
+    renderFormFullName(repo){
+       
     }
 
     render() {
         return(
             <MenuContainer >
+                {!this.props.form ?
+                    <RepositoryButton onClick = {(e) => {this.openMenu(e)}}> 
+                        <RiGitRepositoryLine style = {
+                                        { marginRight: "0.65rem", fontSize: "1.7rem"}
+                        }/>
+                        {this.props.document.repository ? this.renderFullName() : "Select repository"}
+                        <FiChevronDown
+                            style = {{  fontSize: "1.3rem",
+                                        marginTop: "0.25rem",
+                                        marginLeft: "0.8rem"}} 
+                        /> 
+                    </RepositoryButton>
+                    :
+                    <Provider onClick = {(e) => {this.openMenu(e)}}>
+                        <RiGitRepositoryLine style = {{marginTop: "-0.15rem", marginRight: "1rem"}}/>
+                        {this.props.formRepository ? this.props.formRepository.fullName.split("/")[1] : "None Selected"}
+                        <FiChevronDown style = {{ marginLeft: "1rem"}}/>
+                    </Provider>
+                }
                 
-                <RepositoryButton onClick = {(e) => {this.openMenu(e)}}> 
-                    <RiGitRepositoryLine style = {
-                                    { marginRight: "0.5rem", fontSize: "1.4rem"}
-                    }/>
-                    {this.props.document.repository ? this.renderFullName() : "Select a repository to add references"}
-                     <ion-icon 
-                        style = {{fontSize: "1.2rem", marginTop: "0.2rem", marginLeft: "0.8rem"}} 
-                        name="caret-down">
-                    </ion-icon>
-                </RepositoryButton>
                 <CSSTransition
                     in={this.state.open}
                     unmountOnExit
@@ -106,7 +136,7 @@ class RepositoryMenu extends React.Component {
                     timeout = {150}
                     classNames = "dropmenu"
                 >
-                    <Container  ref = {node => this.node = node}>
+                    <Container marginTop = {this.props.form ? "-3rem" : ""}  ref = {node => this.node = node}>
                         <HeaderContainer>Select a repository</HeaderContainer>
                         <ListContainer>
                             {this.renderListItems()}
@@ -119,9 +149,14 @@ class RepositoryMenu extends React.Component {
 }
 
 const mapStateToProps = (state, ownProps) => {
+    console.log(ownProps.match.params);
     let {workspaceId} = ownProps.match.params
+    console.log(workspaceId)
+    console.log("WORKSPACES", state.workspaces[workspaceId])
+    let repositories =  state.workspaces[workspaceId] ? state.workspaces[workspaceId].repositories : [];
+    console.log(repositories)
     return {
-        repositories:  state.workspaces[workspaceId].repositories,
+        repositories,
         workspace: state.workspaces[workspaceId]
     }
 }
@@ -130,23 +165,36 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect( mapStateToProps, {editDocument} )(RepositoryMenu));
 
+const Provider = styled.div`
+    background-color: #363b49;
+    padding: 1rem 2rem;
+    border-radius: 0.4rem;
+    font-weight: 500;
+    font-size: 1.7rem;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 4rem;
+    &:hover {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    cursor: pointer;
+`
 
 const RepositoryButton = styled.div`
-    background-color:#414758;
-    color: white;
-    font-weight: 500;
-    padding: 0.75rem;
+    /*background-color: #f4f7fa;*/
+    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
+   
+   
+    border-radius: 0.3rem;
+    font-size: 1.5rem;
+    /*padding: 0.5rem 1rem;*/
+    margin-right: 1.35rem;
     display: inline-flex;
-    border-radius: 0.4rem;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     align-items: center;
+    margin-bottom: 2rem;
+  /*  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    font-weight: 600;
     cursor: pointer;
-    &: hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    }
-    letter-spacing: 1;
-    font-size: 1.3rem;
-    margin-bottom: 2.5rem;
 `
 
 const RepoName = styled.div`
@@ -203,11 +251,11 @@ const Container = styled.div`
     color: #172A4E;
     box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
-    border-radius: 0.2rem;
     font-size: 1.4rem;
-    margin-top: 2rem;
+    margin-top: -1rem;
     z-index: 2;
     background-color: white;
+    border-radius: 0.2rem;
     margin-top: ${props => props.marginTop};
 `
 
@@ -258,6 +306,7 @@ const HeaderContainer = styled.div`
     padding: 1rem;
     color: #172A4E;
     font-weight: 500;
+    border-bottom: 1px solid #E0E4E7;
 `
 
 const ListHeader = styled.div`
@@ -274,8 +323,7 @@ const ListHeader = styled.div`
 const ListContainer = styled.div`
     display: flex;
     flex-direction: column;
-    padding: 1rem;
-    padding-top: 0rem;
+    padding: 1rem 0rem;
 `
 
 const ListItem = styled.div`
