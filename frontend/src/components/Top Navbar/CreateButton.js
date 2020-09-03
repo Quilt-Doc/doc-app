@@ -37,6 +37,13 @@ class CreateButton extends React.Component {
         let {tags, references, parent, repository} = details; 
         if (path.length > 2) {
             let workspaceId = path[2]
+<<<<<<< HEAD
+            this.props.createDocument({authorId: this.props.user._id,
+                workspaceId, parentId: "", title: "",
+                referenceIds: this.props.selected.map(item => item._id)}).then((documents) => {
+                console.log("CREATE DOCS", documents)
+                let document = documents[0]
+=======
             this.props.createDocument({
                 authorId: this.props.user._id,
                 workspaceId,
@@ -48,6 +55,7 @@ class CreateButton extends React.Component {
             ).then((documents) => {
                 let document = documents.result[0]
                 this.setState({loading: false, open: false})
+>>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
                 this.props.setCreation(true)
                 history.push(`?document=${document._id}`)
                 this.props.clearSelected()

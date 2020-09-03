@@ -14,7 +14,7 @@ import Installed from './Installed';
 import CreateWorkspaceView from './Workspace Page/CreateWorkspaceView';
 
 import TagWrapper from './General/TagWrapper';
-import ReferenceMenu from './Space Page/Text Editor Page/Menus/ReferenceMenu';
+// import ReferenceMenu from './Space Page/Text Editor Page/Menus/ReferenceMenu';
 //import HoveringMenuExample from'./Space Page/Text Editor Page/HoveringMenuExample'
 import ExtensionDemo from './Extension/ExtensionDemo';
 //split markers -- directory, file

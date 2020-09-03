@@ -85,7 +85,7 @@ const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github
 app.use(function (req, res, next) {
   console.log('Time:', Date.now());
   req.path = req.path.trim();
-  console.log('REQ.PATH:' + req.path);
+  // console.log('REQ.PATH:' + req.path);
 
   const authHeader = req.headers.authorization;
 
@@ -136,6 +136,7 @@ app.use(function (req, res, next) {
       var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
       console.log('decoded JWT: ');
       console.log(decoded);
+      req.tokenPayload = decoded;
   }
   catch(err) {
       console.log('JWT Verify Failed Error: ');

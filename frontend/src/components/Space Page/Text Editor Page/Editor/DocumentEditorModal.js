@@ -34,7 +34,7 @@ import { CgArrowsExpandLeft } from 'react-icons/cg'
 
 //components
 import MarkupMenu from '../Menus/MarkupMenu';
-import ReferenceMenu from '../Menus/ReferenceMenu';
+// import ReferenceMenu from '../Menus/ReferenceMenu';
 import { CSSTransition } from 'react-transition-group';
 
 //react dnd

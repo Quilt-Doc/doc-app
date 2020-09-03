@@ -45,7 +45,8 @@ class TextEditorView extends React.Component {
         if (prevProps.location.pathname !== this.props.location.pathname) {
             this.setState({loaded: false})
             if (prevProps.document){
-                this.props.editDocument(prevProps.document._id, {markup: JSON.stringify(this.state.markup)}).then(() => {
+                let { workspaceId } = this.props.match.params;
+                this.props.editDocument({workspaceId, documentId: prevProps.document._id, markup: JSON.stringify(this.state.markup)}).then(() => {
                     this.loadResources()
                 })
             }
@@ -53,9 +54,9 @@ class TextEditorView extends React.Component {
     }
 
     loadResources(){
-        let { documentId } = this.props.match.params
+        let { workspaceId, documentId } = this.props.match.params
 
-        this.props.getDocument(documentId).then((document) =>{
+        this.props.getDocument({workspaceId, documentId}).then((document) =>{
             let markup = [{
                 type: 'paragraph',
                 children: [
@@ -74,7 +75,7 @@ class TextEditorView extends React.Component {
 
             this.setState({markup, title})
             
-            this.props.getParent(documentId).then((parent) => {
+            this.props.getParent({workspaceId, documentId}).then((parent) => {
                 if (parent) {
                     this.setState({parentId: parent._id})
                 }
@@ -89,7 +90,8 @@ class TextEditorView extends React.Component {
 
     saveMarkup = () =>{
         if (this.props.document){
-            this.props.editDocument(this.props.document._id, {markup: JSON.stringify(this.state.markup)})
+            let { workspaceId } = this.props.match.params;
+            this.props.editDocument({workspaceId, documentId: this.props.document._id, markup: JSON.stringify(this.state.markup)})
         }
     }
 
@@ -120,10 +122,12 @@ class TextEditorView extends React.Component {
     onTitleChange(e){
         console.log("BLUR EVENT", e.type)
         console.log("BLUR EVENT TARGET VAL", e.target.value)
+
+        let { workspaceId } = this.props.match.params;
         
         this.setState({title: e.target.value})
         if (e.type === "blur") {
-            this.props.renameDocument({documentId: this.props.document._id, title: e.target.value})
+            this.props.renameDocument({workspaceId, documentId: this.props.document._id, title: e.target.value})
         }
         
     }

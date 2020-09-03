@@ -7,6 +7,10 @@ import LabelMenu from '../../General/Menus/LabelMenu';
 import FileReferenceMenu from '../../General/Menus/FileReferenceMenu';
 import { CSSTransition } from 'react-transition-group';
 
+//router
+import {withRouter} from 'react-router-dom';
+
+
 //styles 
 import styled from "styled-components";
 
@@ -14,8 +18,7 @@ import styled from "styled-components";
 import history from '../../../history';
 
 //actions
-import { retrieveRepositoryItems } from '../../../actions/RepositoryItem_Actions'
-import { getDocument, renameDocument, deleteDocument, editDocument, getParent, removeChild, attachTag, removeTag } from '../../../actions/Document_Actions';
+import { getDocument, renameDocument, deleteDocument, editDocument, getParent, attachTag, removeTag } from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 
 //icons
@@ -47,8 +50,10 @@ class TextEditorView extends React.Component {
         let search = history.location.search
         let params = new URLSearchParams(search)
         let documentId = params.get('document')
+        let { workspaceId } = this.props.match.params;
+        console.log('TEXT EDITOR FOUND WorkspaceId: ', workspaceId);
 
-        this.props.getDocument(documentId).then((document) =>{
+        this.props.getDocument({workspaceId, documentId}).then((document) =>{
             let markup = [{
                 type: 'paragraph',
                 children: [
@@ -75,7 +80,8 @@ class TextEditorView extends React.Component {
 
     saveMarkup = () => {
         if (this.props.document) {
-            this.props.editDocument(this.props.document._id, { markup: JSON.stringify(this.state.markup) })
+            let { workspaceId } = this.props.match.params;
+            this.props.editDocument({workspaceId, documentId: this.props.document._id, markup: JSON.stringify(this.state.markup) })
         }
     }
 
@@ -88,7 +94,8 @@ class TextEditorView extends React.Component {
             if (!this.props.document.title
                 && this.state.markup.length === 1
                 && this.state.markup[0].children[0].text == '') {
-                this.props.deleteDocument(this.props.document._id)
+                    let { workspaceId } = this.props.match.params;
+                    this.props.deleteDocument({workspaceId, documentId: this.props.document._id})
             } else {
                 this.saveMarkup()
             }
@@ -102,8 +109,9 @@ class TextEditorView extends React.Component {
     
     onTitleChange = (e) => {
         this.setState({title: e.target.value})
+        let { workspaceId } = this.props.match.params;
         if (e.type === "blur") {
-            this.props.renameDocument({documentId: this.props.document._id, title: e.target.value})
+            this.props.renameDocument({workspaceId, documentId: this.props.document._id, title: e.target.value})
         }
     }
 
@@ -145,7 +153,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, { getDocument, editDocument, attachTag, removeTag, retrieveRepositoryItems, deleteDocument, setCreation, getParent, removeChild, renameDocument })(TextEditorView);
+export default withRouter(connect(mapStateToProps, { getDocument, editDocument, attachTag, removeTag, deleteDocument, setCreation, getParent, renameDocument })(TextEditorView));
 
 
 const Placeholder = styled.div`

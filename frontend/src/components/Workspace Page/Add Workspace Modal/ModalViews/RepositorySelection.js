@@ -125,7 +125,7 @@ class RepositorySelection extends React.Component {
             installationId: this.state.installationId, accessToken: this.props.user.accessToken}).then((response) => {
             this.interval = setInterval(this.pollRepositories(response), 3000);
         })
-    }   
+    }
 
 
     render(){

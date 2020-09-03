@@ -28,7 +28,7 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 //actions
 import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
 import { retrieveDocuments } from '../../../actions/Document_Actions';
-import { getContents, retrieveCodeReferences, getReferenceFromPath,  retrieveReferences, attachTag, removeTag } from '../../../actions/Reference_Actions';
+import { retrieveCodeReferences, getReferenceFromPath,  retrieveReferences, attachTag, removeTag } from '../../../actions/Reference_Actions';
 import { getRepositoryFile, getRepository } from '../../../actions/Repository_Actions';
 
 import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
@@ -98,12 +98,14 @@ class CodeView extends React.Component {
         
         // get contents of code file from database
         let { referenceId, repositoryId, workspaceId}  = this.props.match.params;
-        await this.props.getRepository(repositoryId)
-        let fileContents = await this.props.getContents({referenceId})
-        await this.props.retrieveReferences({ referenceId })
+        await this.props.getRepository({workspaceId, repositoryId});
+        let fileContents = await this.props.getRepositoryFile({workspaceId, repositoryId, referenceId});
+        console.log('Code View fileContents');
+        console.log(fileContents);
+        await this.props.retrieveReferences({ workspaceId, referenceId })
         await this.props.retrieveSnippets({referenceId, workspaceId})
         console.log("SNIPPETS", this.props.snippets)
-        await this.props.retrieveDocuments({ referenceIds: [referenceId], workspaceId})
+        await this.props.retrieveDocuments({ workspaceId, referenceIds: [referenceId], workspaceId})
         const allLinesJSX = this.renderLines(fileContents);
         window.addEventListener('keydown', this.handleKeyDown, false);
         this.setState({fileContents, allLinesJSX, loaded: true});
@@ -359,9 +361,11 @@ class CodeView extends React.Component {
         const tokens = Prism.tokenize(fileContents, grammar)
         
         let allLinesJSX = []
-        let currLineJSX = [] 
+        let currLineJSX = []
         let callbacks = this.props.references.filter(ref => 
-            {return ref.parseProvider === 'semantic' && ref._id !== this.props.match.params.referenceId}).map(ref => {ref.position = 
+            {return ref.parseProvider === 'semantic' && ref._id !== this.props.match.params.referenceId}).map(ref => {
+                console.log('ref: ', ref);
+                ref.position = 
                 JSON.parse(ref.position); return ref}).sort((a, b) => {
                     a = a.position.start;
                     b = b.position.start;
@@ -504,8 +508,9 @@ class CodeView extends React.Component {
     }
 
     deleteSnippet(index) {
-        this.props.deleteSnippet(this.props.snippets[index]._id).then(() => {
-            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        var { workspaceId } = this.props.match.params;
+        this.props.deleteSnippet({workspaceId, snippetId: this.props.snippets[index]._id}).then(() => {
+            this.props.retrieveSnippets({workspaceId, location: window.location.pathname.slice(20)})
         })
     }
 
@@ -829,10 +834,11 @@ class CodeView extends React.Component {
     reselectSnippetFunction(elem_key) {
         let start = parseInt(elem_key.split('-').pop())
         let length = _.keys(this.state.selected).length
-        let code = this.state.fileContents.split("\n").slice(start, start + length)
+        let code = this.state.fileContents.split("\n").slice(start, start + length);
         this.deselectItems()
-        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {start, code, status: "VALId"}).then(() => {
-            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        var { workspaceId } = this.props.match.params;
+        this.props.editSnippet({workspaceId, snippetId: this.props.snippets[this.state.reselectingSnippet]._id, start, code, status: "VALId"}).then(() => {
+            this.props.retrieveSnippets({workspaceId, location: window.location.pathname.slice(20)})
             this.setState({
                 'selected': {},
                 'reselectingSnippet': null
@@ -920,7 +926,7 @@ class CodeView extends React.Component {
 
     async redirectPath(path) {
         let {workspaceId, repositoryId} = this.props.match.params
-        let ref = await this.props.getReferenceFromPath({path, repositoryId})
+        let ref = await this.props.getReferenceFromPath({workspaceId, path, repositoryId})
         history.push(`/workspaces/${workspaceId}/repository/${repositoryId}/dir/${ref[0]._id}`)
     }
 
@@ -1049,7 +1055,7 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, 
-    deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveDocuments,
+    deleteSnippet, getRepositoryFile, retrieveCallbacks, retrieveDocuments,
     retrieveCodeReferences, retrieveReferences, getRepository, attachTag, removeTag, getReferenceFromPath})(CodeView));
 
 
