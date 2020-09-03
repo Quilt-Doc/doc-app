@@ -30,7 +30,7 @@ class CreateButton extends React.Component {
                 workspaceId, parentId: "", title: "",
                 referenceIds: this.props.selected.map(item => item._id)}).then((documents) => {
                 console.log("CREATE DOCS", documents)
-                let document = documents.result[0]
+                let document = documents[0]
                 this.props.setCreation(true)
                 history.push(`?document=${document._id}`)
                 this.props.clearSelected()

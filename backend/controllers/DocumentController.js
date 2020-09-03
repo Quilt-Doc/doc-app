@@ -36,15 +36,17 @@ createDocument = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
+    // if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
     if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
 
     var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
-    const workspaceId = req.workspaceObj._id.toString();
+
     
     // Check that repositoryId is in accessible workspace
-    if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
-        return res.json({success: false, error: "createDocument Error: request on repository user does not have access to."});
+    if (repositoryId) {
+        if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
+            return res.json({success: false, error: "createDocument Error: request on repository user does not have access to."});
+        }
     }
     
     // Check that authorId matches the userId in the JWT (only the user can create a document for themselves)
@@ -124,7 +126,6 @@ createDocument = async (req, res) => {
     let document = new Document(
         {
             author: ObjectId(authorId),
-            repository: ObjectId(repositoryId),
             workspace: ObjectId(workspaceId),
             title: emptyTitle ? '' : workingTitle,
             path: parentPath + workingTitle,
@@ -134,6 +135,10 @@ createDocument = async (req, res) => {
 
     if (parentId) {
         document.parent = ObjectId(parentId);
+    }
+
+    if (repositoryId) {
+        document.repository = ObjectId(repositoryId);
     }
 
     if (!parentId) document.parent = null;
@@ -219,7 +224,7 @@ getDocument = (req, res) => {
     const documentId = req.documentObj._id.toString();
     Document.findOne({_id: documentId, workspace: workspaceId}).populate('parent').populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
-        return res.json(document);
+        return res.json({success: true, result: document});
     });
 }
 
@@ -234,8 +239,8 @@ getParent = (req, res) => {
     query.populate('parent').populate('author').populate('workspace')
     .populate('repository').populate('references')
     .populate('tags').exec((err, document) => {
-        if (err) return res.json(err);
-        return res.json(document)
+        if (err) return res.json({success: false, error: err});
+        return res.json({success: true, result: document})
     })
 }
 
@@ -265,8 +270,8 @@ editDocument = (req, res) => {
         document.populate('parent').populate('author').populate('workspace')
         .populate('repository').populate('references')
         .populate('tags', (err, document) => {
-            if (err) return res.json(err);
-            return res.json(document);
+            if (err) return res.json({success: false, error: err});
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -546,8 +551,6 @@ moveDocument = async (req, res) => {
         parentToSet = null;
     }
 
-
-
     // If parents are the same and moving child to the end
     // If the request was made with the same order as the max, we just increment the order by 1
     if (newParent == null && originalParent == null) {
@@ -783,7 +786,7 @@ retrieveDocumentsExtension = async (req, res) => {
 
 retrieveDocuments = (req, res) => {
     let { search, sort, authorId, childrenIds, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
-    const { workspaceId } = req.documentObj.workspace.toString();
+    const { workspaceId } = req.workspaceObj._id.toString();
     let query;
     if (search) {
         query = Document.find({ title: { $regex: new RegExp(search, 'i')}, workspace: workspaceId });
@@ -823,14 +826,11 @@ retrieveDocuments = (req, res) => {
                 if (checkValid(sort)) queryNext.sort(sort);
                 queryNext.exec((err, nextDocuments) => {
                     if (err) return res.json({ success: false, error: err });
-                    return res.json(documents.concat(nextDocuments))
+                    documents = documents.concat(nextDocuments);
                 })
-            } else {
-                return res.json(documents)
             }
-        } else {
-            return res.json(documents);
-        }
+        } 
+        return res.json({success: true, result: documents});
     });
 }
 
@@ -845,7 +845,7 @@ attachReference = (req, res) => {
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             console.log("DOCUMENT", document)
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -860,7 +860,7 @@ removeReference = (req, res) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -876,7 +876,7 @@ attachTag = (req, res) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -893,7 +893,7 @@ removeTag = (req, res) => {
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             console.log("DOC", document)
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -910,7 +910,7 @@ attachSnippet = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -927,7 +927,7 @@ removeSnippet = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -943,7 +943,7 @@ attachUploadFile = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -958,7 +958,7 @@ removeUploadFile = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -973,7 +973,7 @@ addCanWrite = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -988,7 +988,7 @@ removeCanWrite = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -1003,7 +1003,7 @@ addCanRead = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -1018,7 +1018,7 @@ removeCanRead = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }

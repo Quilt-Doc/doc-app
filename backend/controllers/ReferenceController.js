@@ -29,7 +29,7 @@ createReferences = (req, res) => {
         if (error) return res.json({ success: false, error });
         references.populate('repository').populate('tags', (error, references) => {
             if (error) return res.json({ success: false, error: error });
-            return res.json(references);
+            return res.json({success: true, result: references});
         });
     })
 }
@@ -46,7 +46,7 @@ getReference = (req, res) => {
 		if (err) return res.json({success: false, error: err});
         reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(reference)
+            return res.json({success: true, result: reference})
         });
     });
 }
@@ -74,7 +74,7 @@ retrieveCodeReferences = async (req, res) => {
 
     query.populate('repository').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(references);
+        return res.json({success: true, result: references});
     });
 }
 
@@ -202,7 +202,7 @@ retrieveReferences = async (req, res) => {
     query.populate('tags').populate('definitionReferences').exec((err, references) => {
         if (err) return res.json({ success: false, error: err });
         // console.log("REFERENCES", references)
-        return res.json(references);
+        return res.json({success: true, result: references});
 
     });
 }
@@ -230,7 +230,7 @@ editReference = (req, res) => {
         reference.populate('repository').populate( 'tags', (err, reference) => {
             if (err) return res.json(err);
             console.log(reference)
-            return res.json(reference);
+            return res.json({success: true, result: reference});
 
         });
     });
@@ -251,7 +251,7 @@ deleteReference = (req, res) => {
 		if (err) return res.json({success: false, error: err});
         reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(reference);
+            return res.json({success: true, result: reference});
         });
     });
 }
@@ -273,7 +273,7 @@ attachTag = (req, res) => {
 		if (err) return res.json({ success: false, error: err });
 		reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(reference);
+            return res.json({success: true, result: reference});
         });
 	})
 }
@@ -298,7 +298,7 @@ removeTag = (req, res) => {
 		if (err) return res.json({ success: false, error: err });
 		reference.populate('repository').populate('tags', (err, reference) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(reference);
+            return res.json({success: true, result: reference});
         });
 	})
 }

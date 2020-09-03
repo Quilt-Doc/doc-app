@@ -68,12 +68,13 @@ class FileReferenceMenu extends React.Component {
            search: event.target.value,
            typing: false,
            typingTimeout: setTimeout(() => {
+               let { workspaceId } = this.props.match.params;
                 if ( this.state.search === ""){
-                    this.props.localRetrieveReferences({limit: 9, referenceIds: setIds, repositoryId,  sort: "-name"}).then((references) => {
+                    this.props.localRetrieveReferences({workspaceId, limit: 9, referenceIds: setIds, repositoryId,  sort: "-name"}).then((references) => {
                         this.setState({references, position: -1})
                     })
                 } else {
-                    this.props.localRetrieveReferences({search: this.state.search,  repositoryId,  sort: "-name",  limit: 9}).then((references) => {
+                    this.props.localRetrieveReferences({workspaceId, search: this.state.search,  repositoryId,  sort: "-name",  limit: 9}).then((references) => {
                         this.setState({references, position: -1})
                     }); 
                 }
@@ -93,22 +94,24 @@ class FileReferenceMenu extends React.Component {
 
     handleSelect(setBool, referenceId){
         let documentId = this.props.document._id
+        let { workspaceId } = this.props.match.params;
         if (setBool) {
-            this.props.removeReference(documentId, referenceId)
+            this.props.removeReference({workspaceId, documentId, referenceId})
         } else {
-            this.props.attachReference(documentId, referenceId)
+            this.props.attachReference({workspaceId, documentId, referenceId})
         }
     }
 
     async setPosition(e) {
         // UP
         let repositoryId = this.props.document.repository._id;
+        let workspaceId = this.props.match.params;
         if (e.key === "Enter" && this.state.position >= 0) {
             let ref = this.state.references[this.state.position]
             this.setState({loaded: false})
             let referenceIds = this.props.setReferences.map(reference => reference._id)
             await this.handleSelect(referenceIds.includes(ref._id), ref._id)
-            this.props.localRetrieveReferences({limit: 9, referenceIds, repositoryId}).then((references) => {
+            this.props.localRetrieveReferences({workspaceId, limit: 9, referenceIds, repositoryId}).then((references) => {
                 this.setState({loaded: true, search: '', references})
             })
         } else {
@@ -165,8 +168,9 @@ class FileReferenceMenu extends React.Component {
         this.setState({open: true})
         let ids = this.props.setReferences.map(ref => ref._id)
         let repositoryId = this.props.document.repository._id
+        let { workspaceId } = this.props.match.params;
 
-        this.props.localRetrieveReferences({limit: 9, referenceIds: ids, repositoryId}).then((references) => {
+        this.props.localRetrieveReferences({workspaceId, limit: 9, referenceIds: ids, repositoryId}).then((references) => {
             this.setState({references, loaded: true })
         })
     }

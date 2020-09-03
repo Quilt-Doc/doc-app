@@ -2,7 +2,9 @@ const Workspace = require('../models/Workspace');
 const Reference = require('../models/Reference');
 const Document = require('../models/Document');
 const Tag = require('../models/Document');
-
+const Snippet = require('../models/Snippet');
+const Repository = require('../models/Repository');
+const User = require('../models/authentication/User');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -85,11 +87,49 @@ const snippetIdParam = async (req, res, next, snippetId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundSnippet = await Tag.findById(snippetId);
+        var foundSnippet = await Snippet.findById(snippetId);
         if (!foundSnippet) {
             next(new Error("snippetIdParam: snippetId doesn't exist"));
         }
         req.snippetObj = foundSnippet;
+    }
+    catch(err) {
+        next(err);
+    }
+    next();
+}
+
+
+const repositoryIdParam = async (req, res, next, repositoryId) => {
+    if (req.repositoryObj) {
+        next();
+    }
+    // try to get the reference object and attach it to the request object
+    try {
+        var foundRepository = await Repository.findById(repositoryId);
+        if (!foundRepository) {
+            next(new Error("repositoryIdParam: repositoryId doesn't exist"));
+        }
+        req.repositoryObj = foundRepository;
+    }
+    catch(err) {
+        next(err);
+    }
+    next();
+}
+
+
+const userIdParam = async (req, res, next, userId) => {
+    if (req.userObj) {
+        next();
+    }
+    // try to get the reference object and attach it to the request object
+    try {
+        var foundUser = await User.findById(userId);
+        if (!foundUser) {
+            next(new Error("userIdParam: userId doesn't exist"));
+        }
+        req.userObj = foundUser;
     }
     catch(err) {
         next(err);
@@ -105,5 +145,7 @@ module.exports = {
     referenceIdParam,
     documentIdParam,
     tagIdParam,
-    snippetIdParam
+    snippetIdParam,
+    repositoryIdParam,
+    userIdParam
 }

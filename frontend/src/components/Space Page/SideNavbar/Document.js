@@ -17,7 +17,7 @@ import { connect } from 'react-redux';
 import DraggableDocument from './DraggableDocument';
 
 //actions
-import { createDocument, moveDocument, retrieveChildren, retrieveDocuments, attachChild, removeChild } from '../../../actions/Document_Actions';
+import { createDocument, moveDocument, retrieveChildren, retrieveDocuments} from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
 
@@ -50,7 +50,7 @@ class Document extends Component {
             this.props.setCreation(true)
             history.push(`?document=${child._id}`)
             this.props.clearSelected()
-            this.props.retrieveDocuments({childrenIds: this.props.document.children}).then(() => {
+            this.props.retrieveDocuments({workspaceId, childrenIds: this.props.document.children}).then(() => {
                 this.setState({open: true})
             })
         })
@@ -63,7 +63,8 @@ class Document extends Component {
 
     
     retrieveChildren = () => {
-        this.props.retrieveDocuments({childrenIds: this.props.document.children})
+        let {workspaceId} = this.props.match.params
+        this.props.retrieveDocuments({workspaceId, childrenIds: this.props.document.children})
     }
 
     renderChildren = () => {
@@ -96,8 +97,9 @@ class Document extends Component {
     open = (e) => {
         e.stopPropagation();
         e.preventDefault();
+        let {workspaceId} = this.props.match.params;
         if (this.props.children.length !== this.props.document.children.length) {
-            this.props.retrieveDocuments({childrenIds: this.props.document.children}).then(() => {
+            this.props.retrieveDocuments({workspaceId, childrenIds: this.props.document.children}).then(() => {
                 this.setState({open: true})
             })
         } else {
@@ -175,7 +177,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
             
-const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, moveDocument, retrieveDocuments, attachChild, removeChild, setCreation, clearSelected })(Document));
+const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, moveDocument, retrieveDocuments, setCreation, clearSelected })(Document));
 
 export default  ConnectedDocument;
 

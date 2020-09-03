@@ -79,24 +79,11 @@ const updateAppToken = async (oldToken) => {
 
 }
 
-const getNewInstallToken = async (tokenModel, installationApi) => {
-    installationApi.post(tokenModel.installationId + "/access_tokens")
-        .then((response) => {
-            var newToken = response.data;
-            newToken = {value: newToken.token, expireTime: Date.parse(newToken.expires_at)};
-
-            return newToken;
-        })
-        .catch((error) => {
-            console.log('Error: ', error);
-            return undefined;
-        });
-}
-
 const createNewInstallToken = async (tokenModel, installationApi) => {
     const newTokenResponse = await installationApi.post(tokenModel.installationId + "/access_tokens");
     var newToken = newTokenResponse.data;
-    newToken = {value: newToken.token, expireTime: Date.parse(newToken.expires_at)};
+    newToken = {installationId: tokenModel.installationId, type: 'INSTALL',
+                value: newToken.token, expireTime: Date.parse(newToken.expires_at)};
 
     return newToken;
 }
@@ -191,7 +178,7 @@ exports.handler = async (event) => {
         console.log('installTokens: ');
         console.log(installTokens);
         var newTokens = installTokens.map(async (tokenModel) => {
-            return await getNewInstallToken(tokenModel, installationApi);
+            return await createNewInstallToken(tokenModel, installationApi);
         });
 
         // Now `newTokens` should have all of our new tokens
@@ -199,12 +186,13 @@ exports.handler = async (event) => {
 
         const bulkOps = results.map(tokenObj => ({
             updateOne: {
+                // Error Here
                 filter: { installationId: tokenObj.installationId },
                 // Where field is the field you want to update
-                update: { $set: { value: tokenbObj.value, expireTime: tokenObj.expireTime} },
+                update: { $set: { value: tokenObj.value, expireTime: tokenObj.expireTime} },
                 upsert: true
-                }
-            }));
+            }
+        }));
 
         if (bulkOps.length > 0) {
             console.log('Bulk writing tokens');

@@ -1,8 +1,5 @@
 import {
     GET_REPOSITORY_FILE,
-    PARSE_REPOSITORY_FILE,
-    CLEAR_REPOSITORY_FILE,
-    UPDATE_REPOSITORY_REFS,
     CREATE_REPOSITORY,
     GET_REPOSITORY,
     DELETE_REPOSITORY,
@@ -20,93 +17,109 @@ var urljoin = require('url-join');
     dispatch({ type: REPO_SEARCH, payload: response.data });
 }*/
 
-// Example download link: https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
-export const getRepositoryFile = (file_desc) => async (dispatch) => {
+export const getRepositoryFile = (fileDesc) => async (dispatch) => {
 
-    console.log('file_desc: ', file_desc);
-    var id = file_desc.repositoryId;
-    const repository = await api.get(`/repositories/get/${id}`);
-
-
-    console.log('Repository Object: ');
-    console.log(repository);
-    console.log(repository.data.name)
-
-    var downloadLink = urljoin("https://raw.githubusercontent.com/", repository.data.name);
-    downloadLink = urljoin(downloadLink, 'master/');
-    downloadLink = urljoin(downloadLink, file_desc.pathInRepo);
+    console.log('fileDesc: ', fileDesc);
     
+    const workspaceId = fileDesc.workspaceId;
+    const repositoryId = fileDesc.repositoryId;
 
-    const response = await api.post('/repositories/get_file', {downloadLink});
-    console.log('getRepositoryFile response: ', response);
+    if (!workspaceId) {
+        throw new Error("getRepositoryFile: workspaceId not provided");
+    }
 
-    dispatch({ type: GET_REPOSITORY_FILE, payload: response.data, fileName: file_desc.fileName});
+    if (!repositoryId) {
+        throw new Error("getRepositoryFile: repositoryId not provided");
+    }
 
+    const response = await api.post(`/repositories/${workspaceId}/get_file/${repositoryId}`, fileDesc);
+
+    if (response.data.success == false) {
+        console.log(response.data.error.toString());
+        throw new Error("getRepositoryFile Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: GET_REPOSITORY_FILE, payload: response.data.result, fileName: fileDesc.fileName});
+        return response.data.result;
+    }
 }
-
-export const parseRepositoryFile = (fileContents) => async (dispatch) => {
-
-    console.log('repo_parse_file called');
-    const response = await api.post('/repositories/parse_file', fileContents);
-    console.log('parseRepositoryFile response');
-    console.log(response);
-
-    dispatch({ type: PARSE_REPOSITORY_FILE, payload: 'test'});
-}
-
-export const getRepositoryRefs = (repoLink) => async (dispatch) => {
-
-    console.log('repo_get_refs called');
-    const response = await api.post('/repositories/get_refs', repoLink);
-    console.log('getRefs response');
-    console.log(response)
-    dispatch({ type: UPDATE_REPOSITORY_REFS, payload: response.data})
-}
-
-export const clearRepositoryRefs = () => async (dispatch) => {
-    dispatch({ type: CLEAR_REPOSITORY_FILE});
-}
-
-export const updateRepositoryRefs = (repositoryRefs) => async (dispatch) => {
-    console.log('repo update refs called');
-    dispatch({type: UPDATE_REPOSITORY_REFS, references: repositoryRefs.references});
-}
-
 
 export const createRepository = (formValues) => async (dispatch) => {
-    console.log("CREATING");
     const response = await api.post('/repositories/create', formValues);
-    console.log('createRepository response: ');
-    console.log(response);
-    dispatch({ type: CREATE_REPOSITORY, payload: response.data });
-    return response.data;
+
+    if (response.data.success == false) {
+        throw new Error("createRepository Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: CREATE_REPOSITORY, payload: response.data.result });
+        return response.data.result;
+    }
 }
 
-// /repositories/get/:id'
-export const getRepository = id => async dispatch => {
-    const response = await api.get(`/repositories/get/${id}`);
-    dispatch({ type: GET_REPOSITORY, payload: response.data });
+
+export const getRepository = formValues => async dispatch => {
+    
+    const repositoryId = formValues.repositoryId;
+    const workspaceId = formValues.workspaceId;
+    
+    if (!workspaceId) {
+        throw new Error("getRepository: workspaceId not provided");
+    }
+
+    if (!repositoryId) {
+        throw new Error("getRepository: repositoryId not provided");
+    }
+
+    const response = await api.get(`/repositories/${workspaceId}/get/${repositoryId}`);
+
+    if (response.data.success == false) {
+        throw new Error("getRepository Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: GET_REPOSITORY, payload: response.data.result });
+    }
 }
 
-// /repositories/delete/:id
-export const deleteRepository = (id) => async dispatch => {
-    const response = await api.delete(`/repositories/delete/${id}`);
-    dispatch({ type: DELETE_REPOSITORY, payload: response.data });
+
+export const deleteRepository = formValues => async dispatch => {
+
+    const repositoryId = formValues.repositoryId;
+    const workspaceId = formValues.workspaceId;
+    
+    if (!workspaceId) {
+        throw new Error("deleteRepository: workspaceId not provided");
+    }
+
+    if (!repositoryId) {
+        throw new Error("deleteRepository: repositoryId not provided");
+    }
+
+    const response = await api.delete(`/repositories/${workspaceId}/delete/${repositoryId}`);
+
+    if (response.data.success == false) {
+        throw new Error("deleteRepository Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: DELETE_REPOSITORY, payload: response.data.result });
+    }
 }
 
 export const retrieveRepositories = (formValues) => async dispatch => {
-    const response = await api.post('/repositories/retrieve', formValues);
-    dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data });
-}
+    
+    const workspaceId = formValues.workspaceId;
+    
+    if (!workspaceId) {
+        throw new Error("retrieveRepositories: workspaceId not provided");
+    }
 
-export const validateRepositories = (formValues) => async () => {
-    const response = await api.post('/repositories/validate', formValues);
-    return response.data
-}
-
-export const pollRepositories = (formValues) => async () => {
-    const response = await api.post('/repositories/poll', formValues);
-    return response.data
+    const response = await api.post(`/repositories/${workspaceId}/retrieve`, formValues);
+    
+    if (response.data.success == false) {
+        throw new Error("retrieveRepositories Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });
+    }
 }
 
 export const setCurrentRepository = (formValues) => dispatch => {
@@ -114,9 +127,32 @@ export const setCurrentRepository = (formValues) => dispatch => {
 }
 
 
-export const updateRepositoryCommit = (formValues) => async (dispatch) => {
-    console.log('repoUpdateCommit formValues: ', formValues);
-    const response = await api.post('/repositories/update_commit', formValues);
-    console.log('repoUpdateCommit response: ')
-    console.log(response);
+// These two routes below are not finalized
+export const validateRepositories = (formValues) => async () => {
+    const response = await api.post('/repositories/validate', formValues);
+
+    if (response.data.success == false) {
+        throw new Error("validateRepositories Error: ", response.data.error.toString());
+    }
+    else {
+        return response.data.result
+    }
+}
+
+export const pollRepositories = (formValues) => async () => {
+
+    const workspaceId = formValues.workspaceId;
+    
+    if (!workspaceId) {
+        throw new Error("retrieveRepositories: workspaceId not provided");
+    }
+
+    const response = await api.post(`/repositories/${workspaceId}/poll`, formValues);
+
+    if (response.data.success == false) {
+        throw new Error("pollRepositories Error: ", response.data.error.toString());
+    }
+    else {
+        return response.data.result;
+    }
 }

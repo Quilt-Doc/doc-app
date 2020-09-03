@@ -1,5 +1,4 @@
 import {
-    CREATE_USER,
     GET_USER,
     EDIT_USER,
     DELETE_USER,
@@ -8,11 +7,6 @@ import {
 
 import { api } from '../apis/api';
 
-
-export const createUser = (formValues) => async (dispatch) => {
-    const response = await api.post('/users/create', formValues );
-    dispatch({ type: CREATE_USER, payload: response.data });
-}
 
 export const getUser = id => async dispatch => {
     const response = await api.get(`/users/get/${id}`);

@@ -88,11 +88,12 @@ class DocumentMenu extends React.Component {
     }
 
     handleSelect(setBool, documentId){
+        let { workspaceId } = this.props.match.params;
         let referenceId = this.props.reference._id
         if (setBool) {
-            this.props.removeReference(documentId, referenceId)
+            this.props.removeReference({workspaceId, documentId, referenceId})
         } else {
-            this.props.attachReference(documentId, referenceId)
+            this.props.attachReference({workspaceId, documentId, referenceId})
         }
     }
 

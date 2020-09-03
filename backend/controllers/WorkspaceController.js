@@ -48,7 +48,7 @@ createWorkspace = (req, res) => {
 
         workspace.populate('creator').populate('repositories').populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
+            return res.json({success: true, result: workspace});
         });
     });
 }
@@ -62,7 +62,7 @@ getWorkspace = (req, res) => {
         workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
             });
     });
 }
@@ -133,7 +133,7 @@ deleteWorkspace = (req, res) => {
         workspace.populate('creator').populate('repositories')
             .populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
             });
     });
 }
@@ -156,7 +156,7 @@ addUser = (req, res) => {
         workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
         });
     });
 }
@@ -176,11 +176,12 @@ removeUser = (req, res) => {
         workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
             });
     });
 }
 
+// Check that the JWT userId is in the memberUsers for all workspaces returned
 retrieveWorkspaces = (req, res) => {
     
     const {name, creatorId, memberUserIds} = req.body;
@@ -191,7 +192,15 @@ retrieveWorkspaces = (req, res) => {
 
     query.populate('creator').populate('memberUsers').populate('repositories').exec((err, workspaces) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(workspaces);
+        
+        var requesterUserId = req.tokenPayload.userId.toString();
+        workspaces = workspaces.filter(currentWorkspace => {
+            var currentMemberUsers = currentWorkspace.memberUsers.map(userObj => userObj._id.toString());
+            // Only return if requesterUserId is in the memberUsers of the workspace
+            return (currentMemberUsers.includes(requesterUserId) != -1);
+        });
+
+        return res.json({success: true, result: workspaces});
     });
 }
 

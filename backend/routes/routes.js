@@ -15,6 +15,8 @@ router.param('referenceId', paramMiddleware.referenceIdParam);
 router.param('documentId', paramMiddleware.documentIdParam);
 router.param('tagId', paramMiddleware.tagIdParam);
 router.param('snippetId', paramMiddleware.snippetIdParam);
+router.param('repositoryId', paramMiddleware.repositoryIdParam);
+router.param('userId', paramMiddleware.userIdParam);
 
 
 //base routes
@@ -38,6 +40,8 @@ router.param('snippetId', paramMiddleware.snippetIdParam);
 // retrieve_code_references - add :workspaceId, check if user is in workspace
 //      make handler requests scoped to the workspace -- DONE
 
+// Need to be checking that if :referenceId then :referenceId repositoryId in workspace `repositories`
+// Need to be checking if :tagId then `workspace` in Tag matches :workspaceId
 
 const reference_controller = require('../controllers/ReferenceController');
 
@@ -45,8 +49,8 @@ router.post('/references/create', authorizationMiddleware.referenceMiddleware, r
 router.get('/references/:workspaceId/get/:referenceId', authorizationMiddleware.referenceMiddleware, reference_controller.getReference);
 router.put('/references/:workspaceId/edit/:referenceId', authorizationMiddleware.referenceMiddleware, reference_controller.editReference);
 router.delete('/references/:workspaceId/delete/:referenceId', authorizationMiddleware.referenceMiddleware, reference_controller.deleteReference);
-router.put('/references/:workspaceId/attach_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.attachTag);
-router.put('/references/:workspaceId/remove_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.removeTag);
+router.put('/references/:workspaceId/:referenceId/attach_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.attachTag);
+router.put('/references/:workspaceId/:referenceId/remove_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.removeTag);
 router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referenceMiddleware, reference_controller.retrieveReferences);
 router.post('/references/:workspaceId/retrieve_code_references', authorizationMiddleware.referenceMiddleware, reference_controller.retrieveCodeReferences);
 
@@ -94,60 +98,78 @@ router.delete('/snippets/:workspaceId/delete/:snippetId', authorizationMiddlewar
 router.post('/snippets/:workspaceId/retrieve', authorizationMiddleware.snippetMiddleware, snippet_controller.retrieveSnippets); // DONE
 router.post('/snippets/:workspaceId/refresh', authorizationMiddleware.snippetMiddleware, snippet_controller.refreshSnippets); // DONE
 
-// create - dev role only
-// update_commit - dev role only
-// update - dev role only
 
-// get_file - verify user is in a workspace with this repository added
-// retrieve - This should be scoped to the workspace. verify user is in a workspace with all these repositories added
-// validate - 
-// poll - scoped to :workspaceId, repositories being polled all in workspaceId
-// get - verify user is in a workspace with this repository added
-// delete - verify user is in a workspace with this repository added
+
 const repository_controller = require('../controllers/RepositoryController');
 
 // Dev only
-router.post('/repositories/create', repository_controller.createRepository);
-router.post('/repositories/update_commit', repository_controller.updateRepositoryCommit);
-router.post('/repositories/update', repository_controller.updateRepository);
+
+// create - dev role only
+// update - dev role only
+
+router.post('/repositories/create', authorizationMiddleware.repositoryMiddleware, repository_controller.createRepository); // DONE
+router.post('/repositories/update/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.updateRepository); // DONE
 
 // User accessible
-router.post('/repositories/get_file', repository_controller.getRepositoryFile);
-router.post('/repositories/retrieve', repository_controller.retrieveRepositories);
-router.post('/repositories/validate', repository_controller.validateRepositories);
-router.post('/repositories/poll', repository_controller.pollRepositories);
-router.get('/repositories/get/:id', repository_controller.getRepository);
-router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
+
+
+// retrieve - Scope to workspace? Add a :workspaceId, then in Controller filter returned repositories down to those in workspace
+
+// Ignore these two routes for now, they are going to be refactored
+// validate - TODO: Figure out how to handle this one, params passed in req.body?
+// poll - scoped to :workspaceId, repositories being polled all in workspaceId
+
+
+// get_file - verify user is in a workspace with this repository added
+// get - verify user is in a workspace with this repository added
+// delete - verify user is in a workspace with this repository added
+
+router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.getRepositoryFile); // DONE
+router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repository_controller.retrieveRepositories); // DONE
+router.post('/repositories/validate', authorizationMiddleware.repositoryMiddleware, repository_controller.validateRepositories); // DONE
+router.post('/repositories/:workspaceId/poll', authorizationMiddleware.repositoryMiddleware, repository_controller.pollRepositories); // DONE
+router.get('/repositories/:workspaceId/get/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.getRepository); // DONE
+router.delete('/repositories/:workspaceId/delete/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.deleteRepository); // DONE
 
 
 // create - verify user exists
+
 // search - verify membership in workspace for calling user
 // get - verify membership in workspace for calling user
 // delete - verify membership in workspace for calling user
 // add_user - verify membership in workspace for calling user
 // remove_user - verify membership in workspace for calling user
+
 // retrieve - verify user is a member of all workspaces returned
 const workspace_controller = require('../controllers/WorkspaceController');
-router.post('/workspaces/create', workspace_controller.createWorkspace);
-router.post('/workspaces/search', workspace_controller.searchWorkspace);
-router.get('/workspaces/get/:id', workspace_controller.getWorkspace);
-router.delete('/workspaces/delete/:id', workspace_controller.deleteWorkspace);
-router.put('/workspaces/add_user/:id', workspace_controller.addUser);
-router.put('/workspaces/remove_user/:id', workspace_controller.removeUser);
-router.post('/workspaces/retrieve', workspace_controller.retrieveWorkspaces);
 
+// TODO: This route cannot be properly secured without a list of repositories that a particular user has access to.
+router.post('/workspaces/create', authorizationMiddleware.workspaceMiddleware, workspace_controller.createWorkspace);
+
+router.post('/workspaces/search/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.searchWorkspace);
+router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.getWorkspace);
+router.delete('/workspaces/delete/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.deleteWorkspace);
+router.put('/workspaces/add_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.addUser);
+router.put('/workspaces/remove_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.removeUser);
+
+router.post('/workspaces/retrieve', authorizationMiddleware.workspaceMiddleware, workspace_controller.retrieveWorkspaces);
+
+
+// All of these tag routes are handled by the same case (Yay!)
 
 // create - verify membership in workspace for calling user
-// get - this needs to be scoped to the workspace
-// edit - this needs to be scoped to the workspace
-// delete - this needs to be scoped to the workspace
-// retrieve - this needs to be scoped to the workspace
+// get - verify membership in workspace for calling user, then verify tag is in workspace
+// edit - verify membership in workspace for calling user, then verify tag is in workspace
+// delete - verify membership in workspace for calling user, then verify tag is in workspace
+// retrieve - scope query to a single workspace, verify user is a member of the workspace, nothing in middleware
+
+
 const tag_controller = require('../controllers/TagController');
-router.post('/tags/create', tag_controller.createTag);
-router.get('/tags/get/:id', tag_controller.getTag);
-router.put('/tags/edit/:id', tag_controller.editTag);
-router.delete('/tags/delete/:id', tag_controller.deleteTag);
-router.post('/tags/retrieve', tag_controller.retrieveTags);
+router.post('/tags/:workspaceId/create', authorizationMiddleware.tagMiddleware, tag_controller.createTag);
+router.get('/tags/:workspaceId/get/:tagId', authorizationMiddleware.tagMiddleware, tag_controller.getTag);
+router.put('/tags/:workspaceId/edit/:tagId', authorizationMiddleware.tagMiddleware, tag_controller.editTag);
+router.delete('/tags/:workspaceId/delete/:tagId', authorizationMiddleware.tagMiddleware, tag_controller.deleteTag);
+router.post('/tags/:workspaceId/retrieve', authorizationMiddleware.tagMiddleware, tag_controller.retrieveTags);
 
 //auth routes
 const auth_controller = require('../controllers/authentication/AuthController');
@@ -189,26 +211,28 @@ router.post('/document_requests/add_snippets', document_request_controller.addSn
 router.post('/document_requests/remove_snippets', document_request_controller.removeSnippets);
 */
 
-// create - Not sure for this one
 // get - userId must match user to fetch
 // edit - user must match the user to edit
 // attach_workspace - user must be a member in the memberUsers field of Workspace
 // remove_workspace - user must be a member in the memberUsers field of Workspace
 // delete_user - user must match the user to delete
+
+// We can use one switch case, with a conditional for if :userId is a param, or :workspaceId is a param
+// If :userId, verify that JWT userId matches :userId
+// If :workspaceId, verify that user is in memberUsers of Workspace
+
 const user_controller = require('../controllers/authentication/UserController');
-router.post('/users/create', user_controller.createUser);
-router.get('/users/get/:id', user_controller.getUser);
-router.put('/users/edit/:id', user_controller.editUser);
-router.put('/users/attach_workspace/:id', user_controller.attachWorkspace);
-router.put('/users/remove_workspace/:id', user_controller.removeWorkspace);
-router.delete('/users/delete_user/:id', user_controller.deleteUser);
+
+router.get('/users/get/:userId', authorizationMiddleware.userMiddleware, user_controller.getUser);
+router.put('/users/edit/:userId', authorizationMiddleware.userMiddleware, user_controller.editUser);
+router.put('/users/attach_workspace/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.attachWorkspace);
+router.put('/users/remove_workspace/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.removeWorkspace);
+router.delete('/users/delete_user/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.deleteUser);
 
 //token routes
 // must be a dev JWT
 const token_controller = require('../controllers/TokenController');
-router.post('/tokens/create', token_controller.createToken);
-
-
+router.post('/tokens/create', authorizationMiddleware.tokenMiddleware, token_controller.createToken);
 
 module.exports = router;
 

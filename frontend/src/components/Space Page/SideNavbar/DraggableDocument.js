@@ -65,10 +65,11 @@ const DraggableDocument = (props) => {
 	let [createDisplay, setCreate] = useState(false)
 
 	let document = props.document;
+	let {workspaceId} = props.match.params;
     const [{ isOver, canDrop}, drop] = useDrop({
 		accept: ItemTypes.DOCUMENT,
 		canDrop: (item) => notChild(item, document, false),
-		drop: (item) => {props.moveDocument({ documentId: item.document._id, parentId: document._id, order: 0} )},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
+		drop: (item) => {props.moveDocument({ workspaceId, documentId: item.document._id, parentId: document._id, order: 0} )},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
 		collect: (monitor) => ({
 			  isOver: !!monitor.isOver(),
 			  canDrop: !!monitor.canDrop()
@@ -82,7 +83,8 @@ const DraggableDocument = (props) => {
 			console.log("ITEM", item);
 			console.log("DOCUMENT", document);
 			let parentId = document.parent !== null ? document.parent._id : ""
-			props.moveDocument({ documentId: item.document._id, parentId, order: document.order} );
+			let {workspaceId} = this.props.match.params;
+			props.moveDocument({ workspaceId, documentId: item.document._id, parentId, order: document.order} );
 		},//props.moveDocument({ documentId: item.document._id, parentId: document._id} ),
 		collect: (monitor) => ({
 			  isOver2: !!monitor.isOver(),

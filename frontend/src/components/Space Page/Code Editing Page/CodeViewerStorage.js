@@ -19,7 +19,7 @@ import _ from 'lodash';
 //actions
 import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
 import { retrieveDocuments } from '../../../actions/Document_Actions';
-import { getContents, retrieveCodeReferences, retrieveReferences } from '../../../actions/Reference_Actions';
+import { retrieveCodeReferences, retrieveReferences } from '../../../actions/Reference_Actions';
 import { getRepositoryFile, getRepository } from '../../../actions/Repository_Actions';
 
 import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
@@ -83,12 +83,12 @@ class CodeView extends React.Component {
 
         
         // get contents of code file from database
-        let { referenceId, repositoryId}  = this.props.match.params;
-        await this.props.getRepository(repositoryId)
-        let fileContents = await this.props.getContents({referenceId})
-        await this.props.retrieveReferences({ referenceId })
-        await this.props.retrieveSnippets({referenceId})
-        await this.props.retrieveDocuments({ referenceIds: [referenceId]})
+        let { referenceId, repositoryId, workspaceId}  = this.props.match.params;
+        await this.props.getRepository({workspaceId, repositoryId})
+        let fileContents = await this.props.getRepositoryFile({workspaceId, repositoryId, referenceId})
+        await this.props.retrieveReferences({workspaceId, referenceId })
+        await this.props.retrieveSnippets({workspaceId, referenceId})
+        await this.props.retrieveDocuments({ workspaceId, referenceIds: [referenceId]})
         const allLinesJSX = this.renderLines(fileContents);
         this.setState({fileContents, allLinesJSX, loaded: true});
     }
@@ -424,8 +424,9 @@ class CodeView extends React.Component {
     }
 
     deleteSnippet(index) {
-        this.props.deleteSnippet(this.props.snippets[index]._id).then(() => {
-            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        var { workspaceId } = this.props.match.params;
+        this.props.deleteSnippet({workspaceId, snippetId: this.props.snippets[index]._id}).then(() => {
+            this.props.retrieveSnippets({workspaceId, location: window.location.pathname.slice(20)})
         })
     }
     // render the snippets that are in the database
@@ -583,9 +584,10 @@ class CodeView extends React.Component {
         //createSnippet must handle all state reset, acquire beginning/end line data
         //snippet content, etc and send them over to the action
 
-        this.props.createSnippet({start, code, annotation, 
+        this.props.createSnippet({start, code, annotation,
+            workspaceId: this.props.match.params.workspaceId,
             referenceId: this.props.match.params.referenceId, status: "VALId", creator: this.props.user._id }).then(() => {
-            this.props.retrieveSnippets({ referenceId: this.props.match.params.referenceId}).then(() => {
+            this.props.retrieveSnippets({workspaceId, referenceId: this.props.match.params.referenceId}).then(() => {
                 console.log("SNIPPETS", this.props.snippets)
             })
             this.setState({
@@ -601,9 +603,10 @@ class CodeView extends React.Component {
         let start = parseInt(elem_key.split('-').pop())
         let length = _.keys(this.state.selected).length
         let code = this.state.fileContents.split("\n").slice(start, start + length)
+        var { workspaceId } = this.props.match.params;
         this.deselectItems()
-        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {start, code, status: "VALId"}).then(() => {
-            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        this.props.editSnippet({workspaceId, snippetId: this.props.snippets[this.state.reselectingSnippet]._id, start, code, status: "VALId"}).then(() => {
+            this.props.retrieveSnippets({workspaceId, location: window.location.pathname.slice(20)})
             this.setState({
                 'selected': {},
                 'reselectingSnippet': null
@@ -823,7 +826,7 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, 
-    deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveDocuments,
+    deleteSnippet, getRepositoryFile, retrieveCallbacks, retrieveDocuments,
     retrieveCodeReferences, retrieveReferences, getRepository})(CodeView));
 
 

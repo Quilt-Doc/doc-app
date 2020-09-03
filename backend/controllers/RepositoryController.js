@@ -177,7 +177,10 @@ createRepository = async (req, res) => {
 
 
 getRepositoryFile = async (req, res) => {
-    var { fullName, installationId, pathInRepo, referenceId } = req.body;
+    var {pathInRepo, referenceId } = req.body;
+    const fullName = req.repositoryObj.fullName;
+    const installationId = req.repositoryObj.installationId;
+
     // if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
     // if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
     if ((typeof pathInRepo == 'undefined' || pathInRepo == null)
@@ -185,13 +188,9 @@ getRepositoryFile = async (req, res) => {
         return res.json({success: false, error: 'no repo pathInRepo and referenceId provided'});
     }
 
-    var referencePath = null;
     if (referenceId) {
         const reference = await Reference.findOne({_id: referenceId}).populate('repository');
-        referencePath = reference.path;
-        pathInRepo = referencePath;
-        fullName = reference.repository.fullName;
-        installationId = reference.repository.installationId;
+        pathInRepo = reference.path;
     }
 
 
@@ -216,22 +215,18 @@ getRepositoryFile = async (req, res) => {
     var blobContent = blobResponse.data.content;
     var fileContent = Buffer.from(blobContent, 'base64').toString('binary');
 
-    return res.json({success: true, fileContents: fileContent});
+    return res.json({success: true, result: fileContent});
 
 }
 
 
 getRepository = (req, res) => {
-    // try{req.body = JSON.parse(Object.keys(req.body)[0])}catch(err){req.body = req.body}
-    console.log(req.body);
-    const { id } = req.params;
 
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
-    Repository.findById(id, (err, repository) => {
-        console.log(repository)
+    const repositoryId = req.repositoryObj._id.toString();
+
+    Repository.findById(repositoryId, (err, repository) => {
         if (err) return res.json({success: false, error: err});
-        console.log(repository)
-        return res.json(repository)
+        return res.json({success: true, result: repository});
     });
 }
 
@@ -244,7 +239,7 @@ deleteRepository = (req, res) => {
         if (err) return res.json({success: false, error: err});
         repository.populate('workspace', (err, repository) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(repository);
+            return res.json({success: true, result: repository});
         });
     });
 }
@@ -253,72 +248,27 @@ deleteRepository = (req, res) => {
 
 retrieveRepositories = (req, res) => {
     const {fullName, installationId, fullNames} = req.body;
-    // (parentId, repositoryId, textQuery, tagIds, snippetIds)
-    console.log(fullNames)
-    console.log(installationId)
+
+    var repositoriesInWorkspace = req.workspaceObj.repositories.map(repositoryId => repositoryId.toString());
 
     query = Repository.find();
     if (fullName) query.where('fullName').equals(fullName);
     if (installationId) query.where('installationId').equals(installationId);
     if (fullNames) query.where('fullName').in(fullNames)
 
+
     query.populate('workspace').exec((err, repositories) => {
-        console.log("REPOSITORIES", repositories)
+        console.log("REPOSITORIES", repositories);
+        // Make sure returned repositories are scoped to workspace on the request
+        repositories = repositories.filter(repositoryObj => repositoriesInWorkspace.includes(repositoryObj._id.toString()) != -1);
         if (err) return res.json({ success: false, error: err });
-        return res.json(repositories);
+        return res.json({success: true, result: repositories});
     });
 }
 
 
-updateRepositoryCommit = (req, res) => {
-    //console.log(req.body);
-    var { repo_id, repo_link } = req.body;
-    if (!typeof repo_id == 'undefined' && repo_id !== null) return res.json({success: false, error: 'no repo repo_id provided'});
-    if (!typeof repo_link == 'undefined' && repo_link !== null) return res.json({success: false, error: 'no repo repo_link provided'});
-
-    repo_link = repo_link.substring(repo_link.indexOf('.com/')+ 5);
-
-    var commit_url = url.resolve(apiURL, 'repos/');
-    commit_url = url.resolve(commit_url, repo_link);
-    commit_url = url.resolve(commit_url, 'commits');
-
-    //console.log('FINAL REQ URL: ', commit_url);
-
-    api.get(commit_url)
-    .then(function (response) {
-        //console.log('repoUpdateCommit response: ');
-        //console.log(response.data);
-        var latest_sha = response.data[0]['sha'];
-        //console.log('latest_sha: ', latest_sha);
-        
-        Codebase.findById(repo_id, (err, codebase) => {
-            // console.log('last_processed_commit.length: ', )
-            if (codebase.last_processed_commit.length == 0) {
-                let update = {};
-                update.last_processed_commit = latest_sha;
-                Codebase.findByIdAndUpdate(repo_id, { $set: update }, { new: true }, (err, updated_codebase) => {
-                    if (err) return res.json({ success: false, error: err });
-                    updated_codebase.populate('creator', (err, updated_codebase) => {
-                        if (err) return res.json(err);
-                        return res.json(updated_codebase);
-                    });
-                });
-            }
-            else {
-                return res.json({ success: true, msg: 'Already found commit: ' +  codebase.last_processed_commit});
-            }
-        }).catch(function (err) {
-            return res.json({ success: false, error: err});
-        });
-      })
-      .catch(function (err) {
-        return res.json({ success: false, error: err });
-      });
-
-}
-
 validateRepositories = async (req, res) => {
-    let repositories = []
+    let repositories = [];
 
 
     let ids = Object.keys(req.body.selected)
@@ -352,7 +302,7 @@ validateRepositories = async (req, res) => {
             repositories.push(fullName)
         }
     })*/
-    return res.json(repositories)
+    return res.json({success: true, result: repositories})
 }
 
 
@@ -362,15 +312,19 @@ pollRepositories = async (req, res) => {
         let fullName = fullNames[i]
         let repository = await Repository.findOne({fullName: fullName, installationId: installationId})
         if (!repository || repository.doxygenJobStatus !== jobs.JOB_STATUS_FINISHED || repository.semanticJobStatus !== jobs.JOB_STATUS_FINISHED) {
-            return res.json({finished: false})
+            return res.json({success: true, result: false})
         }
     }
-    return res.json({finished: true})
+    return res.json({success: true, result: true})
 }
 
 
 updateRepository = async (req, res) => {
-    const {eventType, fullName, installationId, headCommit, cloneUrl} = req.body;
+    const {eventType, headCommit, cloneUrl} = req.body;
+
+    const fullName = req.repositoryObj.fullName;
+    const installationId = req.repositoryObj.installationId;
+
     if (typeof eventType == 'undefined' || eventType !== null) return res.json({success: false, error: 'updateRepository: no eventType provided'});
     if (typeof fullName == 'undefined' || fullName !== null) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
     if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
@@ -472,13 +426,11 @@ updateRepository = async (req, res) => {
 
     }
 
-    return res.json({success: true});
-
-
+    return res.json({success: true, result: true});
 }
 
 module.exports = {
     getRepositoryFile, createRepository, getRepository,
-    deleteRepository, retrieveRepositories, updateRepositoryCommit,
+    deleteRepository, retrieveRepositories,
     validateRepositories, pollRepositories, updateRepository
 }

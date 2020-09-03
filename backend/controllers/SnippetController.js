@@ -45,7 +45,7 @@ createSnippet = (req, res) => {
         if (err) return res.json({ success: false, error: err });
         snippet.populate('workspace').populate('reference', (err, snippet) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(snippet);
+            return res.json({success: true, result: snippet});
         });
     });
 }
@@ -56,7 +56,7 @@ getSnippet = (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
     Snippet.findOne({_id: snippetId, workspace: workspaceId}).populate('workspace').populate('reference').exec((err, snippet) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(snippet);
+        return res.json({success: true, result: snippet});
     });
 }
 
@@ -64,7 +64,7 @@ editSnippet = (req, res) => {
     const snippetId = req.snippetObj._id.toString();
     const workspaceId = req.workspaceObj._id.toString();
     const { name, status, code, start} = req.body;
-    
+
     let update = {};
     if (name) update.name = name;
     if (status) update.status = status;
@@ -74,8 +74,8 @@ editSnippet = (req, res) => {
     Snippet.findOneAndUpdate({_id: snippetId, workspace: workspaceId}, { $set: update }, { new: true }, (err, snippet) => {
         if (err) return res.json({ success: false, error: err });
         snippet.populate('workspace').populate('reference', (err, snippet) => {
-            if (err) return res.json(err);
-            return res.json(snippet);
+            if (err) return res.json({success: false, error: err});
+            return res.json({success: true, result: snippet});
         });
     });
 }
@@ -87,7 +87,7 @@ deleteSnippet = (req, res) => {
         if (err) return res.json({ success: false, error: err });
         snippet.populate('workspace').populate('reference', (err, snippet) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(snippet);
+            return res.json({success: true, result: snippet});
         });
     });
 }
@@ -108,7 +108,7 @@ retrieveSnippets = (req, res) => {
     query.populate('workspace').populate('reference').exec((err, snippets) => {
         if (err) return res.json({ success: false, error: err });
         console.log("SNIPPETS", snippets)
-        return res.json(snippets);
+        return res.json({success: true, result: snippets});
     });
 }
 
@@ -127,8 +127,8 @@ refreshSnippets = (req, res) => {
      }));
    return Snippet.collection
        .bulkWrite(bulkOps)
-       .then(results => res.json(results))
-       .catch(err => console.log('Error refreshing snippets: ', err));
+       .then(results => res.json({success: true, result: results}))
+       .catch(err => res.json({success: false, error: `Error refreshing snippets: ${err}`}));
 };
 
 

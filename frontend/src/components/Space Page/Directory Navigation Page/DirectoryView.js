@@ -45,12 +45,12 @@ class DirectoryView extends React.Component {
         console.log('repid', repositoryId)
         console.log('refid', referenceId)
         if (!referenceId) referenceId = ""
-        await this.props.getRepository(repositoryId)
-        await this.props.retrieveReferences({ repositoryId, referenceId, kinds : ['file', 'dir'] })
+        await this.props.getRepository({workspaceId, repositoryId});
+        await this.props.retrieveReferences({ workspaceId, repositoryId, referenceId, kinds : ['file', 'dir'] })
         console.log(this.props.references);
         let referenceIds = this.props.references.map(ref => ref._id)
         referenceIds.push(this.props.currentReference._id)
-        await this.props.retrieveDocuments({ referenceIds, workspaceId })
+        await this.props.retrieveDocuments({ workspaceId, referenceIds, workspaceId })
         if (!this.state.loaded) {
             this.setState({ loaded:true })
         }
@@ -117,7 +117,7 @@ class DirectoryView extends React.Component {
 
     async redirectPath(path) {
         let {workspaceId, repositoryId} = this.props.match.params
-        let ref = await this.props.getReferenceFromPath({path, repositoryId})
+        let ref = await this.props.getReferenceFromPath({workspaceId, path, repositoryId})
         history.push(`/workspaces/${workspaceId}/repository/${repositoryId}/dir/${ref[0]._id}`)
     }
 
