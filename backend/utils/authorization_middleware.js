@@ -308,13 +308,13 @@ const workspaceMiddleware = async (req, res, next) => {
         req.workspaceObj = foundWorkspace;
 
         if (requesterRole == 'dev') {
-            console.log('referenceMiddleware dev token');
+            console.log('workspaceMiddleware dev token');
             next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
-            console.log('Valid reference request');
+            console.log('Valid workspace request');
             next();
         }
         else {
