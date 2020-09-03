@@ -97,22 +97,14 @@ class FileReferenceMenu extends React.Component {
         return 0;
     }
 
-<<<<<<< HEAD
-    handleSelect(setBool, referenceId){
-        let documentId = this.props.document._id
-        let { workspaceId } = this.props.match.params;
-        if (setBool) {
-            this.props.removeReference({workspaceId, documentId, referenceId})
-        } else {
-            this.props.attachReference({workspaceId, documentId, referenceId})
-=======
     handleSelect(setBool, referenceId, reference){
         if (!this.props.form){
             let documentId = this.props.document._id
+            let { workspaceId } = this.props.match.params;
             if (setBool) {
-                this.props.removeReference(documentId, referenceId)
+                this.props.removeReference({workspaceId, documentId, referenceId});
             } else {
-                this.props.attachReference(documentId, referenceId)
+                this.props.attachReference({workspaceId, documentId, referenceId});
             }
         } else {
             if (setBool) {
@@ -120,7 +112,6 @@ class FileReferenceMenu extends React.Component {
             } else {
                 this.props.formAttachReference(reference)
             }
->>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
         }
      
     }
@@ -133,13 +124,8 @@ class FileReferenceMenu extends React.Component {
             let ref = this.state.references[this.state.position]
             this.setState({loaded: false})
             let referenceIds = this.props.setReferences.map(reference => reference._id)
-<<<<<<< HEAD
             await this.handleSelect(referenceIds.includes(ref._id), ref._id)
             this.props.localRetrieveReferences({workspaceId, limit: 9, referenceIds, repositoryId}).then((references) => {
-=======
-            await this.handleSelect(referenceIds.includes(ref._id), ref._id, ref)
-            this.props.localRetrieveReferences({limit: 9, referenceIds, repositoryId}).then((references) => {
->>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
                 this.setState({loaded: true, search: '', references})
             })
         } else {

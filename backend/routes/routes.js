@@ -44,29 +44,6 @@ router.param('userId', paramMiddleware.userIdParam);
 // Need to be checking if :tagId then `workspace` in Tag matches :workspaceId
 
 const reference_controller = require('../controllers/ReferenceController');
-<<<<<<< HEAD
-=======
-//DEPRECATED
-router.post('/references/create', reference_controller.createReferences);
-router.post('/references/get', reference_controller.getReferences);
-
-// NEW
-router.post('/references/create2', reference_controller.createReferences2);
-router.get('/references/get2/:id', reference_controller.getReference);
-router.put('/references/edit/:id', reference_controller.editReference);
-router.delete('/references/delete/:id', reference_controller.deleteReference);
-router.put('/references/attach_tag/:id', reference_controller.attachTag);
-router.put('/references/remove_tag/:id', reference_controller.removeTag);
-router.post('/references/retrieve',  reference_controller.retrieveReferences);
-router.post('/references/get_contents', reference_controller.getContents);
-router.post('/references/retrieve_code_references', reference_controller.retrieveCodeReferences);
-router.post('/references/retrieve_references_dropdown', reference_controller.retrieveReferencesDropdown);
-// DEPRECATED
-/*
-router.post('/references/attach_document',  reference_controller.attachDocument);
-router.post('/references/remove_document',  reference_controller.removeDocument);
-*/
->>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
 
 router.post('/references/create', authorizationMiddleware.referenceMiddleware, reference_controller.createReferences);
 router.get('/references/:workspaceId/get/:referenceId', authorizationMiddleware.referenceMiddleware, reference_controller.getReference);
@@ -124,22 +101,6 @@ router.post('/snippets/:workspaceId/refresh', authorizationMiddleware.snippetMid
 
 
 const repository_controller = require('../controllers/RepositoryController');
-<<<<<<< HEAD
-=======
-router.post('/repositories/refresh_path', repository_controller.refreshRepositoryPath)
-router.post('/repositories/refresh_path_new', repository_controller.refreshRepositoryPathNew);
-router.post('/repositories/get_file', repository_controller.getRepositoryFile);
-router.post('/repositories/get_refs', repository_controller.getRepositoryRefs);
-router.post('/repositories/create', repository_controller.createRepository);
-router.post('/repositories/retrieve', repository_controller.retrieveRepositories);
-router.post('/repositories/update_commit', repository_controller.updateRepositoryCommit);
-router.post('/repositories/validate', repository_controller.validateRepositories);
-router.post('/repositories/poll', repository_controller.pollRepositories);
-router.get('/repositories/get/:id', repository_controller.getRepository);
-router.delete('/repositories/delete/:id', repository_controller.deleteRepository);
-router.post('/repositories/retrieve_installed', repository_controller.retrieveInstallationRepositories);
-
->>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
 
 // Dev only
 

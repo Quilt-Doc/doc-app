@@ -24,7 +24,6 @@ export const retrieveReferences = (formValues) => async dispatch => {
 
 }
 
-<<<<<<< HEAD
 // DONE
 export const localRetrieveReferences = (formValues) => async dispatch => {
 
@@ -41,11 +40,6 @@ export const localRetrieveReferences = (formValues) => async dispatch => {
     else {
         return response.data.result;
     }
-=======
-export const localRetrieveReferences = (formValues) => async () => {
-    const response = await api.post('/references/retrieve_references_dropdown', formValues);
-    return response.data;
->>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
 }
 
 // DONE
