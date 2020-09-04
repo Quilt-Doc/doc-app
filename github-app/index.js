@@ -2,8 +2,6 @@ var https = require('https')
 
 const fs = require('fs');
 
-var jwt = require('jsonwebtoken');
-
 require('dotenv').config();
 
 var request = require("request");
@@ -13,33 +11,6 @@ const api = apis.requestBackendClient();
 const sqs = apis.requestSQSServiceObject();
 const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 const JOB_UPDATE_SNIPPETS = 2;
-
-
-
-createJWTToken = () => {
-
-  const now = new Date().getTime();
-  const timeNow = Math.round(now / 1000);
-
-  // Generate the JWT
-  var payload = {
-    // issued at time
-    iat: timeNow,
-    // JWT expiration time (10 minute maximum)
-    exp: timeNow + (10 * 60),
-    // GitHub App's identifier
-    iss: 68514
-  }
-
-  var private_key = fs.readFileSync('docapp-test.pem', 'utf8');
-
-  return jwt.sign(payload, private_key, { algorithm: 'RS256' });
-
-}
-
-var token = createJWTToken();
-console.log('TOKEN: ');
-console.log(token);
 
 var createHandler = require('github-webhook-handler')
 var handler = createHandler({ path: '/webhook', secret: process.env.WEBHOOK_SECRET })
