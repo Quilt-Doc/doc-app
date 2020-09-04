@@ -97,27 +97,21 @@ class DocumentMenu2 extends React.Component {
         }
     }
 
-<<<<<<< HEAD
-    handleSelect(parentId) {
+    handleSelect(parentId, doc) {
+
         let documentId = this.props.document._id;
         let {workspaceId} = this.props.match.params;
-        this.props.moveDocument({workspaceId, documentId, parentId, order: 0}).then(() => {
-            this.closeMenu()
-        })
-=======
-    handleSelect(parentId, doc) {
        
         if (this.props.form) {
            this.props.selectParent(doc)
            this.closeMenu()
         } else {
             let documentId = this.props.document._id
-            this.props.moveDocument({documentId, parentId, order: 0}).then(() => {
+            this.props.moveDocument({workspaceId, documentId, parentId, order: 0}).then(() => {
                 this.closeMenu()
             })
         }
 
->>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
     }
 
     async setPosition(e) {
