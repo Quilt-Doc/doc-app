@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import {ImGithub} from 'react-icons/im';
 import { RiCheckboxCircleFill} from 'react-icons/ri';
 
-import {retrieveInstallationRepositories} from '../../actions/Repository_Actions';
+// import {retrieveInstallationRepositories} from '../../actions/Repository_Actions';
 
 //redux
 import { connect } from 'react-redux';
@@ -18,7 +18,7 @@ class ChooseRepos extends React.Component {
     componentDidMount(){
         let installationId = this.props.installations.filter(inst => inst.account.type === 'User' 
                     && inst.account.id == this.props.user.profileId)[0].id;
-        this.props.retrieveInstallationRepositories({installationId})
+        /*this.props.retrieveInstallationRepositories({installationId})*/
     }
 
     render(){
@@ -66,7 +66,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {retrieveInstallationRepositories})(ChooseRepos);
+export default connect(mapStateToProps, {/*retrieveInstallationRepositories*/})(ChooseRepos);
 
 const NextButton = styled.div`
     background-color: #23262f;

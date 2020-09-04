@@ -1,7 +1,11 @@
+//models
 const Document = require('../models/Document');
-
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
+
+//controllers
+const UserStatsController = require('../controllers/reporting/UserStatsController');
+const ActivityFeedItemController = require('../controllers/reporting/ActivityFeedItemController');
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -168,7 +172,12 @@ createDocument = async (req, res) => {
         if (err) return res.json({ success: false, error: err, result: null });
         var pushParent = false;
 
+        // Reporting Updates section
+        UserStatsController.updateDocumentsCreatedNum({userId: authorId, workspaceId, updateNum: 1});
+        ActivityFeedItemController.createActivityFeedItem({userId: authorId, workspaceId, documentId: document._id.toString(), type: "create", date: Date.now()});
         // Increment `order` of parent's children
+
+        // If we are creating at a non-root level
         if (parent) {
             await Document.updateMany({_id: {$in: parent.children.map(childObj => ObjectId(childObj._id.toString()))},
                     order: {$gte: order}},
@@ -181,6 +190,8 @@ createDocument = async (req, res) => {
             );
             modifiedDocs = modifiedDocs.concat(incrementDocs);
         }
+
+        // If we are creating at a root level
         else {
             await Document.updateMany({ parent: null, _id: {$ne: ObjectId(document._id.toString())}, workspace: ObjectId(workspaceId), order: {$gte: order} },
                 {$inc: {order: 1}});
@@ -195,7 +206,7 @@ createDocument = async (req, res) => {
             modifiedDocs = modifiedDocs.concat(incrementDocs);
         }
 
-
+        // Add the new document to the parent Document's `children` array
         if (parentId) {
             // parent.children.push(ObjectId(document._id));
             parent = await Document.findOneAndUpdate({_id: ObjectId(parent._id.toString())}, 
@@ -289,7 +300,6 @@ deleteDocument = async (req, res) => {
     if (!checkValid(documentId)) {
         return res.json({success: false, error: 'deleteDocument: error no id passed', result: null});
     }
-
     var modifiedDocs = [];
 
     console.log('documentId: ', documentId);
@@ -343,6 +353,11 @@ deleteDocument = async (req, res) => {
         if (err) {
             return res.json({ success: false, error: err, result: toDelete });
         }
+
+        // Reporting Section
+        UserStatsController.updateDocumentsCreatedNum({userId: req.tokenPayload.userId.toString(), workspaceId, updateNum: -1});
+        ActivityFeedItemController.createActivityFeedItem({userId: req.tokenPayload.userId.toString(), workspaceId, documentId, type: "delete", date: Date.now()});
+
         modifiedDocs.reverse();
         var finalResults = removeDuplicates(modifiedDocs);
         console.log('Delete successful');

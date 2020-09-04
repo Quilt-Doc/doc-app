@@ -494,6 +494,39 @@ const tokenMiddleware = (req, res, next) => {
     }
 }
 
+const reportingMiddleware = (req, res, next) => {
+    console.log('req.path.trim(): ', req.path.trim());
+    const { workspaceId } = req.params;
+    var searchWorkspaceId;
+    try {
+        searchWorkspaceId = ObjectId(workspaceId);
+    }
+    catch (err) {
+        return next(new Error("Error: invalid workspaceId format"));
+    }
+    var foundWorkspace = await Workspace.findById(searchWorkspaceId);
+    if (!foundWorkspace) {
+        return next(new Error("Error: workspaceId invalid"));
+    }
+
+    req.workspaceObj = foundWorkspace;
+
+    if (req.tokenPayload.role == 'dev') {
+        console.log('reportingMiddleware dev token');
+        next();
+    }
+    var requesterId = req.tokenPayload.userId.toString();
+    var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
+    if (validUsers.indexOf(requesterId) > -1) {
+        console.log('Valid reporting request');
+        next();
+    }
+    else {
+        return next(new Error("Error: requesting user not a member of target workspace"));
+    }
+    
+}
+
 module.exports = {
     referenceMiddleware,
     documentMiddleware,
@@ -503,5 +536,6 @@ module.exports = {
     tagMiddleware,
     authMiddleware,
     userMiddleware,
-    tokenMiddleware
+    tokenMiddleware,
+    reportingMiddleware
 }

@@ -60,14 +60,8 @@ class RepositoryMenu extends React.Component {
             return(
                 <ListItem 
                     onClick = {() => {
-<<<<<<< HEAD
-                        let { workspaceId } = this.props.match.params;
-                        this.props.editDocument({workspaceId, documentId: this.props.document._id, repositoryId: repo._id}); 
-                        this.closeMenu()}} 
-=======
                         this.selectRepository(repo)
                     }} 
->>>>>>> 18bcacd53e6f9e483e57724e2210d65a898887fb
                 >
                     <RiGitRepositoryLine style = {
                         {fontSize: "1.5rem", marginRight: "0.7rem"}
