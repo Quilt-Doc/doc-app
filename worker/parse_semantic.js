@@ -17,7 +17,9 @@ const jobs = require('./apis/jobs');
 
 const { lowerCase, localeLowerCase } = require("lower-case");
 
+const constants = require('./constants/index');
 
+/*
 const JOB_GET_REFS = 1;
 const JOB_UPDATE_SNIPPETS = 2;
 const JOB_SEMANTIC = 3;
@@ -25,6 +27,7 @@ const JOB_SEMANTIC = 3;
 const JOB_STATUS_FINISHED = 'FINISHED';
 const JOB_STATUS_RUNNING = 'RUNNING';
 const JOB_STATUS_ERROR = 'ERROR';
+*/
 
 const getInstallToken = async (installationId) => {
     return await Token.findOne({ installationId })
@@ -57,7 +60,7 @@ const getRepositoryObject = async () => {
 
 const getTreeReferences = async (worker, repoId) => {
     return await Reference.find({repository: ObjectId(repoId), kind: 'file'}, 'path')
-		 .catch(async (err) => await killJob(worker, JOB_STATUS_ERROR, 'Error getting tree references', err));
+		 .catch(async (err) => await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Error getting tree references', err));
 }
 
 
@@ -182,16 +185,16 @@ const execSemantic = async () =>  {
 	
 	// console.log(child.stdout.toString());
 	var stdout = fs.readFileSync(repoDiskPath + "raw_output.txt").toString();
-	
+
 	console.log('Split array length');
 	console.log(stdout.split("\n").length);	
 	var toFile = {splitArray: stdout.split("\n")};
 	var toFileResult = fs.writeFileSync('log.txt', JSON.stringify(toFile));
                 let output = JSON.parse(stdout.split("\n")[1].trim())
-                
+
                 //console.log("OUT BEFORE", output)
                 // console.log(output)
-               
+
 		var fileSymbols = output.files;
 		var finalReferenceList = [];
 
@@ -278,15 +281,15 @@ const execSemantic = async () =>  {
                         .bulkWrite(bulkOps)
                         .then(results => console.log(results))
                         .catch(async (err) => {
-			    await killJob(worker, JOB_STATUS_ERROR, 'Semantic: Error bulk updating parsed files.', err);
+			    await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Semantic: Error bulk updating parsed files.', err);
 
                         });
                 }
-                
+
                 if (finalReferenceList.length > 0) {
                     const refList = await Reference.insertMany(finalReferenceList)
 					      .catch(async (err) => {
-						await killJob(worker, JOB_STATUS_ERROR, 'Semantic error inserting references', err);
+						await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Semantic error inserting references', err);
 					      });
 
                     console.log('refList.length: ');
@@ -332,7 +335,7 @@ const execSemantic = async () =>  {
                              .bulkWrite(bulkLinkOps)
                              .then(results => console.log(results))
                              .catch(async (err) => {
-                                  await killJob(worker, JOB_STATUS_ERROR, 'Error linking calls to definitions: ', err);
+                                  await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Error linking calls to definitions: ', err);
                               });
                     }
 		}
@@ -362,7 +365,7 @@ const execSemantic = async () =>  {
                     'installationId': process.env.installationId.toString(),
                     'cloneUrl': process.env.cloneUrl,
 		    'repositoryId': repoId,
-                    'jobType': JOB_GET_REFS.toString()
+                    'jobType': constants.jobs.JOB_PARSE_DOXYGEN.toString()
                 }
 
                 console.log('RUN DOXYGEN DATA: ');
@@ -370,7 +373,7 @@ const execSemantic = async () =>  {
 
                 jobs.dispatchDoxygenJob(runDoxygenData);
 
-                await killJob(worker, JOB_STATUS_FINISHED, 'Semantic Job Successfully ran.');
+                await killJob(worker, constants.jobs.JOB_STATUS_FINISHED, 'Semantic Job Successfully ran.');
                 
                 //console.log(output)
                 /*const removeContent = execFile("rm", ["-r", repoName],
