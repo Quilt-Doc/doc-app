@@ -9,7 +9,7 @@ const fs = require('fs');
 
 require('dotenv').config();
 
-// PASSPORT 
+// PASSPORT
 const passport = require("passport");
 const passportSetup = require("./passport_config/passport-setup");
 const cookieSession = require("cookie-session");

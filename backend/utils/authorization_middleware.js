@@ -25,10 +25,10 @@ const referenceMiddleware = async (req, res, next) => {
 
     if (requestedPath.includes('/references/create')) {
         if (requesterRole == 'dev') {
-            next();
+            return next();
         }
         else {
-            next(new Error("Error: only dev tokens can create references"));
+            return next(new Error("Error: only dev tokens can create references"));
         }
     }
 
@@ -82,7 +82,7 @@ const referenceMiddleware = async (req, res, next) => {
 
         if (requesterRole == 'dev') {
             console.log('referenceMiddleware dev token');
-            next();
+            return next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
@@ -104,7 +104,7 @@ const referenceMiddleware = async (req, res, next) => {
             }
 
             console.log('Valid reference request');
-            next();
+            return next();
         }
         else {
             return next(new Error("Error: requesting user not a member of target workspace"));
@@ -132,13 +132,13 @@ const documentMiddleware = async (req, res, next) => {
 
     if (req.tokenPayload.role == 'dev') {
         console.log('documentMiddleware dev token');
-        next();
+        return next();
     }
     var requesterId = req.tokenPayload.userId.toString();
     var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
     if (validUsers.indexOf(requesterId) > -1) {
         console.log('Valid document request');
-        next();
+        return next();
     }
     else {
         return next(new Error("Error: requesting user not a member of target workspace"));
@@ -164,13 +164,13 @@ const snippetMiddleware = async (req, res, next) => {
 
     if (req.tokenPayload.role == 'dev') {
         console.log('snippetMiddleware dev token');
-        next();
+        return next();
     }
     var requesterId = req.tokenPayload.userId.toString();
     var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
     if (validUsers.indexOf(requesterId) > -1) {
         console.log('Valid snippet request');
-        next();
+        return next();
     }
     else {
         return next(new Error("Error: requesting user not a member of target workspace"));
@@ -194,10 +194,10 @@ const repositoryMiddleware = async (req, res, next) => {
         requestedPath.includes('/repositories/update')) {
         
         if (requesterRole == 'dev') {
-            next();
+            return next();
         }
         else {
-            next(new Error("Error: only dev tokens can access this repository route."));
+            return next(new Error("Error: only dev tokens can access this repository route."));
         }
     }
 
@@ -207,11 +207,11 @@ const repositoryMiddleware = async (req, res, next) => {
     // poll and validate are temporarily enabled for everything
     if (requestedPath.includes('/repositories/validate') || (requestedPath.includes('/repositories') && requestedPath.includes('/poll'))) {
         if (requesterRole == 'dev') {
-            next();
+            return next();
         }
         // TODO: Fix temporarily allowing everyone to call this.
         else {
-            next();
+            return next();
         }
     }
 
@@ -255,13 +255,13 @@ const repositoryMiddleware = async (req, res, next) => {
 
         if (requesterRole == 'dev') {
             console.log('referenceMiddleware dev token');
-            next();
+            return next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
             console.log('Valid repository request');
-            next();
+            return next();
         }
         else {
             return next(new Error("Error: requesting user not a member of target workspace"));
@@ -286,12 +286,12 @@ const workspaceMiddleware = async (req, res, next) => {
 
     // Temporarily allow any user to access the create method
     if (requestedPath.includes('/workspaces/create')) {
-        next();
+        return next();
     }
 
     if (requestedPath.includes('/workspaces/retrieve')) {
         console.log('Moving on');
-        next();
+        return next();
     }
 
     else {
@@ -310,13 +310,13 @@ const workspaceMiddleware = async (req, res, next) => {
 
         if (requesterRole == 'dev') {
             console.log('workspaceMiddleware dev token');
-            next();
+            return next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
             console.log('Valid workspace request');
-            next();
+            return next();
         }
         else {
             return next(new Error("Error: requesting user not a member of target workspace"));
@@ -379,13 +379,13 @@ const tagMiddleware = async (req, res, next) => {
 
     if (requesterRole == 'dev') {
         console.log('tagMiddleware dev token');
-        next();
+        return next();
     }
 
     var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
     if (validUsers.indexOf(requesterId) > -1) {
         console.log('Valid tag request');
-        next();
+        return next();
     }
     else {
         return next(new Error("Error: requesting user not a member of target workspace"));
@@ -464,13 +464,13 @@ const userMiddleware = async (req, res, next) => {
     if (foundWorkspace) {
         if (requesterRole == 'dev') {
             console.log('userMiddleware dev token');
-            next();
+            return next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
             console.log('Valid user request');
-            next();
+            return next();
         }
         else {
             return next(new Error("Error: requesting user not a member of target workspace"));
@@ -483,10 +483,10 @@ const tokenMiddleware = (req, res, next) => {
     var requesterRole = req.tokenPayload.role;
 
     if (requesterRole == 'dev') {
-        next();
+        return next();
     }
     else {
-        next(new Error("Error: only dev tokens can access the token API"));
+        return next(new Error("Error: only dev tokens can access the token API"));
     }
 }
 
