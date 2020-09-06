@@ -6,8 +6,6 @@ var path = require('path');
 var DOMParser = require('xmldom').DOMParser;
 
 const fsPromises = require('fs').promises
-const apis = require('./apis/api');
-const api = apis.requestClient();
 
 
 const Reference = require('./models/Reference');
@@ -22,24 +20,9 @@ const tokenUtils = require('./utils/token_utils');
 var request = require("request");
 
 
-
-const apiURL = 'https://api.github.com';
-
-const repoBaseURL = 'https://github.com/'
-
 const fsPath = require('fs-path');
 
-
-const COMPOUND_KINDS = ["class", "struct", "union", "interface", "protocol", "category",
-"exception", "file", "namespace", "group", "page", "example", "dir", "type"];
-
-const MEMBER_KINDS = ['define', 'property', 'event', 'variable', 'typedef', 'enum',
-'enumvalue', 'function', 'signal', 'prototype', 'friend', 'dcop', 'slot'];
-
-const JOB_STATUS_FINISHED = 'FINISHED';
-const JOB_STATUS_RUNNING = 'RUNNING';
-const JOB_STATUS_ERROR = 'ERROR';
-
+const constants = require('./constants/index');
 
 
 const getParseableTree = async () => {
@@ -94,7 +77,7 @@ getRefs = async () => {
 
     worker.send({receipt: process.env.receipt})
 
-    await updateJobStatus(JOB_STATUS_RUNNING);
+    await updateJobStatus(constants.jobs.JOB_STATUS_RUNNING);
 
     var parseLevelLookup = await getParseableTree();
 
@@ -156,6 +139,12 @@ getRefs = async () => {
                         compounds.forEach(function (item, index) {
                             target_refs.push(item);
                             // ERROR
+			    if (!item) {
+				return;
+			    }
+			    if (!item.hasOwnProperty("member")) {
+				return;
+			    }
 			    var members = item['member'];
                             if (!(typeof members == 'undefined') && !(members == null)) {
 
@@ -169,7 +158,7 @@ getRefs = async () => {
 
 			// Didn't find references, kill process, update job status
 			else {
-			    await killJob(worker, JOB_STATUS_FINISHED, 'No references found');
+			    await killJob(worker, constants.jobs.JOB_STATUS_FINISHED, 'No references found');
 			}
 			
 
@@ -263,7 +252,7 @@ getRefs = async () => {
                             })
                             //.catch(console.log);
                             .catch(async (error) => {
-				await killJob(worker, JOB_STATUS_ERROR, 'Error parsing references', error);
+				await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Error parsing references', error);
                                 return;
                             });
                     });
@@ -280,7 +269,7 @@ createReferences = async (refList, worker) => {
 
 
     if (!typeof refList == 'undefined' && refList !== null) {
-        await killJob(worker, JOB_STATUS_ERROR, 'no refList provided');
+        await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'no refList provided');
     }
     console.log('refList');
     // console.log(refList);
@@ -314,19 +303,21 @@ createReferences = async (refList, worker) => {
         if (lineNum) reference.lineNum = lineNum;
         if (kind) reference.kind = kind;
 	reference.parseProvider = 'doxygen';
-        return reference;
+	if (kind  != 'page') {
+        	return reference;
+	}
     })
-
+    refObList = refObjList.filter(noPages => noPages);
     console.log('REF OBJ LIST');
     // console.log(refObjList);
     await Reference.insertMany( refObjList )
 		.then(async (reference) => {
         	    console.log('Created references');
-	            await killJob(worker, JOB_STATUS_FINISHED); 
+	            await killJob(worker, constants.jobs.JOB_STATUS_FINISHED); 
                    return;
     		})
     		.catch(async (err) => {
-		    await killJob(worker, JOB_STATUS_ERROR, 'Error creating Reference', err);
+		    await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Error creating Reference', err);
     		});
 }
 
