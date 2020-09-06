@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import AsyncCreatableSelect from 'react-select/async-creatable';
 
-import { removeDocument } from '../../actions/RepositoryItem_Actions';
 
 import styled from 'styled-components';
 

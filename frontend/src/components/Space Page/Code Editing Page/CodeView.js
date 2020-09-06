@@ -1,32 +1,34 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-
 //styles
 import styled, { keyframes } from "styled-components";
 import chroma from 'chroma-js';
 
+//icons
+import { FiFileText } from 'react-icons/fi';
+import { BiHighlight } from 'react-icons/bi'
 //components
 import Annotation from './Annotation';
-import Snippet from './Snippet';
 import TextareaAutosize from 'react-textarea-autosize';
 import LabelMenu from '../../General/Menus/LabelMenu';
 import RotateLoader from "react-spinners/RotateLoader";
 import Loader from 'react-loader-spinner'
 import RepositoryMenu from '../../General/Menus/RepositoryMenu';
 import DocumentMenu from '../../General/Menus/DocumentMenu';
-
+import CodeInfo from '../Directory Navigation Page/CodeInfo';
 //history
 import history from '../../../history';
 
 //utility
 import Selection from '@simonwep/selection-js';
 import _ from 'lodash';
+import scrollIntoView from 'scroll-into-view-if-needed'
 
 //actions
 import {retrieveSnippets, createSnippet, editSnippet, deleteSnippet} from '../../../actions/Snippet_Actions'
 import { retrieveDocuments } from '../../../actions/Document_Actions';
-import { getContents, retrieveCodeReferences, getReferenceFromPath,  retrieveReferences, attachTag, removeTag } from '../../../actions/Reference_Actions';
+import { retrieveCodeReferences, getReferenceFromPath,  retrieveReferences, attachTag, removeTag } from '../../../actions/Reference_Actions';
 import { getRepositoryFile, getRepository } from '../../../actions/Repository_Actions';
 
 import { retrieveCallbacks } from '../../../actions/Semantic_Actions';
@@ -36,6 +38,8 @@ import { withRouter } from 'react-router-dom';
 
 //misc
 import { connect } from 'react-redux';
+
+
 
 //prism
 import Prism from 'prismjs'
@@ -78,6 +82,9 @@ class CodeView extends React.Component {
 
         // variable to determine whether annotation scale
         this.pullAnnotationUp = false
+        this.lines = {};
+        this.annotations = {};
+        this.stopMouseEvents = false;
     }
 
 
@@ -91,16 +98,72 @@ class CodeView extends React.Component {
         
         // get contents of code file from database
         let { referenceId, repositoryId, workspaceId}  = this.props.match.params;
-        await this.props.getRepository(repositoryId)
-        let fileContents = await this.props.getContents({referenceId})
-        await this.props.retrieveReferences({ referenceId })
+        await this.props.getRepository({workspaceId, repositoryId});
+        let fileContents = await this.props.getRepositoryFile({workspaceId, repositoryId, referenceId});
+        console.log('Code View fileContents');
+        console.log(fileContents);
+        await this.props.retrieveReferences({ workspaceId, referenceId })
         await this.props.retrieveSnippets({referenceId, workspaceId})
-        await this.props.retrieveDocuments({ referenceIds: [referenceId], workspaceId})
+        console.log("SNIPPETS", this.props.snippets)
+        await this.props.retrieveDocuments({ workspaceId, referenceIds: [referenceId], workspaceId})
         const allLinesJSX = this.renderLines(fileContents);
+        window.addEventListener('keydown', this.handleKeyDown, false);
         this.setState({fileContents, allLinesJSX, loaded: true});
     }
 
+    handleKeyDown = (e) => {
+        //38 up
+        //40 down
+        
+        if (true) {
+            e.preventDefault();
+            e.stopPropagation();
+            //document.body.style.pointerEvents = 'none';
+            if (e.keyCode === 40) {
+                this.stopMouseEvents = true;
+                if (!this.state.focused && this.props.snippets.length > 0){
+                    this.focusSnippet2(this.props.snippets[0])
+                } else {
+                    for (let i = 0; i < this.props.snippets.length; i++){
+                        let snippet = this.props.snippets[i];
+                        if (snippet._id === this.state.focused) {
+                            if (i !== this.props.snippets.length - 1) {
+                                this.focusSnippet2(this.props.snippets[i + 1])
+                            } else {
+                                this.focusSnippet2(this.props.snippets[0])
+                            }
+                            break
+                        }
+                    }
+                }
+                window.addEventListener('mousemove', this.resetPointerEvents, false)
+            } else if (e.keyCode === 38) {
+                this.stopMouseEvents = true;
+                if (!this.state.focused && this.props.snippets.length > 0){
+                    this.focusSnippet2(this.props.snippets[0])
+                } else {
+                    for (let i = 0; i < this.props.snippets.length; i++){
+                        let snippet = this.props.snippets[i];
+                        if (snippet._id === this.state.focused) {
+                            if (i !== 0) {
+                                this.focusSnippet2(this.props.snippets[i - 1])
+                            } else {
+                                this.focusSnippet2(this.props.snippets[this.props.snippets.length - 1])
+                            }
+                            break
+                        }
+                    }  
+                }
+                window.addEventListener('mousemove', this.resetPointerEvents, false)
+            }
+        }
+    }
 
+    resetPointerEvents = () => {
+        window.removeEventListener('mousemove', this.resetPointerEvents, false)
+        //document.body.style.pointerEvents = 'auto';
+        this.stopMouseEvents = false;
+    }
 
     // translate annotation pane manually if a new snippet is being created 
     componentDidUpdate(){
@@ -110,6 +173,9 @@ class CodeView extends React.Component {
         }
     }
 
+    componentWillUnmount(){
+        window.removeEventListener('keydown', this.handleKeyDown, false);
+    }
     // translate annotation pane manually if a new snippet is being created 
     updateScaleY() {
         const item1 = this.refs["newAnnotation"].getBoundingClientRect().top //anno
@@ -256,7 +322,6 @@ class CodeView extends React.Component {
     } 
 
     toggleSelection = () => {
-
         if (this.state.selectionMode) {
             this.deselectItems();
             this.setState({
@@ -296,9 +361,11 @@ class CodeView extends React.Component {
         const tokens = Prism.tokenize(fileContents, grammar)
         
         let allLinesJSX = []
-        let currLineJSX = [] 
+        let currLineJSX = []
         let callbacks = this.props.references.filter(ref => 
-            {return ref.parseProvider === 'semantic' && ref._id !== this.props.match.params.referenceId}).map(ref => {ref.position = 
+            {return ref.parseProvider === 'semantic' && ref._id !== this.props.match.params.referenceId}).map(ref => {
+                console.log('ref: ', ref);
+                ref.position = 
                 JSON.parse(ref.position); return ref}).sort((a, b) => {
                     a = a.position.start;
                     b = b.position.start;
@@ -441,135 +508,285 @@ class CodeView extends React.Component {
     }
 
     deleteSnippet(index) {
-        this.props.deleteSnippet(this.props.snippets[index]._id).then(() => {
-            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        var { workspaceId } = this.props.match.params;
+        this.props.deleteSnippet({workspaceId, snippetId: this.props.snippets[index]._id}).then(() => {
+            this.props.retrieveSnippets({workspaceId, location: window.location.pathname.slice(20)})
         })
     }
-    // render the snippets that are in the database
-    renderSnippets() {
-        // extract the lines from fileContents
-        //const lines = this.state.fileContents.split("\n");
-        const lines = this.state.allLinesJSX;
-        // jsx that will be rendered, store these in an array to render them appropriately later
-        let snippetJSX = []
-        let annotationJSX = []
 
-        let i = 0
-
-        // iterate over lines, if the line points to a snippet -- create an annotation and snippet,
-        // then skip iteration index to the end of the snippet
-        let deprecatedSeen = false;
-        while (i < lines.length) {
-            if (this.props.snippets 
-                && i in this.props.snippets 
-                && (this.state.reselectingSnippet !== i || this.props.snippets[i].status === "INVALId")
-                && !deprecatedSeen ) {
-                const annotationRef = 'annotation' + i
-                const snippetRef = 'snippet' + i
-                const annotation  =  <Annotation 
-                                    key = {annotationRef} 
-                                    ref={annotationRef} 
-                                    annotation = {this.props.snippets[i].annotation}
-                                    scalePane = {() => this.scalePane(snippetRef, annotationRef)} 
-                                    unhoverBoth = {() => this.unhoverBoth(snippetRef, annotationRef)} 
-                                    />
-                const snippet =   <Snippet 
-                                    status = {this.props.snippets[i].status}
-                                    key = {snippetRef} 
-                                    ref={snippetRef} 
-                                    index = {i}
-                                    codeViewState = {this.state}
-                                    reselectSnippet = {(index) => this.reselectSnippet(index)}
-                                    deleteSnippet = {(index) => this.deleteSnippet(index)}
-                                    codelines = {lines.slice(i, i + this.props.snippets[i].code.length)}
-                                    scalePane = {() => this.scalePane(snippetRef, annotationRef)} 
-                                    unhoverBoth = {() => this.unhoverBoth(snippetRef, annotationRef)}
-                                    />
-                snippetJSX.push(snippet)
-                annotationJSX.push(annotation)
-                if (this.props.snippets[i].status !== "INVALId") {
-                    i += this.props.snippets[i].code.length - 1;
-                } else {
-                    deprecatedSeen = true
-                    i -= 1;
-                }
-            } else {
-                deprecatedSeen = false
-                // if we are in selection mode, find the line that corresponds to the top of the snippet
-                // that will be created
-                if (this.state.newSnippetId === `linecode-${i}`) {
-
-                    //create annotation input if code lines are selected and annotation creation is requested
-                    const annotation_creation = (<AnnotationCardInput
-                                                    key = {'newAnnotation'} 
-                                                    ref={'newAnnotation'} 
-                                                >
-                                                    <StyledTextareaAutosize 
-                                                        autoFocus
-                                                        minRows = {6}
-                                                        placeholder="Add an annotation..."
-                                                        key = {'newAnnotationTextarea'} 
-                                                        ref={'newAnnotationTextarea'} 
-                                                        />
-                                                    <ButtonHolder>
-                                                        <CreateAnnotation onClick = {() => {this.createAnnotationFunction()}}>Create</CreateAnnotation>
-                                                        <CancelAnnotation onClick = {() => {this.resetAnnotationCreation()}}>Cancel</CancelAnnotation>
-                                                    </ButtonHolder>
-                                                </AnnotationCardInput>)
-                    annotationJSX.push(annotation_creation)
-                }
-
-                // if the input is a space break, insert space to render a line
-                let inputLine = lines[i]
-                //if (inputLine === ''){
-                //    inputLine = '    '
-                //}
-                //
-                // render lines that are not snippets, note the id is used to differentiate during selection
-                let border = "1.5px solid transparent"
-                let backgroundColor = ""
-                
-                if (this.state.reselectingSnippet !== null){
-                    console.log(i)
-                    console.log(this.state.reselectingSnippet)
-                    console.log(this.state.reselectingSnippet + this.props.snippets[this.state.reselectingSnippet].code.length)
-                }
-                
-                if (this.state.reselectingSnippet !== null && 
-                    i >= this.state.reselectingSnippet &&
-                    i < this.state.reselectingSnippet + this.props.snippets[this.state.reselectingSnippet].code.length
-                    ) {
-                        console.log("HERE")
-                        border = "1.5px solid #a29bfe"
-                        backgroundColor = "#F1F8FF"
-                    }
-                let codeline = (<Wrapper backgroundColor = {backgroundColor} border = {border} id = {`linecode-${i}`} className = {'codeline'}>
-                                    <CodeLine  >
-                                        {inputLine}
-                                    </CodeLine>
-                                </Wrapper>)
-                snippetJSX.push(codeline)
+  
+    focusSnippet = (snippet) => {
+            let line = this.lines[snippet.start]
+            if (this.state.newSnippetId === '' 
+                && !this.state.selectionMode &&  
+                this.state.focused !== snippet._id
+            ) {
+                if (this.state.focused) {this.annotations[this.state.focused].unhover()};
+                const annotation = this.annotations[snippet._id]
+                const offset_snippet = ReactDOM.findDOMNode(line.node).offsetTop
+                    - document.getElementById('codeholder').offsetTop
+                const offset_annotation =ReactDOM.findDOMNode(annotation).offsetTop;
+                const offset_difference = offset_annotation - offset_snippet
+                const newScale = -1 * offset_difference
+                this.setState({scaleY: newScale, focused: snippet._id})
+                //snippet.hover()
+                annotation.hover()
             }
-            i += 1
+    }
+
+    focusSnippet2 = (snippet) => {
+        let line = this.lines[snippet.start]
+        let line2 = this.lines[snippet.start + snippet.code.length - 1]
+        if (this.state.newSnippetId === '' 
+            && !this.state.selectionMode &&  
+            this.state.focused !== snippet._id
+        ) {
+            if (this.state.focused) {this.annotations[this.state.focused].unhover()};
+            /*
+            scrollIntoView(line.node, {
+                scrollMode: 'if-needed',
+                block: 'center',
+                inline: 'nearest',
+                behavior: 'smooth'
+            })*/
+            /*
+            scrollIntoView(line2.node, {
+                scrollMode: 'if-needed',
+                block: 'center',
+                inline: 'nearest',
+                behavior: 'smooth'
+            })*/
+            const annotation = this.annotations[snippet._id]
+            const offset_snippet = ReactDOM.findDOMNode(line.node).offsetTop 
+                - document.getElementById('codeholder').offsetTop
+                
+            const offset_annotation = ReactDOM.findDOMNode(annotation).offsetTop;
+            const offset_difference = offset_annotation - offset_snippet
+            const newScale = -1 * offset_difference
+            this.setState({scaleY: newScale, focused: snippet._id})
+            console.log(annotation)
+            scrollIntoView(ReactDOM.findDOMNode(annotation).parentNode, {
+                scrollMode: 'if-needed',
+                block: 'nearest',
+                inline: 'nearest',
+                behavior: 'smooth'
+            })
+            //snippet.hover()
+            annotation.hover()
+        }
+}
+
+
+
+    renderSingleLine = (i, lines, allLinesJSX, snippet) => {
+        let lineJSX = allLinesJSX[i];
+        
+        let color = lines[i] ? chroma("#5B75E6").alpha(0.04) : "#ffffff";
+        let border = lines[i] ?  `1.5px solid #5B75E6` : "1.5px solid #ffffff";
+
+        if (snippet) {
+         
+           color = chroma("#5B75E6").alpha(0.07);
+
         }
 
-        // all code related objects packaged into one variable
-        const allCode = <CodeText 
-                            cursor = {this.state.selectionMode || this.state.reselectingSnippet !== null ? "grab" : ""}
-                            className = {'codetext'}>
-                            {snippetJSX.map(snippet => {return snippet })}
-                         </CodeText>
-        
-         // all annotation related objects packaged into one variable
-        const allAnno = <Overflow_Wrapper><AnnotationBar scaleY = {this.state.scaleY} >{annotationJSX.map(annotation => {return annotation })}</AnnotationBar></Overflow_Wrapper>
+        return(
+            
+            <Wrapper 
+                color = {color}   
+                border = {border} 
+                id = {`linecode-${i}`} 
+                className = {'codeline'}
+                ref = {(node) => {
+                    if (lines[i]){
+                        lines[i].node = node
+                    } 
+                }}
+                onMouseEnter = {() => 
+                    {   if (lines[i] && !this.stopMouseEvents) {
+                           
+                            this.focusSnippet(this.props.snippetsObject[lines[i].snippets[0]])
+                            if (lines[i].snippets.length > 1) {
+                                this.setState({moreSnippetDisplay: "true"})
+                            }
+                        }
+                    }}
+                key = {i}
+            >
+                
+                <CodeLine>
+                    
+                    {lineJSX}
+                </CodeLine>
+            </Wrapper>
+        )
+    }
 
-        return (<>
-                {allCode} 
-                {allAnno}
-                {this.renderSnippetAdditionButton()}
-                
-                
-                </>)
+
+    storeSnippetLocation(){
+        let lines = {}
+        this.props.snippets.map((snippet) => {
+            for (let i = snippet.start; i < snippet.start + snippet.code.length; i++){
+                if (i in lines) {
+                    lines[i].snippets.push(snippet._id);
+                } else {
+                    lines[i] = {snippets: [snippet._id]};
+                }
+            }
+        })
+        this.lines = lines
+    }
+
+
+    renderCode = () => {
+        this.storeSnippetLocation();
+        let codeJSX = [];
+
+        let { allLinesJSX } = this.state;
+        let lines = {...this.lines};
+
+        let i = 0
+        let snippet = this.state.focused ? this.props.snippetsObject[this.state.focused] : null;
+
+        while (i < allLinesJSX.length) {
+            if (snippet && snippet.start === i) {
+                let snippetJSX = []
+                while (i < snippet.start + snippet.code.length) {
+                    snippetJSX.push(this.renderSingleLine(i, lines, allLinesJSX, true))
+                    i += 1
+                }
+                codeJSX.push(
+                    <Snippet 
+                        onMouseLeave = {(e) => 
+                        {   
+                            if (!this.stopMouseEvents) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                this.annotations[snippet._id].unhover(); 
+                                this.setState({focused: null}) 
+                            }
+                           
+                        }}
+                    >
+                        {snippetJSX}
+                    </Snippet>
+                )
+            } else {
+                codeJSX.push(
+                    this.renderSingleLine(i, lines, allLinesJSX)
+                )
+                i += 1
+            }
+        }
+
+        this.lines = lines
+        return codeJSX;
+    }
+
+    renderAnnotationCreation(){
+        return(
+            <AnnotationCardInput
+                key = {'newAnnotation'} 
+                ref={'newAnnotation'} 
+            >
+                <StyledTextareaAutosize 
+                    autoFocus
+                    minRows = {6}
+                    placeholder="Add an annotation..."
+                    key = {'newAnnotationTextarea'} 
+                    ref={'newAnnotationTextarea'} 
+                />
+                <ButtonHolder>
+                    <CreateAnnotation onClick = {() => {this.createAnnotationFunction()}}>Create</CreateAnnotation>
+                    <CancelAnnotation onClick = {() => {this.resetAnnotationCreation()}}>Cancel</CancelAnnotation>
+                </ButtonHolder>
+            </AnnotationCardInput>
+        )
+    }
+
+    renderAnnotations() {
+        let annotations = {};
+        let annotationsJSX = [];
+        let annotationCreate = true;
+
+        let annotation_creation = this.renderAnnotationCreation();
+
+        this.props.snippets.map((snippet) => {
+            if ( annotationCreate && 
+                this.state.newSnippetId && 
+                parseInt(this.state.newSnippetId.split("-")[1]) < snippet.start) {
+                //create annotation input if code lines are selected and annotation creation is requested
+             
+                annotationsJSX.push(annotation_creation)
+                annotationCreate = false;
+            }
+            annotationsJSX.push(
+                <div
+                    onMouseLeave = {(e) => {
+                        
+                        if (!this.stopMouseEvents) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.annotations[snippet._id].unhover(); 
+                            this.setState({focused: null})
+                        }
+                       
+                    }}
+                >
+                <Annotation 
+                    key = {snippet._id}
+                    ref = {(node) => {annotations[snippet._id] = node}}
+                    annotation = {snippet.annotation}
+                    snippet = {snippet}
+                    focusSnippet = {() => 
+                        {   
+                            if (!this.stopMouseEvents){
+                                this.stopMouseEvents = true;
+                                this.focusSnippet(snippet);
+                                window.addEventListener('mousemove', this.resetPointerEvents, false)
+                            }
+                            
+                        }
+                    }
+                    releaseSnippet = {(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.annotations[snippet._id].unhover(); 
+                        this.setState({focused: null}) 
+                    }}
+                />
+                </div>
+            )
+        });
+        
+        if ( annotationCreate && this.state.newSnippetId ) {
+            annotationsJSX.push(annotation_creation)
+            annotationCreate = false;
+        }
+
+
+        this.annotations = annotations;
+        return annotationsJSX;
+    }
+
+    renderContent() {
+        let codeJSX = this.renderCode();
+        let annotationsJSX = this.renderAnnotations();
+        const code = <CodeText id = {'codeholder'} className = {`codetext`}> {codeJSX} </CodeText>
+        const annotations = 
+            <Overflow_Wrapper>
+                <AnnotationBar scaleY = {this.state.scaleY} >
+                    {annotationsJSX}
+                </AnnotationBar>
+            </Overflow_Wrapper>
+        return (
+                <>
+                    {code} 
+                    {annotations}
+                    {this.renderSnippetAdditionButton()}
+                </>
+        )
+
     }
 
     /*{this.renderSnippetChangeButton()}
@@ -599,10 +816,10 @@ class CodeView extends React.Component {
 
         //createSnippet must handle all state reset, acquire beginning/end line data
         //snippet content, etc and send them over to the action
-
+        let {referenceId, workspaceId} = this.props.match.params
         this.props.createSnippet({start, code, annotation, 
-            referenceId: this.props.match.params.referenceId, status: "VALId", creator: this.props.user._id }).then(() => {
-            this.props.retrieveSnippets({ referenceId: this.props.match.params.referenceId}).then(() => {
+            workspaceId, referenceId, status: "VALID", creator: this.props.user._id }).then(() => {
+            this.props.retrieveSnippets({ referenceId, workspaceId }).then(() => {
                 console.log("SNIPPETS", this.props.snippets)
             })
             this.setState({
@@ -617,10 +834,11 @@ class CodeView extends React.Component {
     reselectSnippetFunction(elem_key) {
         let start = parseInt(elem_key.split('-').pop())
         let length = _.keys(this.state.selected).length
-        let code = this.state.fileContents.split("\n").slice(start, start + length)
+        let code = this.state.fileContents.split("\n").slice(start, start + length);
         this.deselectItems()
-        this.props.editSnippet(this.props.snippets[this.state.reselectingSnippet]._id, {start, code, status: "VALId"}).then(() => {
-            this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
+        var { workspaceId } = this.props.match.params;
+        this.props.editSnippet({workspaceId, snippetId: this.props.snippets[this.state.reselectingSnippet]._id, start, code, status: "VALId"}).then(() => {
+            this.props.retrieveSnippets({workspaceId, location: window.location.pathname.slice(20)})
             this.setState({
                 'selected': {},
                 'reselectingSnippet': null
@@ -708,7 +926,7 @@ class CodeView extends React.Component {
 
     async redirectPath(path) {
         let {workspaceId, repositoryId} = this.props.match.params
-        let ref = await this.props.getReferenceFromPath({path, repositoryId})
+        let ref = await this.props.getReferenceFromPath({workspaceId, path, repositoryId})
         history.push(`/workspaces/${workspaceId}/repository/${repositoryId}/dir/${ref[0]._id}`)
     }
 
@@ -729,7 +947,7 @@ class CodeView extends React.Component {
                 title = `${title.slice(0, 14)}..`
             }
             return <DocumentItem onClick = {() => history.push(`?document=${doc._id}`)}>
-                        <ion-icon name="document-text-outline" style = {{fontSize: "1.5rem", 'marginRight': '0.8rem'}}></ion-icon>
+                        <FiFileText style = {{fontSize: "1.35rem", 'marginRight': '0.55rem'}}/>
                         <Title>{title && title !== "" ? title : "Untitled"}</Title>
                     </DocumentItem>
         })
@@ -739,52 +957,14 @@ class CodeView extends React.Component {
 
     // render function
     render() {
-        console.log(this.props.currentReference)
-        //console.log("CALLBACKS PREV", this.props.callbacks)
         if (this.state.loaded) {
             return (
-                <>
-                    <Container>
-                    <Header>
-                        <RepositoryMenu 
-                                    name = {this.props.currentRepository.fullName.split("/")[1]}
-                                />
-                        {this.renderHeaderPath()}
-                        </Header>
-                        <InfoBlock>
-                            <InfoHeader>
-                                <ion-icon style = {
-                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
-                                } name="pricetag-outline"></ion-icon>
-                                Labels
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                {this.props.currentReference.tags && this.props.currentReference.tags.length > 0  ? this.renderTags() : <NoneMessage>None yet</NoneMessage>}
-                                <LabelMenu 
-                                    attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
-                                    removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
-                                    setTags = {this.props.currentReference.tags}//this.props.request.tags}
-                                    marginTop = {"1rem"}
-                                />
-                            </ReferenceContainer>
-                        </InfoBlock>
-                        <InfoBlock>
-                            <InfoHeader>
-                                <ion-icon style = {
-                                            {color: "#172A4E",  marginLeft: "-0.4rem", marginRight: "0.7rem", fontSize: "1.8rem"}
-                                    } name="document-text-outline"></ion-icon>
-                                Documents
-                            </InfoHeader>
-                            <ReferenceContainer>
-                                {this.props.documents && this.props.documents.length > 0 ? this.renderDocuments() : <NoneMessage>None yet</NoneMessage>}
-                                <DocumentMenu
-                                        setDocuments = {this.props.documents}
-                                        marginTop = {"1rem"}
-                                        reference = {this.props.currentReference}
-                                />
-                            </ReferenceContainer>
-                        </InfoBlock>
-                        <EditorContainer2>
+                <Background>
+                        <CodeInfo
+                            currentRepository = {this.props.currentRepository}
+                            currentReference = {this.props.currentReference }
+                            documents = {this.props.documents }
+                        />
                         <EditorContainer>
                             <ListToolbar> 
                                 <ListName><b>8</b>&nbsp; documents</ListName>
@@ -795,23 +975,14 @@ class CodeView extends React.Component {
                                     color = {this.state.selectionMode ? '#19E5BE' : '#172A4E'}
 
                                 >
-                                    <IconBorder
-                                        
-                                        >
-                                        <ion-icon style={{'fontSize': '2.2rem'}} name="color-wand-outline"></ion-icon>
-                                        
-                                    </IconBorder>
-                                    Highlight
+                                    <BiHighlight/> 
                                 </HighlightButton>
                             </ListToolbar>
                             <CodeContainer >
-                                {this.renderSnippets()}
+                                {this.renderContent()}
                             </CodeContainer>
                         </EditorContainer>
-                        </EditorContainer2>
-                    </Container>
-                </>
-                
+                </Background>
             );
         } else {
             return <Container>
@@ -875,7 +1046,8 @@ const mapStateToProps = (state, ownProps) => {
         fileContents: state.repositories.fileContents,
         fileName: state.repositories.fileName,
         filePath: state.repositories.repositoryCurrentPath + '/' + state.repositories.fileName,
-        snippets: state.snippets,
+        snippets: Object.values(state.snippets).sort((a, b) => {if (a.start < b.start) {return -1} else {return 1}}),
+        snippetsObject: state.snippets,
         callbacks: state.callbacks,
         user: state.auth.user,
         references: Object.values(state.references)
@@ -883,29 +1055,50 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnippet, editSnippet, 
-    deleteSnippet, getRepositoryFile, retrieveCallbacks, getContents, retrieveDocuments,
+    deleteSnippet, getRepositoryFile, retrieveCallbacks, retrieveDocuments,
     retrieveCodeReferences, retrieveReferences, getRepository, attachTag, removeTag, getReferenceFromPath})(CodeView));
 
 
 
 //Styled Components
+
+const Snippet = styled.div` 
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.31) 0px 1px 1px 0px;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.3) 0px 4px 16px -6px;*/
+    z-index: 1;
+    cursor: pointer;
+   
+`
+
+
+const Info = styled.div`
+    padding: 3.5rem 8rem;
+    padding-bottom: 1.7rem;
+    z-index: 1;
+`
+
+
+
+
+
+
+
+
 const DocumentItem = styled.div`
-    height: 3rem;
-    width: 15rem;
-    padding: 1rem;
-    background-color: white;
-    border-radius: 0.3rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    /*border: 1px solid #DFDFDF;*/
+    /*width: 15rem;*/
+    
+    border-radius: 0.4rem;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
+    /*border: 0.1px solid #D7D7D7;*/
     /*border: 1px solid #E0E4E7;*/
-    font-size: 1.2rem;
-    margin-right: 2rem;
+    font-size: 1.25rem;
+    margin-right: 1.8rem;
     display: flex;
-    align-items: center;
     cursor: pointer;
     &:hover {
-        background-color: #F4F4F6; 
+        color: #1E90FF;
     }
+    font-weight: 500;
 `
 
 const Title = styled.div`
@@ -923,27 +1116,34 @@ const ListName = styled.div`
     font-weight: 300;
 `
 
+const Tag = styled.div`
+    font-size: 1.25rem;
+    color: ${props => props.color}; 
+    padding: 0.45rem 0.8rem;
+    background-color: ${props => chroma(props.color).alpha(0.15)};
+    display: inline-block;
+    border-radius: 0.3rem;
+	margin-right: 1.35rem;
+	font-weight: 500;
+`
 
-
-const EditorContainer2 = styled.div`
-    background-color: #F7F9FB; 
-    padding: 3rem;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #DFDFDF;
-    border-radius:0.4rem;
-    min-width: 110rem;
-    margin-top: 2rem;
+const Background = styled.div`
+    background-color: #f7f9fb;
+    min-height: 100%;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+    padding-left: 8rem;
+    padding-right: 8rem;
+    padding-top: 1rem;
 `
 
 const Header = styled.div`
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     color: #172A4E;
-    margin-bottom: 3rem;
+    margin-bottom: 2.7rem;
     display: flex;
     align-items: center;
 `
-
 
 const Slash = styled.div`
     margin-left: 1rem;
@@ -995,15 +1195,6 @@ const InfoHeader = styled.div`
     margin-bottom: 1.5rem;
 `
 
-const Tag = styled.div`
-    font-size: 1.25rem;
-    color: ${props => props.color}; 
-    padding: 0.4rem 0.8rem;
-    background-color: ${props => props.backgroundColor}; 
-    display: inline-block;
-    border-radius: 4px;
-    margin-right: 1rem;
-`
 
 const NoneMessage = styled.div`
     font-size: 1.3rem;
@@ -1019,15 +1210,17 @@ const InfoBlock = styled.div`
 `
 
 const ReferenceContainer = styled.div`
-    margin-top: 0.8rem;
+    margin-bottom: 2.7rem;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    &:last-of-type {
+        margin-bottom: 1.5rem;
+    }
 `
 
 
 const IconBorder = styled.div`
-    margin-left: ${props => props.marginLeft};
-    margin-right: 0.2rem;
     display: flex;
     align-items: center;
     width: 3.5rem;
@@ -1036,17 +1229,15 @@ const IconBorder = styled.div`
     justify-content: center;
     transition: all 0.1s ease-in;
     border-radius: 0.3rem;
-    margin-right: ${props => props.marginRight};
 `
 
 const EditorContainer = styled.div`
     display: flex;
     flex-direction: column;
     /*border: 1px solid #DFDFDF;*/
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
     border-radius:0.4rem;
-    min-width: 110rem;
-
+    min-width: 80rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 `
 
 const CodeContainer = styled.div`
@@ -1065,7 +1256,7 @@ const ListToolbar = styled.div`
     position: sticky; 
     top: 0;
     border-bottom: 1px solid #EDEFF1;
-    z-index: 1;
+    z-index: 2;
 `
 
 
@@ -1088,15 +1279,16 @@ const Toolbar = styled.div`
 const HighlightButton = styled.div`
     display: flex;
     align-items: center;
+    justify-content: center;
+    height: 3.5rem;
+    width: 3.5rem;
     color: ${props => props.color};
-    font-size: 1.5rem;
-  
-    &: hover {
+    font-size: 2.5rem;
+    &:hover {
         background-color: #F4F4F6; 
     }
     margin-left : auto;
     margin-right: 2rem;
-    padding-right: 0.6rem;
     cursor: pointer;
     border-radius: 0.3rem;
 `
@@ -1117,7 +1309,6 @@ const CodeText = styled.div`
     flex-direction: column;
     font-family: 'Roboto Mono', monospace !important;
     cursor: ${props => props.cursor};
-    
 `
 
 const AnnotationBar = styled.div`
@@ -1128,7 +1319,7 @@ const AnnotationBar = styled.div`
     width: 33rem;
     transition: transform 0.5s cubic-bezier(0, 0.475, 0.01, 1.035);
     transform: ${props => `translateY(${props.scaleY}px)`};
-   
+    z-index:3;
 `
 
 const CodeLine = styled.div`
@@ -1145,7 +1336,8 @@ const CodeLine = styled.div`
 
 const Wrapper = styled.div`
     border-left: ${props => props.border};
-    background-color : ${props => props.backgroundColor};
+    background-color: ${props => props.color};
+    
 `
 
 const AddButton = styled.div`

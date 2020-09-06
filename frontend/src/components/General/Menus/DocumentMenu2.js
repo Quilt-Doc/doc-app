@@ -21,6 +21,10 @@ import { moveDocument, retrieveChildren } from '../../../actions/Document_Action
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
 
+//icons
+import {RiFileTextLine} from 'react-icons/ri'
+import {FiChevronDown} from 'react-icons/fi'
+
 class DocumentMenu2 extends React.Component {
     
     constructor(props){
@@ -83,6 +87,7 @@ class DocumentMenu2 extends React.Component {
     }
 
     renderMarginTop() {
+        return "-3rem";
         if (this.props.marginTop){
             return this.props.marginTop
         } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
@@ -92,11 +97,21 @@ class DocumentMenu2 extends React.Component {
         }
     }
 
-    handleSelect(parentId) {
-        let documentId = this.props.document._id
-        this.props.moveDocument({documentId, parentId, order: 0}).then(() => {
-            this.closeMenu()
-        })
+    handleSelect(parentId, doc) {
+
+        let documentId = this.props.document._id;
+        let {workspaceId} = this.props.match.params;
+       
+        if (this.props.form) {
+           this.props.selectParent(doc)
+           this.closeMenu()
+        } else {
+            let documentId = this.props.document._id
+            this.props.moveDocument({workspaceId, documentId, parentId, order: 0}).then(() => {
+                this.closeMenu()
+            })
+        }
+
     }
 
     async setPosition(e) {
@@ -105,7 +120,7 @@ class DocumentMenu2 extends React.Component {
         if (e.key === "Enter" && this.state.position >= 0) {
             let doc = this.state.documents[this.state.position]
             this.setState({loaded: false})
-            await this.handleSelect(doc._id)
+            await this.handleSelect(doc._id, doc)
             if (this.props.parent){
             this.props.retrieveChildren({limit: 8, workspaceId, sort: "-title"}).then((documents) => {
                 documents = [...documents, this.props.parent]
@@ -136,13 +151,11 @@ class DocumentMenu2 extends React.Component {
         return this.state.documents.map((doc, i) => {
             return(
                 <ListItem 
-                    onClick = {() => {this.handleSelect(doc._id)}} 
+                    onClick = {() => {this.handleSelect(doc._id, doc)}} 
                     onMouseEnter = {() => {this.setState({position: i})}}
                     backgroundColor = {this.state.position === i ? '#F4F4F6' : ""}
                 >
-                    <ion-icon 
-                        style = {{fontSize: "1.5rem", marginRight: "0.7rem"}} 
-                        name="document-text-outline"></ion-icon>
+                    <RiFileTextLine  style = {{fontSize: "1.5rem", marginRight: "1rem"}}/>
                     {doc.title ? doc.title : "Untitled"}
                 </ListItem>
             )
@@ -152,14 +165,15 @@ class DocumentMenu2 extends React.Component {
     openMenu(){
         document.addEventListener('mousedown', this.handleClickOutside, false);
         let { workspaceId } = this.props.match.params
+        this.setState({open: true})
         if (this.props.parent) {
             this.props.retrieveChildren({limit: 8, workspaceId, sort: "-title"}).then((documents) => {
                 documents = [...documents, this.props.parent]
-                this.setState({documents, position: -1, loaded: true, open:true})
+                this.setState({documents, position: -1, loaded: true})
             })
         } else {
             this.props.retrieveChildren({limit: 9, workspaceId, sort: "-title"}).then((documents) => {
-                this.setState({documents, loaded: true,  open:true, position: -1})
+                this.setState({documents, loaded: true, position: -1})
             })
         }
         
@@ -179,22 +193,32 @@ class DocumentMenu2 extends React.Component {
 
     
     render() {
+        console.log("PARENT", this.props.parent)
         return (
             <MenuContainer  >
-                <ModalToolbarButton  marginLeft= "1rem"  onClick = {() => this.openMenu()}>
-                <ion-icon name="document-text-outline" style={{ color: "#172A4E",  'marginRight': '0.7rem', fontSize: "1.5rem" }}></ion-icon>
-                    {this.props.parent ? 
-                        <Parent>{this.props.parent.title}</Parent> : <NoneMessage>Select a parent</NoneMessage>}
-                </ModalToolbarButton>
+                {this.props.form ?
+                    <Provider ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
+                        <RiFileTextLine style = {{marginTop: "-0.15rem", marginRight: "1rem"}}/>
+                        {this.props.parent ? this.props.parent.title : "None Selected"}
+                        <FiChevronDown style = {{ marginLeft: "1rem"}}/>
+                    </Provider> :
+                    <Provider ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
+                        <RiFileTextLine style = {{marginTop: "-0.15rem", marginRight: "1rem"}}/>
+                            None Selected
+                        <FiChevronDown style = {{ marginLeft: "1rem"}}/>
+                    </Provider>
+                }
                 {this.state.open && 
                     <CSSTransition
-                        in={true}
-                        appear = {true}
-                        timeout={100}
-                        classNames="menu"
+                        in = {this.state.open}
+                        unmountOnExit
+                        enter = {true}
+                        exit = {true}       
+                        timeout = {150}
+                        classNames = "dropmenu"
                     >
                         <Container marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
-                            <HeaderContainer>Change Parent</HeaderContainer>
+                            <HeaderContainer>Choose Location</HeaderContainer>
                             <SearchbarContainer>
                                 <SearchbarWrapper 
                                     backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
@@ -233,6 +257,22 @@ const mapStateToProps = (state, ownProps) => {
 
 
 export default withRouter(connect(mapStateToProps, { moveDocument, retrieveChildren })(DocumentMenu2));
+
+
+const Provider = styled.div`
+    background-color: #363b49;
+    padding: 1rem 2rem;
+    border-radius: 0.4rem;
+    font-weight: 500;
+    font-size: 1.7rem;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 4rem;
+    &:hover {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    cursor: pointer;
+`
 
 const Parent = styled.div`
     font-weight: 500;
@@ -296,7 +336,6 @@ const Container = styled.div`
     z-index: 2;
     background-color: white;
     margin-top: ${props => props.marginTop};
-    margin-left: 1rem;
 `
 
 const SearchbarContainer = styled.div`
@@ -346,6 +385,7 @@ const HeaderContainer = styled.div`
     padding: 1rem;
     color: #172A4E;
     border-bottom: 1px solid #E0E4E7;
+    font-weight: 500;
 `
 
 const ListHeader = styled.div`

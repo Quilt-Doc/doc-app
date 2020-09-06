@@ -3,7 +3,7 @@ import {
     EDIT_DOCUMENT, DOCUMENT_ATTACH_SNIPPET, 
     DOCUMENT_REMOVE_SNIPPET, DOCUMENT_ATTACH_PARENT, DOCUMENT_REMOVE_PARENT, DOCUMENT_ATTACH_UPLOADFILE, 
     DOCUMENT_REMOVE_UPLOADFILE, DOCUMENT_ADD_CANWRITE, DOCUMENT_REMOVE_CANWRITE, 
-    DOCUMENT_ADD_CANREAD, DOCUMENT_REMOVE_CANREAD, ATTACH_CHILD, REMOVE_CHILD, GET_PARENT, RETRIEVE_MORE_DOCUMENTS,
+    DOCUMENT_ADD_CANREAD, DOCUMENT_REMOVE_CANREAD, GET_PARENT, RETRIEVE_MORE_DOCUMENTS,
     MOVE_DOCUMENT, ATTACH_TAG, REMOVE_TAG
 } from '../actions/types/Document_Types'
 
@@ -30,10 +30,6 @@ export default (state = {}, action) => {
             console.log("PREVIOUS", state)
             console.log("RESULT", action.payload)
             return { ...state, ..._.mapKeys(action.payload, '_id') };
-        case ATTACH_CHILD:
-            return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_CHILD:
-            return { ...state, [action.payload._id]: action.payload };
         case ATTACH_TAG:
             return { ...state, [action.payload._id]: action.payload };
         case REMOVE_TAG:

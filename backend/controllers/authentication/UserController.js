@@ -4,113 +4,80 @@ const User = require('../../models/authentication/User');
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
-createUser = (req, res) => {
-    const { username, email, debugId} = req.body;
-    if (!typeof username == 'undefined' && name !== null) return res.json({success: false, error: 'no user username provided'});
-    if (!typeof email == 'undefined' && email !== null) return res.json({success: false, error: 'no user email provided'});
-
-    let user = new User(
-        {
-            username: username,
-            email: email,
-        },
-    );
-
-    // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_Id && process.env.DEBUG_CUSTOM_Id != 0) {
-        if (debugId) user._id = ObjectId(debugId);
-    }
-
-    user.save((err, user) => {
-        if (err) return res.json({ success: false, error: err });
-        user.populate('workspaces', (err, user) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(user);
-        });
-    });
-}
-
 
 getUser = (req, res) => {
-    const { id } = req.params;
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
+    const userId = req.userObj._id.toString();
 
-    User.findById(id, (err, user) => {
+    User.findById(userId, (err, user) => {
 		if (err) return res.json({success: false, error: err});
 		user.populate('workspaces', (err, user) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(user);
+            return res.json({success: true, result: user});
         });
     });
 }
 
 editUser = (req, res) => {
-    const { id } = req.params;
+    const userId = req.userObj._id.toString();
     const { username, email} = req.body;
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
 
     let update = {}
     if (username) update.username = username; 
     if (email) update.email = email;
 
-    User.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, user) => {
+    User.findByIdAndUpdate(userId, { $set: update }, { new: true }, (err, user) => {
         if (err) return res.json({ success: false, error: err });
         user.populate('workspaces', (err, user) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(user);
+            return res.json({success: true, result: user});
         });
     });
 }
 
 attachWorkspace = (req, res) => {
-    const { workspaceId } = req.body;
-    const { id } = req.params;
 
-    if (!typeof workspaceId == 'undefined' && workspaceId !== null) return res.json({success: false, error: 'no workspaceId to delete provided'});
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
+    const userId = req.userObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+
     let update = {}
     update.workspaces = ObjectId(workspaceId);
-    User.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, user) => {
+    User.findByIdAndUpdate(userId, { $push: update }, { new: true }, (err, user) => {
         if (err) return res.json({ success: false, error: err });
         user.populate('workspaces', (err, user) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(user);
+            return res.json({success: true, result: user});
         });
     });
 }
 
 
 removeWorkspace = (req, res) => {
-    const { workspaceId } = req.body;
-    const { id } = req.params;
 
-    if (!typeof workspaceId == 'undefined' && workspaceId !== null) return res.json({success: false, error: 'no workspaceId to delete provided'});
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
+    const userId = req.userObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
 
     let update = {}
     update.workspaces = ObjectId(workspaceId);
 
-    User.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, user) => {
+    User.findByIdAndUpdate(userId, { $pull: update }, { new: true }, (err, user) => {
         if (err) return res.json({ success: false, error: err });
         user.populate('workspaces', (err, user) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(user);
+            return res.json({success: true, result: user});
         });
     });
 }
 
 deleteUser = (req, res) => {
-    const { id } = req.params;
-    
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no user id provided'});
+    const userId = req.userObj._id.toString();
 
-    User.findByIdAndRemove(id, (err, user) => {
+    User.findByIdAndRemove(userId, (err, user) => {
         if (err) return res.json({ success: false, error: err });
         user.populate('workspaces', (err, user) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(user);
+            return res.json({success: true, result: user});
         });
     });
 }
 
-module.exports = { createUser, getUser, editUser, attachWorkspace, removeWorkspace, deleteUser}
+module.exports = {getUser, editUser, attachWorkspace, removeWorkspace, deleteUser}

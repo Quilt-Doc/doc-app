@@ -12,12 +12,18 @@ import Bucket from './General/Top Navbar/Bucket'
 import NavbarProfile from './Top Navbar/NavbarProfile';
 import UserSettingsView from './Settings Pages/UserSettingsView';
 import WorkspaceView from './Workspace Page/WorkspaceView';
+import CreateButton from './Top Navbar/CreateButton';
+import ConnectButton from './Top Navbar/ConnectButton';
+import TopNavbar from './Space Page/TopNavbar';
 
 //styles
 import styled from "styled-components";
-
+import {RiPencilLine} from 'react-icons/ri'
+import {RiNotification3Line} from 'react-icons/ri';
+import {IoMdNotificationsOutline} from 'react-icons/io'
 //images
-import preetaicon from '../images/preeta.png'
+import logo from '../images/logo.svg'
+
 
 
 /* <NavbarProfile
@@ -28,11 +34,87 @@ const Dashboard = () => {
     let [search, setSearch] = useState(false)
     const inputRef = useRef(null)
 
-    return (
+    return ( 
         <Container>
+            {/*
             <TopNav>
-                <ion-icon style={{'color': '#5B75E6', 'fontSize': '2.4rem', 'marginLeft': '5rem', 'marginRight': '1.2rem'}} name="book-outline"></ion-icon>
-                <Company>Docapp</Company>
+                <StyledIcon src = {logo} />
+                <Company>quilt</Company>
+                <CreateButton/>
+                <ConnectButton/>
+                <div>
+                    <SearchbarWrapper hoverColor = {search ? '#313b5e' : '#39466f'} onClick = {() => setSearch(true)}>
+                        <ion-icon 
+                            style={{'color': 'white', 'cursor': 'pointer', 'fontSize': '2rem'}} 
+                            name="search-outline">
+                        </ion-icon>
+                        <Searchbar ref = {inputRef} onBlur = {(e) => {e.target.blur(); setSearch(false)}} barWidth = {search ? '40rem' : '15rem'} />
+                    </SearchbarWrapper>
+                    
+                    {search && <SearchBubble>
+                                    <SearchHeader>
+                                        
+                                        Recently Searched
+                                    </SearchHeader>
+                                    {["Torch Utils", "Untitled", "Starting the server", "Document Hierarchy", "Requests"].map((query) => {
+                                        return (
+                                                <SearchResult>
+                                                    <ion-icon name="document-text-outline" style={{'fontSize': '1.7rem', 'color': "#213A81", marginRight: "0.8rem"}}></ion-icon>
+                                                    {query}
+                                                </SearchResult>
+                                            )
+                                        })  
+                                
+                                    }
+                                </SearchBubble>
+                    }
+                     
+                </div>
+                <Options>
+                    <Option>
+                        <IoMdNotificationsOutline/>
+                    </Option>
+                    <NavbarProfile/>
+                </Options>
+                
+               
+                </TopNav>*/}
+            <TopNavbar/>
+            <Router history = {history}>
+                  <Route exact path = "/workspaces" component = {WorkspaceView} />
+                  <Route path = "/workspaces/:workspaceId" component = {SpaceView} />
+                  <Route path = "/settings" component = {UserSettingsView} />
+            </Router>
+            {/*<UserSettingsView/>*/}
+            {/*<SpaceView/>*/}
+        </Container>
+    )
+}
+
+/*
+<Options>
+                    <Option>
+                        <ion-icon name="add-outline">
+                        </ion-icon>
+                    </Option>
+                    <Option>
+                        <ion-icon name="layers-outline">
+                        </ion-icon>
+                    </Option>
+                   
+                    <Option>
+                        <ion-icon name="notifications-outline">
+                        </ion-icon>
+                    </Option>
+                                  
+                    <NavbarProfile
+                        goLogout = {goLogout}
+                    />
+                </Options>
+                
+ <TopNav>
+                <StyledIcon src = {logo} />
+                <Company>quilt</Company>
                 
                 <NavbarElement onClick = {() => {history.push("/workspaces")}} >
                     <ion-icon style={{'color': 'white', 
@@ -91,17 +173,7 @@ const Dashboard = () => {
                 </Options>
                 
                
-            </TopNav>
-            <Router history = {history}>
-                  <Route exact path = "/workspaces" component = {WorkspaceView} />
-                  <Route path = "/workspaces/:workspaceId" component = {SpaceView} />
-                  <Route path = "/settings" component = {UserSettingsView} />
-            </Router>
-            {/*<UserSettingsView/>*/}
-            {/*<SpaceView/>*/}
-        </Container>
-    )
-}
+            </TopNav>*/
 
 /*
  <ion-icon  style={{'color': '#172A4E', 'fontSize': '2.4rem', 'marginRight': '2rem'}} name="bookmarks-outline"></ion-icon>
@@ -190,50 +262,58 @@ const Options = styled.div`
     margin-left: auto;
     display: flex;
     align-items: center;
-    margin-right: 15rem;
+    margin-right: 10rem;
 `
 
 const Option = styled.div`
     font-size: 2rem;
-    margin-right: 1rem;
+    margin-right: 1.5rem;
     height: 3.3rem;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 3.3rem;
-    border-radius: 0.25rem;
-    background-color: #313b5e;
+    border-radius: 0.4rem;
+    background-color:  #323B5D;;
     cursor: pointer;
+    color: white;
     &:hover {
         background-color:#39466f
     }
+    padding: 0.5;
+    background-color: #414758; 
+    border: 1px solid #414758;
 `
 
 
 const Company = styled.div`
-    font-size: 2.2rem;
+    font-size: 2.3rem;
     color:white;
-    font-weight: 300;
-    margin-right: 13rem;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    margin-right: 15rem;
+    margin-top: -0.25rem;
 `
 
 const NavbarElement = styled.div`
-    font-size: 1.3rem;
+    font-size: 1.8rem;
     /*color: #172A4E;*/
-    background-color: #313b5e;
-    height: 3.3rem;
+    background-color: #414758;
+   
+    height: 3.2rem;
     padding: 0 1rem;
-    border-radius: 0.25rem;
-    font-weight: 400;
-    letter-spacing: 0.5px;
-    margin-right: 1rem;
+    margin-right: 1.5rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
     &:hover {
-        background-color:#39466f
+        /*background-color:#39466f*/
     }
-    text-decoration: none;
+    color: white;
+    border: 1px solid #70EAE1;
+    border-radius: 0.3rem;
+    cursor: pointer;
 `
 
 const SearchbarWrapper = styled.div`
@@ -245,11 +325,9 @@ const SearchbarWrapper = styled.div`
     
     height: 3.3rem;
     padding: 0.5rem 1.5rem;
-    background-color:#313b5e; /*#39466f*/
+    background-color: #414758; /*#39466f*/
+    border: 1px solid #414758;
     
-    &:hover {
-        background-color:${props => props.hoverColor};
-    }
    
     width: ${props => props.width};
 `
@@ -275,19 +353,19 @@ const Searchbar = styled.input`
     font-weight: 350;
     height: 3rem;
     width: ${props => props.barWidth};
-    transition: width 0.2s ease-out;
+    transition: width 0.15s ease-out;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
 //#262848;
-
+//#323B5D;
 const TopNav = styled.div`
     min-height: 5.5rem;
     max-height: 5.5rem;
-    box-shadow: 0 2px 2px rgba(0,0,0,0.1);
-    background-color:#262E49;
+    
+    background-color:#343946;
     color:#D6E0EE;
     display: flex;
-    z-index: 20;
+    z-index: 5;
     align-items: center;
 `
 
@@ -354,12 +432,12 @@ const Searchbar = styled.input`
     }
     color: #172A4E;
     outline: none;
-    
 `*/
 
 const StyledIcon = styled.img`
-    width: 3.5rem;
-    margin-left: 3.5rem;
+    width: 2.6rem;
+    margin-left: 4.5rem;
+    margin-right: 1rem;
 `
 
 const StyledIcon2 = styled.img`

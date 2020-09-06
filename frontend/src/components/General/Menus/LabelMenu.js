@@ -18,7 +18,11 @@ import styled from "styled-components";
 
 //actions
 import { retrieveTags, createTag } from '../../../actions/Tag_Actions';
-import { object } from 'prop-types';
+
+//icons
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTag, faPlus } from '@fortawesome/free-solid-svg-icons'
+import {BiPurchaseTag} from 'react-icons/bi';
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
@@ -47,12 +51,7 @@ class LabelMenu extends React.Component {
     /**
      * Alert if clicked on outside of element
      */
-    handleClickOutside = (event) => {
-        if (this.node && !this.node.contains(event.target)) {
-            this.closeMenu()
-        }
-    }
-
+  
 
     searchTags = (event) => {
 
@@ -105,7 +104,9 @@ class LabelMenu extends React.Component {
     }
 
     renderMarginTop() {
-        if (this.props.marginTop){
+        if (this.props.dirview){
+          return "1rem";
+        } else if (this.props.marginTop){
             return this.props.marginTop
         } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
             return "-30rem"
@@ -114,12 +115,21 @@ class LabelMenu extends React.Component {
         }
     }
 
-    handleSelect(labelBool, tagId){
-        if (labelBool) {
-            this.props.removeTag(tagId)
+    handleSelect(labelBool, tagId, tag){
+        if (!this.props.form){
+            if (labelBool) {
+                this.props.removeTag(tagId)
+            } else {
+                this.props.attachTag(tagId)
+            }
         } else {
-            this.props.attachTag(tagId)
+            if (labelBool) {
+                this.props.removeTag(tag)
+            } else {
+                this.props.attachTag(tag)
+            }
         }
+       
     }
 
     async setPosition(e) {
@@ -131,7 +141,7 @@ class LabelMenu extends React.Component {
             } else {
                 let tag = this.props.tags[this.state.position]
                 this.setState({loaded: false, create: ""})
-                await this.handleSelect(this.props.setTags.map(tag => tag.label).includes(tag.label), tag._id)
+                await this.handleSelect(this.props.setTags.map(tag => tag.label).includes(tag.label), tag._id, tag)
                 let ids = this.props.setTags.map(tag => tag._id)
                 this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
                     this.setState({loaded: true, search: ''})
@@ -169,6 +179,25 @@ class LabelMenu extends React.Component {
         }
     }
 
+    renderTop = () => {
+        if (this.addButton){
+            let {top, height} = this.addButton.getBoundingClientRect();
+            console.log(top + height - 100);
+            return top + height + 10;
+        }
+        return 0;
+    }
+
+    renderLeft = () => {
+        if (!this.props.dirview && this.addButton){
+            let {left} = this.addButton.getBoundingClientRect();
+            return left;
+        } else if (this.props.dirview ) {
+            return;
+        }
+        return 0;
+    }
+
     renderListItems(objectLabels){
         return this.props.tags.map((tag, i) => {
             let labelBool = objectLabels.includes(tag.label)
@@ -178,10 +207,9 @@ class LabelMenu extends React.Component {
                 this.colors[tag.color - Math.floor(tag.color/this.colors.length) * this.colors.length];
             let border = this.state.position === i ? `1px solid ${color}` : '';
             let shadow = this.state.position === i ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :'';
-            console.log("COLORES", color)
             return(
                 <ListItem 
-                    onClick = {() => {this.handleSelect(labelBool, tag._id)}} 
+                    onClick = {(e) => {e.preventDefault();this.handleSelect(labelBool, tag._id, tag)}} 
                     onMouseEnter = {() => {this.setState({position: i})}}
                     border = {border}
                     shadow = {shadow}
@@ -197,11 +225,16 @@ class LabelMenu extends React.Component {
         })
     }
 
-    openMenu(){
+    openMenu(e){
+        e.preventDefault()
         document.addEventListener('mousedown', this.handleClickOutside, false);
+        this.setState({open: true, 
+                       left: this.renderLeft(), 
+                       top: this.renderTop()
+                        })
         let ids = this.props.setTags.map(tag => tag._id)
         this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
-            this.setState({loaded: true, open:true})
+            this.setState({loaded: true})
         })
     }
 
@@ -217,31 +250,54 @@ class LabelMenu extends React.Component {
             position: -1})
     }
 
+    handleClickOutside = (event) => {
+        if (this.node && !this.node.contains(event.target)) {
+            this.closeMenu()
+        }
+    }
+
+
     render() {
         this.colors = ['#5352ed', 
         '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
         ]
-        console.log("TAGS", this.props.setTags)
+
         let objectLabels = this.props.setTags.map(tag => tag.label)
         return(
             <MenuContainer  >
-                {!this.props.modalButton ?
-                    <AddButton ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
-                        <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
+                {this.props.form ?
+                    <AddButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
+                        <BiPurchaseTag style = {{fontSize: "1.4rem", marginRight: "0.5rem"}}/>
+                        <Title>Add labels</Title>
                     </AddButton> :
-                    <ModalToolbarButton onClick = {() => this.openMenu()}>
-                        <ion-icon name="pricetag-outline" style={{ 'fontSize': '1.8rem', 'marginRight': '0.7rem'}}></ion-icon> 
-                        {this.props.setTags.length} Labels
-                    </ModalToolbarButton>
+                    this.props.dirview ?
+                    <PageIcon active = {this.state.open} onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
+                        <BiPurchaseTag style = {{marginRight: "0.5rem"}}/>
+                        <Title3>Add labels</Title3>
+                    </PageIcon> :
+
+                    <AddBigButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
+                        <FontAwesomeIcon 
+                            icon={faTag}
+                            style = {{marginRight: "0.5rem"}}
+                        />
+                        Add Labels
+                    </AddBigButton>
                 }
-                {this.state.open && 
-                    <CSSTransition
-                        in={true}
-                        appear = {true}
-                        timeout={100}
-                        classNames="menu"
+                <CSSTransition
+                    in = {this.state.open}
+                    unmountOnExit
+                    enter = {true}
+                    exit = {true}       
+                    timeout = {150}
+                    classNames = "dropmenu"
+                >
+                    <Container 
+                        ref = {node => this.node = node}
+                        left = {this.state.left}
+                        top = {this.state.top}
+                        dirview = { this.props.dirview }
                     >
-                    <Container marginLeft = {this.props.marginLeft} marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
                         <HeaderContainer>Add labels</HeaderContainer>
                         <SearchbarContainer>
                             <Searchbar 
@@ -266,8 +322,7 @@ class LabelMenu extends React.Component {
                             }
                         </ListContainer>
                     </Container>
-                    </CSSTransition>
-                }
+                </CSSTransition>
             </MenuContainer>
         )
     }
@@ -293,6 +348,54 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, { retrieveTags, createTag })(LabelMenu));
 
 
+
+const PageIcon = styled.div`
+    
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+   
+   /*color: white;*/
+    /*background-color: #4c5367;*/
+   /* opacity: 0.8;*/
+   padding: 0.5rem 1rem;
+    &:hover {
+        background-color: #F4F4F6;
+        
+    }
+    background-color: ${props => props.active ? "#F4F4F6" : ""};
+    cursor: pointer;
+    border-radius: 0.3rem;
+`
+
+const Title3 = styled.div`
+    font-size: 1.3rem;
+    margin-right: 0.3rem;
+`
+
+const Title = styled.div`
+    font-weight: 500;
+`
+
+const AddBigButton = styled.div`
+    background-color:white;
+    display: flex;
+    align-items: center;
+    display: inline-flex;
+    font-weight: 500;
+    font-size: 1.35rem;
+    border-radius: 4px;
+    padding: 0.35rem 0.8rem;
+    cursor: pointer;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    &:hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+        opacity: 1;
+    }
+    opacity: 1;
+    margin-bottom: 1rem;
+`
+
 const ModalToolbarButton = styled.div`
     display: flex;
     cursor: pointer;
@@ -316,20 +419,20 @@ const MenuContainer = styled.div`
 `
 
 const AddButton = styled.div`
-    width: 2.3rem;
-    height: 2.3rem;
-    background-color: #F7F9FB;
-    border: 1px solid #E0E4E7;
-    opacity: 0.4;
+    background-color: #363b49;
+    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
     border-radius: 0.2rem;
+    font-size: 1.3rem;
+    padding: 0.4rem 1rem;
+    margin-right: 1rem;
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    margin-bottom: 1rem;
     &:hover {
-        opacity: 1
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    color: #172A4E;
+    cursor: pointer;
+    
 `
 
 const Container = styled.div`
@@ -337,15 +440,16 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
-    border-radius: 0.3rem;
+    border-radius: 0.2rem;
     font-size: 1.4rem;
-    margin-top: -5rem;
-    z-index: 2;
+    z-index: 3;
     background-color: white;
-    margin-top: ${props => props.marginTop};
-    margin-left: ${props => props.marginLeft};
+    top: ${props => props.top}px;
+    left: ${props => props.left}px;
+    margin-left: ${props => props.dirview ? "-17rem": ""};
+    margin-top: ${props => props.dirview ? "-6rem": ""};
 `
 
 const SearchbarContainer = styled.div`
@@ -363,6 +467,7 @@ const HeaderContainer = styled.div`
     font-size: 1.3rem;
     padding: 1rem;
     color: #172A4E;
+    font-weight: 500;
     border-bottom: 1px solid #E0E4E7;
 `
 
@@ -391,7 +496,7 @@ const ListItem = styled.div`
     padding: 1rem;
     display: flex;
     align-items: center;
-    
+   
     background-color: rgba(51, 152, 219, 0.1);
 
    

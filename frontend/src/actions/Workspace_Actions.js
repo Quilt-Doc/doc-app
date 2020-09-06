@@ -10,41 +10,125 @@ import {
 
 import { api } from '../apis/api';
 
-export const searchWorkspace = (formValues) => async () => {
-    const response = await api.post('/workspaces/search', formValues );
-    return response.data
-}
+/*
+router.post('/workspaces/create', authorizationMiddleware.workspaceMiddleware, workspace_controller.createWorkspace);
+
+router.post('/workspaces/search/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.searchWorkspace);
+router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.getWorkspace);
+router.delete('/workspaces/delete/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.deleteWorkspace);
+router.put('/workspaces/add_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.addUser);
+router.put('/workspaces/remove_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.removeUser);
+
+router.post('/workspaces/retrieve', authorizationMiddleware.workspaceMiddleware, workspace_controller.retrieveWorkspaces);
+
+*/
 
 export const createWorkspace = (formValues) => async (dispatch) => {
     const response = await api.post('/workspaces/create', formValues);
-    dispatch({ type: CREATE_WORKSPACE, payload: response.data });
-}
-
-// /workspaces/get/:id'
-export const getWorkspace = id => async dispatch => {
-    const response = await api.get(`/workspaces/get/${id}`);
-    dispatch({ type: GET_WORKSPACE, payload: response.data });
-}
-
-// /workspaces/delete/:id
-export const deleteWorkspace = (id) => async dispatch => {
-    const response = await api.delete(`/workspaces/delete/${id}`);
-    dispatch({ type: DELETE_WORKSPACE, payload: response.data });
+    
+    if (response.data.success == false) {
+        throw new Error("createWorkspace Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: CREATE_WORKSPACE, payload: response.data.result });
+    }
 }
 
 export const retrieveWorkspaces = (formValues) => async dispatch => {
     const response = await api.post(`/workspaces/retrieve`, formValues);
-    dispatch({ type: RETRIEVE_WORKSPACES, payload: response.data });
+    
+    if (response.data.success == false) {
+        throw new Error("retrieveWorkspaces Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: RETRIEVE_WORKSPACES, payload: response.data.result });
+    }
+}
+
+export const searchWorkspace = (formValues) => async () => {
+    
+    var workspaceId = formValues.workspaceId;
+    if (!workspaceId) {
+        throw new Error("searchWorkspace: workspaceId not provided");
+    }
+
+    const response = await api.post(`/workspaces/search/${workspaceId}`, formValues );
+
+    if (response.data.success == false) {
+        throw new Error("searchWorkspace Error: ", response.data.error.toString());
+    }
+    else {
+        return response.data.result
+    }
+}
+
+export const getWorkspace = workspaceId => async dispatch => {
+    
+    if (!workspaceId) {
+        throw new Error("getWorkspace: workspaceId not provided");
+    }
+    const response = await api.get(`/workspaces/get/${workspaceId}`);
+    
+    if (response.data.success == false) {
+        throw new Error("getWorkspace Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: GET_WORKSPACE, payload: response.data.result });
+    }
+}
+
+// /workspaces/delete/:id
+export const deleteWorkspace = (workspaceId) => async dispatch => {
+    
+    if (!workspaceId) {
+        throw new Error("deleteWorkspace: workspaceId not provided");
+    }
+    const response = await api.delete(`/workspaces/delete/${workspaceId}`);
+
+    if (response.data.success == false) {
+        throw new Error("deleteWorkspace Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: DELETE_WORKSPACE, payload: response.data.result });
+    }
 }
 
 // /workspaces/add_user/:id
-export const workspaceAddUser = (id, userId) => async (dispatch) => {
-    const response = await api.put(`/workspaces/add_user/${id}`, { userId });
-    dispatch({ type: WORKSPACE_ADD_USER, payload: response.data });
+export const workspaceAddUser = (workspaceId, userId) => async (dispatch) => {
+    
+    if (!workspaceId) {
+        throw new Error("workspaceAddUser: workspaceId not provided");
+    }
+    if (!userId) {
+        throw new Error("workspaceAddUser: userId not provided");
+    }
+
+    const response = await api.put(`/workspaces/add_user/${workspaceId}`, { userId });
+
+    if (response.data.success == false) {
+        throw new Error("workspaceAddUser Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: WORKSPACE_ADD_USER, payload: response.data.result });
+    }
 }
 
 // /workspaces/remove_user/:id
-export const workspaceRemoveUser = (id, userId) => async (dispatch) => {
-    const response = await api.put(`/workspaces/remove_user/${id}`, { userId });
-    dispatch({ type: WORKSPACE_REMOVE_USER, payload: response.data });
+export const workspaceRemoveUser = (workspaceId, userId) => async (dispatch) => {
+
+    if (!workspaceId) {
+        throw new Error("workspaceRemoveUser: workspaceId not provided");
+    }
+    if (!userId) {
+        throw new Error("workspaceRemoveUser: userId not provided");
+    }
+
+    const response = await api.put(`/workspaces/remove_user/${workspaceId}`, { userId });
+
+    if (response.data.success == false) {
+        throw new Error("workspaceRemoveUser Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: WORKSPACE_REMOVE_USER, payload: response.data.result });
+    }
 }

@@ -17,7 +17,7 @@ import { connect } from 'react-redux';
 import DraggableDocument from './DraggableDocument';
 
 //actions
-import { createDocument, moveDocument, retrieveChildren, retrieveDocuments, attachChild, removeChild } from '../../../actions/Document_Actions';
+import { createDocument, moveDocument, retrieveChildren, retrieveDocuments} from '../../../actions/Document_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
 
@@ -28,7 +28,8 @@ import doc2Icon from '../../../images/doc2.svg'
 import doc3Icon from '../../../images/doc3.svg'
 import doc4Icon from '../../../images/doc4.svg'
 
-
+import { AiOutlineCaretRight} from 'react-icons/ai';
+import { FiChevronRight, FiChevronDown } from 'react-icons/fi';
 
 class Document extends Component {
     constructor(props){
@@ -49,7 +50,7 @@ class Document extends Component {
             this.props.setCreation(true)
             history.push(`?document=${child._id}`)
             this.props.clearSelected()
-            this.props.retrieveDocuments({childrenIds: this.props.document.children}).then(() => {
+            this.props.retrieveDocuments({workspaceId, childrenIds: this.props.document.children}).then(() => {
                 this.setState({open: true})
             })
         })
@@ -62,7 +63,8 @@ class Document extends Component {
 
     
     retrieveChildren = () => {
-        this.props.retrieveDocuments({childrenIds: this.props.document.children})
+        let {workspaceId} = this.props.match.params
+        this.props.retrieveDocuments({workspaceId, childrenIds: this.props.document.children})
     }
 
     renderChildren = () => {
@@ -88,14 +90,16 @@ class Document extends Component {
         if (!title) {
             title = "Untitled"
         }
-        return <Title>{title}</Title>
+        return <Title width = {this.props.width - 7} >{title}</Title>
     }
+    
 
     open = (e) => {
         e.stopPropagation();
         e.preventDefault();
+        let {workspaceId} = this.props.match.params;
         if (this.props.children.length !== this.props.document.children.length) {
-            this.props.retrieveDocuments({childrenIds: this.props.document.children}).then(() => {
+            this.props.retrieveDocuments({workspaceId, childrenIds: this.props.document.children}).then(() => {
                 this.setState({open: true})
             })
         } else {
@@ -110,28 +114,22 @@ class Document extends Component {
             if (this.state.open === false){
                 return (
                     <IconBorder2 onClick = {(e) => this.open(e)}>
-                        <ion-icon 
-                            name="caret-forward"
-                            style={{'fontSize': '1.3rem'}}
-                        ></ion-icon>
+                        <FiChevronRight/>
                     </IconBorder2>
                 )
             } else {
                 return (
                     <IconBorder2 onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState({open: false})}}>
-                        <ion-icon 
-                            name="caret-down"
-                            style={{'fontSize': '1.3rem'}}
-                        ></ion-icon>
+                         <FiChevronDown/>
                     </IconBorder2>
                 )
             }
           
         } else {
             return (
-                <IconBorder3>
+                <IconBorder2 notActive = {true}>
                    
-                </IconBorder3>
+                </IconBorder2>
             )
         }
     }
@@ -158,6 +156,7 @@ class Document extends Component {
                             children = {this.props.children}
                             open = {this.state.open}
                             renderChildren = {this.renderChildren}
+                            width = {this.props.width}
                         />
                 }
             </>
@@ -178,7 +177,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
             
-const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, moveDocument, retrieveDocuments, attachChild, removeChild, setCreation, clearSelected })(Document));
+const ConnectedDocument = withRouter(connect(mapStateToProps, { createDocument, moveDocument, retrieveDocuments, setCreation, clearSelected })(Document));
 
 export default  ConnectedDocument;
 
@@ -226,27 +225,17 @@ const IconBorder2 = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 1.7rem;
-    height: 1.7rem;
-    margin-left: -0.8rem;
+    min-width: 1.7rem;
+    min-height: 1.7rem;
+    margin-left: -0.3rem;
     margin-right: 0.5rem;
+    font-size: 1.3rem;
+    opacity: 0.9;
     border-radius: 0.3rem;
     transition: all 0.05s ease-out;
     &:hover {
-        background-color: white;
-        
+        background-color: ${props => props.notActive ? "" : "#2B2F3A"};
     }
-`
-
-const IconBorder3 = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 1.7rem;
-    height: 1.7rem;
-    margin-left: -0.8rem;
-    margin-right: 0.5rem;
-    border-radius: 0.3rem;
 `
 
 const CurrentReference = styled.div`

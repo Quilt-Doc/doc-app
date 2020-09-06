@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-
+import chroma from 'chroma-js';
 
 class NavbarProfile extends React.Component {
     constructor(props){
@@ -18,7 +18,7 @@ class NavbarProfile extends React.Component {
         return  <Container>
                     <ProfileButton onClick = {() => 
                         {this.setState(prevState => ({menuOpen: !prevState.menuOpen}))}}>
-                        FS
+                        F
                     </ProfileButton>
                     <ProfileMenu 
                         opacity = {this.state.menuOpen ? '' : '0'}
@@ -56,6 +56,21 @@ class NavbarProfile extends React.Component {
 export default NavbarProfile;
 
 const ProfileButton = styled.div`
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    display: flex;
+    background-color: ${chroma('#00579B')};
+    border-radius: 50%;
+    min-width: 3.3rem;
+    min-height: 3.3rem;
+    color: white;
+    margin-right: 2rem;
+    padding-bottom: 0.05rem;
+    cursor: pointer;
+`
+/*
+const ProfileButton = styled.div`
     width: 3.3rem;
     height: 3.3rem;
     justify-content: center;
@@ -67,7 +82,7 @@ const ProfileButton = styled.div`
     background-color:#5B75E6;
     cursor: pointer;
     
-`
+`*/
 
 const Container = styled.div`
     position: relative;

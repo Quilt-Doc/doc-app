@@ -1,4 +1,8 @@
 const Document = require('../models/Document');
+
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -9,16 +13,48 @@ checkValid = (item) => {
     return false
 }
 
-// TODO: add order validation
+removeDuplicates = (modifiedDocs) => {
+    var seenIds = {};
+    var finalResults = [];
+    var x = 0;
+    var currentDoc = undefined;
+    for (x = 0; x < modifiedDocs.length; x++) {
+        currentDoc = modifiedDocs[x];
+        if (!seenIds[currentDoc._id.toString()]) {
+            seenIds[currentDoc._id.toString()] = true;
+            finalResults.push(currentDoc);
+        }
+    }
+    return finalResults;
+}
+
+// Assumption: referenceIds only consists of valid references
 createDocument = async (req, res) => {
-    const { authorId, referenceIds, childrenIds, repositoryId, workspaceId,
-        title, root, markup, tagIds, parentId/*, order*/ } = req.body;
+    const { authorId, referenceIds, childrenIds, repositoryId,
+        title, root, markup, tagIds, parentId} = req.body;
+    
+    const workspaceId = req.workspaceObj._id.toString();
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    //if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
-    if (!checkValid(workspaceId)) return res.json({success: false, error: "createDocument error: no workspaceId provided.", result: null});
+    // if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
     if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
-    // if (!checkValid(order)) return res.json({success: false, error: "createDocument error: no order provided.", result: null});
+
+    var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+
+    
+    // Check that repositoryId is in accessible workspace
+    if (repositoryId) {
+        if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
+            return res.json({success: false, error: "createDocument Error: request on repository user does not have access to."});
+        }
+    }
+    
+    // Check that authorId matches the userId in the JWT (only the user can create a document for themselves)
+    if (authorId != req.tokenPayload.userId) {
+        return res.json({success: false, error: "createDocument Error: userId in JWT doesn't match authorId."});
+    }
+
+
     var order = 0;
 
     var parentPath = '';
@@ -47,11 +83,11 @@ createDocument = async (req, res) => {
     var emptyTitle = false;
 
     // If we are creating an 'untitled_[0-9]+' document 
-    if (title === "") {
+    if (title == '') {
         emptyTitle = true;
         workingTitle = 'untitled_';
         var re = new RegExp('^' + parentPath + 'untitled_[0-9]+$', 'i');
-        var untitledDocuments = await Document.find({path: {$regex: re}});
+        var untitledDocuments = await Document.find({path: {$regex: re}, workspace: ObjectId(workspaceId)});
         console.log('other untitledDocuments: ');
         console.log(untitledDocuments);
 
@@ -79,7 +115,7 @@ createDocument = async (req, res) => {
     // Were given a title, so have to check it's uniqueness
     else {
         workingTitle = title;
-       var duplicateDocument = await Document.findOne({path: parentPath + workingTitle});
+       var duplicateDocument = await Document.findOne({path: parentPath + workingTitle, workspace: ObjectId(workspaceId)});
        if (duplicateDocument) {
            return res.json({success: false, 
             error: 'createDocument: error creating Document, duplicate name - '
@@ -97,12 +133,12 @@ createDocument = async (req, res) => {
         },
     );
 
-    if (repositoryId) {
-        document.repository = ObjectId(repositoryId)
-    }
-    
     if (parentId) {
         document.parent = ObjectId(parentId);
+    }
+
+    if (repositoryId) {
+        document.repository = ObjectId(repositoryId);
     }
 
     if (!parentId) document.parent = null;
@@ -110,6 +146,10 @@ createDocument = async (req, res) => {
 
     if (checkValid(referenceIds)) {
         document.references = referenceIds.map(referenceId => ObjectId(referenceId))
+    }
+
+    if (checkValid(tagIds)) {
+        document.tags = tagIds.map(tagId => ObjectId(tagId))
     }
 
     if (checkValid(childrenIds)){
@@ -121,131 +161,203 @@ createDocument = async (req, res) => {
         document.root = root
     }
 
+    document.status = 'valid';
+
 
     document.save(async (err, document) => {
         if (err) return res.json({ success: false, error: err, result: null });
         var pushParent = false;
-        
+
         // Increment `order` of parent's children
         if (parent) {
             await Document.updateMany({_id: {$in: parent.children.map(childObj => ObjectId(childObj._id.toString()))},
                     order: {$gte: order}},
                     {$inc: {order: 1}});
+            var incrementDocs = await Document.find(
+                {
+                    _id: {$in: parent.children.map(childObj => ObjectId(childObj._id.toString()))},
+                    order: {$gte: (order+1)}
+                }
+            );
+            modifiedDocs = modifiedDocs.concat(incrementDocs);
         }
         else {
-            await Document.updateMany({ parent: null, _id: {$ne: document._id}, order: {$gte: order} },
+            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(document._id.toString())}, workspace: ObjectId(workspaceId), order: {$gte: order} },
                 {$inc: {order: 1}});
+            var incrementDocs = await Document.find(
+                {
+                    parent: null,
+                    _id: {$ne: ObjectId(document._id.toString())},
+                    workspace: ObjectId(workspaceId),
+                    order: {$gte: (order+1)}
+                }
+            );
+            modifiedDocs = modifiedDocs.concat(incrementDocs);
         }
 
 
         if (parentId) {
-            parent.children.push(ObjectId(document._id));
-            await parent.save();
+            // parent.children.push(ObjectId(document._id));
+            parent = await Document.findOneAndUpdate({_id: ObjectId(parent._id.toString())}, 
+              { $push: {children: ObjectId(document._id) }},
+              { new: true});
+
+            // await parent.save();
             pushParent = true;
+            // modifiedDocs.push(parent);
         }
 
 
-        document.populate('parent').populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
+        document.populate('author').populate('repository').populate('workspace').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err, result: [document] });
             modifiedDocs.push(document);
             if (pushParent) {
              modifiedDocs.push(parent);
             }
-            return res.json({success: true, result: modifiedDocs});
+
+            modifiedDocs.reverse();
+            var finalResults = removeDuplicates(modifiedDocs);
+
+            return res.json({success: true, result: finalResults});
         });
     });
 }
 
 getDocument = (req, res) => {
-    Document.findById(req.params.id).populate('parent').populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    Document.findOne({_id: documentId, workspace: workspaceId}).populate('parent').populate('repository').populate('workspace').populate('references').populate('tags').exec(function (err, document) {
         if (err) return res.json({ success: false, error: err });
-        return res.json(document);
+        return res.json({success: true, result: document});
     });
 }
 
 getParent = (req, res) => {
     let query = Document.findOne({})
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
     
-    query.where('children').equals(req.params.id)
+    query.where('children').equals(documentId);
+    query.where('workspace').equals(workspaceId);
     query.populate('parent').populate('author').populate('workspace')
     .populate('repository').populate('references')
     .populate('tags').exec((err, document) => {
-        if (err) return res.json(err);
-        return res.json(document)
+        if (err) return res.json({success: false, error: err});
+        return res.json({success: true, result: document})
     })
 }
 
 
 
 editDocument = (req, res) => {
-    const { id } = req.params;
     const { title, markup, repositoryId } = req.body;
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+
+    var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
+    
+    // Check that repositoryId is in accessible workspace
+    if (repositoryId) {
+        if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
+            return res.json({success: false, error: "editDocument Error: request on repository user does not have access to."});
+        }
+    }
+
     let update = {};
     if (title) update.title = title;
     if (markup) update.markup = markup;
     if (repositoryId) update.repository = repositoryId
-    Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace')
         .populate('repository').populate('references')
         .populate('tags', (err, document) => {
-            if (err) return res.json(err);
-            return res.json(document);
+            if (err) return res.json({success: false, error: err});
+            return res.json({success: true, result: document});
         });
     });
 }
 
 
 deleteDocument = async (req, res) => {
-    const { id } = req.params
-    if (!checkValid(id)) {
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+
+    if (!checkValid(documentId)) {
         return res.json({success: false, error: 'deleteDocument: error no id passed', result: null});
     }
 
-    console.log('documentId: ', id);
-    console.log(typeof id);
-    var toDelete = await Document.findById(id);
+    var modifiedDocs = [];
+
+    console.log('documentId: ', documentId);
+    console.log(typeof documentId);
+    var toDelete = await Document.findOne({_id: documentId, workspace: workspaceId});
     if (!toDelete) {
         return res.json({success: false, error: 'deleteDocument: error could not find document to delete', result: null});
     }
-    let parentObj;
+
     if (toDelete.parent != null) {
 
         await Document.update({_id: ObjectId(toDelete.parent.toString())}, 
-            { $pull: {children: ObjectId(id) }});
-        parentObj = await Document.findById(toDelete.parent);
+            { $pull: {children: ObjectId(documentId) }});
+
+
+        const parentObj = await Document.findById(toDelete.parent);
+        modifiedDocs.push(parentObj);
+
         await Document.updateMany({$and: 
                 [
                     {_id: {$in: parentObj.children.map(childObj => ObjectId(childObj._id.toString()))}},
-                    {_id: {$ne: ObjectId(id)}}
+                    {_id: {$ne: ObjectId(documentId)}}
                 ],
                 order: {$gt: toDelete.order}},
                 {$inc: {order: -1}});
+        modifiedDocs = modifiedDocs.concat(await Document.find({$and: 
+                [
+                    {_id: {$in: parentObj.children.map(childObj => ObjectId(childObj._id.toString()))}},
+                    {_id: {$ne: ObjectId(documentId)}}
+                ],
+                order: {$gt: (toDelete.order-1)}
+            }));
     }
     else {
-        await Document.updateMany({ parent: null, _id: {$ne: ObjectId(id)}, order: {$gt: toDelete.order} },
+        await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, workspace: ObjectId(workspaceId), order: {$gt: toDelete.order} },
             {$inc: {order: -1}});
+        modifiedDocs = modifiedDocs.concat(await Document.find({
+            parent: null,
+            _id: {$ne: ObjectId(documentId)},
+            workspace: ObjectId(workspaceId),
+            order: {$gt: (toDelete.order-1)}
+        }));
     }
-
     var pathToDelete = toDelete.path;
     var re = new RegExp(pathToDelete + '.*', 'i');
-    let deletedDocs = await Document.find({path: {$regex: re}}, '');
-    await Document.deleteMany({path: {$regex: re}}, (err) => {
+    modifiedDocs = modifiedDocs.concat( await Document.find(
+        {path: {$regex: re}, workspace: ObjectId(workspaceId)
+    }));
+
+    await Document.deleteMany({path: {$regex: re}, workspace: ObjectId(workspaceId)}, (err) => {
         if (err) {
             return res.json({ success: false, error: err, result: toDelete });
         }
-        if (parentObj) {
-            return res.json({success: true, result: deletedDocs, edited: parentObj});
-        }
-        return res.json({success: true, result: deletedDocs});
+        modifiedDocs.reverse();
+        var finalResults = removeDuplicates(modifiedDocs);
+        console.log('Delete successful');
+        return res.json({success: true, result: finalResults});
     });
 }
 
 renameDocument = async (req, res) => {
-    const { documentId, title } = req.body;
-    if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.', result: null});
+    const { title } = req.body;
     if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no name provided', result: null});
-    var oldDocument = await Document.findById(documentId);
+
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+
+    var oldDocument = await Document.findOne({_id: documentId, workspace: workspaceId});
     if (!oldDocument) {
         return res.json({success: false, error: 'renameDocument: error could not find document: ' + documentId, result: null});
     }
@@ -264,7 +376,7 @@ renameDocument = async (req, res) => {
     var newProposedPath = oldPath.split('/');
     newProposedPath[newProposedPath.length - 1] = title;// .length > 0 ? title : '';
     newProposedPath = newProposedPath.join('/');
-    var duplicateDocument = await Document.findOne({path: newProposedPath});
+    var duplicateDocument = await Document.findOne({path: newProposedPath, workspace: ObjectId(workspaceId)});
     if (duplicateDocument) {
         return res.json({success: false, 
         error: 'renameDocument: error renaming Document, duplicate path - '
@@ -276,12 +388,14 @@ renameDocument = async (req, res) => {
     console.log(temp);
     var parentPath = temp.slice(0, temp.length - 1).join('/');
     var workingTitle = 'untitled_';
+
+    var oldDocumentId = undefined;
     
 
     if (title == '') {
         console.log('parentPath: ', parentPath);
         var re = new RegExp('^' + parentPath + 'untitled_[0-9]+$', 'i');
-        var untitledDocuments = await Document.find({path: {$regex: re}});
+        var untitledDocuments = await Document.find({path: {$regex: re}, workspace: ObjectId(workspaceId)});
         console.log('other untitledDocuments: ');
         console.log(untitledDocuments);
 
@@ -313,7 +427,7 @@ renameDocument = async (req, res) => {
 
 
     var re = new RegExp(untouchedOldPath, 'i');
-    var oldPaths = await Document.find({path: {$regex: re}});//.select('name path');
+    var oldPaths = await Document.find({path: {$regex: re}, workspace: ObjectId(workspaceId)});//.select('name path');
     oldPaths = oldPaths.map( docObj => {
         var pathItems;
         // If this is the oldDocument
@@ -367,15 +481,20 @@ renameDocument = async (req, res) => {
 }
 
 moveDocument = async (req, res) => {
-    const { documentId, parentId, order } = req.body;
-    if (!checkValid(documentId)) return res.json({success: false, error: 'moveDocument: error no documentId provided.', result: null});
+    var {parentId, order } = req.body;
     if (!checkValid(parentId)) return res.json({success: false, error: 'moveDocument: error no parentId provided', result: null});
     if (!checkValid(order)) return res.json({success: false, error: 'moveDocument: error no order provided', result: null});
+    const documentId = req.documentObj._id.toString();
 
-    var oldDocument = await Document.findById(documentId);
+
+    order = parseInt(order);
+
+    var oldDocument = req.documentObj;
     if (!oldDocument) {
         return res.json({success: false, error: 'moveDocument: error could not find document to move', result: null});
     }
+
+    var workspaceId = oldDocument.workspace.toString();
 
     var originalOrder = oldDocument.order;
     oldDocument.order = order;
@@ -391,7 +510,8 @@ moveDocument = async (req, res) => {
               {new: true});
         
         usedOldParentId = originalParent._id;
-        //modifiedDocs.push(originalParent);
+    
+        // modifiedDocs.push(originalParent);
     }
 
     // set newPath
@@ -402,10 +522,16 @@ moveDocument = async (req, res) => {
 
     var parentToSet = undefined;
 
+    // Determine the value to set the document's parent field to
+    // Update the document's new parent, if not null, to add the documentId to children
     if (parentId != '') {
         newParent = await Document.findById(parentId);
         if (!newParent) {
             return res.json({success: false, error: 'moveDocument: error could not find parent document', result: [oldDocument]});
+        }
+        // Make sure both the new parent and the doc to move are in the same workspace
+        if (newParent.workspace.toString() != oldDocument.workspace.toString()) {
+            return res.json({success: false, error: "moveDocument: error parent doc not in same workspace as doc to move."});
         }
 
         // Don't allow moving the original document into its own child
@@ -426,62 +552,132 @@ moveDocument = async (req, res) => {
     }
 
     else {
-        // oldDocument.parent = null;
         parentToSet = null;
     }
 
-    // await oldDocument.save();
-    await Document.findByIdAndUpdate(oldDocument._id, {$set: {parent: parentToSet}});
-
-    // If moving within the same directory
-        
-
-        // Update the new parent's children
-        // If not root
-        if (newPath) {
-            console.log('Conditional insert 1');
-            // Update the new parent's children's (those that are getting moved up) order
-            // Don't update the document that is being moved, it is part of the children already
-            await Document.updateMany({$and: 
-                [
-                    {_id: {$in: newParent.children.map(childObj => ObjectId(childObj._id.toString()))}},
-                    {_id: {$ne: ObjectId(documentId)}}
-                ],
-                order: {$gte: order}},
-                {$inc: {order: 1}});
+    // If parents are the same and moving child to the end
+    // If the request was made with the same order as the max, we just increment the order by 1
+    if (newParent == null && originalParent == null) {
+        var rootChildren = await Document.find({parent: null, workspace: ObjectId(workspaceId)});
+        var rootOrders = rootChildren.map(childObj => parseInt(childObj.order));
+        if (Math.max(...rootOrders) == order) {
+            console.log('Incrementing Order');
+            order += 1
         }
-        // If root
-        else {
-            console.log('Conditional insert 2');
-            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gte: order} },
+    }
+    else if (newParent != null && originalParent != null) {
+        if (newParent._id.toString() == originalParent._id.toString()) {
+            // console.log('newParent.children: ', newParent.children);
+            var newParentChildren = newParent.children.filter(childObj => childObj.toString() != oldDocument._id.toString());
+            // console.log('newParentChildren: ', newParentChildren);
+            newParentChildren = await Document.find({_id: { $in: newParentChildren}});
+            newParentChildren = newParentChildren.map(childObj => parseInt(childObj.order));
+             // newParentChildren.map(childObj => parseInt(childObj.order));
+            console.log('newParentChildren: ', newParentChildren);
+            if (Math.max(...newParentChildren) == order) {
+                console.log('Incrementing Order');
+                order += 1;
+            }
+        }
+    }
+
+
+    console.log('Order is: ', order);
+    await Document.findByIdAndUpdate(oldDocument._id, {$set: {parent: parentToSet, order: order}});
+
+    // Update the new parent's children
+    // If not root
+    if (newPath) {
+        console.log('Conditional insert 1');
+        // Update the new parent's children's (those that are getting moved up) order
+        // Don't update the document that is being moved, it is part of the children already
+        await Document.updateMany({$and: 
+            [
+                {_id: {$in: newParent.children.map(childObj => ObjectId(childObj._id.toString()))}},
+                {_id: {$ne: ObjectId(documentId)}}
+            ],
+            order: {$gte: order}},
             {$inc: {order: 1}});
-        }
 
-        // Update the old parent's children
-        // This needs to use the original order value
-        // If not root
-        if (originalParent) {
-            console.log('Conditional remove 1');
-            // Update the new parent's children's (those that are getting moved up) order
-            // Don't update the document that is being moved, it is part of the children already
-            console.log('originalOrder: ', originalOrder);
-            // await Document.updateMany({_id: [{$in: originalParent.children.map(childObj => ObjectId(childObj._id.toString()))}, {$ne: ObjectId(documentId)}], order: {$gt: originalOrder}},
-            // {$inc: {order: -1}});
-             await Document.updateMany({$and: 
-                [
-                    {_id: {$in: originalParent.children.map(childObj => ObjectId(childObj._id.toString()))}},
-                    {_id: {$ne: ObjectId(documentId)}}
-                ],
-                order: {$gt: originalOrder}},
-                {$inc: {order: -1}});
-        }
-        // If root
-        else {
-            console.log('Conditional remove 2');
-            await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, order: {$gt: originalOrder} },
+        var incrementDocs = await Document.find({$and: 
+            [
+                {_id: {$in: newParent.children.map(childObj => ObjectId(childObj._id.toString()))}},
+                {_id: {$ne: ObjectId(documentId)}},
+                {order: {$gte: (order+1)}},
+            ]}
+            );
+        console.log('incrementDocs: ');
+        console.log(incrementDocs);
+        modifiedDocs = modifiedDocs.concat(incrementDocs);
+    }
+    // If root
+    else {
+        console.log('Conditional insert 2');
+        await Document.updateMany({ parent: null, _id: {$ne: ObjectId(documentId)}, workspace: ObjectId(workspaceId), order: {$gte: order} },
+        {$inc: {order: 1}});
+        
+        modifiedDocs = modifiedDocs.concat(await Document.find({
+            parent: null, _id: {$ne: ObjectId(documentId)}, workspace: ObjectId(workspaceId), order: {$gte: (order+1)}
+        }));
+        // Remove gap if moving within the same directory and order is now too high
+
+    }
+
+    // Update the old parent's children
+    // This needs to use the original order value
+    // If not root
+    if (originalParent) {
+        originalParent = await Document.findById(originalParent._id);
+        console.log('Conditional remove 1');
+        // Update the new parent's children's (those that are getting moved up) order
+        // Don't update the document that is being moved, it is part of the children already
+        console.log('originalOrder: ', originalOrder);
+        // await Document.updateMany({_id: [{$in: originalParent.children.map(childObj => ObjectId(childObj._id.toString()))}, {$ne: ObjectId(documentId)}], order: {$gt: originalOrder}},
+        // {$inc: {order: -1}});
+
+        await Document.updateMany({$and: 
+            [
+                {_id: {$in: originalParent.children.map(childObj => ObjectId(childObj._id.toString()))}}
+                // {_id: {$ne: ObjectId(documentId)}}
+            ],
+            order: {$gt: originalOrder}},
             {$inc: {order: -1}});
-        }
+        var decrementDocs = await Document.find({_id: {$in: originalParent.children.map(childObj => ObjectId(childObj._id.toString()))},
+                                                                order: {$gt: (originalOrder-1)}});
+        console.log('decrementDocs: ');
+        console.log(decrementDocs);
+        modifiedDocs = modifiedDocs.concat(decrementDocs);
+    }
+    // If root
+    else {
+        console.log('Conditional remove 2');
+        await Document.updateMany({ parent: null, workspace: ObjectId(workspaceId), order: {$gt: originalOrder} },
+        {$inc: {order: -1}});
+
+        modifiedDocs = modifiedDocs.concat(await Document.find({parent: null, workspace: ObjectId(workspaceId), order: {$gt: (originalOrder-1)}}));
+    }
+
+   /* const unique = [...new Set(data.map(item => item.age))]; // [ 'A', 'B']
+    var resultArr = indexArr.map(i => fruitier[i])*/
+
     //}
+
+    /*// Remove gap if moving within the same directory and order is now too high
+    if (newPath) {
+        var newParentMaxOrder = newParent.children.map(childObj => parseInt(childObj.order));
+        newParentMaxOrder = Math.max(...newParentMaxOrder);
+        if ( (order - newParentMaxOrder) > 1) {
+            await Document.findByIdAndUpdate(oldDocument._id, {$set: { order: (newParentMaxOrder + 1)}});
+        }
+    }
+    // If root
+    else {
+        var rootChildren = await Document.find({parent: null});
+        var newParentMaxOrder = rootChildren.map(childObj => parseInt(childObj.order));
+        if ( (order - newParentMaxOrder) > 1) {
+            await Document.findByIdAndUpdate(oldDocument._id, {$set: { order: (newParentMaxOrder + 1)}});
+        }
+    }*/
 
     var oldPath = oldDocument.path;
     var oldPathItemCount = oldPath.split('/').length;
@@ -491,7 +687,7 @@ moveDocument = async (req, res) => {
     console.log('oldPathItemCount: ', oldPathItemCount);
 
     var re = new RegExp(oldPath, 'i');
-    var oldPaths = await Document.find({path: {$regex: re}});//.select('name path');
+    var oldPaths = await Document.find({path: {$regex: re}, workspace: ObjectId(workspaceId)});//.select('name path');
     console.log('Response: ');
     console.log(oldPaths);
     oldPaths = oldPaths.map(docObj => {
@@ -529,7 +725,7 @@ moveDocument = async (req, res) => {
                 update: { $set: { path: docObj.path } },
                 upsert: false
                 }
-            }));
+    }));
     var modifiedObjIds = oldPaths.map(docObj => {
         return docObj._id;
     })
@@ -553,44 +749,54 @@ moveDocument = async (req, res) => {
             .catch((err) => {
                 return res.json({success: false, error: 'moveDocument: error bulk moving Documents: ' + err, result: [oldDocument]});
             });
-
-            modifiedDocs = [];
-
-            if (newPath.length > 0) {
+            if(newPath) {
                 modifiedDocs.push(await Document.findById(newParentId));
             }
-            
-            if (usedOldParentId.length > 0) {
-                modifiedDocs.push(await Document.findById(usedOldParentId));
+            if (originalParent != null) {
+                var oldParentResult = await Document.findById(originalParent._id);
+                console.log('oldParentResult: ');
+                console.log(oldParentResult);
+                modifiedDocs.push(oldParentResult);
             }
             
             console.log('LOG #1');
-            console.log(modifiedDocs);
+            // console.log(modifiedDocs);
             console.log(await Document.find({_id: {$in: modifiedObjIds}}));
             modifiedDocs = modifiedDocs.concat( await Document.find({_id: {$in: modifiedObjIds}}));
 
             console.log('LOG #2');
-            console.log(modifiedDocs);
+            // console.log(modifiedDocs);
+            modifiedDocs.reverse();
 
-            return res.json({success: true, result: modifiedDocs});
+            var finalResults = removeDuplicates(modifiedDocs);
+
+            return res.json({success: true, result: finalResults});
     }
     else {
         return res.json({success: false, error: 'moveDocument: error no Documents to move.', result: [oldDocument]});
     }
+
+
+
     // if parentId == '', move to root
 }
 
+
+retrieveDocumentsExtension = async (req, res) => {
+    let {repositoryFullName, referencePath} = req.body;
+    const { workspaceId } = req.params;
+    let repository = await Repository.findOne({fullName})
+}
+
 retrieveDocuments = (req, res) => {
-    let { search, sort, authorId, childrenIds, workspaceId, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
-    
+    let { search, sort, authorId, childrenIds, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
+    const { workspaceId } = req.workspaceObj._id.toString();
     let query;
-    
     if (search) {
-        query = Document.find({title: { $regex: new RegExp(search, 'i')} })
+        query = Document.find({ title: { $regex: new RegExp(search, 'i')}, workspace: workspaceId });
     } else {
         query =  Document.find();
     }
-
 
     if (checkValid(parentId)) {
         if (parentId == '') {
@@ -601,10 +807,10 @@ retrieveDocuments = (req, res) => {
         }
     }
 
+    query.where('workspace').equals(workspaceId);
     if (checkValid(referenceIds)) query.where('references').in(referenceIds);
     if (checkValid(documentIds)) query.where('_id').in(documentIds);
     if (checkValid(authorId)) query.where('author').equals(authorId);
-    if (checkValid(workspaceId)) query.where('workspace').equals(workspaceId);
     if (checkValid(repositoryId)) query.where('repository').equals(repositoryId);
     if (checkValid(childrenIds)) query.where('_id').in(childrenIds);
     if (checkValid(tagIds)) query.where('tags').all(tagIds);
@@ -614,7 +820,6 @@ retrieveDocuments = (req, res) => {
     if (checkValid(sort)) query.sort(sort);
     query.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags').exec((err, documents) => {
         if (err) return res.json({ success: false, error: err });
-        
         if (checkValid(documentIds) && checkValid(limit)) {
             if (documents.length < limit) {
                 let queryNext = Document.find()
@@ -625,169 +830,108 @@ retrieveDocuments = (req, res) => {
                 if (checkValid(sort)) queryNext.sort(sort);
                 queryNext.exec((err, nextDocuments) => {
                     if (err) return res.json({ success: false, error: err });
-                    return res.json(documents.concat(nextDocuments))
+                    documents = documents.concat(nextDocuments);
                 })
-            } else {
-                return res.json(documents)
             }
-        } else {
-            console.log("SEARCH", search)
-            console.log("DOCS", documents)
-            return res.json(documents);
-        }
+        } 
+        return res.json({success: true, result: documents});
     });
 }
 
 attachReference = (req, res) => {
-    const { id } = req.params;
-    const { referenceId } = req.body;
-    console.log("REFID", referenceId)
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const referenceId = req.referenceObj._id.toString();
     let update = {};
-    if (referenceId) update.references = ObjectId(referenceId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
+    update.references = ObjectId(referenceId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
             console.log("DOCUMENT", document)
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
 
 removeReference = (req, res) => {
-    const { id } = req.params;
-    const { referenceId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const referenceId = req.referenceObj._id.toString();
     let update = {};
-    if (referenceId) update.references = ObjectId(referenceId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+    update.references = ObjectId(referenceId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
 
 attachTag = (req, res) => {
-    const { id } = req.params;
-    const { tagId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const tagId = req.tagObj._id.toString();
+
     let update = {};
-    if (tagId) update.tags = ObjectId(tagId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
+    update.tags = ObjectId(tagId);
+    Document.findByOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
 
 
 removeTag = (req, res) => {
-    const { id } = req.params;
-    const { tagId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const tagId = req.tagObj._id.toString();
     let update = {};
-    if (tagId) update.tags = ObjectId(tagId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+    update.tags = ObjectId(tagId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
-            
             if (err) return res.json({ success: false, error: err });
             console.log("DOC", document)
-            return res.json(document);
-        });
-    });
-}
-
-
-attachChild = (req, res) => {
-    const { id } = req.params;
-    const { childId } = req.body;
-    let update = {};
-    if (childId) update.children = ObjectId(childId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
-        });
-    });
-}
-
-removeChild = (req, res) => {
-    const { id } = req.params;
-    const { childId } = req.body;
-    let update = {};
-    if (childId) update.children = ObjectId(childId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
 
 
 attachSnippet = (req, res) => {
-    const { id } = req.params;
-    const { snippetId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const snippetId = req.snippetObj._id.toString();
     let update = {};
-    if (snippetId) update.snippets = ObjectId(snippetId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
+    update.snippets = ObjectId(snippetId);
+    Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
 
 
 removeSnippet = (req, res) => {
-    const { id } = req.params;
-    const { snippetId } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+    const documentId = req.documentObj._id.toString();
+    const snippetId = req.snippetObj._id.toString();
     let update = {};
-    if (snippetId) update.snippets = ObjectId(snippetId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
+    update.snippets = ObjectId(snippetId);
+    Document.findByIdAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
-        });
-    });
-}
-
-
-attachParent = (req, res) => {
-    const { id } = req.params;
-    const { parentId } = req.body;
-    let update = {};
-    if (parentId) update.parents = ObjectId(parentId);
-    Document.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
-        });
-    });
-}
-
-
-removeParent = (req, res) => {
-    const { id } = req.params;
-    const { parentId } = req.body;
-    let update = {};
-    if (parentId) update.parents = ObjectId(parentId);
-    Document.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, document) => {
-        if (err) return res.json({ success: false, error: err });
-        document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
-        .populate('tags', (err, document) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -803,7 +947,7 @@ attachUploadFile = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -818,7 +962,7 @@ removeUploadFile = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -833,7 +977,7 @@ addCanWrite = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -848,7 +992,7 @@ removeCanWrite = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -863,7 +1007,7 @@ addCanRead = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
@@ -878,15 +1022,14 @@ removeCanRead = (req, res) => {
         document.populate('parent').populate('author').populate('parents').populate('snippets').populate('uploadFiles')
         .populate('tags', (err, document) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(document);
+            return res.json({success: true, result: document});
         });
     });
 }
 
 
-module.exports = { createDocument, getDocument, editDocument, 
-    deleteDocument, retrieveDocuments, attachTag, removeTag, 
-    attachSnippet, removeSnippet, attachParent, removeParent, 
-    attachUploadFile, removeUploadFile, addCanWrite, removeCanWrite, 
-    addCanRead, removeCanRead, attachChild, removeChild, getParent,
+module.exports = { createDocument, getDocument, editDocument, deleteDocument,
+    retrieveDocuments, attachTag, removeTag, attachSnippet,
+    removeSnippet, attachUploadFile, removeUploadFile, addCanWrite,
+    removeCanWrite, addCanRead, removeCanRead, getParent,
     renameDocument, moveDocument, attachReference, removeReference }

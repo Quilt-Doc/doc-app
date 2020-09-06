@@ -23,7 +23,6 @@ import history from '../../../history';
 
 //actions
 import { createDocument, retrieveDocuments,  moveDocument } from '../../../actions/Document_Actions';
-import { attachDocument } from '../../../actions/RepositoryItem_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 
@@ -31,6 +30,14 @@ import { setCreation } from '../../../actions/UI_Actions';
 import repoIcon3 from '../../../images/w4.svg'
 import codeIcon from '../../../images/code.svg'
 
+//icons
+import {FiFileText, FiGrid, FiGitPullRequest, FiTrash} from 'react-icons/fi'
+import {RiScissors2Line, RiLayoutGridLine, RiAddLine,  RiLayoutMasonryLine, RiPencilRuler2Line, RiSettings5Line, RiCodeSLine, RiPencilLine, RiPieChart2Line, RiStackLine} from 'react-icons/ri'
+import { BsLayoutWtf, BsFillGridFill, BsGridFill} from 'react-icons/bs'
+import { VscLink } from 'react-icons/vsc';
+import { HiDownload } from 'react-icons/hi';
+import {BiGridAlt} from 'react-icons/bi';
+import { CgComponents } from 'react-icons/cg'
 class SideNavbar extends React.Component {
     constructor(props) {
         super(props)
@@ -47,7 +54,7 @@ class SideNavbar extends React.Component {
 
     renderDocuments(){
         return this.props.documents.map(document => {return (
-        <Document width =  {23} marginLeft = {0} document = {document}/>)})
+        <Document width =  {23} marginLeft = {2} document = {document}/>)})
     }
 
     createDocumentFromButton() {
@@ -78,25 +85,144 @@ class SideNavbar extends React.Component {
 
 
     renderCodebaseLink(){
-        console.log("WORKSPACE", this.props.workspace)
         let repositoryId = this.props.workspace.repositories[0]._id
         let { workspaceId } = this.props.match.params
         return `/workspaces/${workspaceId}/repository/${repositoryId}/dir`
     }
 
+    renderInsightsLink(){
+        let { workspaceId } = this.props.match.params
+        return `/workspaces/${workspaceId}/insights`;
+    }
+
+    renderConnectLink(){
+        let { workspaceId } = this.props.match.params
+        return `/workspaces/${workspaceId}/connect`;
+    }
+
     openModal(){
         this.setState({modalDisplay: ''})
+    }
+
+    checkRoute(){
+       console.log(history.location.pathname.split("/")[3] === "repository")
     }
     /*onClick = { () => {this.createDocumentFromButton()}}*/
     render(){
         let { workspaceId } = this.props.match.params
         return(
-            <SideNavbarContainer>
+
+            <SideNavbarContainer id = {"sidenavbar"}>
+                
+                 <RepositoryDetail>
+                    <RepositoryIcon>PS</RepositoryIcon>
+                    <RepositoryName>Pegasus</RepositoryName>
+                </RepositoryDetail>
+                <Section>
+                    <NavbarButton
+                        active = {history.location.pathname.split("/")[3] === "insights"}
+                        to = {this.renderInsightsLink()}
+                    >
+                        <NavbarIcon><BiGridAlt/></NavbarIcon>
+                        Dashboard
+                    </NavbarButton>
+                    <NavbarButton 
+                        active = {history.location.pathname.split("/")[3] === "repository"}
+                        to = {this.renderCodebaseLink()}
+                    >
+                        <NavbarIcon active = {true}><RiCodeSLine/></NavbarIcon>  
+                        Codebase    
+                    </NavbarButton>
+                    <NavbarButton
+                        active = {history.location.pathname.split("/")[3] === "connect"}
+                        to = {this.renderConnectLink()}
+                    >
+                        <NavbarIcon><RiStackLine/></NavbarIcon>
+                        Infobank
+                    </NavbarButton>
+                    <NavbarButton>
+                        <NavbarIcon><RiSettings5Line/></NavbarIcon>  
+                        Settings 
+                    </NavbarButton>
+                        
+                    
+                   
+                </Section>  
+
+               <Section margin = {"2.5rem"}>
+                    <Deline>
+                        <Circle/>
+                        Knowledge
+                    </Deline>
+                    <DocumentationContainer backend={HTML5Backend} >
+                        {this.props.documents.length > 0 && this.renderDocuments()}
+                    </DocumentationContainer>
+               </Section>
+               <Section margin = {"2rem"}>
+                    <NavbarButton2>
+                        <IconBorder2/>
+                        <RiLayoutMasonryLine style = 
+                        {{ fontSize: "1.7rem",
+                            marginRight: "0.9rem",
+                            width: "1.6rem"
+                        }}/>
+                        Templates
+                    </NavbarButton2>
+                    <NavbarButton2>
+                        <IconBorder2/>
+                        <HiDownload style = 
+                        {{ fontSize: "1.7rem",
+                            marginRight: "0.9rem",
+                            width: "1.6rem"
+                        }}/>
+                        Import    
+                    </NavbarButton2>
+                    <NavbarButton2>
+                        <IconBorder2/>
+                        <FiTrash style = 
+                        {{ fontSize: "1.5rem",
+                            marginRight: "0.9rem",
+                            width: "1.6rem"
+                        }}/>
+                        Trash
+                    </NavbarButton2>
+               </Section>
+                
+            </SideNavbarContainer>
+           
+        )
+    }
+}
+
+/*
+ <Block >
+                        <Deline>Knowledge</Deline>
+                        <DocumentationContainer backend={HTML5Backend} >
+                            {this.props.documents.length > 0 && this.renderDocuments()}
+                       </DocumentationContainer>
+                    </Block>
+                    */
+
+/*
+ <SideNavbarContainer>
+                <Top>
                 <RepositoryDetail>
                     <RepositoryIcon><StyledIcon src = {repoIcon3}/></RepositoryIcon>
                     <RepositoryName>Customer Feedback</RepositoryName>
                 </RepositoryDetail>
 
+                </Top>
+                <Block >
+                    
+                    {<Deline>Knowledge</Deline>}
+                    <DocumentationContainer backend={HTML5Backend} >
+                        {this.props.documents.length > 0 && this.renderDocuments()}
+                    </DocumentationContainer>
+                </Block>
+            </SideNavbarContainer>
+*/
+
+/*
             
                 <PageSectionContainer>
                     <PageSection2 onClick = {() => {this.createDocumentFromButton()}}>
@@ -130,17 +256,7 @@ class SideNavbar extends React.Component {
                         <PageName>Settings</PageName>
                     </PageSection>
                 </PageSectionContainer>
-            
-                <Block marginTop = {"1rem"}>
-                    <Deline>Documents</Deline>
-                    <DocumentationContainer backend={HTML5Backend} >
-                        {this.props.documents.length > 0 && this.renderDocuments()}
-                    </DocumentationContainer>
-                </Block>
-            </SideNavbarContainer>
-        )
-    }
-}
+*/
 
 /* 
      <DocumentCreateButton onClick = {() => {this.createDocumentFromButton()}} >
@@ -259,35 +375,218 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, { createDocument, moveDocument, attachDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
+export default withRouter(connect(mapStateToProps, { createDocument, moveDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
+//#2B2F3A;  #383e4c;
+//#20263c;
+//#222437; #2f314c;
+//#3F3B4D; 
+//#F7F9FB;/
+
+
+const IconBorder2 = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 1.7rem;
+    min-height: 1.7rem;
+    margin-left: -0.3rem;
+    margin-right: 0.5rem;
+    font-size: 1.3rem;
+    opacity: 0.9;
+    border-radius: 0.3rem;
+`
+
+const SideNavbarContainer = styled.div`
+  
+    background-color:#2B2F3A; 
+    display: flex;
+    flex-direction: column;
+    padding-top: 2rem;
+    color: white;
+    
+    min-width: 25rem;
+    max-width: 25rem;
+    overflow-y: scroll;
+`
+
+
+const LeftNav = styled.div`
+    display: flex;
+    /*flex-direction: column;*/
+    align-items: center;
+    margin-bottom: 2rem;
+`
+
+const Container = styled.div`
+    display: flex;
+`
+
+const Block = styled.div`
+    /*margin-left: 1.5rem;*/
+    margin-right: 1.5rem;
+    width: 19rem;
+    
+    border-radius: 0.4rem;
+    overflow-x: hidden;
+    
+`
+              
+const DocumentationContainer = styled(DndProvider)`
+    display: flex;
+    flex-direction: column;  
+`
+
+
+
+const NavList = styled.div`
+   
+    flex-direction: column;
+    display: flex;
+    border-radius: 0.5rem;
+    margin-left: 2.5rem;
+    margin-right: 2.5rem;
+    margin-top: 1rem;
+    width: 18rem;
+    
+`
+
+const Section = styled.div`
+    margin-top: ${props => props.margin};
+`
+
+const NavbarButton = styled(Link)`
+    display: flex;
+    align-items: center;
+    font-size: 1.3rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: white;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.4rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    &:hover {
+        background-color: #414858;
+    }
+    background-color: ${props => props.active ? '#414858' : ""};
+`
+
+
+const NavbarButton2 = styled(Link)`
+    display: flex;
+    align-items: center;
+    font-size: 1.3rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: white;
+    height: 2.9rem;
+    margin-bottom: 0.4rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    &:hover {
+        background-color: #414858;
+    }
+    background-color: ${props => props.active ? '#414858' : ""};
+`
+
+
+const NavbarIcon = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.25rem;
+    width: 2.25rem;
+    font-size: 1.3rem;
+    font-weight: 500;
+    background-color: #383e4c;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    margin-right: 1.3rem;
+    /*
+    margin-left: 2rem;
+    &:hover {
+        background-color: ${props => props.emph };
+    }*/
+    /*border-bottom: ${props => props.active ? "2px solid #5B75E6" : ""};*/
+`
+
+
+
+const Shadow = styled.div`
+    
+`
+
+const HideLayer = styled.div`
+    height: 1rem;
+    width: 100%;
+    background-color: red;
+
+`
+
+const Top = styled.div`
+    position: sticky;
+    top: 0;
+    z-index:1;
+    background-color:#F7F9FB;
+    box-shadow: 
+`
+
+const Circle = styled.div`
+    border-radius: 50%;
+    height: 0.6rem;
+    width: 0.6rem;
+    background-color: #6FEAE1;
+    margin-right: 0.7rem;
+`
 
 const Deline = styled.div`
     font-weight: 500;
     text-transform: uppercase;
-    color: #172A4E;
-    opacity: 0.7;
-    font-size: 1.15rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
     display: flex;
     align-items: center;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    
 `
 
 const StyledIcon = styled.img`
-    width: 2.8rem;
+    width: 1.8rem;
+    
+
 `
 
 const RepositoryDetail = styled.div`
     display: flex;
     align-items: center;
-    margin-left: 2rem;
-    margin-top: 2rem;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    &:hover {
+        background-color: #414858;
+    }
+    padding:1rem 2rem;
+    cursor: pointer;
 `
 
 const RepositoryName = styled.div`
-    margin-left: 1.5rem;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #172A4E;
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: white;
+`
+
+
+const RepositoryIcon = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background-color: #5B75E6;
+    border-radius: 0.3rem;
+    margin-right: 1.3rem;
+    font-size: 1.3rem;
 `
 
 const PageSectionContainer = styled.div`
@@ -366,25 +665,8 @@ const PageName = styled.div`
     opacity: 1;
 `
 
-const RepositoryIcon = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 5.5rem;
-    height: 4rem;
-    background-color:white;
-    border-radius: 0.5rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    
-`
 
 ///
-const SideNavbarContainer = styled.div`
-    background-color: #F7F9FB;
-    display: flex;
-    flex-direction: column;
-`
-
 
 
 const DocumentCreateButton = styled.div`
@@ -442,18 +724,11 @@ const DocumentRequestButton = styled.div`
     
 `
 
-const Block = styled.div`
-    padding: 1rem 2rem;
-    margin-top: 2rem;
-    margin-top: ${props => props.marginTop};
-`
-              
-const DocumentationContainer = styled(DndProvider)`
-    display: flex;
-    flex-direction: column;
-   
-    height: 38rem;
+const ScrollDocumentContainer = styled.div`
+    height: 10rem;
     overflow-y: scroll;
+    padding-left: 2rem;
+    padding-right: 2rem;
 `
 
 const CodeDocumentContainer = styled.div`

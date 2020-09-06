@@ -48,28 +48,29 @@ createWorkspace = (req, res) => {
 
         workspace.populate('creator').populate('repositories').populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
-            return res.json(workspace);
+            return res.json({success: true, result: workspace});
         });
     });
 }
 
 getWorkspace = (req, res) => {
-    console.log(req.params.id);
-    id = req.params.id;
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
-    Workspace.findById(id, (err, workspace) => {
+    const workspaceId = req.workspaceObj._id.toString();
+
+    Workspace.findById(workspaceId, (err, workspace) => {
 		if (err) return res.json({success: false, error: err});
         workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
             });
     });
 }
 
 searchWorkspace = async (req, res) => {
-    const { workspaceId, userQuery, repositoryId, tagIds,
+    const { userQuery, repositoryId, tagIds,
             returnReferences, returnDocuments, requestedPageSize, requestedPageNumber} = req.body;
+    
+    const workspaceId = req.workspaceObj._id.toString();
 
     // for the `returnReferences`, `returnDocuments` params, put a string "true" if you want to do it
     if (!checkValid(workspaceId)) return res.json({success: false, result: null, error: 'searchWorkspace: error no workspaceId provided.'});
@@ -125,15 +126,15 @@ searchWorkspace = async (req, res) => {
 }
 
 deleteWorkspace = (req, res) => {
-    const { id } = req.params; 
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
+    
+    const workspaceId = req.workspaceObj._id.toString();
 
-    Workspace.findByIdAndRemove(id, (err, workspace) => {
+    Workspace.findByIdAndRemove(workspaceId, (err, workspace) => {
 		if (err) return res.json({success: false, error: err});
         workspace.populate('creator').populate('repositories')
             .populate('memberUsers', (err, workspace) => {
             if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
             });
     });
 }
@@ -142,45 +143,44 @@ deleteWorkspace = (req, res) => {
 // Put request
 // Population only on returns
 addUser = (req, res) => {
-    id = req.params.id;
+    const workspaceId = req.workspaceObj._id.toString();
     const { userId } = req.body;
 
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
     if (!typeof userId == 'undefined' && userId !== null) return res.json({success: false, error: 'no user id provided'});
 
     let update = {};
     if (userId) update.memberUsers = ObjectId(userId);
 
-    Workspace.findByIdAndUpdate(id, { $push: update }, { new: true }, (err, workspace) => {
+    Workspace.findByIdAndUpdate(workspaceId, { $push: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
         workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
         });
     });
 }
 
 removeUser = (req, res) => {
-    const { id } = req.params;
+    const workspaceId = req.workspaceObj._id.toString();
     const { userId } = req.body;
     
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no workspace id provided'});
     if (!typeof userId == 'undefined' && userId !== null) return res.json({success: false, error: 'no user id provided'});
 
     let update = {};
     if (userId) update.memberUsers = ObjectId(userId);
 
-    Workspace.findByIdAndUpdate(id, { $pull: update }, { new: true }, (err, workspace) => {
+    Workspace.findByIdAndUpdate(workspaceId, { $pull: update }, { new: true }, (err, workspace) => {
         if (err) return res.json({ success: false, error: err });
         workspace.populate('creator').populate('repositories')
                 .populate('memberUsers', (err, workspace) => {
                 if (err) return res.json({ success: false, error: err });
-                return res.json(workspace);
+                return res.json({success: true, result: workspace});
             });
     });
 }
 
+// Check that the JWT userId is in the memberUsers for all workspaces returned
 retrieveWorkspaces = (req, res) => {
     
     const {name, creatorId, memberUserIds} = req.body;
@@ -191,7 +191,22 @@ retrieveWorkspaces = (req, res) => {
 
     query.populate('creator').populate('memberUsers').populate('repositories').exec((err, workspaces) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(workspaces);
+        
+        var requesterUserId = req.tokenPayload.userId.toString();
+        
+        console.log('Workspaces before filter: ');
+        console.log(workspaces);
+
+        workspaces = workspaces.filter(currentWorkspace => {
+            var currentMemberUsers = currentWorkspace.memberUsers.map(userObj => userObj._id.toString());
+            // Only return if requesterUserId is in the memberUsers of the workspace
+            return (currentMemberUsers.includes(requesterUserId) != -1);
+        });
+
+        console.log('Workspaces after filter: ');
+        console.log(workspaces);
+
+        return res.json({success: true, result: workspaces});
     });
 }
 

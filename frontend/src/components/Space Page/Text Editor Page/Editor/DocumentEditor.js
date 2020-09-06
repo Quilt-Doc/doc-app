@@ -1,4 +1,4 @@
-import React, { useReducer, useMemo, useCallback, useState } from 'react'
+import React, { useReducer, useMemo, useCallback, useState, useEffect } from 'react'
 
 // slate
 import { Slate, Editable, withReact, useEditor, useSlate, ReactEditor
@@ -6,12 +6,15 @@ import { Slate, Editable, withReact, useEditor, useSlate, ReactEditor
 import { Editor, Transforms, Node, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import withFunctionality from '../Slate_Specific/WithFunctionality'
+import scrollIntoView from 'scroll-into-view-if-needed'
+import TextareaAutosize from 'react-textarea-autosize'
 
 //components
 import Leaf from '../Slate_Specific/Leaf';
 import Element from '../Slate_Specific/Element';
-import InfoBar from '../InfoBar';
 import Sidebar from './Sidebar';
+import DocumentInfo from './DocumentInfo';
+import DocumentOptionsMenu from '../../../General/Menus/DocumentOptionsMenu';
 
 //reducer
 import editorReducer from './EditorReducer';
@@ -26,11 +29,12 @@ import chroma from 'chroma-js';
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAngleDoubleRight, faPen, faEllipsisH  } from '@fortawesome/free-solid-svg-icons'
-
+import { RiPencilLine, RiChat2Line, RiMoreLine } from 'react-icons/ri'
+import { GrMore, GrChat } from 'react-icons/gr'
 
 //components
 import MarkupMenu from '../Menus/MarkupMenu';
-import ReferenceMenu from '../Menus/ReferenceMenu';
+// import ReferenceMenu from '../Menus/ReferenceMenu';
 import { CSSTransition } from 'react-transition-group';
 
 //react dnd
@@ -38,7 +42,7 @@ import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 //prism
 import Prism from 'prismjs'
-import EditorToolbar from './EditorToolbar/Toolbar';
+import EditorToolbar from './EditorToolbar/EditorToolbar';
 // eslint-disable-next-line
 Prism.languages.python = { comment: { pattern: /(^|[^\\])#.*/, lookbehind: !0 }, "string-interpolation": { pattern: /(?:f|rf|fr)(?:("""|''')[\s\S]*?\1|("|')(?:\\.|(?!\2)[^\\\r\n])*\2)/i, greedy: !0, inside: { interpolation: { pattern: /((?:^|[^{])(?:{{)*){(?!{)(?:[^{}]|{(?!{)(?:[^{}]|{(?!{)(?:[^{}])+})+})+}/, lookbehind: !0, inside: { "format-spec": { pattern: /(:)[^:(){}]+(?=}$)/, lookbehind: !0 }, "conversion-option": { pattern: /![sra](?=[:}]$)/, alias: "punctuation" }, rest: null } }, string: /[\s\S]+/ } }, "triple-quoted-string": { pattern: /(?:[rub]|rb|br)?("""|''')[\s\S]*?\1/i, greedy: !0, alias: "string" }, string: { pattern: /(?:[rub]|rb|br)?("|')(?:\\.|(?!\1)[^\\\r\n])*\1/i, greedy: !0 }, function: { pattern: /((?:^|\s)def[ \t]+)[a-zA-Z_]\w*(?=\s*\()/g, lookbehind: !0 }, "class-name": { pattern: /(\bclass\s+)\w+/i, lookbehind: !0 }, decorator: { pattern: /(^\s*)@\w+(?:\.\w+)*/im, lookbehind: !0, alias: ["annotation", "punctuation"], inside: { punctuation: /\./ } }, keyword: /\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|print|raise|return|try|while|with|yield)\b/, builtin: /\b(?:__import__|abs|all|any|apply|ascii|basestring|bin|bool|buffer|bytearray|bytes|callable|chr|classmethod|cmp|coerce|compile|complex|delattr|dict|dir|divmod|enumerate|eval|execfile|file|filter|float|format|frozenset|getattr|globals|hasattr|hash|help|hex|id|input|int|intern|isinstance|issubclass|iter|len|list|locals|long|map|max|memoryview|min|next|object|oct|open|ord|pow|property|range|raw_input|reduce|reload|repr|reversed|round|set|setattr|slice|sorted|staticmethod|str|sum|super|tuple|type|unichr|unicode|vars|xrange|zip)\b/, boolean: /\b(?:True|False|None)\b/, number: /(?:\b(?=\d)|\B(?=\.))(?:0[bo])?(?:(?:\d|0x[\da-f])[\da-f]*\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/i, operator: /[-+%=]=?|!=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/, punctuation: /[{}[\];(),.:]/ }, Prism.languages.python["string-interpolation"].inside.interpolation.inside.rest = Prism.languages.python, Prism.languages.py = Prism.languages.python;
 
@@ -81,7 +85,11 @@ const DocumentEditor = (props) => {
 
 	const [value, setValue] = [props.markup, props.setValue]
 	const [write, setWrite] = useState(false)
-	const blocktypes = ["paragraph", "heading-one", "heading-two", "heading-three", "list-item", "code-line", "code-reference"]
+	const blocktypes = ["paragraph", "heading-one", "heading-two", 
+		"heading-three", "quote", "bulleted-list", "numbered-list",
+		 "code-block", "code-reference", "code-snippet", "check-list",
+		"link", "table", "image"
+		]
 
 	const initialState = {
 		markupMenuActive: false,
@@ -110,6 +118,41 @@ const DocumentEditor = (props) => {
 
 	let range = { anchor: state.anchor, focus: state.focus }
 
+	useEffect(() => {
+        if (editor.selection) {
+            //let path = [selection.anchor.path[0]]
+            /*let rect = ReactEditor.toDOMRange(editor, 
+                              {anchor: {offset: 0, path}, 
+				focus: {offset: 0, path }}).getBoundingClientRect()
+			*/
+			//changeTop(document.getElementById("rightView").scrollTop + rect.top - 125 + rect.height/2)
+			
+			try {
+				let domNode = ReactEditor.toDOMNode(editor, 
+					Node.get(editor, [editor.selection.anchor.path[0]]))
+				let buttonTop = domNode.offsetTop
+				let buttonH = domNode.clientHeight
+				let {clientHeight, scrollTop} = document.getElementById("rightView")
+				let toolbarClientH = document.getElementById("toolbarcontainer").clientHeight
+				//console.log("TRUTH", scrollTop + toolbarClientH > buttonTop)
+				//console.log("SCROLL TOP", scrollTop)
+				//console.log("TOOLBARCLIENTH", toolbarClientH)
+				//console.log("BUTTONTOP", buttonTop)
+				scrollIntoView(domNode, {
+					scrollMode: 'if-needed',
+					block: 'nearest',
+					inline: 'nearest',
+				  })
+			} catch {
+
+			}
+			
+			
+			//document.getElementById("editorSlate").scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+        }
+    }
+	, [editor.selection])
+	
 	updateMarkupType(state, dispatch, range, blocktypes, editor)
 	
 	return (
@@ -124,15 +167,68 @@ const DocumentEditor = (props) => {
 					timeout={150}
 					classNames="editortoolbar"
 				>
-				
+					
 					<EditorToolbar 
+						toggleBlock = {(format) => toggleBlock2(editor, format)}
+						toggleBlockActive = {(format) => toggleBlock(editor, format)}
 						isMarkActive = {isMarkActive} 
 						toggleMark = {toggleMark}
+						removeMarks = {() => removeMarks(editor)}
 					/>
 				
 				</CSSTransition>
 				<Container>
-					<KeyToolbar>
+				
+					
+					<EditorContainer>
+							{write && <Sidebar toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
+							<EditorContainer2 >
+								<KeyToolbar>
+									<KeyBorder active = {write} onClick = {() => {setWrite(!write)}}>
+										<RiPencilLine/>
+									</KeyBorder>
+									<DocumentOptionsMenu document = {props.document}/>
+								</KeyToolbar>
+									 <DocumentInfo write  = {write} />
+									<MarkupMenu dispatch={dispatch} range={range} state={state} scrollTop={props.scrollTop} />
+									{write ? 
+										<Header autoFocus paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
+										:
+										<HeaderDiv active = {props.title} paddingLeft = {"10rem"}>{props.title ? props.title : "Untitled"}</HeaderDiv>
+									}
+									
+									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}
+									
+									<StyledEditable
+										onClick={() => {
+											if (state.markupMenuActive) {
+												dispatch({ 'type': 'markupMenuOff' })
+											}
+										}}
+										id = {"editorSlate"}
+										paddingLeft = {write ? "3rem" : "10rem"}
+										cursortype = {write}
+										onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
+										renderElement={renderElement}
+										renderLeaf={renderLeaf}
+										spellCheck="false"
+										decorate={decorate}
+										
+										readOnly = {!props.write}
+									/>
+									
+							</EditorContainer2>
+					</EditorContainer>
+				</Container>
+			</Slate>
+		</DndProvider>
+	)
+	/*readOnly = {!write}*/
+}
+
+export default DocumentEditor
+
+/*	<KeyToolbar>
 						<KeyBorder active = {write} onClick = {() => {setWrite(!write)}}>
 							<FontAwesomeIcon 
 								
@@ -145,89 +241,44 @@ const DocumentEditor = (props) => {
 						<KeyBorder>
 							<ion-icon style = {{ fontSize: "2.1rem"}} name="ellipsis-horizontal"></ion-icon>
 						</KeyBorder>
-					</KeyToolbar>
-					<Sidebar toggleBlock = {(format) => toggleBlock2(editor, format)}/>
-					<EditorContainer>
-						<DataContainer>
-							<RepositoryButton> <ion-icon  style = {
-										{ marginRight: "0.5rem", fontSize: "1.4rem"}
-								} name="git-network-outline"></ion-icon>
-								fsanal / FinanceNewsApp
-							</RepositoryButton>
-							<ReferenceContainer>
-								
-								<Reference>
-                                    <ion-icon name="document-outline"
-                                    style = {
-                                        {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
-                                    backend.js
-                                </Reference>
-                                <Reference>
-                                    <ion-icon name="folder"
-                                    style = {
-                                        {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
-                                    Semantic
-                                </Reference>
-								<Reference>
-                                    <ion-icon name="document-outline"
-                                    style = {
-                                        {marginRight: "0.55rem", fontSize: "1.4rem"}}></ion-icon>
-                                    DocumentController.js
-                                </Reference>
-                            </ReferenceContainer>
-							<ReferenceContainer>
-								<Tag color = {'#20bf6b'}>Utility</Tag>
-								<Tag color = {'#1e90ff'}>Backend</Tag>
-								<Tag color = {'#1e3799'}>DocHierarchy</Tag>
-                            </ReferenceContainer>
-						</DataContainer>
-						<MarkupMenu dispatch={dispatch} range={range} state={state} scrollTop={props.scrollTop} />
-						<Header onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
-						<AuthorNote>Created by Faraz Sanal, Apr 25, 2016</AuthorNote>
-						<StyledEditable
-							onClick={() => {
-								if (state.markupMenuActive) {
-									dispatch({ 'type': 'markupMenuOff' })
-								}
-							}}
-							readOnly = {!write}
-						
-							onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
-							renderElement={renderElement}
-							renderLeaf={renderLeaf}
-							spellCheck="false"
-							decorate={decorate}
-						/>
-					</EditorContainer>
-				</Container>
-			</Slate>
-		</DndProvider>
-	)
-}
-
-export default DocumentEditor
-
-
+					</KeyToolbar>*/
 // helper functions
 
 const updateMarkupType = (state, dispatch, range, blocktypes, editor) => {
+	
 	let mapping = {
-		"paragraph": "Text",
+		"paragraph": "Paragraph",
 		"heading-one": "Heading 1",
 		"heading-two": "Heading 2",
 		"heading-three": "Heading 3",
-		"list-item": "Bullet list",
-		"code-line": "Code snippet",
-		"code-reference": "Code reference"
+		"quote": "Quote",
+		"bulleted-list": "Bulleted list",
+		"numbered-list": "Numbered list",
+		"code-block": "Code block",
+		"code-reference": "Code reference",
+		"code-snippet": "Code snippet",
+		"check-list": "Checklist",
+		"link": "Link", 
+		"table": "Table", 
+		"image": "Image"
 	}
 	if (state.markupMenuActive) {
+		blocktypes = blocktypes.filter(type => {
+			return mapping[type].toLowerCase().includes(state.text.toLowerCase())
+		})
+		/*
 		for (let t of Node.texts(editor, { from: range.anchor.path, to: range.anchor.path })) {
+			//console.log("\n\nANCHOR", range.anchor.offset)
+			//console.log("FOCUS", range.focus.offset)
+			console.log("TEXT", state.text)
+			console.log("TEXT LENGTH", state.text.length)
 			let filter = t[0].text.slice(range.anchor.offset + 1, range.focus.offset + 1)
 			blocktypes = blocktypes.filter(type => {
 				return mapping[type].toLowerCase().includes(filter.toLowerCase())
 			})
-		}
+		}*/
 	}
+	
 	if (blocktypes.length !== state.blocktypes.length) {
 		dispatch({ type: "setBlockTypes", payload: blocktypes })
 	}
@@ -243,6 +294,15 @@ const onKeyDownHelper = (event, state, dispatch, editor, range) => {
 	} else if (event.key === "Enter") {
 		if (state.markupMenuActive) {
 			event.preventDefault()
+			
+			if (range.focus.offset !== range.anchor.offset) {
+				range = _.cloneDeep(range)
+				range.focus.offset += 1
+			}
+
+			Transforms.select(editor, range)
+			Transforms.delete(editor)
+
 			editor.insertBlock({ type: state.blocktypes[state.hovered.position] }, range)
 		} else {
 			editor.insertDefaultEnter(event)
@@ -378,6 +438,12 @@ const toggleMark = (editor, format) => {
 	}
 }
 
+const removeMarks = (editor) => {
+	let formats = ["bold", "italic", 
+		"underlined", "strike", "code", "backColor", "color"]
+	formats.map(format => Editor.removeMark(editor, format))
+}
+
 const isBlockActive = (editor, format) => {
 	const [match] = Editor.nodes(editor, {
 		match: n => n.type === format,
@@ -392,12 +458,13 @@ const isMarkActive = (editor, format) => {
 
 
 
+
 const AuthorNote = styled.div`
-	padding-left: 10rem;
-	padding-right: 10rem;
 	font-size: 1.25rem;
 	opacity: 0.5;
 	margin-bottom: 1rem;
+	padding-left: ${props => props.paddingLeft};
+  	padding-right: 10rem;
 `
 
 
@@ -422,7 +489,7 @@ const RepositoryButton = styled.div`
 const DataContainer = styled.div`
 	margin-top: 4rem;
 	padding-left: 10rem;
-    padding-right: 10rem;
+	padding-right: 10rem;
 `
 
 const ReferenceContainer = styled.div`
@@ -440,7 +507,8 @@ const Tag = styled.div`
     background-color: ${props => chroma(props.color).alpha(0.15)};
     display: inline-block;
     border-radius: 4px;
-    margin-right: 1rem;
+	margin-right: 1rem;
+	font-weight: 500;
 `
 
 const Reference = styled.div`
@@ -462,70 +530,143 @@ const Reference = styled.div`
 `
 
 
+const KeyBorder = styled.div`
+	
+	width: 3rem;
+	height: 3rem;
+	margin-left: ${props => props.margin ? "auto": "0.5rem"};
+	display: flex;
+	align-items: center;
+	border-radius: 0.3rem;
+	justify-content: center;
+	font-size: 2.1rem;
+	cursor: pointer;
 
+	
+    &:hover {
+        background-color: #eeeef1;
+    }
+    background-color: ${props => props.active ? "#eeeef1": ""};
+	
+`
+
+/*
 const KeyBorder = styled.div`
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 3.3rem;
-	height: 3.3rem;
-	margin-top: 1.2rem;
+	width: 3rem;
+	height: 3rem;
+	font-size: 2.2rem;
 	&:hover {
-		background-color: ${chroma("#5B75E6").alpha(0.7)};
+		background-color: #eeeef1;
 	}
+	color: ${props => props.active ? '#70EAE1' : ""};
+	
+	cursor: pointer;
+	margin-left: 1.5rem;
+	border-radius: 0.3rem;
+`*/
 
-	background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.7) : chroma("#5B75E6").alpha(0.15)};
+const KeyBorder2 = styled.div`
+	width: 3rem;
+	height: 3rem;
+	background-color: #f7f9fb;
+	margin-left: ${props => props.margin ? "auto": "0.5rem"};
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	font-size: 1.9rem;
+
+	&:hover {
+		background-color: #eeeef1;
+	}
+	
 	cursor: pointer;
 	margin-left: 1rem;
 	border-radius: 0.3rem;
 `
 
 const KeyToolbar = styled.div`
-	display: flex;
-	flex-direction: column;
-	width: 7rem;
+	display: inline-flex;
 	align-items: center;
-	padding-top: 3rem;
-	align-self: flex-start;
-	top: 3.5rem;
-	padding-bottom: 3rem;
-	margin-right: auto;
+	margin-left: auto;
 	background-color: white;
-	position: -webkit-sticky; /* for Safari */
-	position: sticky;
+	padding: 2rem 2rem;
 	
 `
 
 
 const Container = styled.div`
 	display: flex;	
-
 	justify-content: center;
+`
+
+const EditorContainer2 = styled.div`
+	flex-direction: column;
+	display: flex;
+	width: 100%;
 `
 
 const EditorContainer = styled.div`
 	display: flex;
-	flex-direction: column;
-	margin-right: auto;
+	
 	width: 94rem;
-	margin-left: -7.5rem;
+	margin-top: 3rem;
+	background-color: white;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	border-radius: 0.2rem;
 `
 
-const Header = styled.input`
-    font-size: 3rem;
+const HeaderDiv = styled.div`
+	font-size: 3.3rem;
+	color: #172A4E;
+	margin-bottom: 2rem;
+	margin-top: 3.5rem;
+	padding-left: ${props => props.paddingLeft};
+	padding-right: 10rem;
+	font-weight: 500;
+	opacity: ${props => props.active ?  1 : 0.4};
+	line-height: 4rem;
+`
+
+const Header = styled(TextareaAutosize)`
+	font-size: 3.3rem;
     color: #172A4E;
     margin-bottom: 2rem;
-    ::placeholder {
+    &::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+	}
+	resize: none;
+    outline: none;
+    border: none;
+	margin-top: 3.5rem;
+	padding-left: ${props => props.paddingLeft};
+	padding-right: 10rem;
+	font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+	line-height: 4rem;
+	font-weight: 500;
+`
+/*
+const Header = styled.input`
+    font-size: 3.3rem;
+    color: #172A4E;
+    margin-bottom: 0.5rem;
+    &::placeholder {
         color: #172A4E;
         opacity: 0.4;
     }
     outline: none;
     border: none;
-    padding-left: 10rem;
-    padding-right: 10rem;
-	margin-top: 5rem;
+	margin-top: 3.5rem;
+	padding-left: ${props => props.paddingLeft};
+	padding-right: 10rem;
+	font-weight: 500;
 `
-
+*/
 
 const StyledEditable = styled(Editable)`
   line-height: 1.5 !important;
@@ -534,8 +675,8 @@ const StyledEditable = styled(Editable)`
   font-size: 16px;
   resize: none !important;
   padding-bottom: 7rem;
-  padding-left: 10rem;
+  min-height: 75rem;
+  cursor: ${props => props.cursortype ? "text" : "default"};
+  padding-left: ${props => props.paddingLeft};
   padding-right: 10rem;
-  min-height: 65rem;
-  cursor: text;
 `	

@@ -25,7 +25,7 @@ passport.use(
             callbackURL: "/api/auth/github/redirect"
         },
         async (accessToken, refreshToken, profile, done) => {
-            console.log(profile)
+            console.log(profile);
             let currentUser = await User.findOne({
                 domain: 'github',
                 profileId: profile.id,

@@ -21,6 +21,7 @@ import { retrieveChildren, attachReference, removeReference } from '../../../act
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
+import { RiStackLine } from 'react-icons/ri';
 
 class DocumentMenu extends React.Component {
     
@@ -78,6 +79,7 @@ class DocumentMenu extends React.Component {
     }
 
     renderMarginTop() {
+        return 0;
         if (this.props.marginTop){
             return this.props.marginTop
         } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
@@ -88,11 +90,12 @@ class DocumentMenu extends React.Component {
     }
 
     handleSelect(setBool, documentId){
+        let { workspaceId } = this.props.match.params;
         let referenceId = this.props.reference._id
         if (setBool) {
-            this.props.removeReference(documentId, referenceId)
+            this.props.removeReference({workspaceId, documentId, referenceId})
         } else {
-            this.props.attachReference(documentId, referenceId)
+            this.props.attachReference({workspaceId, documentId, referenceId})
         }
     }
 
@@ -177,18 +180,21 @@ class DocumentMenu extends React.Component {
         let setIds = this.props.setDocuments.map(doc => doc._id)
         return(
             <MenuContainer  >
-                <AddButton ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
-                    <ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
-                </AddButton>
-                {this.state.open && 
+                <PageIcon active = {this.state.open} onClick = {(e) => {this.openMenu()}} style = {{marginLeft: "auto"}}>
+                    <RiStackLine style = {{marginRight: "0.5rem"}}/>
+                    <Title>Attach Information</Title>
+                </PageIcon>
+
                     <CSSTransition
-                    in={true}
-                    appear = {true}
-                    timeout={100}
-                    classNames="menu"
+                        in={this.state.open}
+                        enter = {true}
+                        exit = {true}
+                        unmountOnExit = {true}
+                        timeout={150}
+                        classNames="dropmenu"
                     >
                     <Container marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
-                        <HeaderContainer>Attach Documents</HeaderContainer>
+                        <HeaderContainer>Attach Information</HeaderContainer>
                         <SearchbarContainer>
                             <SearchbarWrapper 
                                 backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
@@ -210,7 +216,6 @@ class DocumentMenu extends React.Component {
                         </ListContainer>
                     </Container>
                     </CSSTransition>
-                }
             </MenuContainer>
         )
     }
@@ -235,10 +240,31 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { attachReference, removeReference, retrieveChildren })(DocumentMenu));
 
+const Title = styled.div`
+    font-size: 1.3rem;
+    margin-right: 0.3rem;
+`
 
+const PageIcon = styled.div`
+    margin-right: 1.2rem;
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    margin-left: auto;
+
+    padding: 0.5rem 1rem;
+    &:hover {
+        background-color: #F4F4F6;
+        
+    }
+    background-color: ${props => props.active ? '#F4F4F6' : ''};
+    cursor: pointer;
+    border-radius: 0.3rem;
+`
 
 
 const MenuContainer = styled.div`
+    margin-left: auto;
 `
 
 const AddButton = styled.div`
@@ -263,14 +289,14 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
     border-radius: 0.3rem;
     font-size: 1.4rem;
-    margin-top: -5rem;
-    z-index: 2;
+    z-index: 3;
+    margin-top: 0.5rem;
     background-color: white;
-    margin-top: ${props => props.marginTop};
+    margin-left: -8rem;
 `
 
 const SearchbarContainer = styled.div`
@@ -319,6 +345,7 @@ const HeaderContainer = styled.div`
     font-size: 1.3rem;
     padding: 1rem;
     color: #172A4E;
+    font-weight: 500;
     border-bottom: 1px solid #E0E4E7;
 `
 

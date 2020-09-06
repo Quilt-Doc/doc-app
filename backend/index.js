@@ -5,15 +5,17 @@ const bodyParser = require('body-parser');
 const logger = require('morgan');
 const session = require('express-session');
 
+const fs = require('fs');
+
 require('dotenv').config();
 
-// PASSPORT 
+// PASSPORT
 const passport = require("passport");
 const passportSetup = require("./passport_config/passport-setup");
 const cookieSession = require("cookie-session");
 const cookieParser = require("cookie-parser");
 
-
+var jwt = require('jsonwebtoken');
 
 const API_PORT = 3001;
 const app = express();
@@ -35,7 +37,10 @@ console.log(dbRoute);
 
 
 //mongoose.connect('mongodb://localhost:27017/myDatabase');
+
+
 mongoose.connect(dbRoute, { useNewUrlParser: true });
+
 
 let db = mongoose.connection;
 
@@ -68,12 +73,82 @@ app.use(cors());
 */
 app.use(
     cors({
-            origin: "http://localhost:3000", // allow server to accept request from different origin
+            // allow server to accept request from different origin
+            origin: true,
             methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
             credentials: true // allow session cookie from browser to pass through
         })
 );
-  
+
+const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect'];
+
+app.use(function (req, res, next) {
+  console.log('Time:', Date.now());
+  req.path = req.path.trim();
+  // console.log('REQ.PATH:' + req.path);
+
+  const authHeader = req.headers.authorization;
+
+  var isNonAuthPath = false;
+  var i;
+  for (i = 0; i < nonAuthPaths.length; i++) {
+    if (req.path.includes(nonAuthPaths[i])) {
+      isNonAuthPath = true;
+      break;
+    }
+  }
+
+  if (isNonAuthPath) {
+      console.log('nonAuth path detected');
+      next();
+      return;
+  }
+  else {
+      console.log('Auth path');
+  }
+
+  // console.log('Cookies: ');
+  // console.log(req.cookies);
+
+  // Get token
+  var token = undefined;
+  if (authHeader) {
+      token = authHeader.split(' ')[1];
+  }
+  else if (req.cookies['user-jwt']) {
+      token = req.cookies['user-jwt'];
+  }
+
+
+  else {
+      console.log('No JWT provided');
+      return res.status(401).json({
+          authenticated: false,
+          message: "user has not been authenticated"
+      });
+  }
+  // console.log('TOKEN: ', token);
+
+  var publicKey = fs.readFileSync('docapp-test-public.pem', 'utf8');
+  // console.log('publicKey: ', publicKey);
+  try {
+      console.log('About to decode JWT');
+      var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+      console.log('decoded JWT: ');
+      console.log(decoded);
+      req.tokenPayload = decoded;
+  }
+  catch(err) {
+      console.log('JWT Verify Failed Error: ');
+      console.log(err);
+      return res.status(403);
+  }
+
+  console.log('successfully authenticated');
+  next();
+});
+
+
 var routes = require("./routes/routes");
 app.use('/api', routes);
 

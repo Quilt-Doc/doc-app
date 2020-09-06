@@ -11,6 +11,11 @@ import { checkLogin } from '../actions/Auth_Actions'
 
 //components
 import Dashboard from './Dashboard';
+import CreateWorkspaceView from "../components/Workspace Page/CreateWorkspaceView";
+import OnboardingView from '../components/Onboarding Page/OnboardingView';
+import LoginView from '../components/Login Page/LoginView';
+
+import { api, apiEndpoint } from '../apis/api';
 
 //css -- needs to be thrown later
 
@@ -21,23 +26,18 @@ class Home extends React.Component {
     componentDidMount(){
         this.props.checkLogin()
     }
-    
+
     goLogin = () => {
-        window.open("http://localhost:3001/api/auth/github", "_self");
+        window.open(apiEndpoint + "/auth/github", "_self");
     }
 
     renderLoginModal() {
-        return (<LoginBoxContainer>
-                    <LoginBox>
-                        <LoginHeader>Sign in</LoginHeader>
-                        <LoginSubHeader>to continue with Docapp</LoginSubHeader>
-                        <LoginButton onClick = {() => this.goLogin()}><ion-icon style = {{'fontSize':'2.3rem', 'marginRight': '0.7rem',   'color': '#172A4E'}} name="logo-github"></ion-icon>Continue with Github</LoginButton>
-                    </LoginBox>
-                </LoginBoxContainer>)
+        return (<LoginView/>)
     }
 
     renderDashboard() {
-        return <Dashboard/>
+        return <Dashboard/>/* <OnboardingView/>*/
+        //<Dashboard/>return <CreateWorkspaceView/>/*<Dashboard/>*/
     }   
 
     render(){
@@ -65,22 +65,24 @@ const LoginBoxContainer = styled.div`
     overflow: hidden;
     width: 100vw;
     height: 100vh;
+    background-color: #262E49;
 `
 
 const LoginBox = styled.div`
     margin: 0 auto;
     margin-top: 18rem;
     margin-bottom: 50rem;
-    height: 50rem;
-    width: 45rem;
-    box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 10px;
+    height: 40rem;
+    width: 35rem;
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     display: flex;
     flex-direction: column;
     padding: 8rem;
-    
+    border-radius:0.4rem;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
-    color: #262626;
+    color: #172A4e;
     align-items: center;
+    background-color:white;
 `
 
 const LoginHeader = styled.div`
@@ -95,19 +97,20 @@ const LoginSubHeader = styled.div`
 `
 
 const LoginButton = styled.div`
-    margin-top: 8rem;
-    border: 1px solid #1BE5BE;
+    margin-top: 9rem;
+   
     color: #172A4E;
     display: flex;
     align-items: center;
-    padding: 1.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 1.5rem;
-
+    font-size: 1.4rem;
+    background-color: #313b5e;
     &:hover {
-        background-color:  #F7F9FB;
+        background-color:  #39466f;
     }
+    color: white;
 `
 
 

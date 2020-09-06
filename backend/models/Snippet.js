@@ -8,11 +8,11 @@ let snippetSchema = new Schema({
     annotation: {type: String, required: true},
     code: {type: [String], required: true},
     start: {type: Number, required: true},
-    status: {type: String, required: true},
-    workspace: {type: ObjectId, ref: 'Workspace'},
+    status: {type: String, required: true, enum: ['VALID', 'NEW_REGION','INVALID'], default: 'VALID'},
+    workspace: {type: ObjectId, ref: 'Workspace', required: true},
     reference: {type: ObjectId, ref: 'Reference', required: true},
     creator: {type: ObjectId, ref: 'User', required: true},
-    
+
     // DEPRECATED 
     startLine: {type: Number},
     repository: {type: ObjectId, ref: 'Repository'},

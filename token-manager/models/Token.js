@@ -6,8 +6,7 @@ var tokenSchema = new Schema({
     installationId: Number,
     value: String,
     expireTime: Number,
-    type: String,
-    status: {type: String, default: 'RESOLVED'}
+    type: {type: String, required: true, enum: ['APP', 'INSTALL']},
 });
 
 var Token = mongoose.model("Token", tokenSchema);
