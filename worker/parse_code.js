@@ -7,7 +7,7 @@ var DOMParser = require('xmldom').DOMParser;
 
 const fsPromises = require('fs').promises
 const apis = require('./apis/api');
-const api = apis.requestClient();
+const api = apis.requestGithubClient();
 
 
 const Reference = require('./models/Reference');

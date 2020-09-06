@@ -1,4 +1,4 @@
-const requestClient = () => {
+const requestGithubClient = () => {
     const axios = require('axios');
     return axios.create({
         baseURL: "https://api.github.com",
@@ -44,7 +44,7 @@ const requestSQSServiceObject = () => {
 }
 
 module.exports = {
-    requestClient,
+    requestGithubClient,
     requestBackendClient,
     requestSQSServiceObject
 }
