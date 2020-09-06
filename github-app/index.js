@@ -121,6 +121,23 @@ exports.handler = async (event) => {
         }        
     }
 
+    else if (githubAction == "check_suite") {
+      console.log('Check Suite Event');
+      var action = event.payload.action;
+
+      // Create new Check Run
+      if (action == "requested") {
+        console.log('Check Suite Event: ', event.payload);
+        //Can't do the following here, rather on the route: Check if branch matches the default_branch
+      }
+    
+    }
+
+    else if (githubAction == 'pull_request') {
+      console.log('Pull Request Event: ');
+      console.log(event.payload);
+    }
+
 
     let responseBody = {
         message: greeting,
