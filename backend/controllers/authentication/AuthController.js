@@ -1,5 +1,5 @@
 const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
-const client = require("../../apis/api").requestClient();
+const client = require("../../apis/api").requestGithubClient();
 
 const AuthRequest = require('../../models/authentication/AuthRequest');
 const User = require('../../models/authentication/User');
