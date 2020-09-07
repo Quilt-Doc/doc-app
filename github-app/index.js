@@ -51,14 +51,15 @@ exports.handler = async (event) => {
         // console.log('payload: ');
         // console.log(event.payload);
       
-        // var branch = event.payload.ref.split('/').pop();      
+        // var branch = event.payload.ref.split('/').pop();
+        var ref = event.body.ref;
         var baseCommit = event.body.before;
         var headCommit = event.body.after;
         var repositoryFullName = event.body.repository.full_name;
         var cloneUrl = event.body.repository.clone_url;
         var installationId = event.body.installation.id;
         // TODO: Call Repository Update Route Here
-        backendClient.post("/repositories/update", {eventType: 'push', headCommit, fullName: repositoryFullName, cloneUrl, installationId});
+        backendClient.post("/repositories/update", {eventType: 'push', ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId});
     }
 
     else if (githubAction == 'installation') {
