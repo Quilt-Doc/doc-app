@@ -1,7 +1,17 @@
 const requestBackendClient = () => {
 	const axios = require('axios');
+	var backendUrl;
+	if (process.env.DEBUG_BACKEND_API_URL) {
+	    backendUrl = process.env.DEBUG_BACKEND_API_URL;
+	}
+	else {
+	    backendUrl = process.env.BACKEND_API_URL;
+    }
+
+    console.log('backendUrl: ', backendUrl);
+
 	return axios.create({
-        baseURL: process.env.BACKEND_API_URL,
+        baseURL: backendUrl,
         headers: {
             "Authorization": `Bearer ${process.env.DEV_TOKEN}`
         }

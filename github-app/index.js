@@ -59,7 +59,7 @@ exports.handler = async (event) => {
         var cloneUrl = event.body.repository.clone_url;
         var installationId = event.body.installation.id;
         // TODO: Call Repository Update Route Here
-        backendClient.post("/repositories/update", {eventType: 'push', ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId});
+        await backendClient.post("/repositories/update", {eventType: 'push', ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId});
     }
 
     else if (githubAction == 'installation') {
@@ -76,7 +76,7 @@ exports.handler = async (event) => {
         if (action == 'created') {
         
             for (i = 0; i < repositories.length; i++) {
-              backendClient.post("/repositories/create", 
+              await backendClient.post("/repositories/create", 
                     {'fullName': repositories[i].full_name,
                     'installationId': installationId,
                     'icon': defaultIcon})
@@ -95,7 +95,7 @@ exports.handler = async (event) => {
         }
         */
     }
-    
+
     else if (githubAction == 'installation_repositories') {
         console.log('Installation repositories event');
         console.log(event.body);
@@ -107,16 +107,10 @@ exports.handler = async (event) => {
             var added = event.body.repositories_added;
 
             for(i = 0; i < added.length; i++) {
-              backendClient.post("/repositories/create", 
+              await backendClient.post("/repositories/create", 
                     {'fullName': added[i].full_name,
                      'installationId': installationId,
-                      'icon': 1})
-                .then(response => {
-                    console.log('Create Repository Success');
-                })
-                .catch(error => {
-                    console.log('Create Repository Error: ', error);
-                });
+                      'icon': 1});
             }
         }
 
