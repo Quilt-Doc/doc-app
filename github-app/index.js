@@ -31,6 +31,8 @@ exports.handler = async (event) => {
         console.error("Webhook Secret Hash Didn't Match");
         return response;
     }
+
+    event.body = JSON.parse(event.body);
     
     var githubAction = event.headers['x-github-event'];
     
@@ -44,26 +46,27 @@ exports.handler = async (event) => {
         event.payload.repository.name,
         event.payload.ref)
         */
-        console.log('Push event.payload: ');
-        console.log(event.payload);
+        console.log('Push event.body: ');
+        console.log(event.body);
         // console.log('payload: ');
         // console.log(event.payload);
       
-        // var branch = event.payload.ref.split('/').pop();
-    
-        var headCommit = event.payload['after'];
-        var repositoryFullName = event.payload['repository']['full_name'];
-        var cloneUrl = event.payload['repository']['clone_url'];
-        var installationId = event.payload['installation']['id'];
-       // TODO: Call Repository Update Route Here
+        // var branch = event.payload.ref.split('/').pop();      
+        var baseCommit = event.body.before;
+        var headCommit = event.body.after;
+        var repositoryFullName = event.body.repository.full_name;
+        var cloneUrl = event.body.repository.clone_url;
+        var installationId = event.body.installation.id;
+        // TODO: Call Repository Update Route Here
+        backendClient.post("/repositories/update", {eventType: 'push', headCommit, fullName: repositoryFullName, cloneUrl, installationId});
     }
-    
+
     else if (githubAction == 'installation') {
         console.log('Installation Event: ');
-        console.log(event.payload);
+        console.log(event.body);
 
-        var installatonId = event.payload.installation.id;
-        var action = event.payload.action;
+        var installatonId = event.body.installation.id;
+        var action = event.body.action;
         var repositories = action.repositories;
         
         var defaultIcon = 1;
@@ -94,13 +97,13 @@ exports.handler = async (event) => {
     
     else if (githubAction == 'installation_repositories') {
         console.log('Installation repositories event');
-        console.log(event.payload);
-        var action = event.payload.action;
-        var installationId = event.payload.installation.id;
+        console.log(event.body);
+        var action = event.body.action;
+        var installationId = event.body.installation.id;
         console.log('Installation Id: ', installationId);
 
         if (action == 'added') {
-            var added = event.payload.repositories_added;
+            var added = event.body.repositories_added;
 
             for(i = 0; i < added.length; i++) {
               backendClient.post("/repositories/create", 
@@ -117,17 +120,20 @@ exports.handler = async (event) => {
         }
 
         else if (action == 'removed') {
-            var removed = event.payload.repositories_removed;
+            var removed = event.body.repositories_removed;
         }        
     }
 
     else if (githubAction == "check_suite") {
-      console.log('Check Suite Event');
-      var action = event.payload.action;
+
+      var action = event.body.action;
+      console.log('Check Suite Event Action: ', action);
+
 
       // Create new Check Run
       if (action == "requested") {
-        console.log('Check Suite Event: ', event.payload);
+        console.log('Check Suite Event Head Sha: ', event.body.check_suite.head_commit);
+        console.log('Check Suite Event Head Commit Message: ', event.body.check_suite.head_commit.message);
         //Can't do the following here, rather on the route: Check if branch matches the default_branch
       }
     
@@ -135,14 +141,15 @@ exports.handler = async (event) => {
 
     else if (githubAction == 'pull_request') {
       console.log('Pull Request Event: ');
-      console.log(event.payload);
+      console.log(event.body);
     }
 
 
     let responseBody = {
-        message: greeting,
-        input: event
+        message: "200 OK",
     };
+
+    let responseCode = 200;
 
     // The output from a Lambda proxy integration must be 
     // in the following JSON object. The 'headers' property 
