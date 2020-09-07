@@ -331,7 +331,7 @@ updateRepository = async (req, res) => {
     // This conditional determines if we run snippet job and outdate old treeReferences
     if (eventType == 'push') {
         if (typeof headCommit == 'undefined' || headCommit == null) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
-        if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});    
+        if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});
 
 
         var repository = await Repository.find({fullName, installationId})
