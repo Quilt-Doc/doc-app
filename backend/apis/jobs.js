@@ -3,6 +3,8 @@ const sqs = apis.requestSQSServiceObject();
 
 const constants = require('../constants/index');
 
+const queueUrl = process.env.JOB_QUEUE_URL;
+
 // {installationId: , cloneUrl, jobType}
 const dispatchParseDoxygenJob = async (runDoxygenData, log) => {
 
