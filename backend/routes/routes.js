@@ -108,7 +108,7 @@ const repository_controller = require('../controllers/RepositoryController');
 // update - dev role only
 
 router.post('/repositories/create', authorizationMiddleware.repositoryMiddleware, repository_controller.createRepository); // DONE
-router.post('/repositories/update/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.updateRepository); // DONE
+router.post('/repositories/update', authorizationMiddleware.repositoryMiddleware, repository_controller.updateRepository); // DONE
 
 // User accessible
 
