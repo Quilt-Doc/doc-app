@@ -327,6 +327,7 @@ updateRepository = async (req, res) => {
 
     // This conditional determines if we run snippet job and outdate old treeReferences
     if (eventType == 'push') {
+        console.log('Updating repository on push');
         if (typeof headCommit == 'undefined' || headCommit == null) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
         if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});    
 
@@ -363,6 +364,7 @@ updateRepository = async (req, res) => {
 
         repository.updateReferencesJobStatus = jobs.JOB_STATUS_RUNNING;
         repository.save();
+        console.log('Calling update References Job');
         jobs.dispatchUpdateReferencesJob(runReferencesData, log);
 
 

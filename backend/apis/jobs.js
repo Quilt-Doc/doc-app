@@ -145,9 +145,12 @@ const dispatchUpdateSnippetsJob = async (runSnippetData, log) => {
     };
     if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | MessageDeduplicationId: ${timestamp}`);
     if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Push | MessageGroupId: updateReferences_${timestamp}`);
+    
     // Send the refs data to the SQS queue
     let sendSqsMessage = sqs.sendMessage(sqsReferenceData).promise();
-  
+
+    console.log('Sending SQS Message');
+
     sendSqsMessage.then((data) => {
   
         if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | SUCCESS: ${data.MessageId}`);

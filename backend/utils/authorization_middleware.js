@@ -194,6 +194,7 @@ const repositoryMiddleware = async (req, res, next) => {
         requestedPath.includes('/repositories/update')) {
         
         if (requesterRole == 'dev') {
+            console.log('repositoryMiddleware dev token');
             return next();
         }
         else {
@@ -207,6 +208,7 @@ const repositoryMiddleware = async (req, res, next) => {
     // poll and validate are temporarily enabled for everything
     if (requestedPath.includes('/repositories/validate') || (requestedPath.includes('/repositories') && requestedPath.includes('/poll'))) {
         if (requesterRole == 'dev') {
+            console.log('repositoryMiddleware dev token');
             return next();
         }
         // TODO: Fix temporarily allowing everyone to call this.
