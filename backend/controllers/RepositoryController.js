@@ -319,7 +319,7 @@ pollRepositories = async (req, res) => {
 }
 
 updateRepository = async (req, res) => {
-    const {fullName, installationId, eventType, headCommit, cloneUrl} = req.body;
+    const {fullName, ref, installationId, eventType, headCommit, cloneUrl} = req.body;
 
     if (typeof eventType == 'undefined' || eventType !== null) return res.json({success: false, error: 'updateRepository: no eventType provided'});
     if (typeof fullName == 'undefined' || fullName !== null) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
