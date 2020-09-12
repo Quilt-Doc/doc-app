@@ -47,8 +47,8 @@ let db = mongoose.connection;
 db.once('open', () => console.log('connected to the database'));
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ limit: '20mb', extended: false }));
+app.use(bodyParser.json({ limit: '20mb'}));
 app.use(logger('dev'));
 
 // handle cookies 
@@ -78,6 +78,7 @@ app.use(
             methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
             credentials: true // allow session cookie from browser to pass through
         })
+        
 );
 
 const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect'];

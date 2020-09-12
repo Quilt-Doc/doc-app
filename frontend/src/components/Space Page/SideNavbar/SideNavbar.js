@@ -116,7 +116,7 @@ class SideNavbar extends React.Component {
             <SideNavbarContainer id = {"sidenavbar"}>
                 
                  <RepositoryDetail>
-                    <RepositoryIcon>PS</RepositoryIcon>
+                    <RepositoryIcon>P</RepositoryIcon>
                     <RepositoryName>Pegasus</RepositoryName>
                 </RepositoryDetail>
                 <Section>
@@ -398,11 +398,11 @@ const IconBorder2 = styled.div`
 `
 
 const SideNavbarContainer = styled.div`
-  
+    /*border-top: 2px solid #252832;*/
     background-color:#2B2F3A; 
     display: flex;
     flex-direction: column;
-    padding-top: 2rem;
+    padding-top: 1rem;
     color: white;
     
     min-width: 25rem;
@@ -582,8 +582,8 @@ const RepositoryIcon = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 3.5rem;
-    height: 3.5rem;
+    height: 2.9rem;
+    width: 2.9rem;
     background-color: #5B75E6;
     border-radius: 0.3rem;
     margin-right: 1.3rem;

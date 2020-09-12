@@ -21,6 +21,7 @@ import { CSSTransition } from 'react-transition-group';
 //icons
 import {RiGitRepositoryLine} from 'react-icons/ri'
 import {FiFileText, FiChevronDown} from 'react-icons/fi'
+import {VscRepo} from 'react-icons/vsc';
 
 //styles
 import styled from "styled-components";
@@ -99,29 +100,35 @@ class RepositoryMenu extends React.Component {
        
     }
 
+
+    flip = () => {
+        if (this.props.form && this.addButton){
+            let rect = this.addButton.getBoundingClientRect()
+            if (rect.top + 350 > window.innerHeight){
+				return window.innerHeight - rect.top + 10;
+            }
+        }
+    }
+
     render() {
+        let repoName = this.props.form ? this.props.formRepository ? this.props.formRepository.fullName.split("/")[1] : "Select Repository" :
+            this.props.document.repository ? this.renderFullName() : "Select Repository"
         return(
             <MenuContainer >
-                {!this.props.form ?
-                    <RepositoryButton onClick = {(e) => {this.openMenu(e)}}> 
-                        <RiGitRepositoryLine style = {
-                                        { marginRight: "0.65rem", fontSize: "1.7rem"}
-                        }/>
-                        {this.props.document.repository ? this.renderFullName() : "Select repository"}
-                        <FiChevronDown
-                            style = {{  fontSize: "1.3rem",
-                                        marginTop: "0.25rem",
-                                        marginLeft: "0.8rem"}} 
-                        /> 
-                    </RepositoryButton>
-                    :
-                    <Provider onClick = {(e) => {this.openMenu(e)}}>
-                        <RiGitRepositoryLine style = {{marginTop: "-0.15rem", marginRight: "1rem"}}/>
-                        {this.props.formRepository ? this.props.formRepository.fullName.split("/")[1] : "None Selected"}
-                        <FiChevronDown style = {{ marginLeft: "1rem"}}/>
-                    </Provider>
-                }
-                
+                 <MenuButton  active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
+                        <IconBorder>    
+                            <VscRepo/>
+                        </IconBorder>
+                    
+                        {repoName}
+                        <FiChevronDown 
+                                style = {{
+                                    marginLeft: "0.5rem",
+                                    marginTop: "0.3rem",
+                                    fontSize: "1.45rem"
+                                }}
+                            />
+                 </MenuButton>
                 <CSSTransition
                     in={this.state.open}
                     unmountOnExit
@@ -130,7 +137,7 @@ class RepositoryMenu extends React.Component {
                     timeout = {150}
                     classNames = "dropmenu"
                 >
-                    <Container marginTop = {this.props.form ? "-3rem" : ""}  ref = {node => this.node = node}>
+                    <Container  flip = {this.flip()}   ref = {node => this.node = node}>
                         <HeaderContainer>Select a repository</HeaderContainer>
                         <ListContainer>
                             {this.renderListItems()}
@@ -158,6 +165,60 @@ const mapStateToProps = (state, ownProps) => {
 
 
 export default withRouter(connect( mapStateToProps, {editDocument} )(RepositoryMenu));
+
+const IconBorder = styled.div`
+    font-size: 1.8rem;
+    margin-right: 0.7rem;
+    width: 2rem;
+    display: flex;
+    align-items: center;
+    margin-top: 0.1rem;
+`
+
+const MenuButton = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 1.4rem;
+    padding: 0rem 1.5rem;
+    border-radius: 0.4rem;
+    height: 3.5rem;
+    font-weight: 500;
+    display: inline-flex;
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    &:hover {
+        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
+    }
+    cursor: pointer;
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
+`
+
+const Title = styled.div`
+    font-size: 1.3rem;
+    margin-right: 0.3rem;
+    font-weight: 500;
+`
+
+
+
+const PageIcon = styled.div`
+    margin-right: 1.5rem;
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+   
+   /*color: white;*/
+    /*background-color: #4c5367;*/
+   /* opacity: 0.8;*/
+   padding: 0.5rem 1rem;
+    &:hover {
+        background-color: #F4F4F6;
+        
+    }
+    cursor: pointer;
+    border-radius: 0.3rem;
+    background-color: ${props => props.active ? "#F4F4F6" : ""};
+`
+
 
 const Provider = styled.div`
     background-color: #363b49;
@@ -221,6 +282,7 @@ const ModalToolbarButton = styled.div`
 `
 
 const MenuContainer = styled.div`
+    
 `
 
 
@@ -246,11 +308,12 @@ const Container = styled.div`
     box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
     font-size: 1.4rem;
-    margin-top: -1rem;
+    margin-top: 0.5rem;
     z-index: 2;
     background-color: white;
     border-radius: 0.2rem;
-    margin-top: ${props => props.marginTop};
+    bottom: ${props => `${props.flip}px`};
+    margin-top: ${props => props.flip ? "" : '0.5rem'};
 `
 
 const SearchbarContainer = styled.div`

@@ -178,9 +178,15 @@ class DocumentMenu extends React.Component {
     render() {
         let setIds = this.props.setDocuments.map(doc => doc._id)
         return(
-            <MenuContainer  >
-                <PageIcon active = {this.state.open} onClick = {(e) => {this.openMenu()}} style = {{marginLeft: "auto"}}>
-                    <RiStackLine style = {{marginRight: "0.5rem"}}/>
+            <MenuContainer  
+                mLeft = {this.props.mLeft}
+            >
+                <PageIcon 
+                    
+                    active = {this.state.open} 
+                    onClick = {(e) => {this.openMenu()}} 
+                >
+                    <RiStackLine style = {{fontSize: "1.5rem", marginRight: "0.5rem"}}/>
                     <Title>Attach Information</Title>
                 </PageIcon>
 
@@ -240,8 +246,9 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, { attachReference, removeReference, retrieveChildren })(DocumentMenu));
 
 const Title = styled.div`
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     margin-right: 0.3rem;
+    font-weight: 400;
 `
 
 const PageIcon = styled.div`
@@ -249,21 +256,23 @@ const PageIcon = styled.div`
     display: flex;
     align-items: center;
     font-size: 1.5rem;
-    margin-left: auto;
-
+    opacity: ${props => props.active ? 1 : 0.9};
     padding: 0.5rem 1rem;
     &:hover {
-        background-color: #F4F4F6;
+        background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#F4F4F6"};
         
     }
-    background-color: ${props => props.active ? '#F4F4F6' : ''};
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
     cursor: pointer;
     border-radius: 0.3rem;
+    margin-left: auto;
+    /*
+    margin-left: ${props => props.mLeft ? props.mLeft : "0rem"};*/
 `
 
 
 const MenuContainer = styled.div`
-    margin-left: auto;
+    margin-left: ${props => props.mLeft ? props.mLeft : "0rem"};
 `
 
 const AddButton = styled.div`

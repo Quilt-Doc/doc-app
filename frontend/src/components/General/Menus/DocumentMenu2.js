@@ -22,7 +22,7 @@ import { moveDocument, retrieveChildren } from '../../../actions/Document_Action
 import MoonLoader from "react-spinners/MoonLoader";
 
 //icons
-import {RiFileTextLine} from 'react-icons/ri'
+import {RiFileTextLine, RiFileList2Fill} from 'react-icons/ri'
 import {FiChevronDown} from 'react-icons/fi'
 
 class DocumentMenu2 extends React.Component {
@@ -188,17 +188,92 @@ class DocumentMenu2 extends React.Component {
             position: -1})
     }
 
+    renderFlip = () => {
+        if (this.props.form && this.addButton){
+            let rect = this.addButton.getBoundingClientRect()
+            if (rect.top + 350 > window.innerHeight){
+				return [true, window.innerHeight - rect.top + 10];
+            } else {
+                return [false, rect.top + rect.height + 5];
+            }
+        }
+        return [false, 0]
+    }
+
+    renderListContent = (flip) => {
+        if (flip[0]) {
+            return(
+                <>
+                    <ListContainer>
+                        {this.state.loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
+                    </ListContainer>
+                    <SearchbarContainer>
+                        <SearchbarWrapper 
+                            backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
+                            border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
+                        >
+                            <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
+                            <Searchbar 
+                                onFocus = {() => {this.setState({focused: true})}} 
+                                onBlur = {() => {this.setState({focused: false})}} 
+                                onKeyDown = {(e) => this.setPosition(e)}  
+                                onChange = {(e) => {this.searchDocuments(e)}} 
+                                value = {this.state.search}
+                                autoFocus 
+                                placeholder = {"Find a document..."}/>
+                        </SearchbarWrapper>
+                    </SearchbarContainer>
+                    <HeaderContainer>Choose Location</HeaderContainer>
+                </>
+            )
+        } else {
+            return (
+                <>
+                    <HeaderContainer>Choose Location</HeaderContainer>
+                        <SearchbarContainer>
+                            <SearchbarWrapper 
+                                backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
+                                border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
+                            >
+                                <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
+                                <Searchbar 
+                                    onFocus = {() => {this.setState({focused: true})}} 
+                                    onBlur = {() => {this.setState({focused: false})}} 
+                                    onKeyDown = {(e) => this.setPosition(e)}  
+                                    onChange = {(e) => {this.searchDocuments(e)}} 
+                                    value = {this.state.search}
+                                    autoFocus 
+                                    placeholder = {"Find a document..."}/>
+                            </SearchbarWrapper>
+                        </SearchbarContainer>
+                    <ListContainer>
+                        {this.state.loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
+                    </ListContainer>
+                </>
+            )
+        }
+    }
     
     render() {
-        console.log("PARENT", this.props.parent)
+        let flip = this.renderFlip()
         return (
             <MenuContainer  >
                 {this.props.form ?
-                    <Provider ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
-                        <RiFileTextLine style = {{marginTop: "-0.15rem", marginRight: "1rem"}}/>
-                        {this.props.parent ? this.props.parent.title : "None Selected"}
-                        <FiChevronDown style = {{ marginLeft: "1rem"}}/>
-                    </Provider> :
+                     <MenuButton active = {this.state.open} onClick = {() => this.openMenu()} ref = {addButton => this.addButton = addButton}>
+                        <IconBorder>
+                            <RiFileList2Fill/>
+                        </IconBorder>
+                        
+                        {this.props.parent ? this.props.parent.title : "Select Location"}
+                        <FiChevronDown 
+                                style = {{
+                                    marginLeft: "0.5rem",
+                                    marginTop: "0.3rem",
+                                    fontSize: "1.45rem"
+                                }}
+                            />
+                    </MenuButton>
+                        :
                     <Provider ref = {addButton => this.addButton = addButton} onClick = {() => this.openMenu()}>
                         <RiFileTextLine style = {{marginTop: "-0.15rem", marginRight: "1rem"}}/>
                             None Selected
@@ -214,28 +289,8 @@ class DocumentMenu2 extends React.Component {
                         timeout = {150}
                         classNames = "dropmenu"
                     >
-                        <Container marginTop = {this.renderMarginTop()} ref = {node => this.node = node}>
-                            <HeaderContainer>Choose Location</HeaderContainer>
-                            <SearchbarContainer>
-                                <SearchbarWrapper 
-                                    backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
-                                    border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
-                                >
-                                    <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
-                                    <Searchbar 
-                                        onFocus = {() => {this.setState({focused: true})}} 
-                                        onBlur = {() => {this.setState({focused: false})}} 
-                                        onKeyDown = {(e) => this.setPosition(e)}  
-                                        onChange = {(e) => {this.searchDocuments(e)}} 
-                                        value = {this.state.search}
-                                        autoFocus 
-                                        placeholder = {"Find a document..."}/>
-                                </SearchbarWrapper>
-                            </SearchbarContainer>
-                            <ListContainer>
-                                {this.state.loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
-                            </ListContainer>
-                            
+                        <Container flip = {flip} ref = {node => this.node = node}>
+                            {this.renderListContent(flip)}
                         </Container>
                     </CSSTransition>
                 }
@@ -255,6 +310,31 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { moveDocument, retrieveChildren })(DocumentMenu2));
 
+const IconBorder = styled.div`
+    font-size: 1.8rem;
+    margin-right: 0.7rem;
+    color: #2684FF;
+    width: 2rem;
+    display: flex;
+    align-items: center;
+`
+
+const MenuButton = styled.div`
+    display: flex;
+    align-items: center;
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
+    font-size: 1.4rem;
+    padding: 0rem 1.5rem;
+    border-radius: 0.4rem;
+    height: 3.5rem;
+    font-weight: 500;
+    display: inline-flex;
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    &:hover {
+        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
+    }
+    cursor: pointer;
+`
 
 const Provider = styled.div`
     background-color: #363b49;
@@ -325,14 +405,14 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     position: absolute;
     border-radius: 0.3rem;
     font-size: 1.4rem;
-    margin-top: -5rem;
     z-index: 2;
     background-color: white;
-    margin-top: ${props => props.marginTop};
+    bottom: ${props => props.flip[0] ? `${props.flip[1]}px` : ""};
+    top: ${props => !props.flip[0] ? `${props.flip[1]}px` : ""};
 `
 
 const SearchbarContainer = styled.div`
@@ -340,6 +420,7 @@ const SearchbarContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    border-top: 1px solid #E0E4E7;
     border-bottom:  1px solid #E0E4E7;
 `
 
@@ -381,7 +462,6 @@ const HeaderContainer = styled.div`
     font-size: 1.3rem;
     padding: 1rem;
     color: #172A4E;
-    border-bottom: 1px solid #E0E4E7;
     font-weight: 500;
 `
 

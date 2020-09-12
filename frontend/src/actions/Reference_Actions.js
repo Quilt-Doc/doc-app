@@ -42,9 +42,6 @@ export const removeTag = (id, tagId) => async dispatch => {
 export const getContents = (formValues) => async () => {
     // const response = await api.post('/references/get_contents', formValues);
     const response = await api.post('/repositories/get_file', formValues);
-    console.log('getContents Response: ');
-    console.log(response.data.error);
-    console.log(response.data.fileContents);
     return response.data.fileContents;
 }
 

@@ -12,10 +12,12 @@ import SideNavbar from './SideNavbar/SideNavbar';
 import RequestView from './Request Page/RequestView';
 import InsightsView from './Insights Page/InsightsView';
 import CodeView from './Code Editing Page/CodeView';
-import DocumentModal from './Document Creation Page/DocumentModal';
+import DocumentModal from './Document Modal Page/DocumentModal';
 import RequestModal from './Request Page/RequestModal';
 import RepositoryCoverageView from './Repository Coverage Page/RepositoryCoverageView';
 import TopNavbar from './TopNavbar';
+import LinkageCreate from './Linkage Page/LinkageCreate';
+import LinkageView from './Linkage Page/LinkageView';
 import { CSSTransition } from 'react-transition-group';
 
 //react-router
@@ -60,18 +62,29 @@ class SpaceView extends React.Component {
     checkDoc = () => {
         let search = history.location.search
         let params = new URLSearchParams(search)
-        let documentId = params.get('document') 
-        if (documentId !== null && documentId !== undefined){
+        let documentId = params.get('document');
+        let creating =  params.get('create_document');
+        if (documentId !== null && documentId !== undefined || creating !== null && creating !== undefined ){
             return true
         }
         return false
     }   
 
-    checkRequest = () => {
+    checkLinkageCreate = () => {
         let search = history.location.search
         let params = new URLSearchParams(search)
-        let requestId = params.get('request') 
-        if (requestId !== null && requestId !== undefined){
+        let creatingLinkage = params.get('create_linkage') 
+        if (creatingLinkage !== null && creatingLinkage !== undefined){
+            return true
+        }
+        return false
+    }
+
+    checkLinkage = ()  => {
+        let search = history.location.search
+        let params = new URLSearchParams(search)
+        let linkage = params.get('linkage') 
+        if (linkage !== null && linkage !== undefined){
             return true
         }
         return false
@@ -89,21 +102,26 @@ class SpaceView extends React.Component {
                 >
                     <Container>
                         <SideNavbar/>
+                                <div style = {{width: "100%"}}>
 
-                                <RightView id = {"rightView"} ref = {this.rightViewRef} onScroll = {this.onScroll}>
-                                    <Switch history = {history}>
-                                        <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
-                                        <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { CodeView } />
-                                        <Route path = "/workspaces/:workspaceId/document/:documentId" component = { TextEditorView } />
-                                        <Route path = "/workspaces/:workspaceId/insights" component = { InsightsView } />
-                                        <Route path = "/workspaces/:workspaceId/coverage" component = { RepositoryCoverageView } />
-                                        <Route path = "/workspaces/:workspaceId/connect" component = { ConnectView } />
-                                    </Switch>
-                                </RightView>
+                                    <RightView id = {"rightView"} ref = {this.rightViewRef} onScroll = {this.onScroll}>
+                                        <Switch history = {history}>
+                                            <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryView } />
+                                            <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { CodeView } />
+                                            <Route path = "/workspaces/:workspaceId/document/:documentId" component = { TextEditorView } />
+                                            <Route path = "/workspaces/:workspaceId/insights" component = { InsightsView } />
+                                            <Route path = "/workspaces/:workspaceId/coverage" component = { RepositoryCoverageView } />
+                                            <Route path = "/workspaces/:workspaceId/connect" component = { ConnectView } />
+                                        </Switch>
+                                    </RightView>
+                                </div>
+                              
                        
                     </Container>
                     </CSSTransition>
-                    {this.checkDoc() ? <DocumentModal/> : this.checkRequest() ? <RequestModal/> : <></>}
+                    {this.checkDoc() ? <DocumentModal/> : 
+                        this.checkLinkage() ? <LinkageView/> :
+                        this.checkLinkageCreate() ? <LinkageCreate/> : <></>}
                 </>
             );
         } return null
@@ -199,7 +217,7 @@ const RightView = styled.div`
     overflow-y: scroll;
     height: calc(100vh - 5.5rem);
     z-index: 1;
-  
+    background-color: #f7f9fb;
 `
 
 

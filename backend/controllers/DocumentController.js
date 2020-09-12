@@ -34,7 +34,6 @@ createDocument = async (req, res) => {
         title, root, markup, tagIds, parentId/*, order*/ } = req.body;
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
     if (!checkValid(workspaceId)) return res.json({success: false, error: "createDocument error: no workspaceId provided.", result: null});
     if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
     // if (!checkValid(order)) return res.json({success: false, error: "createDocument error: no order provided.", result: null});
@@ -224,11 +223,13 @@ getParent = (req, res) => {
 
 editDocument = (req, res) => {
     const { id } = req.params;
-    const { title, markup, repositoryId } = req.body;
+    const { title, markup, repositoryId, image, content } = req.body;
     let update = {};
     if (title) update.title = title;
     if (markup) update.markup = markup;
-    if (repositoryId) update.repository = repositoryId
+    if (repositoryId) update.repository = repositoryId;
+    if (image) update.image = image;
+    if (content) update.content = content;
     Document.findByIdAndUpdate(id, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace')
@@ -308,7 +309,7 @@ deleteDocument = async (req, res) => {
 }
 
 renameDocument = async (req, res) => {
-    const { documentId, title } = req.body;
+    const { documentId, workspaceId, title } = req.body;
     if (!checkValid(documentId)) return res.json({success: false, error: 'renameDocument: error no documentId provided.', result: null});
     if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no name provided', result: null});
     var oldDocument = await Document.findById(documentId);
@@ -764,7 +765,6 @@ retrieveDocuments = (req, res) => {
     if (checkValid(childrenIds)) query.where('_id').in(childrenIds);
     if (checkValid(tagIds)) query.where('tags').all(tagIds);
     if (checkValid(limit)) query.limit(Number(limit));
-    if (checkValid(skip)) query.skip(Number(skip));
     if (checkValid(skip)) query.skip(Number(skip));
     if (checkValid(sort)) query.sort(sort);
     query.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags').exec((err, documents) => {

@@ -282,19 +282,20 @@ const RightContainer = styled.div`
 `
 
 
+
 const Tag = styled.div`
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     color: ${props => props.color};
-    padding: 0.2rem 0.8rem;
-    background-color: ${props => chroma(props.color).alpha(0.15)};
+    height: 2.1rem;
+    padding: 0rem 0.7rem;
+    background-color: ${props => chroma(props.color).alpha(0.13)};
     border: 1px solid ${props => props.color};
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.3rem;
-	margin-right: 1.35rem;
+    border-radius: 0.25rem;
+	margin-right: 1.3rem;
     font-weight: 500;
-    
 `
 
 const ViewBorder = styled.div`
@@ -533,7 +534,7 @@ const Check_Box = styled.div`
     height: 1.6rem;
     width: 1.6rem;
     background-color: ${props => props.backgroundColor};
-    border: 1.5px solid ${props => props.border_color};
+    border: 2px solid ${props => props.border_color};
     border-radius: 0.2rem;
     display: flex;
     justify-content: center;

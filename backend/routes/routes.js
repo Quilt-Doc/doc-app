@@ -223,6 +223,17 @@ router.post('/semantic/callbacks/retrieve', semantic_controller.acquireCallbacks
 const token_controller = require('../controllers/TokenController');
 router.post('/tokens/create', token_controller.createToken);
 
+//linkage routes
+const linkage_controller = require('../controllers/LinkageController');
+router.post('/linkages/create', linkage_controller.createLinkage);
+router.get('/linkages/get/:linkageId', linkage_controller.getLinkage);
+router.put('/linkages/edit/:linkageId', linkage_controller.editLinkage);
+router.delete('/linkages/delete/:linkageId', linkage_controller.deleteLinkage);
+router.post('/linkages/retrieve', linkage_controller.retrieveLinkages);
+router.put('/linkages/attach_reference/:linkageId', linkage_controller.attachLinkageReference);
+router.put('/linkages/remove_reference/:linkageId', linkage_controller.removeLinkageReference);
+router.put('/linkages/attach_tag/:linkageId', linkage_controller.attachLinkageTag);
+router.put('/linkages/remove_tag/:linkageId', linkage_controller.removeLinkageTag);
 
 
 module.exports = router;

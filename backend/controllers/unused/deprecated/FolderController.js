@@ -3,6 +3,91 @@ const Folder = require('../../../models/Folder');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+
+searchWorkspace2 = async (req, res) => {
+    const { workspaceId, userQuery, repositoryId, tagIds, returnLinkages,
+            returnReferences, returnDocuments, requestedPageSize, requestedPageNumber, sort, mix } = req.body;
+
+    // for the `returnReferences`, `returnDocuments` params, put a string "true" if you want to do it
+    if (!checkValid(workspaceId)) return res.json({success: false, result: null, error: 'searchWorkspace: error no workspaceId provided.'});
+    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'searchWorkspace: error no userQuery provided.'});
+    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnReferences provided.'});
+    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnDocuments provided.'});
+    if (!checkValid(returnLinkages)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnLinkages provided.'});
+
+    var searchResults = {};
+
+    var pageSize = checkValid(requestedPageSize) ? parseInt(requestedPageSize) : PAGE_SIZE;
+    var pageNumber = checkValid(requestedPageNumber) ? parseInt(requestedPageNumber) : 0;
+
+    var re = new RegExp(escapeRegExp(userQuery), 'i');
+
+    var documentFilter;
+    if (tagIds) {
+        documentFilter = {title: {$regex: re}, workspace: workspaceId, tags: {$in: tagIds.map(tag => ObjectId(tag))}};
+    }
+    else {
+        documentFilter = {title: {$regex: re}, workspace: workspaceId};
+    }
+
+    let linkageFilter;
+    if (tagIds) {
+        linkageFilter = {title: {$regex: re}, workspace: workspaceId, tags: {$in: tagIds.map(tag => ObjectId(tag))}};
+    }
+    else {
+        linkageFilter = {title: {$regex: re}, workspace: workspaceId};
+    }
+
+    var referenceFilter;
+
+    if (!repositoryId) {
+        var searchableRepositories = await Workspace.findById(workspaceId);
+        searchableRepositories = searchableRepositories.repositories.map(repositoryObj => repositoryObj._id.toString());
+
+        referenceFilter = {
+            repository: { $in:  searchableRepositories.map(obj => ObjectId(obj))},
+            name: { $regex: re}
+        };
+    }
+
+    else {
+        referenceFilter = {
+            repository: ObjectId(repositoryId),
+            name: { $regex: re}
+        };
+    }
+
+    let documents = [];
+    let references = [];
+    let linkages = [];
+
+    if (returnDocuments === true) {
+        documents = await Document.find(documentFilter)
+            .skip(pageNumber*pageSize).limit(pageSize).sort(sort)
+            .populate('parent').populate('author').populate('workspace')
+            .populate('repository').populate('references')
+            .populate('tags').exec();
+    }
+
+    if (returnReferences === true) {
+        references = await Reference.find(referenceFilter).skip(pageNumber*pageSize).sort(sort)
+            .limit(pageSize).populate('repository').populate('tags').exec();
+    }
+  
+    if (returnLinkages === true) {
+        linkages = await Linkage.find(linkageFilter).skip(pageNumber*pageSize).sort(sort)
+            .limit(pageSize).populate('references').populate('workspace').populate('repository').populate('creator').exec();
+    }
+
+    if (mix) {
+        searchResults = [...documents, ...linkages, ...references];
+    } else {
+        searchResults = {documents, references, linkages};
+    }
+    return res.json({success: true, result: searchResults});
+}
+
+
 createFolder = (req, res) => {
 
     const {workspaceId, creatorId, parentId, title, repositoryId, description, canWrite, canRead, debugId} = req.body;

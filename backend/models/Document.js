@@ -7,6 +7,7 @@ let documentSchema = new Schema({
     author: {type: ObjectId, ref: 'User', required: true},
     title: String,
     markup: String,
+    content: String,
     references: [{type: ObjectId, ref: 'Reference'}],
     workspace: {type: ObjectId, ref: 'Workspace'},
     repository: {type: ObjectId, ref: 'Repository'},
@@ -16,7 +17,7 @@ let documentSchema = new Schema({
     parent: {type: ObjectId, ref: 'Document'},
     path: {type: String, default: ''},
     order: Number,
-
+    image: String,
     //NOT USED
     uploadFiles: [{type: ObjectId, ref: 'UploadFile'}],
     canWrite: [{type: ObjectId, ref: 'User'}],

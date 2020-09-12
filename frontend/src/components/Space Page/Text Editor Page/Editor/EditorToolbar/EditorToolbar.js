@@ -132,8 +132,6 @@ export default EditorToolbar;
 
 
 const ToolbarContainer = styled.div`
-    position: sticky; 
-    top: 0;
     height: 6rem;
     align-items: center;
     z-index:2;

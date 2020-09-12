@@ -12,6 +12,8 @@ import requestReducer from './Request_Reducer';
 import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
+import searchReducer from './Search_Reducer';
+
 
 import uiReducer from './UI_Reducer';
 
@@ -20,6 +22,8 @@ import authReducer from './Auth_Reducer';
 import selectedReducer from './Selected_Reducer';
 
 import semanticReducer from './Semantic_Reducer';
+
+import linkageReducer from './Linkage_Reducer';
 
 export default combineReducers({
     workspaces: workspaceReducer,
@@ -37,5 +41,7 @@ export default combineReducers({
     form: formReducer,
     auth: authReducer,
     ui: uiReducer,
-    callbacks: semanticReducer
+    callbacks: semanticReducer,
+    searchResults: searchReducer,
+    linkages: linkageReducer
 });

@@ -44,10 +44,10 @@ class TextEditorView extends React.Component {
     }
 
     loadResources(){
+       // this.props.setLoading(true)
         let search = history.location.search
         let params = new URLSearchParams(search)
         let documentId = params.get('document')
-
         this.props.getDocument(documentId).then((document) =>{
             let markup = [{
                 type: 'paragraph',
@@ -64,12 +64,12 @@ class TextEditorView extends React.Component {
             if (document.title) {
                 title = document.title
             }
-            console.log("MARKUP", markup);
             this.setState({markup, title})
             
             window.addEventListener('beforeunload', this.saveMarkup, false);
             this.setValue = this.setValue.bind(this)
             this.setState({loaded: true})
+            this.props.setLoading(false)
         })
     }
 
@@ -110,7 +110,6 @@ class TextEditorView extends React.Component {
     
     render() {
         if (this.state.loaded) {
-            console.log(this.state.markup)
             return (
                     <>
                         <ModalEditor>

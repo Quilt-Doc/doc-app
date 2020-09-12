@@ -509,7 +509,7 @@ retrieveInstallationRepositories = async (req, res) => {
 
 module.exports = {
     retrieveInstallationRepositories, 
-    parseRepositoryFile, refreshRepositoryPathNew,
+refreshRepositoryPathNew,
     refreshRepositoryPath, getRepositoryFile, getRepositoryRefs,
     createRepository, getRepository, deleteRepository, retrieveRepositories, updateRepositoryCommit, validateRepositories, pollRepositories
 }
