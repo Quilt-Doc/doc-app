@@ -854,6 +854,7 @@ attachReference = (req, res) => {
     });
 }
 
+// TODO: Update this so that it automatically updates the Document's status / breakCommit
 removeReference = (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();

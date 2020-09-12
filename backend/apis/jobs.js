@@ -4,6 +4,13 @@ const sqs = apis.requestSQSServiceObject();
 const constants = require('../constants/index');
 
 const queueUrl = process.env.JOB_QUEUE_URL;
+// console.log('Environment URL: ');
+// console.log(queueUrl);
+// queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
+
+console.log('In code URL: ');
+console.log(queueUrl);
+
 
 // {installationId: , cloneUrl, jobType}
 const dispatchParseDoxygenJob = async (runDoxygenData, log) => {
@@ -135,6 +142,8 @@ const dispatchUpdateSnippetsJob = async (runSnippetData, log) => {
   const dispatchUpdateReferencesJob = async (runReferenceUpdateData, log) => {
   
     var timestamp = Date.now().toString();
+
+    console.log('SQS Queue URL: ', queueUrl);
   
     var sqsReferenceData = {
         MessageAttributes: {},
@@ -145,12 +154,12 @@ const dispatchUpdateSnippetsJob = async (runSnippetData, log) => {
     };
     if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | MessageDeduplicationId: ${timestamp}`);
     if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Push | MessageGroupId: updateReferences_${timestamp}`);
-    
-    // Send the refs data to the SQS queue
-    let sendSqsMessage = sqs.sendMessage(sqsReferenceData).promise();
 
     console.log('Sending SQS Message');
+    // Send the refs data to the SQS queue
+    await sqs.sendMessage(sqsReferenceData).promise();
 
+    /*
     sendSqsMessage.then((data) => {
   
         if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | SUCCESS: ${data.MessageId}`);
@@ -160,7 +169,7 @@ const dispatchUpdateSnippetsJob = async (runSnippetData, log) => {
         if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Push | ERROR: ${err}`);
         console.log(`Push | ERROR: ${err}`);
     });
-  
+    */
   }
 
 module.exports = {

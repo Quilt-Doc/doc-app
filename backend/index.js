@@ -12,7 +12,7 @@ require('dotenv').config();
 // PASSPORT
 const passport = require("passport");
 const passportSetup = require("./passport_config/passport-setup");
-const cookieSession = require("cookie-session");
+// const cookieSession = require("cookie-session");
 const cookieParser = require("cookie-parser");
 
 var jwt = require('jsonwebtoken');
@@ -53,7 +53,7 @@ app.use(logger('dev'));
 
 // handle cookies 
 
-
+/*
 app.use(
     cookieSession({
       name: "session",
@@ -61,12 +61,13 @@ app.use(
       maxAge: 24 * 60 * 60 * 100
     })
 );
+*/
 app.use(cookieParser());
 
 // initalize passport
 app.use(passport.initialize());
 // deserialize cookie from the browser
-app.use(passport.session());
+// app.use(passport.session());
 
 /*
 app.use(cors());
@@ -100,6 +101,7 @@ app.use(function (req, res, next) {
 
   if (isNonAuthPath) {
       console.log('nonAuth path detected');
+      console.log('JWT req.path: ', req.path);
       next();
       return;
   }
