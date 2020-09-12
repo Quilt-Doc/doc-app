@@ -69,7 +69,9 @@ loginSuccess = async (req, res) => {
         console.log('decoded JWT: ');
         console.log(decoded);
         // req.tokenPayload = decoded;
+        console.log("USER ID", decoded.userId)
         var user = await User.findById(decoded.userId);
+        console.log("USER HERE", user)
         return res.json({
             success: true,
             authenticated: true,

@@ -362,13 +362,11 @@ const CodeDocumentItem = styled(Link)`
 
 const mapStateToProps = (state, ownProps) => {
     let {workspaceId} = ownProps.match.params
-    console.log("WORKSPACES", state.workspaces)
-    console.log("WORKSPACEID", workspaceId)
+
     return {
         documents:  Object.values(state.documents).filter(document => document.parent === null),
         user: state.auth.user,
         selected : Object.values(state.selected),
-        repositoryItems: Object.values(state.repositoryItems),
         workspace: state.workspaces[workspaceId],
         /*repositories: state.repostiorei*/
     }

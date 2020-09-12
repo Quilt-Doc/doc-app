@@ -12,6 +12,8 @@ let initial = {
 export default (state = {}, action) => {
     switch (action.type) {
         case CHECK_LOGIN:
+            console.log("USER", action.payload.user);
+            console.log("AUTH", action.payload.authenticated);
             return { ...state, authenticated: action.payload.authenticated, 
                      user: action.payload.user}
         case CHECK_INSTALLATION:
