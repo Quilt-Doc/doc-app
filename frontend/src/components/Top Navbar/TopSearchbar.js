@@ -49,7 +49,7 @@ class TopSearchbar extends React.Component {
         }
 
         this.setState({
-            typingTimeout: setTimeout(() => this.retrieveSearchResults(), 100)
+            typingTimeout: setTimeout(() => this.retrieveSearchResults(), 50)
         })
     }
 

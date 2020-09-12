@@ -103,9 +103,9 @@ class TextEditorView extends React.Component {
                 let {markup} = this.state;
                 let content = this.serializeMarkup(markup)
                 let { workspaceId } = this.props.match.params;
-                this.props.editDocument(workspaceId, doc._id, {markup: JSON.stringify(markup), content});
+                this.props.editDocument({workspaceId, documentId: doc._id, markup: JSON.stringify(markup), content});
                 if (canvas && canvas.toDataURL()){
-                    this.props.editDocument(workspaceId, doc._id, {image: canvas.toDataURL()});
+                    this.props.editDocument({workspaceId, documentId: doc._id, image: canvas.toDataURL()});
                 }
             });
         }
