@@ -50,7 +50,8 @@ class RepositoryMenu extends React.Component {
             this.props.selectRepository(repo)
             this.closeMenu()
         } else {
-            this.props.editDocument(this.props.document._id, {repositoryId: repo._id}); 
+            let { workspaceId } = this.props.match.params;
+            this.props.editDocument({workspaceId, documentId: this.props.document._id, repositoryId: repo._id}); 
             this.closeMenu()
         }
     }

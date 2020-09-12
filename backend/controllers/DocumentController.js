@@ -791,7 +791,8 @@ retrieveDocumentsExtension = async (req, res) => {
 
 retrieveDocuments = (req, res) => {
     let { search, sort, authorId, childrenIds, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
-    const { workspaceId } = req.workspaceObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+    console.log("WORKSPACE ID", workspaceId)
     let query;
     if (search) {
         query = Document.find({ title: { $regex: new RegExp(search, 'i')}, workspace: workspaceId });
