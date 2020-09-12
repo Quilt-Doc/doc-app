@@ -14,12 +14,11 @@ var referenceSchema = new Schema({
 	repository: {type: ObjectId, ref: 'Repository'},
 	created: {type: Date, default: Date.now },
 	tags: [{type: ObjectId, ref: 'Tag'}],
-	definitionReferences: [{type: ObjectId, ref: 'Reference'}],
 
 	// Reporting Attributes
 
 	// ['valid', 'invalid']
-	status: {type: String, required: true},
+	status: {type: String, enum: ['valid', 'invalid'], default: 'valid', required: true},
 	breakCommit: {type: String}
 });
 

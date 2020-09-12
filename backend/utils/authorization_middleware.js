@@ -113,6 +113,7 @@ const referenceMiddleware = async (req, res, next) => {
 
 }
 
+// TODO: Fix this
 const documentMiddleware = async (req, res, next) => {
     console.log('req.path.trim(): ', req.path.trim());
     const { workspaceId } = req.params;
@@ -190,8 +191,12 @@ const repositoryMiddleware = async (req, res, next) => {
     var searchRepositoryId = undefined;
 
     // Dev routes
-    if (requestedPath.includes('/repositories/create') ||
-        requestedPath.includes('/repositories/update')) {
+    if (
+        requestedPath.includes('/repositories/create') ||
+        requestedPath.includes('/repositories/update') ||
+        requestedPath.includes('/repositories/job_retrieve' ||
+        requestedPath.includes('/repositories/break_references')
+        )) {
         
         if (requesterRole == 'dev') {
             console.log('repositoryMiddleware dev token');
