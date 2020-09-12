@@ -492,6 +492,101 @@ const tokenMiddleware = (req, res, next) => {
     }
 }
 
+/*
+const linkage_controller = require('../controllers/LinkageController');
+router.post('/linkages/:workspaceId/create', linkage_controller.createLinkage);
+router.get('/linkages/:workspaceId/get/:linkageId', linkage_controller.getLinkage);
+router.put('/linkages/:workspaceId/edit/:linkageId', linkage_controller.editLinkage);
+router.delete('/linkages/:workspaceId/delete/:linkageId', linkage_controller.deleteLinkage);
+router.post('/linkages/:workspaceId/retrieve', linkage_controller.retrieveLinkages);
+router.put('/linkages/:workspaceId/:linkageId/attach_reference/:referenceId', linkage_controller.attachLinkageReference);
+router.put('/linkages/:workspaceId/:linkageId/remove_reference/:referenceId', linkage_controller.removeLinkageReference);
+router.put('/linkages/:workspaceId/:linkageId/attach_tag/:tagId', linkage_controller.attachLinkageTag);
+router.put('/linkages/:workspaceId/:linkageId/remove_tag/:tagId', linkage_controller.removeLinkageTag);
+*/
+
+//linkageId, workspaceId, tagId, referenceId
+
+const linkageMiddleware = async (req, res, next) => {
+    console.log('req.path.trim(): ', req.path.trim());
+
+    const { workspaceId, linkageId, tagId, referenceId } = req.params;
+
+    var searchWorkspaceId;
+    var searchLinkageId;
+    var searchTagId;
+    var searchReferenceId;
+
+    try {
+        searchWorkspaceId = ObjectId(workspaceId);
+        if (linkageId) searchLinkageId = ObjectId(linkageId);
+        if (tagId) searchTagId = ObjectId(tagId);
+        if (referenceId) searchReferenceId = ObjectId(referenceId);
+    }
+    catch (err) {
+        return next(new Error("Error: invalid workspaceId, linkageId, tagId, referenceId format"));
+    }
+
+    var foundWorkspace = await Workspace.findById(searchWorkspaceId);
+    if (!foundWorkspace) {
+        return next(new Error("Error: workspaceId invalid"));
+    }
+    req.workspaceObj = foundWorkspace;
+
+    var foundLinkage;
+
+    if (searchLinkageId) {
+        foundLinkage = await Linkage.findOne({_id: searchLinkageId, workspace: foundWorkspace._id});
+        if (!foundLinkage) {
+            return next(new Error("Error: linkageId invalid"));
+        }
+
+        req.linkageObj = foundLinkage;
+    }
+
+    var foundTag;
+
+    if (searchTagId) {
+        foundTag = await Tag.findOne({_id: searchTagId, workspace: foundWorkspace._id});
+        if (!foundTag) {
+            return next(new Error("Error: tagId invalid"));
+        }
+
+        req.tagObj = foundTag;
+    }
+
+    var foundReference;
+    
+    if (searchReferenceId) {
+        foundReference = await Reference.findById({_id: searchReferenceId, workspace: foundWorkspace._id});
+        if (!foundReference) {
+            return next(new Error("Error: referenceId invalid"));
+        }
+
+        var referenceRepository = foundReference.repository.toString();
+        var validRepositories = foundWorkspace.repositories.map(id => id.toString());
+        if (validRepositories.includes(referenceRepository) == -1) {
+            return next(new Error("Error: referenceId not accessible from workspace"));
+        }
+
+        req.referenceObj = foundReference;
+    }
+
+    if (req.tokenPayload.role == 'dev') {
+        console.log('linkageMiddleware dev token');
+        return next();
+    }
+    var requesterId = req.tokenPayload.userId.toString();
+    var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
+    if (validUsers.indexOf(requesterId) > -1) {
+        console.log('Valid linkage request');
+        return next();
+    }
+    else {
+        return next(new Error("Error: requesting user not a member of target workspace"));
+    }
+}
+
 module.exports = {
     referenceMiddleware,
     documentMiddleware,
@@ -501,5 +596,6 @@ module.exports = {
     tagMiddleware,
     authMiddleware,
     userMiddleware,
-    tokenMiddleware
+    tokenMiddleware,
+    linkageMiddleware
 }

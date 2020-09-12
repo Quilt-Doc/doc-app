@@ -43,7 +43,8 @@ class LinkageView extends React.Component {
         let search = history.location.search;
         let params = new URLSearchParams(search);
         let linkageId = params.get('linkage');
-        await this.props.getLinkage(linkageId);
+        let {workspaceId} = this.props.match.params;
+        await this.props.getLinkage({linkageId, workspaceId});
         if (this.props.linkage) {
             this.setState({loaded: true});
         }
@@ -89,14 +90,16 @@ class LinkageView extends React.Component {
 
     attachLinkageRef = (ref) => {
         let {linkage, attachLinkageReference} = this.props;
-        
-        attachLinkageReference(linkage._id, ref._id);
+        let {workspaceId} = this.props.match.params;
+
+        attachLinkageReference({linkageId: linkage._id, referenceId: ref._id, workspaceId});
     }
 
     removeLinkageRef = (ref) => {
         let {linkage, removeLinkageReference} = this.props;
-        
-        removeLinkageReference(linkage._id, ref._id);
+        let {workspaceId} = this.props.match.params;
+
+        removeLinkageReference({linkageId: linkage._id, referenceId: ref._id, workspaceId});
     }
 
     renderReferenceMenu = () => {
@@ -135,17 +138,20 @@ class LinkageView extends React.Component {
 
     attachLinkageTag = (tag) => {
         let {linkage, attachLinkageTag} = this.props;
-        
-        attachLinkageTag(linkage._id, tag._id);
+        let {workspaceId} = this.props.match.params;
+
+        attachLinkageTag({linkageId: linkage._id, tagId: tag._id, workspaceId});
     }
 
     removeLinkageTag = (tag) => {
         let {linkage, removeLinkageTag} = this.props;
-        
-        removeLinkageTag(linkage._id, tag._id);
+        let {workspaceId} = this.props.match.params;
+
+        removeLinkageTag({linkageId: linkage._id, tagId: tag._id, workspaceId});
     }
 
     renderModalContent = () => {
+        let {workspaceId} = this.props.match.params;
         let {title, tags, references, repository, _id} = this.props.linkage;
         return (
             <>
@@ -160,7 +166,10 @@ class LinkageView extends React.Component {
                         Repository
                     </Guide2>
                     <RepositoryMenu2 
-                        selectRepository = {(repo) => this.props.editLinkage(_id, {repositoryId: repo._id})}
+                        selectRepository = {(repo) => this.props.editLinkage({
+                            linkageId: _id,
+                            workspaceId,
+                            repositoryId: repo._id})}
                         formRepository = {repository}
                         form = {true}
                     />

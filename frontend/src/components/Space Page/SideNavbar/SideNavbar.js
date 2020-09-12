@@ -9,7 +9,6 @@ import { connect } from 'react-redux';
 //components
 import Bucket from '../../General/Top Navbar/Bucket';
 import Document from './Document';
-import TextEditorView2 from '../Text Editor Page/TextEditorView2';
 
 import { CSSTransition } from 'react-transition-group';
 

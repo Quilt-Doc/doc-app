@@ -66,12 +66,10 @@ class TopSearchbar extends React.Component {
         await this.props.retrieveSearchResults({
             userQuery: this.input.value,
             workspaceId,
-            requestedPageSize: 9, 
-            requestedPageNumber: 0,
+            limit: 9,
             returnReferences: true, 
             returnDocuments: true,
-            returnLinkages: true,
-            sort: "-created"
+            returnLinkages: true
         });
 
         this.setState({loading: false})

@@ -74,11 +74,11 @@ searchWorkspace = async (req, res) => {
     
     const workspaceId = req.workspaceObj._id.toString();
 
-    if (!checkValid(workspaceId)) return res.json({success: false, result: null, error: 'searchWorkspace: error no workspaceId provided.'});
-    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'searchWorkspace: error no userQuery provided.'});
-    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnReferences provided.'});
-    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnDocuments provided.'});
-    if (!checkValid(returnLinkages)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnLinkages provided.'});
+   
+    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'userQuery: error no userQuery provided.'});
+    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'returnReference: error no returnReferences provided.'});
+    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'returnDocuments: error no returnDocuments provided.'});
+    if (!checkValid(returnLinkages)) return res.json({success: false, result: null, error: 'returnLinkages: error no returnLinkages provided.'});
 
     let documents = [];
     let references = [];
@@ -117,9 +117,9 @@ searchWorkspace = async (req, res) => {
 
         documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
 
-        if (checkValid(repositoryId)) documentAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
+        documentAggregate.match({workspace: new mongoose.Types.ObjectId(workspaceId)});
 
-        if (checkValid(workspaceId)) documentAggregate.match({workspace: new mongoose.Types.ObjectId(workspaceId)});
+        if (checkValid(repositoryId)) documentAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
 
         if (checkValid(tagIds)) documentAggregate.match({
             tags: { $in: tagIds.map((tagId) => new mongoose.Types.ObjectId(tagId)) }
@@ -139,13 +139,21 @@ searchWorkspace = async (req, res) => {
 
         if (checkValid(limit))  documentAggregate.limit(limit);
 
-        documents = await documentAggregate.exec();
+        try {   
+            documents = await documentAggregate.exec();
+        } catch(err) {
+           return res.json({ success: false, error: `searchWorkspace: Failed to aggregate documents, trace: ${err}`});
+        }
 
-        documents = await Document.populate(documents, 
-            {
-                path: "author references workspace repository tags"
-            }
-        );
+        try {
+            documents = await Document.populate(documents, 
+                {
+                    path: "author references workspace repository tags"
+                }
+            );
+        } catch (err) {
+            return res.json({ success: false, error: `searchWorkspace: Failed to populate documents, trace: ${err}`});
+        }
         // Need to include time filtering
     }
 
@@ -171,8 +179,7 @@ searchWorkspace = async (req, res) => {
         
         referenceAggregate.addFields({isReference : true, score: { $meta: "searchScore" }});
         
-        if (checkValid(repositoryId)) referenceAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
-        
+        referenceAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
 
         if (checkValid(tagIds)) referenceAggregate.match({
             tags: { $in: tagIds.map((tagId) => new mongoose.Types.ObjectId(tagId)) }
@@ -189,13 +196,21 @@ searchWorkspace = async (req, res) => {
 
         if (checkValid(limit))  referenceAggregate.limit(limit)
         
-        references = await referenceAggregate.exec()
+        try {
+            references = await referenceAggregate.exec()
+        } catch (err) {
+            return res.json({ success: false, error: `searchWorkspace: Failed to aggregate references, trace: ${err}`});
+        }
 
-        references = await Reference.populate(references, 
+        try {
+            references = await Reference.populate(references, 
                 {
                     path: "repository tags"
                 }
             )
+        } catch (err) {
+            return res.json({ success: false, error: `searchWorkspace: Failed to populate references, trace: ${err}`});
+        }
         // Need to include time filtering
     }
     /*
@@ -231,7 +246,7 @@ searchWorkspace = async (req, res) => {
         // Need to include time filtering
     }
     */
-
+    /*
     if (checkValid(userQuery)) {
 
         references.map((ref) => 
@@ -245,7 +260,7 @@ searchWorkspace = async (req, res) => {
                 DOCUMENT NAME", ${doc.title}`)
         })
     }
-   
+    */
     
     let searchResults = {}
 

@@ -137,6 +137,25 @@ const userIdParam = async (req, res, next, userId) => {
     next();
 }
 
+const linkageIdParam = async (req, res, next, linkageId) => {
+    if (req.linkageObj) {
+        next();
+    }
+    // try to get the linkage object and attach it to the request object
+    try {
+        var foundLinkage = await Linkage.findById(linkageId);
+        if (!foundLinkage) {
+            next(new Error("linkageIdParam: linkageId doesn't exist"));
+        }
+        req.linkageObj = foundLinkage;
+    }
+    catch(err) {
+        next(err);
+    }
+    next();
+}
+
+
 
 
 
@@ -147,5 +166,6 @@ module.exports = {
     tagIdParam,
     snippetIdParam,
     repositoryIdParam,
-    userIdParam
+    userIdParam,
+    linkageIdParam
 }
