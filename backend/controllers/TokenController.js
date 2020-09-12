@@ -36,7 +36,7 @@ createToken = async (req, res) => {
 
     token.save((err, token) => {
         if (err) return res.json({ success: false, error: err });
-        return res.json(token);
+        return res.json({success: true, result: token});
     });
 }
 

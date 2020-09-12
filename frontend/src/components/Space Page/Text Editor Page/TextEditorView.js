@@ -58,8 +58,10 @@ class TextEditorView extends React.Component {
         } else {
             documentId = this.props.match.params.documentId;
         }
+        
+        let { workspaceId } = this.props.match.params
 
-        this.props.getDocument(documentId).then((document) =>{
+        this.props.getDocument({workspaceId, documentId}).then((document) =>{
             let markup = [{
                 type: 'paragraph',
                 children: [
@@ -100,13 +102,14 @@ class TextEditorView extends React.Component {
             html2canvas(document.getElementById("#editorContainer"), {scale: 0.5, height: 1000}).then(canvas => {
                 let {markup} = this.state;
                 let content = this.serializeMarkup(markup)
-                this.props.editDocument(doc._id, {markup: JSON.stringify(markup), content});
+                let { workspaceId } = this.props.match.params;
+                this.props.editDocument(workspaceId, doc._id, {markup: JSON.stringify(markup), content});
                 if (canvas && canvas.toDataURL()){
-                    this.props.editDocument(doc._id, {image: canvas.toDataURL()});
+                    this.props.editDocument(workspaceId, doc._id, {image: canvas.toDataURL()});
                 }
             });
         }
-    }
+   }
 
     setValue(value) {
         this.setState({markup: value});

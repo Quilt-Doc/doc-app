@@ -5,47 +5,152 @@ import {
 
 import { api } from '../apis/api';
 
+// DONE
 export const retrieveReferences = (formValues) => async dispatch => {
-    const response = await api.post('/references/retrieve', formValues);
-    dispatch({ type: RETRIEVE_REFERENCES, payload: response.data });
+    
+    const workspaceId = formValues.workspaceId;
+    if (!workspaceId) {
+        throw new Error("retrieveReferences: workspaceId not provided");
+    }
+
+    const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
+
+    if (response.data.success == false) {
+        throw new Error("retrieveReferences Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });
+    }
+
 }
 
-export const localRetrieveReferences = (formValues) => async () => {
-    const response = await api.post('/references/retrieve_references_dropdown', formValues);
-    return response.data;
+// DONE
+export const localRetrieveReferences = (formValues) => async dispatch => {
+
+    const workspaceId = formValues.workspaceId;
+    if (!workspaceId) {
+        throw new Error("localRetrieveReferences: workspaceId not provided");
+    }
+
+    const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
+
+    if (response.data.success == false) {
+        throw new Error("localRetrieveReferences Error: ", response.data.error.toString());
+    }
+    else {
+        return response.data.result;
+    }
 }
 
+// DONE
 export const getReferenceFromPath = (formValues) => async dispatch => {
-    const response = await api.post('/references/retrieve', formValues);
-    return response.data
+
+    const workspaceId = formValues.workspaceId;
+    if (!workspaceId) {
+        throw new Error("getReferenceFromPath: workspaceId not provided");
+    }
+
+    const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
+
+    if (response.data.success == false) {
+        throw new Error("getReferenceFromPath Error: ", response.data.error.toString());
+    }
+    else {
+        return response.data.result;
+    }
 }
 
-export const editReference = (id, formValues) => async dispatch => {
-    const response = await api.put(`/references/edit/${id}`, formValues);
-    dispatch({ type: EDIT_REFERENCE, payload: response.data });
+export const editReference = (formValues) => async dispatch => {
+
+    const workspaceId = formValues.workspaceId;
+    const referenceId = formValues.referenceId;
+
+    if (!workspaceId) {
+        throw new Error("editReference: workspaceId not provided");
+    }
+    if (!referenceId) {
+        throw new Error("editReference: referenceId not provided");
+    }
+
+    const response = await api.put(`/references/${workspaceId}/edit/${referenceId}`, formValues);
+
+    if (response.data.success == false) {
+        throw new Error("editReference Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: EDIT_REFERENCE, payload: response.data.result });
+    }
+
 }
 
-export const attachTag = (id, tagId) => async dispatch => {
-    const response = await api.put(`/references/attach_tag/${id}`, {tagId});
-    dispatch({ type: EDIT_REFERENCE, payload: response.data });
+export const attachTag = (formValues) => async dispatch => {
+
+    const workspaceId = formValues.workspaceId;
+    const referenceId = formValues.referenceId;
+    const tagId = formValues.tagId;
+
+    if (!workspaceId) {
+        throw new Error("attachTag: workspaceId not provided");
+    }
+    if (!referenceId) {
+        throw new Error("attachTag: referenceId not provided");
+    }
+    if (!tagId) {
+        throw new Error("attachTag: referenceId not provided");
+    }
+
+    const response = await api.put(`/references/${workspaceId}/${referenceId}/attach_tag/${tagId}`);
+
+    if (response.data.success == false) {
+        throw new Error("attachTag Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: EDIT_REFERENCE, payload: response.data.result });
+    }
 }
 
 
-export const removeTag = (id, tagId) => async dispatch => {
-    const response = await api.put(`/references/remove_tag/${id}`, {tagId});
-    dispatch({ type: EDIT_REFERENCE, payload: response.data });
+export const removeTag = (formValues) => async dispatch => {
+
+    const workspaceId = formValues.workspaceId;
+    const referenceId = formValues.referenceId;
+    const tagId = formValues.tagId;
+
+    if (!workspaceId) {
+        throw new Error("removeTag: workspaceId not provided");
+    }
+    if (!referenceId) {
+        throw new Error("removeTag: referenceId not provided");
+    }
+    if (!tagId) {
+        throw new Error("removeTag: referenceId not provided");
+    }
+
+    const response = await api.put(`/references/${workspaceId}/${referenceId}/remove_tag/${tagId}`);
+
+    if (response.data.success == false) {
+        throw new Error("removeTag Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: EDIT_REFERENCE, payload: response.data.result });
+    }
 }
 
-
-// Example download link: https://raw.githubusercontent.com/kgodara/snippet-logic-test/master/post_commit.py
-
-export const getContents = (formValues) => async () => {
-    // const response = await api.post('/references/get_contents', formValues);
-    const response = await api.post('/repositories/get_file', formValues);
-    return response.data.fileContents;
-}
-
+// DONE
 export const retrieveCodeReferences = (formValues) => async dispatch => {
-    const response = await api.post('/references/retrieve_code_references', formValues);
-    dispatch({ type: RETRIEVE_REFERENCES, payload: response.data });
+
+    const workspaceId = formValues.workspaceId;
+
+    if (!workspaceId) {
+        throw new Error("retrieveCodeReferences: workspaceId not provided");
+    }
+
+    const response = await api.post(`/references/${workspaceId}/retrieve_code_references`, formValues);
+
+    if (response.data.success == false) {
+        throw new Error("retrieveCodeReferences Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });
+    }
 }

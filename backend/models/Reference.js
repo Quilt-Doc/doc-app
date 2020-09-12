@@ -13,7 +13,14 @@ var referenceSchema = new Schema({
 	parseProvider: String,
 	repository: {type: ObjectId, ref: 'Repository'},
 	created: {type: Date, default: Date.now },
-	tags: [{type: ObjectId, ref: 'Tag'}]
+	tags: [{type: ObjectId, ref: 'Tag'}],
+	definitionReferences: [{type: ObjectId, ref: 'Reference'}],
+
+	// Reporting Attributes
+
+	// ['valid', 'invalid']
+	status: {type: String, required: true},
+	breakCommit: {type: String}
 });
 
 

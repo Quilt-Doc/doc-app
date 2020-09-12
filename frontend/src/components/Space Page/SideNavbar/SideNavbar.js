@@ -23,7 +23,6 @@ import history from '../../../history';
 
 //actions
 import { createDocument, retrieveDocuments,  moveDocument } from '../../../actions/Document_Actions';
-import { attachDocument } from '../../../actions/RepositoryItem_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
 import { setCreation } from '../../../actions/UI_Actions';
 
@@ -376,7 +375,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, { createDocument, moveDocument, attachDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
+export default withRouter(connect(mapStateToProps, { createDocument, moveDocument, clearSelected, retrieveDocuments, setCreation })(SideNavbar));
 //#2B2F3A;  #383e4c;
 //#20263c;
 //#222437; #2f314c;

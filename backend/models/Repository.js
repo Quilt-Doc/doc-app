@@ -19,6 +19,8 @@ var repositorySchema = new Schema({
 	// "RUNNING", "FINISHED", "ERROR"
 	doxygenJobStatus: String,
 	semanticJobStatus: String,
+	updateSnippetsJobStatus: String,
+	updateReferencesJobStatus: String
 });
 
 

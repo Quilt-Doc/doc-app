@@ -36,7 +36,7 @@ import { GrMore, GrChat } from 'react-icons/gr'
 
 //components
 import MarkupMenu from '../Menus/MarkupMenu';
-import ReferenceMenu from '../Menus/ReferenceMenu';
+// import ReferenceMenu from '../Menus/ReferenceMenu';
 import { CSSTransition } from 'react-transition-group';
 
 //react dnd

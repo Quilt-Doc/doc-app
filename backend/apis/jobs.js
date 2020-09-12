@@ -1,9 +1,12 @@
-
 const apis = require('./api');
 const sqs = apis.requestSQSServiceObject();
 
+const constants = require('../constants/index');
+
+const queueUrl = process.env.JOB_QUEUE_URL;
+
 // {installationId: , cloneUrl, jobType}
-const dispatchDoxygenJob = async (runDoxygenData, log) => {
+const dispatchParseDoxygenJob = async (runDoxygenData, log) => {
 
     var timestamp = Date.now().toString();
     // default_branch, fullName, cloneUrl, args_2, installationId 
@@ -24,7 +27,7 @@ const dispatchDoxygenJob = async (runDoxygenData, log) => {
             },
             "jobType": {
                 DataType: "String",
-                StringValue: JOB_GET_REFS.toString
+                StringValue: constants.jobs.JOB_PARSE_DOXYGEN.toString()
             }
         },
         MessageBody: JSON.stringify(runDoxygenData),
@@ -44,14 +47,13 @@ const dispatchDoxygenJob = async (runDoxygenData, log) => {
     }).catch((err) => {
         if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Doxygen | ERROR: ${err}`);
         console.log(`Doxygen | ERROR: ${err}`);
-
     });
 }
 
 
 
 
-const dispatchSemanticJob = async (runSemanticData, log) => {
+const dispatchParseSemanticJob = async (runSemanticData, log) => {
     var timestamp = Date.now().toString();
     // default_branch, fullName, cloneUrl, args_2, installationId 
 
@@ -79,7 +81,7 @@ const dispatchSemanticJob = async (runSemanticData, log) => {
             },
             "jobType": {
                 DataType: "Number",
-                StringValue: JOB_SEMANTIC.toString()
+                StringValue: constants.jobs.JOB_PARSE_SEMANTIC.toString()
                 }
         },
         MessageBody: JSON.stringify(runSemanticData),
@@ -102,7 +104,68 @@ const dispatchSemanticJob = async (runSemanticData, log) => {
     });
 }
 
+
+const dispatchUpdateSnippetsJob = async (runSnippetData, log) => {
+  
+    var timestamp = Date.now().toString();
+  
+    var sqsSnippetData = {
+        MessageAttributes: {},
+        MessageBody: JSON.stringify(runSnippetData),
+        MessageDeduplicationId: timestamp,
+        MessageGroupId: "updateSnippets_" + timestamp,
+        QueueUrl: queueUrl
+    };
+    if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | MessageDeduplicationId: ${timestamp}`);
+    if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Push | MessageGroupId: getRefRequest_${timestamp}`);
+    // Send the refs data to the SQS queue
+    let sendSqsMessage = sqs.sendMessage(sqsSnippetData).promise();
+  
+    sendSqsMessage.then((data) => {
+  
+        if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | SUCCESS: ${data.MessageId}`);
+        console.log(`Push | SUCCESS: ${data.MessageId}`);
+        // res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
+    }).catch((err) => {
+        if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Push | ERROR: ${err}`);
+        console.log(`Push | ERROR: ${err}`);
+    });
+  }
+  
+  const dispatchUpdateReferencesJob = async (runReferenceUpdateData, log) => {
+  
+    var timestamp = Date.now().toString();
+  
+    var sqsReferenceData = {
+        MessageAttributes: {},
+        MessageBody: JSON.stringify(runReferenceUpdateData),
+        MessageDeduplicationId: timestamp,
+        MessageGroupId: "updateReferences_" + timestamp,
+        QueueUrl: queueUrl
+    };
+    if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | MessageDeduplicationId: ${timestamp}`);
+    if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Push | MessageGroupId: updateReferences_${timestamp}`);
+    
+    // Send the refs data to the SQS queue
+    let sendSqsMessage = sqs.sendMessage(sqsReferenceData).promise();
+
+    console.log('Sending SQS Message');
+
+    sendSqsMessage.then((data) => {
+  
+        if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | SUCCESS: ${data.MessageId}`);
+        console.log(`Push | SUCCESS: ${data.MessageId}`);
+        // res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
+    }).catch((err) => {
+        if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Push | ERROR: ${err}`);
+        console.log(`Push | ERROR: ${err}`);
+    });
+  
+  }
+
 module.exports = {
-    dispatchDoxygenJob,
-    dispatchSemanticJob,
+    dispatchParseDoxygenJob,
+    dispatchParseSemanticJob,
+    dispatchUpdateSnippetsJob,
+    dispatchUpdateReferencesJob
 }

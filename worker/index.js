@@ -3,19 +3,25 @@
 
 */
 
+/*
 const JOB_GET_REFS = 1;
 const JOB_UPDATE_SNIPPETS = 2;
 const JOB_SEMANTIC = 3;
+*/
 
 
 var mongoose = require('mongoose')
 
-const snippetUtils = require('./commit_compare_test');
-const semanticUtils = require('./semantic_utils');
+const snippetUtils = require('./update_snippets');
+const semanticUtils = require('./parse_semantic');
+const updateReferences = require('./update_references');
+
+const constants = require('./constants/index');
+
 
 var sqs = require('./apis/api').requestSQSServiceObject();
 
-const parseUtils = require('./parse_code');
+const parseUtils = require('./parse_doxygen');
 const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
 
 const cluster = require('cluster');
@@ -165,17 +171,18 @@ else {
   console.log('jobType: ', process.env.jobType);
   var jobData = JSON.parse(process.env.jobData);
   console.log('Condition: ');
-  console.log(process.env.jobType == JOB_GET_REFS);
+  console.log(process.env.jobType == constants.jobs.JOB_PARSE_DOXYGEN);
 
-  if(process.env.jobType == JOB_GET_REFS) {
+  // Doxygen Job
+  if(process.env.jobType == constants.jobs.JOB_PARSE_DOXYGEN) {
     console.log('running get refs job');
-    process.env.installationId = jobData.installationId;
     process.env.cloneUrl = jobData.cloneUrl;
     process.env.repositoryId = jobData.repositoryId;
+    process.env.installationId = jobData.installationId;
     parseUtils.getRefs();
   }
 
-  else if(process.env.jobType == JOB_UPDATE_SNIPPETS) {
+  else if(process.env.jobType == constants.jobs.JOB_UPDATE_SNIPPETS) {
     console.log('running update snippets job');
     process.env.headCommit = jobData.headCommit;
     process.env.repositoryFullName = jobData.repositoryFullName;
@@ -185,7 +192,8 @@ else {
     snippetUtils.runValidation();
   }
 
-  else if (process.env.jobType == JOB_SEMANTIC) {
+  // Semantic Job
+  else if (process.env.jobType == constants.jobs.JOB_PARSE_SEMANTIC) {
     console.log('running exec semantic job');
     // fullName, cloneUrl, semanticTargets, installationId 
     process.env.fullName = jobData.fullName;
@@ -193,8 +201,19 @@ else {
     process.env.semanticTargets = jobData.semanticTargets;
     process.env.installationId = jobData.installationId;
     semanticUtils.execSemantic();
-}
-  
+  }
+
+  // Update Reference Job
+  else if (process.env.jobType == constants.jobs.JOB_UPDATE_REFERENCES) {
+    console.log('running update references job');
+    // installationId, fullName, headCommit
+    process.env.installationId = jobData.installationId;
+    process.env.fullName = jobData.fullName;
+    process.env.headCommit = jobData.headCommit;
+    updateReferences.run();
+
+  }
+ 
 
   console.log(`Worker ${process.pid} started`);
 }

@@ -5,6 +5,7 @@ var dmp = new diff_match_patch();
 
 // TODO - Make sure that only first 3-4 lines of snippets can create a new snippet candidate region
 // TODO - Don't search the whole file for the new snippet regions, instead search some factor of `windowSize` around old region
+/*
 const SNIPPET_EXPANSION_FACTOR = 1.5;
 const SNIPPET_VALID_REGION_THRESHOLD = 0.5;
 const NUM_VALID_SNIPPET_START_LINES = 3;
@@ -12,7 +13,9 @@ const NUM_VALID_SNIPPET_START_LINES = 3;
 const SNIPPET_STATUS_INVALID = 'INVALID';
 const SNIPPET_STATUS_NEW_REGION = 'NEW_REGION';
 const SNIPPET_STATUS_VALID = 'VALID';
+*/
 
+const constants = require('./constants/index');
 
 // fileData: new fileContents, finalResult: final selected snippet region, windowSize: size of max snippet range
 const trimSnippet = (fileData, finalResult, windowSize) => {
@@ -56,7 +59,7 @@ const getMaxCandidateScore = (possibleRegions) => {
     var candidateScores = possibleRegions.map(regionObj => (regionObj.val + regionObj.numLines + (1-regionObj.distance)) / 3);
     console.log('candidateScores: ');
     console.log(candidateScores);
-  
+
     var maxScore = 0;
     var maxScoreIdx = 0;
     for(i = 0; i < candidateScores.length; i++) {
@@ -135,14 +138,14 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
   console.log('targetData: ');
   console.log(targetData);
 
-  windowSize = Math.round((snippetSize * SNIPPET_EXPANSION_FACTOR));
+  windowSize = Math.round((snippetSize * constants.snippets.SNIPPET_EXPANSION_FACTOR));
 
   // Make sure windowSize not bigger than file length
   windowSize = windowSize > fileData.length ? fileData.length : windowSize;
 
   console.log('windowSize: ', windowSize);
 
-  var starterLines = targetData.slice(0, NUM_VALID_SNIPPET_START_LINES);
+  var starterLines = targetData.slice(0, constants.snippets.NUM_VALID_SNIPPET_START_LINES);
   console.log('starterLines: ', starterLines);
   var windowMaxes = [];
   // This computes the LIS for every possible window of size `windowSize` within fileData
@@ -182,7 +185,7 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   // We did not find any increasing subsequences
   if (Math.max(...windowMaxes) < 2) {
-    snippetObj.status = SNIPPET_STATUS_INVALID;
+    snippetObj.status = constants.snippets.SNIPPET_STATUS_INVALID;
     return snippetObj;
   }
 
@@ -192,7 +195,7 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
     // numLines: number of lines of original snippet present in the region - We normalize this by dividing by snippet length
     // distance: ratio of distance from original snippet center - We normalize this by dividing by snippet length
   var possibleRegions = windowMaxes.map((value, index) => {
-    if (value > (snippetSize * SNIPPET_VALID_REGION_THRESHOLD)) {
+    if (value > (snippetSize * constants.snippets.SNIPPET_VALID_REGION_THRESHOLD)) {
       return {
         val: value / targetData.length,
         idx: index,
@@ -209,7 +212,7 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   // There are no regions that meet threshold
   if (possibleRegions.length < 1) {
-    snippetObj.status = SNIPPET_STATUS_INVALID;
+    snippetObj.status = constants.snippets.SNIPPET_STATUS_INVALID;
     return snippetObj;
   }
 
@@ -221,7 +224,7 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   [finalResult.size, finalResult.idx] = trimSnippet(fileData, finalResult, windowSize);
 
-  var newSnippet = populateSnippetObj(finalResult, SNIPPET_STATUS_NEW_REGION, snippetObj, fileData);
+  var newSnippet = populateSnippetObj(finalResult, constants.snippets.SNIPPET_STATUS_NEW_REGION, snippetObj, fileData);
   console.log('Returning: ');
 
   console.log(newSnippet);

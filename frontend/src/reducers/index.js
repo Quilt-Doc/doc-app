@@ -3,7 +3,6 @@ import { reducer as formReducer } from 'redux-form'
 
 import workspaceReducer from './Workspace_Reducer';
 import repositoryReducer from './Repository_Reducer';
-import folderReducer from './Folder_Reducer';
 import repositoryItemReducer from './RepositoryItem_Reducer';
 import referenceReducer from './Reference_Reducer';
 import documentReducer from './Document_Reducer';
@@ -16,32 +15,23 @@ import searchReducer from './Search_Reducer';
 
 
 import uiReducer from './UI_Reducer';
-
 import authReducer from './Auth_Reducer';
-
 import selectedReducer from './Selected_Reducer';
-
-import semanticReducer from './Semantic_Reducer';
-
 import linkageReducer from './Linkage_Reducer';
 
 export default combineReducers({
-    workspaces: workspaceReducer,
-    repositories: repositoryReducer,
-    folders: folderReducer,
-    documents: documentReducer,
-    snippets: snippetReducer,
+    workspaces: workspaceReducer, // DONE (with notes)
+    repositories: repositoryReducer, // DONE (with notes)
+    documents: documentReducer, // DONE (not tested)
+    snippets: snippetReducer, // 
     requests: requestReducer,
     comments: commentReducer,
     users: userReducer,
     tags: tagReducer,
     selected: selectedReducer,
-    references: referenceReducer,
-    repositoryItems: repositoryItemReducer,
-    form: formReducer,
+    references: referenceReducer, // DONE (attachTags, removeTags not done)
     auth: authReducer,
     ui: uiReducer,
-    callbacks: semanticReducer,
-    searchResults: searchReducer,
-    linkages: linkageReducer
+    searchResults: searchReducer, // Standardize
+    linkages: linkageReducer // Standardize
 });

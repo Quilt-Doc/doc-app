@@ -63,7 +63,8 @@ class DocumentOptions extends React.Component {
                     { on &&
                         <IconBorder2 onClick = {(e) => {
                             e.preventDefault(); e.stopPropagation();
-                            this.props.deleteDocument(document._id)}}
+                            let { workspaceId } = this.props.match.params;
+                            this.props.deleteDocument({workspaceId, documentId: document._id})}}
                         >
                             <FiTrash/>
                         </IconBorder2>

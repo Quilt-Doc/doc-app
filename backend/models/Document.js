@@ -18,6 +18,13 @@ let documentSchema = new Schema({
     path: {type: String, default: ''},
     order: Number,
     image: String,
+
+    // Reporting Attributes
+
+    status: {type: String, require: true, enum: ['valid', 'resolve', 'invalid'], default: 'valid'},
+    breakCommit: {type: String},
+    breakDate: {type: Date},
+
     //NOT USED
     uploadFiles: [{type: ObjectId, ref: 'UploadFile'}],
     canWrite: [{type: ObjectId, ref: 'User'}],
