@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const express = require('express');
 var cors = require('cors');
 const bodyParser = require('body-parser');
-const logger = require('morgan');
+// const logger = require('morgan');
 const session = require('express-session');
 
 const fs = require('fs');
@@ -20,6 +20,15 @@ var jwt = require('jsonwebtoken');
 const API_PORT = 3001;
 const app = express();
 
+const logger = require('./logging/index').logger;
+const setupESConnection = require('./logging/index').setupESConnection;
+
+const { format } = require('logform');
+
+const jsonFormat = format.json();
+
+
+
 
 
 // This should be an environment variable
@@ -36,6 +45,7 @@ if (process.env.USE_EXTERNAL_DB == 0) {
 console.log(dbRoute);
 
 
+
 //mongoose.connect('mongodb://localhost:27017/myDatabase');
 
 
@@ -49,7 +59,7 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 app.use(bodyParser.urlencoded({ limit: '20mb', extended: false }));
 app.use(bodyParser.json({ limit: '20mb'}));
-app.use(logger('dev'));
+// app.use(logger('dev'));
 
 // handle cookies 
 
@@ -196,5 +206,38 @@ app.get("/", authCheck, (req, res) => {
         cookies: req.cookies
     });
 });
+
+
+if (process.env.IS_PRODUCTION) {
+  setupESConnection().then(() => {
+    /*
+    const info = jsonFormat.transform({
+      level: 'error',
+      message: 'my message',
+      customField: 'testValue'
+    });
+    
+    logger.debug('Test Print');
+    logger.info({ message: 'Testing error value',
+                  customField: 'testValue2'
+    });
+    */
+    app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+  });
+}
+
+else {
+  const info = jsonFormat.transform({
+    level: 'error',
+    message: 'my message',
+    customField: 'testValue'
+  });
   
-app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+  // logger.debug('Test Print');
+  // logger.info({ message: 'Testing error value',
+  //               customField: 'testValue2'
+  // });
+  logger.error({message: 'Error Message', stack: new Error("Error Object")});
+  // logger.verbose('Verbose Message');
+  app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+}

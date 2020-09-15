@@ -566,6 +566,7 @@ moveDocument = async (req, res) => {
             order += 1
         }
     }
+
     else if (newParent != null && originalParent != null) {
         if (newParent._id.toString() == originalParent._id.toString()) {
             // console.log('newParent.children: ', newParent.children);
