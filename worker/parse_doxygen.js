@@ -44,7 +44,6 @@ const getParseableTree = async () => {
     console.log('parseLevelLookup: ');
     // console.log(parseLevelLookup);
     return parseLevelLookup
-
 }
 
 const updateJobStatus = async (status) => {
@@ -132,34 +131,32 @@ getRefs = async () => {
                         // console.log(result);
                         console.log('getRefs parseString successful');
 			
-			var compounds = [];
+			            var compounds = [];
                         var compounds = compounds.concat(result['doxygenindex']['compound']);
                         var target_refs = []
-			if (compounds.length > 0) {
-                        compounds.forEach(function (item, index) {
-                            target_refs.push(item);
-                            // ERROR
-			    if (!item) {
-				return;
-			    }
-			    if (!item.hasOwnProperty("member")) {
-				return;
-			    }
-			    var members = item['member'];
-                            if (!(typeof members == 'undefined') && !(members == null)) {
-
-                                members.forEach(function (elem, idx) {
-                                    target_refs.push(elem);
-                                });
-                            }
-
+			            if (compounds.length > 0) {
+                            compounds.forEach(function (item, index) {
+                                target_refs.push(item);
+                                // ERROR
+			                    if (!item) {
+				                    return;
+			                    }
+			                    if (!item.hasOwnProperty("member")) {
+				                    return;
+			                    }
+			                    var members = item['member'];
+                                if (!(typeof members == 'undefined') && !(members == null)) {
+                                    members.forEach(function (elem, idx) {
+                                        target_refs.push(elem);
+                                    });
+                                }
                             });
-			}
+			            }
 
-			// Didn't find references, kill process, update job status
-			else {
-			    await killJob(worker, constants.jobs.JOB_STATUS_FINISHED, 'No references found');
-			}
+                        // Didn't find references, kill process, update job status
+                        else {
+                            await killJob(worker, constants.jobs.JOB_STATUS_FINISHED, 'No references found');
+                        }
 			
 
                         default_parser = new DOMParser();
@@ -168,34 +165,33 @@ getRefs = async () => {
                         // console.log('target_refs')
                         // console.log(target_refs[0]);
                         const func = filenames => {
-                          return Promise.all(
-                            filenames.map(f => fsPromises.readFile(new_env.DOXYGEN_XML_DIR + '/' + f))
-                          )
+                            return Promise.all(
+                                filenames.map(f => fsPromises.readFile(new_env.DOXYGEN_XML_DIR + '/' + f))
+                            )
                         }
 
                         // console.log(target_files);
 
-                        func(target_files)
-                            .then(async (results) =>  {
-                                // console.log('target file called');
-                                // console.log(res);
-                                results.forEach( async function(read_file, fileNum) {
-                                    var xmlDoc = default_parser.parseFromString(read_file.toString(), "text/xml");
-                                    var compound_defs = xmlDoc.getElementsByTagName("compounddef");
-                                    
-				    target_refs.forEach(function (i, k) {
-                                        var found_element = xmlDoc.getElementById(i['$']['refid']);
-                                        var location = ''
-                                        var file = ''
-                                        var name = ''
-                                        var kind = ''
-					
-                                        if (found_element ) {
-                                            kind = found_element.getAttribute('kind');
-					    if (kind == 'file' || kind == 'dir') {
-						console.log('skipping doxygen file/dir');
-					    }
-					    else {
+                        func(target_files).then(async (results) =>  {
+                            // console.log('target file called');
+                            // console.log(res);
+                            results.forEach( async function(read_file, fileNum) {
+                                var xmlDoc = default_parser.parseFromString(read_file.toString(), "text/xml");
+                                var compound_defs = xmlDoc.getElementsByTagName("compounddef");
+                                
+                                target_refs.forEach(function (i, k) {
+                                    var found_element = xmlDoc.getElementById(i['$']['refid']);
+                                    var location = ''
+                                    var file = ''
+                                    var name = ''
+                                    var kind = ''
+                
+                                    if (found_element ) {
+                                        kind = found_element.getAttribute('kind');
+                                        if (kind == 'file' || kind == 'dir') {
+                                            console.log('skipping doxygen file/dir');
+                                        }
+                                        else {
                                             if (found_element.tagName === 'compounddef') {
                                                 x = found_element.childNodes;
                                                 // console.log('found compounddef');
@@ -228,36 +224,33 @@ getRefs = async () => {
                                             // console.log(name, ' - ', kind, ' - ', file, ' - ', location);
 
                                             // Remove our local directories where we placed git repo contents
-					    file = file.substring(file.indexOf('git_repos'));
-						
+                                            file = file.substring(file.indexOf('git_repos'));
+                        
                                             file = file.substring(file.indexOf('/')+1);
                                             file = file.substring(file.indexOf('/')+1);
-				    	    // console.log('Lookup Key: ', file);
-				            // if not a function or class for a semanticParsed file
-					    if (!(parseLevelLookup[file] && (kind == 'function' || kind == 'class'))) {
+                                            // console.log('Lookup Key: ', file);
+                                            // if not a function or class for a semanticParsed file
+                                            if (!(parseLevelLookup[file] && (kind == 'function' || kind == 'class'))) {
                                                 found_refs.push({name: name, kind: kind, path: file, lineNum: location, repositoryId})
-					    }
-					    else {
-						console.log('Skipping ref');
-					    }
-					  }
-
-				        }
-                                    });
+                                            }
+                                            else {
+                                                console.log('Skipping ref');
+                                            }
+                                        }
+                                    }
                                 });
-                                console.log('END FOUND_REFS');
-                                // console.log(found_refs);
-                                
-                                await createReferences(found_refs, worker);
-                            })
-                            //.catch(console.log);
-                            .catch(async (error) => {
-				await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Error parsing references', error);
-                                return;
                             });
+                            console.log('END FOUND_REFS');
+                            // console.log(found_refs);
+                            await createReferences(found_refs, worker);
+                        })
+                        //.catch(console.log);
+                        .catch(async (error) => {
+                            await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Error parsing references', error);
+                            return;
+                        });
                     });
                 });
-
             });
         });
     });

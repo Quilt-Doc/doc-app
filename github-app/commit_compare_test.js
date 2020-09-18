@@ -27,7 +27,7 @@ const fs_promises = require('fs').promises;
 
 const { findNewSnippetRegion } = require('./validator');
 
-const { parseCommitObjects, getTrackedFiles } = require('./utils/validate_utils');
+const { getRepositoryObject, parseCommitObjects, getTrackedFiles } = require('./utils/validate_utils');
 
 const SNIPPET_STATUS_INVALID = 'INVALID';
 const SNIPPET_STATUS_NEW_REGION = 'NEW_REGION';
@@ -41,20 +41,6 @@ const SNIPPET_STATUS_VALID = 'VALID';
 require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
-
-const getRepositoryObject = async (installationId, fullName) => {
-
-  const getRepositoryResponse = await api.post('/repositories/retrieve', {
-    installationId: installationId,
-    fullName: fullName
-  });
-  console.log('getRepositoryResponse: ');
-  console.log(getRepositoryResponse.data);
-  var repoCommit = getRepositoryResponse.data.lastProcessedCommit;
-  var repoId = getRepositoryResponse.data._id;
-  return [repoId, repoCommit];
-};
-
 const runValidation = async () => {
   var timestamp = Date.now().toString();    
   var repoDiskPath = 'git_repos/' + timestamp +'/';
@@ -63,9 +49,11 @@ const runValidation = async () => {
   // Testing Values:
   // var head_commit = '7774441eb5e8bfaa8c151b2bc3a4f7e72ddc6ce5';
   // var repo_commit = '3a64c575cca6ed3e90bf6464ccc4f5a8814c9693';
-  var repoId = '';
-  var repoCommit = '';
-  [repoId, repoCommit] = await getRepositoryObject(process.env.installationId, process.env.process.env.repositoryFullName);
+
+  var repoObj = await getRepositoryObject(process.env.installationId, process.env.process.env.repositoryFullName);
+
+  var repoId = repoObj._id;
+  var repoCommit = repoObj.lastProcessedCommit;
 
   headCommit = process.env.headCommit;
 

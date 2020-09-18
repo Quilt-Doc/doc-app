@@ -198,7 +198,6 @@ else {
     // fullName, cloneUrl, semanticTargets, installationId 
     process.env.fullName = jobData.fullName;
     process.env.cloneUrl = jobData.cloneUrl;
-    process.env.semanticTargets = jobData.semanticTargets;
     process.env.installationId = jobData.installationId;
     semanticUtils.execSemantic();
   }
@@ -207,11 +206,11 @@ else {
   else if (process.env.jobType == constants.jobs.JOB_UPDATE_REFERENCES) {
     console.log('running update references job');
     // installationId, fullName, headCommit
+    process.env.cloneUrl = jobData.cloneUrl;
     process.env.installationId = jobData.installationId;
     process.env.fullName = jobData.fullName;
     process.env.headCommit = jobData.headCommit;
     updateReferences.run();
-
   }
  
 

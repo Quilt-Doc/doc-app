@@ -6,7 +6,6 @@ const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
 const fs = require ('fs');
-const yaml = require('js-yaml');
 
 const api = require('./apis/api').requestBackendClient();
 const spawn = require('await-spawn')
@@ -18,6 +17,8 @@ const jobs = require('./apis/jobs');
 const { lowerCase, localeLowerCase } = require("lower-case");
 
 const constants = require('./constants/index');
+
+const { filterVendorFiles, getRepositoryObject } = require('./utils/validate_utils');
 
 /*
 const JOB_GET_REFS = 1;
@@ -40,23 +41,6 @@ const getInstallToken = async (installationId) => {
         return {};
     });
 }
-
-const getRepositoryObject = async () => {
-
-    console.log('getRepositoryObject installationId: ', process.env.installationId);
-    console.log('getRepositoryObject fullName: ', process.env.fullName);
-    const getRepositoryResponse = await api.post('/repositories/retrieve', {
-      installationId: Number(process.env.installationId),
-      fullName: process.env.fullName
-    });
-    // console.log('getRepositoryResponse: ');
-    // console.log(getRepositoryResponse.data);
-    var repoId = getRepositoryResponse.data[0]._id;
-    var cloneUrl = getRepositoryResponse.data[0].cloneUrl;
-    return [repoId, cloneUrl];
-    // var repoCommit = getRepositoryResponse.data.last_processed_commit;
-    // return [repoId, repoCommit];
-};
 
 const getTreeReferences = async (worker, repoId) => {
     return await Reference.find({repository: ObjectId(repoId), kind: 'file'}, 'path')
@@ -91,13 +75,6 @@ const escapeShell = (cmd) => {
         return '"'+cmd.replace('"', '\\"')+'"';//.replace(/(["\s'$`\\])/g,'\\$1')+'"';
 }
 
-const filterVendorFiles = (regexFilters, files) => {
-    return files.filter(function (fileName) {
-        return !regexFilters.some(function (regex) {
-            return regex.test(fileName);
-        });
-    });
-}
 
 // Args append: [ '../' + repoDiskPath ]
 
@@ -107,9 +84,9 @@ const execSemantic = async () =>  {
 
     worker.send({receipt: process.env.receipt});
 
-    var repoInfo = await getRepositoryObject();
-    var repoId = repoInfo[0];
-    var cloneUrl = repoInfo[1];
+    var repoObj = await getRepositoryObject(process.env.installationId, process.env.fullName);
+    var repoId = repoObj._id;
+    var cloneUrl = repoObj.cloneUrl;
 
     var timestamp = Date.now().toString();
     var repoDiskPath = 'git_repos/' + timestamp +'/';
@@ -118,11 +95,7 @@ const execSemantic = async () =>  {
     var installToken = await tokenUtils.getInstallToken(process.env.installationId);
 
     var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
-    var regexFilters = yaml.safeLoad(fs.readFileSync('vendor.yml', 'utf8'));
-    regexFilters = regexFilters.map(filter => RegExp(filter));
 
-    console.log('vendor.yml: ');
-    console.log(regexFilters.length);
 
     console.log('CloneUrl: ', cloneUrl);
 
@@ -137,12 +110,11 @@ const execSemantic = async () =>  {
 
         let args2 = ["v2-run", "semantic", "parse"];
 
-        // var semanticTargets = JSON.parse(process.env.semanticTargets).targets;
 	var semanticTargets = await getTreeReferences(worker, repoId);
 	semanticTargets = semanticTargets.map(obj => obj.path);
 	
 	console.log('semanticTargets.length before filter: ', semanticTargets.length);
-	semanticTargets = filterVendorFiles(regexFilters, semanticTargets);
+	semanticTargets = filterVendorFiles(semanticTargets);
 	console.log('semanticTargets.length after filter: ', semanticTargets.length);
 
 
@@ -319,6 +291,7 @@ const execSemantic = async () =>  {
                         });
                         finalLinkedCallsList = finalLinkedCallsList.concat(relatedCalls);
                      }
+/*
 		     console.log('finalLinkedCallsList.length: ');
 	             console.log(finalLinkedCallsList.length);
                      const bulkLinkOps = finalLinkedCallsList.map( linkedCall => ({
@@ -338,6 +311,7 @@ const execSemantic = async () =>  {
                                   await killJob(worker, constants.jobs.JOB_STATUS_ERROR, 'Error linking calls to definitions: ', err);
                               });
                     }
+*/
 		}
 
                 else {

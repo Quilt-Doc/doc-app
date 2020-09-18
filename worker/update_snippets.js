@@ -27,7 +27,7 @@ const fs_promises = require('fs').promises;
 
 const { findNewSnippetRegion } = require('./snippet_validator');
 
-const { parseCommitObjects, getTrackedFiles } = require('./utils/validate_utils');
+const { getRepositoryObject, parseCommitObjects, getTrackedFiles } = require('./utils/validate_utils');
 
 
 const tokenUtils = require('./utils/token_utils');
@@ -37,22 +37,6 @@ const { exec, execFile, spawnSync } = require('child_process');
 
 const constants = require('./constants/index');
 
-
-
-
-
-const getRepositoryObject = async (installationId, repositoryFullName) => {
-  
-  const getRepositoryResponse = await api.post('/repositories/retrieve', {
-    installationId: installationId,
-    fullName: repositoryFullName 
-  });
-  console.log('getRepositoryResponse: ');
-  console.log(getRepositoryResponse.data);
-  var repoCommit = getRepositoryResponse.data.last_processed_commit;
-  var repoId = getRepositoryResponse.data._id;
-  return [repoId, repoCommit];
-};
 
 const runValidation = async () => {
   var timestamp = Date.now().toString();    
@@ -74,9 +58,11 @@ const runValidation = async () => {
   // Github API Client
 
 
-  var repoId = '';
-  var repoCommit = '';
-  [repoId, repoCommit] = await getRepositoryObject(process.env.installationId, process.env.repositoryFullName);
+
+  var repoObj= await getRepositoryObject(process.env.installationId, process.env.repositoryFullName);
+
+  var repoId = repoObj._id;
+  var repoCommit = repoObj.lastProcessedCommit;
 
   headCommit = process.env.headCommit;
 
