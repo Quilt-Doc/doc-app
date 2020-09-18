@@ -23,9 +23,11 @@ import { retrieveTags, createTag } from '../../../actions/Tag_Actions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTag, faPlus } from '@fortawesome/free-solid-svg-icons'
 import {BiPurchaseTag} from 'react-icons/bi';
-
+import {BsTag} from 'react-icons/bs';
+import {TiTag} from 'react-icons/ti';
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
+import { RiAddLine } from 'react-icons/ri';
 
 class LabelMenu extends React.Component {
     
@@ -104,15 +106,7 @@ class LabelMenu extends React.Component {
     }
 
     renderMarginTop() {
-        if (this.props.dirview){
-          return "1rem";
-        } else if (this.props.marginTop){
-            return this.props.marginTop
-        } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
-            return "-30rem"
-        } else {
-            return "-5rem"
-        }
+        return "1rem";
     }
 
     handleSelect(labelBool, tagId, tag){
@@ -256,6 +250,78 @@ class LabelMenu extends React.Component {
         }
     }
 
+    renderFlip = () => {
+        if (this.props.form && this.addButton){
+            let rect = this.addButton.getBoundingClientRect()
+            if (rect.top + 350 > window.innerHeight){
+				return [true, window.innerHeight - rect.top + 10];
+            } else {
+                return [false, rect.top + rect.height + 5];
+            }
+        }
+        return [false, 0]
+    }
+
+    renderListContent = (flip, objectLabels) => {
+        if (flip[0]) {
+            return(
+                <>
+                    <ListContainer>
+                        {this.state.loaded ?  this.renderListItems(objectLabels) : <MoonLoader size = {12}/>}
+                        {this.state.create !== "" &&
+                            <ListCreate 
+                                onMouseEnter = {() => this.setState({position: this.props.tags.length})} 
+                                onClick = {() => {this.createTag()}}
+                                border = {this.state.position === this.props.tags.length ? `1px solid ${chroma("#172A4E").alpha(0.7)}` : ''}
+                                shadow = {this.state.position === this.props.tags.length ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :''}
+                            >
+                                {`Create "${this.state.create}"`}
+                            </ListCreate>
+                        }
+                    </ListContainer>
+                    <SearchbarContainer>
+                        <Searchbar 
+                            onKeyDown = {(e) => this.setPosition(e)}  
+                            onChange = {(e) => {this.searchTags(e)}} 
+                            value = {this.state.search}
+                            autoFocus 
+                            placeholder = {"Find labels..."}
+                        />
+                    </SearchbarContainer>
+                    <HeaderContainer>Add labels</HeaderContainer>
+                </>
+            )
+        } else {
+            return(
+                <>
+                    <HeaderContainer>Add labels</HeaderContainer>
+                    <SearchbarContainer>
+                        <Searchbar 
+                            onKeyDown = {(e) => this.setPosition(e)}  
+                            onChange = {(e) => {this.searchTags(e)}} 
+                            value = {this.state.search}
+                            autoFocus 
+                            placeholder = {"Find labels..."}
+                        />
+                    </SearchbarContainer>
+                    <ListContainer>
+                        {this.state.loaded ?  this.renderListItems(objectLabels) : <MoonLoader size = {12}/>}
+                        {this.state.create !== "" &&
+                            <ListCreate 
+                                onMouseEnter = {() => this.setState({position: this.props.tags.length})} 
+                                onClick = {() => {this.createTag()}}
+                                border = {this.state.position === this.props.tags.length ? `1px solid ${chroma("#172A4E").alpha(0.7)}` : ''}
+                                shadow = {this.state.position === this.props.tags.length ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :''}
+                            >
+                                {`Create "${this.state.create}"`}
+                            </ListCreate>
+                        }
+                    </ListContainer>
+                </>
+            )
+        }
+    }
+
 
     render() {
         this.colors = ['#5352ed', 
@@ -263,26 +329,22 @@ class LabelMenu extends React.Component {
         ]
 
         let objectLabels = this.props.setTags.map(tag => tag.label)
+        let flip = this.renderFlip()
         return(
             <MenuContainer  >
                 {this.props.form ?
-                    <AddButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
-                        <BiPurchaseTag style = {{fontSize: "1.4rem", marginRight: "0.5rem"}}/>
-                        <Title>Add labels</Title>
+                    <AddButton 
+                        ref = {addButton => this.addButton = addButton} 
+                        onClick = {(e) => this.openMenu(e)}
+                        active = {this.state.open}
+                    >
+                        <RiAddLine />
                     </AddButton> :
-                    this.props.dirview ?
-                    <PageIcon active = {this.state.open} onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
-                        <BiPurchaseTag style = {{marginRight: "0.5rem"}}/>
-                        <Title3>Add labels</Title3>
-                    </PageIcon> :
-
-                    <AddBigButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
-                        <FontAwesomeIcon 
-                            icon={faTag}
-                            style = {{marginRight: "0.5rem"}}
-                        />
-                        Add Labels
-                    </AddBigButton>
+                    <PageIcon 
+                        active = {this.state.open} onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
+                        <TiTag style = {{fontSize: "1.5rem", marginRight: "0.5rem", marginTop: "0.1rem"}}/>
+                        <Title3>Add Labels</Title3>
+                    </PageIcon>
                 }
                 <CSSTransition
                     in = {this.state.open}
@@ -294,33 +356,11 @@ class LabelMenu extends React.Component {
                 >
                     <Container 
                         ref = {node => this.node = node}
-                        left = {this.state.left}
-                        top = {this.state.top}
+                        flip = {flip}
+                        form = {this.props.form}
                         dirview = { this.props.dirview }
                     >
-                        <HeaderContainer>Add labels</HeaderContainer>
-                        <SearchbarContainer>
-                            <Searchbar 
-                                onKeyDown = {(e) => this.setPosition(e)}  
-                                onChange = {(e) => {this.searchTags(e)}} 
-                                value = {this.state.search}
-                                autoFocus 
-                                placeholder = {"Find labels..."}
-                            />
-                        </SearchbarContainer>
-                        <ListContainer>
-                            {this.state.loaded ?  this.renderListItems(objectLabels) : <MoonLoader size = {12}/>}
-                            {this.state.create !== "" &&
-                                <ListCreate 
-                                    onMouseEnter = {() => this.setState({position: this.props.tags.length})} 
-                                    onClick = {() => {this.createTag()}}
-                                    border = {this.state.position === this.props.tags.length ? `1px solid ${chroma("#172A4E").alpha(0.7)}` : ''}
-                                    shadow = {this.state.position === this.props.tags.length ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :''}
-                                >
-                                    {`Create "${this.state.create}"`}
-                                </ListCreate>
-                            }
-                        </ListContainer>
+                        {this.renderListContent(flip, objectLabels)}
                     </Container>
                 </CSSTransition>
             </MenuContainer>
@@ -350,27 +390,28 @@ export default withRouter(connect(mapStateToProps, { retrieveTags, createTag })(
 
 
 const PageIcon = styled.div`
-    
+    opacity: ${props => props.active ? 1 : 0.9};
     display: flex;
     align-items: center;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
    
    /*color: white;*/
     /*background-color: #4c5367;*/
    /* opacity: 0.8;*/
    padding: 0.5rem 1rem;
     &:hover {
-        background-color: #F4F4F6;
+        background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#F4F4F6"};
         
     }
-    background-color: ${props => props.active ? "#F4F4F6" : ""};
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
     cursor: pointer;
     border-radius: 0.3rem;
 `
 
 const Title3 = styled.div`
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     margin-right: 0.3rem;
+    font-weight: 400;
 `
 
 const Title = styled.div`
@@ -419,20 +460,20 @@ const MenuContainer = styled.div`
 `
 
 const AddButton = styled.div`
-    background-color: #363b49;
-    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
-    border-radius: 0.2rem;
-    font-size: 1.3rem;
-    padding: 0.4rem 1rem;
-    margin-right: 1rem;
+    height: 3rem;
+    width: 3rem;
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
+    border-radius: 50%;
+    font-size: 1.8rem;
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
     &:hover {
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
-    
 `
 
 const Container = styled.div`
@@ -446,10 +487,9 @@ const Container = styled.div`
     font-size: 1.4rem;
     z-index: 3;
     background-color: white;
-    top: ${props => props.top}px;
-    left: ${props => props.left}px;
-    margin-left: ${props => props.dirview ? "-17rem": ""};
-    margin-top: ${props => props.dirview ? "-6rem": ""};
+    bottom:${props => props.flip[0] ? `${props.flip[1]}px` : ""};
+    top: ${props => !props.flip[0] ? `${props.flip[1]}px` : ""};
+    margin-left: ${props => props.form ? "" : "-16.8rem"};
 `
 
 const SearchbarContainer = styled.div`
@@ -457,6 +497,7 @@ const SearchbarContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    border-top: 1px solid #E0E4E7;
     border-bottom:  1px solid #E0E4E7;
 `
 
@@ -468,7 +509,7 @@ const HeaderContainer = styled.div`
     padding: 1rem;
     color: #172A4E;
     font-weight: 500;
-    border-bottom: 1px solid #E0E4E7;
+  
 `
 
 const ListHeader = styled.div`

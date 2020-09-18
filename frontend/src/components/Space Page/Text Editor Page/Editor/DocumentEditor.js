@@ -14,7 +14,9 @@ import Leaf from '../Slate_Specific/Leaf';
 import Element from '../Slate_Specific/Element';
 import Sidebar from './Sidebar';
 import DocumentInfo from './DocumentInfo';
+import MainToolbar from './MainToolbar';
 import DocumentOptionsMenu from '../../../General/Menus/DocumentOptionsMenu';
+import AttachmentToolbar from './AttachmentToolbar';
 
 //reducer
 import editorReducer from './EditorReducer';
@@ -85,6 +87,7 @@ const DocumentEditor = (props) => {
 
 	const [value, setValue] = [props.markup, props.setValue]
 	const [write, setWrite] = useState(false)
+	const [setOptions, toggleOptions] = useState(false);
 	const blocktypes = ["paragraph", "heading-one", "heading-two", 
 		"heading-three", "quote", "bulleted-list", "numbered-list",
 		 "code-block", "code-reference", "code-snippet", "check-list",
@@ -158,41 +161,58 @@ const DocumentEditor = (props) => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Slate editor={editor} value={value} onChange={value => setValue(value)}>
-				<CSSTransition
-					in={write}
-					unmountOnExit
-				
-					enter = {true}
-					exit = {true}
-					timeout={150}
-					classNames="editortoolbar"
-				>
-					
-					<EditorToolbar 
-						toggleBlock = {(format) => toggleBlock2(editor, format)}
-						toggleBlockActive = {(format) => toggleBlock(editor, format)}
-						isMarkActive = {isMarkActive} 
-						toggleMark = {toggleMark}
-						removeMarks = {() => removeMarks(editor)}
-					/>
-				
-				</CSSTransition>
+			
+				<ToolbarsContainer>
+					<CSSTransition
+						in={setOptions}
+						unmountOnExit
+						enter = {true}
+						exit = {true}
+						timeout={150}
+						classNames="editortoolbar"
+					>
+						<AttachmentToolbar
+							document = {props.document}
+						/>
+					</CSSTransition>
+					<CSSTransition
+						in={write}
+						unmountOnExit
+						enter = {true}
+						exit = {true}
+						timeout={150}
+						classNames="editortoolbar"
+					>
+						<EditorToolbar 
+							toggleBlock = {(format) => toggleBlock2(editor, format)}
+							toggleBlockActive = {(format) => toggleBlock(editor, format)}
+							isMarkActive = {isMarkActive} 
+							toggleMark = {toggleMark}
+							removeMarks = {() => removeMarks(editor)}
+						/>
+					</CSSTransition>
+				</ToolbarsContainer>
+				<MainToolbar 
+					document = {props.document}
+					write = {write} 
+					setWrite = {() => {setWrite(!write)}}
+					setOptions = {setOptions}
+					toggleOptions = {() => {toggleOptions(!setOptions)}}
+					documentModal = {props.documentModal}
+				/>
 				<Container>
 				
-					
-					<EditorContainer>
+					<EditorContainer 
+						documentModal = {props.documentModal}
+						id = {"#editorContainer"}
+					>
 							{write && <Sidebar toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
-							<EditorContainer2 >
-								<KeyToolbar>
-									<KeyBorder active = {write} onClick = {() => {setWrite(!write)}}>
-										<RiPencilLine/>
-									</KeyBorder>
-									<DocumentOptionsMenu document = {props.document}/>
-								</KeyToolbar>
+							<EditorContainer2  >
+							
 									 <DocumentInfo write  = {write} />
 									<MarkupMenu dispatch={dispatch} range={range} state={state} scrollTop={props.scrollTop} />
 									{write ? 
-										<Header autoFocus paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
+										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
 										:
 										<HeaderDiv active = {props.title} paddingLeft = {"10rem"}>{props.title ? props.title : "Untitled"}</HeaderDiv>
 									}
@@ -213,8 +233,8 @@ const DocumentEditor = (props) => {
 										renderLeaf={renderLeaf}
 										spellCheck="false"
 										decorate={decorate}
+										readOnly = {!write}
 										
-										readOnly = {!props.write}
 									/>
 									
 							</EditorContainer2>
@@ -457,147 +477,11 @@ const isMarkActive = (editor, format) => {
 }
 
 
-
-
-const AuthorNote = styled.div`
-	font-size: 1.25rem;
-	opacity: 0.5;
-	margin-bottom: 1rem;
-	padding-left: ${props => props.paddingLeft};
-  	padding-right: 10rem;
+const ToolbarsContainer = styled.div`
+	position: sticky; 
+	top: 0;
+	z-index: 2;
 `
-
-
-
-const RepositoryButton = styled.div`
-    background-color: ${chroma("#5B75E6").alpha(0.1)}; 
-    color: #172A4E;
-    font-weight: 500;
-    padding: 0.75rem;
-    display: inline-flex;
-    border-radius: 0.4rem;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
-    align-items: center;
-    cursor: pointer;
-    &: hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    }
-    letter-spacing: 1;
-    font-size: 1.3rem;
-`
-
-const DataContainer = styled.div`
-	margin-top: 4rem;
-	padding-left: 10rem;
-	padding-right: 10rem;
-`
-
-const ReferenceContainer = styled.div`
-    margin-top: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-   
-    align-items: center;
-`
-
-const Tag = styled.div`
-    font-size: 1.25rem;
-    color: ${props => props.color}; 
-    padding: 0.4rem 0.8rem;
-    background-color: ${props => chroma(props.color).alpha(0.15)};
-    display: inline-block;
-    border-radius: 4px;
-	margin-right: 1rem;
-	font-weight: 500;
-`
-
-const Reference = styled.div`
-    font-size: 1.25rem;
-    color: #172A4E;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
-    padding: 0.55rem 0.7rem;
-	padding-right: 0.9rem;
-	padding-left: 0rem;
-    align-items: center;
-    display: inline-flex;
-    /*background-color:#262E49;*/
-    /*color:#D6E0EE;*/
-	font-weight: 500;
-    
-    border-radius: 0.3rem;
-   /* box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
-	margin-right: 1.2rem;
-`
-
-
-const KeyBorder = styled.div`
-	
-	width: 3rem;
-	height: 3rem;
-	margin-left: ${props => props.margin ? "auto": "0.5rem"};
-	display: flex;
-	align-items: center;
-	border-radius: 0.3rem;
-	justify-content: center;
-	font-size: 2.1rem;
-	cursor: pointer;
-
-	
-    &:hover {
-        background-color: #eeeef1;
-    }
-    background-color: ${props => props.active ? "#eeeef1": ""};
-	
-`
-
-/*
-const KeyBorder = styled.div`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 3rem;
-	height: 3rem;
-	font-size: 2.2rem;
-	&:hover {
-		background-color: #eeeef1;
-	}
-	color: ${props => props.active ? '#70EAE1' : ""};
-	
-	cursor: pointer;
-	margin-left: 1.5rem;
-	border-radius: 0.3rem;
-`*/
-
-const KeyBorder2 = styled.div`
-	width: 3rem;
-	height: 3rem;
-	background-color: #f7f9fb;
-	margin-left: ${props => props.margin ? "auto": "0.5rem"};
-	display: flex;
-	align-items: center;
-	justify-content: center;
-
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-	font-size: 1.9rem;
-
-	&:hover {
-		background-color: #eeeef1;
-	}
-	
-	cursor: pointer;
-	margin-left: 1rem;
-	border-radius: 0.3rem;
-`
-
-const KeyToolbar = styled.div`
-	display: inline-flex;
-	align-items: center;
-	margin-left: auto;
-	background-color: white;
-	padding: 2rem 2rem;
-	
-`
-
 
 const Container = styled.div`
 	display: flex;	
@@ -608,22 +492,23 @@ const EditorContainer2 = styled.div`
 	flex-direction: column;
 	display: flex;
 	width: 100%;
+	padding-top: 7rem;
 `
 
 const EditorContainer = styled.div`
 	display: flex;
-	
 	width: 94rem;
-	margin-top: 3rem;
+	margin-top: ${props => props.documentModal ? "" : "1.5rem"};
 	background-color: white;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	box-shadow: ${props => props.documentModal ? "": "0 1px 2px rgba(0, 0, 0, 0.2)"};
 	border-radius: 0.2rem;
+
 `
 
 const HeaderDiv = styled.div`
 	font-size: 3.3rem;
 	color: #172A4E;
-	margin-bottom: 2rem;
+	margin-bottom: 1rem;
 	margin-top: 3.5rem;
 	padding-left: ${props => props.paddingLeft};
 	padding-right: 10rem;
@@ -635,7 +520,7 @@ const HeaderDiv = styled.div`
 const Header = styled(TextareaAutosize)`
 	font-size: 3.3rem;
     color: #172A4E;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     &::placeholder {
         color: #172A4E;
         opacity: 0.4;
@@ -650,23 +535,6 @@ const Header = styled(TextareaAutosize)`
 	line-height: 4rem;
 	font-weight: 500;
 `
-/*
-const Header = styled.input`
-    font-size: 3.3rem;
-    color: #172A4E;
-    margin-bottom: 0.5rem;
-    &::placeholder {
-        color: #172A4E;
-        opacity: 0.4;
-    }
-    outline: none;
-    border: none;
-	margin-top: 3.5rem;
-	padding-left: ${props => props.paddingLeft};
-	padding-right: 10rem;
-	font-weight: 500;
-`
-*/
 
 const StyledEditable = styled(Editable)`
   line-height: 1.5 !important;
@@ -675,7 +543,7 @@ const StyledEditable = styled(Editable)`
   font-size: 16px;
   resize: none !important;
   padding-bottom: 7rem;
-  min-height: 75rem;
+  min-height: 66rem;
   cursor: ${props => props.cursortype ? "text" : "default"};
   padding-left: ${props => props.paddingLeft};
   padding-right: 10rem;

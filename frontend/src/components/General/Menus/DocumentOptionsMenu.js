@@ -93,11 +93,12 @@ class DocumentOptionsMenu extends React.Component {
     render() {
         let {open, left, top} = this.state;
         return (
-            <>
-                <Button 
-                    onClick = {(e) => {this.openMenu(e)}}
-                    ref = {button => this.button = button}
-                    active = {open}
+            <Container>
+
+                <Button
+                      onClick = {(e) => {this.openMenu(e)}}
+                      ref = {button => this.button = button}
+                      active = {open}
                 >
                     <RiMoreFill/>
                 </Button>
@@ -140,16 +141,22 @@ class DocumentOptionsMenu extends React.Component {
                         </AuthorNote>
                     </Menu>
                 </CSSTransition>
-            </>
+            </Container>
         )
     }
 }
 
 const mapStateToProps = () => {
-
+    return (
+        {}
+    )
 }
 
 export default withRouter(connect(mapStateToProps, {deleteDocument})(DocumentOptionsMenu))
+
+const Container = styled.div`
+
+`
 
 const Description = styled.div`
     display: flex;
@@ -198,9 +205,12 @@ const Menu = styled.div`
     box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     border-radius: 0.2rem;
     overflow-y: scroll;
-    
+    /*
     top: ${props => props.top}px;
     left: ${props => props.left -20}px;
+    */
+    margin-top: 0.5rem;
+    margin-left: -17rem;
 `
 
 const SmallHeaderContainer = styled.div`
@@ -220,21 +230,18 @@ const SmallHeaderContainer = styled.div`
 
 const Button = styled.div`
     width: 3rem;
-    height: 3rem;
-    
-    margin-left: ${props => props.margin ? "auto": "0.5rem"};
+	height: 3rem;
     display: flex;
-    align-items: center;
+    font-size: 2.4rem;
     justify-content: center;
-
-    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
-    font-size: 1.9rem;
-
-    &:hover {
-        background-color: #eeeef1;
-    }
-    background-color: ${props => props.active ? "#eeeef1": ""};
-    cursor: pointer;
-    margin-left: 1rem;
+    align-items: center;
+    opacity: 0.8;
+    position: relative;
+    z-index: 0;
     border-radius: 0.3rem;
+    &:hover {
+        background-color:  ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
+    }
+    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
+    cursor: pointer;
 `

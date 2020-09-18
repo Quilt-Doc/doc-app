@@ -46,12 +46,9 @@ class DirectoryView extends React.Component {
 
     async loadResources(){
         let { repositoryId, referenceId, workspaceId } = this.props.match.params
-        console.log('repid', repositoryId)
-        console.log('refid', referenceId)
         if (!referenceId) referenceId = ""
         await this.props.getRepository({workspaceId, repositoryId});
         await this.props.retrieveReferences({ workspaceId, repositoryId, referenceId, kinds : ['file', 'dir'] })
-        console.log(this.props.references);
         let referenceIds = this.props.references.map(ref => ref._id)
         referenceIds.push(this.props.currentReference._id)
         await this.props.retrieveDocuments({ workspaceId, referenceIds, workspaceId })
@@ -179,6 +176,7 @@ class DirectoryView extends React.Component {
             < DocumentMenu
                 setDocuments = {this.props.documents}
                 reference = {this.props.currentReference}
+                mLeft = {"auto"}
             />
         )
     }
@@ -475,8 +473,8 @@ const DirectoryContainer = styled.div`
    
 
     min-width: 80rem;
-    margin-left: 8rem;
-    margin-right: 8rem;
+    margin-left: 5rem;
+    margin-right: 5rem;
 `
 
 

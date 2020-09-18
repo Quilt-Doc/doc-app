@@ -5,8 +5,9 @@ var request = require("request");
 const apis = require('../apis/api');
 
 const jobs = require('../apis/jobs');
+const jobConstants = require('../constants/index').jobs;
 
-const api = apis.requestClient();
+const api = apis.requestGithubClient();
 
 const apiURL = 'https://api.github.com';
 const localURL = 'https://localhost:3001/api'
@@ -19,6 +20,8 @@ const { exec, execFile } = require('child_process');
 
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
+const Document = require('../models/Document');
+
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -42,13 +45,18 @@ const { json } = require('body-parser');
     return res.json({status: 'SUCCESS'});
 }*/
 
+checkValid = (item) => {
+    if (item !== null && item !== undefined) {
+        return true
+    }
+    return false
+}
+
 // Needs to use installation token
 createRepository = async (req, res) => {
     const {fullName, installationId, htmlUrl, cloneUrl, debugId, icon} = req.body;
-
-    if (!typeof fullName == 'undefined' && fullName !== null) return res.json({success: false, error: 'no repository fullName provided'});
-    if (!typeof installationId == 'undefined' && installationId !== null) return res.json({success: false, error: 'no repository installationId provided'});
-
+    if (!checkValid(fullName)) return res.json({success: false, error: 'no repository fullName provided'});
+    if (!checkValid(installationId)) return res.json({success: false, error: 'no repository installationId provided'});
 
     let repository = new Repository({
         fullName,
@@ -164,7 +172,7 @@ createRepository = async (req, res) => {
                     // default_branch, fullName, cloneUrl, args_2, installationId 
 
                     runSemanticData['semanticTargets'] = JSON.stringify({targets: args2});
-                    repository.semanticJobStatus = jobs.JOB_STATUS_RUNNING;
+                    repository.semanticJobStatus = jobConstants.JOB_STATUS_RUNNING;
                     repository.save();
                     jobs.dispatchSemanticJob(runSemanticData, log);
                 
@@ -183,8 +191,7 @@ getRepositoryFile = async (req, res) => {
 
     // if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
     // if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
-    if ((typeof pathInRepo == 'undefined' || pathInRepo == null)
-        && (typeof referenceId == 'undefined' || referenceId == null)) {
+    if (!checkValid(pathInRepo) && !checkValid(referenceId)) {
         return res.json({success: false, error: 'no repo pathInRepo and referenceId provided'});
     }
 
@@ -232,10 +239,9 @@ getRepository = (req, res) => {
 
 
 deleteRepository = (req, res) => {
-    const { id } = req.params;
+    const repositoryId = req.repositoryObj._id.toString();
 
-    if (!typeof id == 'undefined' && id !== null) return res.json({success: false, error: 'no repository id provided'});
-    Repository.findByIdAndRemove(id, (err, repository) => {
+    Repository.findByIdAndRemove(repositoryId, (err, repository) => {
         if (err) return res.json({success: false, error: err});
         repository.populate('workspace', (err, repository) => {
             if (err) return res.json({ success: false, error: err });
@@ -262,6 +268,25 @@ retrieveRepositories = (req, res) => {
         // Make sure returned repositories are scoped to workspace on the request
         repositories = repositories.filter(repositoryObj => repositoriesInWorkspace.includes(repositoryObj._id.toString()) != -1);
         if (err) return res.json({ success: false, error: err });
+        return res.json({success: true, result: repositories});
+    });
+}
+
+jobRetrieveRepositories = (req, res) => {
+    const {fullName, installationId, fullNames} = req.body;
+
+
+    query = Repository.find();
+    if (fullName) query.where('fullName').equals(fullName);
+    if (installationId) query.where('installationId').equals(installationId);
+    if (fullNames) query.where('fullName').in(fullNames)
+
+
+    query.populate('workspace').exec((err, repositories) => {
+        console.log("REPOSITORIES", repositories);
+        // Make sure returned repositories are scoped to workspace on the request
+        if (err) return res.json({ success: false, error: err });
+        console.log('Returning Repositories');
         return res.json({success: true, result: repositories});
     });
 }
@@ -311,7 +336,7 @@ pollRepositories = async (req, res) => {
     for (let i = 0; i < fullNames.length; i++) {
         let fullName = fullNames[i]
         let repository = await Repository.findOne({fullName: fullName, installationId: installationId})
-        if (!repository || repository.doxygenJobStatus !== jobs.JOB_STATUS_FINISHED || repository.semanticJobStatus !== jobs.JOB_STATUS_FINISHED) {
+        if (!repository || repository.doxygenJobStatus !== jobConstants.JOB_STATUS_FINISHED || repository.semanticJobStatus !== jobConstants.JOB_STATUS_FINISHED) {
             return res.json({success: true, result: false})
         }
     }
@@ -319,27 +344,31 @@ pollRepositories = async (req, res) => {
 }
 
 updateRepository = async (req, res) => {
-    const {eventType, headCommit, cloneUrl} = req.body;
+    const {fullName, ref, installationId, eventType, headCommit, cloneUrl} = req.body;
+    console.log('updateRepository called');
 
-    const fullName = req.repositoryObj.fullName;
-    const installationId = req.repositoryObj.installationId;
+    console.log('eventType: ', eventType);
+    console.log('fullName: ', fullName);
+    console.log('installationId: ', installationId);
 
-    if (typeof eventType == 'undefined' || eventType !== null) return res.json({success: false, error: 'updateRepository: no eventType provided'});
-    if (typeof fullName == 'undefined' || fullName !== null) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
-    if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
+    if (!checkValid(eventType)) return res.json({success: false, error: 'updateRepository: no eventType provided'});
+    if (!checkValid(fullName)) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
+    if (!checkValid(installationId)) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
 
+    console.log('eventType: ', eventType);
     // This conditional determines if we run snippet job and outdate old treeReferences
     if (eventType == 'push') {
+        console.log('Updating repository on push');
         if (typeof headCommit == 'undefined' || headCommit == null) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
         if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});    
 
 
-        var repository = await Repository.find({fullName, installationId})
+        var repository = await Repository.findOne({fullName, installationId})
                                 .catch(err => {
                                     return res.json({ success: false, error: 'Error updateRepository could not find repository: ' + err });
                                 });
 
-        repository.snippetJobStatus = jobs.JOB_STATUS_RUNNING;
+        repository.snippetJobStatus = jobConstants.JOB_STATUS_RUNNING;
         await repository.save()
                 .catch(err => {
                     return res.json({success: false, error: 'Error setting repository snippetJobStatus = JOB_STATUS_RUNNING ' + err});
@@ -350,23 +379,26 @@ updateRepository = async (req, res) => {
         runSnippetData['installationId'] = installationId;
         runSnippetData['headCommit'] = headCommit;
         runSnippetData['cloneUrl'] = cloneUrl;
-        runSnippetData['jobType'] = jobs.JOB_UPDATE_SNIPPETS.toString();
+        runSnippetData['jobType'] = jobConstants.JOB_UPDATE_SNIPPETS.toString();
 
-        repository.updateSnippetJobStatus = jobs.JOB_STATUS_RUNNING;
-        repository.save();
-        jobs.dispatchSemanticJob(runSnippetData, log);
+        repository.updateSnippetJobStatus = jobConstants.JOB_STATUS_RUNNING;
+        await repository.save();
+        // await jobs.dispatchSemanticJob(runSnippetData, log);
 
         // 
 
         var runReferencesData = {};
         runReferencesData['fullName'] = fullName;
-        runReferenceData['installationId'] = installationId;
-        runReferencesData['headCommit'] = headCommit;
-        runReferencesData['jobType'] = jobs.JOB_UPDATE_REFERENCES.toString();
+        runReferencesData['installationId'] = installationId;
+        // runReferencesData['headCommit'] = headCommit;
+        runReferencesData['headCommit'] = '9d87a041d7f12f1f59df90fb2e9485d9b067ac37';
+        runReferencesData['cloneUrl'] = cloneUrl;
+        runReferencesData['jobType'] = jobConstants.JOB_UPDATE_REFERENCES.toString();
 
-        repository.updateReferencesJobStatus = jobs.JOB_STATUS_RUNNING;
+        repository.updateReferencesJobStatus = jobConstants.JOB_STATUS_RUNNING;
         repository.save();
-        jobs.dispatchUpdateReferencesJob(runReferencesData, log);
+        console.log('Calling update References Job');
+        await jobs.dispatchUpdateReferencesJob(runReferencesData, log);
 
 
 
@@ -428,8 +460,18 @@ updateRepository = async (req, res) => {
     return res.json({success: true, result: true});
 }
 
+// In route needs: repoId
+// In req.body needs: pathInRepo, breakCommit
+// Update the Reference itself
+// Find all documents associated with the Reference, and update their statuses appropriately
+//  If document already invalid, do nothing
+//  If document valid then: set status to invalid, set breakCommit to Reference breakCommit
+// breakCommits = [{`oldRef`: `commitSha`}, ...]
+
+
 module.exports = {
     getRepositoryFile, createRepository, getRepository,
     deleteRepository, retrieveRepositories,
-    validateRepositories, pollRepositories, updateRepository
+    validateRepositories, pollRepositories, updateRepository,
+    jobRetrieveRepositories
 }

@@ -6,6 +6,11 @@ var path = require('path');
 var DOMParser = require('xmldom').DOMParser;
 
 const fsPromises = require('fs').promises
+<<<<<<< HEAD:worker/parse_code.js
+const apis = require('./apis/api');
+const api = apis.requestGithubClient();
+=======
+>>>>>>> 2b188f80be04dab998def19e7e4dd5cf9f3479b4:worker/parse_doxygen.js
 
 
 const Reference = require('./models/Reference');
