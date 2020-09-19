@@ -146,7 +146,7 @@ const parseGithubFileChangeList = (fileChangeList) => {
 }
 
 
-const getTrackedReferenceFiles = (commitObjects) => {
+const getFileChangeList = (commitObjects) => {
 
   // Build file list as we go
   var trackedFiles = [];
@@ -243,7 +243,7 @@ const getTrackedReferenceFiles = (commitObjects) => {
 
 
 
-
+/*
 const getTrackedFiles = (commitObjects, snippetFiles) => {
   for (i = 0; i < commitObjects.length; i++) {
     var commit = commitObjects[i];
@@ -289,7 +289,6 @@ const getTrackedFiles = (commitObjects, snippetFiles) => {
 
       else {
 
-
         if (commitOperation == 'D') {
           console.log('Delete Operation');
 
@@ -328,26 +327,7 @@ const getTrackedFiles = (commitObjects, snippetFiles) => {
 
   return trackedFiles;
 }
-
-const getFileTreeDirectoryReferences = async () => {
-  const stdout = execFileSync('tree', ['-i', '-f', '-F', '--dirsfirst']);
-  var outputLines = stdout.toString().split('\n');
-
-  // Remove empty lines and current directory
-  outputLines = outputLines.filter(line =>  line.length > 0 && line != '.');
-
-  console.log('outputLines: ');
-  console.log(outputLines);
-
-  var directoryList = outputLines.filter(line => line.slice(-1) == '/');
-  var fileList = outputLines.filter(line => line.slice(-1) != '/');
-
-  var directoryReferences = [];
-
-  // Create directory Reference for each directory found
-  // for (i = 0; i < directoryList)
-
-}
+*/
 
 module.exports = {getRepositoryObject, filterVendorFiles, parseCommitObjects,
-                  getTrackedReferenceFiles, getTrackedFiles, parseGithubFileChangeList };
+                  getFileChangeList, parseGithubFileChangeList };

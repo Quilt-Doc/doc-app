@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
 
+
 var referenceSchema = new Schema({
 	name: {type: String, index: true, required: true},
 	kind: {type: String, index: true, required: true},
@@ -10,7 +11,7 @@ var referenceSchema = new Schema({
 	description: String,
 	lineNum: Number,
 	position: String,
-	parseProvider: String,
+	parseProvider: {type: String, enum: ['create', 'update', 'semantic', 'doxygen'], required: true},
 	repository: {type: ObjectId, ref: 'Repository'},
 	created: {type: Date, default: Date.now },
 	tags: [{type: ObjectId, ref: 'Tag'}],

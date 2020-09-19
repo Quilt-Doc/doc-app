@@ -100,21 +100,6 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
   var line_versions = dmp.diff_linesToChars_(snippetCode, fileContents);
 
 
-  console.log('first diff length: ', line_versions.chars1.length);
-  var print = [...line_versions.chars1];
-  console.log(print.length);
-  plain_arr_1 = print.map((c, index) => line_versions.chars1.charCodeAt(index));
-  console.log(plain_arr_1);
-
-
-  console.log('second diff length: ', line_versions.chars2.length);
-  print = [...line_versions.chars2];
-  console.log(print.length);
-  plain_arr_2 = print.map((c, index) => line_versions.chars2.charCodeAt(index));
-  console.log(plain_arr_2);
-
-
-
   var targetData = '';
   for (i = 0; i < snippetObj.numLines; i++) {
     targetData = targetData + line_versions.chars1[i];
@@ -224,25 +209,21 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
   [finalResult.size, finalResult.idx] = trimSnippet(fileData, finalResult, windowSize);
 
-  var newSnippet = populateSnippetObj(finalResult, constants.snippets.SNIPPET_STATUS_NEW_REGION, snippetObj, fileData);
+  // Create New Snippet Obj
+  var newSnippet = snippetObj;
+  newSnippet.startLine = finalResult.idx;
+  newSnippet.numLines = finalResult.size;
+  newSnippet.status = constants.snippets.SNIPPET_STATUS_NEW_REGION;
+  newSnippet.code = [];
+  for( i = newSnippet.startLine; i < newSnippet.numLines; i++ ) {
+    newSnippet.code.push(fileData[i]);
+  }
   console.log('Returning: ');
 
   console.log(newSnippet);
 
   return newSnippet;
 }
-
-
-const populateSnippetObj = (finalResult, status, snippetObj, fileData) => {
-  snippetObj.startLine = finalResult.idx;
-  snippetObj.numLines = finalResult.size;
-  snippetObj.status = status;
-  snippetObj.code = [];
-  for( i = startLine; i < numLines; i++ ) {
-    snippetObj.code.push(fileData[i]);
-  }
-  return snippetObj;
-};
 
 
 module.exports = { findNewSnippetRegion };

@@ -8,8 +8,8 @@ const fs_promises = require('fs').promises;
 
 const { findNewSnippetRegion } = require('./snippet_validator');
 
-const { getRepositoryObject, filterVendorFiles, parseCommitObjects, getTrackedFiles,
-        parseGithubFileChangeList, getTrackedReferenceFiles } = require('./utils/validate_utils');
+const { getRepositoryObject, filterVendorFiles, parseCommitObjects,
+        parseGithubFileChangeList, getFileChangeList } = require('./utils/validate_utils');
 
 
 
@@ -19,6 +19,8 @@ const { exec, execFile, spawnSync } = require('child_process');
 const constants = require('./constants/index');
 
 const tokenUtils = require('./utils/token_utils');
+const Reference = require('./models/Reference');
+const Document = require('./models/Document');
 
 /*
 // Remove old non-tree references
@@ -52,9 +54,64 @@ Directory Update Procedure:
 */
 
 
+const breakAttachedDocuments = async (repoId, refUpdateData) => {
+    // Find all Documents associated with References that have been broken
+    var documentsToBreak = Document.find({repository: repoId, references: { $in: refUpdateData.map(refObj => ObjectId(refObj._id)) }});
+
+    // No need to update any info on documents that are already broken so filter them out
+    documentsToBreak = documentsToBreak.filter(documentObj => documentObj.status != 'invalid');
+
+    var docUpdateData = [];
+
+    // Need to match the retrieved Documents to the References that broke them
+    for (i = 0; i < documentsToBreak.length; i++) {
+        var currentDocument = documentsToBreak[i];
+        // References that have been broken that are attached to the currentDocument
+        var attachedReferences = refUpdateData.filter(refUpdate => currentDocument.references.includes(refUpdate._id ));
+        // We will use the commit of the first broken Reference
+        // TODO: Make sure this is the earliest commit sha
+        if (attachedReferences.length > 0) docUpdateData.push({_id: currentDocument._id, status: 'invalid', breakCommit: attachedReferences[0].breakCommit});
+    }
+
+    const bulkDocumentInvalidateOps = docUpdateData.map(docObj => ({
+
+        updateOne: {
+                filter: { _id: docObj._id },
+                // Where field is the field you want to update
+                // TODO: Instead of using `new Date()` use the actual date on the git push
+                update: { $set: { status: docObj.status, breakCommit: docObj.breakCommit, breakDate: new Date() } },
+                upsert: false
+        }
+    }));
+    if (bulkDocumentInvalidateOps.length > 0) {
+        await Document.collection
+            .bulkWrite(bulkDocumentInvalidateOps)
+            .then(async (results) => {})
+            .catch((err) => {
+                throw new Error("Update Reference Job: Error bulk invalidating Documents");
+            });
+    }
+}
+
+
+
 // tree -i -f -F --dirsfirst -o test.txt
 // tree -i -f -F 
 // Directory Update Approach: Only fetch directories by going through the paths given by `tree` at the base commit and comparing with the head commit
+// Cases:
+//      Old directory exactly matches a new path from `tree`, in this case do nothing
+//      Old directory References without a match found have status set to `invalid`
+//      New directory References found with `tree` are created as new References
+//      
+
+function intersect(a, b) {
+    var setA = new Set(a);
+    var setB = new Set(b);
+    var intersection = new Set([...setA].filter(x => setB.has(x)));
+    return Array.from(intersection);
+}
+
+
 const validateDirectories = async (repoId, repoDiskPath, headCommit) => {
 
     // Make sure repository is at correct commit
@@ -64,25 +121,81 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit) => {
 
     const fileTree = cp.stdout.toString().split('\n');
 
-    var directories = fileTree.filter(filePath => filePath.slice(-1) == '/');
+    var newDirectories = fileTree.filter(filePath => filePath.slice(-1) == '/');
 
     // Get all directories to track for References
-    directories = filterVendorFiles(directories);
+    newDirectories = filterVendorFiles(newDirectories);
+
+    // directories are not stored with a trailing slash
+    newDirectories = newDirectories.map(dirPath => {
+        if (dirPath.slice(-1) == '/') {
+            return dirPath.slice(0, -1);
+        }
+        return dirPath;
+    });
 
     // Get all directory Reference currently existing
 
-    var oldDirectories = await Reference.find({kind: "dir", repository: `${repoId}`, });
-    
+    var oldDirectories = await Reference.find({kind: "dir", status: 'valid', repository: `${repoId}`}, 'path').exec();
+
+    var oldDirectoryPaths = oldDirectories.map(dirObj => dirObj.path);
+
+    // Don't need to do anything for these References?
+    var matchedDirectories = intersect(newDirectories, oldDirectoryPaths);
+
+    // all directories in oldDirectories but not in newDirectories
+    var unmatchedDirectories = oldDirectories.map(dirObj => {
+        if (!newDirectories.includes(dirObj.path)) {
+            return {_id: dirObj._id, path: dirObj.path, status: 'invalid', breakCommit: `${headCommit}`};
+        }
+        return undefined
+    });
+    unmatchedDirectories = unmatchedDirectories.filter(dirObj => (dirObj));
+
+    // all directories in newDirectories but not in oldDirectoryPaths
+    // This can have just dir paths, since creating new References
+    var createdDirectories = newDirectories.filter(dirPath => !oldDirectoryPaths.includes(dirPath));
 
 
 
-    console.log('repoDiskPath: ', repoDiskPath);
-    console.log(`Commit Range: ${repoCommit}..${headCommit}`);
-    console.log('Commit Range 2: ', (repoCommit + '..' + headCommit));
-    // git log -M --numstat --name-status --pretty=%H
-    const child = execFile('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H',
-    repoCommit + '..' + headCommit],
-    { cwd: './' + repoDiskPath },
+    // Handle invalidating directories
+    // Invalidate all the References that have been broken
+    const bulkDirectoryInvalidateOps = unmatchedDirectories.map(dirObj => ({
+        
+        updateOne: {
+                filter: { _id: dirObj._id },
+                // Where field is the field you want to update
+                update: { $set: { status: dirObj.status } },
+                upsert: false
+        }
+    }));
+    if (bulkDirectoryInvalidateOps.length > 0) {
+        await Reference.collection
+            .bulkWrite(bulkReferenceInvalidateOps)
+            .then(async (results) => {})
+            .catch((err) => {
+                throw new Error("Update Reference Job: Error bulk invalidating Directories");
+            });
+    }
+    await breakAttachedDocuments(repoId, unmatchedDirectories);
+
+    // Handle creating new directories
+
+    createdDirectories = createdDirectories.map(dirPath => {
+        var pathSplit = dirPath.split('/');
+        var dirName = pathSplit.slice(pathSplit.length - 1)[0]
+        return {name: dirName, path: dirPath, kind: 'dir',
+                status: 'valid', repository: repoId, parseProvider: 'update'}
+    });
+
+    if (createdDirectories.length > 0) {
+        await Reference.insertMany(createdDirectories)
+        .then()
+        .catch((err) => {
+            throw new Error("Update Reference Job: Error bulk creating new Directories");
+        });
+    }
+
 }
 
 /*
@@ -153,7 +266,7 @@ const run = async () => {
         var lines = stdout.split("\n");
         var commitObjects = parseCommitObjects(lines);
         // trackedFile[0].operationList is chronological commit operations, earliest --> latest
-        var trackedFiles = getTrackedReferenceFiles(commitObjects);
+        var trackedFiles = getFileChangeList(commitObjects);
         console.log('Tracked Files: ');
         trackedFiles.forEach(file => {
             console.log(file);
@@ -177,14 +290,16 @@ const run = async () => {
         if (fileReferencesToCreate.length > 0) {
             var refCreateData = [];
             for (i = 0; i < fileReferencesToCreate.length; i++) {
-                refCreateData.push({name: , repository: , kind: , path: , parseProvider: });
+                var pathSplit = fileReferencesToCreate[i].ref.split('/');
+                var fileName = pathSplit.slice(pathSplit.length - 1)[0];
+                refCreateData.push({name: fileName, repository: repoId, kind: "file", path: fileReferencesToCreate[i].ref, parseProvider: 'update'});
             }
 
             try {
                 await Reference.insertMany(references);
             }
             catch (err) {
-
+                throw new Error('Update Reference Job: Error creating new File References');
             }
 
         }
@@ -192,11 +307,8 @@ const run = async () => {
         // Handling Deleted File References
         if (fileReferencesToDelete.length > 0) {
 
-            var brokenReferences
-            var brokenReferences = await backendClient.post('/references/job_retrieve', 
-                                            {kind: 'file', repositoryId: repoId, paths: fileReferencesToDelete.map(file => file.oldRef)});
-            // /references/job_retrieve        
-            brokenReferences = brokenReferences.data.result;
+            var brokenReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
+                                                        path: {$in: fileReferencesToDelete.map(file => file.oldRef)}});
             console.log('fileReferencesToDelete: ', );
             console.log(fileReferencesToDelete.map(file => file.oldRef));
 
@@ -234,8 +346,10 @@ const run = async () => {
                     .catch((err) => {
                         throw new Error("Update Reference Job: Error bulk invalidating References");
                     });
+                    await breakAttachedDocuments(repoId, refUpdateData);
             }
-            
+
+            /*
             // Find all Documents associated with References that have been broken
             var documentsToBreak = Document.find({repository: repoId, references: { $in: refUpdateData.map(refObj => ObjectId(refObj._id)) }});
 
@@ -272,6 +386,7 @@ const run = async () => {
                         throw new Error("Update Reference Job: Error bulk invalidating Documents");
                     });
             }
+            */
 
         }
     });
