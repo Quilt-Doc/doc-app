@@ -54,7 +54,7 @@ checkValid = (item) => {
 
 // Needs to use installation token
 createRepository = async (req, res) => {
-    const {fullName, installationId, htmlUrl, cloneUrl, debugId, icon} = req.body;
+    const {fullName, installationId, htmlUrl, cloneUrl, icon} = req.body;
     if (!checkValid(fullName)) return res.json({success: false, error: 'no repository fullName provided'});
     if (!checkValid(installationId)) return res.json({success: false, error: 'no repository installationId provided'});
 
@@ -66,12 +66,6 @@ createRepository = async (req, res) => {
 
     if (htmlUrl) repository.htmlUrl = htmlUrl;
     if (cloneUrl) repository.cloneUrl = cloneUrl;
-
-
-    // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_Id && process.env.DEBUG_CUSTOM_Id != 0) {
-        if (debugId) repository._id = ObjectId(debugId);
-    }
 
 
     var installationClient = await apis.requestInstallationClient(installationId);
@@ -96,10 +90,11 @@ createRepository = async (req, res) => {
             repository.save();
 
             var runSemanticData = {};
-            runSemanticData['fullName'] = response.data.full_name;
-            runSemanticData['defaultBranch'] = response.data.default_branch,
-            runSemanticData['cloneUrl'] = cloneUrl,
+            runSemanticData['fullName'] = fullName;
             runSemanticData['installationId'] = installationId.toString();
+            runSemanticData['cloneUrl'] = cloneUrl;
+            // This needs to be used in the worker
+            runSemanticData['defaultBranch'] = response.data.default_branch;
             runSemanticData['jobType'] =  JOB_SEMANTIC;
 
             installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
@@ -109,13 +104,7 @@ createRepository = async (req, res) => {
                 // Extract tree SHA from most recent commit
                 let treeSHA = response.data.commit.tree.sha
 
-                let args = [
-                    'clone',
-                    `https://github.com/${fullName}.git`,
-                ];
 
-                // let args2 = ["v2-run", "semantic", "parse"]
-                let args2 = [];
                 //"--", "--json-symbols"
                 // Extract contents using tree SHA
                 console.log("REPO NAME OWNER", fullName)
@@ -129,10 +118,6 @@ createRepository = async (req, res) => {
                         let name = pathSplit.slice(pathSplit.length - 1)[0]
                         let path = pathSplit.join('/');
                         let kind = item.type == 'blob' ? 'file' : 'dir'
-                        if (kind === 'file') {
-                            // args2.push(`../content/${repoName}/${item.path}`)
-                            args2.push(`${item.path}`);
-                        }
                         return {name, path, kind, repository: ObjectId(repository._id)}
                     })
 
@@ -144,34 +129,12 @@ createRepository = async (req, res) => {
                              return res.json({ success: false, error: errInsertItems });
                         }
                         console.log('Success: Inserted treeReferences.length: ', treeReferences.length);
-                        // return res.json(repository);
-                        /*repository.populate('workspace', (errPopulation, repository) => {
-                            if (errPopulation) return res.json({ success: false, error: errPopulation });
-
-                            // return the repository object
-                            return res.json(repository);
-                        });*/
                     });
-
-                    //DOXYGEN
-                    /*var runDoxygenData = {
-                        'installationId': installationId.toString(),
-                        'cloneUrl': cloneUrl,
-                        'jobType': JOB_GET_REFS.toString(),
-                        'repositoryId': repository._id
-                    }
-
-                    console.log('RUN DOXYGEN DATA: ');
-                    console.log(runDoxygenData);
-
-                    jobs.dispatchDoxygenJob(runDoxygenData, log);*/
-
 
 
                     // SEMANTIC
-                    // default_branch, fullName, cloneUrl, args_2, installationId 
+                    // defaultBranch, fullName, cloneUrl, installationId, jobType
 
-                    runSemanticData['semanticTargets'] = JSON.stringify({targets: args2});
                     repository.semanticJobStatus = jobConstants.JOB_STATUS_RUNNING;
                     repository.save();
                     jobs.dispatchSemanticJob(runSemanticData, log);
