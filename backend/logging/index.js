@@ -8,24 +8,28 @@ var setupESConnection = require('./es_transport').setupESConnection;
 var logger = undefined; 
 
 const errorHunter = logform.format(info => {
-  console.log('errorHunter');
+  // console.log('errorHunter');
   if (info.error) return info;
 
+  // console.log('info; ', info);
+
   // const splat = info[tripleBeam.SPLAT] || [];
-  console.log('splat: ', splat);
-  info.error = splat.find(obj => obj instanceof Error);
-  console.log('info.error: ', info.error);
+  // console.log('splat: ', splat);
+  info.error = Object.values(info).find(obj => obj instanceof Error);
+  // console.log('info.error: ', info.error);
 
   return info;
 });
 
 const errorPrinter = logform.format(info => {
-  console.log('errorPrinter');
+  // console.log('errorPrinter');
   if (!info.error) return info;
+
+  console.log('info.stack: ', info.stack);
 
   // Handle case where Error has no stack.
   const errorMsg = info.error.stack || info.error.toString();
-  console.log('errorMsg: ', errorMsg);
+  // console.log('errorMsg: ', errorMsg);
   info.message += `\n${errorMsg}`;
 
   return info;

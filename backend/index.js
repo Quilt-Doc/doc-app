@@ -194,7 +194,7 @@ const authCheck = (req, res, next) => {
       next();
     }
 };
-  
+
   // if it's already login, send the profile response,
   // otherwise, send a 401 response that the user is not authenticated
   // authCheck before navigating to home page
@@ -237,7 +237,7 @@ else {
   // logger.info({ message: 'Testing error value',
   //               customField: 'testValue2'
   // });
-  logger.error({message: 'Error Message', stack: new Error("Error Object")});
+  // logger.error({message: 'Error Message', jaja: "JAJA", stack: new Error()});
   // logger.verbose('Verbose Message');
   app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
 }
