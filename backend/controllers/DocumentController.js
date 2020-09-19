@@ -566,6 +566,7 @@ moveDocument = async (req, res) => {
             order += 1
         }
     }
+
     else if (newParent != null && originalParent != null) {
         if (newParent._id.toString() == originalParent._id.toString()) {
             // console.log('newParent.children: ', newParent.children);
@@ -792,7 +793,6 @@ retrieveDocumentsExtension = async (req, res) => {
 retrieveDocuments = (req, res) => {
     let { search, sort, authorId, childrenIds, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
     const workspaceId = req.workspaceObj._id.toString();
-    console.log("WORKSPACE ID", workspaceId)
     let query;
     if (search) {
         query = Document.find({ title: { $regex: new RegExp(search, 'i')}, workspace: workspaceId });
