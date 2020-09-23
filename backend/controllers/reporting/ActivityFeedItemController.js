@@ -25,6 +25,8 @@ createActivityFeedItem = (params) => {
 
     if (documentId) activityfeedItem.actionDocument = documentId;
 
+    
+
     activityfeedItem.save((err, createdObj) => {
         if (err) throw new Error("createActivityFeedItem Error: Could not save");
         return createdObj;
