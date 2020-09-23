@@ -1,7 +1,7 @@
 import React from 'react';
 import {AiOutlineTeam} from 'react-icons/ai';
 import styled from 'styled-components';
-import {RiFlag2Line, RiFileList2Line, RiFileTextLine, RiGitPullRequestLine} from 'react-icons/ri';
+import {RiFlag2Line, RiFileList2Line, RiFileTextLine, RiGitPullRequestLine, RiFileList2Fill, RiFlagFill} from 'react-icons/ri';
 import {FiFileText} from 'react-icons/fi'
 
 import chroma from 'chroma-js';
@@ -11,58 +11,84 @@ class PeopleLog extends React.Component {
     render(){
         return(
             <PeopleContainer>
-                <ListToolbar>
-                    <AiOutlineTeam style = {{fontSize: "1.8rem", marginRight: "0.7rem"}} />
+                <Header>
                     Team
-                </ListToolbar>
+                </Header>
                 <ListView>
                     <Member>
-                        <PersonIcon>F</PersonIcon>
-                        <Name>Faraz Sanal</Name>
+                        <PersonIcon color = {'#1e90ff'}>F</PersonIcon>
+                        <Name >Faraz Sanal</Name>
                         <Metrics>
-                                <Metric >
-                                    <RiFileList2Line style = {{marginTop: "0rem", fontSize: "1.5rem", marginRight: "0.7rem"}}/>
-                                    3
-                                </Metric>
-                                <Metric>
-                                    <RiFlag2Line style = {{fontSize: "1.5rem", marginRight: "0.7rem"}}/>
-                                    3
-                                </Metric>
-                                
-                            
+                            <Metric>
+                                <RiFileList2Fill
+                                    style = {{
+                                            marginTop: "0rem", 
+                                            marginRight: "0.7rem",
+                                            fontSize: "1.8rem",
+                                            color: '#2684FF'
+                                        }}
+                                />
+                                <Number>0</Number>
+                            </Metric>
+                            <Metric>
+                                <RiFlagFill style = {{
+                                    marginRight: "0.7rem",
+                                    fontSize: "1.8rem",
+                                    color: '#ff4757'
+                                }}/>
+                                <Number>8</Number>
+                            </Metric>
                         </Metrics>
                         
                     </Member>
                     <Member>
-                        <PersonIcon>K</PersonIcon>
-                        <Name>Karan Godara</Name>
+                        <PersonIcon color = {'#fd9644'}>K</PersonIcon>
+                        <Name>Karan Goda</Name>
                         <Metrics>
                             <Metric>
-                                <RiFileList2Line style = {{marginTop: "0rem", fontSize: "1.5rem", marginRight: "0.7rem"}}/>
-                                3
+                                <RiFileList2Fill
+                                    style = {{
+                                            marginTop: "0rem", 
+                                            marginRight: "0.7rem",
+                                            fontSize: "1.8rem",
+                                            color: '#2684FF'
+                                        }}
+                                />
+                                <Number>8</Number>
                             </Metric>
                             <Metric>
-                                <RiFlag2Line style = {{fontSize: "1.5rem", marginRight: "0.7rem"}}/>
-                                3
+                                <RiFlagFill style = {{
+                                    marginRight: "0.7rem",
+                                    fontSize: "1.8rem",
+                                    color: '#ff4757'
+                                }}/>
+                                <Number>7</Number>
                             </Metric>
-                           
-                            
                         </Metrics>
                     </Member>
                     <Member>
-                        <PersonIcon>R</PersonIcon>
-                        <Name>Rasprat Kohli</Name>
+                        <PersonIcon color = {'#20bf6b'}>R</PersonIcon>
+                        <Name>Raspra Koh</Name>
                         <Metrics>
                             <Metric>
-                                <RiFileList2Line style = {{marginTop: "0rem", fontSize: "1.5rem", marginRight: "0.7rem"}}/>
-                                3
+                                <RiFileList2Fill
+                                    style = {{
+                                            marginTop: "0rem", 
+                                            marginRight: "0.7rem",
+                                            fontSize: "1.8rem",
+                                            color: '#2684FF'
+                                        }}
+                                />
+                                <Number>3</Number>
                             </Metric>
                             <Metric>
-                                <RiFlag2Line style = {{fontSize: "1.5rem", marginRight: "0.7rem"}}/>
-                                3
+                                <RiFlagFill style = {{
+                                    marginRight: "0.7rem",
+                                    fontSize: "1.8rem",
+                                    color: '#ff4757'
+                                }}/>
+                                <Number>4</Number>
                             </Metric>
-                            
-                            
                         </Metrics>
                     </Member>
                 </ListView>
@@ -74,24 +100,26 @@ class PeopleLog extends React.Component {
 export default PeopleLog;
 
 const PersonIcon = styled.div`
+    min-height: 3rem;
+    min-width: 3rem;
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    color:${props => props.color};
+    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.35rem;
-    display: flex;
-    background-color: ${chroma('#00579B')};
-    border-radius: 50%;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    color: white;
-    margin-right: 2rem;
-    padding-bottom: 0.05rem;
+    border-radius: 0.3rem;
+    font-size: 1.5rem;
+    margin-right: 1.5rem;
 `
 
 const Metric =styled.div`
-    font-size: 1.2rem;
+    font-size: 1.35rem;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    margin-left: 2rem;
+    &:last-of-type {
+        margin-left: 0.5rem;
+    }
 `
 
 const Metrics = styled.div`
@@ -100,23 +128,22 @@ const Metrics = styled.div`
     margin-left: auto;
 `
 
-const PeopleContainer = styled.div`
-    margin-right: 2rem;
-    width: 50rem;
-    background-color: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    border-radius: 0.2rem;
-    
+const Number = styled.div`
+    width: 2rem;
 `
 
-const ListToolbar = styled.div`
+const PeopleContainer = styled.div`
+    margin-top: 1rem;
+    padding: 0 3rem;
+
+`
+
+const Header = styled.div`
     height: 4.5rem;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #EDEFF1;
-    padding: 0rem 3rem;
-    font-size: 1.5rem;
-    font-weight: 500;
+    font-size: 1.7rem;
+    font-weight: 600;
 `
 
 const ListView = styled.div`
@@ -131,15 +158,15 @@ const Member = styled.div`
     display: flex;
     align-items: center;
     height: 5rem;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     /*border-bottom: 1px solid #E0e4e7;*/
-    padding-left: 3rem;
-    padding-right: 3rem;
 `
 
 const Name = styled.div`
     font-size: 1.3rem;
     font-weight: 500;
+    width: 13rem;
+    margin-right: 1rem;
 `
 
 const Block = styled.div`

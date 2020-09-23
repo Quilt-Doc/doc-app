@@ -3,10 +3,12 @@ const Workspace = require('../models/Workspace');
 const Reference = require('../models/Reference');
 const Document = require('../models/Document');
 const Tag = require('../models/Tag');
-
+const Linkage = require('../models/Linkage')
 
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
+
+const quickScore = require("quick-score").quickScore;
 
 const PAGE_SIZE = 10;
 
@@ -67,62 +69,241 @@ getWorkspace = (req, res) => {
 }
 
 searchWorkspace = async (req, res) => {
-    const { userQuery, repositoryId, tagIds,
-            returnReferences, returnDocuments, requestedPageSize, requestedPageNumber} = req.body;
+    const { userQuery, repositoryId, tagIds, referenceIds, creatorIds, returnLinkages, includeImage,
+        returnReferences, returnDocuments, docSkip, refSkip, linkageSkip, limit, sort, mix } = req.body;
     
     const workspaceId = req.workspaceObj._id.toString();
 
-    // for the `returnReferences`, `returnDocuments` params, put a string "true" if you want to do it
-    if (!checkValid(workspaceId)) return res.json({success: false, result: null, error: 'searchWorkspace: error no workspaceId provided.'});
-    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'searchWorkspace: error no userQuery provided.'});
-    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnReferences provided.'});
-    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'searchWorkspace: error no returnDocuments provided.'});
+   
+    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'userQuery: error no userQuery provided.'});
+    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'returnReference: error no returnReferences provided.'});
+    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'returnDocuments: error no returnDocuments provided.'});
+    if (!checkValid(returnLinkages)) return res.json({success: false, result: null, error: 'returnLinkages: error no returnLinkages provided.'});
 
-    var searchResults = [];
+    let documents = [];
+    let references = [];
+    let linkages = [];
 
-    var pageSize = checkValid(requestedPageSize) ? parseInt(requestedPageSize) : PAGE_SIZE;
-    var pageNumber = checkValid(requestedPageNumber) ? parseInt(requestedPageNumber) : 0;
+    if (returnDocuments) {
+        let documentAggregate;
+        
+        if (checkValid(userQuery) && userQuery !== "") {
+            documentAggregate = Document.aggregate([
+                { 
+                    $search: {
+                        "compound": {
+                            "should": [ 
+                                {
+                                "autocomplete": {
+                                        "query": userQuery,
+                                        "path": "title"
+                                    }
+                                },
+                                {
+                                    "text": {
+                                        "query": userQuery,
+                                        "path": "content"
+                                    }
+                                }
+                            ],
+                            "minimumShouldMatch": 1
+                        } 
+                    }  
+                },
+            ]);
+        } else {
+            documentAggregate = Document.aggregate([]);
+        }
 
+        documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
 
-    var re = new RegExp(escapeRegExp(userQuery), 'i');
+        documentAggregate.match({workspace: new mongoose.Types.ObjectId(workspaceId)});
 
-    var documentFilter;
-    if (tagIds) {
-        documentFilter = {title: {$regex: re}, workspace: workspaceId, tags: {$in: tagIds.map(tag => ObjectId(tag))}};
+        if (checkValid(repositoryId)) documentAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
+
+        if (checkValid(tagIds)) documentAggregate.match({
+            tags: { $in: tagIds.map((tagId) => new mongoose.Types.ObjectId(tagId)) }
+        });
+
+        if (checkValid(referenceIds)) documentAggregate.match({
+            references: { $in: referenceIds.map((refId) => new mongoose.Types.ObjectId(refId)) }
+        });
+
+        if (checkValid(creatorIds)) documentAggregate.match({
+            author: { $in: creatorIds.map((creatorId) =>  new mongoose.Types.ObjectId(creatorId)) }
+        });
+        
+        if (checkValid(sort)) documentAggregate.sort(sort);
+
+        if (checkValid(docSkip))  documentAggregate.skip(docSkip);
+
+        if (checkValid(limit))  documentAggregate.limit(limit);
+
+        try {   
+            documents = await documentAggregate.exec();
+        } catch(err) {
+           return res.json({ success: false, error: `searchWorkspace: Failed to aggregate documents, trace: ${err}`});
+        }
+
+        try {
+            documents = await Document.populate(documents, 
+                {
+                    path: "author references workspace repository tags"
+                }
+            );
+        } catch (err) {
+            return res.json({ success: false, error: `searchWorkspace: Failed to populate documents, trace: ${err}`});
+        }
+        // Need to include time filtering
     }
-    else {
-        documentFilter = {title: {$regex: re}, workspace: workspaceId};
-    }
-    var referenceFilter;
 
-    if (!repositoryId) {
-        var searchableRepositories = await Workspace.findById(workspaceId);
-        searchableRepositories = searchableRepositories.repositories.map(repositoryObj => repositoryObj._id.toString());
+    
+    if (returnReferences) {
+        
+        let referenceAggregate;
+        
+        if (checkValid(userQuery) && userQuery !== "") {
+            referenceAggregate = Reference.aggregate([
+                { 
+                    $search: {
+                        "autocomplete": {
+                                "query": userQuery,
+                                "path": "name"
+                        }
+                    } 
+                }
+            ]);
+        } else {
+            referenceAggregate = Reference.aggregate([]);
+        }
+        
+        referenceAggregate.addFields({isReference : true, score: { $meta: "searchScore" }});
+        
+        referenceAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
 
-        referenceFilter = {
-            repository: { $in:  searchableRepositories.map(obj => ObjectId(obj))},
-            name: { $regex: re}
-        };
+        if (checkValid(tagIds)) referenceAggregate.match({
+            tags: { $in: tagIds.map((tagId) => new mongoose.Types.ObjectId(tagId)) }
+        });
+
+        if (checkValid(referenceIds)) referenceAggregate.match({
+            _id: { $in: referenceIds.map((refId) => new mongoose.Types.ObjectId(refId)) }
+        });
+        
+        if (checkValid(sort)) referenceAggregate.sort(sort);
+
+
+        if (checkValid(refSkip))  referenceAggregate.skip(refSkip);
+
+        if (checkValid(limit))  referenceAggregate.limit(limit)
+        
+        try {
+            references = await referenceAggregate.exec()
+        } catch (err) {
+            return res.json({ success: false, error: `searchWorkspace: Failed to aggregate references, trace: ${err}`});
+        }
+
+        try {
+            references = await Reference.populate(references, 
+                {
+                    path: "repository tags"
+                }
+            )
+        } catch (err) {
+            return res.json({ success: false, error: `searchWorkspace: Failed to populate references, trace: ${err}`});
+        }
+        // Need to include time filtering
+    }
+    /*
+    if (returnLinkages) {
+
+        let linkageAggregate = Linkage.aggregate([
+                { 
+                    $search: {
+                        "autocomplete": {
+                                "query": userQuery,
+                                "path": "title"
+                        }
+                    } 
+                }
+            ])
+        
+        if (checkValid(repositoryId)) linkageAggregate.match({repositoryId});
+        if (checkValid(workspaceId)) linkageAggregate.match({workspaceId});
+
+        if (checkValid(tagIds)) linkageAggregate.match({
+            tags: { $in: tagIds }
+        });
+        if (checkValid(referenceIds)) linkageAggregate.match({
+            references: { $in: referenceIds }
+        });
+        if (checkValid(creators)) linkageAggregate.match({
+            creator: { $in: creators }
+        });
+
+        linkageAggregate.skip(linkageSkip).sort(sort).limit(limit)
+
+        linkages = await linkageAggregate.exec()
+        // Need to include time filtering
+    }
+    */
+    /*
+    if (checkValid(userQuery)) {
+
+        references.map((ref) => 
+            console.log(`REFERENCE SCORE , ${quickScore(ref.name, userQuery)},  REFERENCE NAME, ${ref.name}, 
+            REFERENCE SCORE2, ${ref.score}`));
+
+        documents.map((doc) => {
+            console.log(`DOCUMENT SCORE, ${
+                quickScore(doc.title, userQuery)},
+                REF SCORE2, ${doc.score},
+                DOCUMENT NAME", ${doc.title}`)
+        })
+    }
+    */
+    
+    let searchResults = {}
+
+    let newDocSkip = 0;
+    let newRefSkip = 0;
+    let newLinkageSkip = 0;
+
+    let finalResult = {}
+    // NEED TO INCLUDE PROPER SORTING ON MIX
+    if (mix) {
+        searchResults = [...documents, ...linkages, ...references];
+        if (sort) {
+            searchResults.sort((a, b) => {
+                if (a.created.getTime() > b.created.getTime()) {
+                    return -1
+                } else {
+                    return 1
+                }
+            })
+        }
+        
+        searchResults = searchResults.slice(0, limit);
+
+        searchResults.map((seResult) => {
+            if (seResult.isDocument) {
+                newDocSkip += 1;
+            } else if (seResult.isReference) {
+                newRefSkip += 1;
+            } else if (seResult.isLinkage) {
+                newLinkageSkip += 1;
+            }
+        })
+
+        finalResult = {searchResults, docSkip: newDocSkip, refSkip: newRefSkip, linkageSkip: newLinkageSkip};
+    } else {
+        searchResults.documents = documents;
+        //searchResults.linkages = linkages;
+        searchResults.references = references;
+        finalResult = searchResults;
     }
 
-    else {
-        referenceFilter = {
-            repository: ObjectId(repositoryId),
-            name: { $regex: re}
-        };
-    }
-
-    var temp;
-    if (returnReferences == 'true') {
-        temp = await Reference.find(referenceFilter).skip(pageNumber*pageSize).limit(pageSize).exec();
-        searchResults.push(...temp);
-    }
-    if (returnDocuments == 'true') {
-        temp = await Document.find(documentFilter).skip(pageNumber*pageSize).limit(pageSize).exec();
-        searchResults.push(...temp);
-    }
-
-    return res.json({success: true, result: searchResults});
+    
+    return res.json({success: true, result: finalResult});
 }
 
 deleteWorkspace = (req, res) => {

@@ -23,6 +23,7 @@ import {RiGitRepositoryLine} from 'react-icons/ri'
 import {AiOutlineCaretDown} from 'react-icons/ri'
 import { AiFillCaretDown } from 'react-icons/ai';
 import { FiChevronDown } from 'react-icons/fi';
+import { VscRepo } from 'react-icons/vsc';
 
 class RepositoryMenu extends React.Component {
     
@@ -84,11 +85,21 @@ class RepositoryMenu extends React.Component {
         let {repositoryId, workspaceId} = this.props.match.params;
         return(
             <MenuContainer >
-                <PageIcon active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
-                    <RiGitRepositoryLine style = {{marginRight: "0.7rem"}}/>
-                    <Title>{this.props.repoName}</Title>
-                    <FiChevronDown style = {{fontSize: "1.3rem", marginTop: "0.3rem"}}/>
-                </PageIcon>
+                  <SwitchButton active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
+                    <VscRepo style = {{
+                            marginRight: "0.5rem",
+                            fontSize: "1.7rem",
+                            marginTop: "0.1rem"
+                        }}/>
+                    {this.props.repoName}
+                    <FiChevronDown 
+                        style = {{
+                            marginLeft: "0.3rem",
+                            marginTop: "0.2rem",
+                            fontSize: "1.3rem"
+                        }}
+                    />
+                </SwitchButton>
                 <CSSTransition
                     in={this.state.open }
                     enter = {true}
@@ -125,6 +136,26 @@ export default withRouter(connect( mapStateToProps )(RepositoryMenu));
 const Title = styled.div`
     font-size: 1.3rem;
     margin-right: 0.3rem;
+    font-weight: 500;
+`
+
+
+
+const SwitchButton = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    padding: 0rem 1rem;
+    border-radius: 0.4rem;
+    height: 3rem;
+    font-weight: 500;
+    opacity: ${props => props.active ? 1 : 0.9};
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    &:hover {
+        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
+    }
+    cursor: pointer;
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
 `
 
 

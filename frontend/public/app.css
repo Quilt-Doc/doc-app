@@ -18,7 +18,7 @@ html {
 }
 
 .marker-mode{
-  cursor: grab;
+  cursor: url('./wand.svg') 0 0, auto;
 }
 
 body {
@@ -76,6 +76,17 @@ body {
   background-color: #E7EAFC;
 }
 
+.itemcard-appear {
+  transform: translateY(-3rem);
+  opacity: 0;
+}
+
+.itemcard-appear.itemcard-appear-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 150ms;
+}
+
 .sidenav-appear {
   transform: translateX(-26rem);
 }
@@ -85,8 +96,20 @@ body {
   transition: transform 500ms;
 }
 
+.dropmenu-appear {
+  transform: translateY(-1rem);
+  opacity: 0;
+}
+
+.dropmenu-appear.dropmenu-appear-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 150ms;
+}
+
+
 .dropmenu-enter {
-  transform: translateY(-3rem);
+  transform: translateY(-1rem);
   opacity: 0;
   /*transform: translateY(-2rem);*/
 }

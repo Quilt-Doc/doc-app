@@ -12,10 +12,10 @@ let snippetSchema = new Schema({
     workspace: {type: ObjectId, ref: 'Workspace', required: true},
     reference: {type: ObjectId, ref: 'Reference', required: true},
     creator: {type: ObjectId, ref: 'User', required: true},
+    repository: {type: ObjectId, ref: 'Repository', required: true},
 
     // DEPRECATED 
     startLine: {type: Number},
-    repository: {type: ObjectId, ref: 'Repository'},
     path: {type: String },
     folders: [{type: ObjectId, index: true, ref: 'Folder'}],
     documents: [{type: ObjectId, index: true, ref: 'Document'}],

@@ -10,7 +10,7 @@ var AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 
 
-const requestClient = () => {
+const requestGithubClient = () => {
     const axios = require('axios');
     return axios.create({
         baseURL: "https://api.github.com",
@@ -103,7 +103,7 @@ const requestInstallationClient = async (installationId) => {
 }
 
 module.exports = {
-    requestClient,
+    requestGithubClient,
     requestSQSServiceObject,
     fetchAppToken,
     requestInstallationToken,

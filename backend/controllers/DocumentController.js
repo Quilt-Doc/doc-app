@@ -36,14 +36,13 @@ createDocument = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
 
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    // if (!checkValid(repositoryId)) return res.json({success: false, error: "createDocument error: no repositoryId provided.", result: null});
     if (!checkValid(title)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
 
     var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
 
     
     // Check that repositoryId is in accessible workspace
-    if (repositoryId) {
+    if (checkValid(repositoryId)) {
         if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
             return res.json({success: false, error: "createDocument Error: request on repository user does not have access to."});
         }
@@ -251,7 +250,7 @@ getParent = (req, res) => {
 
 
 editDocument = (req, res) => {
-    const { title, markup, repositoryId } = req.body;
+    const { title, markup, repositoryId, image, content } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
@@ -269,6 +268,8 @@ editDocument = (req, res) => {
     if (title) update.title = title;
     if (markup) update.markup = markup;
     if (repositoryId) update.repository = repositoryId
+    if (image) update.image = image;
+    if (content) update.content = content;
     Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $set: update }, { new: true }, (err, document) => {
         if (err) return res.json({ success: false, error: err });
         document.populate('parent').populate('author').populate('workspace')
@@ -565,6 +566,7 @@ moveDocument = async (req, res) => {
             order += 1
         }
     }
+
     else if (newParent != null && originalParent != null) {
         if (newParent._id.toString() == originalParent._id.toString()) {
             // console.log('newParent.children: ', newParent.children);
@@ -790,7 +792,7 @@ retrieveDocumentsExtension = async (req, res) => {
 
 retrieveDocuments = (req, res) => {
     let { search, sort, authorId, childrenIds, repositoryId, documentIds, referenceIds, parentId, tagIds, limit, skip } = req.body;
-    const { workspaceId } = req.workspaceObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
     let query;
     if (search) {
         query = Document.find({ title: { $regex: new RegExp(search, 'i')}, workspace: workspaceId });
@@ -815,7 +817,6 @@ retrieveDocuments = (req, res) => {
     if (checkValid(childrenIds)) query.where('_id').in(childrenIds);
     if (checkValid(tagIds)) query.where('tags').all(tagIds);
     if (checkValid(limit)) query.limit(Number(limit));
-    if (checkValid(skip)) query.skip(Number(skip));
     if (checkValid(skip)) query.skip(Number(skip));
     if (checkValid(sort)) query.sort(sort);
     query.populate('parent').populate('author').populate('workspace').populate('repository').populate('references').populate('tags').exec((err, documents) => {
@@ -854,6 +855,7 @@ attachReference = (req, res) => {
     });
 }
 
+// TODO: Update this so that it automatically updates the Document's status / breakCommit
 removeReference = (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();

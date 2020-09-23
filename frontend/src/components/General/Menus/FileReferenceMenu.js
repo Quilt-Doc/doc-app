@@ -18,8 +18,9 @@ import { CSSTransition } from 'react-transition-group';
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCube, faPlus } from '@fortawesome/free-solid-svg-icons'
-import {RiCheckFill, RiGitRepositoryLine, RiFileFill, RiFileLine} from 'react-icons/ri'
+import {RiCheckFill, RiGitRepositoryLine, RiFileFill, RiFileLine, RiAddLine} from 'react-icons/ri'
 import {AiFillFolder} from 'react-icons/ai';
+import {BiCubeAlt} from 'react-icons/bi';
 
 //actions
 import { attachReference, removeReference } from '../../../actions/Document_Actions';
@@ -223,9 +224,7 @@ class FileReferenceMenu extends React.Component {
         e.preventDefault()
         document.addEventListener('mousedown', this.handleClickOutside, false);
         this.setState({
-            open: true, 
-            left: this.renderLeft(),
-            top: this.renderTop()
+            open: true
         })
         let ids = this.props.setReferences.map(ref => ref._id)
         let repositoryId = this.props.document.repository._id
@@ -248,43 +247,97 @@ class FileReferenceMenu extends React.Component {
             position: -1})
     }
 
-
-    renderTop = () => {
-        if (this.addButton){
-            let {top, height} = this.addButton.getBoundingClientRect();
-            console.log(top + height - 100);
-            return top + height + 10;
+    renderListContent = (flip, setIds) => {
+        if (flip[0]){
+            return(
+                <>
+                    <ListContainer>
+                        {this.state.loaded ?  this.renderListItems(setIds) : <MoonLoader size = {12}/>}
+                    </ListContainer>
+                    <SearchbarContainer>
+                        <SearchbarWrapper 
+                            backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
+                            border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
+                        >
+                        
+                            <Searchbar 
+                                onFocus = {() => {this.setState({focused: true})}} 
+                                onBlur = {() => {this.setState({focused: false})}} 
+                                onKeyDown = {(e) => this.setPosition(e)}  
+                                onChange = {(e) => {this.searchReferences(e)}} 
+                                value = {this.state.search}
+                                autoFocus 
+                                placeholder = {"Find references..."}/>
+                        </SearchbarWrapper>
+                    </SearchbarContainer>
+                    <HeaderContainer>Attach References</HeaderContainer>
+                    
+                </>
+            )
+        } else {
+            return(
+                <>
+                    <HeaderContainer>Attach References</HeaderContainer>
+                    <SearchbarContainer>
+                        <SearchbarWrapper 
+                            backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
+                            border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
+                        >
+                        
+                            <Searchbar 
+                                onFocus = {() => {this.setState({focused: true})}} 
+                                onBlur = {() => {this.setState({focused: false})}} 
+                                onKeyDown = {(e) => this.setPosition(e)}  
+                                onChange = {(e) => {this.searchReferences(e)}} 
+                                value = {this.state.search}
+                                autoFocus 
+                                placeholder = {"Find references..."}/>
+                        </SearchbarWrapper>
+                    </SearchbarContainer>
+                    <ListContainer>
+                        {this.state.loaded ?  this.renderListItems(setIds) : <MoonLoader size = {12}/>}
+                    </ListContainer>
+                </>
+            )
         }
-        return 0;
     }
 
-    renderLeft = () => {
-        if (this.addButton){
-            let {left} = this.addButton.getBoundingClientRect();
-            
-            return left;
+    renderFlip = () => {
+        if (this.props.form && this.addButton){
+            let rect = this.addButton.getBoundingClientRect()
+            if (rect.top + 350 > window.innerHeight){
+				return [true, window.innerHeight - rect.top + 10];
+            } else {
+                return [false, rect.top + rect.height + 5];
+            }
         }
-        return 0;
+        return [false, 0]
     }
+
 
     render() {
         let setIds = this.props.setReferences.map(ref => ref._id)
+        let flip = this.renderFlip()
         return(
-            <MenuContainer  >
+            <MenuContainer mLeft = {this.props.form ? "" : "auto"} >
                     {this.props.form ?
-                        <AddButton  onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
-                           <BiCube style = {{fontSize: "1.4rem", marginRight: "0.5rem"}}/>
-                           <Title>Add references</Title>
-                        </AddButton> :
-                        <AddBigButton onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
-                            <FontAwesomeIcon 
-                                icon={faCube}
-                                style = {{marginRight: "0.5rem"}}
-                            />
-                            Add References
-                        </AddBigButton> 
+                        <AddButton 
+                            ref = {addButton => this.addButton = addButton} 
+                            onClick = {(e) => this.openMenu(e)}
+                            active = {this.state.open}
+                        >
+                            <RiAddLine />
+                        </AddButton>
+                         :
+                        <PageIcon 
+                            active = {this.state.open} 
+                            onClick = {(e) => {this.openMenu(e)}} 
+                            ref = {addButton => this.addButton = addButton}
+                        >
+                            <BiCube style = {{marginRight: "0.5rem"}}/>
+                            <Title>Attach References</Title>
+                        </PageIcon>
                     }
-                   
                     <CSSTransition
                          in = {this.state.open}
                          unmountOnExit
@@ -294,32 +347,11 @@ class FileReferenceMenu extends React.Component {
                          classNames = "dropmenu"
                     >
                         <Container 
-                            
-                            top = {this.state.top}
-                            left = {this.state.left}
-                            marginTop = {this.renderMarginTop()} 
+                            form = {this.props.form}
                             ref = {node => this.node = node}
+                            flip = {flip}
                         >
-                            <HeaderContainer>Add References</HeaderContainer>
-                            <SearchbarContainer>
-                                <SearchbarWrapper 
-                                    backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
-                                    border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
-                                >
-                                  
-                                    <Searchbar 
-                                        onFocus = {() => {this.setState({focused: true})}} 
-                                        onBlur = {() => {this.setState({focused: false})}} 
-                                        onKeyDown = {(e) => this.setPosition(e)}  
-                                        onChange = {(e) => {this.searchReferences(e)}} 
-                                        value = {this.state.search}
-                                        autoFocus 
-                                        placeholder = {"Find references..."}/>
-                                </SearchbarWrapper>
-                            </SearchbarContainer>
-                            <ListContainer>
-                                {this.state.loaded ?  this.renderListItems(setIds) : <MoonLoader size = {12}/>}
-                            </ListContainer>
+                            {this.renderListContent(flip, setIds)}
                         </Container>
                     </CSSTransition>
             </MenuContainer>
@@ -338,25 +370,48 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { attachReference, removeReference, localRetrieveReferences })(FileReferenceMenu));
 
+
+
 const Title = styled.div`
+    font-size: 1.3rem;
+    margin-right: 0.3rem;
     font-weight: 500;
 `
 
-const AddButton = styled.div`
-    background-color: #363b49;
-    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
-    border-radius: 0.2rem;
-    font-size: 1.3rem;
-    padding: 0.4rem 1rem;
-    margin-right: 1rem;
+const PageIcon = styled.div`
+    margin-right: 1.2rem;
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
+    font-size: 1.5rem;
+
+    padding: 0.5rem 1rem;
     &:hover {
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#F4F4F6"};
+        
+    }
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    cursor: pointer;
+    border-radius: 0.3rem;
+    margin-left: auto;
+    /*
+    margin-left: ${props => props.mLeft ? props.mLeft : "0rem"};*/
+`
+
+const AddButton = styled.div`
+    height: 3rem;
+    width: 3rem;
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
+    border-radius: 50%;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    &:hover {
+        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
-    
 `
 
 
@@ -404,6 +459,7 @@ const NoneMessage = styled.div`
 
 
 const MenuContainer = styled.div`
+    margin-left: ${props => props.mLeft};
 `
 
 
@@ -418,8 +474,9 @@ const Container = styled.div`
     font-size: 1.4rem;
     z-index: 2;
     background-color: white;
-    top: ${props => props.top}px;
-    left: ${props => props.left}px;
+    bottom:${props => props.flip[0] ? `${props.flip[1]}px` : ""};
+    top: ${props => !props.flip[0] ? `${props.flip[1]}px` : ""};
+    margin-left: ${props => props.form ? "" : "-14rem"};
 `
 
 const SearchbarContainer = styled.div`
@@ -427,6 +484,7 @@ const SearchbarContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    border-top: 1px solid #E0E4E7;
     border-bottom:  1px solid #E0E4E7;
 `
 
@@ -467,7 +525,6 @@ const HeaderContainer = styled.div`
     font-size: 1.3rem;
     padding: 1rem;
     color: #172A4E;
-    border-bottom: 1px solid #E0E4E7;
     font-weight: 500;
 `
 
@@ -498,7 +555,6 @@ const ListItem = styled.div`
     align-items: center;
     
     background-color: white;
-    /*border: 1px solid #E0E4E7;*/
 
    
     cursor: pointer;

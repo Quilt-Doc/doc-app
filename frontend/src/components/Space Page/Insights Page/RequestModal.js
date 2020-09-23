@@ -220,7 +220,7 @@ const RequestBody = styled.div`
     width: 100%;
     border-left: 1px solid #E0E4e7;
     /*box-shadow: 0 2px 4px rgba(0,0,0,0.15);*/
-    height: 100%;
+    height: calc(100vh - 45rem);
     padding: 3rem 3.5rem;
     overflow-y: scroll;
 `

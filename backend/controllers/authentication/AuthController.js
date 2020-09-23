@@ -1,5 +1,5 @@
 const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
-const client = require("../../apis/api").requestClient();
+const client = require("../../apis/api").requestGithubClient();
 
 const AuthRequest = require('../../models/authentication/AuthRequest');
 const User = require('../../models/authentication/User');
@@ -13,51 +13,114 @@ const { ObjectId } = mongoose.Types;
 
 const SUPPORTED_PLATFORMS = ['jira'];
 
+const fs = require('fs');
+var jwt = require('jsonwebtoken');
+
+
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
         return true
     }
     return false
 }
-
+// TODO: Change just to validate JWT
 loginSuccess = async (req, res) => {
-    console.log("REQ USER", req.user)
-    if (req.user) {
-        console.log('req.user: ');
-        console.log(req.user);
-        
-        
+    console.log("REQ USER: ", req.user)
+
+    console.log('req.user: ');
+    console.log(req.user);
+
+    const authHeader = req.headers.authorization;
+
+    // console.log('Cookies: ');
+    // console.log(req.cookies);
+
+    // Get token
+    var token = undefined;
+    if (authHeader) {
+        token = authHeader.split(' ')[1];
+    }
+    else if (req.cookies['user-jwt']) {
+        token = req.cookies['user-jwt'];
+    }
+
+
+    else {
+        console.log('No JWT provided');
+        return res.json({
+            success: false,
+            authenticated: false,
+            user: {}
+        })
         /*
-        // Apparently standard practice is to run a new JWT on every sign-in
-        // If they don't have a JWT yet, let's make one for them
-        if (!req.cookies['user-jwt']) {
-            
-        }
+        return res.status(401).json({
+            authenticated: false,
+            message: "user has not been authenticated"
+        });
         */
+    }
+    // console.log('TOKEN: ', token);
+
+    var publicKey = fs.readFileSync('docapp-test-public.pem', 'utf8');
+    // console.log('publicKey: ', publicKey);
+    try {
+        console.log('About to decode JWT');
+        var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+        console.log('decoded JWT: ');
+        console.log(decoded);
+        // req.tokenPayload = decoded;
+        console.log("USER ID", decoded.userId)
+        var user = await User.findById(decoded.userId);
+        console.log("USER HERE", user)
+        return res.json({
+            success: true,
+            authenticated: true,
+            message: "user has successfully authenticated",
+            user,
+            cookies: req.cookies
+        });
+    }
+    catch(err) {
+        console.log('JWT Verify Failed Error: ');
+        console.log(err);
+        return res.status(403);
+    }
+    
+    
+    
+    /*
+    // Apparently standard practice is to run a new JWT on every sign-in
+    // If they don't have a JWT yet, let's make one for them
+    if (!req.cookies['user-jwt']) {
         
-        // Check if req.user is an actual user, normally we would be using username/password to authenticate req.user
-        // Since we don't have this, this is the current stopgap
-        var requestUser = await User.findOne({ _id: req.user._id, domain: req.user.domain, username: req.user.username, profileId: req.user.profileId });
-        if (requestUser) {
-            var jwtToken = createUserJWTToken(req.user._id, req.user.role);
+    }
+    */
+    
+    // Check if req.user is an actual user, normally we would be using username/password to authenticate req.user
+    // Since we don't have this, this is the current stopgap
+    
+    /*
+    var requestUser = await User.findOne({ _id: req.user._id, domain: req.user.domain, username: req.user.username, profileId: req.user.profileId });
+    if (requestUser) {
+        var jwtToken = createUserJWTToken(req.user._id, req.user.role);
 
-            res.cookie('user-jwt', jwtToken, { httpOnly: true });
+        res.cookie('user-jwt', jwtToken, { httpOnly: true });
 
-            // req.cookies['token'] = {"user-jwt": jwtToken};
-            return res.json({
-                success: true,
-                authenticated: true,
-                message: "user has successfully authenticated",
-                user: req.user,
-                cookies: req.cookies
-            });
-        }
+        // req.cookies['token'] = {"user-jwt": jwtToken};
+        return res.json({
+            success: true,
+            authenticated: true,
+            message: "user has successfully authenticated",
+            user: req.user,
+            cookies: req.cookies
+        });
     }
     return res.json({
         success: false,
         authenticated: false,
         user: {}
     })
+    */
 }
 
 loginFailed = (req, res) => {

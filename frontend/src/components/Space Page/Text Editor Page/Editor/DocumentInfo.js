@@ -21,6 +21,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCube, faTag} from '@fortawesome/free-solid-svg-icons'
 import {RiGitRepositoryLine, RiFileFill} from 'react-icons/ri'
 import {AiFillFolder} from 'react-icons/ai';
+import {VscRepo} from 'react-icons/vsc';
 
 //router
 import { withRouter } from 'react-router-dom';
@@ -87,32 +88,29 @@ class DocumentInfo extends React.Component {
         return(
             <DataContainer 
                 paddingLeft = {this.props.write ? "3rem" : "10rem"}>
-            {!this.props.write ? 
-                <>
-                    { this.props.document.repository &&
-                        <RepositoryButton> 
-                            <RiGitRepositoryLine style = {
-                                    { marginRight: "0.65rem", fontSize: "1.7rem"}
-                                    }/>
-                            {this.renderFullName()}
-                        </RepositoryButton>
-                    }
-                    {(this.props.document.references && this.props.document.references.length > 0) &&
-                        <InfoList2>
-                            {this.renderFolders()}
-                            {this.renderFiles()}
-                        </InfoList2>
-                    }
                 
-                   
-                    {/*(this.props.document.tags && this.props.document.tags.length > 0) &&
-                        <InfoList>
-                            {this.renderTags()}
-                        </InfoList>*/
-                    }
-                    
-                </>
-                 :
+                { this.props.document.repository &&
+                    <RepositoryButton> 
+                        <VscRepo style = {
+                                { marginRight: "0.65rem", fontSize: "1.6rem"}
+                                }/>
+                        {this.renderFullName()}
+                    </RepositoryButton>
+                }
+                {(this.props.document.references && this.props.document.references.length > 0) &&
+                    <InfoList2>
+                        {this.renderFolders()}
+                        {this.renderFiles()}
+                    </InfoList2>
+                }
+            
+            </DataContainer>
+        )
+    }
+}
+
+/*
+:
                     <>
                         <RepositoryMenu2
                             document={this.props.document}
@@ -147,11 +145,7 @@ class DocumentInfo extends React.Component {
                             />
                         </InfoList>
                     </>
-            }
-            </DataContainer>
-        )
-    }
-}
+            }*/
 
 const mapStateToProps = (state, ownProps) => {
     let { documentId } = ownProps.match.params
@@ -182,16 +176,16 @@ const InfoList2 = styled.div`
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.5rem;
 `
 
 const Reference = styled.div`
     background-color: ${chroma("#5B75E6").alpha(0.12)};
     /*color: ${chroma("#5B75E6").alpha(0.9)};*/
-    border-radius: 0.3rem;
+    border-radius: 0.2rem;
     font-size: 1.3rem;
-    padding: 0.4rem 0.6rem;
-    margin-right: 1.35rem;
+    padding: 0.3rem 0.55rem;
+    margin-right: 1.5rem;
     display: flex;
     align-items: center;
     margin-bottom: 1rem;
@@ -257,16 +251,19 @@ const Reference = styled.div`
 */
 
 const Tag = styled.div`
-    font-size: 1.35rem;
+    font-size: 1.2rem;
     color: ${props => props.color};
-    padding: 0.2rem 0.8rem;
-    background-color: ${props => chroma(props.color).alpha(0.15)};
+    padding: 0.1rem 0.7rem;
+    background-color: ${props => chroma(props.color).alpha(0.13)};
     border: 1px solid ${props => props.color};
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.3rem;
-	margin-right: 1rem;
+    border-radius: 0.2rem;
+	margin-right: 1.5rem;
     font-weight: 500;
+    min-width: 3rem;
+    min-height: 0.5rem;
     margin-bottom:1rem;
+
 `
