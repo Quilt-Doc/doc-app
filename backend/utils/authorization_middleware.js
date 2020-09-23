@@ -497,6 +497,32 @@ const tokenMiddleware = (req, res, next) => {
     }
 }
 
+
+const checkMiddleware = (req, res, next) => {
+    var requesterId = req.tokenPayload.userId.toString();
+    var requesterRole = req.tokenPayload.role;
+
+    if (requesterRole == 'dev') {
+        return next();
+    }
+    else {
+        return next(new Error("Error: only dev tokens can access the check API"));
+    }
+}
+
+const pullRequestMiddleware = (req, res, next) => {
+    var requesterId = req.tokenPayload.userId.toString();
+    var requesterRole = req.tokenPayload.role;
+
+    if (requesterRole == 'dev') {
+        return next();
+    }
+    else {
+        return next(new Error("Error: only dev tokens can access the pull request API"));
+    }
+}
+
+
 /*
 const linkage_controller = require('../controllers/LinkageController');
 router.post('/linkages/:workspaceId/create', linkage_controller.createLinkage);
@@ -602,5 +628,7 @@ module.exports = {
     authMiddleware,
     userMiddleware,
     tokenMiddleware,
+    checkMiddleware,
+    pullRequestMiddleware,
     linkageMiddleware
 }

@@ -3,12 +3,10 @@ import Cookies from 'js-cookie';
 var apiEndpoint;
 
 console.log('Running!');
-if(process.env.REACT_APP_NETLIFY_API_URL) { 
+if(process.env.a) { 
     apiEndpoint = process.env.REACT_APP_NETLIFY_API_URL;
-    console.log('Using Netlify URL');
 }
 else { 
-   console.log('SET');
    apiEndpoint = process.env.REACT_APP_LOCAL_URL;
 }
 console.log('apiEndpoint: ', apiEndpoint);
