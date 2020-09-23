@@ -323,7 +323,7 @@ updateRepository = async (req, res) => {
     if (eventType == 'push') {
         console.log('Updating repository on push');
         if (typeof headCommit == 'undefined' || headCommit == null) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
-        if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});    
+        if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});
 
 
         var repository = await Repository.findOne({fullName, installationId})
