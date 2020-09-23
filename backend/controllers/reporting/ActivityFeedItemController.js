@@ -2,12 +2,14 @@ const ActivityFeedItem = require('../../models/reporting/ActivityFeedItem');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+const logger = require('../../logging/index').logger;
+
 /*
-    actionType: {type: String, enum: ["create", "delete"], required: true},
-    actionDate: {type: Date, default: Date.now, required: true },
-    actionUser: {type: ObjectId, ref: 'User', required: true},
-    actionWorkspaceId: {type: ObjectId, ref: 'Workspace', required: true},
-    actionDocumentId: {type: ObjectId, ref: 'Document'}
+    type: {type: String, enum: ["create", "delete"], required: true},
+    date: {type: Date, default: Date.now, required: true },
+    user: {type: ObjectId, ref: 'User', required: true},
+    workspace: {type: ObjectId, ref: 'Workspace', required: true},
+    document: {type: ObjectId, ref: 'Document'}
 */
 
 createActivityFeedItem = (params) => {
@@ -16,21 +18,24 @@ createActivityFeedItem = (params) => {
 
     let activityfeedItem = new ActivityFeedItem(
         {
-            actionType: type,
-            actionDate: date,
-            actionUser: ObjectId(userId),
-            actionWorkspace: ObjectId(workspaceId)
+            type: type,
+            date: date,
+            user: ObjectId(userId),
+            workspace: ObjectId(workspaceId)
         },
     );
 
-    if (documentId) activityfeedItem.actionDocument = documentId;
+    if (documentId) activityfeedItem.document = documentId;
 
-    
-
-    activityfeedItem.save((err, createdObj) => {
-        if (err) throw new Error("createActivityFeedItem Error: Could not save");
-        return createdObj;
-    });
+    try {
+        activityfeedItem = await activityfeedItem.save();
+        return res.json({success: true, result: activityfeedItem});
+    }
+    catch (err) {
+        logger.error({source: 'backend-api', message: err,
+                        errorDescription: 'Error saving new ActivityFeedItem', function: 'createActivityFeedItem'});
+        return res.json({success: false, error: err});
+    }
 }
 
 
@@ -42,16 +47,23 @@ retrieveActivityFeedItems = (req, res) => {
 
     let query;
 
-    query = ActivityFeedItem.find({ actionWorkspace: workspaceId });
+    query = ActivityFeedItem.find({ workspace: workspaceId });
 
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
     
-    query.sort({actionDate: -1});
-    query.populate('actionUser').exec((err, items) => {
-        if (err) return res.json({ success: false, error: err });
+    query.sort({date: -1});
+    query.populate('user');
+    var items;
+    try {
+        items = await query.exec();
         return res.json({success: true, result: items});
-    });
+    }
+    catch (err) {
+        logger.error({source: 'backend-api', message: err,
+                        errorDescription: 'Error retrieving ActivityFeedItems', function: 'retrieveActivityFeedItems'});
+        return res.json({success: false, error: err});
+    }
 }
 
 /*
@@ -87,5 +99,4 @@ deleteActivityFeedItem = (req, res) => {
     });
 }*/
 
-module.exports = { createActivityFeedItem, retrieveActivityFeedItems,
-                   getActivityFeedItem, deleteActivityFeedItem };
+module.exports = { createActivityFeedItem, retrieveActivityFeedItems };

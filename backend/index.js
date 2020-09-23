@@ -210,34 +210,10 @@ app.get("/", authCheck, (req, res) => {
 
 if (process.env.IS_PRODUCTION) {
   setupESConnection().then(() => {
-    /*
-    const info = jsonFormat.transform({
-      level: 'error',
-      message: 'my message',
-      customField: 'testValue'
-    });
-    
-    logger.debug('Test Print');
-    logger.info({ message: 'Testing error value',
-                  customField: 'testValue2'
-    });
-    */
     app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
   });
 }
 
 else {
-  const info = jsonFormat.transform({
-    level: 'error',
-    message: 'my message',
-    customField: 'testValue'
-  });
-  
-  // logger.debug('Test Print');
-  // logger.info({ message: 'Testing error value',
-  //               customField: 'testValue2'
-  // });
-  // logger.error({message: 'Error Message', jaja: "JAJA", stack: new Error()});
-  // logger.verbose('Verbose Message');
   app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
 }
