@@ -41,6 +41,7 @@ class Home extends React.Component {
     }   
 
     render(){
+        console.log("AUTHENTICATION", this.props.authenticated)
         if (this.props.authenticated === undefined){
             return null
         }

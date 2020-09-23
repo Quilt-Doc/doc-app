@@ -8,6 +8,8 @@ const paramMiddleware = require('../utils/param_middleware');
 
 const authorizationMiddleware = require('../utils/authorization_middleware');
 
+const { createUserJWTToken } = require('../utils/jwt');
+
 
 
 router.param('workspaceId', paramMiddleware.workspaceIdParam);
@@ -17,7 +19,7 @@ router.param('tagId', paramMiddleware.tagIdParam);
 router.param('snippetId', paramMiddleware.snippetIdParam);
 router.param('repositoryId', paramMiddleware.repositoryIdParam);
 router.param('userId', paramMiddleware.userIdParam);
-
+router.param('linkageId', paramMiddleware.linkageIdParam);
 
 //base routes
 
@@ -53,6 +55,8 @@ router.put('/references/:workspaceId/:referenceId/attach_tag/:tagId', authorizat
 router.put('/references/:workspaceId/:referenceId/remove_tag/:tagId', authorizationMiddleware.referenceMiddleware, referenceController.removeTag);
 router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referenceMiddleware, referenceController.retrieveReferences);
 router.post('/references/:workspaceId/retrieve_code_references', authorizationMiddleware.referenceMiddleware, referenceController.retrieveCodeReferences);
+
+router.post('/references/job_retrieve', authorizationMiddleware.referenceMiddleware, reference_controller.jobRetrieveReferences);
 
 
 // Validate workspace membership for calling user; all methods
@@ -107,8 +111,9 @@ const repositoryController = require('../controllers/RepositoryController');
 // create - dev role only
 // update - dev role only
 
-router.post('/repositories/create', authorizationMiddleware.repositoryMiddleware, repositoryController.createRepository); // DONE
-router.post('/repositories/update/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.updateRepository); // DONE
+router.post('/repositories/create', authorizationMiddleware.repositoryMiddleware, repository_controller.createRepository); // DONE
+router.post('/repositories/update', authorizationMiddleware.repositoryMiddleware, repository_controller.updateRepository); // DONE
+router.post('/repositories/job_retrieve', authorizationMiddleware.repositoryMiddleware, repository_controller.jobRetrieveRepositories);
 
 // User accessible
 
@@ -172,14 +177,65 @@ router.delete('/tags/:workspaceId/delete/:tagId', authorizationMiddleware.tagMid
 router.post('/tags/:workspaceId/retrieve', authorizationMiddleware.tagMiddleware, tagController.retrieveTags);
 
 //auth routes
-const authController = require('../controllers/authentication/AuthController');
-router.get('/auth/login/success', authController.loginSuccess);
-router.get('/auth/login/failed', authController.loginFailed);
-router.get('/auth/logout', authController.logout);
-router.get('/auth/github', passport.authenticate("github"));
-router.get('/auth/github2', function(req, res, next) { 
-    console.log("REQUEST", req.headers);
+const auth_controller = require('../controllers/authentication/AuthController');
+router.get('/auth/login/success', auth_controller.loginSuccess);
+router.get('/auth/login/failed', auth_controller.loginFailed);
+router.get('/auth/logout', auth_controller.logout);
+
+
+// router.get('/auth/github', passport.authenticate("github"));
+router.get('/auth/github', function(req, res, next) {
+    passport.authenticate('github', {session: false}, function(err, user, info) {
+      console.log('FIRST CALLBACK');
+      if (err) { return next(err); }
+      // TODO: Change this to appropriate route
+      if (!user) { console.log('!user == true'); return res.redirect('/login'); }
+
+      var jwtToken = createUserJWTToken(user._id, user.role);
+
+      res.cookie('user-jwt', jwtToken, { httpOnly: true });
+      
+      return res.redirect('/api/auth/github/redirect');
+    })(req, res, next);
 });
+
+
+/*
+app.get('/login', function(req, res, next) {
+  passport.authenticate('local', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return res.redirect('/login'); }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.redirect('/users/' + user.username);
+    });
+  })(req, res, next);
+});
+*/
+
+
+router.get('/auth/github/redirect', passport.authenticate("github", {session: false}), (req, res) => {
+    // console.log('Request Host: ', req.get('host'));
+    // if (err) { return res.json({success: false, error: err}) }
+    // TODO: Change this to appropriate route
+    console.log('REQ: ', req);
+    console.log('RES: ', res);
+    
+    if (!req.user) { console.log('!req.user == true'); return res.redirect('/login'); }
+
+    var jwtToken = createUserJWTToken(req.user._id, req.user.role);
+
+    res.cookie('user-jwt', jwtToken, { httpOnly: true });
+    
+    if (req.query.state === "installing") {
+        res.redirect(`http://localhost:3000/installed`);
+    } else {
+        res.redirect(CLIENT_HOME_PAGE_URL);
+    }
+});
+
+
+/*
 router.get('/auth/github/redirect', passport.authenticate("github"), function(req, res){
                                             console.log('Request Host: ', req.get('host'));
                                             if (req.query.state === "installing") {
@@ -188,9 +244,10 @@ router.get('/auth/github/redirect', passport.authenticate("github"), function(re
                                                 res.redirect(CLIENT_HOME_PAGE_URL);
                                             }
                                         });
-router.post('/auth/check_installation', authController.checkInstallation);
-router.post('/auth/retrieve_domain_repositories', authController.retrieveDomainRepositories)
-router.get('/auth/start_jira_auth', authController.startJiraAuthRequest);
+*/
+router.post('/auth/check_installation', auth_controller.checkInstallation);
+router.post('/auth/retrieve_domain_repositories', auth_controller.retrieveDomainRepositories)
+router.get('/auth/start_jira_auth', auth_controller.startJiraAuthRequest);
 
 
 // Not currently enabled
@@ -247,6 +304,19 @@ router.post('/reporting/:workspaceId/retrieve_broken_documents', authorizationMi
 router.post('/reporting/:workspaceId/retrieve_activity_feed_items', authorizationMiddleware.reportingMiddleware, reportingController.retrieveActivityFeedItems);
 router.post('/reporting/:workspaceId/retrieve_user_stats', authorizationMiddleware.reportingMiddleware, reportingController.retrieveUserStats);
 
+
+
+//linkage routes
+const linkage_controller = require('../controllers/LinkageController');
+router.post('/linkages/:workspaceId/create', authorizationMiddleware.linkageMiddleware, linkage_controller.createLinkage);
+router.get('/linkages/:workspaceId/get/:linkageId', authorizationMiddleware.linkageMiddleware, linkage_controller.getLinkage);
+router.put('/linkages/:workspaceId/edit/:linkageId', authorizationMiddleware.linkageMiddleware, linkage_controller.editLinkage);
+router.delete('/linkages/:workspaceId/delete/:linkageId', authorizationMiddleware.linkageMiddleware, linkage_controller.deleteLinkage);
+router.post('/linkages/:workspaceId/retrieve', authorizationMiddleware.linkageMiddleware, linkage_controller.retrieveLinkages);
+router.put('/linkages/:workspaceId/:linkageId/attach_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkage_controller.attachLinkageReference);
+router.put('/linkages/:workspaceId/:linkageId/remove_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkage_controller.removeLinkageReference);
+router.put('/linkages/:workspaceId/:linkageId/attach_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkage_controller.attachLinkageTag);
+router.put('/linkages/:workspaceId/:linkageId/remove_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkage_controller.removeLinkageTag);
 
 module.exports = router;
 

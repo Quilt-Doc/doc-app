@@ -11,12 +11,13 @@ import requestReducer from './Request_Reducer';
 import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
+import searchReducer from './Search_Reducer';
+
 
 import uiReducer from './UI_Reducer';
-
 import authReducer from './Auth_Reducer';
-
 import selectedReducer from './Selected_Reducer';
+import linkageReducer from './Linkage_Reducer';
 
 export default combineReducers({
     workspaces: workspaceReducer, // DONE (with notes)
@@ -29,8 +30,8 @@ export default combineReducers({
     tags: tagReducer,
     selected: selectedReducer,
     references: referenceReducer, // DONE (attachTags, removeTags not done)
-    repositoryItems: repositoryItemReducer,
-    form: formReducer,
     auth: authReducer,
-    ui: uiReducer
+    ui: uiReducer,
+    searchResults: searchReducer, // Standardize
+    linkages: linkageReducer // Standardize
 });

@@ -25,35 +25,27 @@ const api = require('./apis/api').requestBackendClient();
 
 const fs_promises = require('fs').promises;
 
-const { findNewSnippetRegion } = require('./validator');
+const { findNewSnippetRegion } = require('./snippet_validator');
 
 const { parseCommitObjects, getTrackedFiles } = require('./utils/validate_utils');
-
-const SNIPPET_STATUS_INVALID = 'INVALID';
-const SNIPPET_STATUS_NEW_REGION = 'NEW_REGION';
-const SNIPPET_STATUS_VALID = 'VALID';
 
 
 const tokenUtils = require('./utils/token_utils');
 
-/*var client = axios.create({
-  baseURL: "http://localhost:3001/api"
-});*/
-
-
 require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
+const constants = require('./constants/index');
 
 
 
 
 
-const getRepositoryObject = async () => {
+const getRepositoryObject = async (installationId, repositoryFullName) => {
   
   const getRepositoryResponse = await api.post('/repositories/retrieve', {
-    installationId: process.env.installationId,
-    fullName: process.env.repositoryFullName 
+    installationId: installationId,
+    fullName: repositoryFullName 
   });
   console.log('getRepositoryResponse: ');
   console.log(getRepositoryResponse.data);
@@ -73,12 +65,18 @@ const runValidation = async () => {
 
   const gitClone = spawnSync('git', ['clone', cloneUrl, repoDiskPath]);
 
-  // Testing Values:
-  // var head_commit = '7774441eb5e8bfaa8c151b2bc3a4f7e72ddc6ce5';
-  // var repo_commit = '3a64c575cca6ed3e90bf6464ccc4f5a8814c9693';
+  // Needed Parameters:
+  // ----------------------
+  // repository fullName
+  // repository cloneUrl
+  // Head commit
+  // Base commit
+  // Github API Client
+
+
   var repoId = '';
   var repoCommit = '';
-  [repoId, repoCommit] = await getRepositoryObject(process.env.repositoryFullName);
+  [repoId, repoCommit] = await getRepositoryObject(process.env.installationId, process.env.repositoryFullName);
 
   headCommit = process.env.headCommit;
 
@@ -195,14 +193,14 @@ const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
     var currentSnippet = snippetData[i];
     console.log('currentSnippet: ');
     console.log(currentSnippet);
-    var status = SNIPPET_STATUS_INVALID;
+    var status = constants.snippets.SNIPPET_STATUS_INVALID;
   
     var snippetStartLine = currentSnippet.firstLine.replace(/\s+/g, '');
     var snippetEndLine = currentSnippet.endLine.replace(/\s+/g, '');
     console.log('lines length, idx, lines: ', lines.length, ' - ', currentSnippet.startLineNum, '\n', lines);
     if (snippetStartLine == lines[currentSnippet.startLineNum].replace(/\s+/g, '')) {
       if (snippetEndLine == lines[currentSnippet.startLineNum + currentSnippet.numLines-1].replace(/\s+/g, '')) {
-        status = SNIPPET_STATUS_VALID;
+        status = constants.snippets.SNIPPET_STATUS_VALID;
       }
     }
 
@@ -225,7 +223,7 @@ const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
   
   for (i = 0; i < snippetData.length; i++) {
     // {startLine: finalResult.idx, numLines: finalResult.size, status: 'NEW_REGION'}
-    if (snippetData[i].status == SNIPPET_STATUS_INVALID) {
+    if (snippetData[i].status == constants.snippets.SNIPPET_STATUS_INVALID) {
       console.log('Looking for new snippet region, idx: ', i);
       snippetData[i] = findNewSnippetRegion(snippetData[i], lines);
     }

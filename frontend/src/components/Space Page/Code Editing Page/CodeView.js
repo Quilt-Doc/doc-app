@@ -39,6 +39,8 @@ import { withRouter } from 'react-router-dom';
 //misc
 import { connect } from 'react-redux';
 
+//animation
+import { CSSTransition } from 'react-transition-group';
 
 
 //prism
@@ -64,7 +66,7 @@ class CodeView extends React.Component {
 
             //refers to selected elements - key is element id, value is element ref
             'selected': {},
-
+            'first': null,
             //id pointing to snippet ref that is selected for creation
             'newSnippetId': '',
 
@@ -83,6 +85,7 @@ class CodeView extends React.Component {
         // variable to determine whether annotation scale
         this.pullAnnotationUp = false
         this.lines = {};
+        this.linenumbers = {};
         this.annotations = {};
         this.stopMouseEvents = false;
     }
@@ -95,16 +98,12 @@ class CodeView extends React.Component {
         // retrieve snippets using url path 
         //this.props.retrieveSnippets({location: window.location.pathname.slice(20)})
 
-        
         // get contents of code file from database
         let { referenceId, repositoryId, workspaceId}  = this.props.match.params;
         await this.props.getRepository({workspaceId, repositoryId});
         let fileContents = await this.props.getRepositoryFile({workspaceId, repositoryId, referenceId});
-        console.log('Code View fileContents');
-        console.log(fileContents);
-        await this.props.retrieveReferences({ workspaceId, referenceId })
-        await this.props.retrieveSnippets({referenceId, workspaceId})
-        console.log("SNIPPETS", this.props.snippets)
+        await this.props.retrieveReferences({ workspaceId, repositoryId, referenceId })
+        await this.props.retrieveSnippets({referenceId, workspaceId, repositoryId})
         await this.props.retrieveDocuments({ workspaceId, referenceIds: [referenceId], workspaceId})
         const allLinesJSX = this.renderLines(fileContents);
         window.addEventListener('keydown', this.handleKeyDown, false);
@@ -170,7 +169,8 @@ class CodeView extends React.Component {
         if (this.pullAnnotationUp == true) {
             this.pullAnnotationUp = false
             this.updateScaleY()
-        }
+        } 
+       
     }
 
     componentWillUnmount(){
@@ -196,12 +196,14 @@ class CodeView extends React.Component {
 			selectables: ['.codeline'],
 		
 			// The container is also the boundary in this case
-			boundaries: ['.codetext']
+            boundaries: ['.codetext'],
+
+            scrollSpeedDivider: 10,
+            manualScrollSpeed: 750
 		}).on('start', ({inst, selected, oe}) => {
             if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
                 this.state.reselectingSnippet !== null) {
                 let addedClass = 'selected_code'
-                console.log(addedClass)
                 this.setState({selected: {}})
                 for (const el of selected) {
                     el.classList.remove(addedClass);
@@ -209,14 +211,15 @@ class CodeView extends React.Component {
                 }
                 inst.clearSelection();
             }
+            
 		}).on('move', ({changed: {removed, added}}) => {
             // Add a custom class to the elements that where selected.
             if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
                 this.state.reselectingSnippet !== null) {
                 
                 let addedClass = 'selected_code'
-                console.log("ADDED CLASS", addedClass)
-                let selected = this.state.selected
+               
+                let selected = {...this.state.selected}
                 for (const el of added) {
                     selected[el.id] = el
                     el.classList.add(addedClass);
@@ -230,10 +233,19 @@ class CodeView extends React.Component {
                     }
                     el.classList.remove(addedClass);
                 }
+
                 
-                this.setState({selected})
+                let newState = {selected};
+               
+                if (_.isEmpty(this.state.selected) && added.length > 0){
+                    newState.first = added[0]
+                }
+
+                this.setState({...newState})
             }
+            
 		}).on('stop', ({inst}) => {
+
             if ((!(this.state.cannotSelect) && this.state.selectionMode) ||
             this.state.reselectingSnippet !== null) {
                 inst.keepSelection();
@@ -329,7 +341,8 @@ class CodeView extends React.Component {
                 'selected': {},
                 'newSnippetId': '',
                 'cannotSelect': false,
-                'selectionMode': false
+                'selectionMode': false,
+                'first': null
             });
         } else {
             this.deselectItems();
@@ -339,7 +352,8 @@ class CodeView extends React.Component {
                 'newSnippetId': '',
                 'cannotSelect': false,
                 'selectionMode': true,
-                'reselectingSnippet': null
+                'reselectingSnippet': null,
+                'first': null
             })
         }
     }
@@ -564,7 +578,6 @@ class CodeView extends React.Component {
             const offset_difference = offset_annotation - offset_snippet
             const newScale = -1 * offset_difference
             this.setState({scaleY: newScale, focused: snippet._id})
-            console.log(annotation)
             scrollIntoView(ReactDOM.findDOMNode(annotation).parentNode, {
                 scrollMode: 'if-needed',
                 block: 'nearest',
@@ -585,26 +598,17 @@ class CodeView extends React.Component {
         let border = lines[i] ?  `1.5px solid #5B75E6` : "1.5px solid #ffffff";
 
         if (snippet) {
-         
            color = chroma("#5B75E6").alpha(0.07);
-
         }
 
-        return(
-            
-            <Wrapper 
-                color = {color}   
-                border = {border} 
-                id = {`linecode-${i}`} 
-                className = {'codeline'}
-                ref = {(node) => {
-                    if (lines[i]){
-                        lines[i].node = node
-                    } 
-                }}
+
+        
+        let wrapjsx = 
+
+            (<WrapContainer
                 onMouseEnter = {() => 
-                    {   if (lines[i] && !this.stopMouseEvents) {
-                           
+                    {  if (lines[i] && !this.stopMouseEvents) {
+                        
                             this.focusSnippet(this.props.snippetsObject[lines[i].snippets[0]])
                             if (lines[i].snippets.length > 1) {
                                 this.setState({moreSnippetDisplay: "true"})
@@ -612,16 +616,67 @@ class CodeView extends React.Component {
                         }
                     }}
                 key = {i}
+                ref = {(node) => {
+                    if (lines[i]){
+                        lines[i].node = node
+                    } 
+                }}
             >
-                
-                <CodeLine>
-                    
-                    {lineJSX}
-                </CodeLine>
-            </Wrapper>
-        )
+                <Linenumber>{i}</Linenumber>
+                <Wrapper 
+                    color = {color}   
+                    border = {border} 
+                    id = {`linecode-${i}`} 
+                    className = {'codeline'}
+                >
+                    <CodeLine>
+                        {lineJSX}
+                    </CodeLine>
+                    {/*(this.state.first && this.state.first.id.split('-').pop() == i) &&
+                        this.renderAddButton()*/
+                    }
+                </Wrapper>
+            </WrapContainer>
+            )
+        /*
+        if (this.state.first && this.state.first.id.split('-').pop() == i) { 
+            console.log("ENTERED HERE")
+            return (
+                <WrapContainer>
+                    {wrapjsx}
+                    {this.renderAddButton()}
+                </WrapContainer>
+            )  
+        }*/
+
+        return wrapjsx
     }
 
+
+    renderAddButton(){
+        //console.log("DOC", document.getElementById("codeholder").getBoundingClientRect());
+        //let {width} = document.getElementById("codeholder").getBoundingClientRect();
+        //console.log("RIGHT", right);
+        //onMouseDown = {(e) =>  {this.renderSelectionChanges(e, this.state.first.id)}}
+        let {top} = this.state.first.getBoundingClientRect();
+        let { scrollTop } = document.getElementById("rightView");
+        let top2 = document.getElementById('codeholder').offsetTop;
+        //let  = document.getElementById("")
+        return(
+            <CSSTransition
+                in = {true}
+                appear = {true}
+                timeout = {150}
+                classNames = "dropmenu"
+            >
+                <AddButton
+                    onMouseDown = {(e) =>  {this.renderSelectionChanges(e, this.state.first.id)}}
+                    top = {top + scrollTop - top2 - 20}>
+                    <ion-icon  style={{'margin-top': "0.9rem"}} name="add-outline"></ion-icon>
+                </AddButton>
+            </CSSTransition>
+        )
+    }
 
     storeSnippetLocation(){
         let lines = {}
@@ -647,6 +702,7 @@ class CodeView extends React.Component {
 
         let i = 0
         let snippet = this.state.focused ? this.props.snippetsObject[this.state.focused] : null;
+        
 
         while (i < allLinesJSX.length) {
             if (snippet && snippet.start === i) {
@@ -680,6 +736,7 @@ class CodeView extends React.Component {
         }
 
         this.lines = lines
+        
         return codeJSX;
     }
 
@@ -769,10 +826,26 @@ class CodeView extends React.Component {
         return annotationsJSX;
     }
 
+
+    renderLinenumbers = () => {
+        return <LinenumberColumn>
+                    {Object.values(this.linenumbers).map((node, i) => {
+                        return(
+                            <Linenumber>{i}</Linenumber>
+                        )
+                    })}
+                </LinenumberColumn>
+    }
+
     renderContent() {
         let codeJSX = this.renderCode();
         let annotationsJSX = this.renderAnnotations();
-        const code = <CodeText id = {'codeholder'} className = {`codetext`}> {codeJSX} </CodeText>
+        let classString = `codetext${this.state.selectionMode ? ' marker-mode' : ''}`
+        console.log("LINENUMBERS1", this.linenumbers);
+
+        const code = <CodeText id = {'codeholder'} className = {classString}> {codeJSX} </CodeText>
+            
+
         const annotations = 
             <Overflow_Wrapper>
                 <AnnotationBar scaleY = {this.state.scaleY} >
@@ -782,8 +855,12 @@ class CodeView extends React.Component {
         return (
                 <>
                     {code} 
+                    {this.state.first &&
+                        <MiddleContainer>
+                            {this.renderAddButton()}
+                        </MiddleContainer>
+                    }
                     {annotations}
-                    {this.renderSnippetAdditionButton()}
                 </>
         )
 
@@ -799,7 +876,8 @@ class CodeView extends React.Component {
             'scaleY': 0,
             'selected': {},
             'newSnippetId': '',
-            'cannotSelect': false
+            'cannotSelect': false,
+            'first': null
         });
     }
 
@@ -819,9 +897,7 @@ class CodeView extends React.Component {
         let {referenceId, workspaceId} = this.props.match.params
         this.props.createSnippet({start, code, annotation, 
             workspaceId, referenceId, status: "VALID", creator: this.props.user._id }).then(() => {
-            this.props.retrieveSnippets({ referenceId, workspaceId }).then(() => {
-                console.log("SNIPPETS", this.props.snippets)
-            })
+            this.props.retrieveSnippets({ referenceId, workspaceId })
             this.setState({
                 'selected': {},
                 'newSnippetId': '',
@@ -854,8 +930,13 @@ class CodeView extends React.Component {
     }
 
     // make changes to selection process, pull annotation pane, set id of new snippet 
-    renderSelectionChanges(elem_key) {
+    renderSelectionChanges(e, elem_key) {
+        console.log("CLICKED HERE")
+        e.preventDefault()
+        e.stopPropagation()
         this.pullAnnotationUp = true;
+        console.log("STATE", this.state)
+        console.log("ELEM KEY", elem_key);
         this.setState({'newSnippetId': elem_key, 'cannotSelect': true});
     }
 
@@ -863,29 +944,36 @@ class CodeView extends React.Component {
     findSmallestLinecode() {
         let smallestLinecode = null
         let smallestIdentifier = null
+        let identifier = null
         for (let linecode in this.state.selected) {
             if (this.state.selected.hasOwnProperty(linecode)) {
-
-                let identifier = parseInt(linecode.split('-').pop())
+                identifier = parseInt(linecode.split('-').pop())
                 if (smallestIdentifier === null || identifier < smallestIdentifier) {
                     smallestIdentifier = identifier
                     smallestLinecode = linecode
                 }
             }
         }
-        return smallestLinecode
+        return [smallestLinecode, identifier]
     }
 
     // to render the add snippet button when needed
     // need to change to deal with scrolling --- BUG
     renderSnippetAdditionButton() {
         if (!_.isEmpty(this.state.selected) && this.state.newSnippetId === ''){
-            let elem_key = this.findSmallestLinecode()
+            let elem_key = this.findSmallestLinecode()[0]
             let elem = this.state.selected[elem_key]
-            //console.log(elem.scrollTop)
+
+            /*let addButton = <AddButton  
+                                onClick = {() =>  {this.renderSelectionChanges(elem_key)}}
+                            >
+                                <ion-icon style={{'margin-top': "0.9rem"}} name="add-outline"></ion-icon>
+                            </AddButton>*/
+           // elem.appendChild(addButton);
             let offset = elem.getBoundingClientRect().top - 25 + window.scrollY
+            
             if (this.state.selectionMode) {
-                return  <AddButton  onClick = {() =>  {this.renderSelectionChanges(elem_key)}}
+                return  <AddButton  onClick = {(e) =>  {this.renderSelectionChanges(e, elem_key)}}
                 factor = {offset}  >
                         <ion-icon style={{'margin-top': "0.9rem"}} name="add-outline"></ion-icon>
                     </AddButton>
@@ -895,6 +983,7 @@ class CodeView extends React.Component {
                         <ion-icon style={{'margin-top': "0.9rem"}} name="checkmark-outline"></ion-icon>
                     </AddButton>
             }
+            
         }
     }
 
@@ -954,6 +1043,31 @@ class CodeView extends React.Component {
     }
 
     
+    renderLabelMenu = () => {
+        
+        return(
+            <LabelMenu 
+                attachTag = {(tagId) => this.props.attachTag(this.props.currentReference._id, tagId)}//this.props.attachTag(requestId, tagId)}
+                removeTag = {(tagId) => this.props.removeTag(this.props.currentReference._id, tagId)}//this.props.removeTag(requestId, tagId)}
+                setTags = {this.props.currentReference.tags}//this.props.request.tags}
+                marginTop = {"1rem"}
+                dirview = {true}
+            />
+        )
+    }
+
+
+    renderDocumentMenu = () => {
+        return(
+            < DocumentMenu
+                setDocuments = {this.props.documents}
+                reference = {this.props.currentReference}
+               
+            />
+        )
+    }
+
+
 
     // render function
     render() {
@@ -964,19 +1078,17 @@ class CodeView extends React.Component {
                             currentRepository = {this.props.currentRepository}
                             currentReference = {this.props.currentReference }
                             documents = {this.props.documents }
+                            renderLabelMenu = {this.renderLabelMenu}
+                            renderDocumentMenu = {this.renderDocumentMenu}
+                            redirectPath = {(path) => this.redirectPath(path)}
+                            toggleSelection = {this.toggleSelection}
+                            codeview = {true}
+                            selectionMode = {this.state.selectionMode}
                         />
                         <EditorContainer>
                             <ListToolbar> 
                                 <ListName><b>8</b>&nbsp; documents</ListName>
                                 <ListName><b>15</b>&nbsp; snippets</ListName>
-                                <HighlightButton
-                                    onClick = {this.toggleSelection}
-                                    opacity = {this.state.selectionMode ? '1' : '0.7'}
-                                    color = {this.state.selectionMode ? '#19E5BE' : '#172A4E'}
-
-                                >
-                                    <BiHighlight/> 
-                                </HighlightButton>
                             </ListToolbar>
                             <CodeContainer >
                                 {this.renderContent()}
@@ -1061,13 +1173,34 @@ export default withRouter(connect(mapStateToProps, {retrieveSnippets, createSnip
 
 
 //Styled Components
+const MiddleContainer = styled.div`
+    position: relative;
+`
+
+const LinenumberColumn = styled.div`
+    display: flex;
+    flex-direction: column;
+`
+
+const Linenumber = styled.div`
+
+    width: 3rem;
+    font-size: 1.2rem;
+    opacity: 0.5;
+    margin-top: 0.2rem;
+`
+
+const WrapContainer = styled.div`
+    display: flex;
+    position: relative;
+`
 
 const Snippet = styled.div` 
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.31) 0px 1px 1px 0px;
+  /*  box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.31) 0px 1px 1px 0px;*/
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.3) 0px 4px 16px -6px;*/
     z-index: 1;
     cursor: pointer;
-   
+
 `
 
 
@@ -1130,11 +1263,7 @@ const Tag = styled.div`
 const Background = styled.div`
     background-color: #f7f9fb;
     min-height: 100%;
-    padding-top: 5rem;
     padding-bottom: 5rem;
-    padding-left: 8rem;
-    padding-right: 8rem;
-    padding-top: 1rem;
 `
 
 const Header = styled.div`
@@ -1238,6 +1367,8 @@ const EditorContainer = styled.div`
     border-radius:0.4rem;
     min-width: 80rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    margin-left: 8rem;
+    margin-right: 8rem;
 `
 
 const CodeContainer = styled.div`
@@ -1253,10 +1384,7 @@ const ListToolbar = styled.div`
     align-items: center;
     background-color: white;
     border-radius: 0.4rem 0.4rem 0rem 0rem !important;
-    position: sticky; 
-    top: 0;
     border-bottom: 1px solid #EDEFF1;
-    z-index: 2;
 `
 
 
@@ -1301,6 +1429,29 @@ const Overflow_Wrapper = styled.div`
     background-color: #F7F9FB;
 `
 
+
+/*
+const CodeTextContainer = styled.div`
+    display: flex;
+    flex: 1 1 77rem;
+    padding: 1.5rem;
+    border-right: 1px solid #EDEFF1;
+    font-family: 'Roboto Mono', monospace !important;
+    overflow-x: scroll;
+    
+`*/
+
+const CodeText = styled.div`
+    display: flex;
+    flex: 1 1 77rem;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-right: 1px solid #EDEFF1;
+    font-family: 'Roboto Mono', monospace !important;
+    overflow-x: scroll;
+`
+
+/*
 const CodeText = styled.div`
     flex: 1 1 77rem;
     padding: 1.5rem;
@@ -1310,7 +1461,7 @@ const CodeText = styled.div`
     font-family: 'Roboto Mono', monospace !important;
     cursor: ${props => props.cursor};
 `
-
+*/
 const AnnotationBar = styled.div`
     padding: 1.5rem;
     display: flex;
@@ -1332,12 +1483,15 @@ const CodeLine = styled.div`
     boxShadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;
     cursor: drag;
     white-space: pre-wrap !important;
+    
 `
 
 const Wrapper = styled.div`
     border-left: ${props => props.border};
     background-color: ${props => props.color};
-    
+    position: relative;
+    z-index: 0;
+    width: 100%;
 `
 
 const AddButton = styled.div`
@@ -1347,30 +1501,20 @@ const AddButton = styled.div`
     height: 4rem;
     width: 4rem;
     position: absolute;
-    z-index: 10;
+    z-index: 1;
     font-size: 2rem;
-    margin-left: 74.95rem;
     text-align: center;
     color: #19E5BE;
     border: 1.5px solid #19E5BE;
-
-    top: ${props => props.factor}px !important;
-    animation-name: moveInBottom;
-    animation-duration: 0.5s;
-    animation-timing-function: ease-out;
-
-    @keyframes moveInBottom {
-        0% {
-          opacity: 0;
-          transform: translateY(-10px); }
-        100% {
-          opacity: 1;
-          transform: translate(0); } }
+    
     cursor: pointer;
 
     &:hover {
         background-color:#F7F9FB;
     }
+    transition: transform 0.4s cubic-bezier(0, 0.475, 0.01, 1.035), background-color 0.1s ease-in-out;
+    transform: translateY(${props => props.top}px);
+    margin-left: -2rem;
 `   
 
 const AnnotationCardInput = styled.div`

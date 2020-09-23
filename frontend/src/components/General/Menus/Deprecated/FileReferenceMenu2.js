@@ -13,6 +13,23 @@ import styled from "styled-components";
 //actions
 import { retrieveTags } from '../../../../actions/Tag_Actions';
 
+/*renderTop = () => {
+        if (this.addButton){
+            let {top, height} = this.addButton.getBoundingClientRect();
+            console.log(top + height - 100);
+            return top + height + 10;
+        }
+        return 0;
+    }
+
+    renderLeft = () => {
+        if (this.addButton){
+            let {left} = this.addButton.getBoundingClientRect();
+            
+            return left;
+        }
+        return 0;
+    }*/
 class FileReferenceMenu extends React.Component {
     
     constructor(props){

@@ -4,24 +4,10 @@ import {
     WORKSPACE_ADD_USER,
     DELETE_WORKSPACE,
     WORKSPACE_REMOVE_USER,
-    RETRIEVE_WORKSPACES,
-    SEARCH_WORKSPACE
+    RETRIEVE_WORKSPACES
 } from './types/Workspace_Types';
 
 import { api } from '../apis/api';
-
-/*
-router.post('/workspaces/create', authorizationMiddleware.workspaceMiddleware, workspace_controller.createWorkspace);
-
-router.post('/workspaces/search/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.searchWorkspace);
-router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.getWorkspace);
-router.delete('/workspaces/delete/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.deleteWorkspace);
-router.put('/workspaces/add_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.addUser);
-router.put('/workspaces/remove_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.removeUser);
-
-router.post('/workspaces/retrieve', authorizationMiddleware.workspaceMiddleware, workspace_controller.retrieveWorkspaces);
-
-*/
 
 export const createWorkspace = (formValues) => async (dispatch) => {
     const response = await api.post('/workspaces/create', formValues);

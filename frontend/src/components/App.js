@@ -12,6 +12,8 @@ import Home from './Home';
 import Landing from './Landing/Landing';
 import Installed from './Installed';
 import CreateWorkspaceView from './Workspace Page/CreateWorkspaceView';
+import Rat from './Rat.js';
+
 
 import TagWrapper from './General/TagWrapper';
 // import ReferenceMenu from './Space Page/Text Editor Page/Menus/ReferenceMenu';
@@ -26,6 +28,7 @@ const App = () => {
                   <Switch>
                     <Route path = "/installed" component = {Installed} />
                     <Route path = "/workspaces/:workspaceId" component = {Home} />
+                    <Route path = "/rat" component = {Rat} />
                   </Switch>
                 </Router>
             </>)

@@ -182,12 +182,15 @@ export const retrieveChildren = (formValues) => async () => {
 export const retrieveDocuments = (formValues) => async dispatch => {
 
     const workspaceId = formValues.workspaceId;
-
+    console.log("WORKSPACE ID", workspaceId);
+    
     if (!workspaceId) {
         throw new Error("retrieveDocuments: workspaceId not provided");
     }
 
     const response = await api.post(`/documents/${workspaceId}/retrieve`, formValues );
+
+    console.log("RESPONSE HERE", response.data);
 
     if (response.data.success == false) {
         throw new Error("retrieveDocuments Error: ", response.data.error.toString());

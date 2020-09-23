@@ -2,12 +2,14 @@ const passport = require("passport");
 const GithubStrategy = require("passport-github2").Strategy;
 const User = require("../models/authentication/User");
 
+/*
 passport.serializeUser((user, done) => {
     done(null, user.id);
   });
   
   // deserialize the cookieUserId to user in the database
 passport.deserializeUser((id, done) => {
+    console.log("USER ID", id)
     User.findById(id)
         .then(user => {
             done(null, user);
@@ -16,6 +18,7 @@ passport.deserializeUser((id, done) => {
             done(new Error("Failed to deserialize an user"));
         });
 });
+*/
 
 passport.use(
     new GithubStrategy(
@@ -25,7 +28,7 @@ passport.use(
             callbackURL: "/api/auth/github/redirect"
         },
         async (accessToken, refreshToken, profile, done) => {
-            console.log(profile);
+            console.log("ENTERED HERE")
             let currentUser = await User.findOne({
                 domain: 'github',
                 profileId: profile.id,
@@ -39,14 +42,16 @@ passport.use(
                     refreshToken: refreshToken
                 }).save();
                 if (user) {
+                    console.log("ENTERED HERE2")
                     done(null, user);
                 }
             }
             else {
                 let updatedUser = await User.findByIdAndUpdate(currentUser._id, { accessToken, refreshToken }, { new: true })
+                console.log("ENTERED HERE3")
+                console.log("Updated User", updatedUser)
                 done(null, updatedUser)
             }
         }
     )
 )
-

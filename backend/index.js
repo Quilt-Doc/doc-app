@@ -2,23 +2,32 @@ const mongoose = require('mongoose');
 const express = require('express');
 var cors = require('cors');
 const bodyParser = require('body-parser');
-const logger = require('morgan');
+// const logger = require('morgan');
 const session = require('express-session');
 
 const fs = require('fs');
 
 require('dotenv').config();
 
-// PASSPORT 
+// PASSPORT
 const passport = require("passport");
 const passportSetup = require("./passport_config/passport-setup");
-const cookieSession = require("cookie-session");
+// const cookieSession = require("cookie-session");
 const cookieParser = require("cookie-parser");
 
 var jwt = require('jsonwebtoken');
 
 const API_PORT = 3001;
 const app = express();
+
+const logger = require('./logging/index').logger;
+const setupESConnection = require('./logging/index').setupESConnection;
+
+const { format } = require('logform');
+
+const jsonFormat = format.json();
+
+
 
 
 
@@ -36,6 +45,7 @@ if (process.env.USE_EXTERNAL_DB == 0) {
 console.log(dbRoute);
 
 
+
 //mongoose.connect('mongodb://localhost:27017/myDatabase');
 
 
@@ -47,13 +57,13 @@ let db = mongoose.connection;
 db.once('open', () => console.log('connected to the database'));
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(logger('dev'));
+app.use(bodyParser.urlencoded({ limit: '20mb', extended: false }));
+app.use(bodyParser.json({ limit: '20mb'}));
+// app.use(logger('dev'));
 
 // handle cookies 
 
-
+/*
 app.use(
     cookieSession({
       name: "session",
@@ -61,12 +71,13 @@ app.use(
       maxAge: 24 * 60 * 60 * 100
     })
 );
+*/
 app.use(cookieParser());
 
 // initalize passport
 app.use(passport.initialize());
 // deserialize cookie from the browser
-app.use(passport.session());
+// app.use(passport.session());
 
 /*
 app.use(cors());
@@ -78,6 +89,7 @@ app.use(
             methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
             credentials: true // allow session cookie from browser to pass through
         })
+        
 );
 
 const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect'];
@@ -100,6 +112,7 @@ app.use(function (req, res, next) {
 
   if (isNonAuthPath) {
       console.log('nonAuth path detected');
+      console.log('JWT req.path: ', req.path);
       next();
       return;
   }
@@ -181,7 +194,7 @@ const authCheck = (req, res, next) => {
       next();
     }
 };
-  
+
   // if it's already login, send the profile response,
   // otherwise, send a 401 response that the user is not authenticated
   // authCheck before navigating to home page
@@ -193,5 +206,38 @@ app.get("/", authCheck, (req, res) => {
         cookies: req.cookies
     });
 });
+
+
+if (process.env.IS_PRODUCTION) {
+  setupESConnection().then(() => {
+    /*
+    const info = jsonFormat.transform({
+      level: 'error',
+      message: 'my message',
+      customField: 'testValue'
+    });
+    
+    logger.debug('Test Print');
+    logger.info({ message: 'Testing error value',
+                  customField: 'testValue2'
+    });
+    */
+    app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+  });
+}
+
+else {
+  const info = jsonFormat.transform({
+    level: 'error',
+    message: 'my message',
+    customField: 'testValue'
+  });
   
-app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+  // logger.debug('Test Print');
+  // logger.info({ message: 'Testing error value',
+  //               customField: 'testValue2'
+  // });
+  // logger.error({message: 'Error Message', jaja: "JAJA", stack: new Error()});
+  // logger.verbose('Verbose Message');
+  app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+}

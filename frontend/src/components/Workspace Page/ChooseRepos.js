@@ -18,7 +18,7 @@ class ChooseRepos extends React.Component {
     componentDidMount(){
         let installationId = this.props.installations.filter(inst => inst.account.type === 'User' 
                     && inst.account.id == this.props.user.profileId)[0].id;
-        /*this.props.retrieveInstallationRepositories({installationId})*/
+        // this.props.retrieveInstallationRepositories({installationId})
     }
 
     render(){

@@ -9,6 +9,7 @@ createSnippet = (req, res) => {
     
     const workspaceId = req.workspaceObj._id.toString();
     const referenceId = req.referenceObj._id.toString();
+    const repositoryId = req.referenceObj.repository.toString();
     
     var referenceRepository = req.referenceObj.repository.toString();
     var workspaceRepositories = req.workspaceObj.repositories.map(repositoryObj => {repositoryObj.toString()});
@@ -29,6 +30,7 @@ createSnippet = (req, res) => {
         {       
            workspace: ObjectId(workspaceId),
            reference: ObjectId(referenceId),
+           repository: ObjectId(repositoryId),
            code,
            annotation,
            start,

@@ -4,7 +4,7 @@ var request = require("request");
 
 const apis = require('../apis/api');
 
-const api = apis.requestClient();
+const api = apis.requestGithubClient();
 
 const apiURL = 'https://api.github.com';
 const localURL = 'https://localhost:3001/api'
