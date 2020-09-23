@@ -11,7 +11,7 @@ const crypto = require('crypto')
 exports.handler = async (event) => {
 
 
-    console.log("EVENT: ", event);
+    // console.log("EVENT: ", event);
     const secret = process.env.WEBHOOK_SECRET;
     const sigHeaderName = 'x-hub-signature'
     const sig = event.headers[sigHeaderName] || ''
@@ -69,7 +69,7 @@ exports.handler = async (event) => {
         var installatonId = event.body.installation.id;
         var action = event.body.action;
         var repositories = action.repositories;
-        
+
         var defaultIcon = 1;
         
         
@@ -81,7 +81,6 @@ exports.handler = async (event) => {
                     'installationId': installationId,
                     'icon': defaultIcon})
             }
-        
         }
 
         /*
@@ -136,7 +135,7 @@ exports.handler = async (event) => {
 
     else if (githubAction == 'pull_request') {
       console.log('Pull Request Event: ');
-      console.log(event.body);
+      // console.log(event.body);
     }
 
 

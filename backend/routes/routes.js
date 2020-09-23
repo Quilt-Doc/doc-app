@@ -56,7 +56,6 @@ router.put('/references/:workspaceId/:referenceId/remove_tag/:tagId', authorizat
 router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referenceMiddleware, referenceController.retrieveReferences);
 router.post('/references/:workspaceId/retrieve_code_references', authorizationMiddleware.referenceMiddleware, referenceController.retrieveCodeReferences);
 
-router.post('/references/job_retrieve', authorizationMiddleware.referenceMiddleware, reference_controller.jobRetrieveReferences);
 
 
 // Validate workspace membership for calling user; all methods
@@ -304,6 +303,13 @@ router.post('/reporting/:workspaceId/retrieve_broken_documents', authorizationMi
 router.post('/reporting/:workspaceId/retrieve_activity_feed_items', authorizationMiddleware.reportingMiddleware, reportingController.retrieveActivityFeedItems);
 router.post('/reporting/:workspaceId/retrieve_user_stats', authorizationMiddleware.reportingMiddleware, reportingController.retrieveUserStats);
 
+
+
+const check_controller = require('../controllers/CheckController');
+router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, check_controller.createCheck);
+
+const pull_request_controller = require('../controllers/PullRequestController');
+router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pull_request_controller.createPullRequest);
 
 
 //linkage routes
