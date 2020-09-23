@@ -1,8 +1,5 @@
-var jwtUtils = require('../utils/jwt');
-
 const Token = require('../models/Token');
-
-const fs = require('fs');
+const logger = require('../logging/index').logger;
 
 // Load the AWS SDK for Node.js
 var AWS = require('aws-sdk');
@@ -13,7 +10,7 @@ AWS.config.update({region: 'us-east-1'});
 const requestGithubClient = () => {
     const axios = require('axios');
     return axios.create({
-        baseURL: "https://api.github.com",
+        baseURL: proccess.env.GITHUB_API_URL,
     });
 }
 
@@ -26,24 +23,22 @@ const requestSQSServiceObject = () => {
 
 // Only token Manager will create / update App tokens
 const fetchAppToken = async () => {
-    
-    var currentTime = new Date().getTime();
-    curentTime = Math.round(currentTime  / 1000);
 
-    var token = undefined;
-    
-    return await Token.findOne({'type': 'APP'})
-    .then((foundToken) => {
-        token = foundToken;
-        console.log('Token found is: ');
-        console.log(token);
+    var token;
+    try {
+        token = await Token.findOne({'type': 'APP'});
+        if (!token) {
+            await logger.error({source: 'backend-api', message: Error(`Error finding 'APP' Token`),
+                                errorDescription: "Could not find the App Token", function: "fetchAppToken"});
+            throw new Error(`Error finding 'APP' Token`);
+        }
         return token;
-    })
-    .catch((err) => {
-        console.log("Error finding app access token: ");
-        console.log(err);
-        return undefined;
-    });
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: "Error finding the App Token", function: "fetchAppToken"});
+        throw err;
+    }
 }
 
 const requestNewInstallationToken = async (installationId) => {
@@ -53,28 +48,59 @@ const requestNewInstallationToken = async (installationId) => {
         FunctionName: 'token-manager', /* required */
         Payload: JSON.stringify({ action: 'create', installationId })
     };
-    var lambdaResponse = await lambda.invoke(params).promise();
+    var lambdaResponse;
+
+
+    try {
+        lambdaResponse = await lambda.invoke(params).promise();
+    }
+    catch(err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: "Error Calling token-manager lambda", function: "requestNewInstallationToken"});
+        throw err;
+    }
+
     if (lambdaResponse.body.success == 'true') {
         return lambdaResponse.body.result;
     }
-    return undefined;
+
+    else {
+        await logger.error({source: 'backend-api', message: Error(lambdaResponse.body.error),
+                            errorDescription: "Error token-manager lambda success != true", function: "requestNewInstallationToken"});
+        throw Error(lambdaResponse.body.error);
+    }
 }
 
 
 
 const requestInstallationToken = async (appToken, installationId) => {
 
-    var tokenFetch = await Token.findOne({ installationId });
-    console.log('requestInstallationToken tokenFetch: ');
-    console.log(tokenFetch);
+    var tokenFetch;
+    try {
+        // console.log('requestInstallationToken tokenFetch: ');
+        // console.log(tokenFetch);
+        tokenFetch = await Token.findOne({ installationId });
+    }
+    catch(err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error finding installationToken with installationId: ${installationId}`, function: "requestInstallationToken"});
+        throw err;
+    }
 
     if (tokenFetch) {
         return tokenFetch
     }
 
     else {
-        console.log('Requesting new installation token');
-        return await requestNewInstallationToken(installationId);
+        try {
+            var newToken = await requestNewInstallationToken(installationId);
+            return newToken;
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                errorDescription: "Error: requestNewInstallationToken", function: "requestInstallationToken"});
+            throw err;
+        }
     }
 }
 
@@ -82,14 +108,19 @@ const requestInstallationClient = async (installationId) => {
     const axios = require('axios');
 
     var appToken = await fetchAppToken();
-    console.log('Received App Token');
-    console.log(appToken);
-    var installationToken = await requestInstallationToken(appToken, installationId);
-    console.log('Received Installation Token');
-    console.log(installationToken);
+    var installationToken;
+    try {
+       installationToken = await requestInstallationToken(appToken, installationId);
+    }
+    catch(err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: "Error: requestInstallationToken", function: "requestInstallationClient"});
+        throw err;
+    }
+
 
     var installationApi = axios.create({
-        baseURL: "https://api.github.com/",
+        baseURL: process.env.GITHUB_API_URL + "/",
         headers: {
             post: {        // can be common or any other method
                 Authorization: 'token ' + installationToken.value

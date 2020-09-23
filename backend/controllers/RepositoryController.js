@@ -7,11 +7,6 @@ const apis = require('../apis/api');
 const jobs = require('../apis/jobs');
 const jobConstants = require('../constants/index').jobs;
 
-const api = apis.requestGithubClient();
-
-const apiURL = 'https://api.github.com';
-const localURL = 'https://localhost:3001/api'
-const repoBaseURL = 'https://github.com/'
 
 const fs = require('fs');
 const fsPath = require('fs-path');
@@ -25,12 +20,6 @@ const Document = require('../models/Document');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
-var EventLogger = undefined;
-var log = undefined;
-if (process.env.RUN_AS_REMOTE_BACKEND === 1) {
-    EventLogger = require('node-windows').EventLogger;
-    log = new EventLogger('DocApp EventLogger Hello!');
-}
 const { v4 } = require('uuid');
 const { json } = require('body-parser');
 
@@ -51,6 +40,7 @@ checkValid = (item) => {
     }
     return false
 }
+
 
 // Needs to use installation token
 createRepository = async (req, res) => {
@@ -134,11 +124,11 @@ createRepository = async (req, res) => {
 
                     // SEMANTIC
                     // defaultBranch, fullName, cloneUrl, installationId, jobType
-
+                    /*
                     repository.semanticJobStatus = jobConstants.JOB_STATUS_RUNNING;
                     repository.save();
                     jobs.dispatchSemanticJob(runSemanticData, log);
-                
+                    */
                 })
             })
         })

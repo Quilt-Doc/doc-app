@@ -346,116 +346,11 @@ removeTag = (req, res) => {
 }
 
 
-jobRetrieveReferences = async (req, res) => {
-
-    let { textQuery, search, paths, name, path, kind, kinds, notKinds, 
-        referenceId, repositoryId, truncated, repositoryIds, include, limit, skip } = req.body;
-    let filter = {}
-
-
-    var singleRepositoryFilter = false;
-    var multipleRepositoryFilter = false;
-    
-    if (checkValid(kind)) filter.kind = kind;
-    if (checkValid(name)) filter.name = name;
-    if (checkValid(path)) filter.path = path;
-    if (checkValid(repositoryId)) {
-        filter.repository = ObjectId(repositoryId);
-    }
-
-    let regexQuery;
-
-    if (checkValid(referenceId)) {
-        let reference;
-        if (referenceId !== ""){
-            reference = await Reference.findOne({_id: referenceId});
-        } else {
-            reference = await Reference.findOne({repository: repositoryId, path: ""})
-        }
-
-        let regex;
-
-        if (reference.path === "") {
-            regex = new RegExp(`^([^\/]+)?$`, 'i');
-        } else {
-            let refPath = reference.path.replace('/', '\/')
-            regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
-        }
-
-        regexQuery = [{ path : { $regex: regex } }]
-    }
-
-    if (checkValid(truncated)) {
-        let regex = new RegExp(`^[^\/]+$`, 'i');
-        regexQuery = [{ path : { $regex: regex } }]
-    }
-
-    if (checkValid(textQuery)) {
-        let regex = new RegExp(textQuery, 'i');
-        regexQuery = [{ name: { $regex: regex } }, { path : { $regex: regex } }]
-    }
-
-
-    let query;
-
-    if (checkValid(regexQuery)) {
-        if (filter.repository) {
-            query =  Reference.find({
-                            $and : [
-                                { $or: regexQuery },
-                                filter
-                            ]
-                        });
-        }
-        // DONE: add an $in operator on searchable repositories here, if filter does not contain repository
-        else {
-            query = Reference.find({
-                            $and : [
-                                { $or: regexQuery},
-                                filter
-                            ]
-            })
-        }
-    } else {
-        if (filter.repository) {
-            query = Reference.find(filter);
-        }
-        // DONE: if repository field not set in filter add an $in operator from workspace repositories
-        else {
-            query = Reference.find({
-                    filter
-            });
-        }
-    }
-
-    if (checkValid(kinds)) query.where('kind').in(kinds);
-    if (checkValid(notKinds)) query.where('kind').nin(notKinds);
-    if (checkValid(paths)) query.where('path').in(paths);
-    // DONE: check that these repositoryIds are all in workspace repositories
-    if (checkValid(repositoryIds)) {
-        var i;
-        multipleRepositoryFilter = true;
-        query.where('repository').in(repositoryIds);
-    }
-    if (checkValid(limit)) query.limit(Number(limit));
-    if (checkValid(skip)) query.skip(Number(skip));
-
-    // DONE?: If at this point repositoryIds AND repositoryId have not been set, add an query.where('repository').in(repositories in workspace);
-    query.exec((err, references) => {
-        if (err) return res.json({ success: false, error: err });
-        // console.log("REFERENCES", references)
-        return res.json({success: true, result: references});
-
-    });
-}
-
-
 module.exports =
 {
 
     createReferences,
     getReference,
-    jobRetrieveReferences,
     retrieveReferences,
     retrieveCodeReferences,
     editReference,

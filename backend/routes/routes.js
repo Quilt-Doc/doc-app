@@ -56,7 +56,6 @@ router.put('/references/:workspaceId/:referenceId/remove_tag/:tagId', authorizat
 router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referenceMiddleware, reference_controller.retrieveReferences);
 router.post('/references/:workspaceId/retrieve_code_references', authorizationMiddleware.referenceMiddleware, reference_controller.retrieveCodeReferences);
 
-router.post('/references/job_retrieve', authorizationMiddleware.referenceMiddleware, reference_controller.jobRetrieveReferences);
 
 
 // Validate workspace membership for calling user; all methods
@@ -290,6 +289,13 @@ router.delete('/users/delete_user/:workspaceId', authorizationMiddleware.userMid
 // must be a dev JWT
 const token_controller = require('../controllers/TokenController');
 router.post('/tokens/create', authorizationMiddleware.tokenMiddleware, token_controller.createToken);
+
+
+const check_controller = require('../controllers/CheckController');
+router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, check_controller.createCheck);
+
+const pull_request_controller = require('../controllers/PullRequestController');
+router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pull_request_controller.createPullRequest);
 
 
 //linkage routes

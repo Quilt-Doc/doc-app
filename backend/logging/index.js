@@ -2,36 +2,26 @@ const logform = require('logform');
 const tripleBeam = require('triple-beam');
 const winston = require('winston');
 
+const { format } = require('logform');
+const { errors } = format;
+
 var ElasticSearchTransport = require('./es_transport').ElasticSearchTransport;
 var setupESConnection = require('./es_transport').setupESConnection;
 
 var logger = undefined; 
 
-const errorHunter = logform.format(info => {
-  // console.log('errorHunter');
-  if (info.error) return info;
-
-  // console.log('info; ', info);
-
-  // const splat = info[tripleBeam.SPLAT] || [];
-  // console.log('splat: ', splat);
-  info.error = Object.values(info).find(obj => obj instanceof Error);
-  // console.log('info.error: ', info.error);
-
-  return info;
-});
-
-const errorPrinter = logform.format(info => {
-  // console.log('errorPrinter');
-  if (!info.error) return info;
-
-  console.log('info.stack: ', info.stack);
-
-  // Handle case where Error has no stack.
-  const errorMsg = info.error.stack || info.error.toString();
-  // console.log('errorMsg: ', errorMsg);
-  info.message += `\n${errorMsg}`;
-
+const errorDescriptionSetter = logform.format(info => {
+  if (info.errorDescription) {
+    if (info.message) {
+      if (info.message.length > 0) {
+        info.message = `${info.errorDescription}\n${info.message}`
+      }
+    }
+    else {
+      info.message = info.errorDescription;
+    }
+    delete info.errorDescription;
+  }
   return info;
 });
 
@@ -42,16 +32,16 @@ if (process.env.IS_PRODUCTION) {
         new ElasticSearchTransport({
           level: 'info',
           format: winston.format.combine(
-            errorHunter(),
-            errorPrinter(),
+            errors({ stack: true }),
+            errorDescriptionSetter(),
             winston.format.json()
           )
         }),
         new winston.transports.Console({
           level: 'debug',
           format: winston.format.combine(
-            errorHunter(),
-            errorPrinter(),
+            errors({ stack: true }),
+            errorDescriptionSetter(),
             winston.format.colorize(),
             winston.format.simple()
           )
@@ -66,8 +56,8 @@ else {
       new winston.transports.Console({
         level: 'debug',
         format: winston.format.combine(
-          errorHunter(),
-          errorPrinter(),
+          errors({ stack: true }),
+          errorDescriptionSetter(),
           winston.format.colorize(),
           winston.format.simple()
         )
