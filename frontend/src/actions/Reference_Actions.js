@@ -6,7 +6,7 @@ import {
 import { api } from '../apis/api';
 
 // DONE
-export const retrieveReferences = (formValues) => async dispatch => {
+export const retrieveReferences = (formValues, passBack) => async dispatch => {
     
     const workspaceId = formValues.workspaceId;
     if (!workspaceId) {
@@ -14,11 +14,12 @@ export const retrieveReferences = (formValues) => async dispatch => {
     }
 
     const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
-
+    console.log("RETRIEVE REFERENCE RESPONSE", response);
     if (response.data.success == false) {
         throw new Error("retrieveReferences Error: ", response.data.error.toString());
     }
     else {
+        if (passBack) return response.data.result;
         dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });
     }
 
@@ -83,7 +84,7 @@ export const editReference = (formValues) => async dispatch => {
 
 }
 
-export const attachTag = (formValues) => async dispatch => {
+export const attachReferenceTag = (formValues) => async dispatch => {
 
     const workspaceId = formValues.workspaceId;
     const referenceId = formValues.referenceId;
@@ -110,7 +111,7 @@ export const attachTag = (formValues) => async dispatch => {
 }
 
 
-export const removeTag = (formValues) => async dispatch => {
+export const removeReferenceTag = (formValues) => async dispatch => {
 
     const workspaceId = formValues.workspaceId;
     const referenceId = formValues.referenceId;

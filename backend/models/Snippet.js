@@ -13,15 +13,6 @@ let snippetSchema = new Schema({
     reference: {type: ObjectId, ref: 'Reference', required: true},
     creator: {type: ObjectId, ref: 'User', required: true},
     repository: {type: ObjectId, ref: 'Repository', required: true},
-
-    // DEPRECATED 
-    startLine: {type: Number},
-    path: {type: String },
-    folders: [{type: ObjectId, index: true, ref: 'Folder'}],
-    documents: [{type: ObjectId, index: true, ref: 'Document'}],
-    type: String,
-    pathInRepository: String,
-    expirationDate: Date
 });
 
 let Snippet = mongoose.model("Snippet", snippetSchema);

@@ -2,9 +2,9 @@ const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
-var request = require("request");
-const { jobRetrieveRepositories } = require('./RepositoryController');
-
+// string to populate the fields needed on Reference
+const populationString = "repository tags"
+const minSelectionString = "name kind path _id created status"
 
 checkValid = (item) => {
     if (item !== null && item !== undefined) {
@@ -13,352 +13,274 @@ checkValid = (item) => {
     return false
 }
 
-// NEW CONTROLLER METHODS
+escapeRegExp = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
 
-createReferences = (req, res) => {
+// Faraz FIXME: will have to see whether insertMany actually populates or returns the refs at all
+// Created References should be mapped _.map in reducer
+createReferences = async (req, res) => {
     const { references } = req.body;
     if (!checkValid(references)) return res.json({success: false, error: 'no references provided'});
 
+    // validate that the references provided have a name and repository
     var i;
-    for (i = 0; i < references.lengt; i++) {
+    for (i = 0; i < references.length; i++) {
         var currentRef = references[i];
-        if (!checkValid(currentRef.name)) return res.json({success: false, error: 'no reference name provided'});
-        if (!checkValid(currentRef.repository)) return res.json({success: false, error: 'no reference repository provided'});
+        if (!checkValid(currentRef.name)) return res.json({success: false, error: 'createReference Error: no reference name provided'});
+        if (!checkValid(currentRef.repository)) return res.json({success: false, error: 'createReference Error: no reference repository provided'});
     }
 
-    Reference.insertMany(references, (error, references) => {
-        if (error) return res.json({ success: false, error });
-        references.populate('repository').populate('tags', (error, references) => {
-            if (error) return res.json({ success: false, error: error });
-            return res.json({success: true, result: references});
-        });
-    })
+    // insert references through insertMany one db call
+    let insertedReferences;
+
+    try {
+        insertedReferences = await Reference.insertMany(references).populate({path: populationString}).exec();
+    } catch (err) {
+        return res.json({success: false, error: 'createReferences Error: insertMany query failed', trace: err});
+    }
+    
+    return res.json({success: true, result: insertedReferences});
 }
 
-getReference = (req, res) => {
-    // const { id } = req.params;
-    // if (!checkValid(id)) return res.json({success: false, error: 'no reference id provided'});
-    
-    // NEW
+/// add reference to state
+getReference = async (req, res) => {
     const referenceId = req.referenceObj._id.toString();
     const repositoryIds = req.workspaceObj.repositories.map(repositoryObj => ObjectId(repositoryObj.toString()));
     
-    Reference.findOne({_id: referenceId, repository: {$in: repositoryIds}}, (err, reference) => {
-		if (err) return res.json({success: false, error: err});
-        reference.populate('repository').populate('tags', (err, reference) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: reference})
-        });
-    });
-}
-
-/*path\/example\/[^\/]+$*/
-
-retrieveCodeReferences = async (req, res) => {
-    // let {referenceId} = req.body
-
-    // let rootReference = await Reference.findOne({_id: referenceId})
-    const rootReference = req.referenceObj;
-    var repositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
-    if (repositoryIds.indexof(rootReference._id.toString()) == -1 ) {
-        return res.json({success: false, error: "retrieveCodeReferences Error: request on repository user does not have access to."});
+    // acquire reference through findOne call and make sure reference's repository is within the repositories
+    //  of accessible workspace
+    let reference;
+    try {
+        reference = await Reference.findOne({_id: referenceId, repository: {$in: repositoryIds}}).lean()
+            .populate({path: populationString}).exec(); 
+    } catch (err) {
+        return res.json({success: false, error: 'getReference Error: getReference query failed', trace: err});
     }
 
-
-    console.log(rootReference)
-    let query = Reference.find({})
-
-
-    query.where('path').equals(rootReference.path)
-    query.where('kind').ne('file')
-    query.where('repository').equals(rootReference.repository)
-
-    query.populate('repository').exec((err, references) => {
-        if (err) return res.json({ success: false, error: err });
-        return res.json({success: true, result: references});
-    });
+    return res.json({success: true, result: reference});
 }
 
+/// new mapping of references in state
 retrieveReferences = async (req, res) => {
 
-    let { textQuery, search, paths, name, path, kind, kinds, notKinds, 
-        referenceId, repositoryId, truncated, repositoryIds, include, limit, skip } = req.body;
-    let filter = {}
+    let { kinds, path, referenceId, repositoryId, minimal, limit, skip } = req.body;
 
-    var validRepositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
-
-    var singleRepositoryFilter = false;
-    var multipleRepositoryFilter = false;
+    var validRepositoryIds = req.workspaceObj.repositories;
     
-    if (checkValid(kind)) filter.kind = kind;
-    if (checkValid(name)) filter.name = name;
-    if (checkValid(path)) filter.path = path;
+    let query = Reference.find();
+
+    if (checkValid(kinds)) query.where('kind').in(kinds);
+    if (checkValid(path)) query.where('path').equals(path);
+    // make sure that repositoryId provided exists and is accessible from workspace
+    
     if (checkValid(repositoryId)) {
-        
-        // DONE: check that this repositoryId is valid
-        if (validRepositoryIds.indexOf(repositoryId.toString()) == -1) {
+        if (!validRepositoryIds.includes(repositoryId)) {
             return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
         }
-        filter.repository = ObjectId(repositoryId);
+        query.where('repository').equals(repositoryId);
+    } else {
+        return res.json({success: false, error: "retrieveReferences Error: repositoryId is not provided."});
     }
 
-    let regexQuery;
-
-
     if (checkValid(referenceId)) {
+
+        // retrieve the reference so we can extract the reference's path
         let reference;
         if (referenceId !== ""){
-            reference = await Reference.findOne({_id: referenceId});
-            // DONE: verify Reference repository field is valid for workspace
-            if (validRepositoryIds.indexOf(reference.repository.toString()) == -1) {
-                return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
+
+            try {
+                reference = await Reference.findOne({_id: referenceId, repository: repositoryId})
+                    .lean().select('path').exec();
+            } catch (err) {
+                return res.json({success: false, error: "retrieveReferences Error: query findOne of referenceId failed", trace: err});
             }
+
         } else {
-            reference = await Reference.findOne({repository: repositoryId, path: ""})
-            // DONE: verify repositoryId is valid for workspace
-            if (validRepositoryIds.indexOf(reference.repository.toString()) == -1) {
-                return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
+
+            try {
+                reference = await Reference.findOne({ repository: repositoryId, path: "" })
+                    .lean().select('path').exec();
+            } catch (err) {
+                return res.json({success: false, error: "retrieveReferences Error: query findOne with empty path of referenceId failed"});
             }
         }
 
+        // build a regex using the reference's path to find all the reference's children and return the reference as well
+        // for convenience
+
+        // two cases for regex -- first is when path is empty and need to match anything that doesn't include a slash
+        // including empty string. second is when path is nonempty and need to match reference path as well as path of 
+        // reference children --- reference path + / + child name
         let regex;
 
         if (reference.path === "") {
-            regex = new RegExp(`^([^\/]+)?$`, 'i');
+            regex = new RegExp(`^([^\/]+)?$`);
         } else {
-            let refPath = reference.path.replace('/', '\/')
-            regex = new RegExp(`^${refPath}(\/[^\/]+)?$`, 'i');
+            let refPath = escapeRegex(reference.path);
+            regex = new RegExp(`^${refPath}(\/[^\/]+)?$`);
         }
 
-        regexQuery = [{ path : { $regex: regex } }]
+        query.where('path').equals(regex);
     }
 
-    if (checkValid(truncated)) {
-        let regex = new RegExp(`^[^\/]+$`, 'i');
-        regexQuery = [{ path : { $regex: regex } }]
-    }
-
-    if (checkValid(textQuery)) {
-        let regex = new RegExp(textQuery, 'i');
-        regexQuery = [{ name: { $regex: regex } }, { path : { $regex: regex } }]
-    }
-
-
-    let query;
-
-    if (checkValid(regexQuery)) {
-        if (filter.repository) {
-            query =  Reference.find({
-                            $and : [
-                                { $or: regexQuery },
-                                filter
-                            ]
-                        });
-        }
-        // DONE: add an $in operator on searchable repositories here, if filter does not contain repository
-        else {
-            query = Reference.find({
-                            $and : [
-                                { $or: regexQuery},
-                                filter,
-                                { repository: {$in: validRepositoryIds} }
-                            ]
-            })
-        }
-    } else {
-        if (filter.repository) {
-            query = Reference.find(filter);
-        }
-        // DONE: if repository field not set in filter add an $in operator from workspace repositories
-        else {
-            query = Reference.find({
-                $and : [
-                    filter,
-                    { repository: {$in: validRepositoryIds} }
-                ]
-            });
-        }
-    }
-
-    if (checkValid(kinds)) query.where('kind').in(kinds);
-    if (checkValid(notKinds)) query.where('kind').nin(notKinds);
-    if (checkValid(paths)) query.where('path').in(paths);
-    // DONE: check that these repositoryIds are all in workspace repositories
-    if (checkValid(repositoryIds)) {
-        var i;
-        for (i = 0; i < repositoryIds.length; i++) {
-            if (validRepositoryIds.indexOf(repositoryIds[i].toString()) == -1) {
-                return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
-            }
-        }
-        multipleRepositoryFilter = true;
-        query.where('repository').in(repositoryIds);
-    }
-    else {
-        query.where('repository').in(validRepositoryIds);
-    }
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
-
-    // DONE?: If at this point repositoryIds AND repositoryId have not been set, add an query.where('repository').in(repositories in workspace);
-    query.populate('tags').exec((err, references) => {
-        if (err) return res.json({ success: false, error: err });
-        // console.log("REFERENCES", references)
-        return res.json({success: true, result: references});
-
-    });
-}
-
-
-retrieveReferencesDropdown = (req, res) => {
-    let {limit, referenceIds, repositoryId,  sort, search} = req.body;
     
-    let query;
-
-    if (checkValid(search)) {
-        query = Reference.find({name: { $regex: new RegExp(search, 'i')} })
+    // minimal retrieve is for cases when you don't need all fields and don't need to populate (dirview)
+    if (minimal === true) { 
+        query.select(minSelectionString);
     } else {
-        query =  Reference.find();
+        query.populate({path: populationString});
     }
 
+    let returnedReferences;
+    try {
+        returnedReferences =  await query.lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "retrieveReferences Error: direct retrieve query execution failed", trace: err});
+    }
+    console.log("RETURNED", returnedReferences);
+    return res.json({success: true, result: returnedReferences});
+}
 
-    if (checkValid(referenceIds)) query.where('_id').in(referenceIds);
-    if (checkValid(repositoryId)) query.where('repository').equals(repositoryId);
+// merge reference with existing reference
+editReference = async (req, res) => {
 
-    if (checkValid(limit)) query.limit(limit);
-    //if (checkValid(sort)) query.sort(sort);
-    
-    query.populate('repository').populate('tags').exec((err, references) => {
-        if (err) return res.json({ success: false, error: err });
-        if ((checkValid(limit)) && checkValid(referenceIds) && referenceIds.length < limit){
-            let query2;
-            if (checkValid(search)) {
-                query2 = Reference.find({name: { $regex: new RegExp(search, 'i')} })
-            } else {
-                query2 =  Reference.find();
-            }
-            if (checkValid(repositoryId)) query2.where('repository').equals(repositoryId);
-            query2.limit(limit - referenceIds.length)
-            query2.where('_id').nin(referenceIds);
-            query2.populate('repository').populate('tags').exec((err, references2) => {
-                references = [...references, ...references2];
-                return res.json(references)
-            })
-        } else {
-            return res.json(references);
+    const {  name, path, kind } = req.body;
+
+    const referenceId = req.referenceObj._id;
+    var repositoryIds = req.workspaceObj.repositories;
+
+    let reference;
+
+    // make sure repository of reference is accessible to the user
+    try {
+        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
+        if (!repositoryValid) {
+            return res.json({success: false, error: "editReference Error: reference with that id and that is in accessible \
+                repositories doesn't exist", trace: err});
         }
-    })
-}
-
-
-editReference = (req, res) => {
-
-    const referenceId = req.referenceObj._id;
-    var repositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
-
-    if (repositoryIds.indexof(referenceId) == -1 ) {
-        return res.json({success: false, error: "editReference Error: request on repository user does not have access to."});
+    } catch (err) {
+        return res.json({success: false, error: "editReference Error: error checking whether reference with that id \
+        is in accessible repositories", trace: err});
     }
 
-
-    const {  name, path, kind, tags } = req.body;
+    // check which body params were asked to update -- add to the update object and selection string
     let update = {};
-    if (name) update.name = name;
-    if (path) update.path = path;
-    if (kind) update.kind = kind;
-    if (tags) update.tags = tags.map(tag => ObjectId(tag));
-    Reference.findByIdAndUpdate(referenceId, { $set: update }, { new: true }, (err, reference) => {
-        if (err) return res.json({ success: false, error: err });
-        reference.populate('repository').populate( 'tags', (err, reference) => {
-            if (err) return res.json(err);
-            console.log(reference)
-            return res.json({success: true, result: reference});
+    let selectionString = "_id"
 
-        });
-    });
-}
-
-
-deleteReference = (req, res) => {
-    // const { id } = req.params;
-
-    const referenceId = req.referenceObj._id;
-    var repositoryIds = req.workspaceObj.repositories.map(repositoryObj => repositoryObj.toString());
-
-    if (repositoryIds.indexof(referenceId) == -1 ) {
-        return res.json({success: false, error: "deleteReference Error: request on repository user does not have access to."});
+    if (checkValid(name)) {
+        update.name = name;
+        selectionString += " name";
+    }
+    if (checkValid(path)) {
+        update.path = path;
+        selectionString += " path";
+    }
+    if (checkValid(kind)) {
+        update.kind = kind;
+        selectionString += " kind";
     }
 
-    Reference.findByIdAndRemove(referenceId, (err, reference) => {
-		if (err) return res.json({success: false, error: err});
-        reference.populate('repository').populate('tags', (err, reference) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: reference});
-        });
-    });
+    let query =  Reference.findByIdAndUpdate(referenceId, { $set: update }, { new: true }, (err, reference));
+
+    query.select(selectionString);
+
+    let returnedReference;
+    try {
+        returnedReference = await query.lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "editReference Error:  execution of query to update reference failed", 
+            trace: err});
+    }
+   
+    return res.json({success: true, result: returnedReference})
+}
+
+// omit reference in state
+deleteReference = async (req, res) => {
+
+    const referenceId = req.referenceObj._id;
+    var repositoryIds = req.workspaceObj.repositories;
+
+    // make sure repository of reference is accessible to the user
+    try {
+        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
+        if (!repositoryValid) {
+            return res.json({success: false, error: "deleteReference Error: reference with that id and that is in accessible \
+                repositories doesn't exist", trace: err});
+        }
+    } catch (err) {
+        return res.json({success: false, error: "deleteReference Error: error checking whether reference with that id \
+        is in accessible repositories", trace: err});
+    }
+
+    let deletedReference = await Reference.findByIdAndRemove(referenceId).select("_id").lean().exec();
+    return res.json({success: true, result: deletedReference});
 }
 
 
-attachTag = (req, res) => {
-	// const { id } = req.params
-	// const { tagId } = req.body;
-	// if (!checkValid(id)) return res.json({success: false, error: "attachTag error: no id provided.", result: null});
-    // if (!checkValid(tagId)) return res.json({success: false, error: "attachTag error: no tagIds provided.", result: null});
-    
+// merge reference with existing reference
+attachReferenceTag = async (req, res) => {
+
     const referenceId = req.referenceObj._id.toString();
     const tagId = req.tagObj._id.toString();
 
 	let update = {}
 	update.tags = ObjectId(tagId);
-	
-	Reference.findOneAndUpdate({_id: referenceId}, { $push: update}, { new: true }, (err, reference) => {
-		if (err) return res.json({ success: false, error: err });
-		reference.populate('repository').populate('tags', (err, reference) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: reference});
-        });
-	})
+    
+    let query = Reference.findOneAndUpdate({_id: referenceId}, { $push: update}, { new: true }).lean();
+
+    // populate and select only the values we want to update in the reducer
+    query.populate('tags');
+    query.select('_id tags');
+
+    let returnedReference;
+    try {
+        returnedReference = query.exec();
+    } catch (err) {
+        return res.json({success: false, error: "attachReferenceTag Error: error executing tag update query", trace: err});
+    }
+    
+    return res.json({success: true, result: returnedReference});
+
 }
 
 
-removeTag = (req, res) => {
-    /*
-    const { id } = req.params
-	const { tagId } = req.body;
-	if (!checkValid(id)) return res.json({success: false, error: "removeTag error: no id provided.", result: null});
-	if (!checkValid(tagId)) return res.json({success: false, error: "removeTag error: no tagIds provided.", result: null});
-    */
+// merge reference with existing reference
+removeReferenceTag = async (req, res) => {
 
     const referenceId = req.referenceObj._id.toString();
     const tagId = req.tagObj._id.toString();
 
-
-    let update = {}
+	let update = {}
 	update.tags = ObjectId(tagId);
-	
-	Reference.findOneAndUpdate({_id: referenceId}, { $pull: update}, { new: true }, (err, reference) => {
-		if (err) return res.json({ success: false, error: err });
-		reference.populate('repository').populate('tags', (err, reference) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: reference});
-        });
-	})
+    
+    let query = Reference.findOneAndUpdate({_id: referenceId}, { $pull: update}, { new: true }).lean();
+
+    // populate and select only the values we want to update in the reducer
+    query.populate('tags');
+    query.select('_id tags');
+
+    let returnedReference;
+    try {
+        returnedReference = query.exec();
+    } catch (err) {
+        return res.json({success: false, error: "removeReferenceTag Error: error executing tag update query", trace: err});
+    }
+    
+    return res.json({success: true, result: returnedReference});
 }
 
 
 module.exports =
 {
-
     createReferences,
     getReference,
     retrieveReferences,
-    retrieveCodeReferences,
     editReference,
     deleteReference,
-    attachTag, 
-    removeTag,
-    retrieveReferencesDropdown
-    /*
-    attachDocument,
-    removeDocument*/
+    attachReferenceTag, 
+    removeReferenceTag,
 }
