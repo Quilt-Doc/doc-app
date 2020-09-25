@@ -31,10 +31,11 @@ escapeRegExp = (string) => {
 
 
 createWorkspace = async (req, res) => {
-    const {name, creatorId, repositoryIds } = req.body;
+    const {name, creatorId, installationId, repositoryIds } = req.body;
 
-    if (checkValid(name)) return res.json({success: false, error: 'no workspace name provided'});
-    if (checkValid(creatorId)) return res.json({success: false, error: 'no workspace creator Id provided'});
+    if (!checkValid(name)) return res.json({success: false, error: 'no workspace name provided'});
+    if (!checkValid(installationId)) return res.json({success: false, error: 'no workspace installationId provided'});
+    if (!checkValid(creatorId)) return res.json({success: false, error: 'no workspace creatorId provided'});
 
     let workspace = new Workspace({
         name: name,
@@ -54,7 +55,7 @@ createWorkspace = async (req, res) => {
     // Set all workspace Repositories 'currentlyScanning' to true
     var workspaceRepositories;
     try {
-        workspaceRepositories = await Repository.update({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }});
+        workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }});
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -66,7 +67,8 @@ createWorkspace = async (req, res) => {
     // Kick off Scan Repositories Job
     var scanRepositoriesData = {};
     scanRepositoriesData['installationId'] = installationId;
-    scanRepositoriesData['repositoryIdList'] = JSON.stringify(repositoryIds);
+    scanRepositoriesData['repositoryIdList'] = repositoryIds;
+    scanRepositoriesData['workspaceId'] = workspace._id.toString();
     scanRepositoriesData['jobType'] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
 
     try {
