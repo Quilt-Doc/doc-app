@@ -29,7 +29,9 @@ setupESConnection = async () => {
                     date: { type: 'date'},
                     level: { type: 'text' },
                     message: { type: 'text' },
-                    customField: { type: 'text' },
+                    errorDescription: { type: 'text' },
+                    source: { type: 'text' },
+                    function: { type: 'text' }
                 }
             }
         }

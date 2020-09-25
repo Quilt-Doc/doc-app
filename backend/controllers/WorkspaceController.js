@@ -7,7 +7,6 @@ const Tag = require('../models/Tag');
 const Linkage = require('../models/Linkage');
 
 var mongoose = require('mongoose');
-const { rest } = require('lodash');
 const { ObjectId } = mongoose.Types;
 
 const quickScore = require("quick-score").quickScore;
@@ -32,10 +31,15 @@ escapeRegExp = (string) => {
 
 
 createWorkspace = async (req, res) => {
-    const {name, creatorId, repositoryIds } = req.body;
+    const {name, creatorId, installationId, repositoryIds } = req.body;
 
     if (!checkValid(name)) return res.json({success: false, error: 'no workspace name provided'});
+<<<<<<< HEAD
     if (!checkValid(creatorId)) return res.json({success: false, error: 'no workspace creator Id provided'});
+=======
+    if (!checkValid(installationId)) return res.json({success: false, error: 'no workspace installationId provided'});
+    if (!checkValid(creatorId)) return res.json({success: false, error: 'no workspace creatorId provided'});
+>>>>>>> a22229df6f57f2ca4b54983fef03b264486180df
 
     let workspace = new Workspace({
         name: name,
@@ -55,7 +59,7 @@ createWorkspace = async (req, res) => {
     // Set all workspace Repositories 'currentlyScanning' to true
     var workspaceRepositories;
     try {
-        workspaceRepositories = await Repository.update({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }});
+        workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }});
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -68,6 +72,7 @@ createWorkspace = async (req, res) => {
     var scanRepositoriesData = {};
     scanRepositoriesData['installationId'] = installationId;
     scanRepositoriesData['repositoryIdList'] = repositoryIds;
+    scanRepositoriesData['workspaceId'] = workspace._id.toString();
     scanRepositoriesData['jobType'] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
 
     try {

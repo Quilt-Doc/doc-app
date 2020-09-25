@@ -13,7 +13,6 @@ const crypto = require('crypto')
 
 exports.handler = async (event) => {
 
-
     const secret = process.env.WEBHOOK_SECRET;
     const sigHeaderName = 'x-hub-signature'
     const sig = event.headers[sigHeaderName] || ''
@@ -34,8 +33,19 @@ exports.handler = async (event) => {
         return response;
     }
 
+    if (process.env.IS_PRODUCTION) {
+        try {
+            await require('./logging/index').setupESConnection();
+        }
+        catch (err) {
+            console.error("Couldn't setup ES connection");
+            console.error(err);
+        }
+    }
+
+
     event.body = JSON.parse(event.body);
-    
+
     var githubAction = event.headers['x-github-event'];
     
     if (githubAction == 'error') {
@@ -43,16 +53,13 @@ exports.handler = async (event) => {
     }
 
     else if (githubAction == 'push') {
+        await logger.info({source: 'github-lambda', message: 'Push Event Received', function: 'handler'});
         /*
         console.log('Received a push event for %s to %s',
         event.payload.repository.name,
         event.payload.ref)
         */
-        console.log('Push event.body: ');
-        console.log(event.body);
-        // console.log('payload: ');
-        // console.log(event.payload);
-      
+
         // var branch = event.payload.ref.split('/').pop();
         var ref = event.body.ref;
         var baseCommit = event.body.before;
@@ -65,26 +72,45 @@ exports.handler = async (event) => {
     }
 
     else if (githubAction == 'installation') {
-        console.log('Installation Event: ');
-        console.log(event.body);
+        await logger.info({source: 'github-lambda', message: 'Installation Event Received', function: 'handler'});
 
-        var installatonId = event.body.installation.id;
+        var installationId = event.body.installation.id;
         var action = event.body.action;
         var repositories = action.repositories;
         
         var defaultIcon = 1;
-        
-        
+
+
         if (action == 'created') {
+            await logger.info({source: 'github-lambda', message: 'Created Event Received', function: 'handler'});
 
-            var postDataList = repositories.map(repositoryObj => { fullName, repositoryObj.full_name, installationId, 'icon': defaultIcon});
+            var postDataList = repositories.map(repositoryObj => ({ fullName: repositoryObj.full_name, installationId, 'icon': defaultIcon}));
 
-            var requestPromiseList = postDataList.map(postDataObj => axios.post("/repositories/create", postDataObj));
+            var requestPromiseList = postDataList.map(postDataObj => backendClient.post("/repositories/init", postDataObj));
 
             try {
                 await Promise.all(requestPromiseList);
             }
             catch (err) {
+                await logger.error({source: 'github-lambda', message: err,
+                                    errorDescription: `error initializing repositories: ${postDataList}`,
+                                    function: 'handler'});
+
+                let responseBody = {
+                    message: "200 OK",
+                };
+            
+                let responseCode = 200;
+            
+            
+                let response = {
+                    statusCode: responseCode,
+                    headers: {
+                        "x-custom-header" : "my custom header value"
+                    },
+                    body: JSON.stringify(responseBody)
+                };
+                return response;
 
             }
 
@@ -103,20 +129,42 @@ exports.handler = async (event) => {
     }
 
     else if (githubAction == 'installation_repositories') {
-        console.log('Installation repositories event');
-        console.log(event.body);
+        await logger.info({source: 'github-lambda', message: 'Installation Repositories Event Received', function: 'handler'});
         var action = event.body.action;
         var installationId = event.body.installation.id;
-        console.log('Installation Id: ', installationId);
+
 
         if (action == 'added') {
             var added = event.body.repositories_added;
 
-            for(i = 0; i < added.length; i++) {
-              await backendClient.post("/repositories/create", 
-                    {'fullName': added[i].full_name,
-                     'installationId': installationId,
-                      'icon': 1});
+            var postDataList = added.map(repositoryObj => ({ fullName: repositoryObj.full_name, installationId, 'icon': defaultIcon}));
+
+            var requestPromiseList = postDataList.map(postDataObj => backendClient.post("/repositories/init", postDataObj));
+
+            try {
+                await Promise.all(requestPromiseList);
+            }
+            catch (err) {
+                await logger.error({source: 'github-lambda', message: err,
+                                    errorDescription: `error initializing repositories: ${postDataList}`,
+                                    function: 'handler'});
+
+                let responseBody = {
+                    message: "200 OK",
+                };
+            
+                let responseCode = 200;
+            
+            
+                let response = {
+                    statusCode: responseCode,
+                    headers: {
+                        "x-custom-header" : "my custom header value"
+                    },
+                    body: JSON.stringify(responseBody)
+                };
+                return response;
+
             }
         }
 
@@ -155,15 +203,9 @@ exports.handler = async (event) => {
       
 
 
-      console.log(event.body);
     }
 
 
-    let responseBody = {
-        message: "200 OK",
-    };
-
-    let responseCode = 200;
 
     // The output from a Lambda proxy integration must be 
     // in the following JSON object. The 'headers' property 
@@ -171,6 +213,14 @@ exports.handler = async (event) => {
     // ones. The 'body' property  must be a JSON string. For 
     // base64-encoded payload, you must also set the 'isBase64Encoded'
     // property to 'true'.
+
+    let responseBody = {
+        message: "200 OK",
+    };
+
+    let responseCode = 200;
+
+
     let response = {
         statusCode: responseCode,
         headers: {
@@ -178,6 +228,5 @@ exports.handler = async (event) => {
         },
         body: JSON.stringify(responseBody)
     };
-    console.log("response: " + JSON.stringify(response))
     return response;
 };

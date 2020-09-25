@@ -1,118 +1,60 @@
-
 const apis = require('./api');
 const sqs = apis.requestSQSServiceObject();
 
-const JOB_GET_REFS = 1;
-const JOB_UPDATE_SNIPPETS = 2;
-const JOB_SEMANTIC = 3;
+const logger = require('../logging/index').logger;
 
-const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
+const queueUrl = process.env.JOB_QUEUE_URL;
 
-// {installationId: , cloneUrl, jobType}
-const dispatchDoxygenJob = async (runDoxygenData) => {
+const dispatchScanRepositoriesJob = async (jobData) => {
 
     var timestamp = Date.now().toString();
-    // default_branch, fullName, cloneUrl, args_2, installationId 
 
-
-    console.log('RUN DOXYGEN DATA: ');
-    console.log(runDoxygenData);
-
-    var sqsDoxygenData = {
-        MessageAttributes: {
-            "installationId": {
-                DataType: "String",
-                StringValue: runDoxygenData.installationId
-            },
-            "cloneUrl": {
-                DataType: "String",
-                StringValue: runDoxygenData.cloneUrl
-            },
-	    "repositoryId": {
-		DataType: "String",
-		StringValue: runDoxygenData.repositoryId
-	    },
-            "jobType": {
-                DataType: "String",
-                StringValue: JOB_GET_REFS.toString()
-            }
-        },
-        MessageBody: JSON.stringify(runDoxygenData),
+    var sqsScanData = {
+        MessageAttributes: {},
+        MessageBody: JSON.stringify(jobData),
         MessageDeduplicationId: timestamp,
-        MessageGroupId: "runDoxygen_" + timestamp,
+        MessageGroupId: jobData.workspaceId,
         QueueUrl: queueUrl
     };
-    // if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Doxygen | MessageDeduplicationId: ${timestamp}`);
-    // if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Doxygen | MessageGroupId: getRefRequest_${timestamp}`);
-    // Send the doxygen data to the SQS queue
-    let sendSqsMessage = sqs.sendMessage(sqsDoxygenData).promise();
 
-    sendSqsMessage.then((data) => {
-
-        // if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Doxygen | SUCCESS: ${data.MessageId}`);
-        console.log(`Doxygen | SUCCESS: ${data.MessageId}`);
-    }).catch((err) => {
-        // if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Doxygen | ERROR: ${err}`);
-        console.log(`Doxygen | ERROR: ${err}`);
-
-    });
+    // Send the scan data to the SQS queue
+    try {
+        await sqs.sendMessage(sqsScanData).promise();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error sending SQS message to scan repositories jobData: ${JSON.stringify(jobData)}`,
+                                function: 'dispatchScanRepositoriesJob'});
+        throw err;
+    }
 }
 
+  
+const dispatchUpdateReferencesJob = async (jobData) => {
 
-
-
-const dispatchSemanticJob = async (runSemanticData, log) => {
     var timestamp = Date.now().toString();
-    // default_branch, fullName, cloneUrl, args_2, installationId 
 
-    var sqsSemanticData = {
-        MessageAttributes: {
-            "fullName": {
-                DataType: "String",
-                StringValue: runSemanticData.fullName
-            },
-            "defaultBranch": {
-                DataType: "String",
-                StringValue: runSemanticData.defaultBranch
-            },
-            "cloneUrl": {
-                DataType: "String",
-                StringValue: runSemanticData.cloneUrl
-            },
-            "semanticTargets": {
-                DataType: "String",
-                StringValue: runSemanticData.semanticTargets
-            },
-            "installationId": {
-                DataType: "String",
-                StringValue: runSemanticData.installationId
-            },
-            "jobType": {
-                DataType: "Number",
-                StringValue: JOB_SEMANTIC.toString()
-                }
-        },
-        MessageBody: JSON.stringify(runSemanticData),
+    var sqsReferenceData = {
+        MessageAttributes: {},
+        MessageBody: JSON.stringify(jobData),
         MessageDeduplicationId: timestamp,
-        MessageGroupId: "runSemantic_" + timestamp,
+        MessageGroupId: jobData.installationId,
         QueueUrl: queueUrl
     };
-    if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Semantic | MessageDeduplicationId: ${timestamp}`);
-    if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Semantic | MessageGroupId: getRefRequest_${timestamp}`);
-    // Send the semantic data to the SQS queue
-    let sendSqsMessage = sqs.sendMessage(sqsSemanticData).promise();
 
-    sendSqsMessage.then((data) => {
-
-        if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Semantic | SUCCESS: ${data.MessageId}`);
-        console.log(`Semantic | SUCCESS: ${data.MessageId}`);
-    }).catch((err) => {
-        if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Semantic | ERROR: ${err}`);
-        console.log(`Semantic | ERROR: ${err}`);
-    });
+    // Send the update data to the SQS queue
+    try {
+        await sqs.sendMessage(sqsReferenceData).promise();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error sending SQS message to update references jobData: ${JSON.stringify(jobData)}`,
+                                function: 'dispatchUpdateReferencesJob'});
+        throw err;
+    }
 }
 
 module.exports = {
-    dispatchDoxygenJob,
-    dispatchSemanticJob,
+    dispatchScanRepositoriesJob,
+    dispatchUpdateReferencesJob
 }

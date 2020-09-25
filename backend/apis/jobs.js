@@ -7,6 +7,8 @@ const queueUrl = process.env.JOB_QUEUE_URL;
 
 const dispatchScanRepositoriesJob = async (jobData) => {
 
+    var timestamp = Date.now().toString();
+
     var sqsScanData = {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
@@ -29,6 +31,8 @@ const dispatchScanRepositoriesJob = async (jobData) => {
 
   
 const dispatchUpdateReferencesJob = async (jobData) => {
+
+    var timestamp = Date.now().toString();
 
     var sqsReferenceData = {
         MessageAttributes: {},
