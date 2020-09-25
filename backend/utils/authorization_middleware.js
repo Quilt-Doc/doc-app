@@ -8,7 +8,6 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
 const referenceMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     var requestedPath = req.path.trim();
 
     var requesterId = req.tokenPayload.userId.toString();
@@ -115,7 +114,6 @@ const referenceMiddleware = async (req, res, next) => {
 
 // TODO: Fix this
 const documentMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     const { workspaceId } = req.params;
     var searchWorkspaceId;
     try {
@@ -147,7 +145,6 @@ const documentMiddleware = async (req, res, next) => {
 }
 
 const snippetMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     const { workspaceId } = req.params;
     var searchWorkspaceId;
     try {
@@ -179,7 +176,6 @@ const snippetMiddleware = async (req, res, next) => {
 }
 
 const repositoryMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     var requestedPath = req.path.trim();
 
     var requesterId = req.tokenPayload.userId.toString();
@@ -192,7 +188,7 @@ const repositoryMiddleware = async (req, res, next) => {
 
     // Dev routes
     if (
-        requestedPath.includes('/repositories/create') ||
+        requestedPath.includes('/repositories/init') ||
         requestedPath.includes('/repositories/update') ||
         requestedPath.includes('/repositories/job_retrieve' ||
         requestedPath.includes('/repositories/break_references')
@@ -277,18 +273,14 @@ const repositoryMiddleware = async (req, res, next) => {
 }
 
 const workspaceMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     var requestedPath = req.path.trim();
 
     var requesterId = req.tokenPayload.userId.toString();
     var requesterRole = req.tokenPayload.role;
 
     const { workspaceId } = req.params;
-    console.log('params workspaceId: ', workspaceId);
 
     var searchWorkspaceId;
-    // Retrieve doesn't need middleware auth here
-    console.log('TEST: ', requestedPath.includes('/workspaces/retrieve'));
 
 
     // Temporarily allow any user to access the create method
@@ -333,7 +325,6 @@ const workspaceMiddleware = async (req, res, next) => {
 }
 
 const tagMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     var requestedPath = req.path.trim();
 
     var requesterId = req.tokenPayload.userId.toString();
@@ -404,7 +395,6 @@ const authMiddleware = async (req, res, next) => {
 }
 
 const userMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     var requestedPath = req.path.trim();
 
     var requesterId = req.tokenPayload.userId.toString();
@@ -496,6 +486,32 @@ const tokenMiddleware = (req, res, next) => {
         return next(new Error("Error: only dev tokens can access the token API"));
     }
 }
+
+
+const checkMiddleware = (req, res, next) => {
+    var requesterId = req.tokenPayload.userId.toString();
+    var requesterRole = req.tokenPayload.role;
+
+    if (requesterRole == 'dev') {
+        return next();
+    }
+    else {
+        return next(new Error("Error: only dev tokens can access the check API"));
+    }
+}
+
+const pullRequestMiddleware = (req, res, next) => {
+    var requesterId = req.tokenPayload.userId.toString();
+    var requesterRole = req.tokenPayload.role;
+
+    if (requesterRole == 'dev') {
+        return next();
+    }
+    else {
+        return next(new Error("Error: only dev tokens can access the pull request API"));
+    }
+}
+
 
 /*
 const linkage_controller = require('../controllers/LinkageController');
@@ -602,5 +618,7 @@ module.exports = {
     authMiddleware,
     userMiddleware,
     tokenMiddleware,
+    checkMiddleware,
+    pullRequestMiddleware,
     linkageMiddleware
 }

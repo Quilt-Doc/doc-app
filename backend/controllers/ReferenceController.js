@@ -274,92 +274,6 @@ removeReferenceTag = async (req, res) => {
 }
 
 
-jobRetrieveReferences = async (req, res) => {
-
-    let {  paths, path, kind, kinds, repositoryId, referenceId, minimal, limit, skip } = req.body;
-
-    var validRepositoryIds = req.workspaceObj.repositories;
-    
-    let query = Reference.find();
-
-    if (checkValid(kinds)) query.where('kind').in(kinds);
-
-    // make sure that repositoryId provided exists and is accessible from workspace
-    if (checkValid(repositoryId)) {
-        if (!validRepositoryIds.includes(repositoryId)) {
-            return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
-        }
-        query.where('repository').equals(repositoryId);
-    } else {
-        return res.json({success: false, error: "retrieveReferences Error: repositoryId is not provided."});
-    }
-
-    if (checkValid(referenceId)) {
-
-        // retrieve the reference so we can extract the reference's path
-        let reference;
-        if (referenceId !== ""){
-
-            try {
-                reference = await Reference.findOne({_id: referenceId, repository: repositoryId})
-                    .lean().select('path').exec();
-            } catch (err) {
-                return res.json({success: false, error: "retrieveReferences Error: query findOne of referenceId failed", trace: err});
-            }
-
-        } else {
-
-            try {
-                reference = await Reference.findOne({ repository: repositoryId, path: "" })
-                    .lean().select('path').exec();
-            } catch (err) {
-                return res.json({success: false, error: "retrieveReferences Error: query findOne with empty path of referenceId failed"});
-            }
-        }
-
-        // build a regex using the reference's path to find all the reference's children and return the reference as well
-        // for convenience
-
-        // two cases for regex -- first is when path is empty and need to match anything that doesn't include a slash
-        // including empty string. second is when path is nonempty and need to match reference path as well as path of 
-        // reference children --- reference path + / + child name
-        let regex;
-
-        if (reference.path === "") {
-            regex = new RegExp(`^([^\/]+)?$`);
-        } else {
-            let refPath = escapeRegex(reference.path);
-            regex = new RegExp(`^${refPath}(\/[^\/]+)?$`);
-        }
-
-        query.where('path').equals(regex);
-    }
-
-    if (checkValid(paths)) query.where('path').in(paths);
-    if (checkValid(path)) query.where('path').equals(path);
-    if (checkValid(kind)) query.where('kind').equals(kind);
-    if (checkValid(limit)) query.limit(Number(limit));
-    if (checkValid(skip)) query.skip(Number(skip));
-
-    // minimal retrieve is for cases when you don't need all fields and don't need to populate (dirview)
-    if (minimal === true) { 
-        query.select(minSelectionString);
-    } else {
-        query.populate({path: populationString});
-    }
-
-    let returnedReferences;
-    try {
-        returnedReferences =  query.lean().exec();
-    } catch (err) {
-        return res.json({success: false, error: "retrieveReferences Error: direct retrieve query execution failed", trace: err});
-    }
-   
-    return res.json({success: true, result: returnedReferences});
-
-}
-
-
 module.exports =
 {
     createReferences,
@@ -369,5 +283,4 @@ module.exports =
     deleteReference,
     attachReferenceTag, 
     removeReferenceTag,
-    jobRetrieveReferences,
 }
