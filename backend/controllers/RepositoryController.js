@@ -138,11 +138,9 @@ createRepository = async (req, res) => {
                     repository.semanticJobStatus = jobConstants.JOB_STATUS_RUNNING;
                     repository.save();
                     jobs.dispatchSemanticJob(runSemanticData, log);
-                
                 })
             })
         })
-        
     });
 }
 
@@ -159,7 +157,7 @@ getRepositoryFile = async (req, res) => {
     }
 
     if (referenceId) {
-        const reference = await Reference.findOne({_id: referenceId}).populate('repository');
+        const reference = await Reference.findOne({_id: referenceId}).lean().select('path').exec();
         pathInRepo = reference.path;
     }
 
@@ -170,7 +168,7 @@ getRepositoryFile = async (req, res) => {
             .catch(err => {
                 return res.json({success: false, error: 'getRepositoryFile error fetching fileSha: ' + err});
             });
-    if(!fileResponse.data.hasOwnProperty('sha')) {
+    if (!fileResponse.data.hasOwnProperty('sha')) {
         return res.json({success: false, error: 'getRepositoryFile error: provided path did not resolve to a file'});
     }
     var fileSha = fileResponse.data.sha;
@@ -190,68 +188,87 @@ getRepositoryFile = async (req, res) => {
 }
 
 
-getRepository = (req, res) => {
+getRepository = async (req, res) => {
 
     const repositoryId = req.repositoryObj._id.toString();
 
-    Repository.findById(repositoryId, (err, repository) => {
-        if (err) return res.json({success: false, error: err});
-        return res.json({success: true, result: repository});
-    });
+    let returnedRepository;
+
+    try {
+        returnedRepository = Repository.findById(repositoryId).lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: 'getRepository error: repository find by id query failed', trace: err});
+    }
+    
+    return res.json({success: true, result: returnedRepository});
 }
 
 
-deleteRepository = (req, res) => {
+deleteRepository = async (req, res) => {
     const repositoryId = req.repositoryObj._id.toString();
 
-    Repository.findByIdAndRemove(repositoryId, (err, repository) => {
-        if (err) return res.json({success: false, error: err});
-        repository.populate('workspace', (err, repository) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: repository});
-        });
-    });
+    let returnedRepository;
+
+    try {
+        returnedRepository = Repository.findByIdAndRemove(repositoryId).lean().select("_id").exec();
+    } catch (err) {
+        return res.json({success: false, error: 'deleteRepository error: repository find by id and remove query failed', trace: err});
+    }
+
+    return res.json({success: true, result: returnedRepository});
 }
 
 
-
-retrieveRepositories = (req, res) => {
+retrieveRepositories = async (req, res) => {
     const {fullName, installationId, fullNames} = req.body;
 
-    var repositoriesInWorkspace = req.workspaceObj.repositories.map(repositoryId => repositoryId.toString());
+    var repositoriesInWorkspace = req.workspaceObj.repositories;
 
-    query = Repository.find();
+    let query = Repository.find();
+
     if (fullName) query.where('fullName').equals(fullName);
     if (installationId) query.where('installationId').equals(installationId);
     if (fullNames) query.where('fullName').in(fullNames)
 
+    let returnedRepositories;
 
-    query.populate('workspace').exec((err, repositories) => {
-        console.log("REPOSITORIES", repositories);
-        // Make sure returned repositories are scoped to workspace on the request
-        repositories = repositories.filter(repositoryObj => repositoriesInWorkspace.includes(repositoryObj._id.toString()) != -1);
-        if (err) return res.json({ success: false, error: err });
-        return res.json({success: true, result: repositories});
-    });
+    try {
+        returnedRepositories = await query.lean().exec()
+    } catch (err) {
+        return res.json({success: false, error: 'retrieveRepositories error: repository retrieve \
+            query failed', trace: err});
+    }
+    
+    // make sure that repository is in accessible workspace
+    returnedRepositories = returnedRepositories.filter((repo) => repositoriesInWorkspace.includes(repo));
+
+    return res.json({success: true, result: returnedRepositories});
 }
 
-jobRetrieveRepositories = (req, res) => {
-    const {fullName, installationId, fullNames} = req.body;
+jobRetrieveRepositories = async (req, res) => {
+   const {fullName, installationId, fullNames} = req.body;
 
+    var repositoriesInWorkspace = req.workspaceObj.repositories;
 
-    query = Repository.find();
+    let query = Repository.find();
+
     if (fullName) query.where('fullName').equals(fullName);
     if (installationId) query.where('installationId').equals(installationId);
     if (fullNames) query.where('fullName').in(fullNames)
 
+    let returnedRepositories;
 
-    query.populate('workspace').exec((err, repositories) => {
-        console.log("REPOSITORIES", repositories);
-        // Make sure returned repositories are scoped to workspace on the request
-        if (err) return res.json({ success: false, error: err });
-        console.log('Returning Repositories');
-        return res.json({success: true, result: repositories});
-    });
+    try {
+        returnedRepositories = await query.lean().exec()
+    } catch (err) {
+        return res.json({success: false, error: 'retrieveRepositories error: repository retrieve \
+            query failed', trace: err});
+    }
+    
+    // make sure that repository is in accessible workspace
+    returnedRepositories = returnedRepositories.filter((repo) => repositoriesInWorkspace.includes(repo));
+    
+    return res.json({success: true, result: returnedRepositories});
 }
 
 
@@ -263,7 +280,7 @@ validateRepositories = async (req, res) => {
     for (let i = 0; i < ids.length; i++){
         let id = ids[i]
         let fullName = req.body.selected[id]
-        let repository = await Repository.findOne({fullName: fullName, installationId: req.body.installationId})
+        let repository = await (await Repository.findOne({fullName: fullName, installationId: req.body.installationId})).execPopulate()
 
         if (!repository) {
             repositories.push(fullName)
@@ -306,6 +323,7 @@ pollRepositories = async (req, res) => {
     return res.json({success: true, result: true})
 }
 
+
 updateRepository = async (req, res) => {
     const {fullName, ref, installationId, eventType, headCommit, cloneUrl} = req.body;
     console.log('updateRepository called');
@@ -325,8 +343,9 @@ updateRepository = async (req, res) => {
         if (typeof headCommit == 'undefined' || headCommit == null) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
         if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});
 
+        var repository;
 
-        var repository = await Repository.findOne({fullName, installationId})
+        var repository = await Repository.findOne({fullName, installationId}).exec()
                                 .catch(err => {
                                     return res.json({ success: false, error: 'Error updateRepository could not find repository: ' + err });
                                 });
@@ -359,7 +378,7 @@ updateRepository = async (req, res) => {
         runReferencesData['jobType'] = jobConstants.JOB_UPDATE_REFERENCES.toString();
 
         repository.updateReferencesJobStatus = jobConstants.JOB_STATUS_RUNNING;
-        repository.save();
+        await repository.save();
         console.log('Calling update References Job');
         await jobs.dispatchUpdateReferencesJob(runReferencesData, log);
 

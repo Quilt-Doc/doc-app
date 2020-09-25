@@ -3,12 +3,9 @@ import { reducer as formReducer } from 'redux-form'
 
 import workspaceReducer from './Workspace_Reducer';
 import repositoryReducer from './Repository_Reducer';
-import repositoryItemReducer from './RepositoryItem_Reducer';
 import referenceReducer from './Reference_Reducer';
 import documentReducer from './Document_Reducer';
 import snippetReducer from './Snippet_Reducer';
-import requestReducer from './Request_Reducer';
-import commentReducer from './Comment_Reducer';
 import userReducer from './User_Reducer';
 import tagReducer from './Tag_Reducer';
 import searchReducer from './Search_Reducer';
@@ -24,8 +21,7 @@ export default combineReducers({
     repositories: repositoryReducer, // DONE (with notes)
     documents: documentReducer, // DONE (not tested)
     snippets: snippetReducer, // 
-    requests: requestReducer,
-    comments: commentReducer,
+   
     users: userReducer,
     tags: tagReducer,
     selected: selectedReducer,
@@ -33,5 +29,6 @@ export default combineReducers({
     auth: authReducer,
     ui: uiReducer,
     searchResults: searchReducer, // Standardize
-    linkages: linkageReducer // Standardize
+    linkages: linkageReducer, // Standardize
+    //fileContents: fileContentsReducer
 });

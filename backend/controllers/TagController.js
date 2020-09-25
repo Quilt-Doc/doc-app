@@ -15,7 +15,14 @@ createTag = async (req, res) => {
     const { label } = req.body;
     const workspaceId = req.workspaceObj._id.toString();
 
-    let color = await Tag.count({workspace: workspaceId})
+    if (!checkValid(label)) return res.json({success: false, error: "createTag Error: label not provided"});
+    let color;
+    
+    try {
+        color = await Tag.count({workspace: workspaceId}).exec();
+    } catch (err) {
+        return res.json({success: true, result: returnedSnippets});
+    }
 
     let tag = new Tag(
         {
@@ -24,89 +31,107 @@ createTag = async (req, res) => {
             color
         },
     );
-    tag.save((err, tag) => {
-        if (err) return res.json({ success: false, error: err });
-        return res.json({success: true, result: tag})
-    });
+
+    try {
+        tag = await tag.save();
+    } catch (err) {
+        return res.json({success: false, error: "createTag Error: save query failed", trace: err});
+    }
+
+    return res.json({success: true, result: tag});
 }
 
-getTag = (req, res) => {
+getTag = async (req, res) => {
     const tagId = req.tagObj._id.toString();
+    
+    let returnedTag;
+    const workspaceId = req.workspaceObj._id;
 
-    Tag.findById(tagId).populate('folder').exec((err, tag) => {
-        if (err) return res.json({ success: false, error: err });
-        return res.json({success: true, result: tag});
-    });
+    try {
+        returnedTag = await Tag.findOne({_id: tagId, workspace: workspaceId}).lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "getTag Error: findById query failed", trace: err});
+    }
+
+    return res.json({success:true, result: returnedTag});
 }
 
-
-editTag = (req, res) => {
+editTag = async (req, res) => {
     const tagId = req.tagObj._id.toString();
     const { label, color } = req.body;
+
     let update = {};
     if (label) update.label = label;
     if (color) update.color = color;
-    Tag.findByIdAndUpdate(tagId, { $set: update }, { new: true }, (err, tag) => {
-        if (err) return res.json({ success: false, error: err });
-        tag.populate('folder', (err, tag) => {
-            if (err) return res.json({success: false, error: err});
-            return res.json({success: true, result: tag});
-        });
-    });
+
+    let returnedTag;
+    try {
+        returnedTag = await Tag.findByIdAndUpdate(tagId, { $set: update }, { new: true }).lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "editTag Error: findByIdAndUpdate query failed", trace: err});
+    }
+    
+    return res.json({success:true, result: returnedTag});
 }
 
 
-deleteTag = (req, res) => {
+deleteTag = async (req, res) => {
     const tagId = req.tagObj._id.toString();
 
-    Tag.findByIdAndRemove(tagId, (err, tag) => {
-        if (err) return res.json({ success: false, error: err });
-        tag.populate('folder', (err, tag) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: tag});
-        });
-    });
+    let deletedTag;
+
+    try {
+        deletedTag = await Tag.findByIdAndRemove(tagId).select('_id').lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "deleteTag Error: findByIdAndRemove query failed", trace: err});
+    }
+   
+    return res.json({success:true, result: deletedTag});
 }
 
-retrieveTags = (req, res) => {
+retrieveTags = async (req, res) => {
 
     let { search, label, color, tagIds, limit, skip } = req.body;
+    const workspaceId = req.workspaceObj._id.toString();
+
     let query;
     if (search) {
-        query = Tag.find({label: { $regex: new RegExp(search, 'i')} })
+        query = Tag.find({workspace: workspaceId, label: { $regex: new RegExp(search, 'i')} })
     } else {
-        query =  Tag.find();
+        query =  Tag.find({workspace: workspaceId});
     }
-
-    const workspaceId = req.workspaceObj._id.toString();
-    query.where('workspace').equals(workspaceId);
-
+   
     if (checkValid(tagIds)) query.where('_id').in(tagIds);
-
     if (checkValid(label)) query.where('label').equals(label);
     if (checkValid(color)) query.where('color').equals(color);
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
     query.sort('-label');
-    query.exec((err, tags) => {
-        console.log("ENTERED HERE", err);
-        if (err) return res.json({ success: false, error: err });
-        if (checkValid(tagIds) && checkValid(limit)) {
-            if (tags.length < limit) {
-                let queryNext = Tag.find()
-                queryNext.limit(Number(limit - tags.length))
-                if (tagIds.length !== 0) {
-                    queryNext.where('_id').nin(tagIds)
-                }
-                queryNext.exec((err, nextTags) => {
-                    console.log("TAGS2", nextTags)
-                    if (err) return res.json({ success: false, error: err });
-                    tags = tags.concat(nextTags);
-                })
-            }
+
+    let returnedTags;
+    try {
+        returnedTags = await query.lean.exec();
+    } catch (err) {
+        return res.json({success: false, error: "retrieveTags Error: find query failed", trace: err});
+    }
+
+    if (checkValid(tagIds) && checkValid(limit) && returnedTags.length < limit) {
+        query = Tag.find();
+        query.limit(Number(limit - returnedTags.length));
+        query.where('_id').nin(tagIds)
+
+        let moreTags;
+        
+        try {
+            moreTags = query.lean().exec();
+        } catch (err) {
+            return res.json({success: false, error: "retrieveTags Error: find more with limit query failed", trace: err});
         }
-        return res.json({success: true, result: tags});
-    });
+
+        returnedTags = [...returnedTags, ...moreTags];
+    }
+
+    return res.json({success: true, result: returnedTags});
 }
 
 

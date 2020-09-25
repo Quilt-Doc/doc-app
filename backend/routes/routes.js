@@ -51,11 +51,9 @@ router.post('/references/create', authorizationMiddleware.referenceMiddleware, r
 router.get('/references/:workspaceId/get/:referenceId', authorizationMiddleware.referenceMiddleware, reference_controller.getReference);
 router.put('/references/:workspaceId/edit/:referenceId', authorizationMiddleware.referenceMiddleware, reference_controller.editReference);
 router.delete('/references/:workspaceId/delete/:referenceId', authorizationMiddleware.referenceMiddleware, reference_controller.deleteReference);
-router.put('/references/:workspaceId/:referenceId/attach_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.attachTag);
-router.put('/references/:workspaceId/:referenceId/remove_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.removeTag);
+router.put('/references/:workspaceId/:referenceId/attach_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.attachReferenceTag);
+router.put('/references/:workspaceId/:referenceId/remove_tag/:tagId', authorizationMiddleware.referenceMiddleware, reference_controller.removeReferenceTag);
 router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referenceMiddleware, reference_controller.retrieveReferences);
-router.post('/references/:workspaceId/retrieve_code_references', authorizationMiddleware.referenceMiddleware, reference_controller.retrieveCodeReferences);
-
 router.post('/references/job_retrieve', authorizationMiddleware.referenceMiddleware, reference_controller.jobRetrieveReferences);
 
 
@@ -63,7 +61,6 @@ router.post('/references/job_retrieve', authorizationMiddleware.referenceMiddlew
 const document_controller = require('../controllers/DocumentController');
 router.post('/documents/:workspaceId/create', authorizationMiddleware.documentMiddleware, document_controller.createDocument); // DONE
 router.get('/documents/:workspaceId/get/:documentId', authorizationMiddleware.documentMiddleware, document_controller.getDocument); // DONE
-router.get('/documents/:workspaceId/get_parent/:documentId', authorizationMiddleware.documentMiddleware, document_controller.getParent); // DONE
 router.put('/documents/:workspaceId/edit/:documentId', authorizationMiddleware.documentMiddleware, document_controller.editDocument); //  DONE
 router.delete('/documents/:workspaceId/delete/:documentId', authorizationMiddleware.documentMiddleware, document_controller.deleteDocument); // DONE
 router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware.documentMiddleware, document_controller.renameDocument); // DONE
@@ -71,15 +68,15 @@ router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.d
 router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, document_controller.retrieveDocuments); // DONE
 
 
-router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.attachTag); // DONE
-router.put('/documents/:workspaceId/:documentId/remove_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.removeTag); // DONE
+router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentTag); // DONE
+router.put('/documents/:workspaceId/:documentId/remove_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentTag); // DONE
 
-router.put('/documents/:workspaceId/:documentId/attach_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.attachReference); // DONE
-router.put('/documents/:workspaceId/:documentId/remove_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.removeReference); // DONE
+router.put('/documents/:workspaceId/:documentId/attach_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentReference); // DONE
+router.put('/documents/:workspaceId/:documentId/remove_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentReference); // DONE
 
 
-router.put('/documents/:workspaceId/:documentId/attach_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.attachSnippet); // DONE
-router.put('/documents/:workspaceId/:documentId/remove_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.removeSnippet); // DONE
+router.put('/documents/:workspaceId/:documentId/attach_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentSnippet); // DONE
+router.put('/documents/:workspaceId/:documentId/remove_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentSnippet); // DONE
 
 // These routes are not usable yet.
 /*
@@ -150,12 +147,11 @@ const workspace_controller = require('../controllers/WorkspaceController');
 
 // TODO: This route cannot be properly secured without a list of repositories that a particular user has access to.
 router.post('/workspaces/create', authorizationMiddleware.workspaceMiddleware, workspace_controller.createWorkspace);
-
 router.post('/workspaces/search/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.searchWorkspace);
 router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.getWorkspace);
 router.delete('/workspaces/delete/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.deleteWorkspace);
-router.put('/workspaces/add_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.addUser);
-router.put('/workspaces/remove_user/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspace_controller.removeUser);
+router.put('/workspaces/:workspaceId/add_user/:userId', authorizationMiddleware.workspaceMiddleware, workspace_controller.addWorkspaceUser);
+router.put('/workspaces/:workspaceId/remove_user/:userId', authorizationMiddleware.workspaceMiddleware, workspace_controller.removeWorkspaceUser);
 
 router.post('/workspaces/retrieve', authorizationMiddleware.workspaceMiddleware, workspace_controller.retrieveWorkspaces);
 
@@ -282,8 +278,8 @@ const user_controller = require('../controllers/authentication/UserController');
 
 router.get('/users/get/:userId', authorizationMiddleware.userMiddleware, user_controller.getUser);
 router.put('/users/edit/:userId', authorizationMiddleware.userMiddleware, user_controller.editUser);
-router.put('/users/attach_workspace/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.attachWorkspace);
-router.put('/users/remove_workspace/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.removeWorkspace);
+router.put('/users/attach_workspace/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.attachUserWorkspace);
+router.put('/users/remove_workspace/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.removeUserWorkspace);
 router.delete('/users/delete_user/:workspaceId', authorizationMiddleware.userMiddleware, user_controller.deleteUser);
 
 //token routes

@@ -3,27 +3,35 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let documentSchema = new Schema({
+    
+    // Creation Date
     created: {type: Date, default: Date.now },
-    author: {type: ObjectId, ref: 'User', required: true},
-    title: String,
+
+    // Textual Attributes
     markup: String,
     content: String,
+
+    // Populated Model Attributes
+    author: {type: ObjectId, ref: 'User'},
     references: [{type: ObjectId, ref: 'Reference'}],
+    snippets: [{type: ObjectId, ref: 'Snippet'}],
     workspace: {type: ObjectId, ref: 'Workspace'},
     repository: {type: ObjectId, ref: 'Repository'},
-    children: [{type: ObjectId, ref:'Document'}],
-    root: {type: Boolean, default: false},
     tags: [{type: ObjectId, ref: 'Tag'}],
-    parent: {type: ObjectId, ref: 'Document'},
-    path: {type: String, default: ''},
-    order: Number,
-    image: String,
+
+    // Location Attributes
+    children: [{type: ObjectId, ref:'Document'}],
+    path: {type: String, default: '', index: true},
+    title: {type: String, index: true},
+    root: {type: Boolean, default: false},
 
     // Reporting Attributes
 
     status: {type: String, require: true, enum: ['valid', 'resolve', 'invalid'], default: 'valid'},
     breakCommit: {type: String},
     breakDate: {type: Date},
+
+    image: String,
 
     //NOT USED
     uploadFiles: [{type: ObjectId, ref: 'UploadFile'}],
