@@ -2,9 +2,8 @@ import {
     CREATE_WORKSPACE,
     GET_WORKSPACE,
     RETRIEVE_WORKSPACES,
-    WORKSPACE_ADD_USER,
     DELETE_WORKSPACE,
-    WORKSPACE_REMOVE_USER
+    EDIT_WORKSPACE
 } from '../actions/types/Workspace_Types'
 
 import _ from 'lodash';
@@ -19,10 +18,8 @@ export default (state = {}, action) => {
             return { ...state, [action.payload._id]: action.payload };
         case DELETE_WORKSPACE:
             return _.omit(state, action.payload._id); 
-        case WORKSPACE_ADD_USER:
-            return { ...state, [action.payload._id]: action.payload };
-        case WORKSPACE_REMOVE_USER:
-            return { ...state, [action.payload._id]: action.payload };
+        case EDIT_WORKSPACE:
+            return _.merge({...state}, {[action.payload._id]: action.payload});
         case RETRIEVE_WORKSPACES:
             return { ..._.mapKeys(action.payload, '_id') };
         default: 

@@ -4,7 +4,6 @@ const { ObjectId} = Schema.Types;
 
 var tagSchema = new Schema({
 	created: {type: Date, default: Date.now},
-	folder: {type: ObjectId, ref: 'Folder'},
 	label: {type: String, index: true},
 	color: String,
 	workspace: {type: ObjectId, ref: 'Workspace'}
