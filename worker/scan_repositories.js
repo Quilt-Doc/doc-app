@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const apis = require('../apis/api');
+const apis = require('./apis/api');
 
 
 require('dotenv').config();
