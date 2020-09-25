@@ -7,7 +7,6 @@ const Tag = require('../models/Tag');
 const Linkage = require('../models/Linkage');
 
 var mongoose = require('mongoose');
-const { rest } = require('lodash');
 const { ObjectId } = mongoose.Types;
 
 const quickScore = require("quick-score").quickScore;

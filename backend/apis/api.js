@@ -10,7 +10,7 @@ AWS.config.update({region: 'us-east-1'});
 const requestGithubClient = () => {
     const axios = require('axios');
     return axios.create({
-        baseURL: proccess.env.GITHUB_API_URL,
+        baseURL: process.env.GITHUB_API_URL,
     });
 }
 
