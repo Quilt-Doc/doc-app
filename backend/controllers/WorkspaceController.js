@@ -6,6 +6,7 @@ const Tag = require('../models/Tag');
 const Linkage = require('../models/Linkage')
 
 var mongoose = require('mongoose');
+const { rest } = require('lodash');
 const { ObjectId } = mongoose.Types;
 
 const quickScore = require("quick-score").quickScore;
@@ -24,184 +25,318 @@ escapeRegExp = (string) => {
 }
 
 
-createWorkspace = (req, res) => {
-    const {name, creatorId, debugId, repositoryIds, icon, key} = req.body;
+createWorkspace = async (req, res) => {
+    const {name, creatorId, repositoryIds } = req.body;
 
-    if (!typeof name == 'undefined' && name !== null) return res.json({success: false, error: 'no workspace name provided'});
-    if (!typeof creatorId == 'undefined' && creatorId !== null) return res.json({success: false, error: 'no workspace creator Id provided'});
+    if (checkValid(name)) return res.json({success: false, error: 'no workspace name provided'});
+    if (checkValid(creatorId)) return res.json({success: false, error: 'no workspace creator Id provided'});
 
     let workspace = new Workspace({
         name: name,
         creator: ObjectId(creatorId),
         memberUsers: [ObjectId(creatorId)],
-        key
+        repositories: repositoryIds.map(repoId => ObjectId(repoId))
     });
-
-    if (icon >= 0) workspace.icon = icon;
-    if (repositoryIds) workspace.repositories = repositoryIds.map(id => ObjectId(id))
     
-    // Check if user-defined ids allowed
-    if (process.env.DEBUG_CUSTOM_Id && process.env.DEBUG_CUSTOM_Id != 0) {
-        if (debugId) workspace._id = ObjectId(debugId);
+    // save workspace
+    try {
+        workspace = await workspace.save();
+    } catch (err) {
+        return res.json({success: false, error: "createWorkspace error: save() on new workspace failed", trace: err});
     }
 
-    workspace.save((err, workspace) => {
-        if (err) return res.json({ success: false, error: err });
+    // populate workspace
+    try {
+        workspace = await Workspace.populate(workspace, {path: 'creator repositories memberUsers'});
+    } catch (err) {
+        return res.json({success: false, error: "createWorkspace error: workspace population failed", trace: err});
+    }
 
-        workspace.populate('creator').populate('repositories').populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: workspace});
-        });
-    });
+    return res.json({success: true, result: workspace});
 }
 
-getWorkspace = (req, res) => {
+getWorkspace = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
 
-    Workspace.findById(workspaceId, (err, workspace) => {
-		if (err) return res.json({success: false, error: err});
-        workspace.populate('creator').populate('repositories')
-                .populate('memberUsers', (err, workspace) => {
-                if (err) return res.json({ success: false, error: err });
-                return res.json({success: true, result: workspace});
-            });
-    });
+    let returnedWorkspace;
+    try {
+        returnedWorkspace =  await Workspace.findById(workspaceId)
+            .populate({path: 'creator repositories memberUsers'}).lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "getWorkspace error: workspace findById query failed", trace: err});
+    }
+
+    return res.json({success: true, result: returnedWorkspace});
 }
 
-searchWorkspace = async (req, res) => {
-    const { userQuery, repositoryId, tagIds, referenceIds, creatorIds, returnLinkages, includeImage,
-        returnReferences, returnDocuments, docSkip, refSkip, linkageSkip, limit, sort, mix } = req.body;
+
+deleteWorkspace = async (req, res) => {
     
     const workspaceId = req.workspaceObj._id.toString();
 
+    let deletedWorkspace;
+    
+    try {
+        deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId).select('_id').lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "deleteWorkspace error: workspace findByIdAndRemove query failed", trace: err});
+    }
    
-    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'userQuery: error no userQuery provided.'});
-    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'returnReference: error no returnReferences provided.'});
-    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'returnDocuments: error no returnDocuments provided.'});
-    if (!checkValid(returnLinkages)) return res.json({success: false, result: null, error: 'returnLinkages: error no returnLinkages provided.'});
+    return res.json({success: true, result: deletedWorkspace});
+}
 
-    let documents = [];
-    let references = [];
-    let linkages = [];
 
-    if (returnDocuments) {
-        let documentAggregate;
-        
-        if (checkValid(userQuery) && userQuery !== "") {
-            documentAggregate = Document.aggregate([
-                { 
-                    $search: {
-                        "compound": {
-                            "should": [ 
-                                {
-                                "autocomplete": {
-                                        "query": userQuery,
-                                        "path": "title"
-                                    }
-                                },
-                                {
-                                    "text": {
-                                        "query": userQuery,
-                                        "path": "content"
-                                    }
-                                }
-                            ],
-                            "minimumShouldMatch": 1
-                        } 
-                    }  
-                },
-            ]);
-        } else {
-            documentAggregate = Document.aggregate([]);
-        }
+// Put request
+// Population only on returns
+addWorkspaceUser = async (req, res) => {
+    const workspaceId = req.workspaceObj._id.toString();
+    const { userId } = req.params;
 
-        documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
+    if (checkValid(userId)) return res.json({success: false, error: 'no user id provided'});
 
-        documentAggregate.match({workspace: new mongoose.Types.ObjectId(workspaceId)});
+    let returnedWorkspace;
 
-        if (checkValid(repositoryId)) documentAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
+    try {
+        returnedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, 
+            { $push: {memberUsers: userId} }, { new: true }).select('_id memberUsers').populate({path: 'user'}).lean.exec();
+    } catch (err) {
+        return res.json({success: false, error: "addUser error: workspace findByIdAndUpdate query failed", trace: err});
+    }   
 
-        if (checkValid(tagIds)) documentAggregate.match({
-            tags: { $in: tagIds.map((tagId) => new mongoose.Types.ObjectId(tagId)) }
-        });
+    return res.json({success: true, result: returnedWorkspace});
+}
 
-        if (checkValid(referenceIds)) documentAggregate.match({
-            references: { $in: referenceIds.map((refId) => new mongoose.Types.ObjectId(refId)) }
-        });
+removeWorkspaceUser = async (req, res) => {
+    const workspaceId = req.workspaceObj._id.toString();
+    const { userId } = req.params;
 
-        if (checkValid(creatorIds)) documentAggregate.match({
-            author: { $in: creatorIds.map((creatorId) =>  new mongoose.Types.ObjectId(creatorId)) }
-        });
-        
-        if (checkValid(sort)) documentAggregate.sort(sort);
+    if (checkValid(userId)) return res.json({success: false, error: 'no user id provided'});
 
-        if (checkValid(docSkip))  documentAggregate.skip(docSkip);
+    let returnedWorkspace;
 
-        if (checkValid(limit))  documentAggregate.limit(limit);
+    try {
+        returnedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, 
+            { $pull: {memberUsers: userId} }, { new: true }).select('_id memberUsers').populate({path: 'user'}).lean.exec();
+    } catch (err) {
+        return res.json({success: false, error: "addUser error: workspace findByIdAndUpdate query failed", trace: err});
+    }   
 
-        try {   
-            documents = await documentAggregate.exec();
-        } catch(err) {
-           return res.json({ success: false, error: `searchWorkspace: Failed to aggregate documents, trace: ${err}`});
-        }
+    return res.json({success: true, result: returnedWorkspace});
+}
 
-        try {
-            documents = await Document.populate(documents, 
-                {
-                    path: "author references workspace repository tags"
-                }
-            );
-        } catch (err) {
-            return res.json({ success: false, error: `searchWorkspace: Failed to populate documents, trace: ${err}`});
-        }
-        // Need to include time filtering
+// Check that the JWT userId is in the memberUsers for all workspaces returned
+retrieveWorkspaces = async (req, res) => {
+
+    const {name, creatorId, memberUserIds} = req.body;
+    const requesterUserId = req.tokenPayload.userId;
+
+    query = Workspace.find();
+
+    if (name) query.where('name').equals(name);
+    if (creatorId) query.where('creator').equals(creatorId);
+    if (memberUserIds) query.where('memberUsers').in(memberUserIds);
+
+    let returnedWorkspaces;
+
+    try {
+        returnedWorkspaces = await query.populate({path: 'creator memberUsers repositories'}).lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "retrieveWorkspaces error: workspace find query failed", trace: err});
     }
 
+    returnedWorkspaces = returnedWorkspaces.filter(currentWorkspace => {
+        var currentMemberUsers = currentWorkspace.memberUsers.map(userObj => userObj._id.toString());
+        // Only return if requesterUserId is in the memberUsers of the workspace
+        return (currentMemberUsers.includes(requesterUserId));
+    });
+
+    return res.json({success: true, result: returnedWorkspaces});
+}
+
+
+//FARAZ TODO: Selectively pull content
+//FARAZ TODO: Need to place searchFunctions in correct controller and import
+//FARAZ TODO: Need to figure out import (or maybe not?)
+searchDocuments = async (req, res, searchWorkspace) => {
+    const { userQuery, repositoryId, tagIds, returnDocuments, minimalDocuments, includeImage, searchContent,
+        referenceIds, creatorIds, docSkip, limit, sort, mix } = req.body;
     
-    if (returnReferences) {
-        
-        let referenceAggregate;
-        
-        if (checkValid(userQuery) && userQuery !== "") {
-            referenceAggregate = Reference.aggregate([
-                { 
-                    $search: {
-                        "autocomplete": {
-                                "query": userQuery,
-                                "path": "name"
-                        }
-                    } 
-                }
-            ]);
+    const workspaceId = req.workspaceObj._id.toString();
+
+    if (!returnDocuments) {
+        let response = {success: true, result: []};
+
+        if (searchWorkspace) {
+            return response;
         } else {
-            referenceAggregate = Reference.aggregate([]);
+            return res.json(response);
         }
+    }
+
+    let documentAggregate;
         
-        referenceAggregate.addFields({isReference : true, score: { $meta: "searchScore" }});
-        
-        referenceAggregate.match({repository: new mongoose.Types.ObjectId(repositoryId)});
+    if (checkValid(userQuery) && userQuery !== "") {
+        // make search for title
+        let shouldFilter = [ 
+            {
+            "autocomplete": {
+                    "query": userQuery,
+                    "path": "title"
+                }
+            }];
 
-        if (checkValid(tagIds)) referenceAggregate.match({
-            tags: { $in: tagIds.map((tagId) => new mongoose.Types.ObjectId(tagId)) }
-        });
+        // make search for textual content
+        if (checkValid(searchContent) && searchContent) shouldFilter.push({
+                "text": {
+                    "query": userQuery,
+                    "path": "content"
+                }
+            });
 
-        if (checkValid(referenceIds)) referenceAggregate.match({
-            _id: { $in: referenceIds.map((refId) => new mongoose.Types.ObjectId(refId)) }
-        });
-        
-        if (checkValid(sort)) referenceAggregate.sort(sort);
+        documentAggregate = Document.aggregate([
+            { 
+                $search: {
+                    "compound": {
+                        "should": shouldFilter,
+                        "minimumShouldMatch": 1
+                    } 
+                }  
+            },
+        ]);
+    } else {
+        documentAggregate = Document.aggregate([]);
+    }
 
+    documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
 
-        if (checkValid(refSkip))  referenceAggregate.skip(refSkip);
+    documentAggregate.match({workspace: ObjectId(workspaceId)});
 
-        if (checkValid(limit))  referenceAggregate.limit(limit)
-        
-        try {
-            references = await referenceAggregate.exec()
-        } catch (err) {
-            return res.json({ success: false, error: `searchWorkspace: Failed to aggregate references, trace: ${err}`});
+    if (checkValid(repositoryId)) documentAggregate.match({repository: ObjectId(repositoryId)});
+
+    if (checkValid(tagIds)) documentAggregate.match({
+        tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }
+    });
+
+    if (checkValid(referenceIds)) documentAggregate.match({
+        references: { $in: referenceIds.map((refId) => ObjectId(refId)) }
+    });
+
+    if (checkValid(creatorIds)) documentAggregate.match({
+        author: { $in: creatorIds.map((creatorId) =>  ObjectId(creatorId)) }
+    });
+    
+    if (checkValid(sort)) documentAggregate.sort(sort);
+
+    if (checkValid(docSkip))  documentAggregate.skip(docSkip);
+
+    if (checkValid(limit))  documentAggregate.limit(limit);
+
+    let minimalProjectionString = "_id created author title status";
+    let populationString = "author references workspace repository tags";
+
+    if (checkValid(minimalDocuments) && minimalDocuments) {
+        if (checkValid(includeImage)) minimalProjectionString += " image";
+        documentAggregate.project(minimalProjectionString);
+        populationString = "author";
+    }
+
+    try {   
+        documents = await documentAggregate.exec();
+    } catch(err) {
+        let response = { success: false, error: "searchDocuments: Failed to aggregate documents", trace: err};
+        if (searchWorkspace) {
+            return response;
+        } else {
+            return res.json(response);
         }
+    }
 
+    try {
+        documents = await Document.populate(documents, 
+            {
+                path: populationString
+            }
+        );
+    } catch (err) {
+        let response = { success: false, error: "searchDocuments: Failed to populate documents", trace: err};
+        if (searchWorkspace) {
+            return response;
+        } else {
+            return res.json(response);
+        }
+    }
+
+    let response = {success: true, result: documents};
+
+    if (searchWorkspace) {
+        return response;
+    } else {
+        return res.json(response);
+    }
+}
+
+searchReferences = async (req, res, searchWorkspace) => {
+    const { userQuery, repositoryId, tagIds, referenceIds,
+        returnReferences, minimalReferences, refSkip, limit, sort } = req.body;
+
+    if (!returnReferences) {
+        let response = {success: true, result: []};
+        if (searchWorkspace) {
+            return response;
+        } else {
+            return res.json(response);
+        }
+    }
+
+    let referenceAggregate;
+    
+    if (checkValid(userQuery) && userQuery !== "") {
+        referenceAggregate = Reference.aggregate([
+            { 
+                $search: {
+                    "autocomplete": {
+                            "query": userQuery,
+                            "path": "name"
+                    }
+                } 
+            }
+        ]);
+    } else {
+        referenceAggregate = Reference.aggregate([]);
+    }
+    
+    referenceAggregate.addFields({isReference : true, score: { $meta: "searchScore" }});
+    
+    referenceAggregate.match({repository: ObjectId(repositoryId)});
+
+    if (checkValid(tagIds)) referenceAggregate.match({
+        tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }
+    });
+
+    if (checkValid(referenceIds)) referenceAggregate.match({
+        _id: { $in: referenceIds.map((refId) => ObjectId(refId)) }
+    });
+    
+    if (checkValid(sort)) referenceAggregate.sort(sort);
+
+    if (checkValid(refSkip))  referenceAggregate.skip(refSkip);
+
+    if (checkValid(limit))  referenceAggregate.limit(limit);
+    
+    if (checkValid(minimalReferences) && minimalReferences) referenceAggregate.project("name kind path _id created status");
+
+    try {
+        references = await referenceAggregate.exec()
+    } catch (err) {
+        let response = { success: false, error: "searchReferences: Failed to aggregate references", trace: err};
+        if (searchWorkspace) {
+            return response;
+        } else {
+            return res.json(response);
+        }
+    }
+
+    if (!minimalReferences) {
         try {
             references = await Reference.populate(references, 
                 {
@@ -209,59 +344,57 @@ searchWorkspace = async (req, res) => {
                 }
             )
         } catch (err) {
-            return res.json({ success: false, error: `searchWorkspace: Failed to populate references, trace: ${err}`});
+            let response = { success: false, error: "searchReferences: Failed to populate references", trace: err};
+            if (searchWorkspace) {
+                return response;
+            } else {
+                return res.json(response);
+            }
         }
-        // Need to include time filtering
     }
-    /*
-    if (returnLinkages) {
+    // Need to include time filtering
+    let response = {success: true, result: references};
 
-        let linkageAggregate = Linkage.aggregate([
-                { 
-                    $search: {
-                        "autocomplete": {
-                                "query": userQuery,
-                                "path": "title"
-                        }
-                    } 
-                }
-            ])
-        
-        if (checkValid(repositoryId)) linkageAggregate.match({repositoryId});
-        if (checkValid(workspaceId)) linkageAggregate.match({workspaceId});
-
-        if (checkValid(tagIds)) linkageAggregate.match({
-            tags: { $in: tagIds }
-        });
-        if (checkValid(referenceIds)) linkageAggregate.match({
-            references: { $in: referenceIds }
-        });
-        if (checkValid(creators)) linkageAggregate.match({
-            creator: { $in: creators }
-        });
-
-        linkageAggregate.skip(linkageSkip).sort(sort).limit(limit)
-
-        linkages = await linkageAggregate.exec()
-        // Need to include time filtering
+    if (searchWorkspace) {
+        return response;
+    } else {
+        return res.json(response);
     }
-    */
-    /*
-    if (checkValid(userQuery)) {
+}
 
-        references.map((ref) => 
-            console.log(`REFERENCE SCORE , ${quickScore(ref.name, userQuery)},  REFERENCE NAME, ${ref.name}, 
-            REFERENCE SCORE2, ${ref.score}`));
+searchLinkages = async (body) => {
+    return
+}
 
-        documents.map((doc) => {
-            console.log(`DOCUMENT SCORE, ${
-                quickScore(doc.title, userQuery)},
-                REF SCORE2, ${doc.score},
-                DOCUMENT NAME", ${doc.title}`)
-        })
+
+//TODO: Search workspace return values needs to be reflected in reducer
+searchWorkspace = async (req, res) => {
+    const { userQuery, repositoryId, tagIds, referenceIds, creatorIds, includeImage,
+        returnReferences, returnDocuments, docSkip, refSkip, linkageSkip, limit, sort, mix } = req.body;
+
+    if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'userQuery: error no userQuery provided.'});
+    if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'returnReference: error no returnReferences provided.'});
+    if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'returnDocuments: error no returnDocuments provided.'});
+    if (!checkValid(returnLinkages)) return res.json({success: false, result: null, error: 'returnLinkages: error no returnLinkages provided.'});
+
+    let documentResponse = await searchDocuments(req, res, true);
+
+    if (!documentResponse.success) {
+        let {trace, error} = documentResponse;
+        return res.json({success: false, error: `searchWorkspace: ${error}`, trace})
     }
-    */
-    
+
+    let {documents} = documentResponse;
+
+    let referenceResponse = await searchReferences(req, res, true);
+
+    if (!referenceResponse.success) {
+        let {trace, error} = referenceResponse;
+        return res.json({success: false, error: `searchWorkspace: ${error}`, trace})
+    }
+
+    let {references} = referenceResponse;
+
     let searchResults = {}
 
     let newDocSkip = 0;
@@ -294,101 +427,17 @@ searchWorkspace = async (req, res) => {
             }
         })
 
-        finalResult = {searchResults, docSkip: newDocSkip, refSkip: newRefSkip, linkageSkip: newLinkageSkip};
+        finalResult = { searchResults, docSkip: newDocSkip, refSkip: newRefSkip, linkageSkip: newLinkageSkip };
     } else {
         searchResults.documents = documents;
         //searchResults.linkages = linkages;
         searchResults.references = references;
-        finalResult = searchResults;
+        finalResult = { searchResults };
     }
 
     
     return res.json({success: true, result: finalResult});
 }
 
-deleteWorkspace = (req, res) => {
-    
-    const workspaceId = req.workspaceObj._id.toString();
-
-    Workspace.findByIdAndRemove(workspaceId, (err, workspace) => {
-		if (err) return res.json({success: false, error: err});
-        workspace.populate('creator').populate('repositories')
-            .populate('memberUsers', (err, workspace) => {
-            if (err) return res.json({ success: false, error: err });
-                return res.json({success: true, result: workspace});
-            });
-    });
-}
-
-
-// Put request
-// Population only on returns
-addUser = (req, res) => {
-    const workspaceId = req.workspaceObj._id.toString();
-    const { userId } = req.body;
-
-    if (!typeof userId == 'undefined' && userId !== null) return res.json({success: false, error: 'no user id provided'});
-
-    let update = {};
-    if (userId) update.memberUsers = ObjectId(userId);
-
-    Workspace.findByIdAndUpdate(workspaceId, { $push: update }, { new: true }, (err, workspace) => {
-        if (err) return res.json({ success: false, error: err });
-        workspace.populate('creator').populate('repositories')
-                .populate('memberUsers', (err, workspace) => {
-                if (err) return res.json({ success: false, error: err });
-                return res.json({success: true, result: workspace});
-        });
-    });
-}
-
-removeUser = (req, res) => {
-    const workspaceId = req.workspaceObj._id.toString();
-    const { userId } = req.body;
-    
-    if (!typeof userId == 'undefined' && userId !== null) return res.json({success: false, error: 'no user id provided'});
-
-    let update = {};
-    if (userId) update.memberUsers = ObjectId(userId);
-
-    Workspace.findByIdAndUpdate(workspaceId, { $pull: update }, { new: true }, (err, workspace) => {
-        if (err) return res.json({ success: false, error: err });
-        workspace.populate('creator').populate('repositories')
-                .populate('memberUsers', (err, workspace) => {
-                if (err) return res.json({ success: false, error: err });
-                return res.json({success: true, result: workspace});
-            });
-    });
-}
-
-// Check that the JWT userId is in the memberUsers for all workspaces returned
-retrieveWorkspaces = (req, res) => {
-    
-    const {name, creatorId, memberUserIds} = req.body;
-    query = Workspace.find();
-    if (name) query.where('name').equals(name);
-    if (creatorId) query.where('creator').equals(creatorId);
-    if (memberUserIds) query.where('memberUsers').in(memberUserIds)
-
-    query.populate('creator').populate('memberUsers').populate('repositories').exec((err, workspaces) => {
-        if (err) return res.json({ success: false, error: err });
-        
-        var requesterUserId = req.tokenPayload.userId.toString();
-        
-        console.log('Workspaces before filter: ');
-        console.log(workspaces);
-
-        workspaces = workspaces.filter(currentWorkspace => {
-            var currentMemberUsers = currentWorkspace.memberUsers.map(userObj => userObj._id.toString());
-            // Only return if requesterUserId is in the memberUsers of the workspace
-            return (currentMemberUsers.includes(requesterUserId) != -1);
-        });
-
-        console.log('Workspaces after filter: ');
-        console.log(workspaces);
-
-        return res.json({success: true, result: workspaces});
-    });
-}
-
-module.exports = {createWorkspace, searchWorkspace, getWorkspace, deleteWorkspace, addUser, removeUser, retrieveWorkspaces}
+module.exports = {createWorkspace, searchWorkspace, getWorkspace, 
+    deleteWorkspace, addWorkspaceUser, removeWorkspaceUser, retrieveWorkspaces}

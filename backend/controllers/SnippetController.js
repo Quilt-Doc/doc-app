@@ -3,27 +3,42 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 
-createSnippet = (req, res) => {
+checkValid = (item) => {
+    if (item !== undefined && item !== null) {
+        return true
+    }
+    return false
+}
+
+createSnippet = async (req, res) => {
     const { annotation, code, start, 
-        status, name, creator } = req.body;
+        status, name, creatorId } = req.body;
     
     const workspaceId = req.workspaceObj._id.toString();
     const referenceId = req.referenceObj._id.toString();
     
-    var referenceRepository = req.referenceObj.repository.toString();
-    var workspaceRepositories = req.workspaceObj.repositories.map(repositoryObj => {repositoryObj.toString()});
+    var referenceRepository = req.referenceObj.repository;
+    var workspaceRepositories = req.workspaceObj.repositories;
 
-    if (workspaceRepositories.indexOf(referenceRepository) == -1) {
+    // check if repositories accessible to the user workspace includes reference Repository
+    if (!workspaceRepositories.includes(referenceRepository)) {
         return res.json({success: false, error: "createSnippet Error: request on repository user does not have access to."});
     }
 
-    // DONE: Verify creator matches user in req.tokenPayload
-    if (creator) {
-        if (req.tokenPayload.userId.toString() != creator) {
+    // verify creator matches user in req.tokenPayload
+    if (checkValid(creatorId)) {
+        if (req.tokenPayload.userId.toString() != creatorId) {
             return res.json({success: false, error: "createSnippet Error: JWT does not match `creator`."});
         }
+    } else {
+        return res.json({success: false, error: "createSnippet error: snippet creator not provided"});
     }
 
+    // validation on essential values
+    if (!checkValid(annotation)) return res.json({success: false, error: "createSnippet error: snippet annotation not provided"});
+    if (!checkValid(code)) return res.json({success: false, error: "createSnippet error: snippet code not provided"});
+    if (!checkValid(start)) return res.json({success: false, error: "createSnippet error: snippet start not provided"});
+    if (!checkValid(status)) return res.json({success: false, error: "createSnippet error: snippet status not provided"});
 
     let snippet = new Snippet(
         {       
@@ -33,87 +48,134 @@ createSnippet = (req, res) => {
            annotation,
            start,
            status,
-           
+           creator: creatorId
         },
     );
 
-    if (creator) snippet.creator = creator
-
     if (name) snippet.name = name;
 
-    snippet.save((err, snippet) => {
-        if (err) return res.json({ success: false, error: err });
-        snippet.populate('workspace').populate('reference', (err, snippet) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: snippet});
-        });
-    });
+    // save the snippet to db
+    try {
+        snippet = await snippet.save();
+    } catch (err) {
+        return res.json({success: false, error: "createSnippet error: new snippet could not be saved", trace: err});
+    }
+    
+    // populate certain object fields on the snippet
+    try {
+        snippet = await Snippet.populate(snippet, {path: "workspace reference creator"}).exec();
+    } catch (err) {
+        return res.json({success: false, error: "createSnippet error: new snippet could not be populated but was saved", trace: err});
+    }
+
+    return res.json({success: true, snippet});
 }
 
 
-getSnippet = (req, res) => {
+getSnippet = async (req, res) => {
     const snippetId = req.snippetObj._id.toString();
     const workspaceId = req.workspaceObj._id.toString();
-    Snippet.findOne({_id: snippetId, workspace: workspaceId}).populate('workspace').populate('reference').exec((err, snippet) => {
-        if (err) return res.json({ success: false, error: err });
-        return res.json({success: true, result: snippet});
-    });
+
+    let returnedSnippet;
+
+    try {
+        returnedSnippet = await Snippet.findOne({_id: snippetId, workspace: workspaceId})
+            .populate({path: 'workspace reference'}).lean.exec();
+    } catch (err) {
+        return res.json({success: false, error: "getSnippet error: findOne query failed", trace: err});
+    }
+
+    return res.json({success: true, returnedSnippet});
 }
 
-editSnippet = (req, res) => {
+editSnippet = async (req, res) => {
     const snippetId = req.snippetObj._id.toString();
     const workspaceId = req.workspaceObj._id.toString();
-    const { name, status, code, start} = req.body;
+    const { name, status, code, start } = req.body;
 
+
+    // build update object and selection object to update and only pull exactly what is needed from db
     let update = {};
-    if (name) update.name = name;
-    if (status) update.status = status;
-    if (code) update.code = code;
-    if (start) update.start = start;
+    let selectionString = "_id";
 
-    Snippet.findOneAndUpdate({_id: snippetId, workspace: workspaceId}, { $set: update }, { new: true }, (err, snippet) => {
-        if (err) return res.json({ success: false, error: err });
-        snippet.populate('workspace').populate('reference', (err, snippet) => {
-            if (err) return res.json({success: false, error: err});
-            return res.json({success: true, result: snippet});
-        });
-    });
+    if (name) {
+        update.name = name;
+        selectionString += " name";
+    }
+
+    if (status) {
+        update.status = status;
+        selectionString += " status";
+    }
+
+    if (code) {
+        update.code = code;
+        selectionString += " code";
+    }
+
+    if (start) {
+        update.start = start;
+        selectionString += " start";
+    }
+
+    let returnedSnippet;
+    try {
+        returnedSnippet = Snippet.findOneAndUpdate({_id: snippetId, workspace: workspaceId}, 
+            { $set: update }, { new: true }).select(selectionString).lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "editSnippet error: findOneAndUpdate query failed", trace: err});
+    }
+   
+    return res.json({success: true, result: returnedSnippet});
 }
 
-deleteSnippet = (req, res) => {
+deleteSnippet = async (req, res) => {
     const snippetId = req.snippetObj._id.toString();
     const workspaceId = req.workspaceObj._id.toString();
-    Snippet.findOneAndRemove({_id: snippetId, workspace: workspaceId}, (err, snippet) => {
-        if (err) return res.json({ success: false, error: err });
-        snippet.populate('workspace').populate('reference', (err, snippet) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: snippet});
-        });
-    });
+
+    let deletedSnippet;
+    try {
+        deletedSnippet = await Snippet.findOneAndRemove({_id: snippetId, workspace: workspaceId}).select('_id').lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "deleteSnippet error: findOneAndRemove query failed", trace: err});
+    }
+  
+    return res.json({success: true, result: deletedSnippet});
 }
 
-retrieveSnippets = (req, res) => {
-    let { referenceId, name, status, limit, skip } = req.body;
+retrieveSnippets = async (req, res) => {
+    let { referenceId, repositoryId, name, status, minimal, limit, skip } = req.body;
     const workspaceId = req.workspaceObj._id.toString();
-    query = Snippet.find();
 
-    query.where('workspace').equals(workspaceId)
+    //TODO: ADD repository: repositoryId spec
+    let query = Snippet.find({ workspace: workspaceId });
 
-    if (referenceId) query.where('reference').equals(referenceId)
-    if (name) query.where('name').equals(name)
-    if (status) query.where('status').equals(status);
-    if (limit) query.limit(Number(limit));
-    if (skip) query.skip(Number(skip));
+    if (checkValid(referenceId)) query.where('reference').equals(referenceId)
+    if (checkValid(name)) query.where('name').equals(name)
+    if (checkValid(status)) query.where('status').equals(status);
+    if (checkValid(limit)) query.limit(Number(limit));
+    if (checkValid(skip)) query.skip(Number(skip));
 
-    query.populate('workspace').populate('reference').exec((err, snippets) => {
-        if (err) return res.json({ success: false, error: err });
-        console.log("SNIPPETS", snippets)
-        return res.json({success: true, result: snippets});
-    });
+    if (!minimal) {
+        query.populate({path: 'workspace reference creator'});
+    } else {
+        query.select('_id name annotation code status start creator');
+        query.populate({path: 'creator'});
+    }
+    
+    let returnedSnippets;
+
+    try {
+        returnedSnippets = await query.lean().exec();
+    } catch (err) {
+        return res.json({success: false,  error: "retrieveSnippets error: find query failed", trace: err});
+    }
+
+    return res.json({success: true, result: returnedSnippets});
 }
 
 
-refreshSnippets = (req, res) => {
+refreshSnippets = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
     const { updates } = req.body;
     const bulkOps = updates.map(update => ({
@@ -125,7 +187,8 @@ refreshSnippets = (req, res) => {
             upsert: true
          }
      }));
-   return Snippet.collection
+
+    return Snippet.collection
        .bulkWrite(bulkOps)
        .then(results => res.json({success: true, result: results}))
        .catch(err => res.json({success: false, error: `Error refreshing snippets: ${err}`}));

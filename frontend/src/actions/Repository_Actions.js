@@ -3,19 +3,11 @@ import {
     CREATE_REPOSITORY,
     GET_REPOSITORY,
     DELETE_REPOSITORY,
-    RETRIEVE_REPOSITORIES, 
-    SET_CURRENT_REPOSITORY
+    RETRIEVE_REPOSITORIES
 } from './types/Repository_Types';
 
 import { api } from '../apis/api';
 
-var urljoin = require('url-join');
-
-
-/* export const repoSearch = (formValues) => async (dispatch) => {
-    const response = await api.post('/repositories/search', formValues );
-    dispatch({ type: REPO_SEARCH, payload: response.data });
-}*/
 
 export const getRepositoryFile = (fileDesc) => async (dispatch) => {
 
@@ -120,10 +112,6 @@ export const retrieveRepositories = (formValues) => async dispatch => {
     else {
         dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });
     }
-}
-
-export const setCurrentRepository = (formValues) => dispatch => {
-    dispatch({ type: SET_CURRENT_REPOSITORY, payload: formValues });
 }
 
 

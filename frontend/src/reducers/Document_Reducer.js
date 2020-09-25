@@ -1,62 +1,48 @@
 import {
     CREATE_DOCUMENT, GET_DOCUMENT, RETRIEVE_DOCUMENTS, DELETE_DOCUMENT, 
-    EDIT_DOCUMENT, DOCUMENT_ATTACH_SNIPPET, 
-    DOCUMENT_REMOVE_SNIPPET, DOCUMENT_ATTACH_PARENT, DOCUMENT_REMOVE_PARENT, DOCUMENT_ATTACH_UPLOADFILE, 
-    DOCUMENT_REMOVE_UPLOADFILE, DOCUMENT_ADD_CANWRITE, DOCUMENT_REMOVE_CANWRITE, 
-    DOCUMENT_ADD_CANREAD, DOCUMENT_REMOVE_CANREAD, GET_PARENT, RETRIEVE_MORE_DOCUMENTS,
-    MOVE_DOCUMENT, ATTACH_TAG, REMOVE_TAG
+    EDIT_DOCUMENT, MOVE_DOCUMENT, RENAME_DOCUMENT
 } from '../actions/types/Document_Types'
 
 import _ from 'lodash';
 
+// POPULATION: If in reducer state, the following should be populated at all times:
+//  author references snippets workspace repository tags
+
+// If in reducer state, the following should not be populated ever:
+// children
 
 export default (state = {}, action) => {
     switch (action.type) {
         case CREATE_DOCUMENT:
-            return { ...state, ..._.mapKeys(action.payload, '_id') };
+            // merge incoming payload with new state
+            return _.merge({...state}, _.mapKeys(action.payload, '_id'));
         case GET_DOCUMENT:
+            // replace or add whole document to state
             return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_DOCUMENTS:
-            return { ...state, ..._.mapKeys(action.payload, '_id') };
-        case DELETE_DOCUMENT:
-            console.log(action.payload)
-            let ids = action.payload.map(result => result._id);
-            console.log(ids)
-            return _.omit(state, ids);
+            // merge incoming payload with new state
+            if (action.wipe) return _.mapKeys(action.payload, '_id');
+            return _.merge({...state}, _.mapKeys(action.payload, '_id'));
         case EDIT_DOCUMENT:
-            console.log(action.payload)
-            return { ...state, [action.payload._id]: action.payload };
+            // merge incoming single doc payload with state
+            return _.merge({...state}, {[action.payload._id]: action.payload});
         case MOVE_DOCUMENT:
-            console.log("PREVIOUS", state)
-            console.log("RESULT", action.payload)
-            return { ...state, ..._.mapKeys(action.payload, '_id') };
-        case ATTACH_TAG:
-            return { ...state, [action.payload._id]: action.payload };
-        case REMOVE_TAG:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_ATTACH_SNIPPET:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_REMOVE_SNIPPET:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_ATTACH_PARENT:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_REMOVE_PARENT:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_ATTACH_UPLOADFILE:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_REMOVE_UPLOADFILE:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_ADD_CANWRITE:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_REMOVE_CANWRITE:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_ADD_CANREAD:
-            return { ...state, [action.payload._id]: action.payload };
-        case DOCUMENT_REMOVE_CANREAD:
-            return { ...state, [action.payload._id]: action.payload };
-        case GET_PARENT:
-            if (action.payload){
-                return { ...state, [action.payload._id]: action.payload };
+            // merge incoming payload with new state
+            return _.merge({...state}, _.mapKeys(action.payload, '_id'));
+        case RENAME_DOCUMENT:
+            // merge incoming payload with new state
+            return _.merge({...state}, _.mapKeys(action.payload, '_id'));
+        case DELETE_DOCUMENT:
+            const { deletedDocuments, parent } = action.payload; 
+
+            // omit documents that are deleted from state
+            let omitted = _.omit(state, deletedDocuments.map(doc => doc._id));
+
+            // if parent of top level deleted doc is gone, update it in the state
+            if (parent) {
+                return _.merge(omitted, {[parent._id]: parent});
+            } else {
+                return omitted;
             }
         default: 
             return state;

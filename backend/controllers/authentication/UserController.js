@@ -5,19 +5,21 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
 
-getUser = (req, res) => {
+getUser = async (req, res) => {
     const userId = req.userObj._id.toString();
 
-    User.findById(userId, (err, user) => {
-		if (err) return res.json({success: false, error: err});
-		user.populate('workspaces', (err, user) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: user});
-        });
-    });
+    let returnedUser;
+
+    try {
+        returnedUser = await  User.findById(userId).populate('workspaces').lean().exec()
+    } catch (err) {
+        return res.json({success: false, error: "getUser Error: findbyId query failed", trace: err});
+    }
+   
+    return res.json({success: true, result: returnedUser});
 }
 
-editUser = (req, res) => {
+editUser = async (req, res) => {
     const userId = req.userObj._id.toString();
     const { username, email} = req.body;
 
@@ -25,59 +27,74 @@ editUser = (req, res) => {
     if (username) update.username = username; 
     if (email) update.email = email;
 
-    User.findByIdAndUpdate(userId, { $set: update }, { new: true }, (err, user) => {
-        if (err) return res.json({ success: false, error: err });
-        user.populate('workspaces', (err, user) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: user});
-        });
-    });
+    let returnedUser;
+
+    try {
+        returnedUser = await  User.findByIdAndUpdate(userId, { $set: update }, { new: true })
+            .populate('workspaces').lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "editUser Error: findbyIdAndUpdate query failed", trace: err});
+    }
+   
+    return res.json({success: true, result: returnedUser});
 }
 
-attachWorkspace = (req, res) => {
-
-    const userId = req.userObj._id.toString();
-    const workspaceId = req.workspaceObj._id.toString();
-
-    let update = {}
-    update.workspaces = ObjectId(workspaceId);
-    User.findByIdAndUpdate(userId, { $push: update }, { new: true }, (err, user) => {
-        if (err) return res.json({ success: false, error: err });
-        user.populate('workspaces', (err, user) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: user});
-        });
-    });
-}
-
-
-removeWorkspace = (req, res) => {
-
+attachUserWorkspace = async (req, res) => {
     const userId = req.userObj._id.toString();
     const workspaceId = req.workspaceObj._id.toString();
 
     let update = {}
     update.workspaces = ObjectId(workspaceId);
 
-    User.findByIdAndUpdate(userId, { $pull: update }, { new: true }, (err, user) => {
-        if (err) return res.json({ success: false, error: err });
-        user.populate('workspaces', (err, user) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: user});
-        });
-    });
+    let returnedUser;
+
+    try {
+        returnedUser = await User.findByIdAndUpdate(userId, { $push: update }, { new: true })
+            .populate('workspaces').lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "attachUserWorkspace Error: findbyIdAndUpdate query failed", trace: err});
+    }
+   
+    return res.json({success: true, result: returnedUser});
+
 }
 
-deleteUser = (req, res) => {
+
+removeUserWorkspace = async (req, res) => {
     const userId = req.userObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
 
-    User.findByIdAndRemove(userId, (err, user) => {
-        if (err) return res.json({ success: false, error: err });
-        user.populate('workspaces', (err, user) => {
-            if (err) return res.json({ success: false, error: err });
-            return res.json({success: true, result: user});
-        });
-    });
+    let update = {}
+    update.workspaces = ObjectId(workspaceId);
+
+    let returnedUser;
+
+    try {
+        returnedUser = await User.findByIdAndUpdate(userId, { $pull: update }, { new: true })
+            .populate('workspaces').lean().exec();
+    } catch (err) {
+        return res.json({success: false, error: "removeUserWorkspace Error: findbyIdAndUpdate query failed", trace: err});
+    }
+   
+    return res.json({success: true, result: returnedUser});
 }
 
-module.exports = {getUser, editUser, attachWorkspace, removeWorkspace, deleteUser}
+deleteUser = async (req, res) => {
+    const userId = req.userObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+
+    let update = {}
+    update.workspaces = ObjectId(workspaceId);
+
+    let returnedUser;
+
+    try {
+        returnedUser = await  User.findByIdAndRemove(userId).select('_id').lean().exec()
+    } catch (err) {
+        return res.json({success: false, error: "deleteUser Error: findbyIdAndRemove query failed", trace: err});
+    }
+   
+    return res.json({success: true, result: returnedUser});
+}
+
+module.exports = {getUser, editUser, attachUserWorkspace, removeUserWorkspace, deleteUser}
