@@ -1,211 +1,164 @@
-var https = require('https')
-
 const fs = require('fs');
-
-var jwt = require('jsonwebtoken');
 
 require('dotenv').config();
 
-var request = require("request");
 
 const apis = require('./apis/api');
-const api = apis.requestBackendClient();
-const sqs = apis.requestSQSServiceObject();
-const queueUrl = "https://sqs.us-east-1.amazonaws.com/695620441159/dataUpdate.fifo";
-const JOB_UPDATE_SNIPPETS = 2;
+const backendClient = apis.requestBackendClient();
+ 
+const crypto = require('crypto')
+
+exports.handler = async (event) => {
 
 
+    console.log("EVENT: ", event);
+    const secret = process.env.WEBHOOK_SECRET;
+    const sigHeaderName = 'x-hub-signature'
+    const sig = event.headers[sigHeaderName] || ''
+    
+    var hmac = crypto.createHmac("sha1", secret)
+    hmac.update(event.body, 'binary')
+    var expected = 'sha1=' + hmac.digest('hex')
 
-createJWTToken = () => {
-
-  const now = new Date().getTime();
-  const timeNow = Math.round(now / 1000);
-
-  // Generate the JWT
-  var payload = {
-    // issued at time
-    iat: timeNow,
-    // JWT expiration time (10 minute maximum)
-    exp: timeNow + (10 * 60),
-    // GitHub App's identifier
-    iss: 68514
-  }
-
-  var private_key = fs.readFileSync('docapp-test.pem', 'utf8');
-
-  return jwt.sign(payload, private_key, { algorithm: 'RS256' });
-
-}
-
-var token = createJWTToken();
-console.log('TOKEN: ');
-console.log(token);
-
-var createHandler = require('github-webhook-handler')
-var handler = createHandler({ path: '/webhook', secret: process.env.WEBHOOK_SECRET })
-
-const options = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
-};
-
-
-https.createServer(options, function (req, res) {
-  handler(req, res, function (err) {
-    res.statusCode = 404
-    res.end('no such location')
-  })
-}).listen(3002)
-
-handler.on('error', function (err) {
-  console.error('Error:', err.message)
-})
-
-handler.on('push', function (event) {
-  /*console.log('Received a push event for %s to %s',
-    event.payload.repository.name,
-    event.payload.ref)*/
-  console.log('Push event.payload: ');
-  console.log(event.payload);
-  // console.log('payload: ');
-  // console.log(event.payload);
-  
-  // var branch = event.payload.ref.split('/').pop();
-
-  var headCommit = event.payload['after'];
-  var repositoryFullName = event.payload['repository']['full_name'];
-  var cloneUrl = event.payload['repository']['clone_url'];
-  var installationId = event.payload['installation']['id'];
-
-  // console.log('branch: ', branch);
-  console.log('headCommit: ', headCommit);
-
-  var timestamp = Date.now().toString();
-
-  var pushData = {
-      'headCommit': headCommit,
-      'repositoryFullName': repositoryFullName,
-      'cloneUrl': cloneUrl,
-      'installationId': installationId,
-      'jobType': JOB_UPDATE_SNIPPETS
-  }
-  var sqsPushData = {
-      MessageAttributes: {
-        "headCommit": {
-          DataType: "String",
-          StringValue: pushData.headCommit
+    if ( !(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) ) {
+        let response = {
+        statusCode: 401,
+        headers: {
+            "x-error-desc" : "Invalid Request Source"
         },
-        "repositoryFullName": {
-          DataType: "String",
-          StringValue: pushData.repositoryFullName
-        },
-        "cloneUrl": {
-          DataType: "String",
-          StringValue: pushData.cloneUrl
-        },
-        "installationId": {
-          DataType: "Number",
-          StringValue: pushData.installationId.toString()
-        },
-        "jobType": {
-          DataType: "Number",
-          StringValue: JOB_UPDATE_SNIPPETS.toString()
+            body: {}
+        };
+        console.error("Webhook Secret Hash Didn't Match");
+        return response;
+    }
+
+    event.body = JSON.parse(event.body);
+    
+    var githubAction = event.headers['x-github-event'];
+    
+    if (githubAction == 'error') {
+        console.error('Error:', err.message)
+    }
+
+    else if (githubAction == 'push') {
+        /*
+        console.log('Received a push event for %s to %s',
+        event.payload.repository.name,
+        event.payload.ref)
+        */
+        console.log('Push event.body: ');
+        console.log(event.body);
+        // console.log('payload: ');
+        // console.log(event.payload);
+      
+        // var branch = event.payload.ref.split('/').pop();
+        var ref = event.body.ref;
+        var baseCommit = event.body.before;
+        var headCommit = event.body.after;
+        var repositoryFullName = event.body.repository.full_name;
+        var cloneUrl = event.body.repository.clone_url;
+        var installationId = event.body.installation.id;
+        // TODO: Call Repository Update Route Here
+        await backendClient.post("/repositories/update", {eventType: 'push', ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId});
+    }
+
+    else if (githubAction == 'installation') {
+        console.log('Installation Event: ');
+        console.log(event.body);
+
+        var installatonId = event.body.installation.id;
+        var action = event.body.action;
+        var repositories = action.repositories;
+        
+        var defaultIcon = 1;
+        
+        
+        if (action == 'created') {
+        
+            for (i = 0; i < repositories.length; i++) {
+              await backendClient.post("/repositories/create", 
+                    {'fullName': repositories[i].full_name,
+                    'installationId': installationId,
+                    'icon': defaultIcon})
+            }
+        
         }
-      },
-      MessageBody: JSON.stringify(pushData),
-      MessageDeduplicationId: timestamp,
-      MessageGroupId: "updateSnippets_" + timestamp,
-      QueueUrl: queueUrl
-  };
-  if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | MessageDeduplicationId: ${timestamp}`);
-  if (process.env.RUN_AS_REMOTE_BACKEND)  log.info(`Push | MessageGroupId: getRefRequest_${timestamp}`);
-  // Send the refs data to the SQS queue
-  let sendSqsMessage = sqs.sendMessage(sqsPushData).promise();
 
-  sendSqsMessage.then((data) => {
-
-      if (process.env.RUN_AS_REMOTE_BACKEND) log.info(`Push | SUCCESS: ${data.MessageId}`);
-      console.log(`Push | SUCCESS: ${data.MessageId}`);
-      // res.json({success: true, msg: "Job successfully sent to queue: ", queueUrl});
-  }).catch((err) => {
-      if (process.env.RUN_AS_REMOTE_BACKEND) log.error(`Push | ERROR: ${err}`);
-      console.log(`Push | ERROR: ${err}`);
-
-      // Send email to emails API
-      // res.json({success: false, msg: "We ran into an error. Please try again."});
-  });
-
-
-});
-
-handler.on('installation', function (event) {
-  console.log('Installation Event: ');
-  console.log(event.payload);
-
-  var installatonId = event.payload.installation.id;
-  var action = event.payload.action;
-  var repositories = action.repositories;
-
-  var defaultIcon = 1;
-
-
-  if (action == 'created') {
-
-    for (i = 0; i < repositories.length; i++) {
-      api.post("/repositories/create", 
-        {'fullName': repositories[i].full_name,
-        'installationId': installationId,
-        'icon': defaultIcon})
+        /*
+        else if (action == 'deleted') {
+    
+        }
+        
+      
+        if(event.payload['action'] == 'created') {
+    
+        }
+        */
     }
 
-  }
+    else if (githubAction == 'installation_repositories') {
+        console.log('Installation repositories event');
+        console.log(event.body);
+        var action = event.body.action;
+        var installationId = event.body.installation.id;
+        console.log('Installation Id: ', installationId);
 
-  /*else if (action == 'deleted') {
+        if (action == 'added') {
+            var added = event.body.repositories_added;
 
-  }*/
-  //if(event.payload['action'] == 'created') {
+            for(i = 0; i < added.length; i++) {
+              await backendClient.post("/repositories/create", 
+                    {'fullName': added[i].full_name,
+                     'installationId': installationId,
+                      'icon': 1});
+            }
+        }
 
-  //  }
-
-});
-
-handler.on('installation_repositories', function (event) {
-  console.log('Installation repositories event');
-  console.log(event.payload);
-  var action = event.payload.action;
-  var installationId = event.payload.installation.id;
-  console.log('Installation Id: ', installationId);
-
-  if (action == 'added') {
-    var added = event.payload.repositories_added;
-
-    for(i = 0; i < added.length; i++) {
-      api.post("/repositories/create", 
-        {'fullName': added[i].full_name,
-        'installationId': installationId,
-        'icon': 1})
-      .then(response => {
-        console.log('Create Repository Success');
-      })
-      .catch(error => {
-        console.log('Create Repository Error: ', error);
-      });
+        else if (action == 'removed') {
+            var removed = event.body.repositories_removed;
+        }        
     }
 
-  }
+    else if (githubAction == "check_suite") {
 
-  else if (action == 'removed') {
-    var removed = event.payload.repositories_removed;
-  }
+      var action = event.body.action;
+      console.log('Check Suite Event Action: ', action);
 
-});
 
-handler.on('issues', function (event) {
-  console.log('Received an issue event for %s action=%s: #%d %s',
-    event.payload.repository.name,
-    event.payload.action,
-    event.payload.issue.number,
-    event.payload.issue.title)
-  console.log('Print payload');
-  console.log(event.payload);
-})
+      // Create new Check Run
+      if (action == "requested") {
+        console.log('Check Suite Event Head Sha: ', event.body.check_suite.head_commit);
+        console.log('Check Suite Event Head Commit Message: ', event.body.check_suite.head_commit.message);
+        //Can't do the following here, rather on the route: Check if branch matches the default_branch
+      }
+    
+    }
+
+    else if (githubAction == 'pull_request') {
+      console.log('Pull Request Event: ');
+      console.log(event.body);
+    }
+
+
+    let responseBody = {
+        message: "200 OK",
+    };
+
+    let responseCode = 200;
+
+    // The output from a Lambda proxy integration must be 
+    // in the following JSON object. The 'headers' property 
+    // is for custom response headers in addition to standard 
+    // ones. The 'body' property  must be a JSON string. For 
+    // base64-encoded payload, you must also set the 'isBase64Encoded'
+    // property to 'true'.
+    let response = {
+        statusCode: responseCode,
+        headers: {
+            "x-custom-header" : "my custom header value"
+        },
+        body: JSON.stringify(responseBody)
+    };
+    console.log("response: " + JSON.stringify(response))
+    return response;
+};

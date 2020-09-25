@@ -4,14 +4,15 @@ const { ObjectId } = Schema.Types;
 
 
 let snippetSchema = new Schema({
-    name: {type: String, index: true},
-    annotation: String,
-    code: [String],
-    start: Number,
-    status: {type: String, enum: ['VALID', 'NEW_REGION','INVALID'], default: 'VALID'},
-    workspace: {type: ObjectId, ref: 'Workspace'},
-    reference: {type: ObjectId, ref: 'Reference'},
-    creator: {type: ObjectId, ref: 'User'},
+    name: String,
+    annotation: {type: String, required: true},
+    code: {type: [String], required: true},
+    start: {type: Number, required: true},
+    status: {type: String, required: true, enum: ['VALID', 'NEW_REGION','INVALID'], default: 'VALID'},
+    workspace: {type: ObjectId, ref: 'Workspace', required: true},
+    reference: {type: ObjectId, ref: 'Reference', required: true},
+    creator: {type: ObjectId, ref: 'User', required: true},
+    repository: {type: ObjectId, ref: 'Repository', required: true},
 });
 
 let Snippet = mongoose.model("Snippet", snippetSchema);
