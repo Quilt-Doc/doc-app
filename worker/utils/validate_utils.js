@@ -1,5 +1,11 @@
 const { execFileSync } = require('child_process');
 const yaml = require('js-yaml');
+const fs = require('fs');
+
+const {serializeError, deserializeError} = require('serialize-error');
+
+
+const backendClient = require('../apis/api').requestBackendClient();
 
 
 const filterVendorFiles = (filePaths) => {
@@ -15,27 +21,32 @@ const filterVendorFiles = (filePaths) => {
 }
 
 
-const getRepositoryObject = async (installationId, repositoryFullName) => {
+const getRepositoryObject = async (installationId, repositoryFullName, worker) => {
 
-  console.log('InstallationId: ', installationId);
-  console.log('repositoryFullName: ', repositoryFullName);
+  await worker.send({action: 'log', info: {level: 'debug', message: `InstallationId, repositoryFullName: ${installationId}, ${repositoryFullName}`,
+                                      source: 'worker-instance', function: 'getRepositoryObject'}})
 
-  const getRepositoryResponse = await backendClient.post('/repositories/job_retrieve', {
-    installationId,
-    fullName: repositoryFullName 
-  });
-  console.log('Finished API Call');
-  if (!getRepositoryResponse.data.success) {
-      throw new Error("getRepositoryObect /repositories/job_retrieve API call failed");
+  var getRepositoryResponse;
+  try {
+    getRepositoryResponse = await backendClient.post('/repositories/job_retrieve', {
+      installationId,
+      fullName: repositoryFullName 
+    });
   }
-  console.log('getRepositoryResponse: ');
-  console.log(getRepositoryResponse.data.result);
+  catch (err) {
+    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                              errorDescription: `Error /repositories/job_retrieve call error on repositoryFullName: ${repositoryFullName}`,
+                                              source: 'worker-instance', function: 'getRepositoryObject'}})
+    worker.kill();
+  }
 
+  if (!getRepositoryResponse.data.success) {
+    await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(getRepositoryResponse.data.error)),
+                                              errorDescription: `Error /repositories/job_retrieve call failed on repositoryFullName: ${repositoryFullName}`,
+                                              source: 'worker-instance', function: 'getRepositoryObject'}})
+    worker.kill();
+  }
   return getRepositoryResponse.data.result[0];
-
-  var repoCommit = getRepositoryResponse.data.result[0].lastProcessedCommit;
-  var repoId = getRepositoryResponse.data.result[0]._id;
-  return [repoId, repoCommit];
 };
 
 
@@ -43,8 +54,6 @@ const getRepositoryObject = async (installationId, repositoryFullName) => {
 const parseCommitObjects = (logLines) => {
     var withinCommit = '';
     var commitObjects = [];
-    console.log('logLines.length: ', logLines.length);
-    console.log('logLines: ', logLines);
 
     var i = 0;
 
@@ -60,8 +69,6 @@ const parseCommitObjects = (logLines) => {
   
       else {
         if (logLines[i].length > 1) { 
-          // console.log('Appending to: ', commitObjects[commitObjects.length-1].sha);
-          // console.log('Appending line: ', logLines[i]);
   
           var lineData = logLines[i].split("\t");
           // Operation type
@@ -153,23 +160,19 @@ const getFileChangeList = (commitObjects) => {
 
   for (i = 0; i < commitObjects.length; i++) {
     var commit = commitObjects[i];
-    console.log('On Commit: ');
-    console.log(commit);
-    // console.log(commit.fileNames);
 
     for (k = 0; k < commit.changes.length; k++) {
 
       var commitChanges = commit.changes[k];
       var commitOperation = commit.changes[k].operation;
-      console.log('COMMIT OPERATION: ', commitOperation);
       var fileObj = trackedFiles.find( function( ele ) {
         return ele.ref == commitChanges.fileNames[0] && ele.deleted == false;
       });
 
+      // Rename Operation
       // If there is already a file object for this existing in trackedFiles, update the ref
       // Else: add file object: {oldRef: snippetFiles[x], ref: commit}
       if (commitOperation.includes('R')) {
-        console.log('Rename Operation');
         if (commitChanges.fileNames.length < 2) {
           throw new Error('Rename Operation with less than 2 names');
         }
@@ -190,9 +193,8 @@ const getFileChangeList = (commitObjects) => {
       }
       // End of R Handling Section
 
-
+      // Delete Operation
       if (commitOperation == 'D') {
-        console.log('Delete Operation');
 
         // We only care if a Snippet file has been deleted
         
@@ -210,8 +212,8 @@ const getFileChangeList = (commitObjects) => {
         }
       }
 
+      // Modify File Operation
       else if (commitOperation == 'M') {
-        console.log('Modify File Operation ');
         if (fileObj) {
           fileObj.operationList.push({sha: commit.sha, operation: 'Modify'});
         }
@@ -221,8 +223,8 @@ const getFileChangeList = (commitObjects) => {
         }
       }
 
+      // Add File Operation
       else if (commitOperation == 'A') {
-        console.log('Add File Operation ');
         if (fileObj) {
           throw new Error ("Add File Commit Operation Found Existing Reference with same `ref` and not deleted");
           fileObj.operationList.push({sha: commit.sha, operation: 'Add'});
@@ -241,93 +243,6 @@ const getFileChangeList = (commitObjects) => {
   return trackedFiles;
 }
 
-
-
-/*
-const getTrackedFiles = (commitObjects, snippetFiles) => {
-  for (i = 0; i < commitObjects.length; i++) {
-    var commit = commitObjects[i];
-    console.log('On Commit: ');
-    console.log(commit);
-    // console.log(commit.fileNames);
-
-    var trackedFiles = [];
-    
-    for (k = 0; k < commit.changes.length; k++) {
-
-      var commitChanges = commit.changes[k];
-      var commitOperation = commit.changes[k].operation;
-      console.log('COMMIT OPERATION: ', commitOperation);
-      var fileObj = trackedFiles.find( function( ele ) { 
-        return ele.ref == commitChanges.fileNames[0];
-      });
-
-      // If there is already a file object for this existing in trackedFiles, update the ref
-      // Else: add file object: {oldRef: snippetFiles[x], ref: commit}
-      if (commitOperation == 'R') {
-        console.log('Rename Operation');
-        if (commitChanges.fileNames.length < 2) {
-          throw new Error('Rename Operation with less than 2 names');
-        }
-        if (fileObj) {
-          if (!(fileObj.deleted)) {
-            // Update the fileObj with the new file name
-            fileObj.ref = commitChanges.fileNames[0];
-            fileObj.sha = commit.sha;
-          }
-        }
-        // Add a new object if the old file name is in snippetFiles
-        // This is the case where the file is being referenced and renamed
-        // for the first time in the commit log
-        else {
-          if (snippetFiles.includes(commitChanges.fileNames[0])) {
-            trackedFiles.push({oldRef: commitChanges.fileNames[0], ref: commitChanges.fileNames[1], sha: commit.sha, deleted: false});
-          }
-        }
-      }
-      // End of R Handling Section
-
-      else {
-
-        if (commitOperation == 'D') {
-          console.log('Delete Operation');
-
-          // We only care if a Snippet file has been deleted
-          
-
-          // Case: file is already being tracked
-          if (fileObj) {
-            fileObj.deleted = true;
-          }
-          // What do we do if this is the only commit referencing the file
-          // Idea: Add a fileObj to trackedFiles with status: 'DELETED'
-          else if (snippetFiles.includes(commitChanges.fileNames[0])) {
-            trackedFiles.push({ref: commitChanges.fileNames[0], deleted: true, sha: commit.sha});
-          }
-
-        }
-
-        else if (commitOperation == 'M' || commitOperation == 'A') {
-            console.log('Add File / Modify File Operation ');
-          if (!(fileObj)) {
-            if (snippetFiles.includes(commitChanges.fileNames[0])) {
-              trackedFiles.push({ref: commitChanges.fileNames[0], deleted: false, sha: commit.sha});
-            }
-          }
-
-          else {
-            fileObj.sha = commit.sha;
-          }
-
-        }
-
-      }
-    }
-  }
-
-  return trackedFiles;
-}
-*/
 
 module.exports = {getRepositoryObject, filterVendorFiles, parseCommitObjects,
                   getFileChangeList, parseGithubFileChangeList };

@@ -6,11 +6,6 @@ var path = require('path');
 var DOMParser = require('xmldom').DOMParser;
 
 const fsPromises = require('fs').promises
-<<<<<<< HEAD:worker/parse_code.js
-const apis = require('./apis/api');
-const api = apis.requestGithubClient();
-=======
->>>>>>> 2b188f80be04dab998def19e7e4dd5cf9f3479b4:worker/parse_doxygen.js
 
 
 const Reference = require('./models/Reference');
@@ -79,14 +74,14 @@ getRefs = async () => {
 
     var worker = require('cluster').worker;
 
-    worker.send({receipt: process.env.receipt})
+    worker.send({action: 'receipt', receipt: process.env.receipt})
 
     await updateJobStatus(constants.jobs.JOB_STATUS_RUNNING);
 
     var parseLevelLookup = await getParseableTree();
 
     var repositoryId = process.env.repositoryId;
-    var installToken = await tokenUtils.getInstallToken(process.env.installationId);
+    var installToken = await tokenUtils.getInstallToken(process.env.installationId, worker);
 
     var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
 

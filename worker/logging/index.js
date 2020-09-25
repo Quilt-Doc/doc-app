@@ -10,31 +10,18 @@ var setupESConnection = require('./es_transport').setupESConnection;
 
 var logger = undefined; 
 
-const errorHunter = logform.format(info => {
-  if (info.message) {
-    if (info.message instanceof Error) {
-      if (info.errorDescription) {
-        info.message.message = `${info.errorDescription}\n${info.message.message}`;
-        delete info.errorDescription;
+const errorDescriptionSetter = logform.format(info => {
+  if (info.errorDescription) {
+    if (info.message) {
+      if (info.message.length > 0) {
+        info.message = `${info.errorDescription}\n${info.message}`
       }
     }
-    return info;
+    else {
+      info.message = info.errorDescription;
+    }
+    delete info.errorDescription;
   }
-
-
-  // info.error = Object.values(info).find(obj => obj instanceof Error);
-
-  return info;
-});
-
-const errorPrinter = logform.format(info => {
-  if (!info.error) return info;
-
-  // Handle case where Error has no stack.
-  var errorMsg = info.error.stack || info.error.toString();
-
-  info.message += `\n${errorMsg}`;
-  console.log('RETURNING MESSAGE: ', info.message);
   return info;
 });
 
@@ -45,18 +32,16 @@ if (process.env.IS_PRODUCTION) {
         new ElasticSearchTransport({
           level: 'info',
           format: winston.format.combine(
-            errorHunter(),
             errors({ stack: true }),
-            // errorPrinter(),
+            errorDescriptionSetter(),
             winston.format.json()
           )
         }),
         new winston.transports.Console({
           level: 'debug',
           format: winston.format.combine(
-            errorHunter(),
             errors({ stack: true }),
-            // errorPrinter(),
+            errorDescriptionSetter(),
             winston.format.colorize(),
             winston.format.simple()
           )
@@ -71,8 +56,8 @@ else {
       new winston.transports.Console({
         level: 'debug',
         format: winston.format.combine(
-          errorHunter(),
-          errorPrinter(),
+          errors({ stack: true }),
+          errorDescriptionSetter(),
           winston.format.colorize(),
           winston.format.simple()
         )

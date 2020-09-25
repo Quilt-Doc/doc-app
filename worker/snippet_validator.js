@@ -234,7 +234,3 @@ module.exports = { findNewSnippetRegion };
 
 // Now I want to get the correct alignment for the window around these increasing segments which maximizes the amount of snippet lines in the window
 // ^^ We shouldn't have to do this because if there is a better alignment at the snippet max, then it will be represented in our array as a separate element
-/* {pathInRepository: snippetObj.pathInRepository.substr(snippetObj.pathInRepository.indexOf("/")+1),
-    _id: snippetObj._id, startLineNum: snippetObj.startLine, numLines: snippetObj.code.length,
-    firstLine: snippetObj.code[0], endLine: snippetObj.code[snippetObj.code.length-1]        
-    } */

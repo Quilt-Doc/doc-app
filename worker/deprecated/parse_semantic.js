@@ -20,27 +20,6 @@ const constants = require('./constants/index');
 
 const { filterVendorFiles, getRepositoryObject } = require('./utils/validate_utils');
 
-/*
-const JOB_GET_REFS = 1;
-const JOB_UPDATE_SNIPPETS = 2;
-const JOB_SEMANTIC = 3;
-
-const JOB_STATUS_FINISHED = 'FINISHED';
-const JOB_STATUS_RUNNING = 'RUNNING';
-const JOB_STATUS_ERROR = 'ERROR';
-*/
-
-const getInstallToken = async (installationId) => {
-    return await Token.findOne({ installationId })
-    .then( token => {
-        return token;
-    })
-    .catch(err => {
-        console.log('Error fetching installation access token');
-        console.log(err);
-        return {};
-    });
-}
 
 const getTreeReferences = async (worker, repoId) => {
     return await Reference.find({repository: ObjectId(repoId), kind: 'file'}, 'path')
@@ -82,9 +61,9 @@ const execSemantic = async () =>  {
 
     var worker = require('cluster').worker;
 
-    worker.send({receipt: process.env.receipt});
+    worker.send({action: 'receipt', receipt: process.env.receipt});
 
-    var repoObj = await getRepositoryObject(process.env.installationId, process.env.fullName);
+    var repoObj = await getRepositoryObject(process.env.installationId, process.env.fullName, worker);
     var repoId = repoObj._id;
     var cloneUrl = repoObj.cloneUrl;
 
@@ -92,7 +71,7 @@ const execSemantic = async () =>  {
     var repoDiskPath = 'git_repos/' + timestamp +'/';
     const { exec, execFile, execFileSync, spawnSync, spawn} = require('child_process');
 
-    var installToken = await tokenUtils.getInstallToken(process.env.installationId);
+    var installToken = await tokenUtils.getInstallToken(process.env.installationId, worker);
 
     var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
 
