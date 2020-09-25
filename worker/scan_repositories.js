@@ -8,6 +8,7 @@ require('dotenv').config();
 const constants = require('./constants/index');
 
 const Repository = require('./models/Repository');
+const Reference = require('./models/Reference');
 
 
 const mongoose = require("mongoose")
@@ -129,16 +130,29 @@ const scanRepositories = async () => {
     }
 
     // Bulk update repository 'lastProcessedCommit' fields
-
+    /*
     const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => ({
 
         updateOne: {
                 filter: { _id: unscannedRepositories[idx]._id },
                 // Where field is the field you want to update
-                update: { $set: { lastProcessedCommit: repositoryCommitResponse.data[0]['sha'] } },
+                update: { $set: { lastProcessedCommit: repositoryCommitResponse.data[0].sha } },
                 upsert: false
         }
     }));
+    */
+
+   const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => {
+    // TODO: Figure out why this list commits endpoint isn't returning an array
+    // console.log('repositoryCommitResponse.data[0]: ');
+    // console.log(repositoryCommitResponse.data[0]);
+    return {updateOne: {
+            filter: { _id: unscannedRepositories[idx]._id },
+            // Where field is the field you want to update
+            update: { $set: { lastProcessedCommit: repositoryCommitResponse.data.sha } },
+            upsert: false
+    }}
+    });
 
     if (bulkLastCommitOps.length > 0) {
         try {
@@ -177,7 +191,7 @@ const scanRepositories = async () => {
     var treeReferences = [];
     // Extract References from trees
     for (i = 0; i < repositoryTreeResponseList.length; i++) {
-        var currentTree = repositoryTreeResponseList[i].tree;
+        var currentTree = repositoryTreeResponseList[i].data.tree;
         for (k = 0; k < currentTree.length; k++) {
             let item = currentTree[k];
 
@@ -187,7 +201,7 @@ const scanRepositories = async () => {
             let path = pathSplit.join('/');
             let kind = item.type == 'blob' ? 'file' : 'dir'
 
-            treeReferences.push({ name, path, kind, repository: ObjectId(unscannedRepositories[idx]._id) });
+            treeReferences.push({ name, path, kind, repository: ObjectId(unscannedRepositories[i]._id), parseProvider: 'create' });
         }
     }
 
