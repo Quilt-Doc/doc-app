@@ -61,7 +61,7 @@ exports.handler = async (event) => {
         var cloneUrl = event.body.repository.clone_url;
         var installationId = event.body.installation.id;
         // TODO: Fix controller method, so doesn't update non-scanned repositories
-        await backendClient.post("/repositories/update", {eventType: 'push', ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId});
+        await backendClient.post("/repositories/update", { ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId });
     }
 
     else if (githubAction == 'installation') {
