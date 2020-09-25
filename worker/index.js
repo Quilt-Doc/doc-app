@@ -166,7 +166,7 @@ if (cluster.isMaster) {
           logger.error({message: err, errorDescription: `Error Deleting SQS Message.`, source: 'worker-instance', function: 'index.js'})
         }
         logger.debug({message: `Successfully deleted SQS message`, source: 'worker-instance', function: 'index.js'});
-      });
+    });
     numWorkersActive  = numWorkersActive - 1;
     if (numWorkersActive < 4 && !(currentlyPolling)) {
       pollQueue(cluster);
@@ -177,6 +177,7 @@ if (cluster.isMaster) {
     logger.debug({message: `Worker ${worker.process.pid} exited.`, source: 'worker-instance', function: 'index.js'});
   });
 }
+
 else {
   var worker = require('cluster').worker;
 
@@ -188,7 +189,7 @@ else {
   // Scan Repository Job
   if(process.env.jobType == constants.jobs.JOB_SCAN_REPOSITORIES) {
     
-    worker.send({action: 'log', info: {level: 'debug', message: `Running Scan Repositories Job`}});
+    worker.send({action: 'log', info: {level: 'debug', message: `Running Scan Repositories Job`, source: 'worker-instance', function: 'index.js'}});
     process.env.repositoryIdList = JSON.stringify(jobData.repositoryIdList);
     process.env.installationId = jobData.installationId;
     scanRepositories.scanRepositories();
@@ -196,9 +197,9 @@ else {
 
   // Update Reference Job
   else if (process.env.jobType == constants.jobs.JOB_UPDATE_REFERENCES) {
-    
-    worker.send({action: 'log', info: {level: 'debug', message: `Running Update References Job`}});
-    
+
+    worker.send({action: 'log', info: {level: 'debug', message: `Running Update References Job`, source: 'worker-instance', function: 'index.js'}});
+
     // installationId, fullName, headCommit
     process.env.cloneUrl = jobData.cloneUrl;
     process.env.installationId = jobData.installationId;
@@ -208,5 +209,5 @@ else {
   }
  
 
-  worker.send({action: 'log', info: {level: 'debug', message: `Worker ${process.pid} started`}});
+  worker.send({action: 'log', info: {level: 'debug', message: `Worker ${process.pid} started`, source: 'worker-instance', function: 'index.js'}});
 }

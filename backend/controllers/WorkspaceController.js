@@ -14,6 +14,9 @@ const quickScore = require("quick-score").quickScore;
 
 const PAGE_SIZE = 10;
 
+const jobs = require('../apis/jobs');
+const jobConstants = require('../constants/index').jobs;
+
 const logger = require('../logging/index').logger;
 
 checkValid = (item) => {
@@ -52,7 +55,7 @@ createWorkspace = async (req, res) => {
     // Set all workspace Repositories 'currentlyScanning' to true
     var workspaceRepositories;
     try {
-        workspaceRepositories = await Repository.update({_id: { $in: repositoryIds}}, {$set: { currentlyScanning: true }});
+        workspaceRepositories = await Repository.update({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }});
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -62,6 +65,21 @@ createWorkspace = async (req, res) => {
     }
 
     // Kick off Scan Repositories Job
+    var scanRepositoriesData = {};
+    scanRepositoriesData['installationId'] = installationId;
+    scanRepositoriesData['repositoryIdList'] = JSON.stringify(repositoryIds);
+    scanRepositoriesData['jobType'] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
+
+    try {
+        await jobs.dispatchScanRepositoriesJob(scanRepositoriesData);
+    }
+
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `error dispatching scanRepositoriesJob installationId, repositoryIds: ${installationId}, ${JSON.stringify(repositoryIds)}`,
+                                function: 'createWorkspace'});
+        return res.json({success: false, error: "createWorkspace error: Could not kick off scan repository job", trace: err});
+    }
 
 
     // Returning workspace

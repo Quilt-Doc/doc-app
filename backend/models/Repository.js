@@ -6,8 +6,8 @@ const { ObjectId, Mixed } = Schema.Types;
 // add default branch
 var repositorySchema = new Schema({
 	fullName: {type: String, index: true},
-	link: String,
 	lastProcessedCommit: { type: String, default: ''},
+	defaultBranch: {type: String},
 	installationId: Number,
 	htmlUrl: String,
 	cloneUrl: String,

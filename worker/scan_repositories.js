@@ -26,8 +26,9 @@ const scanRepositories = async () => {
 
     var installationId = process.env.installationId;
 
-
     var repositoryIdList = JSON.parse(process.env.repositoryIdList);
+    var urlList;
+
 
     var repositoryObjList;
 
@@ -42,16 +43,16 @@ const scanRepositories = async () => {
     }
 
 
-    // Assumption: Repositories have had 'currentlyScanning' set to true
+    // Assumption: Repositories with 'scanned' == false have 'currentlyScanning' set to true
     // Filter out repositories with 'scanned' == true
-
-
-
-
-    if (repository.scanned == true) {
-        await logger.error({source: 'backend-api', error: Error(`Repository already scanned fullName, installationId: ${fullName}, ${installationId}`),
-                                errorDescription: 'Repository already scanned', function: 'scanRepositories'});
-        return res.json({success: false, error: `Repository already scanned fullName, installationId: ${fullName}, ${installationId}`});
+    var unscannedRepositories = repositoryObjList.filter(repositoryObj => repositoryObj.scanned == false);
+    var unscannedRepositoryIdList = unscannedRepositories.map(repositoryObj => repositoryObj._id);
+    
+    // If all repositories within this workspace have already been scanned, nothing to do
+    if (unscannedRepositories.length == 0) {
+        await worker.send({action: 'log', info: {level: 'info', message: `No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`,
+                                                    source: 'worker-instance', function: 'scanRepositories'}});
+        worker.kill();
     }
 
 
@@ -60,116 +61,180 @@ const scanRepositories = async () => {
         installationClient = await apis.requestInstallationClient(installationId);
     }
     catch (err) {
-        await logger.error({source: 'worker-instance', message: err,
-                        errorDescription: `Error fetching installationClient installationId: ${installationId}`, function: 'scanRepositories'});
-        return res.json({success: false, error: 'Error fetching installationClient'});
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                    errorDescription: `Error fetching installationClient installationId: ${installationId}`,
+                                                    function: 'scanRepositories'}});
+        worker.kill();
     }
-    
-    var listCommitResponse;
+
+    // Get Repository objects from github for all unscanned Repositories
+    var repositoryListObjects;
     try {
-        listCommitResponse = await installationClient.get('/repos/' + fullName + '/commits')
+        urlList = unscannedRepositories.map(repositoryObj => `/repos/${repositoryObj.fullName}`);
+        var requestPromiseList = urlList.map(url => installationClient.get(url));
+
+        repositoryListObjects = await Promise.all(requestPromiseList);
     }
     catch (err) {
-        await logger.error({source: 'backend-api', message: err, 
-                        errorDescription: `Error getting repository commits fullName, installationId: ${fullName}, ${installationId}`,
-                        function: 'scanRepository'});
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                    errorDescription: `Error getting repository objects urlList: ${urlList}`,
+                                                    function: 'scanRepositories'}});
+        worker.kill();
     }
 
-    var latestCommitSha = listCommitResponse.data[0]['sha'];
+    // Bulk update 'cloneUrl', 'htmlUrl', and 'defaultBranch' fields
+    // Update our local list of unscannedRepositories to include the default_branch at the same time
+    const bulkFieldUpdateOps = repositoryListObjects.map((repositoryListObjectResponse, idx) => {
+        unscannedRepositories[idx].defaultBranch = repositoryListObjectResponse.data.default_branch
+        return {
+            updateOne: {
+                    filter: { _id: unscannedRepositories[idx]._id },
+                    // Where field is the field you want to update
+                    update: { $set: { htmlUrl: repositoryListObjectResponse.data.html_url,
+                                        cloneUrl: repositoryListObjectResponse.data.clone_url,
+                                        defaultBranch:  repositoryListObjectResponse.data.default_branch} },
+                    upsert: false
+            }
+        }
+    });
 
-    repository.lastProcessedCommit = latestCommitSha;
+    if (bulkFieldUpdateOps.length > 0) {
+        try {
+            const bulkResult = await Repository.collection.bulkWrite(bulkFieldUpdateOps);
+            await worker.send({action: 'log', info: {level: 'debug', message: `bulk Repository 'html_url', 'clone_url', 'default_branch' update results: ${bulkResult}`,
+                                                source: 'worker-instance', function: 'scanRepositories'}});
+        }
+        catch(err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                        errorDescription: `Error bulk updating  on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
+                                                        source: 'worker-instance', function: 'scanRepositories'}});
+            worker.kill();
+        }
+    }
 
+
+    // Get Repository commits for all unscanned Repositories
+    var repositoryListCommits;
     try {
-        repository = await respository.save();
+        urlList = unscannedRepositories.map(repositoryObj => `/repos/${repositoryObj.fullName}/commits/${repositoryObj.defaultBranch}`);
+        var requestPromiseList = urlList.map(url => installationClient.get(url));
+
+        repositoryListCommits = await Promise.all(requestPromiseList);
     }
     catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
-                                function: 'scanRepository'});
-        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                    errorDescription: `Error getting repository commits urlList: ${urlList}`,
+                                                    function: 'scanRepositories'}});
+        worker.kill();
     }
 
-    var githubRepositoryObj;
+    // Bulk update repository 'lastProcessedCommit' fields
+
+    const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => ({
+
+        updateOne: {
+                filter: { _id: unscannedRepositories[idx]._id },
+                // Where field is the field you want to update
+                update: { $set: { lastProcessedCommit: repositoryCommitResponse.data[0]['sha'] } },
+                upsert: false
+        }
+    }));
+
+    if (bulkLastCommitOps.length > 0) {
+        try {
+            const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps);
+            await worker.send({action: 'log', info: {level: 'debug', message: `bulk Repository 'lastProcessCommit' update results: ${bulkResult}`,
+                                                source: 'worker-instance', function: 'scanRepositories'}});
+        }
+        catch(err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                        errorDescription: `Error bulk updating  on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
+                                                        source: 'worker-instance', function: 'scanRepositories'}});
+            worker.kill();
+        }
+    }
+
+    // Get Tree Objects for each Repository
+    var repositoryTreeResponseList;
+
+    // Get tree sha's for latest commit on default branch for each Repository
+    repositoryListCommits.forEach((repositoryCommitResponse, idx) => {
+        unscannedRepositories[idx].treeSha = repositoryCommitResponse.data.commit.tree.sha;
+    });
+
     try {
-        githubRepositoryObj = await installationClient.get(`/repos/${fullName}`).data;
+        urlList = unscannedRepositories.map(repositoryObj => `/repos/${repositoryObj.fullName}/git/trees/${repositoryObj.treeSha}?recursive=true`);
+        var requestPromiseList = urlList.map(url => installationClient.get(url));
+        repositoryTreeResponseList = await Promise.all(requestPromiseList);
     }
     catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error getting repository object from Github fullName, installationId: ${fullName}, ${installationId}`,
-                                function: 'scanRepository'});
-        return res.json({success: false, error: `Error getting repository object from Github fullName, installationId: ${fullName}, ${installationId}`});
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                    errorDescription: `Error getting repository tree urlList: ${urlList}`,
+                                                    function: 'scanRepositories'}});
+        worker.kill();
     }
 
-    var cloneUrl = githubRepositoryObj.clone_url;
-    
-    repository.cloneUrl = cloneUrl;
-    
-    try {
-        repository = await repository.save();
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
-                                function: 'scanRepository'});
-        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
+    var treeReferences = [];
+    // Extract References from trees
+    for (i = 0; i < repositoryTreeResponseList.length; i++) {
+        var currentTree = repositoryTreeResponseList[i].tree;
+        for (k = 0; k < currentTree.length; k++) {
+            let item = currentTree[k];
 
-    }
+            let pathSplit = item.path.split('/')
 
-    // Get all commits from default branch
-    var commitListResponse;
-    try {
-        commitListResponse = await installationClient.get(`/repos/${fullName}/commits/${githubRepositoryObj.default_branch}`).data;
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error getting list of commits for repository fullName, installationId: ${fullName}, ${installationId}`,
-                                function: 'scanRepository'});
-        return res.json({success: false, error: `Error getting list of commits for repository fullName, installationId: ${fullName}, ${installationId}`});
+            let name = pathSplit.slice(pathSplit.length - 1)[0]
+            let path = pathSplit.join('/');
+            let kind = item.type == 'blob' ? 'file' : 'dir'
+
+            treeReferences.push({ name, path, kind, repository: ObjectId(unscannedRepositories[idx]._id) });
+        }
     }
 
-    // Extract tree SHA from most recent commit
-    let treeSHA = commitListResponse.commit.tree.sha;
 
-
-    // Extract contents using tree SHA
-    var treeResponse;
-    try {
-        treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${treeSHA}?recursive=true`).data;
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error getting tree for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`,
-                                function: 'scanRepository'});
-        return res.json({success: false, error: `Error getting tree for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`});
-    }
-
-    let treeReferences = treeResponse.tree.map(item => {
-
-        let pathSplit = item.path.split('/')
-        let name = pathSplit.slice(pathSplit.length - 1)[0]
-        let path = pathSplit.join('/');
-        let kind = item.type == 'blob' ? 'file' : 'dir'
-        return {name, path, kind, repository: ObjectId(repository._id)}
-    })
-
+    // Bulk insert tree references
     var insertedReferences;
     try {
         insertedReferences = await Reference.insertMany(treeReferences);
     }
     catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error inserting tree references for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`,
-                                function: 'scanRepository'});
-        return res.json({success: false, error: `Error inserting tree references for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`});
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                    errorDescription: `Error inserting tree references: ${JSON.stringify(unscannedRepositoryIdList)}`,
+                                                    function: 'scanRepositories'}});
+        worker.kill();
     }
-    logger.info({source: 'backend-api',
-                    message: `scanRepository: inserted ${insertedReferences.length} tree references for repository fullName, installationId: ${fullName}, ${installationId}`,
-                    function: 'scanRepository'});
-    return res.json({success: true, result: insertedReferences.length});
+
+    await worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', message: `inserted ${insertedReferences.length} tree references`,
+                                                function: 'scanRepositories'}});
 
 
+    // Update 'scanned' to true, 'currentlyScanning' to false
+    const bulkStatusUpdateOps = unscannedRepositories.map(repositoryObj => ({
 
+        updateOne: {
+                filter: { _id: repositoryObj._id },
+                // Where field is the field you want to update
+                update: { $set: { scanned: true, currentlyScanning: false } },
+                upsert: false
+        }
+    }));
 
+    if (bulkStatusUpdateOps.length > 0) {
+        try {
+            const bulkResult = await Repository.collection.bulkWrite(bulkStatusUpdateOps);
+            await worker.send({action: 'log', info: {level: 'debug', message: `bulk Repository status update results: ${bulkResult}`,
+                                                source: 'worker-instance', function: 'scanRepositories'}});
+        }
+        catch(err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                        errorDescription: `Error bulk updating status on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
+                                                        source: 'worker-instance', function: 'scanRepositories'}});
+            worker.kill();
+        }
+    }
+
+    await worker.send({action: 'log', info: {level: 'info', message: `Completed scanning repositories: ${unscannedRepositoryIdList}`,
+                                                source: 'worker-instance', function: 'scanRepositories'}});
 }
 
 module.exports = {

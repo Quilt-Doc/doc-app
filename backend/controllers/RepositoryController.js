@@ -398,7 +398,7 @@ updateRepository = async (req, res) => {
         repository.updateReferencesJobStatus = jobConstants.JOB_STATUS_RUNNING;
         await repository.save();
         console.log('Calling update References Job');
-        await jobs.dispatchUpdateReferencesJob(runReferencesData, log);
+        await jobs.dispatchUpdateReferencesJob(runReferencesData);
 
 
 
