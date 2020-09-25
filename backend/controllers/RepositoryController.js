@@ -388,23 +388,9 @@ updateRepository = async (req, res) => {
                     return res.json({success: false, error: 'Error setting repository snippetJobStatus = JOB_STATUS_RUNNING ' + err});
                 });
 
-        var runSnippetData = {};
-        runSnippetData['fullName'] = fullName;
-        runSnippetData['installationId'] = installationId;
-        runSnippetData['headCommit'] = headCommit;
-        runSnippetData['cloneUrl'] = cloneUrl;
-        runSnippetData['jobType'] = jobConstants.JOB_UPDATE_SNIPPETS.toString();
-
-        repository.updateSnippetJobStatus = jobConstants.JOB_STATUS_RUNNING;
-        await repository.save();
-        // await jobs.dispatchSemanticJob(runSnippetData, log);
-
-        // 
-
         var runReferencesData = {};
         runReferencesData['fullName'] = fullName;
         runReferencesData['installationId'] = installationId;
-        // runReferencesData['headCommit'] = headCommit;
         runReferencesData['headCommit'] = '9d87a041d7f12f1f59df90fb2e9485d9b067ac37';
         runReferencesData['cloneUrl'] = cloneUrl;
         runReferencesData['jobType'] = jobConstants.JOB_UPDATE_REFERENCES.toString();

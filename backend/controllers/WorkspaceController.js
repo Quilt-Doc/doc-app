@@ -1,9 +1,10 @@
 
 const Workspace = require('../models/Workspace');
+const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 const Document = require('../models/Document');
 const Tag = require('../models/Tag');
-const Linkage = require('../models/Linkage')
+const Linkage = require('../models/Linkage');
 
 var mongoose = require('mongoose');
 const { rest } = require('lodash');
@@ -12,6 +13,8 @@ const { ObjectId } = mongoose.Types;
 const quickScore = require("quick-score").quickScore;
 
 const PAGE_SIZE = 10;
+
+const logger = require('../logging/index').logger;
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -37,20 +40,39 @@ createWorkspace = async (req, res) => {
         memberUsers: [ObjectId(creatorId)],
         repositories: repositoryIds.map(repoId => ObjectId(repoId))
     });
-    
+
     // save workspace
     try {
         workspace = await workspace.save();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `error saving workspace creator: ${creatorId}`, function: 'createWorkspace'});
         return res.json({success: false, error: "createWorkspace error: save() on new workspace failed", trace: err});
     }
 
+    // Set all workspace Repositories 'currentlyScanning' to true
+    var workspaceRepositories;
+    try {
+        workspaceRepositories = await Repository.update({_id: { $in: repositoryIds}}, {$set: { currentlyScanning: true }});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `error updating workspace repositories to currentlyScanning repositoryIds: ${JSON.stringify(repositoryIds)}`,
+                                function: 'createWorkspace'});
+        return res.json({success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err});
+    }
+
+    // Kick off Scan Repositories Job
+
+
+    // Returning workspace
     // populate workspace
     try {
         workspace = await Workspace.populate(workspace, {path: 'creator repositories memberUsers'});
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `error populating workspace creator: ${creatorId}`, function: 'createWorkspace'});
         return res.json({success: false, error: "createWorkspace error: workspace population failed", trace: err});
     }
+
 
     return res.json({success: true, result: workspace});
 }

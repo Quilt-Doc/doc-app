@@ -13,14 +13,8 @@ var repositorySchema = new Schema({
 	cloneUrl: String,
 	created: {type: Date, default: Date.now },
 	icon: Number,
-	
-	references: [{type: ObjectId, ref: 'Reference', index: true}],
-	refreshingReferences: {type: Boolean, default: false},
-	// "RUNNING", "FINISHED", "ERROR"
-	doxygenJobStatus: String,
-	semanticJobStatus: String,
-	updateSnippetsJobStatus: String,
-	updateReferencesJobStatus: String
+	scanned: {type: Boolean, default: false, required: true},
+	currentlyScanning: {type: Boolean, default: false, required: true}
 });
 
 

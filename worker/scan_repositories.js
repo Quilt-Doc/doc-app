@@ -27,19 +27,23 @@ const scanRepositories = async () => {
     var installationId = process.env.installationId;
 
 
-    var repositoryIdList = process.env.repositoryIdList;
+    var repositoryIdList = JSON.parse(process.env.repositoryIdList);
 
     var repositoryObjList;
 
     try {
-        repositoryObjList = await Repository.find({_id: {$in: repositoryIdList}});
+        repositoryObjList = await Repository.find({_id: {$in: repositoryIdList}, installationId});
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                    errorDescription: `Error finding repositories, repositoryIdList: ${repoId}`,
+                                                    errorDescription: `Error finding repositories, installationId repositoryIdList: ${installationId}, ${JSON.stringify(repositoryIdList)}`,
                                                     source: 'worker-instance', function: 'scanRepositories'}});
         worker.kill();
     }
+
+
+    // Assumption: Repositories have had 'currentlyScanning' set to true
+    // Filter out repositories with 'scanned' == true
 
 
 
