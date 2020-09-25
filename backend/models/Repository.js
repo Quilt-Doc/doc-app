@@ -13,7 +13,8 @@ var repositorySchema = new Schema({
 	cloneUrl: String,
 	created: {type: Date, default: Date.now },
 	icon: Number,
-	scanned: {type: Boolean, default: false, required: true}
+	scanned: {type: Boolean, default: false, required: true},
+	currentlyScanning: {type: Boolean, default: false, required: true}
 });
 
 

@@ -36,7 +36,8 @@ initRepository = async (req, res) => {
         fullName,
         installationId,
         icon,
-        scanned: false
+        scanned: false,
+        currentlyScanning: false
     });
 
     try {
@@ -280,8 +281,6 @@ retrieveRepositories = async (req, res) => {
 jobRetrieveRepositories = async (req, res) => {
    const {fullName, installationId, fullNames} = req.body;
 
-    var repositoriesInWorkspace = req.workspaceObj.repositories;
-
     let query = Repository.find();
 
     if (fullName) query.where('fullName').equals(fullName);
@@ -293,13 +292,14 @@ jobRetrieveRepositories = async (req, res) => {
     try {
         returnedRepositories = await query.lean().exec()
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error job fetching repositories, fullName, installationId: ${fullName}, ${installationId}`,
+                                function: 'jobRetrieveRepositories'});
+
         return res.json({success: false, error: 'retrieveRepositories error: repository retrieve \
             query failed', trace: err});
     }
-    
-    // make sure that repository is in accessible workspace
-    returnedRepositories = returnedRepositories.filter((repo) => repositoriesInWorkspace.includes(repo));
-    
+
     return res.json({success: true, result: returnedRepositories});
 }
 
@@ -484,7 +484,8 @@ updateRepository = async (req, res) => {
 
 
 module.exports = {
-    getRepositoryFile, createRepository, getRepository,
+    initRepository, scanRepository,
+    getRepositoryFile, getRepository,
     deleteRepository, retrieveRepositories,
     validateRepositories, pollRepositories, updateRepository,
     jobRetrieveRepositories

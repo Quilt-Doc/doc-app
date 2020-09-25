@@ -14,7 +14,6 @@ const crypto = require('crypto')
 exports.handler = async (event) => {
 
 
-    console.log("EVENT: ", event);
     const secret = process.env.WEBHOOK_SECRET;
     const sigHeaderName = 'x-hub-signature'
     const sig = event.headers[sigHeaderName] || ''
@@ -61,7 +60,7 @@ exports.handler = async (event) => {
         var repositoryFullName = event.body.repository.full_name;
         var cloneUrl = event.body.repository.clone_url;
         var installationId = event.body.installation.id;
-        // TODO: Call Repository Update Route Here
+        // TODO: Fix controller method, so doesn't update non-scanned repositories
         await backendClient.post("/repositories/update", {eventType: 'push', ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId});
     }
 
@@ -78,13 +77,17 @@ exports.handler = async (event) => {
         
         if (action == 'created') {
 
-            for (i = 0; i < repositories.length; i++) {
-              await backendClient.post("/repositories/create", 
-                    {'fullName': repositories[i].full_name,
-                    'installationId': installationId,
-                    'icon': defaultIcon})
+            var postDataList = repositories.map(repositoryObj => { fullName, repositoryObj.full_name, installationId, 'icon': defaultIcon});
+
+            var requestPromiseList = postDataList.map(postDataObj => axios.post("/repositories/create", postDataObj));
+
+            try {
+                await Promise.all(requestPromiseList);
             }
-        
+            catch (err) {
+
+            }
+
         }
 
         /*
@@ -134,7 +137,7 @@ exports.handler = async (event) => {
         console.log('Check Suite Event Head Commit Message: ', event.body.check_suite.head_commit.message);
         //Can't do the following here, rather on the route: Check if branch matches the default_branch
       }
-    
+
     }
 
 

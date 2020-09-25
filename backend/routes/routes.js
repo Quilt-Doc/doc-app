@@ -57,24 +57,24 @@ router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referen
 
 // Validate workspace membership for calling user; all methods
 const document_controller = require('../controllers/DocumentController');
-router.post('/documents/:workspaceId/create', authorizationMiddleware.documentMiddleware, document_controller.createDocument); // DONE
-router.get('/documents/:workspaceId/get/:documentId', authorizationMiddleware.documentMiddleware, document_controller.getDocument); // DONE
-router.put('/documents/:workspaceId/edit/:documentId', authorizationMiddleware.documentMiddleware, document_controller.editDocument); //  DONE
-router.delete('/documents/:workspaceId/delete/:documentId', authorizationMiddleware.documentMiddleware, document_controller.deleteDocument); // DONE
-router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware.documentMiddleware, document_controller.renameDocument); // DONE
-router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.documentMiddleware, document_controller.moveDocument); // DONE
-router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, document_controller.retrieveDocuments); // DONE
+router.post('/documents/:workspaceId/create', authorizationMiddleware.documentMiddleware, document_controller.createDocument);
+router.get('/documents/:workspaceId/get/:documentId', authorizationMiddleware.documentMiddleware, document_controller.getDocument);
+router.put('/documents/:workspaceId/edit/:documentId', authorizationMiddleware.documentMiddleware, document_controller.editDocument);
+router.delete('/documents/:workspaceId/delete/:documentId', authorizationMiddleware.documentMiddleware, document_controller.deleteDocument);
+router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware.documentMiddleware, document_controller.renameDocument);
+router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.documentMiddleware, document_controller.moveDocument);
+router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, document_controller.retrieveDocuments);
 
 
-router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentTag); // DONE
-router.put('/documents/:workspaceId/:documentId/remove_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentTag); // DONE
+router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentTag);
+router.put('/documents/:workspaceId/:documentId/remove_tag/:tagId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentTag);
 
-router.put('/documents/:workspaceId/:documentId/attach_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentReference); // DONE
-router.put('/documents/:workspaceId/:documentId/remove_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentReference); // DONE
+router.put('/documents/:workspaceId/:documentId/attach_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentReference);
+router.put('/documents/:workspaceId/:documentId/remove_reference/:referenceId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentReference);
 
 
-router.put('/documents/:workspaceId/:documentId/attach_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentSnippet); // DONE
-router.put('/documents/:workspaceId/:documentId/remove_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentSnippet); // DONE
+router.put('/documents/:workspaceId/:documentId/attach_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.attachDocumentSnippet);
+router.put('/documents/:workspaceId/:documentId/remove_snippet/:snippetId', authorizationMiddleware.documentMiddleware, document_controller.removeDocumentSnippet);
 
 // These routes are not usable yet.
 /*
@@ -90,12 +90,12 @@ router.put('/documents/:workspaceId/remove_canread/:id', authorizationMiddleware
 
 // Validate workspace membership for calling user; all methods
 const snippet_controller = require('../controllers/SnippetController');
-router.post('/snippets/:workspaceId/:referenceId/create', authorizationMiddleware.snippetMiddleware, snippet_controller.createSnippet); // DONE
-router.get('/snippets/:workspaceId/get/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.getSnippet); // DONE
-router.put('/snippets/:workspaceId/edit/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.editSnippet); // DONE
-router.delete('/snippets/:workspaceId/delete/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.deleteSnippet); // DONE
-router.post('/snippets/:workspaceId/retrieve', authorizationMiddleware.snippetMiddleware, snippet_controller.retrieveSnippets); // DONE
-router.post('/snippets/:workspaceId/refresh', authorizationMiddleware.snippetMiddleware, snippet_controller.refreshSnippets); // DONE
+router.post('/snippets/:workspaceId/:referenceId/create', authorizationMiddleware.snippetMiddleware, snippet_controller.createSnippet);
+router.get('/snippets/:workspaceId/get/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.getSnippet);
+router.put('/snippets/:workspaceId/edit/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.editSnippet);
+router.delete('/snippets/:workspaceId/delete/:snippetId', authorizationMiddleware.snippetMiddleware, snippet_controller.deleteSnippet);
+router.post('/snippets/:workspaceId/retrieve', authorizationMiddleware.snippetMiddleware, snippet_controller.retrieveSnippets);
+router.post('/snippets/:workspaceId/refresh', authorizationMiddleware.snippetMiddleware, snippet_controller.refreshSnippets);
 
 
 
@@ -106,8 +106,8 @@ const repository_controller = require('../controllers/RepositoryController');
 // create - dev role only
 // update - dev role only
 
-router.post('/repositories/create', authorizationMiddleware.repositoryMiddleware, repository_controller.createRepository); // DONE
-router.post('/repositories/update', authorizationMiddleware.repositoryMiddleware, repository_controller.updateRepository); // DONE
+router.post('/repositories/init', authorizationMiddleware.repositoryMiddleware, repository_controller.initRepository);
+router.post('/repositories/update', authorizationMiddleware.repositoryMiddleware, repository_controller.updateRepository);
 router.post('/repositories/job_retrieve', authorizationMiddleware.repositoryMiddleware, repository_controller.jobRetrieveRepositories);
 
 // User accessible
@@ -124,12 +124,12 @@ router.post('/repositories/job_retrieve', authorizationMiddleware.repositoryMidd
 // get - verify user is in a workspace with this repository added
 // delete - verify user is in a workspace with this repository added
 
-router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.getRepositoryFile); // DONE
-router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repository_controller.retrieveRepositories); // DONE
-router.post('/repositories/validate', authorizationMiddleware.repositoryMiddleware, repository_controller.validateRepositories); // DONE
-router.post('/repositories/:workspaceId/poll', authorizationMiddleware.repositoryMiddleware, repository_controller.pollRepositories); // DONE
-router.get('/repositories/:workspaceId/get/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.getRepository); // DONE
-router.delete('/repositories/:workspaceId/delete/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.deleteRepository); // DONE
+router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.getRepositoryFile);
+router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repository_controller.retrieveRepositories);
+router.post('/repositories/validate', authorizationMiddleware.repositoryMiddleware, repository_controller.validateRepositories);
+router.post('/repositories/:workspaceId/poll', authorizationMiddleware.repositoryMiddleware, repository_controller.pollRepositories);
+router.get('/repositories/:workspaceId/get/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.getRepository);
+router.delete('/repositories/:workspaceId/delete/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.deleteRepository);
 
 
 // create - verify user exists
