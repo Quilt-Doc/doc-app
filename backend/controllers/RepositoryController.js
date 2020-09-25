@@ -7,11 +7,7 @@ const apis = require('../apis/api');
 const jobs = require('../apis/jobs');
 const jobConstants = require('../constants/index').jobs;
 
-
-const fs = require('fs');
-const fsPath = require('fs-path');
-
-const { exec, execFile } = require('child_process');
+const logger = require('../logging/index').logger;
 
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
@@ -20,19 +16,8 @@ const Document = require('../models/Document');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
-const { v4 } = require('uuid');
 const { json } = require('body-parser');
 
-
-/*repositorySearch = (req, res) => {
-    console.log(req.body);
-    const { RepositorysitoryName } = req.body;
-    const response = await api.get('/repos//create', formValues );
-
-    if (!typeof repositoryName == 'undefined' && repositoryName !== null) return res.json({success: false, error: 'no repo repositoryName provided'});
-    
-    return res.json({status: 'SUCCESS'});
-}*/
 
 checkValid = (item) => {
     if (item !== null && item !== undefined) {
@@ -41,99 +26,155 @@ checkValid = (item) => {
     return false
 }
 
+initRepository = async (req, res) => {
+    const {fullName, installationId, icon} = req.body;
 
-// Needs to use installation token
-createRepository = async (req, res) => {
-    const {fullName, installationId, htmlUrl, cloneUrl, icon} = req.body;
     if (!checkValid(fullName)) return res.json({success: false, error: 'no repository fullName provided'});
     if (!checkValid(installationId)) return res.json({success: false, error: 'no repository installationId provided'});
 
     let repository = new Repository({
         fullName,
         installationId,
-        icon
+        icon,
+        scanned: false
     });
 
-    if (htmlUrl) repository.htmlUrl = htmlUrl;
-    if (cloneUrl) repository.cloneUrl = cloneUrl;
+    try {
+        repository = await repository.save();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: 'err',
+                        errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
+                        function: 'initRepository'});
+        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
+    }
+
+    return res.json({success: true, result: repository});
+}
+
+// Needs to use installation token
+scanRepository = async (req, res) => {
+
+    var repository = req.repositoryObj;
+
+    if (repository.scanned == true) {
+        await logger.error({source: 'backend-api', error: Error(`Repository already scanned fullName, installationId: ${fullName}, ${installationId}`),
+                                errorDescription: 'Repository already scanned', function: 'scanRepository'});
+        return res.json({success: false, error: `Repository already scanned fullName, installationId: ${fullName}, ${installationId}`});
+    }
 
 
-    var installationClient = await apis.requestInstallationClient(installationId);
+    var installationClient;
+    try {
+        installationClient = await apis.requestInstallationClient(installationId);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error fetching installationClient installationId: ${installationId}`, function: 'scanRepository'});
+        return res.json({success: false, error: 'no repository installationId provided'});
+    }
     
-    const listCommitResponse = await installationClient.get('/repos/' + fullName + '/commits')
-                                    .catch(err => console.log("Error getting repository commits: ", err));
+    var listCommitResponse;
+    try {
+        listCommitResponse = await installationClient.get('/repos/' + fullName + '/commits')
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err, 
+                        errorDescription: `Error getting repository commits fullName, installationId: ${fullName}, ${installationId}`,
+                        function: 'scanRepository'});
+    }
+
     var latestCommitSha = listCommitResponse.data[0]['sha'];
 
     repository.lastProcessedCommit = latestCommitSha;
 
-    repository.save(async (err, repository) => {
-        if (err) return res.json({ success: false, error: err });
+    try {
+        repository = await respository.save();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
+                                function: 'scanRepository'});
+        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
+    }
 
-        installationClient.get(`/repos/${fullName}`).then((response) => {
-            //console.log("FIRST RESPONSE", response.data)
-            // Get all commits from default branch
-            var cloneUrl = response.data.clone_url;
+    var githubRepositoryObj;
+    try {
+        githubRepositoryObj = await installationClient.get(`/repos/${fullName}`).data;
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error getting repository object from Github fullName, installationId: ${fullName}, ${installationId}`,
+                                function: 'scanRepository'});
+        return res.json({success: false, error: `Error getting repository object from Github fullName, installationId: ${fullName}, ${installationId}`});
+    }
 
-            console.log('repo')
-            
-            repository.cloneUrl = cloneUrl;
-            repository.save();
+    var cloneUrl = githubRepositoryObj.clone_url;
+    
+    repository.cloneUrl = cloneUrl;
+    
+    try {
+        repository = await repository.save();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
+                                function: 'scanRepository'});
+        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
 
-            var runSemanticData = {};
-            runSemanticData['fullName'] = fullName;
-            runSemanticData['installationId'] = installationId.toString();
-            runSemanticData['cloneUrl'] = cloneUrl;
-            // This needs to be used in the worker
-            runSemanticData['defaultBranch'] = response.data.default_branch;
-            runSemanticData['jobType'] =  JOB_SEMANTIC;
+    }
 
-            installationClient.get(`/repos/${fullName}/commits/${response.data.default_branch}`).then((response) => {
-                
-                console.log('Latest Commit obj: ');
-                console.log(response.data.commit);
-                // Extract tree SHA from most recent commit
-                let treeSHA = response.data.commit.tree.sha
+    // Get all commits from default branch
+    var commitListResponse;
+    try {
+        commitListResponse = await installationClient.get(`/repos/${fullName}/commits/${githubRepositoryObj.default_branch}`).data;
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error getting list of commits for repository fullName, installationId: ${fullName}, ${installationId}`,
+                                function: 'scanRepository'});
+        return res.json({success: false, error: `Error getting list of commits for repository fullName, installationId: ${fullName}, ${installationId}`});
+    }
 
-
-                //"--", "--json-symbols"
-                // Extract contents using tree SHA
-                console.log("REPO NAME OWNER", fullName)
-                let repoName = fullName.split("/").slice(1)[0]
-                console.log(repoName);
-                installationClient.get(`/repos/${fullName}/git/trees/${treeSHA}?recursive=true`).then((response) => {
-                    
-                    let treeReferences = response.data.tree.map(item => {
-                        
-                        let pathSplit = item.path.split('/')
-                        let name = pathSplit.slice(pathSplit.length - 1)[0]
-                        let path = pathSplit.join('/');
-                        let kind = item.type == 'blob' ? 'file' : 'dir'
-                        return {name, path, kind, repository: ObjectId(repository._id)}
-                    })
-
-                    // Save repository contents as items in our database
-                    Reference.insertMany(treeReferences, (errInsertItems, treeReferences) => {
-                        if (errInsertItems) {
-                            console.log('Error inserting tree References: ');
-                            console.log(errInsertItems);
-                             return res.json({ success: false, error: errInsertItems });
-                        }
-                        console.log('Success: Inserted treeReferences.length: ', treeReferences.length);
-                    });
+    // Extract tree SHA from most recent commit
+    let treeSHA = commitListResponse.commit.tree.sha;
 
 
-                    // SEMANTIC
-                    // defaultBranch, fullName, cloneUrl, installationId, jobType
-                    /*
-                    repository.semanticJobStatus = jobConstants.JOB_STATUS_RUNNING;
-                    repository.save();
-                    jobs.dispatchSemanticJob(runSemanticData, log);
-                    */
-                })
-            })
-        })
-        
-    });
+    // Extract contents using tree SHA
+    var treeResponse;
+    try {
+        treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${treeSHA}?recursive=true`).data;
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error getting tree for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`,
+                                function: 'scanRepository'});
+        return res.json({success: false, error: `Error getting tree for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`});
+    }
+
+    let treeReferences = treeResponse.tree.map(item => {
+
+        let pathSplit = item.path.split('/')
+        let name = pathSplit.slice(pathSplit.length - 1)[0]
+        let path = pathSplit.join('/');
+        let kind = item.type == 'blob' ? 'file' : 'dir'
+        return {name, path, kind, repository: ObjectId(repository._id)}
+    })
+
+    var insertedReferences;
+    try {
+        insertedReferences = await Reference.insertMany(treeReferences);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error inserting tree references for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`,
+                                function: 'scanRepository'});
+        return res.json({success: false, error: `Error inserting tree references for repository treeSHA, fullName, installationId: ${treeSHA}, ${fullName}, ${installationId}`});
+    }
+    logger.info({source: 'backend-api',
+                    message: `scanRepository: inserted ${insertedReferences.length} tree references for repository fullName, installationId: ${fullName}, ${installationId}`,
+                    function: 'scanRepository'});
+    return res.json({success: true, result: insertedReferences.length});
 }
 
 
@@ -176,7 +217,6 @@ getRepositoryFile = async (req, res) => {
     var fileContent = Buffer.from(blobContent, 'base64').toString('binary');
 
     return res.json({success: true, result: fileContent});
-
 }
 
 

@@ -1,5 +1,8 @@
+// How to handle pull requests?
+
 const fs = require('fs');
 
+const logger = require('./logging/index').logger;
 require('dotenv').config();
 
 
@@ -74,7 +77,7 @@ exports.handler = async (event) => {
         
         
         if (action == 'created') {
-        
+
             for (i = 0; i < repositories.length; i++) {
               await backendClient.post("/repositories/create", 
                     {'fullName': repositories[i].full_name,
@@ -134,8 +137,21 @@ exports.handler = async (event) => {
     
     }
 
+
+    // Parameters needed
     else if (githubAction == 'pull_request') {
-      console.log('Pull Request Event: ');
+      await logger.info({source: 'github-lambda', message: 'Pull Request Event Received', function: 'handler'});
+    
+      //  const {installationId, status, headRef, baseRef, checks, pullRequestObjId, pullRequestNumber} = req.body;
+      var installationId = event.installation.id;
+      var status = event.body.action;
+      var headRef = event.body.pull_request.head.ref;
+      var baseRef = event.body.pull_request.base.ref;
+      var pullRequestObjId = event.body.pull_request.id;
+      var pullRequestNumber = event.body.number;
+      
+
+
       console.log(event.body);
     }
 
