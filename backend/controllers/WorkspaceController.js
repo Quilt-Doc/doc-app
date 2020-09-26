@@ -41,6 +41,7 @@ createWorkspace = async (req, res) => {
         name: name,
         creator: ObjectId(creatorId),
         memberUsers: [ObjectId(creatorId)],
+        setupComplete: false,
         repositories: repositoryIds.map(repoId => ObjectId(repoId))
     });
 

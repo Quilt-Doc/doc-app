@@ -3,7 +3,8 @@ const Schema = mongoose.Schema;
 const { ObjectId, Mixed } = Schema.Types;
 
 var workspaceSchema = new Schema({
-	name: String,
+	name: {type: String, required: true},
+	setupComplete: {type: Boolean, required: true, default: false},
 	creator: {type: ObjectId, ref: 'User'},
 	repositories: [{type: ObjectId, ref: 'Repository'}],
 	memberUsers: [{type: ObjectId, ref: 'User'}],
