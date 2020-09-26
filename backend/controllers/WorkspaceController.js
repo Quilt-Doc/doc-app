@@ -34,12 +34,8 @@ createWorkspace = async (req, res) => {
     const {name, creatorId, installationId, repositoryIds } = req.body;
 
     if (!checkValid(name)) return res.json({success: false, error: 'no workspace name provided'});
-<<<<<<< HEAD
-    if (!checkValid(creatorId)) return res.json({success: false, error: 'no workspace creator Id provided'});
-=======
     if (!checkValid(installationId)) return res.json({success: false, error: 'no workspace installationId provided'});
     if (!checkValid(creatorId)) return res.json({success: false, error: 'no workspace creatorId provided'});
->>>>>>> a22229df6f57f2ca4b54983fef03b264486180df
 
     let workspace = new Workspace({
         name: name,

@@ -51,6 +51,7 @@ const scanRepositories = async () => {
     
     // If all repositories within this workspace have already been scanned, nothing to do
     if (unscannedRepositories.length == 0) {
+        // TODO: Set workspace 'setupComplete' to true
         await worker.send({action: 'log', info: {level: 'info', message: `No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`,
                                                     source: 'worker-instance', function: 'scanRepositories'}});
         worker.kill();
@@ -246,6 +247,9 @@ const scanRepositories = async () => {
             worker.kill();
         }
     }
+    
+    // TODO: Set workspace's 'setupComplete' to true
+    
 
     await worker.send({action: 'log', info: {level: 'info', message: `Completed scanning repositories: ${unscannedRepositoryIdList}`,
                                                 source: 'worker-instance', function: 'scanRepositories'}});

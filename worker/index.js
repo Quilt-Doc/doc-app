@@ -190,6 +190,8 @@ else {
   if(process.env.jobType == constants.jobs.JOB_SCAN_REPOSITORIES) {
     
     worker.send({action: 'log', info: {level: 'debug', message: `Running Scan Repositories Job`, source: 'worker-instance', function: 'index.js'}});
+
+    process.env.workspaceId = jobData.workspaceId;
     process.env.repositoryIdList = JSON.stringify(jobData.repositoryIdList);
     process.env.installationId = jobData.installationId;
     scanRepositories.scanRepositories();
