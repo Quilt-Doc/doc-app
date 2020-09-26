@@ -233,7 +233,6 @@ pollRepositories = async (req, res) => {
 updateRepository = async (req, res) => {
     const {fullName, ref, installationId, headCommit, cloneUrl} = req.body;
 
-    if (!checkValid(eventType)) return res.json({success: false, error: 'updateRepository: no eventType provided'});
     if (!checkValid(fullName)) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
     if (!checkValid(installationId)) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
 
@@ -254,7 +253,7 @@ updateRepository = async (req, res) => {
     }
 
     // If repository is unscanned, we don't update
-    if (repository.scanned == false) {
+    if (repository.scanned == false || repository.scanned == true) {
         return res.json({success: true, result: `Ignoring update on unscanned repository fullName, installationId: ${fullName}, ${installationId}`});
     }
 
