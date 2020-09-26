@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const constants = require('./constants/index');
 
+const Workspace = require('./models/Workspace');
 const Repository = require('./models/Repository');
 const Reference = require('./models/Reference');
 
@@ -26,6 +27,8 @@ const scanRepositories = async () => {
     await worker.send({action: 'receipt', receipt: process.env.receipt})
 
     var installationId = process.env.installationId;
+
+    var workspaceId = process.env.workspaceId;
 
     var repositoryIdList = JSON.parse(process.env.repositoryIdList);
     var urlList;
@@ -51,7 +54,16 @@ const scanRepositories = async () => {
     
     // If all repositories within this workspace have already been scanned, nothing to do
     if (unscannedRepositories.length == 0) {
-        // TODO: Set workspace 'setupComplete' to true
+        // Set workspace 'setupComplete' to true
+        try {
+            await Workspace.findByIdAndUpdate(workspaceId, {$set: {setupComplete: true}}).exec();
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                        errorDescription: `Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`,
+                                                        source: 'worker-instance', function: 'scanRepositories'}});
+            worker.kill();
+        }
         await worker.send({action: 'log', info: {level: 'info', message: `No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`,
                                                     source: 'worker-instance', function: 'scanRepositories'}});
         worker.kill();
@@ -247,9 +259,17 @@ const scanRepositories = async () => {
             worker.kill();
         }
     }
-    
-    // TODO: Set workspace's 'setupComplete' to true
-    
+
+    // Set workspace 'setupComplete' to true
+    try {
+        await Workspace.findByIdAndUpdate(workspaceId, {$set: {setupComplete: true}}).exec();
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                    errorDescription: `Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`,
+                                                    source: 'worker-instance', function: 'scanRepositories'}});
+        worker.kill();
+    }
 
     await worker.send({action: 'log', info: {level: 'info', message: `Completed scanning repositories: ${unscannedRepositoryIdList}`,
                                                 source: 'worker-instance', function: 'scanRepositories'}});

@@ -559,9 +559,20 @@ const runUpdateProcedure = async () => {
                 }
             }
             
+        }
+
         // TODO: Need to Delete invalidated References that are not attached to any Document/anything else, otherwise they will keep taking up space.
         
+        // Delete Downloaded Repository
+        try {
+            const deleteRepository = spawnSync('rm', ['-rf', `${repoDiskPath}`], {cwd: repoDiskPath});
         }
+        catch(err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error deleting repository ${repoId} at:  ${repoDiskPath}`,
+                                                        source: 'worker-instance', function: 'runUpdateProcedure'}});
+            worker.kill();
+        }
+
     });
 }
 
