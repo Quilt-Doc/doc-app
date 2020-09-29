@@ -427,7 +427,8 @@ const userMiddleware = async (req, res, next) => {
     }
     var foundUser = undefined;
     if (searchUserId) {
-        foundUser = await Tag.findById(searchUserId);
+        console.log("THIS IS THE USER ID", searchUserId);
+        foundUser = await User.findById(searchUserId);
     }
 
 

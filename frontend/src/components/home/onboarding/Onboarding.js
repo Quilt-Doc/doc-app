@@ -15,7 +15,7 @@ class Onboarding extends React.Component {
     }
 
     onboardUser = () => {
-        const { editUser, user: {_id}}
+        const { editUser, user: {_id}} = this.props;
         const firstName = this.firstNameInput.value;
         const lastName = this.lastNameInput.value;
 
@@ -33,7 +33,7 @@ class Onboarding extends React.Component {
                         Welcome!
                     </Header>
                     <SubHeader>
-                        Provide us some info to tailor your experience
+                        Provide us some info so we can tailor your experience.
                     </SubHeader>
                     <SubContent>   
                         <NameInput 
@@ -62,7 +62,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {})(Onboarding);
+export default connect(mapStateToProps, { editUser })(Onboarding);
 
  {/*
                             <CSSTransition

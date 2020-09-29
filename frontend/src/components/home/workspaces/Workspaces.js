@@ -111,25 +111,19 @@ class Workspaces extends Component {
     render(){
         const {loaded} = this.state;
         return (
-            <Container>
-                 <Top>
-                    <StyledIcon src = {logo} />
-                    <Company>quilt</Company>
-                </Top>
-                <ContentContainer>
-                    <Content>
-                        <Header>
-                            Workspaces
-                            <AddButton onClick = {() => history.push('/create_workspace')}>
-                                <FiPlus/>
-                            </AddButton>
-                        </Header>
-                        <SpaceContainer>
-                            {loaded && this.renderSpaces()}
-                        </SpaceContainer>
-                    </Content>
-                </ContentContainer>
-            </Container>
+            <ContentContainer>
+                <Content>
+                    <Header>
+                        Workspaces
+                        <AddButton onClick = {() => history.push('/create_workspace')}>
+                            <FiPlus/>
+                        </AddButton>
+                    </Header>
+                    <SpaceContainer>
+                        {loaded && this.renderSpaces()}
+                    </SpaceContainer>
+                </Content>
+            </ContentContainer>
         )
     }
 }
@@ -256,16 +250,6 @@ const WorkspaceStats = styled.div`
     margin-left: auto;
 `
 
-const Container = styled.div`
-    
-    background-color:#16181d;
-    display: flex;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    color: white;
-`
-
 const ContentContainer = styled.div`
     width: 100%;
     height: 100%;
@@ -282,26 +266,4 @@ const Content = styled.div`
 
 const SpaceContainer = styled.div`
     margin-top: 3.5rem;
-`
-
-const Top = styled.div`
-    height: 10rem;
-    color:#D6E0EE;
-    display: flex;
-    align-items: center;
-`
-
-const StyledIcon = styled.img`
-    width: 2.7rem;
-    margin-left: 4.5rem;
-    margin-right: 1rem;
-`
-
-const Company = styled.div`
-    font-size: 3rem;
-    color:white;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    margin-right: 15rem;
-    margin-top: -0.25rem;
 `

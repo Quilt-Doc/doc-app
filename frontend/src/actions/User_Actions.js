@@ -29,17 +29,23 @@ export const editUser = (formValues) => async dispatch => {
     if (!userId) throw new Error("editUser: userId not provided");
 
     const response = await api.put(`/users/edit/${userId}`, formValues);
-    dispatch({ type: EDIT_USER, payload: response.data });
+
+    const {success, result} = response.data;
+    if (!success) {
+        throw new Error("createWorkspace Error: ", response.data.error.toString());
+    } else {
+        dispatch({ type: EDIT_USER, payload: result });
+    }
 }
 
 export const userAttachWorkspace = (id, workspaceId) => async (dispatch) => {
     const response = await api.put(`/users/attach_workspace/${id}`, { workspaceId });
-    dispatch({ type: USER_ATTACH_WORKSPACE, payload: response.data });
+    dispatch({ type: EDIT_USER, payload: response.data });
 }
 
 export const userRemoveWorkspace = (id, workspaceId) => async (dispatch) => {
     const response = await api.put(`/users/remove_workspace/${id}`, { workspaceId });
-    dispatch({ type: USER_REMOVE_WORKSPACE, payload: response.data });
+    dispatch({ type: EDIT_USER, payload: response.data });
 }
 
 
