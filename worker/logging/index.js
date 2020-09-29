@@ -4,36 +4,33 @@ const winston = require('winston');
 
 const { format } = require('logform');
 const { errors } = format;
+const errorsFormat = errors({ stack: true })
 
 var ElasticSearchTransport = require('./es_transport').ElasticSearchTransport;
 var setupESConnection = require('./es_transport').setupESConnection;
 
 var logger = undefined; 
 
-const errorDescriptionSetter = logform.format(info => {
-  if (info.errorDescription) {
-    if (info.message) {
-      if (info.message.length > 0) {
-        info.message = `${info.errorDescription}\n${info.message}`
-      }
-    }
-    else {
-      info.message = info.errorDescription;
-    }
-    delete info.errorDescription;
-  }
+
+
+const validKeys = [ 'date', 'level', 'message', 'stack', 'source', 'function', 'errorDescription'];
+
+const objectKeyRemover = logform.format(info => {
+
+  Object.keys(info).forEach((key) => validKeys.includes(key) || delete info[key]);
   return info;
 });
 
 
 if (process.env.IS_PRODUCTION) {
   logger = winston.createLogger({
+      levels: winston.config.syslog.levels,
       transports: [
         new ElasticSearchTransport({
           level: 'info',
           format: winston.format.combine(
             errors({ stack: true }),
-            errorDescriptionSetter(),
+            objectKeyRemover(),
             winston.format.json()
           )
         }),
@@ -41,7 +38,7 @@ if (process.env.IS_PRODUCTION) {
           level: 'debug',
           format: winston.format.combine(
             errors({ stack: true }),
-            errorDescriptionSetter(),
+            objectKeyRemover(),
             winston.format.colorize(),
             winston.format.simple()
           )
@@ -52,12 +49,13 @@ if (process.env.IS_PRODUCTION) {
 
 else {
   logger = winston.createLogger({
+    levels: winston.config.syslog.levels,
     transports: [
       new winston.transports.Console({
         level: 'debug',
         format: winston.format.combine(
           errors({ stack: true }),
-          errorDescriptionSetter(),
+          objectKeyRemover(),
           winston.format.colorize(),
           winston.format.simple()
         )

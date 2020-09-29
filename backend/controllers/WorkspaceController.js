@@ -115,7 +115,7 @@ getWorkspace = async (req, res) => {
 
 
 deleteWorkspace = async (req, res) => {
-    
+
     const workspaceId = req.workspaceObj._id.toString();
 
     let deletedWorkspace;

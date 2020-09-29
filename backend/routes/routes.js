@@ -283,7 +283,7 @@ router.delete('/users/delete_user/:workspaceId', authorizationMiddleware.userMid
 // must be a dev JWT
 const token_controller = require('../controllers/TokenController');
 router.post('/tokens/create', authorizationMiddleware.tokenMiddleware, token_controller.createToken);
-
+router.post('/tokens/delete', authorizationMiddleware.tokenMiddleware, token_controller.deleteInstallationToken);
 
 const check_controller = require('../controllers/CheckController');
 router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, check_controller.createCheck);
