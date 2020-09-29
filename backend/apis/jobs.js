@@ -12,8 +12,8 @@ const dispatchScanRepositoriesJob = async (jobData) => {
     var sqsScanData = {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
-        MessageDeduplicationId: timestamp,
-        MessageGroupId: jobData.workspaceId,
+        // MessageDeduplicationId: timestamp,
+        // MessageGroupId: jobData.workspaceId,
         QueueUrl: queueUrl
     };
 
@@ -37,8 +37,8 @@ const dispatchUpdateReferencesJob = async (jobData) => {
     var sqsReferenceData = {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
-        MessageDeduplicationId: timestamp,
-        MessageGroupId: jobData.installationId,
+        // MessageDeduplicationId: timestamp,
+        // MessageGroupId: jobData.installationId,
         QueueUrl: queueUrl
     };
 

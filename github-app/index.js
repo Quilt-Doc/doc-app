@@ -23,11 +23,11 @@ exports.handler = async (event) => {
 
     if ( !(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) ) {
         let response = {
-        statusCode: 401,
-        headers: {
-            "x-error-desc" : "Invalid Request Source"
-        },
-            body: {}
+            statusCode: 401,
+            headers: {
+                "x-error-desc" : "Invalid Request Source"
+            },
+            body: JSON.stringify({})
         };
         console.error("Webhook Secret Hash Didn't Match");
         return response;
@@ -49,16 +49,11 @@ exports.handler = async (event) => {
     var githubAction = event.headers['x-github-event'];
     
     if (githubAction == 'error') {
-        console.error('Error:', err.message)
+        await logger.info({source: 'github-lambda', message: `Github 'error' action received`, function: 'handler'});
     }
 
     else if (githubAction == 'push') {
         await logger.info({source: 'github-lambda', message: 'Push Event Received', function: 'handler'});
-        /*
-        console.log('Received a push event for %s to %s',
-        event.payload.repository.name,
-        event.payload.ref)
-        */
 
         // var branch = event.payload.ref.split('/').pop();
         var ref = event.body.ref;
@@ -68,21 +63,56 @@ exports.handler = async (event) => {
         var cloneUrl = event.body.repository.clone_url;
         var installationId = event.body.installation.id;
         // TODO: Fix controller method, so doesn't update non-scanned repositories
-        await backendClient.post("/repositories/update", { ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId });
+        try {
+            var updateResponse = await backendClient.post("/repositories/update", { ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId });
+            if (updateResponse.data.success == false) {
+                throw Error(`repositories/update success == false: ${updateResponse.error}`);
+            }
+        }
+        catch (err) {
+            await logger.error({source: 'github-lambda', message: err,
+                                    errorDescription: `error calling update repository route - fullName, installationId: ${fullName}, ${installationId}`,
+                                    function: 'handler'});
+                        
+                let response = {
+                    statusCode: 200,
+                    body: JSON.stringify({message: "200 OK"})
+                };
+                return response;
+        }
+        await logger.info({source: 'github-lambda', message: 'Successfully handled Push Event', function: 'handler'});
     }
 
     else if (githubAction == 'installation') {
-        await logger.info({source: 'github-lambda', message: 'Installation Event Received', function: 'handler'});
-
         var installationId = event.body.installation.id;
         var action = event.body.action;
-        var repositories = action.repositories;
-        
+        var repositories = event.body.repositories;
+
         var defaultIcon = 1;
+
+        await logger.info({source: 'github-lambda', message: `Installation '${action}' Event Received`, function: 'handler'});
 
 
         if (action == 'created') {
-            await logger.info({source: 'github-lambda', message: 'Created Event Received', function: 'handler'});
+
+            var tokenCreateResponse;
+            try {
+                tokenCreateResponse = await backendClient.post("/tokens/create", {installationId, type: 'INSTALL'});
+                if (tokenCreateResponse.data.success == false) {
+                    throw Error(`tokens/create success == false: ${tokenCreateResponse.error}`);
+                }
+            }
+            catch (err) {
+                await logger.error({source: 'github-lambda', message: err,
+                                    errorDescription: `error creating install token installationId: ${installationId}`,
+                                    function: 'handler'});
+                        
+                let response = {
+                    statusCode: 200,
+                    body: JSON.stringify({message: "200 OK"})
+                };
+                return response;
+            }
 
             var postDataList = repositories.map(repositoryObj => ({ fullName: repositoryObj.full_name, installationId, 'icon': defaultIcon}));
 
@@ -95,46 +125,50 @@ exports.handler = async (event) => {
                 await logger.error({source: 'github-lambda', message: err,
                                     errorDescription: `error initializing repositories: ${postDataList}`,
                                     function: 'handler'});
-
-                let responseBody = {
-                    message: "200 OK",
-                };
-            
-                let responseCode = 200;
-            
-            
+                        
                 let response = {
-                    statusCode: responseCode,
-                    headers: {
-                        "x-custom-header" : "my custom header value"
-                    },
-                    body: JSON.stringify(responseBody)
+                    statusCode: 200,
+                    body: JSON.stringify({ message: "200 OK" })
                 };
                 return response;
-
             }
+            await logger.info({source: 'github-lambda', message: `Successfully created Repositories installationId: ${installationId}`, function: 'handler'});
 
         }
 
-        /*
-        else if (action == 'deleted') {
-    
-        }
         
-      
-        if(event.payload['action'] == 'created') {
-    
+        else if (action == 'deleted') {
+            var tokenDeleteResponse;
+            try {
+                tokenDeleteResponse = await backendClient.post("/tokens/delete", {installationId});
+                if (tokenCreateResponse.data.success == false) {
+                    throw Error(`tokens/delete success == false: ${tokenCreateResponse.error}`);
+                }
+            }
+            catch (err) {
+                await logger.error({source: 'github-lambda', message: err,
+                                    errorDescription: `error deleting install token installationId: ${installationId}`,
+                                    function: 'handler'});
+                        
+                let response = {
+                    statusCode: 200,
+                    body: JSON.stringify({message: "200 OK"})
+                };
+                return response;
+            }
+            await logger.info({source: 'github-lambda', message: `Succesfully deleted 'INSTALL' token installationId: ${installationId}`, function: 'handler'});
         }
-        */
     }
 
     else if (githubAction == 'installation_repositories') {
-        await logger.info({source: 'github-lambda', message: 'Installation Repositories Event Received', function: 'handler'});
+
         var action = event.body.action;
         var installationId = event.body.installation.id;
 
+        await logger.info({source: 'github-lambda', message: `Installation Repositories '${action}' Event Received`, function: 'handler'});
 
         if (action == 'added') {
+            
             var added = event.body.repositories_added;
 
             var postDataList = added.map(repositoryObj => ({ fullName: repositoryObj.full_name, installationId, 'icon': defaultIcon}));
@@ -148,10 +182,6 @@ exports.handler = async (event) => {
                 await logger.error({source: 'github-lambda', message: err,
                                     errorDescription: `error initializing repositories: ${postDataList}`,
                                     function: 'handler'});
-
-                let responseBody = {
-                    message: "200 OK",
-                };
             
                 let responseCode = 200;
             
@@ -161,7 +191,7 @@ exports.handler = async (event) => {
                     headers: {
                         "x-custom-header" : "my custom header value"
                     },
-                    body: JSON.stringify(responseBody)
+                    body: JSON.stringify({ message: "200 OK"})
                 };
                 return response;
 
@@ -176,13 +206,13 @@ exports.handler = async (event) => {
     else if (githubAction == "check_suite") {
 
       var action = event.body.action;
-      console.log('Check Suite Event Action: ', action);
+      await logger.info({source: 'github-lambda', message: `Check_Suite '${action}' event received`, function: 'handler'});
 
 
       // Create new Check Run
       if (action == "requested") {
-        console.log('Check Suite Event Head Sha: ', event.body.check_suite.head_commit);
-        console.log('Check Suite Event Head Commit Message: ', event.body.check_suite.head_commit.message);
+        // console.log('Check Suite Event Head Sha: ', event.body.check_suite.head_commit);
+        // console.log('Check Suite Event Head Commit Message: ', event.body.check_suite.head_commit.message);
         //Can't do the following here, rather on the route: Check if branch matches the default_branch
       }
 
@@ -191,7 +221,7 @@ exports.handler = async (event) => {
 
     // Parameters needed
     else if (githubAction == 'pull_request') {
-      await logger.info({source: 'github-lambda', message: 'Pull Request Event Received', function: 'handler'});
+      await logger.info({source: 'github-lambda', message: `Pull Request '${event.body.action}' Event Received`, function: 'handler'});
     
       //  const {installationId, status, headRef, baseRef, checks, pullRequestObjId, pullRequestNumber} = req.body;
       var installationId = event.installation.id;
@@ -200,8 +230,6 @@ exports.handler = async (event) => {
       var baseRef = event.body.pull_request.base.ref;
       var pullRequestObjId = event.body.pull_request.id;
       var pullRequestNumber = event.body.number;
-      
-
 
     }
 
@@ -214,10 +242,6 @@ exports.handler = async (event) => {
     // base64-encoded payload, you must also set the 'isBase64Encoded'
     // property to 'true'.
 
-    let responseBody = {
-        message: "200 OK",
-    };
-
     let responseCode = 200;
 
 
@@ -226,7 +250,7 @@ exports.handler = async (event) => {
         headers: {
             "x-custom-header" : "my custom header value"
         },
-        body: JSON.stringify(responseBody)
+        body: JSON.stringify({ message: "200 OK"})
     };
     return response;
 };

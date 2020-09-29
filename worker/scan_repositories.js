@@ -143,28 +143,16 @@ const scanRepositories = async () => {
     }
 
     // Bulk update repository 'lastProcessedCommit' fields
-    /*
-    const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => ({
-
-        updateOne: {
+    const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => {
+        // TODO: Figure out why this list commits endpoint isn't returning an array
+        // console.log('repositoryCommitResponse.data[0]: ');
+        // console.log(repositoryCommitResponse.data[0]);
+        return {updateOne: {
                 filter: { _id: unscannedRepositories[idx]._id },
                 // Where field is the field you want to update
-                update: { $set: { lastProcessedCommit: repositoryCommitResponse.data[0].sha } },
+                update: { $set: { lastProcessedCommit: repositoryCommitResponse.data.sha } },
                 upsert: false
-        }
-    }));
-    */
-
-   const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => {
-    // TODO: Figure out why this list commits endpoint isn't returning an array
-    // console.log('repositoryCommitResponse.data[0]: ');
-    // console.log(repositoryCommitResponse.data[0]);
-    return {updateOne: {
-            filter: { _id: unscannedRepositories[idx]._id },
-            // Where field is the field you want to update
-            update: { $set: { lastProcessedCommit: repositoryCommitResponse.data.sha } },
-            upsert: false
-    }}
+        }}
     });
 
     if (bulkLastCommitOps.length > 0) {
