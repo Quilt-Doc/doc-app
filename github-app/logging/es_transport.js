@@ -13,7 +13,6 @@ setupESConnection = async () => {
 
     awsCredentials = await awsGetCredentials();
     AWSConnection = createAWSConnection(awsCredentials)
-    console.log('Defining client');
     client = awsCredsifyAll(
         new Client({
             node: 'https://search-quilt-e5ak7qxc7rf4t7gdl3p5vf2p6a.us-east-1.es.amazonaws.com',
@@ -29,9 +28,10 @@ setupESConnection = async () => {
                     date: { type: 'date'},
                     level: { type: 'text' },
                     message: { type: 'text' },
-                    errorDescription: { type: 'text' },
+                    stack: { type: 'text' },
                     source: { type: 'text' },
-                    function: { type: 'text' }
+                    function: { type: 'text' },
+                    errorDescription: {type: 'text'}
                 }
             }
         }
