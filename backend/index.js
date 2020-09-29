@@ -40,7 +40,6 @@ console.log(process.env.USE_EXTERNAL_DB);
 
 if (process.env.USE_EXTERNAL_DB == 0) {
     dbRoute = 'mongodb://127.0.0.1:27017?retryWrites=true&w=majority'
-    console.log('Running')
 }
 console.log(dbRoute);
 
@@ -95,9 +94,7 @@ app.use(
 const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect'];
 
 app.use(function (req, res, next) {
-  console.log('Time:', Date.now());
   req.path = req.path.trim();
-  // console.log('REQ.PATH:' + req.path);
 
   const authHeader = req.headers.authorization;
 
@@ -111,17 +108,9 @@ app.use(function (req, res, next) {
   }
 
   if (isNonAuthPath) {
-      console.log('nonAuth path detected');
-      console.log('JWT req.path: ', req.path);
       next();
       return;
   }
-  else {
-      console.log('Auth path');
-  }
-
-  // console.log('Cookies: ');
-  // console.log(req.cookies);
 
   // Get token
   var token = undefined;
@@ -134,21 +123,18 @@ app.use(function (req, res, next) {
 
 
   else {
-      console.log('No JWT provided');
       return res.status(401).json({
           authenticated: false,
           message: "user has not been authenticated"
       });
   }
-  // console.log('TOKEN: ', token);
+
 
   var publicKey = fs.readFileSync('docapp-test-public.pem', 'utf8');
-  // console.log('publicKey: ', publicKey);
   try {
-      console.log('About to decode JWT');
+
       var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-      console.log('decoded JWT: ');
-      console.log(decoded);
+
       req.tokenPayload = decoded;
   }
   catch(err) {
@@ -157,7 +143,6 @@ app.use(function (req, res, next) {
       return res.status(403);
   }
 
-  console.log('successfully authenticated');
   next();
 });
 
@@ -210,10 +195,10 @@ app.get("/", authCheck, (req, res) => {
 
 if (process.env.IS_PRODUCTION) {
   setupESConnection().then(() => {
-    app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+    app.listen(API_PORT, '0.0.0.0', () => logger.info({source: 'backend-api', message: `Listening on port ${API_PORT}`, function: 'index.js'}));
   });
 }
 
 else {
-  app.listen(API_PORT, '0.0.0.0', () => console.log(`LISTENING ON PORT ${API_PORT}`));
+  app.listen(API_PORT, '0.0.0.0', () => logger.debug({source: 'backend-api', message: `Listening on port ${API_PORT}`, function: 'index.js'}));
 }

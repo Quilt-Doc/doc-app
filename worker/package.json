@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@acuris/aws-es-connection": "^1.1.1",
+    "@elastic/elasticsearch": "^7.9.0",
     "await-spawn": "^3.0.0",
     "aws-sdk": "^2.699.0",
     "axios": "^0.19.2",
@@ -16,13 +18,13 @@
     "fs-path": "0.0.24",
     "js-yaml": "^3.14.0",
     "jsonwebtoken": "^8.5.1",
+    "logform": "^2.2.0",
     "lower-case": "^2.0.1",
     "mongoose": "^5.9.19",
     "request": "^2.88.2",
+    "serialize-error": "^7.0.1",
+    "winston": "^3.3.3",
     "xml2js": "^0.4.23",
     "xmldom": "^0.3.0"
-  },
-  "optionalDependencies": {
-    "node-windows": "^1.0.0-beta.1"
   }
 }

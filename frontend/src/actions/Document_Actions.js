@@ -2,21 +2,10 @@ import {
     CREATE_DOCUMENT,
     GET_DOCUMENT,
     RETRIEVE_DOCUMENTS,
-    RETRIEVE_MORE_DOCUMENTS,
     DELETE_DOCUMENT,
     EDIT_DOCUMENT,
-    ATTACH_TAG,
-    REMOVE_TAG,
-    DOCUMENT_ATTACH_SNIPPET,
-    DOCUMENT_REMOVE_SNIPPET,
-    DOCUMENT_ATTACH_UPLOADFILE,
-    DOCUMENT_REMOVE_UPLOADFILE,
-    DOCUMENT_ADD_CANWRITE,
-    DOCUMENT_REMOVE_CANWRITE,
-    DOCUMENT_ADD_CANREAD,
-    DOCUMENT_REMOVE_CANREAD,
-    GET_PARENT,
-    MOVE_DOCUMENT
+    MOVE_DOCUMENT,
+    RENAME_DOCUMENT
 } from './types/Document_Types';
 
 import { api } from '../apis/api';
@@ -55,7 +44,7 @@ export const moveDocument = (formValues) => async (dispatch) => {
         throw new Error("moveDocument: documentId not provided");
     }
 
-    const response = await api.put('/documents/move', formValues );
+    const response = await api.put(`/documents/${workspaceId}/move/${documentId}`, formValues );
 
     if (response.data.success == false) {
         throw new Error("createDocument Error: ", response.data.error.toString());
@@ -67,7 +56,8 @@ export const moveDocument = (formValues) => async (dispatch) => {
 
 }
 
-// DONE
+// FARAZ TODO: ACTION SHOULD BE DELETED
+/*
 export const createChild = (formValues) => async (dispatch) => {
     
     var workspaceId = formValues.workspaceId;
@@ -83,34 +73,10 @@ export const createChild = (formValues) => async (dispatch) => {
     else {
         return response.data.result;
     }
-}
+}*/
 
-// DONE
-export const getParent = (formValues) => async dispatch => {
 
-    const workspaceId = formValues.workspaceId;
-    const documentId = formValues.documentId;
-
-    if (!workspaceId) {
-        throw new Error("getParent: workspaceId not provided");
-    }
-
-    if (!documentId) {
-        throw new Error("getParent: documentId not provided");
-    }
-
-    const response = await api.get(`/documents/${workspaceId}/get_parent/${documentId}`);
-
-    if (response.data.success == false) {
-        throw new Error("getParent Error: ", response.data.error.toString());
-    }
-    else {
-        dispatch({ type: GET_PARENT, payload: response.data.result });
-        return response.data.result;
-    }
-}
-
-// DONE
+// FARAZ TODO: ACTION SHOULD NOT RETURN.. USE ID
 export const getDocument = (formValues) => async dispatch => {
 
     const workspaceId = formValues.workspaceId;
@@ -155,11 +121,12 @@ export const renameDocument = (formValues) => async dispatch => {
         throw new Error("renameDocument Error: ", response.data.error.toString());
     }
     else {
-        dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data.result });
+        dispatch({ type: RENAME_DOCUMENT, payload: response.data.result });
     }
 }
 
-// DONE
+// FARAZ TODO: ACTION SHOULD BE DELETED
+/*
 export const retrieveChildren = (formValues) => async () => {
 
     const workspaceId = formValues.workspaceId;
@@ -177,12 +144,12 @@ export const retrieveChildren = (formValues) => async () => {
         return response.data.result;
     }
 }
+*/
 
 // DONE
-export const retrieveDocuments = (formValues) => async dispatch => {
+export const retrieveDocuments = (formValues, wipe, passback) => async dispatch => {
 
     const workspaceId = formValues.workspaceId;
-    console.log("WORKSPACE ID", workspaceId);
     
     if (!workspaceId) {
         throw new Error("retrieveDocuments: workspaceId not provided");
@@ -190,17 +157,18 @@ export const retrieveDocuments = (formValues) => async dispatch => {
 
     const response = await api.post(`/documents/${workspaceId}/retrieve`, formValues );
 
-    console.log("RESPONSE HERE", response.data);
-
     if (response.data.success == false) {
         throw new Error("retrieveDocuments Error: ", response.data.error.toString());
     }
-    else {
-        dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data.result });
+    else if (!passback) {
+        dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data.result, wipe});
+    } else {
+        return response.data.result;
     }
 }
 
-// DONE
+// DONE  // FARAZ TODO: ACTION NEEDS TO BE DELETED
+/*
 export const retrieveMoreDocuments = (formValues) => async dispatch => {
     
     const workspaceId = formValues.workspaceId;
@@ -218,6 +186,7 @@ export const retrieveMoreDocuments = (formValues) => async dispatch => {
         dispatch({ type: RETRIEVE_MORE_DOCUMENTS, payload: response.data.result });
     }
 }
+*/
 
 // DONE
 export const deleteDocument = (formValues) => async dispatch => {
@@ -268,7 +237,7 @@ export const editDocument = (formValues) => async dispatch => {
     }
 }
 
-export const attachTag = (formValues) => async (dispatch) => {
+export const attachDocumentTag = (formValues) => async (dispatch) => {
 
 
     const workspaceId = formValues.workspaceId;
@@ -276,85 +245,85 @@ export const attachTag = (formValues) => async (dispatch) => {
     const tagId = formValues.tagId;
 
     if (!workspaceId) {
-        throw new Error("attachTag: workspaceId not provided");
+        throw new Error("attachDocumentTag: workspaceId not provided");
     }
 
     if (!documentId) {
-        throw new Error("attachTag: documentId not provided");
+        throw new Error("attachDocumentTag: documentId not provided");
     }
 
     if (!tagId) {
-        throw new Error("attachTag: tagId not provided");
+        throw new Error("attachDocumentTag: tagId not provided");
     }
 
     const response = await api.put(`/documents/${workspaceId}/${documentId}/attach_tag/${tagId}`);
 
     if (response.data.success == false) {
-        throw new Error("attachTag Error: ", response.data.error.toString());
-    }
-    else {
-        dispatch({ type: ATTACH_TAG, payload: response.data.result });
-    }
-}
-
-export const removeTag = (formValues) => async (dispatch) => {
-
-    const workspaceId = formValues.workspaceId;
-    const documentId = formValues.documentId;
-    const tagId = formValues.tagId;
-
-    if (!workspaceId) {
-        throw new Error("removeTag: workspaceId not provided");
-    }
-
-    if (!documentId) {
-        throw new Error("removeTag: documentId not provided");
-    }
-
-    if (!tagId) {
-        throw new Error("removeTag: tagId not provided");
-    }
-
-    const response = await api.put(`/documents/${workspaceId}/${documentId}/remove_tag/${tagId}`);
-
-    if (response.data.success == false) {
-        throw new Error("removeTag Error: ", response.data.error.toString());
-    }
-    else {
-        dispatch({ type: REMOVE_TAG, payload: response.data.result });
-    }
-}
-
-
-export const attachReference = (formValues) =>  async (dispatch) => {
-
-    const workspaceId = formValues.workspaceId;
-    const documentId = formValues.documentId;
-    const referenceId = formValues.referenceId;
-
-    if (!workspaceId) {
-        throw new Error("attachReference: workspaceId not provided");
-    }
-
-    if (!documentId) {
-        throw new Error("attachReference: documentId not provided");
-    }
-
-    if (!referenceId) {
-        throw new Error("attachReference: referenceId not provided");
-    }
-
-    const response = await api.put(`/documents/${workspaceId}/${documentId}/attach_reference/${referenceId}`);
-
-    if (response.data.success == false) {
-        throw new Error("attachReference Error: ", response.data.error.toString());
+        throw new Error("attachDocumentTag Error: ", response.data.error.toString());
     }
     else {
         dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });
     }
 }
 
-export const removeReference = (formValues) =>  async (dispatch) => {
+export const removeDocumentTag = (formValues) => async (dispatch) => {
+
+    const workspaceId = formValues.workspaceId;
+    const documentId = formValues.documentId;
+    const tagId = formValues.tagId;
+
+    if (!workspaceId) {
+        throw new Error("removeDocumentTag: workspaceId not provided");
+    }
+
+    if (!documentId) {
+        throw new Error("removeDocumentTag: documentId not provided");
+    }
+
+    if (!tagId) {
+        throw new Error("removeDocumentTag: tagId not provided");
+    }
+
+    const response = await api.put(`/documents/${workspaceId}/${documentId}/remove_tag/${tagId}`);
+
+    if (response.data.success == false) {
+        throw new Error("removeDocumentTag Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });
+    }
+}
+
+
+export const attachDocumentReference = (formValues) =>  async (dispatch) => {
+
+    const workspaceId = formValues.workspaceId;
+    const documentId = formValues.documentId;
+    const referenceId = formValues.referenceId;
+
+    if (!workspaceId) {
+        throw new Error("attachDocumentReference: workspaceId not provided");
+    }
+
+    if (!documentId) {
+        throw new Error("attachDocumentReference: documentId not provided");
+    }
+
+    if (!referenceId) {
+        throw new Error("attachDocumentReference: referenceId not provided");
+    }
+
+    const response = await api.put(`/documents/${workspaceId}/${documentId}/attach_reference/${referenceId}`);
+
+    if (response.data.success == false) {
+        throw new Error("attachDocumentReference Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });
+    }
+}
+
+export const removeDocumentReference = (formValues) =>  async (dispatch) => {
 
     const workspaceId = formValues.workspaceId;
     const documentId = formValues.documentId;

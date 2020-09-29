@@ -10,7 +10,7 @@ AWS.config.update({region: 'us-east-1'});
 const requestGithubClient = () => {
     const axios = require('axios');
     return axios.create({
-        baseURL: proccess.env.GITHUB_API_URL,
+        baseURL: process.env.GITHUB_API_URL,
     });
 }
 
@@ -46,7 +46,7 @@ const requestNewInstallationToken = async (installationId) => {
 
     var params = {
         FunctionName: 'token-manager', /* required */
-        Payload: JSON.stringify({ action: 'create', installationId })
+        Payload: JSON.stringify({ action: 'createInstallToken', installationId })
     };
     var lambdaResponse;
 
@@ -60,7 +60,10 @@ const requestNewInstallationToken = async (installationId) => {
         throw err;
     }
 
-    if (lambdaResponse.body.success == 'true') {
+
+    lambdaResponse = JSON.parse(lambdaResponse.Payload);
+
+    if (lambdaResponse.body.success) {
         return lambdaResponse.body.result;
     }
 

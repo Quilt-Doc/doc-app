@@ -5,7 +5,7 @@ const { ObjectId, Mixed } = Schema.Types;
 // split name into name, owner
 // add default branch
 var repositorySchema = new Schema({
-	fullName: String,
+	fullName: {type: String, index: true},
 	link: String,
 	lastProcessedCommit: { type: String, default: ''},
 	installationId: Number,
@@ -13,11 +13,8 @@ var repositorySchema = new Schema({
 	cloneUrl: String,
 	created: {type: Date, default: Date.now },
 	icon: Number,
-	references: [{type: ObjectId, ref: 'Reference', index: true}],
-	refreshingReferences: {type: Boolean, default: false},
-	// "RUNNING", "FINISHED", "ERROR"
-	doxygenJobStatus: String,
-	semanticJobStatus: String,
+	scanned: {type: Boolean, default: false, required: true},
+	currentlyScanning: {type: Boolean, default: false, required: true}
 });
 
 
