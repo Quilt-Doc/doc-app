@@ -207,7 +207,7 @@ const repositoryMiddleware = async (req, res, next) => {
     // User routes
 
     // poll and validate are temporarily enabled for everything
-    if (requestedPath.includes('/repositories/validate') || (requestedPath.includes('/repositories') && requestedPath.includes('/poll'))) {
+    if (requestedPath.includes('/repositories/retrieve')) {
         if (requesterRole == 'dev') {
             console.log('repositoryMiddleware dev token');
             return next();

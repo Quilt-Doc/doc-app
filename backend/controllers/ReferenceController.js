@@ -35,7 +35,7 @@ createReferences = async (req, res) => {
     let insertedReferences;
 
     try {
-        insertedReferences = await Reference.insertMany(references).populate({path: populationString}).exec();
+        insertedReferences = await Reference.insertMany(references).populate({path: populationString});
     } catch (err) {
         return res.json({success: false, error: 'createReferences Error: insertMany query failed', trace: err});
     }
@@ -156,7 +156,7 @@ editReference = async (req, res) => {
 
     // make sure repository of reference is accessible to the user
     try {
-        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
+        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}});
         if (!repositoryValid) {
             return res.json({success: false, error: "editReference Error: reference with that id and that is in accessible \
                 repositories doesn't exist", trace: err});
@@ -206,7 +206,7 @@ deleteReference = async (req, res) => {
 
     // make sure repository of reference is accessible to the user
     try {
-        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
+        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}});
         if (!repositoryValid) {
             return res.json({success: false, error: "deleteReference Error: reference with that id and that is in accessible \
                 repositories doesn't exist", trace: err});

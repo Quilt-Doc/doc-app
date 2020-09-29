@@ -152,6 +152,36 @@ retrieveRepositories = async (req, res) => {
     return res.json({success: true, result: returnedRepositories});
 }
 
+retrieveCreationRepositories = async (req, res) => {
+    const { fullName, installationId, fullNames } = req.body;
+    let query = Repository.find();
+
+    if (checkValid(fullName)) query.where('fullName').equals(fullName);
+
+    // installationId required for this route
+    if (checkValid(installationId)) {
+        query.where('installationId').equals(installationId);
+    } else {
+        return res.json({success: false, error: 'retrieveCreationRepositories error: no installationId Provided'});
+    }
+
+    if (checkValid(fullNames)) query.where('fullName').in(fullNames);
+
+    let returnedRepositories;
+
+    try {
+        returnedRepositories = await query.lean().exec()
+    } catch (err) {
+        console.log("ERROR");
+        return res.json({ success: false, error: 'retrieveCreationRepositories error: repository retrieve \
+            query failed', trace: err });
+    }
+    
+    console.log("RETURNED REPOSITORIES", returnedRepositories);
+
+    return res.json({success: true, result: returnedRepositories});
+}
+
 jobRetrieveRepositories = async (req, res) => {
    const {fullName, installationId, fullNames} = req.body;
 
@@ -186,7 +216,7 @@ validateRepositories = async (req, res) => {
     for (let i = 0; i < ids.length; i++){
         let id = ids[i]
         let fullName = req.body.selected[id]
-        let repository = await (await Repository.findOne({fullName: fullName, installationId: req.body.installationId})).execPopulate()
+        let repository = await Repository.findOne({fullName: fullName, installationId: req.body.installationId}).exec();
 
         if (!repository) {
             repositories.push(fullName)
@@ -282,5 +312,5 @@ module.exports = {
     initRepository, getRepositoryFile, getRepository,
     deleteRepository, retrieveRepositories,
     validateRepositories, pollRepositories, updateRepository,
-    jobRetrieveRepositories
+    jobRetrieveRepositories, retrieveCreationRepositories
 }

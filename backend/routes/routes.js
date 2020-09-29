@@ -1,6 +1,6 @@
 // TODO: Add Workspace, Repository Delete Routes and methods 
 const passport = require("passport");
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000/workspaces";
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
 
 const express = require('express');
 const router = express.Router({mergeParams: true});
@@ -123,7 +123,7 @@ router.post('/repositories/job_retrieve', authorizationMiddleware.repositoryMidd
 // get_file - verify user is in a workspace with this repository added
 // get - verify user is in a workspace with this repository added
 // delete - verify user is in a workspace with this repository added
-
+router.post('/repositories/retrieve', authorizationMiddleware.repositoryMiddleware, repository_controller.retrieveCreationRepositories );
 router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repository_controller.getRepositoryFile);
 router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repository_controller.retrieveRepositories);
 router.post('/repositories/validate', authorizationMiddleware.repositoryMiddleware, repository_controller.validateRepositories);
@@ -180,7 +180,6 @@ router.get('/auth/logout', auth_controller.logout);
 // router.get('/auth/github', passport.authenticate("github"));
 router.get('/auth/github', function(req, res, next) {
     passport.authenticate('github', {session: false}, function(err, user, info) {
-      console.log('FIRST CALLBACK');
       if (err) { return next(err); }
       // TODO: Change this to appropriate route
       if (!user) { console.log('!user == true'); return res.redirect('/login'); }
@@ -212,8 +211,8 @@ router.get('/auth/github/redirect', passport.authenticate("github", {session: fa
     // console.log('Request Host: ', req.get('host'));
     // if (err) { return res.json({success: false, error: err}) }
     // TODO: Change this to appropriate route
-    console.log('REQ: ', req);
-    console.log('RES: ', res);
+    //console.log('REQ: ', req);
+    //console.log('RES: ', res);
     
     if (!req.user) { console.log('!req.user == true'); return res.redirect('/login'); }
 

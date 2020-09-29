@@ -23,8 +23,12 @@ export const deleteUser = id => async dispatch => {
     dispatch({ type: DELETE_USER, payload: response.data });
 }
 
-export const editUser = (id, formValues) => async dispatch => {
-    const response = await api.put(`/users/edit/${id}`, formValues);
+export const editUser = (formValues) => async dispatch => {
+    const { userId } = formValues;
+
+    if (!userId) throw new Error("editUser: userId not provided");
+
+    const response = await api.put(`/users/edit/${userId}`, formValues);
     dispatch({ type: EDIT_USER, payload: response.data });
 }
 

@@ -65,7 +65,7 @@ createSnippet = async (req, res) => {
     
     // populate certain object fields on the snippet
     try {
-        snippet = await Snippet.populate(snippet, {path: "workspace reference creator"}).exec();
+        snippet = await Snippet.populate(snippet, {path: "workspace reference creator"});
     } catch (err) {
         return res.json({success: false, error: "createSnippet error: new snippet could not be populated but was saved", trace: err});
     }

@@ -6,6 +6,8 @@ const Document = require('../models/Document');
 const Tag = require('../models/Tag');
 const Linkage = require('../models/Linkage');
 
+const createDocument = require('../controllers/DocumentController').createDocument;
+
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
@@ -17,6 +19,7 @@ const jobs = require('../apis/jobs');
 const jobConstants = require('../constants/index').jobs;
 
 const logger = require('../logging/index').logger;
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -92,7 +95,6 @@ createWorkspace = async (req, res) => {
         await logger.error({source: 'backend-api', message: err, errorDescription: `error populating workspace creator: ${creatorId}`, function: 'createWorkspace'});
         return res.json({success: false, error: "createWorkspace error: workspace population failed", trace: err});
     }
-
 
     return res.json({success: true, result: workspace});
 }

@@ -9,6 +9,8 @@ import { Router, Route  } from 'react-router-dom';
 import Space from './space/Space';
 import UserSettings from './settings/UserSettings';
 import MainNavbar from './main_navbar/MainNavbar';
+import WorkspaceCreation from './workspace_creation/WorkspaceCreation';
+import Workspaces from './home/workspaces/Workspaces';
 
 //styles
 import styled from "styled-components";
@@ -17,10 +19,13 @@ import styled from "styled-components";
 const Application = () => {
     return ( 
         <Container>
-            <MainNavbar/>
+            {/*<MainNavbar/>*/}
             <Router history = {history}>
-                  <Route path = "/workspaces/:workspaceId" component = {Space} />
-                  <Route path = "/settings" component = {UserSettings} />
+                <Route path = "/create_workspace" component = {WorkspaceCreation}/>
+                <Route exact path = "/" component = {Workspaces}/>
+                <Route exact path = "/workspaces" component = {Workspaces} />
+                <Route path = "/workspaces/:workspaceId" component = {Space} />
+                <Route path = "/settings" component = {UserSettings} />
             </Router>
         </Container>
     )

@@ -9,7 +9,7 @@ import {
 
 import { api } from '../apis/api';
 
-export const createWorkspace = (formValues) => async (dispatch) => {
+export const createWorkspace = (formValues, passback) => async (dispatch) => {
     const response = await api.post('/workspaces/create', formValues);
     
     if (response.data.success == false) {
@@ -17,6 +17,7 @@ export const createWorkspace = (formValues) => async (dispatch) => {
     }
     else {
         dispatch({ type: CREATE_WORKSPACE, payload: response.data.result });
+        if (passback) return response.data.result;
     }
 }
 

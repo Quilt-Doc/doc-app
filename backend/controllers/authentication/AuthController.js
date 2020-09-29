@@ -136,13 +136,19 @@ logout = (req, res) => {
 }
 
 checkInstallation = async (req, res) => {
-    const response = await client.get("/user/installations",  
+    let response;
+    try {
+        response = await client.get("/user/installations",  
         { headers: {
                 Authorization: `token ${req.body.accessToken}`,
-                Accept: 'application/vnd.github.machine-man-preview+json'
+                Accept: 'application/vnd.github.v3+json'
             }
         })
-    return res.json(response.data.installations)
+    } catch (err) {
+        return res.json({error: "checkInstallation Error: github api response failed", trace: err, success: false})
+    }
+    //console.log("RESPONSE", response.data);
+    return res.json({success: true, result: response.data.installations})
 }
 
 

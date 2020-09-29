@@ -144,3 +144,17 @@ export const pollRepositories = (formValues) => async () => {
         return response.data.result;
     }
 }
+
+
+export const retrieveCreationRepositories = (formValues) => async dispatch => {
+    console.log("ENTERED IN RETRIEVE CREATION REPOS");
+    const response = await api.post(`/repositories/retrieve`, formValues);
+    
+    console.log("RESPONSE RETRIEVE CREATION", response);
+    if (response.data.success == false) {
+        throw new Error("retrieveCreationRepositories Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });
+    }
+}

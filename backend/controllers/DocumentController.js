@@ -28,15 +28,16 @@ createDocument = async (req, res) => {
     
     // validation
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    if (!checkValid(title) || title === "") return res.json({success: false, error: "createDocument error: no title provided.", result: null});
+    if (!checkValid(title) || (title === "" && !root)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
 
     // make sure title doesn't exist already in space
     try {
-        let duplicate = await Document.exists({title, workspaceId}).exec();
+        let duplicate = await Document.exists({title, workspace: workspaceId});
         if (duplicate) {
             return res.json({success: false, error: "createDocument Error: duplicate title."})
         }
     } catch (err) {
+        console.log("ERROR", err)
         return res.json({success: false, error: "createDocument Error: validation on duplicate title failed.", trace: err});
     }
     
@@ -58,16 +59,16 @@ createDocument = async (req, res) => {
     // Get parent of newly created document to add to parent's children 
     let parent;
 
-    if (checkValid(parentId)) {
+    if (checkValid(parentPath)) {
         try {   
             parent = await Document.findOne({path: parentPath, workspace: workspaceId})
                 .select('_id path children').exec();
         } catch (err) {
-            return res.json({success: false, error: `createDocument Error: invalid parentId`, trace: err});
+            return res.json({success: false, error: `createDocument Error: invalid parentPath`, trace: err});
         }
     // if created document is root, no need to update a "parent"
     } else if (!root) {
-        return res.json({success: false, error: "createDocument Error: no parentId provided."});
+        return res.json({success: false, error: "createDocument Error: no parentPath provided."});
     }
 
     let documentPath = "";
@@ -114,8 +115,9 @@ createDocument = async (req, res) => {
 
     // populate everything on the document on creation
     try {
-        document = await Document.populate(document, {path: "author references workspace repository tags snippets"}).exec();
+        document = await Document.populate(document, {path: "author references workspace repository tags snippets"});
     } catch (err) {
+        console.log("TRACE", err);
         return res.json({success: false, error: "createDocument Error: document population failed", trace: err});
     }
    
@@ -227,7 +229,7 @@ moveDocument = async (req, res) => {
 
         // mongoose bulkwrite for one many update db call
         try {
-           await Document.bulkWrite(bulkWritePathOps).exec();
+           await Document.bulkWrite(bulkWritePathOps);
         } catch (err) {
             return res.json({success: false, error: "moveDocument Error: bulk write of paths failed", trace: err});
         }
@@ -323,7 +325,7 @@ renameDocument = async (req, res) => {
 
     // make sure title doesn't exist already in space
     try {
-        let duplicate = await Document.exists({title, workspaceId}).exec();
+        let duplicate = await Document.exists({title, workspace: workspaceId});
         if (duplicate) {
             return res.json({success: false, error: "createDocument Error: duplicate title."})
         }
@@ -365,7 +367,7 @@ renameDocument = async (req, res) => {
 
     // execute bulkWrite to make one db call for multi-update
     try {
-       await Document.bulkWrite(bulkWritePathOps).exec();
+       await Document.bulkWrite(bulkWritePathOps);
     } catch (err) {
         return res.json({success: false, error: "renameDocument Error: bulk write of paths failed", trace: err});
     }

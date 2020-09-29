@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let checkSchema = new Schema({
+    created: {type: Date, default: Date.now },
     sha: {type: String, required: true},
     brokenDocuments: [{type: ObjectId, ref: 'Document'}],
     brokenSnippets: [{type: ObjectId, ref: 'Snippet'}],

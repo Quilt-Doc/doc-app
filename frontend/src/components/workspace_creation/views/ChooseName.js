@@ -1,26 +1,65 @@
-import React from 'react';
+import React, { Component } from 'react';
+
+//styles
 import styled from 'styled-components';
 
-// part of the workspace creation where name of workspace is inputted
-const ChooseName = () => {
-    return(
-        <ContentContainer>
-            <SubContentHeader>
-                Name your workspace
-            </SubContentHeader>
-            <SubContentText>
-                And thats it! Enjoy.
-            </SubContentText>
-            <NameInput spellCheck = {false} autoFocus placeholder = 
-                {"workspace name"}/>
-            <NextButton>
-                Create
-            </NextButton>
-        </ContentContainer>
-    )
+//actions
+import { createWorkspace } from '../../../actions/Workspace_Actions';
+
+//redux
+import { connect } from 'react-redux';
+
+// part of the workspace creation where name of workspace is inputted and workspace is created
+class ChooseName extends Component {
+
+    createWorkspace = async () => {
+        const {changePage, installations, createWorkspace, user, active, setCreatedWorkspaceId} = this.props;
+
+        const installationId = installations.filter(inst => inst.account.type == 'User' 
+                    && inst.account.id == user.profileId)[0].id;
+        
+        const name = this.input.value;
+
+        if (name === "") {
+            alert("Please enter a workspace name");
+        } else {
+            const workspace = await createWorkspace({installationId, creatorId: user._id, repositoryIds: active, name}, true);
+            setCreatedWorkspaceId(workspace._id);
+            changePage(3);
+        }
+    }
+
+    render(){
+        return(
+            <ContentContainer>
+                <SubContentHeader>
+                    Name your workspace
+                </SubContentHeader>
+                <SubContentText>
+                    And thats it! Enjoy.
+                </SubContentText>
+                <NameInput ref = {(node) => this.input = node} spellCheck = {false} autoFocus placeholder = 
+                    {"workspace name"}/>
+                <NextButton onClick = {this.createWorkspace}>
+                    Create
+                </NextButton>
+            </ContentContainer>
+        )
+    }
+}
+/*
+    const installationId = installations.filter(inst => inst.account.type === 'User' 
+                    && inst.account.id == user.profileId)[0].id;*/
+//const {name, creatorId, installationId, repositoryIds } = req.body;
+
+const mapStateToProps = (state) => {
+    return {
+        user: state.auth.user,
+        installations: state.auth.installations
+    }
 }
 
-export default ChooseName;
+export default connect(mapStateToProps, { createWorkspace })(ChooseName);
 
 
 const NameInput = styled.input`

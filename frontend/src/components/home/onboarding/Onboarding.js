@@ -1,20 +1,33 @@
 import React from 'react';
 
-import logo from '../../images/logo.svg';
+//styles
 import styled from 'styled-components';
+
+//actions
+import { editUser } from '../../../actions/User_Actions'
+
+//redux
+import { connect } from 'react-redux';
 
 class Onboarding extends React.Component {
     constructor(props){
         super(props);
     }
 
+    onboardUser = () => {
+        const { editUser, user: {_id}}
+        const firstName = this.firstNameInput.value;
+        const lastName = this.lastNameInput.value;
+
+        if (!firstName) alert("Please enter a first name");
+        if (!lastName) alert("Please enter a last name");
+
+        editUser({userId: _id, firstName, lastName, onboarded: true});
+    }   
+
     render(){
         return(
-            <Container>
-                <TopNavbar>
-                    <StyledIcon src = {logo} />
-                    <Company>quilt</Company>
-                </TopNavbar>
+
                 <Content>
                     <Header>
                         Welcome!
@@ -23,21 +36,33 @@ class Onboarding extends React.Component {
                         Provide us some info to tailor your experience
                     </SubHeader>
                     <SubContent>   
-                        <NameInput spellCheck = {false} autoFocus placeholder = 
+                        <NameInput 
+                            ref = {node => this.firstNameInput = node}
+                            spellCheck = {false} 
+                            autoFocus placeholder = 
                             {"First name"}/>
-                        <NameInput spellCheck = {false}  placeholder = 
+                        <NameInput 
+                            ref = {node => this.lastNameInput = node}
+                            spellCheck = {false} 
+                            placeholder = 
                             {"Last name"}/>
-                        <NextButton>
+                        <NextButton onClick = {() => this.onboardUser()}>
                             Next
                         </NextButton>
                     </SubContent>
                 </Content>
-            </Container>
         )
     }
 }
 
-export default Onboarding;
+const mapStateToProps = (state) => {
+    const { auth: {user} } = state;
+    return {
+        user
+    }
+}
+
+export default connect(mapStateToProps, {})(Onboarding);
 
  {/*
                             <CSSTransition

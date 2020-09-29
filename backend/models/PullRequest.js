@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let pullRequestSchema = new Schema({
+    created: {type: Date, default: Date.now },
     installationId: {type: Number, required: true},
     status: {type: String, required: true},
     headRef: {type: String, required: true},
