@@ -7,7 +7,8 @@ let activityFeedItemSchema = new Schema({
     date: {type: Date, default: Date.now, required: true },
     user: {type: ObjectId, ref: 'User', required: true},
     workspace: {type: ObjectId, ref: 'Workspace', required: true},
-    document: {type: ObjectId, ref: 'Document'}
+    document: {type: ObjectId, ref: 'Document'},
+    title: {type: String}
 });
 
 let ActivityFeedItem = mongoose.model("ActivityFeedItem", activityFeedItemSchema);

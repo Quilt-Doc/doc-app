@@ -12,35 +12,39 @@ const logger = require('../../logging/index').logger;
     document: {type: ObjectId, ref: 'Document'}
 */
 
-createActivityFeedItem = (params) => {
+createActivityFeedItem = async (params) => {
     const { type, date, userId, 
-        workspaceId, documentId } = params;
+        workspaceId, userUpdates } = params;
 
-    let activityfeedItem = new ActivityFeedItem(
-        {
-            type: type,
-            date: date,
-            user: ObjectId(userId),
-            workspace: ObjectId(workspaceId)
-        },
-    );
+    var activityfeedItemList = [];
 
-    if (documentId) activityfeedItem.document = documentId;
+    userUpdates.forEach(userUpdate => {
+        var activityFeedItem = {type: type,
+                                date: date,
+                                user: ObjectId(userId),
+                                workspace: ObjectId(workspaceId)
+                            }
+        if (userUpdate.documentId) activityFeedItem.document = userUpdate.documentId;
+        if (userUpdate.title) activityFeedItem.title = userUpdate.title;
+
+        activityfeedItemList.push(activityFeedItem);
+    });
 
     try {
-        activityfeedItem = await activityfeedItem.save();
-        return res.json({success: true, result: activityfeedItem});
+        var bulkInsertResult = await ActivityFeedItem.insertMany(activityfeedItemList);
+        return bulkInsertResult;
     }
     catch (err) {
         logger.error({source: 'backend-api', message: err,
-                        errorDescription: 'Error saving new ActivityFeedItem', function: 'createActivityFeedItem'});
-        return res.json({success: false, error: err});
+                        errorDescription: `Error saving new ActivityFeedItem(s) workspaceId, userId, userUpdates: ${workspaceId}, ${userId}, ${JSON.stringify(userUpdates)}`,
+                        function: 'createActivityFeedItem'});
+        throw new Error(`Error saving new ActivityFeedItem(s) workspaceId, userId, userUpdates: ${workspaceId}, ${userId}, ${JSON.stringify(userUpdates)}`);
     }
 }
 
 
 
-retrieveActivityFeedItems = (req, res) => {
+retrieveActivityFeedItems = async (req, res) => {
     const { limit, skip } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();

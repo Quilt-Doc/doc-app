@@ -13,7 +13,7 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 
-retrieveBrokenDocuments = (req, res) => {
+retrieveBrokenDocuments = async (req, res) => {
     const { limit, skip } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
@@ -33,7 +33,7 @@ retrieveBrokenDocuments = (req, res) => {
         return res.json({success: true, result: documents});
     }
     catch (err) {
-        logger.error({source: 'backend-api', message: err,
+        await logger.error({source: 'backend-api', message: err,
                         errorDescription: 'Error executing query to retrieve broken documents', function: 'retrieveBrokenDocuments'});
         return res.json({success: false, error: err});
     }

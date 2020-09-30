@@ -6,6 +6,8 @@ const Document = require('../models/Document');
 const Tag = require('../models/Tag');
 const Linkage = require('../models/Linkage');
 
+const UserStatsController = require('./reporting/UserStatsController');
+
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
@@ -51,6 +53,17 @@ createWorkspace = async (req, res) => {
     } catch (err) {
         await logger.error({source: 'backend-api', message: err, errorDescription: `error saving workspace creator: ${creatorId}`, function: 'createWorkspace'});
         return res.json({success: false, error: "createWorkspace error: save() on new workspace failed", trace: err});
+    }
+
+    // Create UserStats object for creator
+    try {
+        await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString()});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
+                            function: 'createWorkspace'});
+        return res.json({success: false, error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err});
     }
 
     // Set all workspace Repositories 'currentlyScanning' to true
@@ -123,7 +136,7 @@ deleteWorkspace = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: "deleteWorkspace error: workspace findByIdAndRemove query failed", trace: err});
     }
-   
+
     return res.json({success: true, result: deletedWorkspace});
 }
 
@@ -143,7 +156,18 @@ addWorkspaceUser = async (req, res) => {
             { $push: {memberUsers: userId} }, { new: true }).select('_id memberUsers').populate({path: 'user'}).lean.exec();
     } catch (err) {
         return res.json({success: false, error: "addUser error: workspace findByIdAndUpdate query failed", trace: err});
-    }   
+    }
+
+    // Create UserStats object for creator
+    try {
+        await UserStatsController.createUserStats({userId, workspaceId});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `error creating UserStats object userId, workspaceId: ${userId} ${workspaceId}`,
+                            function: 'addWorkspaceUser'});
+        return res.json({success: false, error: `error creating UserStats object userId, workspaceId: ${userId} ${workspaceId}`, trace: err});
+    }
 
     return res.json({success: true, result: returnedWorkspace});
 }

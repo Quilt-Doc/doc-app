@@ -608,7 +608,7 @@ const linkageMiddleware = async (req, res, next) => {
     }
 }
 
-const reportingMiddleware = (req, res, next) => {
+const reportingMiddleware = async (req, res, next) => {
     console.log('req.path.trim(): ', req.path.trim());
     const { workspaceId } = req.params;
     var searchWorkspaceId;

@@ -12,7 +12,7 @@ const logger = require('../../logging/index').logger;
     documentsBrokenNum: {type: Number, default: 0}
 */
 
-createUserStats = (params) => {
+createUserStats = async (params) => {
     const {userId, workspaceId } = params;
 
     let userStats = new UserStats(
@@ -24,18 +24,19 @@ createUserStats = (params) => {
 
     try {
         userStats = await userStats.save();
-        return userStats;
     }
     catch (err) {
         logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error saving User Stats object for userId, workspaceId: ${userId}, ${workspaceId}`, function: 'createUserStats'});
         throw new Error(`Error saving User Stats object for userId, workspaceId: ${userId}, ${workspaceId}`);
     }
+
+    return userStats;
 }
 
 
 
-retrieveUserStats = (req, res) => {
+retrieveUserStats = async (req, res) => {
     const { limit, skip } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
@@ -69,19 +70,64 @@ retrieveUserStats = (req, res) => {
     return res.json({success: true, result: statItems});
 }
 
-updateDocumentsCreatedNum = (params) => {
-    const {updateNum, userId, workspaceId} = params;
-    
-    UserStats.findOneAndUpdate({user: userId, workspace: workspaceId},
-        {$inc: {documentsCreatedNum: updateNum}});
+updateDocumentsCreatedNum = async (params) => {
+    const {userUpdates, workspaceId} = params;
 
+    if (userUpdates.length < 1) {
+        return true;
+    }
+    
+    try {
+        const bulkIncrementOps = userUpdates.map((update) => {
+            return ({
+                updateOne: {
+                    filter: { user: update.userId, workspace: workspaceId },
+                    // Where field is the field you want to update
+                    update: { $inc: { documentsCreatedNum: update.updateNum } },
+                    upsert: false
+                }
+            })
+        });
+
+       await UserStats.bulkWrite(bulkIncrementOps).exec();
+    }
+    catch (err) {
+        logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error bulk updating User Stats for userUpdates, workspaceId: ${JSON.stringify(userUpdates)}, ${workspaceId}`,
+                        function: 'updateDocumentsCreatedNum'});
+        throw new Error(`Error bulk updating User Stats for userUpdates, workspaceId: ${JSON.stringify(userUpdates)}, ${workspaceId}`);
+    }
+    return true;
 }
 
-updateDocumentsBrokenNum = (params) => {
-    const {updateNum, userId, workspaceId} = params;
-    
-    UserStats.findOneAndUpdate({user: userId, workspace: workspaceId},
-        {$inc: {documentsBrokenNum: updateNum}});
+updateDocumentsBrokenNum = async (params) => {
+    const {userUpdates, workspaceId} = params;
+
+    if (userUpdates.length < 1) {
+        return true;
+    }
+
+    // mongoose bulkwrite for one many update db call
+    try {
+        const bulkDecrementOps = userUpdates.map((update) => {
+            return ({
+                updateOne: {
+                    filter: { user: update.userId, workspace: workspaceId },
+                    // Where field is the field you want to update
+                    update: { $inc: { documentsBrokenNum: update.updateNum } },
+                    upsert: false
+                }
+            })
+        });
+       await UserStats.bulkWrite(bulkDecrementOps).exec();
+    }
+    catch (err) {
+        logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error bulk updating User Stats for userUpdates, workspaceId: ${JSON.stringify(userUpdates)}, ${workspaceId}`,
+                        function: 'updateDocumentsBrokenNum'});
+        throw new Error(`Error bulk updating User Stats for userUpdates, workspaceId: ${JSON.stringify(userUpdates)}, ${workspaceId}`);
+    }
+    return true;
 }
 
 module.exports = { createUserStats, retrieveUserStats,
