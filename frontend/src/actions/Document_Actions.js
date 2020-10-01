@@ -26,6 +26,7 @@ export const createDocument = (formValues) => async (dispatch) => {
     }
     else {
         dispatch({ type: CREATE_DOCUMENT, payload: response.data.result });
+        console.log("CREATE RESULT", response.data.result);
         return response.data.result;
     }
 }
@@ -90,12 +91,14 @@ export const getDocument = (formValues) => async dispatch => {
         throw new Error("getDocument: documentId not provided");
     }
 
+    console.log("SENDING GET DOCUMENT REQUEST");
     const response = await api.get(`/documents/${workspaceId}/get/${documentId}`);
 
     if (response.data.success == false) {
         throw new Error("getDocument Error: ", response.data.error.toString());
     }
     else {
+        console.log("GET DOCUMENT RESPONSE", response.data.result);
         dispatch({ type: GET_DOCUMENT, payload: response.data.result });
         return response.data.result
     }

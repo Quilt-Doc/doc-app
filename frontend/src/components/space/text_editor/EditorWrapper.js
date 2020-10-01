@@ -54,7 +54,7 @@ class EditorWrapper extends React.Component {
     loadResources = async () => {
         const { documentModal, match, getDocument } = this.props;
         let { workspaceId, documentId } = match.params;
-
+        console.log("LOADING");
         // if the editor is a modal, the id is in the params
         if (documentModal){
             let search = history.location.search;
@@ -62,9 +62,10 @@ class EditorWrapper extends React.Component {
             documentId = params.get('document');
         }
         
+        console.log("CALLING");
         // get the document data using the id
         const doc = await getDocument({workspaceId, documentId});
-
+        console.log("BROKEN");
         // placeholder markup if the doc has no markup
         let markup = [{
             type: 'paragraph',
@@ -82,6 +83,7 @@ class EditorWrapper extends React.Component {
         // add an event listener to make sure content is saved on unload
         window.addEventListener('beforeunload', this.saveMarkup, false);
         this.setValue = this.setValue.bind(this);
+        console.log("UP TO HERE");
         this.setState({markup, title, loaded: true});
     }
 
@@ -147,6 +149,8 @@ class EditorWrapper extends React.Component {
     renderTextEditor(){
         let { document, documentModal } = this.props;
         let {title, markup} = this.state;
+        console.log("PROPS", { document, documentModal });
+        console.log( {title, markup} );
         return(
             <TextEditor 
                 onTitleChange = {this.onTitleChange}
@@ -162,7 +166,8 @@ class EditorWrapper extends React.Component {
     render(){
         const {loaded} = this.state;
         const {documentModal} = this.props;
-
+        console.log("ENTERED HERE");
+        console.log("LOADED", loaded);
         if (loaded) {
             return(
                 documentModal ? this.renderTextEditor()

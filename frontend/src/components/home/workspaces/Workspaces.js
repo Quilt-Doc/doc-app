@@ -180,6 +180,7 @@ const Space = styled(Link)`
     text-decoration: none;
     outline: none;
     color: white;
+    margin-bottom: 2rem;
 `
 
 

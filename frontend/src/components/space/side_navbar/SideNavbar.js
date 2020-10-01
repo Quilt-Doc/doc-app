@@ -47,6 +47,7 @@ class SideNavbar extends React.Component {
         ]);
 
         const { rootDocument } = this.props;
+
         // retrieve the children of the root (root is hidden, these are the first layer of docs)
         await retrieveDocuments({workspaceId, documentIds: rootDocument.children, minimal: true});
     }
@@ -71,18 +72,18 @@ class SideNavbar extends React.Component {
 
     //TODO: MOVE RENDERCODEBASE LINK INTO COMPONENTDIDMOUNT
     renderCodebaseLink = async () => {
-        const { match, workspace, rootReference, retrieveReferences } = this.props;
+        let { match, workspace, rootReference, retrieveReferences } = this.props;
         const { repositories } = workspace;
         const { workspaceId } = match.params;
-
+       
         let repositoryId = repositories[0]._id;
-        
-        let referenceId;
+       
         if (!rootReference) {
-            referenceId = await retrieveReferences({ workspaceId, repositoryId, path: ""}, true)[0]._id;
-        } else {
-            referenceId = rootReference._id;
-        }
+            rootReference = await retrieveReferences({ workspaceId, repositoryId, path: ""}, true);
+            rootReference = rootReference[0];
+        } 
+        
+        let referenceId = rootReference._id;
         
 
         return `/workspaces/${workspaceId}/repository/${repositoryId}/dir/${referenceId}`;
@@ -204,8 +205,7 @@ const makeMapStateToProps = () => {
         let {documents, auth, workspaces, references} = state;
         
         const rootDocument = Object.values(documents).filter(document => document.root)[0];
-        documents = getChildDocuments({rootDocument, documents});
-
+        documents = getChildDocuments({parent: rootDocument, documents});
         const rootReference = Object.values(references).filter(reference => reference.path === "")[0];
 
         return {

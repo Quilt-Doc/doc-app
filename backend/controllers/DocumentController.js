@@ -386,22 +386,27 @@ renameDocument = async (req, res) => {
 
 // replace or add entire document
 getDocument = async (req, res) => {
+    console.log("ENTERED QUERY");
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
-
+    console.log("PARAMS", {workspaceId, documentId});
     // populate everything on get calls
     let returnDocument;
     let population = "author references workspace repository tags snippets";
 
     // no filtering or selection --- usually get is called when we need all the data
+    console.log("ABOUT TO QUERY");
     try {
         returnDocument =  await Document.findOne({_id: documentId, workspace: workspaceId}).lean()
             .populate({path: population}).exec();
     } catch (err) {
+        console.log("GET DOCUMENT ERROR");
         return res.json({ success: false, error: "getDocument Error: unable to get document", trace: err });
     }
 
-    return { success: true, result: returnDocument };
+    console.log("FINISHED QUERY");
+    console.log("RETURNED DOCUMENT", returnDocument);
+    return res.json({ success: true, result: returnDocument });
 }
 
 
@@ -495,7 +500,7 @@ retrieveHelper = async (body, req) => {
     
     // depending on whether we need all the data (most of the time we only need the essentials -- minimal)
     // we will select/populate what we need
-    let selection = "_id author title created path status references children"
+    let selection = "_id author title created path status references children root"
     let population = checkValid(minimal) ? "author references" : "author references workspace repository tags snippets";
 
     if (checkValid(minimal)) {

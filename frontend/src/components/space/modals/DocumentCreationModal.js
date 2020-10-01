@@ -15,7 +15,6 @@ import {RiFileFill, RiPencilLine, RiAddLine} from 'react-icons/ri';
 //router
 import {withRouter} from 'react-router-dom';
 
-
 //components
 import DocumentMenu2 from '../../menus/DocumentMenu2';
 import RepositoryMenu2 from '../../menus/RepositoryMenu2';
@@ -27,22 +26,26 @@ import { CSSTransition } from 'react-transition-group';
 import { createDocument } from '../../../actions/Document_Actions';
 import { clearSelected } from '../../../actions/Selected_Actions';
 
-
 class DocumentCreationModal extends React.Component {
     constructor(props){
         super(props)
         this.state = {
             tags: [],
             references: [],
-            parent: "",
+            parent: null,
             repository: null,
             loading: false,
             title: "XYZOS"
         }
     }
 
-    componentDidMount(){
-        this.setState({references: this.props.selected, repository: this.props.repository})
+    async componentDidMount(){
+        const { selected, repository } = this.props;
+
+        this.setState({
+            references: selected, 
+            repository
+        });
     }
 
     //TODO: NEED TO FORCE TITLE
@@ -57,17 +60,20 @@ class DocumentCreationModal extends React.Component {
         let {tags, references, parent, repository, title} = this.state;
         let {workspaceId} = this.props.match.params
 
-        let result =  await this.props.createDocument({
+        let affectedDocuments =  await this.props.createDocument({
             authorId: this.props.user._id,
             workspaceId,
-            title,
+            title: "Semantic",
             tagIds: tags.map(tag => tag._id), 
             parentPath: parent ? parent.path : "",
             repositoryId: repository ? repository._id : null,
             referenceIds: references.map(item => item._id)}
         )
 
-        document = result[0];
+        console.log(affectedDocuments);
+        const { documents } = this.props;
+
+        document = documents[affectedDocuments[0]._id];
             
         this.props.history.push(`?document=${document._id}&edit=${true}`)
         this.props.clearSelected()
@@ -237,13 +243,15 @@ class DocumentCreationModal extends React.Component {
 
 
 const mapStateToProps = (state, ownProps) => {
-    let {repositoryId, workspaceId} = ownProps.match.params
-
+    const { documents, selected, workspaces, auth: { user } } = state;
+    let { repositoryId, workspaceId } = ownProps.match.params
+    
     return {
-        user: state.auth.user,
-        selected: Object.values(state.selected),
+        user,
+        selected: Object.values(selected),
+        documents,
         repository: repositoryId ? 
-            state.workspaces[workspaceId].repositories.filter(repo => {return repo._id === repositoryId})[0] : 
+            workspaces[workspaceId].repositories.filter(repo => {return repo._id === repositoryId})[0] : 
             undefined
     }   
 }

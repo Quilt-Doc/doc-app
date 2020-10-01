@@ -13,7 +13,7 @@ import styled from "styled-components";
 import {IoMdNotificationsOutline} from 'react-icons/io'
 
 //images
-import logo from '../../images/logo.svg';
+import logo from '../../../images/logo.svg';
 
 
 const MainNavbar = () => {

@@ -7,6 +7,7 @@ import styled from "styled-components";
 import EditorWrapper from './text_editor/EditorWrapper';
 import Infobank from './infobank/Infobank';
 import SideNavbar from './side_navbar/SideNavbar';
+import MainNavbar from './main_navbar/MainNavbar';
 import Dashboard from './dashboard/Dashboard';
 import ReferenceEditor from './codebase/reference_editor/ReferenceEditor';
 import DirectoryNavigator from './codebase/directory_navigator/DirectoryNavigator';
@@ -72,18 +73,21 @@ class Space extends React.Component {
                     timeout={500}
                     classNames="sidenav"
                 >
-                    <Container>
-                        <SideNavbar/>
-                        <RightView id = {"rightView"} >
-                            <Router history = {history}>
-                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryNavigator } />
-                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
-                                <Route path = "/workspaces/:workspaceId/document/:documentId" component = { EditorWrapper } />
-                                <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
-                                <Route path = "/workspaces/:workspaceId/infobank" component = { Infobank } />
-                            </Router>
-                        </RightView>
-                    </Container>
+                    <div>
+                        <MainNavbar/>
+                        <Container>
+                            <SideNavbar/>
+                            <RightView id = {"rightView"} >
+                                <Router history = {history}>
+                                    <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryNavigator } />
+                                    <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
+                                    <Route path = "/workspaces/:workspaceId/document/:documentId" component = { EditorWrapper } />
+                                    <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
+                                    <Route path = "/workspaces/:workspaceId/infobank" component = { Infobank } />
+                                </Router>
+                            </RightView>
+                        </Container>
+                    </div>
                 </CSSTransition>
                 {this.renderModal()}
             </>

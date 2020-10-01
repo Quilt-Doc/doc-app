@@ -14,11 +14,11 @@ export const retrieveReferences = (formValues, passBack) => async dispatch => {
     }
 
     const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
-    console.log("RETRIEVE REFERENCE RESPONSE", response);
     if (response.data.success == false) {
         throw new Error("retrieveReferences Error: ", response.data.error.toString());
     }
     else {
+        console.log("RESPONSE", response.data.result);
         if (passBack) return response.data.result;
         dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });
     }

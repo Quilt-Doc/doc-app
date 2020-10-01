@@ -39,7 +39,7 @@ createReferences = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: 'createReferences Error: insertMany query failed', trace: err});
     }
-    
+
     return res.json({success: true, result: insertedReferences});
 }
 
@@ -140,7 +140,7 @@ retrieveReferences = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: "retrieveReferences Error: direct retrieve query execution failed", trace: err});
     }
-    console.log("RETURNED", returnedReferences);
+
     return res.json({success: true, result: returnedReferences});
 }
 

@@ -47,7 +47,18 @@ initRepository = async (req, res) => {
         await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
                         function: 'initRepository'});
-        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
+        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`, trace: err});
+    }
+
+    try {
+        await Reference.create({repository: repository._id, 
+            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create"});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error saving rootReference`,
+                        function: 'initRepository'});
+        return res.json({success: false, error: `Error saving rootReference`, trace: err});
     }
 
     return res.json({success: true, result: repository});
@@ -172,12 +183,9 @@ retrieveCreationRepositories = async (req, res) => {
     try {
         returnedRepositories = await query.lean().exec()
     } catch (err) {
-        console.log("ERROR");
         return res.json({ success: false, error: 'retrieveCreationRepositories error: repository retrieve \
             query failed', trace: err });
     }
-    
-    console.log("RETURNED REPOSITORIES", returnedRepositories);
 
     return res.json({success: true, result: returnedRepositories});
 }

@@ -4,7 +4,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 //router
-import history from '../../../history';
+import history from '../../../../history';
 
 //icons
 import { RiPencilLine } from 'react-icons/ri';
