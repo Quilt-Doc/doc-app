@@ -95,8 +95,6 @@ router.get('/snippets/:workspaceId/get/:snippetId', authorizationMiddleware.snip
 router.put('/snippets/:workspaceId/edit/:snippetId', authorizationMiddleware.snippetMiddleware, snippetController.editSnippet);
 router.delete('/snippets/:workspaceId/delete/:snippetId', authorizationMiddleware.snippetMiddleware, snippetController.deleteSnippet);
 router.post('/snippets/:workspaceId/retrieve', authorizationMiddleware.snippetMiddleware, snippetController.retrieveSnippets);
-router.post('/snippets/:workspaceId/refresh', authorizationMiddleware.snippetMiddleware, snippetController.refreshSnippets);
-
 
 
 const repositoryController = require('../controllers/RepositoryController');
@@ -268,7 +266,7 @@ router.post('/tokens/delete', authorizationMiddleware.tokenMiddleware, tokenCont
 const checkController = require('../controllers/CheckController');
 router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, checkController.createCheck);
 
-const pullRequestController = require('../controllers/PullRequestController');
+const pullRequestController = require('../controllers/unused/PullRequestController');
 router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pullRequestController.createPullRequest);
 
 

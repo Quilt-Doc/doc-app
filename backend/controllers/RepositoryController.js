@@ -32,6 +32,9 @@ initRepository = async (req, res) => {
     if (!checkValid(fullName)) return res.json({success: false, error: 'no repository fullName provided'});
     if (!checkValid(installationId)) return res.json({success: false, error: 'no repository installationId provided'});
 
+    await logger.info({source: 'backend-api', message: `Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`,
+                        function: 'initRepository'});
+
     let repository = new Repository({
         fullName,
         installationId,
@@ -48,6 +51,17 @@ initRepository = async (req, res) => {
                         errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
                         function: 'initRepository'});
         return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
+    }
+
+    try {
+        await Reference.create({repository: repository._id, 
+            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create"});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error saving rootReference`,
+                        function: 'initRepository'});
+        return res.json({success: false, error: `Error saving rootReference`, trace: err});
     }
 
     return res.json({success: true, result: repository});

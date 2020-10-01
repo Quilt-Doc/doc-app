@@ -24,7 +24,7 @@ retrieveBrokenDocuments = async (req, res) => {
 
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
-    
+
     query.sort({breakDate: -1});
 
     var documents;
@@ -44,5 +44,4 @@ retrieveBrokenDocuments = async (req, res) => {
 module.exports = { retrieveBrokenDocuments,
                    retrieveActivityFeedItems: ActivityFeedItemController.retrieveActivityFeedItems,
                    retrieveUserStats: UserStatsController.retrieveUserStats,
-
                 };

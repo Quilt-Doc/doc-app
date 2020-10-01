@@ -11,6 +11,9 @@ const UserStats = require('../models/reporting/UserStats');
 const { ObjectId } = mongoose.Types;
 const logger = require('../logging/index').logger;
 
+const jobs = require('../apis/jobs');
+const jobConstants = require('../constants/index').jobs;
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -316,7 +319,7 @@ deleteDocument = async (req, res) => {
         // add the parent to finalResult
         finalResult.parent = parent;
     }
-   
+
     // find all documents that are about to be deleted (toplevel doc included for cleanliness)
     try {
         deletedDocuments = await Document.find({path: regex, workspace: workspaceId}).select("_id").lean().exec();
@@ -394,6 +397,31 @@ deleteDocument = async (req, res) => {
                             errorDescription: `Error updating updateDocumentsBrokenNum userBrokenDocumentUpdateList, workspaceId: ${userBrokenDocumentUpdateList}, ${workspaceId}`,
                             function: `deleteDocument`});
         return res.json({success: false, error: `Error updating updateDocumentsBrokenNum userBrokenDocumentUpdateList, workspaceId: ${userBrokenDocumentUpdateList}, ${workspaceId}`, trace: err});
+    }
+
+    // Kick off Check update job
+
+    var validatedDocuments = deletedDocumentInfo.filter(infoObj => infoObj.status == 'invalid')
+                                                .forEach(infoObj => {
+                                                    infoObj._id.toString();
+                                                });
+    if (validatedDocuments.length > 0) {
+        var runUpdateChecksData = {};
+        runUpdateChecksData['repositoryId'] = documentObj.repository.toString();
+        runUpdateChecksData['validatedDocuments'] = validatedDocuments;
+        runUpdateChecksData['validatedSnippets'] = [];
+
+        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+        try {
+            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`,
+                            function: 'deleteDocument'});
+            return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`});
+        }
     }
 
 
@@ -718,8 +746,8 @@ removeDocumentReference = async (req, res) => {
     //  If removed Reference.status == 'invalid'
     //      If Document has no References set status to 'valid'
     //      If Document now has only valid References set status to 'valid'
-
     // Now that Reference has been removed, update the Document's status, if necessary
+    // Kick off Update Checks Job
 
     var setStatusValid = false;
 
@@ -752,9 +780,10 @@ removeDocumentReference = async (req, res) => {
             }
         }
 
+        // Set the Document status to 'valid'
         if (setStatusValid) {
             try {
-                var setDocumentValidResponse = await Document.findByIdAndUpdate({_id: documentId, workspace: workspaceId}).lean().exec();
+                var setDocumentValidResponse = await Document.findByIdAndUpdate(documentId, {$set: {status: 'valid'}}).lean().exec();
             }
             catch (err) {
                 await logger.error({source: 'backend-api', message: err,
@@ -765,6 +794,29 @@ removeDocumentReference = async (req, res) => {
                                     trace: err });
             }
         }
+
+
+        // Kick off Check update job
+        var validatedDocuments = [documentId.toString()];
+        if (validatedDocuments.length > 0) {
+            var runUpdateChecksData = {};
+            runUpdateChecksData['repositoryId'] = req.documentObj.repository.toString();
+            runUpdateChecksData['validatedDocuments'] = validatedDocuments;
+            runUpdateChecksData['validatedSnippets'] = [];
+
+            runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+            try {
+                await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                        errorDescription: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`,
+                                        function: 'removeDocumentReference'});
+            return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`});
+            }
+        }
+
     }
 
     // Also update UserStats.documentsBrokenNum

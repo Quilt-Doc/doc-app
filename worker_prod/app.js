@@ -1,5 +1,6 @@
 const updateReferences = require('./update_references');
 const scanRepositories = require('./scan_repositories');
+const updateChecks = require('./update_checks');
 
 const {serializeError, deserializeError} = require('serialize-error');
 
@@ -83,6 +84,8 @@ app.post('/job', async function(req, res) {
         res.status(200).end();
     }
 
+
+
     // Update Reference Job
     else if (jobType == constants.jobs.JOB_UPDATE_REFERENCES) {
 
@@ -128,6 +131,46 @@ app.post('/job', async function(req, res) {
         catch (err) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
                                 errorDescription: `Error aborted 'Update References' job`,
+                                source: 'worker-instance', function: 'app.js'}});
+            res.status(500).end();
+        }
+    }
+
+
+
+    // Update Checks Job
+    else if (jobType == constants.jobs.JOB_UPDATE_CHECKS) {
+
+        const { repositoryId, validatedDocuments, validatedSnippets } = req.body;
+
+        if (!checkValid(repositoryId)) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No repositoryId provided for Upate Checks job`)),
+                                                        errorDescription: `No repositoryId provided for Upate Checks job`,
+                                                        source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
+        if (!checkValid(validatedDocuments)) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No validatedDocuments provided for Upate Checks job`)),
+                                                        errorDescription: `No validatedDocuments provided for Upate Checks job`,
+                                                        source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
+        if (!checkValid(validatedSnippets)) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No validatedSnippets provided for Upate Checks job`)),
+                                                        errorDescription: `No validatedSnippets provided for Upate Checks job`,
+                                                        source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
+        process.env.repositoryId = repositoryId;
+        process.env.validatedDocuments = JSON.stringify(validatedDocuments);
+        process.env.validatedSnippets = JSON.stringify(validatedSnippets);
+
+        try {
+            await updateChecks.runUpdateProcedure();
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                errorDescription: `Error aborted 'Update Checks' job`,
                                 source: 'worker-instance', function: 'app.js'}});
             res.status(500).end();
         }

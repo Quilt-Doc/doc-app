@@ -2,6 +2,10 @@ const Snippet = require('../models/Snippet');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+const logger = require('../logging/index').logger;
+const jobs = require('../apis/jobs');
+const jobConstants = require('../constants/index').jobs;
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -95,6 +99,7 @@ editSnippet = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
     const { name, status, code, start } = req.body;
 
+    var isValidatingSnippet = false;
 
     // build update object and selection object to update and only pull exactly what is needed from db
     let update = {};
@@ -105,9 +110,16 @@ editSnippet = async (req, res) => {
         selectionString += " name";
     }
 
+    // If updating Status, potential for Check updates
     if (status) {
+        
         update.status = status;
         selectionString += " status";
+        
+        if (req.snippetObj.status == 'INVALID' && status == 'VALID') {
+            isValidatingSnippet = true;
+        }
+    
     }
 
     if (code) {
@@ -127,6 +139,29 @@ editSnippet = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: "editSnippet error: findOneAndUpdate query failed", trace: err});
     }
+
+    // Kick off Check update job
+    if (isValidatingSnippet) {
+
+        var validatedSnippets = [req.snippetObj._id.toString()];
+
+        var runUpdateChecksData = {};
+        runUpdateChecksData['repositoryId'] = documentObj.repository.toString();
+        runUpdateChecksData['validatedDocuments'] = [];
+        runUpdateChecksData['validatedSnippets'] = validatedSnippets;
+
+        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+        try {
+            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`,
+                            function: 'editSnippet'});
+            return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
+        }
+    }
    
     return res.json({success: true, result: returnedSnippet});
 }
@@ -141,6 +176,29 @@ deleteSnippet = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: "deleteSnippet error: findOneAndRemove query failed", trace: err});
     }
+
+    // Kick off Check update job if Snippet was 'invalid'
+    if (deletedSnippet.status == 'INVALID') {
+        var validatedSnippets = [deletedSnippet._id.toString()];
+        
+        var runUpdateChecksData = {};
+        runUpdateChecksData['repositoryId'] = req.snippetObj.repository.toString();
+        runUpdateChecksData['validatedDocuments'] = [];
+        runUpdateChecksData['validatedSnippets'] = validatedSnippets;
+
+        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+        try {
+            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`,
+                                    function: 'deleteSnippet'});
+        return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
+        }
+    }
+    
   
     return res.json({success: true, result: deletedSnippet});
 }
@@ -177,25 +235,5 @@ retrieveSnippets = async (req, res) => {
 }
 
 
-refreshSnippets = async (req, res) => {
-    const workspaceId = req.workspaceObj._id.toString();
-    const { updates } = req.body;
-    const bulkOps = updates.map(update => ({
-        updateOne: {
-            filter: { _id: ObjectId(update._id), workspace: workspaceId },
-            // Where field is the field you want to update
-            // startLine, code, 
-            update: { $set: { code: update.code, pathInRepository: update.pathInRepository, startLine: update.startLineNum } },
-            upsert: true
-         }
-     }));
-
-    return Snippet.collection
-       .bulkWrite(bulkOps)
-       .then(results => res.json({success: true, result: results}))
-       .catch(err => res.json({success: false, error: `Error refreshing snippets: ${err}`}));
-};
-
-
 module.exports = { createSnippet, getSnippet, editSnippet, deleteSnippet, 
-    retrieveSnippets, refreshSnippets }
+    retrieveSnippets }

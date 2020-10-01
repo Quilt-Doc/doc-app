@@ -85,7 +85,7 @@ createCheckRunObj = async (commit, brokenDocuments, brokenSnippets, checkId) => 
                         caption: 'Test image',
                     }
     
-                
+
     var outputObj;
     try {
         outputObj = {   title: 'Quilt Docs Documentation Changes',
@@ -196,7 +196,7 @@ const createCheck = async (req, res) => {
     console.log(JSON.stringify(checkObj));
 
     console.log('githubId: ', check.githubId);
-    
+
     /*
     var checkUpdateResponse;
     try {

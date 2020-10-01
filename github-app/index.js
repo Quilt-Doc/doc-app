@@ -125,7 +125,7 @@ exports.handler = async (event) => {
                 await logger.error({source: 'github-lambda', message: err,
                                     errorDescription: `error initializing repositories: ${postDataList}`,
                                     function: 'handler'});
-                        
+
                 let response = {
                     statusCode: 200,
                     body: JSON.stringify({ message: "200 OK" })
