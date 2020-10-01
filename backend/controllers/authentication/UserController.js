@@ -3,6 +3,7 @@
 const User = require('../../models/authentication/User');
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
+const logger = require('../../logging/index').logger;
 
 
 getUser = async (req, res) => {
@@ -11,8 +12,9 @@ getUser = async (req, res) => {
     let returnedUser;
 
     try {
-        returnedUser = await  User.findById(userId).populate('workspaces').lean().exec()
+        returnedUser = await User.findById(userId).populate('workspaces').lean().exec()
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to fetch User - userId: ${userId}`, function: 'getUser'});
         return res.json({success: false, error: "getUser Error: findbyId query failed", trace: err});
     }
    
@@ -33,6 +35,7 @@ editUser = async (req, res) => {
         returnedUser = await  User.findByIdAndUpdate(userId, { $set: update }, { new: true })
             .populate('workspaces').lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to findByIdAndUpdate User - userId: ${userId}`, function: 'editUser'});
         return res.json({success: false, error: "editUser Error: findbyIdAndUpdate query failed", trace: err});
     }
    
@@ -52,11 +55,11 @@ attachUserWorkspace = async (req, res) => {
         returnedUser = await User.findByIdAndUpdate(userId, { $push: update }, { new: true })
             .populate('workspaces').lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to findByIdAndUpdate User - userId: ${userId}`, function: 'attachUserWorkspace'});
         return res.json({success: false, error: "attachUserWorkspace Error: findbyIdAndUpdate query failed", trace: err});
     }
-   
-    return res.json({success: true, result: returnedUser});
 
+    return res.json({success: true, result: returnedUser});
 }
 
 
@@ -73,9 +76,10 @@ removeUserWorkspace = async (req, res) => {
         returnedUser = await User.findByIdAndUpdate(userId, { $pull: update }, { new: true })
             .populate('workspaces').lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to findByIdAndUpdate User - userId: ${userId}`, function: 'removeUserWorkspace'});
         return res.json({success: false, error: "removeUserWorkspace Error: findbyIdAndUpdate query failed", trace: err});
     }
-   
+
     return res.json({success: true, result: returnedUser});
 }
 
@@ -91,6 +95,7 @@ deleteUser = async (req, res) => {
     try {
         returnedUser = await  User.findByIdAndRemove(userId).select('_id').lean().exec()
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to findByIdAndRemove User - userId: ${userId}`, function: 'deleteUser'});
         return res.json({success: false, error: "deleteUser Error: findbyIdAndRemove query failed", trace: err});
     }
    

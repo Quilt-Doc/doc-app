@@ -391,7 +391,7 @@ const tagMiddleware = async (req, res, next) => {
 }
 
 const authMiddleware = async (req, res, next) => {
-
+    next();
 }
 
 const userMiddleware = async (req, res, next) => {

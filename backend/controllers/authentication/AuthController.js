@@ -1,7 +1,6 @@
 const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 const client = require("../../apis/api").requestGithubClient();
 
-const AuthRequest = require('../../models/authentication/AuthRequest');
 const User = require('../../models/authentication/User');
 
 const querystring = require('querystring');
@@ -128,27 +127,37 @@ checkInstallation = async (req, res) => {
             });
     }
     catch (err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `Error fetching installation - accessToken: ${req.body.accessToken}`});
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error fetching installation - userId: ${req.tokenPayload.userId}`, function: 'checkInstallation'});
         return res.json({success: false, error: err});
-
     }
     // KARAN TODO: Format this result properly
-    return res.json(response.data.installations)
+    return res.json(response.data.installations);
 }
 
 
 
 retrieveDomainRepositories = async (req, res) => {
-    const response = await client.get("/user/repos",  
-    { headers: {
-            Authorization: `token ${req.body.accessToken}`,
-            Accept: 'application/vnd.github.machine-man-preview+json'
-        }
-    })
-    filteredResponse = response.data.filter(item => item.permissions.admin === true)
+    var userRepositoriesResponse;
+    try {
+        userRepositoriesResponse = await client.get("/user/repos",  
+        { headers: {
+                Authorization: `token ${req.body.accessToken}`,
+                Accept: 'application/vnd.github.machine-man-preview+json'
+            }
+        })
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error Retrieving Repositories - userId: ${req.tokenPayload.userId}`, function: 'retrieveDomainRepositories'});
+        return res.json({success: false, error: err});
+    }
+
+    filteredResponse = userRepositoriesResponse.data.filter(item => item.permissions.admin === true);
+    // KARAN TODO: Format this result properly
     return res.json(filteredResponse)
 }
 
 module.exports = {
-    loginSuccess, loginFailed, logout, checkInstallation, retrieveDomainRepositories, startJiraAuthRequest
+    loginSuccess, loginFailed, logout, checkInstallation, retrieveDomainRepositories
 }

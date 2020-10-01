@@ -1,6 +1,9 @@
 // TODO: Add Workspace, Repository Delete Routes and methods 
 const passport = require("passport");
+
+// KARAN TODO: Replace these with environment variables
 const CLIENT_HOME_PAGE_URL = "http://localhost:3000/workspaces";
+const INSTALLED_URL = "http://localhost:3000/installed";
 
 const express = require('express');
 const router = express.Router({mergeParams: true});
@@ -191,55 +194,26 @@ router.get('/auth/github', function(req, res, next) {
     })(req, res, next);
 });
 
-
-/*
-app.get('/login', function(req, res, next) {
-  passport.authenticate('local', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user) { return res.redirect('/login'); }
-    req.logIn(user, function(err) {
-      if (err) { return next(err); }
-      return res.redirect('/users/' + user.username);
-    });
-  })(req, res, next);
-});
-*/
-
-
 router.get('/auth/github/redirect', passport.authenticate("github", {session: false}), (req, res) => {
     // console.log('Request Host: ', req.get('host'));
     // if (err) { return res.json({success: false, error: err}) }
     // TODO: Change this to appropriate route
-    console.log('REQ: ', req);
-    console.log('RES: ', res);
     
-    if (!req.user) { console.log('!req.user == true'); return res.redirect('/login'); }
+    if (!req.user) { console.log('req.user != true'); return res.redirect('/login'); }
 
     var jwtToken = createUserJWTToken(req.user._id, req.user.role);
 
     res.cookie('user-jwt', jwtToken, { httpOnly: true });
     
     if (req.query.state === "installing") {
-        res.redirect(`http://localhost:3000/installed`);
+        res.redirect(INSTALLED_URL);
     } else {
         res.redirect(CLIENT_HOME_PAGE_URL);
     }
 });
 
-
-/*
-router.get('/auth/github/redirect', passport.authenticate("github"), function(req, res){
-                                            console.log('Request Host: ', req.get('host'));
-                                            if (req.query.state === "installing") {
-                                                res.redirect(`http://localhost:3000/installed`);
-                                            } else {
-                                                res.redirect(CLIENT_HOME_PAGE_URL);
-                                            }
-                                        });
-*/
-router.post('/auth/check_installation', authController.checkInstallation);
-router.post('/auth/retrieve_domain_repositories', authController.retrieveDomainRepositories)
-router.get('/auth/start_jira_auth', authController.startJiraAuthRequest);
+router.post('/auth/check_installation', authorizationMiddleware.authMiddleware, authController.checkInstallation);
+router.post('/auth/retrieve_domain_repositories', authorizationMiddleware.authMiddleware, authController.retrieveDomainRepositories);
 
 
 

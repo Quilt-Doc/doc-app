@@ -30,16 +30,19 @@ createActivityFeedItem = async (params) => {
         activityfeedItemList.push(activityFeedItem);
     });
 
+    var bulkInsertResult;
     try {
-        var bulkInsertResult = await ActivityFeedItem.insertMany(activityfeedItemList);
-        return bulkInsertResult;
+        bulkInsertResult = await ActivityFeedItem.insertMany(activityfeedItemList);
     }
     catch (err) {
-        logger.error({source: 'backend-api', message: err,
+        await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error saving new ActivityFeedItem(s) workspaceId, userId, userUpdates: ${workspaceId}, ${userId}, ${JSON.stringify(userUpdates)}`,
                         function: 'createActivityFeedItem'});
         throw new Error(`Error saving new ActivityFeedItem(s) workspaceId, userId, userUpdates: ${workspaceId}, ${userId}, ${JSON.stringify(userUpdates)}`);
     }
+
+    await logger.info({source: 'backend-api', message: `Successfully created ${userUpdates.length} ActivityFeedItems - userId, workspaceId: ${userId}, ${workspaceId}`});
+    return bulkInsertResult;
 }
 
 
@@ -61,13 +64,14 @@ retrieveActivityFeedItems = async (req, res) => {
     var items;
     try {
         items = await query.exec();
-        return res.json({success: true, result: items});
     }
     catch (err) {
-        logger.error({source: 'backend-api', message: err,
+        await logger.error({source: 'backend-api', message: err,
                         errorDescription: 'Error retrieving ActivityFeedItems', function: 'retrieveActivityFeedItems'});
         return res.json({success: false, error: err});
     }
+
+    return res.json({success: true, result: items});
 }
 
 /*

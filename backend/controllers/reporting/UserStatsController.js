@@ -31,6 +31,9 @@ createUserStats = async (params) => {
         throw new Error(`Error saving User Stats object for userId, workspaceId: ${userId}, ${workspaceId}`);
     }
 
+    await logger.info({source: 'backend-api', message: `Successfully created UserStats object - userId, workspaceId: ${userId}, ${workspaceId}`,
+                        function: 'createUserStats'});
+
     return userStats;
 }
 
@@ -56,7 +59,7 @@ retrieveUserStats = async (req, res) => {
         statItems = await query.exec();
     }
     catch(err) {
-        logger.error({source: 'backend-api', message: err,
+        await logger.error({source: 'backend-api', message: err,
                         errorDescription: 'Error executing query to retrieve user stats', function: 'retrieveUserStats'});
         return res.json({success: false, result: err});
     }
@@ -92,11 +95,16 @@ updateDocumentsCreatedNum = async (params) => {
        await UserStats.bulkWrite(bulkIncrementOps).exec();
     }
     catch (err) {
-        logger.error({source: 'backend-api', message: err,
+        await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error bulk updating User Stats for userUpdates, workspaceId: ${JSON.stringify(userUpdates)}, ${workspaceId}`,
                         function: 'updateDocumentsCreatedNum'});
         throw new Error(`Error bulk updating User Stats for userUpdates, workspaceId: ${JSON.stringify(userUpdates)}, ${workspaceId}`);
     }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully updated 'UserStats.documentsCreatedNum' for ${userUpdates.length} Users - workspaceId: ${workspaceId}`,
+                        function: 'updateDocumentsCreatedNum'});
+
     return true;
 }
 
@@ -127,6 +135,11 @@ updateDocumentsBrokenNum = async (params) => {
                         function: 'updateDocumentsBrokenNum'});
         throw new Error(`Error bulk updating User Stats for userUpdates, workspaceId: ${JSON.stringify(userUpdates)}, ${workspaceId}`);
     }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully updated 'UserStats.documentsBrokenNum' for ${userUpdates.length} Users - workspaceId: ${workspaceId}`,
+                        function: 'updateDocumentsBrokenNum'});
+
     return true;
 }
 

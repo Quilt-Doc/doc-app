@@ -59,10 +59,13 @@ initRepository = async (req, res) => {
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
-                        errorDescription: `Error saving rootReference`,
+                        errorDescription: `Error saving rootReference - repositoryId: ${repository._id.toString()}`,
                         function: 'initRepository'});
         return res.json({success: false, error: `Error saving rootReference`, trace: err});
     }
+
+    await logger.info({source: 'backend-api', message: `Successfully initialized Repository - fullName, installationId: ${fullName}, ${installationId}`,
+                        function: 'initRepository'});
 
     return res.json({success: true, result: repository});
 }
@@ -80,7 +83,15 @@ getRepositoryFile = async (req, res) => {
     }
 
     if (referenceId) {
-        const reference = await Reference.findOne({_id: referenceId}).lean().select('path').exec();
+        var reference;
+        try {
+            reference = await Reference.findOne({_id: referenceId}).lean().select('path').exec();
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err, errorDescription: `Error querying findOne on Reference - referenceId: `,
+                                function: 'getRepositoryFile'});
+            return res.json({success: false, error: err});
+        }
         pathInRepo = reference.path;
     }
 
