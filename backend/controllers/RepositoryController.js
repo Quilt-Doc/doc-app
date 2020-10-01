@@ -96,23 +96,40 @@ getRepositoryFile = async (req, res) => {
     }
 
 
-    var installationClient = await apis.requestInstallationClient(installationId);
-    var fileResponse = await installationClient.get(`/repos/${fullName}/contents/${pathInRepo}`)
-            .catch(err => {
-                return res.json({success: false, error: 'getRepositoryFile error fetching fileSha: ' + err});
-            });
+    var installationClient;
+    try {
+        = await apis.requestInstallationClient(installationId);
+    }
+    catch (err) {
+
+    }
+
+    var fileResponse;
+    try {
+        fileResponse = await installationClient.get(`/repos/${fullName}/contents/${pathInRepo}`)
+    }
+    catch (err) {
+        return res.json({success: false, error: 'getRepositoryFile error fetching fileSha: ' + err});
+    }
+
     if (!fileResponse.data.hasOwnProperty('sha')) {
         return res.json({success: false, error: 'getRepositoryFile error: provided path did not resolve to a file'});
     }
     var fileSha = fileResponse.data.sha;
     // repos/:username/:reponame/git/blobs/:sha
-    var blobResponse = await installationClient.get(`/repos/${fullName}/git/blobs/${fileSha}`)
-            .catch(err => {
-                return res.json({success: false, error: 'getRepositoryFile error getting file blob'});
-            });
+    var blobResponse;
+    try {
+        blobResponse = await installationClient.get(`/repos/${fullName}/git/blobs/${fileSha}`);
+    }
+    catch (err) {
+
+        return res.json({success: false, error: 'getRepositoryFile error getting file blob'});
+    }
     if(!blobResponse.data.hasOwnProperty('content')) {
         return res.json({success: false, error: 'getRepositoryFile error: provided fileSha did not return a blob'});
     }
+
+    
     var blobContent = blobResponse.data.content;
     var fileContent = Buffer.from(blobContent, 'base64').toString('binary');
 
