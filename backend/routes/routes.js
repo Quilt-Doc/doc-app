@@ -22,7 +22,7 @@ router.param('tagId', paramMiddleware.tagIdParam);
 router.param('snippetId', paramMiddleware.snippetIdParam);
 router.param('repositoryId', paramMiddleware.repositoryIdParam);
 router.param('userId', paramMiddleware.userIdParam);
-router.param('linkageId', paramMiddleware.linkageIdParam);
+// router.param('linkageId', paramMiddleware.linkageIdParam);
 
 //base routes
 
@@ -127,8 +127,6 @@ router.post('/repositories/job_retrieve', authorizationMiddleware.repositoryMidd
 
 router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepositoryFile);
 router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.retrieveRepositories);
-router.post('/repositories/validate', authorizationMiddleware.repositoryMiddleware, repositoryController.validateRepositories);
-router.post('/repositories/:workspaceId/poll', authorizationMiddleware.repositoryMiddleware, repositoryController.pollRepositories);
 router.get('/repositories/:workspaceId/get/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepository);
 router.delete('/repositories/:workspaceId/delete/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.deleteRepository);
 
@@ -240,21 +238,23 @@ router.post('/tokens/delete', authorizationMiddleware.tokenMiddleware, tokenCont
 const checkController = require('../controllers/CheckController');
 router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, checkController.createCheck);
 
-const pullRequestController = require('../controllers/unused/PullRequestController');
-router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pullRequestController.createPullRequest);
+/*
+    const pullRequestController = require('../controllers/unused/PullRequestController');
+    router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pullRequestController.createPullRequest);
 
 
-//linkage routes
-const linkageController = require('../controllers/LinkageController');
-router.post('/linkages/:workspaceId/create', authorizationMiddleware.linkageMiddleware, linkageController.createLinkage);
-router.get('/linkages/:workspaceId/get/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.getLinkage);
-router.put('/linkages/:workspaceId/edit/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.editLinkage);
-router.delete('/linkages/:workspaceId/delete/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.deleteLinkage);
-router.post('/linkages/:workspaceId/retrieve', authorizationMiddleware.linkageMiddleware, linkageController.retrieveLinkages);
-router.put('/linkages/:workspaceId/:linkageId/attach_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkageController.attachLinkageReference);
-router.put('/linkages/:workspaceId/:linkageId/remove_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkageController.removeLinkageReference);
-router.put('/linkages/:workspaceId/:linkageId/attach_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkageController.attachLinkageTag);
-router.put('/linkages/:workspaceId/:linkageId/remove_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkageController.removeLinkageTag);
+    //linkage routes
+    const linkageController = require('../controllers/LinkageController');
+    router.post('/linkages/:workspaceId/create', authorizationMiddleware.linkageMiddleware, linkageController.createLinkage);
+    router.get('/linkages/:workspaceId/get/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.getLinkage);
+    router.put('/linkages/:workspaceId/edit/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.editLinkage);
+    router.delete('/linkages/:workspaceId/delete/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.deleteLinkage);
+    router.post('/linkages/:workspaceId/retrieve', authorizationMiddleware.linkageMiddleware, linkageController.retrieveLinkages);
+    router.put('/linkages/:workspaceId/:linkageId/attach_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkageController.attachLinkageReference);
+    router.put('/linkages/:workspaceId/:linkageId/remove_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkageController.removeLinkageReference);
+    router.put('/linkages/:workspaceId/:linkageId/attach_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkageController.attachLinkageTag);
+    router.put('/linkages/:workspaceId/:linkageId/remove_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkageController.removeLinkageTag);
+*/
 
 module.exports = router;
 

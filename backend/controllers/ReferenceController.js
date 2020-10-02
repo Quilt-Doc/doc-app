@@ -17,7 +17,7 @@ escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
-// Faraz FIXME: will have to see whether insertMany actually populates or returns the refs at all
+// Faraz FIXME TODO: will have to see whether insertMany actually populates or returns the refs at all
 // Created References should be mapped _.map in reducer
 createReferences = async (req, res) => {
     const { references } = req.body;
@@ -37,8 +37,14 @@ createReferences = async (req, res) => {
     try {
         insertedReferences = await Reference.insertMany(references).populate({path: populationString}).exec();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error insertMany failed for ${references.length} References`,
+                            function: 'createReferences'});
+
         return res.json({success: false, error: 'createReferences Error: insertMany query failed', trace: err});
     }
+
+    await logger.info({source: 'backend-api', message: `Successfully inserted ${references.length} new References`, function: 'createReferences'});
     
     return res.json({success: true, result: insertedReferences});
 }
@@ -55,6 +61,9 @@ getReference = async (req, res) => {
         reference = await Reference.findOne({_id: referenceId, repository: {$in: repositoryIds}}).lean()
             .populate({path: populationString}).exec(); 
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error findOne failed - referenceId, repositoryIds: ${referenceId}, ${JSON.stringify(repositoryIds)}`,
+                                function: 'getReference'});
         return res.json({success: false, error: 'getReference Error: getReference query failed', trace: err});
     }
 
@@ -76,6 +85,10 @@ retrieveReferences = async (req, res) => {
     
     if (checkValid(repositoryId)) {
         if (!validRepositoryIds.includes(repositoryId)) {
+            await logger.error({source: 'backend-api',
+                                    message: Error(`Error cannot retrieve References on repository user can't access - repositoryId, userId: ${repositoryId}, ${req.tokenPayload.userId}`),
+                                    errorDescription: `Error cannot retrieve References on repository user can't access - repositoryId, userId: ${repositoryId}, ${req.tokenPayload.userId}`,
+                                    function: 'retrieveReferences'});
             return res.json({success: false, error: "retrieveReferences Error: request on repository user does not have access to."});
         }
         query.where('repository').equals(repositoryId);
@@ -93,6 +106,9 @@ retrieveReferences = async (req, res) => {
                 reference = await Reference.findOne({_id: referenceId, repository: repositoryId})
                     .lean().select('path').exec();
             } catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `Error findOne failed - referenceId, repositoryId: ${referenceId}, ${repositoryId}`,
+                                    function: 'retrieveReferences'});
                 return res.json({success: false, error: "retrieveReferences Error: query findOne of referenceId failed", trace: err});
             }
 
@@ -102,6 +118,9 @@ retrieveReferences = async (req, res) => {
                 reference = await Reference.findOne({ repository: repositoryId, path: "" })
                     .lean().select('path').exec();
             } catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                        errorDescription: `Error findOne failed - path, repositoryId: "", ${repositoryId}`,
+                                        function: 'retrieveReferences'});
                 return res.json({success: false, error: "retrieveReferences Error: query findOne with empty path of referenceId failed"});
             }
         }
@@ -126,7 +145,7 @@ retrieveReferences = async (req, res) => {
 
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
-    
+
     // minimal retrieve is for cases when you don't need all fields and don't need to populate (dirview)
     if (minimal === true) { 
         query.select(minSelectionString);
@@ -138,9 +157,15 @@ retrieveReferences = async (req, res) => {
     try {
         returnedReferences =  await query.lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error find failed - referenceId, repositoryId, path: ${referenceId}, ${repositoryId}, ${path}`,
+                                function: 'retrieveReferences'});
+
         return res.json({success: false, error: "retrieveReferences Error: direct retrieve query execution failed", trace: err});
     }
-    console.log("RETURNED", returnedReferences);
+
+    await logger.info({source: 'backend-api', message: `Successfully retrieved ${returnedReferences.length} References`, function: 'retrieveReferences'});
+
     return res.json({success: true, result: returnedReferences});
 }
 
@@ -158,10 +183,20 @@ editReference = async (req, res) => {
     try {
         let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
         if (!repositoryValid) {
+            await logger.error({source: 'backend-api',
+                                    message: Error(`Error Reference does not exist in accessible repository - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`),
+                                    errorDescription: `Error Reference does not exist in accessible repository - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`,
+                                    function: 'editReference'});
+
             return res.json({success: false, error: "editReference Error: reference with that id and that is in accessible \
                 repositories doesn't exist", trace: err});
         }
-    } catch (err) {
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error exists query failed - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`,
+                                function: 'editReference'});
         return res.json({success: false, error: "editReference Error: error checking whether reference with that id \
         is in accessible repositories", trace: err});
     }
@@ -191,9 +226,16 @@ editReference = async (req, res) => {
     try {
         returnedReference = await query.lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findByIdAndUpdate query failed - referenceId, update: ${referenceId}, ${JSON.stringify(update)}`,
+                                function: 'editReference'});
+
         return res.json({success: false, error: "editReference Error:  execution of query to update reference failed", 
             trace: err});
     }
+
+    await logger.info({source: 'backend-api', message: `Successfully edited Reference  - referenceId, update: ${referenceId}, ${JSON.stringify(update)}`, function: 'editReference'});
    
     return res.json({success: true, result: returnedReference})
 }
@@ -208,15 +250,39 @@ deleteReference = async (req, res) => {
     try {
         let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
         if (!repositoryValid) {
+            await logger.error({source: 'backend-api',
+                                    message: Error(`Error Reference does not exist in accessible repository - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`),
+                                    errorDescription: `Error Reference does not exist in accessible repository - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`,
+                                    function: 'deleteReference'});
+
             return res.json({success: false, error: "deleteReference Error: reference with that id and that is in accessible \
                 repositories doesn't exist", trace: err});
         }
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error exists query failed - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`,
+                                function: 'deleteReference'});
         return res.json({success: false, error: "deleteReference Error: error checking whether reference with that id \
         is in accessible repositories", trace: err});
     }
 
-    let deletedReference = await Reference.findByIdAndRemove(referenceId).select("_id").lean().exec();
+    var deletedReference;
+    try {
+        deletedReference = await Reference.findByIdAndRemove(referenceId).select("_id").lean().exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findByIdAndRemove query failed - referenceId: ${referenceId}`,
+                                function: 'deleteReference'});
+        return res.json({success: false, error: "deleteReference Error: error findByIdAndRemove query failed"});
+    }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully deleted Reference - referenceId: ${referenceId}`,
+                        function: 'deleteReference'});
+
     return res.json({success: true, result: deletedReference});
 }
 
@@ -240,6 +306,11 @@ attachReferenceTag = async (req, res) => {
     try {
         returnedReference = query.exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findOneAndUpdate query failed - referenceId, update: ${referenceId}, ${JSON.stringify(update)}`,
+                                function: 'attachReferenceTag'});
+
         return res.json({success: false, error: "attachReferenceTag Error: error executing tag update query", trace: err});
     }
     
@@ -267,9 +338,14 @@ removeReferenceTag = async (req, res) => {
     try {
         returnedReference = query.exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findOneAndUpdate query failed - referenceId, update: ${referenceId}, ${JSON.stringify(update)}`,
+                                function: 'removeReferenceTag'});
+
         return res.json({success: false, error: "removeReferenceTag Error: error executing tag update query", trace: err});
     }
-    
+
     return res.json({success: true, result: returnedReference});
 }
 

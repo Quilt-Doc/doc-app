@@ -137,6 +137,7 @@ const userIdParam = async (req, res, next, userId) => {
     next();
 }
 
+/*
 const linkageIdParam = async (req, res, next, linkageId) => {
     if (req.linkageObj) {
         next();
@@ -154,6 +155,7 @@ const linkageIdParam = async (req, res, next, linkageId) => {
     }
     next();
 }
+*/
 
 
 
@@ -166,6 +168,5 @@ module.exports = {
     tagIdParam,
     snippetIdParam,
     repositoryIdParam,
-    userIdParam,
-    linkageIdParam
+    userIdParam
 }
