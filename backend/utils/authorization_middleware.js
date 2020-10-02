@@ -190,8 +190,7 @@ const repositoryMiddleware = async (req, res, next) => {
     if (
         requestedPath.includes('/repositories/init') ||
         requestedPath.includes('/repositories/update') ||
-        requestedPath.includes('/repositories/job_retrieve' ||
-        requestedPath.includes('/repositories/break_references')
+        requestedPath.includes('/repositories/job_retrieve'
         )) {
         
         if (requesterRole == 'dev') {
@@ -204,19 +203,6 @@ const repositoryMiddleware = async (req, res, next) => {
     }
 
 
-    // User routes
-
-    // poll and validate are temporarily enabled for everything
-    if (requestedPath.includes('/repositories/validate') || (requestedPath.includes('/repositories') && requestedPath.includes('/poll'))) {
-        if (requesterRole == 'dev') {
-            console.log('repositoryMiddleware dev token');
-            return next();
-        }
-        // TODO: Fix temporarily allowing everyone to call this.
-        else {
-            return next();
-        }
-    }
 
     // Verify membership in workspace for calling user, if :repositoryId then verify repository is in workspace
     else {
@@ -391,7 +377,7 @@ const tagMiddleware = async (req, res, next) => {
 }
 
 const authMiddleware = async (req, res, next) => {
-
+    next();
 }
 
 const userMiddleware = async (req, res, next) => {
@@ -500,6 +486,7 @@ const checkMiddleware = (req, res, next) => {
     }
 }
 
+/*
 const pullRequestMiddleware = (req, res, next) => {
     var requesterId = req.tokenPayload.userId.toString();
     var requesterRole = req.tokenPayload.role;
@@ -511,7 +498,7 @@ const pullRequestMiddleware = (req, res, next) => {
         return next(new Error("Error: only dev tokens can access the pull request API"));
     }
 }
-
+*/
 
 /*
 const linkage_controller = require('../controllers/LinkageController');
@@ -528,6 +515,7 @@ router.put('/linkages/:workspaceId/:linkageId/remove_tag/:tagId', linkage_contro
 
 //linkageId, workspaceId, tagId, referenceId
 
+/*
 const linkageMiddleware = async (req, res, next) => {
     console.log('req.path.trim(): ', req.path.trim());
 
@@ -607,6 +595,40 @@ const linkageMiddleware = async (req, res, next) => {
         return next(new Error("Error: requesting user not a member of target workspace"));
     }
 }
+*/
+
+const reportingMiddleware = async (req, res, next) => {
+    console.log('req.path.trim(): ', req.path.trim());
+    const { workspaceId } = req.params;
+    var searchWorkspaceId;
+    try {
+        searchWorkspaceId = ObjectId(workspaceId);
+    }
+    catch (err) {
+        return next(new Error("Error: invalid workspaceId format"));
+    }
+    var foundWorkspace = await Workspace.findById(searchWorkspaceId);
+    if (!foundWorkspace) {
+        return next(new Error("Error: workspaceId invalid"));
+    }
+
+    req.workspaceObj = foundWorkspace;
+
+    if (req.tokenPayload.role == 'dev') {
+        console.log('reportingMiddleware dev token');
+        next();
+    }
+    var requesterId = req.tokenPayload.userId.toString();
+    var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
+    if (validUsers.indexOf(requesterId) > -1) {
+        console.log('Valid reporting request');
+        next();
+    }
+    else {
+        return next(new Error("Error: requesting user not a member of target workspace"));
+    }
+    
+}
 
 module.exports = {
     referenceMiddleware,
@@ -618,7 +640,6 @@ module.exports = {
     authMiddleware,
     userMiddleware,
     tokenMiddleware,
+    reportingMiddleware,
     checkMiddleware,
-    pullRequestMiddleware,
-    linkageMiddleware
 }

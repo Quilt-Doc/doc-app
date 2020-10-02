@@ -99,7 +99,6 @@ class DocumentMenu2 extends React.Component {
 
     handleSelect(parentId, doc) {
 
-        let documentId = this.props.document._id;
         let {workspaceId} = this.props.match.params;
        
         if (this.props.form) {

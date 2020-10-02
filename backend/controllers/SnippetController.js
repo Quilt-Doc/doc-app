@@ -2,6 +2,10 @@ const Snippet = require('../models/Snippet');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+const logger = require('../logging/index').logger;
+const jobs = require('../apis/jobs');
+const jobConstants = require('../constants/index').jobs;
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -23,15 +27,26 @@ createSnippet = async (req, res) => {
 
     // check if repositories accessible to the user workspace includes reference Repository
     if (!workspaceRepositories.includes(referenceRepository)) {
+        await logger.error({source: 'backend-api',
+                                message: Error(`Error cannot create Snippet on repository user can't access - repositoryId, userId: ${referenceRepository}, ${req.tokenPayload.userId}`),
+                                errorDescription: `Error cannot create Snippet on repository user can't access - repositoryId, userId: ${referenceRepository}, ${req.tokenPayload.userId}`,
+                                function: 'createSnippet'});
+
         return res.json({success: false, error: "createSnippet Error: request on repository user does not have access to."});
     }
 
     // verify creator matches user in req.tokenPayload
     if (checkValid(creatorId)) {
         if (req.tokenPayload.userId.toString() != creatorId) {
+            await logger.error({source: 'backend-api',
+                                    message: Error(`Error Snippet 'creatorId' doesn't match token userId - creatorId, userId: ${creatorId}, ${req.tokenPayload.userId}`),
+                                    errorDescription: `Error Snippet 'creatorId' doesn't match token userId - creatorId, userId: ${creatorId}, ${req.tokenPayload.userId}`,
+                                    function: 'createSnippet'});
+
             return res.json({success: false, error: "createSnippet Error: JWT does not match `creator`."});
         }
-    } else {
+    }
+    else {
         return res.json({success: false, error: "createSnippet error: snippet creator not provided"});
     }
 
@@ -60,6 +75,10 @@ createSnippet = async (req, res) => {
     try {
         snippet = await snippet.save();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error couldn't save Snippet - creatorId, workspaceId, referenceId, repositoryId: ${creatorId}, ${workspaceId}, ${referenceId}, ${repositoryId}`,
+                                function: 'createSnippet'});
         return res.json({success: false, error: "createSnippet error: new snippet could not be saved", trace: err});
     }
     
@@ -67,8 +86,16 @@ createSnippet = async (req, res) => {
     try {
         snippet = await Snippet.populate(snippet, {path: "workspace reference creator"}).exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error couldn't populate Snippet - creatorId, workspaceId, referenceId, repositoryId: ${creatorId}, ${workspaceId}, ${referenceId}, ${repositoryId}`,
+                                function: 'createSnippet'});
         return res.json({success: false, error: "createSnippet error: new snippet could not be populated but was saved", trace: err});
     }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully created Snippet - creatorId, workspaceId, referenceId, repositoryId: ${creatorId}, ${workspaceId}, ${referenceId}, ${repositoryId}`,
+                        function: 'createSnippet'});
 
     return res.json({success: true, snippet});
 }
@@ -84,6 +111,10 @@ getSnippet = async (req, res) => {
         returnedSnippet = await Snippet.findOne({_id: snippetId, workspace: workspaceId})
             .populate({path: 'workspace reference'}).lean.exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findOne failed - snippetId, workspaceId: ${snippetId}, ${workspaceId}`,
+                                function: 'getSnippet'});
         return res.json({success: false, error: "getSnippet error: findOne query failed", trace: err});
     }
 
@@ -95,6 +126,7 @@ editSnippet = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
     const { name, status, code, start } = req.body;
 
+    var isValidatingSnippet = false;
 
     // build update object and selection object to update and only pull exactly what is needed from db
     let update = {};
@@ -105,9 +137,16 @@ editSnippet = async (req, res) => {
         selectionString += " name";
     }
 
+    // If updating Status, potential for Check updates
     if (status) {
+        
         update.status = status;
         selectionString += " status";
+        
+        if (req.snippetObj.status == 'INVALID' && status == 'VALID') {
+            isValidatingSnippet = true;
+        }
+    
     }
 
     if (code) {
@@ -125,9 +164,42 @@ editSnippet = async (req, res) => {
         returnedSnippet = Snippet.findOneAndUpdate({_id: snippetId, workspace: workspaceId}, 
             { $set: update }, { new: true }).select(selectionString).lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findOneAndUpdate failed - snippetId, workspaceId, update: ${snippetId}, ${workspaceId}, ${JSON.stringify(update)}`,
+                                function: 'getSnippet'});
         return res.json({success: false, error: "editSnippet error: findOneAndUpdate query failed", trace: err});
     }
-   
+
+    // Kick off Check update job
+    if (isValidatingSnippet) {
+
+        var validatedSnippets = [req.snippetObj._id.toString()];
+
+        var runUpdateChecksData = {};
+        runUpdateChecksData['repositoryId'] = documentObj.repository.toString();
+        runUpdateChecksData['validatedDocuments'] = [];
+        runUpdateChecksData['validatedSnippets'] = validatedSnippets;
+
+        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+        try {
+            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`,
+                            function: 'editSnippet'});
+            return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
+        }
+
+        await logger.info({source: 'backend-api', message: `Successfully began updating Checks for validated Snippet`, function: 'editSnippet'});
+    }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully updated Snippet - snippetId, workspaceId, update: ${snippetId}, ${workspaceId}, ${JSON.stringify(update)}`,
+                        function: 'editSnippet'});
+
     return res.json({success: true, result: returnedSnippet});
 }
 
@@ -139,9 +211,37 @@ deleteSnippet = async (req, res) => {
     try {
         deletedSnippet = await Snippet.findOneAndRemove({_id: snippetId, workspace: workspaceId}).select('_id').lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error findOneAndRemove failed - snippetId, workspaceId: ${snippetId}, ${workspaceId}`,
+                                function: 'deleteSnippet'});
         return res.json({success: false, error: "deleteSnippet error: findOneAndRemove query failed", trace: err});
     }
-  
+
+    // Kick off Check update job if Snippet was 'invalid'
+    if (deletedSnippet.status == 'INVALID') {
+        var validatedSnippets = [deletedSnippet._id.toString()];
+        
+        var runUpdateChecksData = {};
+        runUpdateChecksData['repositoryId'] = req.snippetObj.repository.toString();
+        runUpdateChecksData['validatedDocuments'] = [];
+        runUpdateChecksData['validatedSnippets'] = validatedSnippets;
+
+        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+        try {
+            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`,
+                                    function: 'deleteSnippet'});
+        return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
+        }
+
+        await logger.info({source: 'backend-api', message: `Successfully dispatched update Checks job for invalid Snippet deletion`, function: 'deleteSnippet'});
+    }
+    
+    await logger.info({source: 'backend-api', message: `Successfully deleted Snippet - snippetId, workspaceId: ${snippetId}, ${workspaceId}`, function: 'deleteSnippet'});
     return res.json({success: true, result: deletedSnippet});
 }
 
@@ -170,6 +270,9 @@ retrieveSnippets = async (req, res) => {
     try {
         returnedSnippets = await query.lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error find failed - workspaceId, repositoryId, referenceId: ${workspaceId}, ${repositoryId}, ${referenceId}`,
+                                function: 'retrieveSnippets'});
         return res.json({success: false,  error: "retrieveSnippets error: find query failed", trace: err});
     }
 
@@ -177,25 +280,5 @@ retrieveSnippets = async (req, res) => {
 }
 
 
-refreshSnippets = async (req, res) => {
-    const workspaceId = req.workspaceObj._id.toString();
-    const { updates } = req.body;
-    const bulkOps = updates.map(update => ({
-        updateOne: {
-            filter: { _id: ObjectId(update._id), workspace: workspaceId },
-            // Where field is the field you want to update
-            // startLine, code, 
-            update: { $set: { code: update.code, pathInRepository: update.pathInRepository, startLine: update.startLineNum } },
-            upsert: true
-         }
-     }));
-
-    return Snippet.collection
-       .bulkWrite(bulkOps)
-       .then(results => res.json({success: true, result: results}))
-       .catch(err => res.json({success: false, error: `Error refreshing snippets: ${err}`}));
-};
-
-
 module.exports = { createSnippet, getSnippet, editSnippet, deleteSnippet, 
-    retrieveSnippets, refreshSnippets }
+    retrieveSnippets }

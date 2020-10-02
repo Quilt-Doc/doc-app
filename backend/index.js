@@ -150,24 +150,6 @@ app.use(function (req, res, next) {
 var routes = require("./routes/routes");
 app.use('/api', routes);
 
-/*
-const ensureAuthenticated = (req, res, next) => {
-    if (req.isAuthenticated()) { return next(); }
-    return res.json({
-        authenticated: false,
-        message: "user has not been authenticated"
-    })
-}
-
-app.get("/", ensureAuthenticated, (req, res) => {
-    res.status(200).json({
-      authenticated: true,
-      message: "user successfully authenticated",
-      user: req.user,
-      cookies: req.cookies
-    });
-});
-*/
 
 const authCheck = (req, res, next) => {
     if (!req.user) {
@@ -195,7 +177,7 @@ app.get("/", authCheck, (req, res) => {
 
 if (process.env.IS_PRODUCTION) {
   setupESConnection().then(() => {
-    app.listen(API_PORT, '0.0.0.0', () => logger.debug({source: 'backend-api', message: `Listening on port ${API_PORT}`, function: 'index.js'}));
+    app.listen(API_PORT, '0.0.0.0', () => logger.info({source: 'backend-api', message: `Listening on port ${API_PORT}`, function: 'index.js'}));
   });
 }
 

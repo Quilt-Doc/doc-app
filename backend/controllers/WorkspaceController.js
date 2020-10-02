@@ -4,7 +4,8 @@ const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 const Document = require('../models/Document');
 const Tag = require('../models/Tag');
-const Linkage = require('../models/Linkage');
+
+const UserStatsController = require('./reporting/UserStatsController');
 
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
@@ -49,8 +50,21 @@ createWorkspace = async (req, res) => {
     try {
         workspace = await workspace.save();
     } catch (err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `error saving workspace creator: ${creatorId}`, function: 'createWorkspace'});
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
+                            function: 'createWorkspace'});
         return res.json({success: false, error: "createWorkspace error: save() on new workspace failed", trace: err});
+    }
+
+    // Create UserStats object for creator
+    try {
+        await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString()});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
+                            function: 'createWorkspace'});
+        return res.json({success: false, error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err});
     }
 
     // Set all workspace Repositories 'currentlyScanning' to true
@@ -60,7 +74,7 @@ createWorkspace = async (req, res) => {
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `error updating workspace repositories to currentlyScanning repositoryIds: ${JSON.stringify(repositoryIds)}`,
+                                errorDescription: `error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`,
                                 function: 'createWorkspace'});
         return res.json({success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err});
     }
@@ -89,10 +103,13 @@ createWorkspace = async (req, res) => {
     try {
         workspace = await Workspace.populate(workspace, {path: 'creator repositories memberUsers'});
     } catch (err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `error populating workspace creator: ${creatorId}`, function: 'createWorkspace'});
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
+                            function: 'createWorkspace'});
         return res.json({success: false, error: "createWorkspace error: workspace population failed", trace: err});
     }
 
+    await logger.info({source: 'backend-api', });
 
     return res.json({success: true, result: workspace});
 }
@@ -123,7 +140,7 @@ deleteWorkspace = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: "deleteWorkspace error: workspace findByIdAndRemove query failed", trace: err});
     }
-   
+
     return res.json({success: true, result: deletedWorkspace});
 }
 
@@ -143,7 +160,18 @@ addWorkspaceUser = async (req, res) => {
             { $push: {memberUsers: userId} }, { new: true }).select('_id memberUsers').populate({path: 'user'}).lean.exec();
     } catch (err) {
         return res.json({success: false, error: "addUser error: workspace findByIdAndUpdate query failed", trace: err});
-    }   
+    }
+
+    // Create UserStats object for creator
+    try {
+        await UserStatsController.createUserStats({userId, workspaceId});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `error creating UserStats object userId, workspaceId: ${userId} ${workspaceId}`,
+                            function: 'addWorkspaceUser'});
+        return res.json({success: false, error: `error creating UserStats object userId, workspaceId: ${userId} ${workspaceId}`, trace: err});
+    }
 
     return res.json({success: true, result: returnedWorkspace});
 }
@@ -404,20 +432,14 @@ searchReferences = async (req, res, searchWorkspace) => {
     }
 }
 
-searchLinkages = async (body) => {
-    return
-}
-
-
 //TODO: Search workspace return values needs to be reflected in reducer
 searchWorkspace = async (req, res) => {
     const { userQuery, repositoryId, tagIds, referenceIds, creatorIds, includeImage,
-        returnReferences, returnDocuments, docSkip, refSkip, linkageSkip, limit, sort, mix } = req.body;
+        returnReferences, returnDocuments, docSkip, refSkip, limit, sort, mix } = req.body;
 
     if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'userQuery: error no userQuery provided.'});
     if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'returnReference: error no returnReferences provided.'});
     if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'returnDocuments: error no returnDocuments provided.'});
-    if (!checkValid(returnLinkages)) return res.json({success: false, result: null, error: 'returnLinkages: error no returnLinkages provided.'});
 
     let documentResponse = await searchDocuments(req, res, true);
 
@@ -441,12 +463,11 @@ searchWorkspace = async (req, res) => {
 
     let newDocSkip = 0;
     let newRefSkip = 0;
-    let newLinkageSkip = 0;
 
     let finalResult = {}
     // NEED TO INCLUDE PROPER SORTING ON MIX
     if (mix) {
-        searchResults = [...documents, ...linkages, ...references];
+        searchResults = [...documents, ...references];
         if (sort) {
             searchResults.sort((a, b) => {
                 if (a.created.getTime() > b.created.getTime()) {
@@ -464,15 +485,12 @@ searchWorkspace = async (req, res) => {
                 newDocSkip += 1;
             } else if (seResult.isReference) {
                 newRefSkip += 1;
-            } else if (seResult.isLinkage) {
-                newLinkageSkip += 1;
             }
         })
 
-        finalResult = { searchResults, docSkip: newDocSkip, refSkip: newRefSkip, linkageSkip: newLinkageSkip };
+        finalResult = { searchResults, docSkip: newDocSkip, refSkip: newRefSkip };
     } else {
         searchResults.documents = documents;
-        //searchResults.linkages = linkages;
         searchResults.references = references;
         finalResult = { searchResults };
     }

@@ -85,7 +85,7 @@ createCheckRunObj = async (commit, brokenDocuments, brokenSnippets, checkId) => 
                         caption: 'Test image',
                     }
     
-                
+
     var outputObj;
     try {
         outputObj = {   title: 'Quilt Docs Documentation Changes',
@@ -140,7 +140,7 @@ const createCheck = async (req, res) => {
         return res.json({success: false, error: 'error accessing installationClient'});
     }
 
-    // Validate that there isn't already a Check on this commit
+    // KARAN TODO: Validate that there isn't already a Check on this commit
 
 
 
@@ -151,7 +151,13 @@ const createCheck = async (req, res) => {
         repository: repositoryId
     });
 
-    check = await check.save();
+    // Save new Check
+    try {
+        check = await check.save();
+    }
+    catch (err) {
+        
+    }
 
     // Create initial 'in_progress' Check
     var beginObject = {
@@ -165,13 +171,6 @@ const createCheck = async (req, res) => {
     var checkCreateBegin;
     try {
         checkCreateBegin = await installationClient.post(`/repos/${fullName}/check-runs`, beginObject);
-        if (checkCreateBegin.status.toString() != '201') {
-            await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error creating 'in_progress' Check on commit: ${commit}\n status: ${checkCreateBegin.status}`,
-                                function: "createCheck"});
-
-            return res.json({success: false, error: "error creating 'in_progress' Check"});
-        }
         check.githubId = checkCreateBegin.data.id;
         check = await check.save();
     }
@@ -196,7 +195,7 @@ const createCheck = async (req, res) => {
     console.log(JSON.stringify(checkObj));
 
     console.log('githubId: ', check.githubId);
-    
+
     /*
     var checkUpdateResponse;
     try {

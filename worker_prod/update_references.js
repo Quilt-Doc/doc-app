@@ -31,6 +31,7 @@ const {serializeError, deserializeError} = require('serialize-error');
 const removeOldNonTreeReferences = async () => {
 }
 */
+// TODO: Create a Check at the end
 
 /*
 Directory Update Procedure:
@@ -281,8 +282,6 @@ Procedure:
 const runUpdateProcedure = async () => {
 
     var worker = require('cluster').worker;
-
-    await worker.send({action: 'receipt', receipt: process.env.receipt})
 
 
     await worker.send({action: 'log', info: {level: 'debug', message: `cloneUrl: ${process.env.cloneUrl}`,
@@ -583,6 +582,10 @@ const runUpdateProcedure = async () => {
                                                         source: 'worker-instance', function: 'runUpdateProcedure'}});
             throw new Error(`Error deleting repository ${repoId} at:  ${repoDiskPath}`);
         }
+
+        // TODO: Create a Check at the end
+
+
     });
 }
 
