@@ -113,34 +113,3 @@ export const retrieveRepositories = (formValues) => async dispatch => {
         dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });
     }
 }
-
-
-// These two routes below are not finalized
-export const validateRepositories = (formValues) => async () => {
-    const response = await api.post('/repositories/validate', formValues);
-
-    if (response.data.success == false) {
-        throw new Error("validateRepositories Error: ", response.data.error.toString());
-    }
-    else {
-        return response.data.result
-    }
-}
-
-export const pollRepositories = (formValues) => async () => {
-
-    const workspaceId = formValues.workspaceId;
-    
-    if (!workspaceId) {
-        throw new Error("retrieveRepositories: workspaceId not provided");
-    }
-
-    const response = await api.post(`/repositories/${workspaceId}/poll`, formValues);
-
-    if (response.data.success == false) {
-        throw new Error("pollRepositories Error: ", response.data.error.toString());
-    }
-    else {
-        return response.data.result;
-    }
-}
