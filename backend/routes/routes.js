@@ -57,6 +57,7 @@ router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referen
 
 // Validate workspace membership for calling user; all methods
 const document_controller = require('../controllers/DocumentController');
+router.post('/testRoute', document_controller.testRoute);
 router.post('/documents/:workspaceId/create', authorizationMiddleware.documentMiddleware, document_controller.createDocument);
 router.get('/documents/:workspaceId/get/:documentId', authorizationMiddleware.documentMiddleware, document_controller.getDocument);
 router.put('/documents/:workspaceId/edit/:documentId', authorizationMiddleware.documentMiddleware, document_controller.editDocument);

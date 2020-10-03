@@ -35,17 +35,33 @@ class DocumentCreationModal extends React.Component {
             parent: null,
             repository: null,
             loading: false,
-            title: "XYZOS"
+            title: ""
         }
     }
 
-    async componentDidMount(){
-        const { selected, repository } = this.props;
+    checkParam = (param) => {
+        let { search } = history.location;
+        let params = new URLSearchParams(search)
+        let check = params.get(param);
+        if ( check !== null && check !== undefined ){
+            return true
+        }
+        return false
+    }
 
-        this.setState({
-            references: selected, 
-            repository
-        });
+
+    async componentDidMount(){
+        const { selected, repository, documents } = this.props;
+
+        let { search } = history.location;
+        let params = new URLSearchParams(search)
+        let parentId = params.get("parent_id");
+
+        let state = { references: selected, repository };
+
+        if (parentId && documents[parentId]) state.parent = documents[parentId];
+
+        this.setState(state);
     }
 
     //TODO: NEED TO FORCE TITLE
@@ -57,26 +73,29 @@ class DocumentCreationModal extends React.Component {
 
         this.setState({loading: true})
 
-        let {tags, references, parent, repository, title} = this.state;
-        let {workspaceId} = this.props.match.params
+        const { tags, references, parent, repository } = this.state;
+        const { match, user, createDocument, clearSelected, history } = this.props;
+        let { workspaceId } = match.params
 
-        let affectedDocuments =  await this.props.createDocument({
-            authorId: this.props.user._id,
+
+        let affectedDocuments =  await createDocument({
+            authorId: user._id,
             workspaceId,
-            title: "Semantic",
+            title: this.titleInput.value,
             tagIds: tags.map(tag => tag._id), 
             parentPath: parent ? parent.path : "",
             repositoryId: repository ? repository._id : null,
             referenceIds: references.map(item => item._id)}
         )
 
-        console.log(affectedDocuments);
-        const { documents } = this.props;
+        if (affectedDocuments) {
+            const { documents } = this.props;
 
-        document = documents[affectedDocuments[0]._id];
-            
-        this.props.history.push(`?document=${document._id}&edit=${true}`)
-        this.props.clearSelected()
+            let doc = documents[affectedDocuments[0]._id];
+                
+            history.push(`?document=${doc._id}&edit=${true}`);
+            clearSelected();
+        }
     }
 
 
@@ -150,7 +169,7 @@ class DocumentCreationModal extends React.Component {
     }
 
     render(){
-        let {loading} = this.state;
+        let {loading, titleFocused} = this.state;
         return(
             <ModalBackground onClick = {() => {this.undoModal()}}>
                 <CSSTransition
@@ -168,6 +187,19 @@ class DocumentCreationModal extends React.Component {
                 </Header>
                 <Content>
                     <Body>
+                        <Guide>
+                            Title
+                        </Guide>
+                        <Description>
+                            Provide your document with a unique title in this workspace.
+                        </Description>
+                        <TitleInput 
+                            ref = {node => this.titleInput = node} 
+                            onFocus = {() => {this.setState({titleFocused: true})}}
+                            onBlur = {() => {this.setState({titleFocused: false})}}
+                            active = {titleFocused}
+                            placeholder = {"Document Title"}
+                        />
                         <Guide>
                             Location
                         </Guide>
@@ -283,7 +315,7 @@ const ModalContent = styled.div`
     box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
     display: flex;
     flex-direction: column;
-    max-width: 70rem;
+    max-width: 75rem;
     border-radius: 0.3rem;
     background-color: white;
     color: #172A4e;
@@ -305,7 +337,7 @@ const Bottom = styled.div`
 `
 
 const Body = styled.div`
-    width: 50rem;
+    width: 65rem;
     padding-bottom: 3rem;
 `
 
@@ -371,6 +403,24 @@ const InfoList = styled.div`
     align-items: center;
     margin-left: 1.5rem;
     margin-bottom: -1rem;
+`
+
+const TitleInput = styled.input`
+    height: 3.5rem;
+    padding: 0rem 1.5rem;
+    width: 100%;
+    border: 1px solid #E0E4E7;
+    border-radius: 0.4rem;
+    &:hover {
+        background-color: ${props => props.active ? "" : "#F4F4F6"};
+    }
+    font-size: 1.4rem;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+    font-weight: 500;
+    &::placeholder {
+        color: #172A4e;
+        opacity: 0.5;
+    }
 `
 
 const CreateButton = styled.div`

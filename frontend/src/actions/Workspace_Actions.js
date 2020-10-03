@@ -54,6 +54,7 @@ export const getWorkspace = workspaceId => async dispatch => {
     if (!workspaceId) {
         throw new Error("getWorkspace: workspaceId not provided");
     }
+
     const response = await api.get(`/workspaces/get/${workspaceId}`);
     
     if (response.data.success == false) {

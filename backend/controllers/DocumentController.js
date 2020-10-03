@@ -28,16 +28,16 @@ createDocument = async (req, res) => {
     
     // validation
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    if (!checkValid(title) || (title === "" && !root)) return res.json({success: false, error: "createDocument error: no title provided.", result: null});
+    if (!checkValid(title) || (title === "" && !root)) return res.json({
+        success: false, error: "createDocument error: no title provided.", result: null, alert: "Please provide a title"});
 
     // make sure title doesn't exist already in space
     try {
         let duplicate = await Document.exists({title, workspace: workspaceId});
         if (duplicate) {
-            return res.json({success: false, error: "createDocument Error: duplicate title."})
+            return res.json({success: false, error: "createDocument Error: duplicate title.", alert: "Duplicate title in space.. Please select a unique title"})
         }
     } catch (err) {
-        console.log("ERROR", err)
         return res.json({success: false, error: "createDocument Error: validation on duplicate title failed.", trace: err});
     }
     
@@ -117,7 +117,6 @@ createDocument = async (req, res) => {
     try {
         document = await Document.populate(document, {path: "author references workspace repository tags snippets"});
     } catch (err) {
-        console.log("TRACE", err);
         return res.json({success: false, error: "createDocument Error: document population failed", trace: err});
     }
    
@@ -131,7 +130,6 @@ moveDocument = async (req, res) => {
 
     // extract old and new parent as well as the new index of placement
     const { oldParentId, newParentId, newIndex } = req.body;
-
     const documentId = req.documentObj._id.toString();
     const workspaceId = req.workspaceObj._id.toString();
 
@@ -141,7 +139,6 @@ moveDocument = async (req, res) => {
 
     // check if we're moving the document into the same directory or not
     let sameDir = oldParentId === newParentId;
-
 
     // checks if both parentIds are provided else throws error
     if (checkValid(oldParentId) && checkValid(newParentId)) {
@@ -158,7 +155,8 @@ moveDocument = async (req, res) => {
         }
 
         // filter out the doc from it's old parent's children and save the old parent
-        oldParent.children = oldParent.children.filter((childId) => childId === documentId);
+        oldParent.children = oldParent.children.filter((childId) => childId.toString() !== documentId);
+
         try {
             oldParent = await oldParent.save();
         } catch (err) {
@@ -176,7 +174,7 @@ moveDocument = async (req, res) => {
 
                 // validation here to check that the newParent is not a child of the movedDocument
                 if (documentObj.path.length  <= newParent.path.length
-                    && newParent.path.length.slice(0, documentObj.path.length) === documentObj.path) {
+                    && newParent.path.slice(0, documentObj.path.length) === documentObj.path) {
                         return res.json({success: false, error: `moveDocument Error: newParent is child of movedDocument`});
                     }
             } catch (err) {
@@ -184,7 +182,7 @@ moveDocument = async (req, res) => {
             }
         }
 
-        // splice the movedDocument into the right location in the newParents children
+        //splice the movedDocument into the right location in the newParents children
         newParent.children.splice(newIndex, 0, documentId);
         try {
             newParent = await newParent.save();
@@ -213,7 +211,6 @@ moveDocument = async (req, res) => {
     
         // add the movedDoc to all the docs that need to have their paths changed
         modifiedDocuments.push(documentObj);
-
         // create a list of operations for updating many docs with one db call
         let bulkWritePathOps = modifiedDocuments.map((doc) => {
             let newPath = newParent.path + doc.path.slice(oldParent.path.length);
@@ -244,8 +241,7 @@ moveDocument = async (req, res) => {
         }
     }
 
-
-    return sameDir ? {success: true, result: [newParent]} : {success: true, result: [oldParent, newParent, ...modifiedDocuments]};
+    return sameDir ? res.json({success: true, result: [newParent]}) : res.json({success: true, result: [oldParent, newParent, ...modifiedDocuments]});
 }
 
 
@@ -261,7 +257,7 @@ deleteDocument = async (req, res) => {
 
     let deletedDocuments;
 
-    let finalResult = [];
+    let finalResult = {};
 
     // if the document is not the root, we can find the doc's parent using the doc's path
     // we will remove the deleted document from the parent's children
@@ -273,13 +269,14 @@ deleteDocument = async (req, res) => {
         // extract the parent using the parentPath
         let parent;
         try {
-            parent = await Document.find({ path: parentPath, workspace: workspaceId }).select("_id children").exec();
-        } catch (err) {
+            parent = await Document.findOne({ path: parentPath, workspace: workspaceId }).select("_id children").exec();
+        } catch (err) { 
             return res.json({success: false, error: "deleteDocument Error: unable to retrieve parent from path", trace: err});
         }
         
         // filter the children of the parent to remove the deleted top level document
-        parent.children = parent.children.filter(child => child._id === documentObj._id);
+        parent.children = parent.children.filter(child => !(child._id.equals(documentObj._id)));
+
         try {
             parent = parent.save();
         } catch (err) {
@@ -308,7 +305,7 @@ deleteDocument = async (req, res) => {
     // since delete many does not return documents, but we only need ids, we can use previous extracted deletedDocuments
     finalResult.deletedDocuments = deletedDocuments;
 
-    return {success: true, result: finalResult}
+    return res.json({success: true, result: finalResult});
 }
 
 
@@ -317,7 +314,7 @@ renameDocument = async (req, res) => {
 
     // extract new title that will be used to rename
     const { title } = req.body;
-    if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no title provided'});
+    if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no title provided', alert: "Please provide a title"});
 
     
     const workspaceId = req.workspaceObj._id.toString();
@@ -327,10 +324,10 @@ renameDocument = async (req, res) => {
     try {
         let duplicate = await Document.exists({title, workspace: workspaceId});
         if (duplicate) {
-            return res.json({success: false, error: "createDocument Error: duplicate title."})
+            return res.json({success: false, error: "renameDocument Error: duplicate title.", alert: "Duplicate title in space.. Please select a unique title"})
         }
     } catch (err) {
-        return res.json({success: false, error: "createDocument Error: validation on duplicate title failed.", trace: err});
+        return res.json({success: false, error: "renameDocument Error: validation on duplicate title failed.", trace: err});
     }
     
 
@@ -349,12 +346,13 @@ renameDocument = async (req, res) => {
 
     // the new path of the renamed doc
     let documentPath = documentObj.path;
-    documentPath = documentPath.slice(0, documentPath.length - document.title.length) + title;
+    documentPath = documentPath.slice(0, documentPath.length - documentObj.title.length) + title;
 
     // create update ops for each descendant of renamed doc + the actual renamed doc
     let bulkWritePathOps = renamedDocuments.map((doc) => {
+        // new path is the new parent path + (old path without old parent path prefix)
         let newPath = documentPath + doc.path.slice(documentObj.path.length, doc.path.length);
-        let update = doc._id === documentObj._id ? { $set: { path: newPath, title } } : { $set: { path: newPath } };
+        let update = doc._id.equals(documentObj._id) ? { $set: { path: newPath, title } } : { $set: { path: newPath } };
         return ({
             updateOne: {
                 filter: { _id: doc._id },
@@ -380,38 +378,36 @@ renameDocument = async (req, res) => {
         return res.json({ success: false, error: "renameDocument Error: unable to retrieve renamedDocs", trace: err });
     }
 
-    return { success: true, result: renamedDocuments };
+    return res.json({ success: true, result: renamedDocuments });
 } 
 
 
 // replace or add entire document
 getDocument = async (req, res) => {
-    console.log("ENTERED QUERY");
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
-    console.log("PARAMS", {workspaceId, documentId});
     // populate everything on get calls
     let returnDocument;
     let population = "author references workspace repository tags snippets";
 
     // no filtering or selection --- usually get is called when we need all the data
-    console.log("ABOUT TO QUERY");
     try {
-        returnDocument =  await Document.findOne({_id: documentId, workspace: workspaceId}).lean()
-            .populate({path: population}).exec();
+        returnDocument =  await Document.findOne({_id: documentId, workspace: workspaceId}).select('-image')
+        .lean().populate({path: population}).exec();
     } catch (err) {
-        console.log("GET DOCUMENT ERROR");
         return res.json({ success: false, error: "getDocument Error: unable to get document", trace: err });
     }
 
-    console.log("FINISHED QUERY");
-    console.log("RETURNED DOCUMENT", returnDocument);
     return res.json({ success: true, result: returnDocument });
 }
 
+testRoute = async (req, res) => {
+    console.log("ENTERED HERE TEST", req.body);
+}
 
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
+    console.log("ENTERED EDIT DOCUMENT");
     const { title, markup, repositoryId, image, content } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
@@ -505,6 +501,8 @@ retrieveHelper = async (body, req) => {
 
     if (checkValid(minimal)) {
         query.select(selection);  
+    } else {
+        query.select('-image')
     }
 
     if (checkValid(limit)) {
@@ -724,7 +722,7 @@ removeDocumentSnippet = async (req, res) => {
 
 }
 
-module.exports = { 
+module.exports = { testRoute,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }

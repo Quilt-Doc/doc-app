@@ -5,27 +5,24 @@ import styled from "styled-components";
 import chroma from 'chroma-js';
 
 //actions
-import { getDocument, editDocument, 
-    renameDocument, attachTag, removeTag } from '../../../../actions/Document_Actions';
+import { getDocument, editDocument, attachDocumentTag, removeDocumentTag } from '../../../../../actions/Document_Actions';
 
 //components
-import LabelMenu from '../../../General/Menus/LabelMenu';
-import FileReferenceMenu from '../../../General/Menus/FileReferenceMenu';
-import RepositoryMenu2 from '../../../General/Menus/RepositoryMenu2'
+import LabelMenu from '../../../../menus/LabelMenu';
+import FileReferenceMenu from '../../../../menus/FileReferenceMenu';
+import RepositoryMenu2 from '../../../../menus/RepositoryMenu2'
 
 //redux
 import { connect } from 'react-redux';
 
 //icons
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCube, faTag} from '@fortawesome/free-solid-svg-icons'
-import {RiGitRepositoryLine, RiFileFill} from 'react-icons/ri'
+import {RiGitRepositoryLine, RiFileFill, RiAddLine} from 'react-icons/ri'
 import {AiFillFolder} from 'react-icons/ai';
 import {VscRepo} from 'react-icons/vsc';
 
 //router
 import { withRouter } from 'react-router-dom';
-import history from '../../../../history';
+import history from '../../../../../history';
 
 class DocumentInfo extends React.Component {
     constructor(props){
@@ -33,10 +30,8 @@ class DocumentInfo extends React.Component {
     }
 
     renderFullName(){
-        console.log(this.props.document.repository)
         let split = this.props.document.repository.fullName.split("/")
         return `${split[1]}`
-       
     }
 
     renderFolders = () => {
@@ -48,10 +43,10 @@ class DocumentInfo extends React.Component {
         }
 
         return directories.map((directory, i) => {
-            return ( <Reference>
+            return (    <Reference>
                             <AiFillFolder style = {{marginRight: "0.5rem"}}/>
                             <Title>{directory.name}</Title>
-                    </Reference>
+                        </Reference>
                     )
         })
     }
@@ -63,50 +58,104 @@ class DocumentInfo extends React.Component {
         if (files) {
             files = files.sort((a, b) => {if (a.name < b.name) return -1; else if (a.name > b.name) return 1; else return 0})
         }
+
         return files.map((file, i) => {
             return (
                 <Reference>
                     <RiFileFill style = {{width: "1rem", fontSize: "1.1rem" ,marginRight: "0.5rem"}}/>
-                   <Title>{file.name}</Title>
+                    <Title>{file.name}</Title>
                 </Reference>
             )
         })
+    }
+
+    renderReferenceMenu = () => {
+        const { document } = this.props;
+        const {repository, references} = document;
+        return (
+            repository ? < FileReferenceMenu 
+                            setReferences = {references}
+                            document = { document }
+                        /> :
+                            <AddButton>
+                                <RiAddLine/>
+                            </AddButton>
+        )
     }
 
     renderTags(){
         let colors = ['#5352ed', 
             '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
         ]
-       return this.props.document.tags.map((tag) => {
+        //this.props.document.
+        let tags = [{color: 2, label: "backend"}, {color: 1, label: "worker"}, {color: 4, label: "lambdas"}]
+        return tags.map((tag) => {
             let color = tag.color < colors.length ? colors[tag.color] : 
                 colors[tag.color - Math.floor(tag.color/colors.length) * colors.length];
             return (<Tag color = {color} >{tag.label}</Tag>)
         })
     }
 
-    render(){
-        return(
-            <DataContainer 
-                paddingLeft = {this.props.write ? "3rem" : "10rem"}>
-                
-                { this.props.document.repository &&
-                    <RepositoryButton> 
-                       <VscRepo style = {{
-                                marginRight: "0.5rem",
-                                fontSize: "1.7rem",
-                                marginTop: "0.1rem"
-                            }}/>
-                        {this.renderFullName()}
-                    </RepositoryButton>
-                }
-                {(this.props.document.references && this.props.document.references.length > 0) &&
-                    <InfoList2>
+    renderEditData = () => {
+        const { document: {references, repository} } = this.props;
+        return (
+            <>
+                <RepositoryMenu2 document={this.props.document}/>
+                <List>
+                    {this.renderReferenceMenu()}
+                    {   (references && references.length > 0) ? 
+                         <InfoList edit = {true}>
+                            {this.renderFolders()}
+                            {this.renderFiles()}
+                        </InfoList> :
+                         <Message>
+                            { repository ? 
+                                "Attach References" : 
+                                "Select a repository to attach references"
+                            }
+                        </Message>
+                    }
+                   
+                </List>
+            </>
+        )
+    }
+
+    renderStaticData = () => {
+        const { document: {references, repository} } = this.props;
+        return (
+            <>
+            { repository &&
+                <RepositoryButton> 
+                    <IconBorder>    
+                        <VscRepo/>
+                    </IconBorder>
+                    {this.renderFullName()}
+                </RepositoryButton>
+            }
+            { (references && references.length > 0) &&
+                <List>
+                    <InfoList>
                         {this.renderFolders()}
                         {this.renderFiles()}
-                    </InfoList2>
-                }
-            
-            </DataContainer>
+                    </InfoList>
+                </List>
+                
+            }
+            </>
+        )
+    }
+
+    render(){
+        const { write, document: { repository} } = this.props;
+        return(
+            <>
+            {(repository || write) && 
+                <DataContainer paddingLeft = {write ? "3rem" : "10rem"} >
+                    { write ? this.renderEditData() : this.renderStaticData() }
+                </DataContainer>
+            }
+            </>
         )
     }
 }
@@ -165,20 +214,40 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, { 
-    getDocument, editDocument, renameDocument, attachTag, removeTag })(DocumentInfo));
+    getDocument, editDocument, attachDocumentTag, removeDocumentTag })(DocumentInfo));
+
+const Message = styled.div`
+    opacity: 0.5;
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin-left: 1.5rem;
+`
 
 const InfoList = styled.div`
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: -1rem;
+    margin-left: ${props => props.edit ? "1.5rem" : "0rem"};
 `
 
-const InfoList2 = styled.div`
+const List = styled.div`
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-top: 2rem;
+`
+
+const AddButton = styled.div`
+    height: 3rem;
+    width: 3rem;
+    border: 1px solid #E0E4e7;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+   /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
 `
 
 const Reference = styled.div`
@@ -202,8 +271,9 @@ const DataContainer = styled.div`
     padding-left: ${props => props.paddingLeft};
     padding-right: 10rem;
     margin-top: 1rem;
+    margin-bottom: 1rem;
 `
-
+/*
 const RepositoryButton = styled.div`
     display: inline-flex;
     align-items: center;
@@ -215,7 +285,30 @@ const RepositoryButton = styled.div`
     cursor: pointer;
     border: 1px solid #E0E4e7;
     margin-bottom: 1rem;
+`*/
+
+const RepositoryButton = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 1.4rem;
+    padding: 0rem 1.5rem;
+    border-radius: 0.4rem;
+    height: 3.5rem;
+    font-weight: 500;
+    display: inline-flex;
+    cursor: pointer;
+    border: 1px solid #172A4e;
 `
+
+const IconBorder = styled.div`
+    font-size: 1.8rem;
+    margin-right: 0.7rem;
+    width: 2rem;
+    display: flex;
+    align-items: center;
+    margin-top: 0.1rem;
+`
+
 /*
 
 const RepositoryButton = styled.div`

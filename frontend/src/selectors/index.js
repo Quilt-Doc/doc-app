@@ -71,8 +71,14 @@ const getParent = data => data.parent;
 export const makeGetChildDocuments = () => {
     return createSelector(
         [getParent, getDocuments],
-        (parent, documents) => {
-            return parent ? parent.children.map(childId => documents[childId]) : [];
+        (parent, documents) => { 
+            if (parent && parent.title == "XYZOS") {
+                console.log("Individual Document", parent);
+                console.log("ALL DOCS", documents)
+            }
+            let children = parent ? parent.children.map(childId => documents[childId]) : [];
+            children = children.filter(child => child !== undefined);
+            return children;
         }
     )
 }

@@ -160,7 +160,6 @@ class FileReferenceMenu extends React.Component {
             }
         })
 
-        console.log("REFS", references);
         let dirs = references.filter((ref) => {
             return ref.kind === "dir"
         })
@@ -319,25 +318,14 @@ class FileReferenceMenu extends React.Component {
         let setIds = this.props.setReferences.map(ref => ref._id)
         let flip = this.renderFlip()
         return(
-            <MenuContainer mLeft = {this.props.form ? "" : "auto"} >
-                    {this.props.form ?
-                        <AddButton 
-                            ref = {addButton => this.addButton = addButton} 
-                            onClick = {(e) => this.openMenu(e)}
-                            active = {this.state.open}
-                        >
-                            <RiAddLine />
-                        </AddButton>
-                         :
-                        <PageIcon 
-                            active = {this.state.open} 
-                            onClick = {(e) => {this.openMenu(e)}} 
-                            ref = {addButton => this.addButton = addButton}
-                        >
-                            <BiCube style = {{marginRight: "0.5rem"}}/>
-                            <Title>Attach References</Title>
-                        </PageIcon>
-                    }
+            <MenuContainer >
+                    <AddButton 
+                        ref = {addButton => this.addButton = addButton} 
+                        onClick = {(e) => this.openMenu(e)}
+                        active = {this.state.open}
+                    >
+                        <RiAddLine />
+                    </AddButton>
                     <CSSTransition
                          in = {this.state.open}
                          unmountOnExit
@@ -376,25 +364,6 @@ const Title = styled.div`
     font-size: 1.3rem;
     margin-right: 0.3rem;
     font-weight: 500;
-`
-
-const PageIcon = styled.div`
-    margin-right: 1.2rem;
-    display: flex;
-    align-items: center;
-    font-size: 1.5rem;
-
-    padding: 0.5rem 1rem;
-    &:hover {
-        background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#F4F4F6"};
-        
-    }
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
-    cursor: pointer;
-    border-radius: 0.3rem;
-    margin-left: auto;
-    /*
-    margin-left: ${props => props.mLeft ? props.mLeft : "0rem"};*/
 `
 
 const AddButton = styled.div`
@@ -459,7 +428,6 @@ const NoneMessage = styled.div`
 
 
 const MenuContainer = styled.div`
-    margin-left: ${props => props.mLeft};
 `
 
 
@@ -474,9 +442,9 @@ const Container = styled.div`
     font-size: 1.4rem;
     z-index: 2;
     background-color: white;
-    bottom:${props => props.flip[0] ? `${props.flip[1]}px` : ""};
-    top: ${props => !props.flip[0] ? `${props.flip[1]}px` : ""};
-    margin-left: ${props => props.form ? "" : "-14rem"};
+    ${props => (props.form && props.flip[0]) ? `bottom: ${props.flip[1]}px` : ""};
+    ${props => (props.form && !props.flip[0]) ? `top: ${props.flip[1]}px` : ""};
+    margin-top: ${props => !props.form ? "10px": ""};
 `
 
 const SearchbarContainer = styled.div`

@@ -1,16 +1,16 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import RepositoryMenu2 from '../../../menus/RepositoryMenu2';
-import FileReferenceMenu from '../../../menus/FileReferenceMenu';
-import LabelMenu from '../../../menus/LabelMenu';
+import RepositoryMenu2 from '../../../../menus/RepositoryMenu2';
+import FileReferenceMenu from '../../../../menus/FileReferenceMenu';
+import LabelMenu from '../../../../menus/LabelMenu';
 
 import {connect} from 'react-redux';
 
 import {withRouter} from 'react-router-dom';
 
 //actions
-import { attachDocumentTag, removeDocumentTag } from '../../../../actions/Document_Actions';
+import { attachDocumentTag, removeDocumentTag } from '../../../../../actions/Document_Actions';
 
 class AttachmentToolbar extends React.Component {
 

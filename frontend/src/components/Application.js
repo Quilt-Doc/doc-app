@@ -19,19 +19,26 @@ const Application = () => {
     return ( 
         <Container>
             <Router history = {history}>
+                <Route path = "/workspaces/:workspaceId" component = {Space} />
                 <Route path = "/create_workspace" component = {WorkspaceCreation}/>
                 <Route exact path = "/" component = {Home}/>
                 <Route exact path = "/workspaces" component = {Home} />
-                <Route path = "/workspaces/:workspaceId" component = {Space} />
                 <Route path = "/settings" component = {UserSettings} />
             </Router>
         </Container>
     )
 }
 
+{/*   <Route path = "/create_workspace" component = {WorkspaceCreation}/>
+                <Route exact path = "/" component = {Home}/>
+                <Route exact path = "/workspaces" component = {Home} />
+                <Route path = "/workspaces/:workspaceId" component = {Space} />
+<Route path = "/settings" component = {UserSettings} />*/}
+
 export default Application;
 
 const Container = styled.div`
+    
     display: flex;
     flex-direction:column;
     height: 100vh;
