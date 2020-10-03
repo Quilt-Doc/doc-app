@@ -13,25 +13,44 @@ import Feed from './feed/Feed';
 // initial page on the workspace, contains tracking information (breakage), actionable components (pull requests)
 const Dashboard = () => {
     return(
+        <>
         <Container>
-            <Leftbar>
-                <Todos>
-                    3 actions required
-                </Todos>
-                <People/>
-                <Feed/>
-            </Leftbar>
+            <Top>
+                <Header>DASHBOARD</Header>
+                {/*
+                <NavbarElement>
+                    <RiPencilLine/>
+                </NavbarElement>*/}
+            </Top>
             <RightContainer>
                 <Breakage/>
                 <PullRequest/>
             </RightContainer>
         </Container>
+        </>
     )
 }
 
 export default Dashboard;
 
 // Styled Components
+
+const Top = styled.div`
+    display: flex;
+    align-items: center;
+`
+
+const Header = styled.div`
+    font-size: 1.1rem;
+    font-weight: 400;
+    display: inline-flex;
+    border-bottom: 2px solid #172A4E;
+    height: 2.8rem;
+    padding-right: 3.5rem;
+    display: flex;
+    align-items: center;
+`
+
 const RightContainer = styled.div`
     width: calc(100% - 32rem);
     padding: 2rem 0rem;
@@ -63,7 +82,7 @@ const Leftbar = styled.div`
 `
 
 const Container = styled.div`
-    background-color: #f7f9fb;
+    background-color: #f6f7f9;
     height: 100vh;
-    display: flex;
+    padding: 2.1rem;
 `

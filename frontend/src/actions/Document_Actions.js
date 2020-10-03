@@ -223,7 +223,6 @@ export const retrieveMoreDocuments = (formValues) => async dispatch => {
 // DONE
 export const deleteDocument = (formValues) => async dispatch => {
 
-    console.log("ENTERED HERE");
     const workspaceId = formValues.workspaceId;
     const documentId = formValues.documentId;
 
@@ -235,10 +234,10 @@ export const deleteDocument = (formValues) => async dispatch => {
         throw new Error("deleteDocument: documentId not provided");
     }
 
-    console.log("ABOUT TO DELETE");
     const response = await api.delete(`/documents/${workspaceId}/delete/${documentId}`);
 
     if (response.data.success == false) {
+        console.log(response.data.trace);
         throw new Error(response.data.error);
     }
     else {

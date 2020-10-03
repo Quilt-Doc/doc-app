@@ -336,11 +336,12 @@ deleteDocument = async (req, res) => {
         // Reporting Section ---------
         // Need list of userId's attached to deleted Documents
         // Get all titles of deleted Documents
-        deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author", "title", "status").lean().exec();
+        deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author title status").lean().exec();
         // Reporting Section End ---------
         
-        await Document.deleteMany({_id: {$in: deletedIds}}).exec();
+        await Document.deleteMany({_id: {$in: deletedIds}})
     } catch (err) {
+        console.log(err);
         return res.json({success: false, error: "deleteDocument Error: unable to delete document and/or descendants", trace: err});
     }
 
@@ -442,7 +443,7 @@ deleteDocument = async (req, res) => {
 
     // since delete many does not return documents, but we only need ids, we can use previous extracted deletedDocuments
     finalResult.deletedDocuments = deletedDocuments;
-
+    console.log("FINAL RESULT", finalResult);
     return res.json({success: true, result: finalResult});
 }
 
