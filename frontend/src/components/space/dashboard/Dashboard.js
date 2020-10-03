@@ -56,7 +56,7 @@ const Leftbar = styled.div`
     padding: 2rem 0rem;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 5.5rem);
+    /*height: calc(100vh - 5.5rem);*/
     overflow-y: scroll;
     box-shadow: 5px 0 3px -3px rgba(0,0,0,0.1);
     z-index: 1;
@@ -64,6 +64,6 @@ const Leftbar = styled.div`
 
 const Container = styled.div`
     background-color: #f7f9fb;
-    min-height: 100%;
+    height: 100vh;
     display: flex;
 `

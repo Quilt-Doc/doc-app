@@ -27,7 +27,14 @@ export const checkLogin = () => async (dispatch) => {
 
 export const checkInstallation = (formValues) => async (dispatch) => {
     const response = await api.post('/auth/check_installation', formValues)
-    dispatch({ type: CHECK_INSTALLATION, payload: response.data });
+
+    console.log("CHECKINSTALLATIONRESPONSE", response)
+    if (response.data.success == false) {
+        throw new Error("checkInstallation Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: CHECK_INSTALLATION, payload: response.data.result });
+    }
 }
 
 export const retrieveDomainRepositories = (formValues) => async (dispatch) => {

@@ -10,7 +10,7 @@ import _ from 'lodash';
 import DraggableDocument from './DraggableDocument';
 
 //actions
-import { moveDocument, retrieveDocuments } from '../../../../actions/Document_Actions';
+import { moveDocument, retrieveDocuments, setDocumentOpen } from '../../../../actions/Document_Actions';
 
 //router
 import { withRouter } from 'react-router-dom';
@@ -26,9 +26,6 @@ import { makeGetChildDocuments } from '../../../../selectors';
 class Document extends Component {
     constructor(props){
         super(props)
-        this.state = {
-            open: false
-        }
     }
 
     //FARAZ TODO: Need to send to document creation modal, not auto create. Check title field.
@@ -58,36 +55,46 @@ class Document extends Component {
     open = async (e) => {
         e.stopPropagation();
         e.preventDefault();
-        const { children, document, match, retrieveDocuments} = this.props;
+        const { children, document, match, retrieveDocuments, setDocumentOpen } = this.props;
         let {workspaceId} = match.params;
+
         if (children.length !== document.children.length) {
             await retrieveDocuments({workspaceId, documentIds: document.children, minimal: true});
-            this.setState({open: true});
+            setDocumentOpen({documentId: document._id, open: true})
         } else {
-            this.setState({open: true});
+            setDocumentOpen({documentId: document._id, open: true})
         }
     }
 
+    close = (e) => {
+        const { document: { _id}, setDocumentOpen } = this.props;
+        e.stopPropagation(); 
+        e.preventDefault(); 
+        setDocumentOpen({documentId: _id, open: false});
+    }
+
     renderLeftIcon = () =>{
-        const {children} = this.props.document;
-        const {open} = this.state;
+        const {children, open, title} = this.props.document;
+        if (title === "a") console.log("OPEN", open);
         if (children.length > 0) {
             if (!open){
                 return (
-                    <IconBorder onClick = {(e) => this.open(e)}>
+                    <IconBorder active = {true} onClick = {this.open}>
                         <FiChevronRight/>
                     </IconBorder>
                 )
             } else {
                 return (
-                    <IconBorder onClick = {(e) => {e.stopPropagation(); e.preventDefault(); this.setState({open: false})}}>
+                    <IconBorder active = {true} onClick = {this.close}>
                          <FiChevronDown/>
                     </IconBorder>
                 )
-            } 
+            }
         } else {
             return (
-                <IconBorder notActive = {true} />
+                <IconBorder active = {false} >
+                    <FiChevronRight/>
+                </IconBorder>
             )
         }
     }
@@ -102,7 +109,7 @@ class Document extends Component {
 
     render() {
         const { document, children, width, last, moveDocument } = this.props;
-        const { open } = this.state;
+        const { open } = document;
         return (
             <>
                 { document && 
@@ -132,8 +139,12 @@ const makeMapStateToProps = () => {
     const mapStateToProps = (state, ownProps) => {
         const { document } = ownProps; 
         const {documents, auth} = state;
+
+        if (document && document.title == "XYZOS") {
+            console.log("DOCUMENTS IN DOCUMENT", documents);
+        }
         
-        const children = getChildDocuments({document, documents});
+        const children = getChildDocuments({parent: document, documents});
 
         return {
             children,
@@ -145,7 +156,8 @@ const makeMapStateToProps = () => {
 }
 
 
-const ConnectedDocument = withRouter(connect(makeMapStateToProps, { moveDocument, retrieveDocuments })(Document));
+const ConnectedDocument = withRouter(connect(makeMapStateToProps, { 
+    moveDocument, setDocumentOpen, retrieveDocuments })(Document));
 
 export default ConnectedDocument;
 
@@ -157,31 +169,15 @@ const IconBorder = styled.div`
     align-items: center;
     min-width: 1.7rem;
     min-height: 1.7rem;
-    margin-left: -0.3rem;
-    margin-right: 0.5rem;
+    margin-right: 0.3rem;
+    margin-left: 0.4rem;
     font-size: 1.3rem;
-    opacity: 0.9;
     border-radius: 0.3rem;
     transition: all 0.05s ease-out;
+    color: #172A4e;
+    cursor: ${props => props.active ? "pointer" : "default"};
+    opacity: ${props => props.active ? 1 : 0.3};
     &:hover {
-        background-color: ${props => props.notActive ? "" : "#2B2F3A"};
+        background-color: ${props => props.active ? "#f7f9fb" : ""};
     }
-`
-
-const CurrentReference = styled.div`
-    display: flex;
-    align-items: center;
-    font-size: 1.4rem;
-    background-color: ${props => props.backgroundColor};
-    &:hover {
-        background-color: #EBECF0;
-    }
-    transition: background-color 0.15s ease-out;
-    width: ${props => props.width};
-    margin-left: ${props => props.marginLeft};
-    padding: 1.2rem;
-    border-radius: 0.3rem;
-    height: 3.6rem;
-    color: #172A4E;
-    cursor: pointer;
 `

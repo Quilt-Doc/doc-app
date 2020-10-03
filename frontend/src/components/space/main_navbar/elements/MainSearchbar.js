@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { CSSTransition } from 'react-transition-group';
 
 //actions
-import {retrieveSearchResults} from '../../../actions/Search_Actions';
+import {retrieveSearchResults} from '../../../../actions/Search_Actions';
 
 //icons
 import {RiFileList2Fill, RiFileLine} from 'react-icons/ri';

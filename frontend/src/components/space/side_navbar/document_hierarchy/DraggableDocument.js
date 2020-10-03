@@ -18,6 +18,7 @@ import { RiFileList2Line } from 'react-icons/ri';
 
 
 import { withRouter } from 'react-router-dom';
+import { FiPlus } from 'react-icons/fi';
 // find children and see lowest one -- only show that one
 // put the ref on current reference, put style on children
 
@@ -25,13 +26,7 @@ const notChild = (item, document, gap) => {
 	let path = item.document.path
 	let path2 = document.path
 	let bool = gap ?  path.length < path2.length : path.length <= path2.length
-	/*
-	if (gap) {
-		console.log("\n\n\n\n", "BIG MOVES")
-		console.log(path)
-		console.log(path2)
-		console.log(bool)
-	}*/
+
 	if (bool && path2.slice(0, path.length) === path) {
 		return false
 	}
@@ -64,11 +59,14 @@ const DraggableDocument = (props) => {
 	const order = props.order;
 	let {workspaceId} = props.match.params;
 
-
+	// Dropping on document
     const [{ isOver, canDrop}, drop] = useDrop({
 		accept: ItemTypes.DOCUMENT,
 		canDrop: (item) => notChild(item, document, false),
 		drop: (item) => {
+			console.log("DOCUMENT", item);
+			console.log("OLD PARENT", item.parent);
+			console.log("NEW PARENT", document);
 			props.moveDocument({ 
 				workspaceId, 
 				documentId: item.document._id, 
@@ -83,6 +81,7 @@ const DraggableDocument = (props) => {
 		})
 	});
 
+	// Dropping on gap 
 	const [{ isOver2, canDrop2}, gapDrop] = useDrop({
 		accept: ItemTypes.DOCUMENT,
 		canDrop: (item) => notChild(item, document, true),
@@ -90,10 +89,16 @@ const DraggableDocument = (props) => {
 			let newParentId = parent._id;
 			let oldParentId = item.parent._id;
 
+			console.log("NEW PARENT", parent);
+			console.log("OLD PARENT", item.parent);
+
 			let { workspaceId } = props.match.params;
 
 			let newOrder = order;
 			let oldOrder = item.order;
+
+			console.log("NEW ORDER", newOrder);
+			console.log("OLD ORDER", oldOrder);
 
 			if (newParentId === oldParentId && newOrder > oldOrder) {
 				newOrder -= 1;
@@ -122,13 +127,15 @@ const DraggableDocument = (props) => {
 			let oldParentId = item.parent._id;
 
 			let { workspaceId } = props.match.params;
+			
+			let newIndex = (newParentId !== oldParentId) ? order + 1 : order;
 
 			props.moveDocument( { 
 				workspaceId, 
 				documentId: item.document._id, 
 				newParentId,
 				oldParentId,
-				newIndex: order } 
+				newIndex } 
 			);
 		},
 		collect: (monitor) => ({
@@ -144,12 +151,15 @@ const DraggableDocument = (props) => {
 		}),
 	});
 
+	//console.log("document", document);
+	//console.log("children", props.children);
     return (
 		<>
 			<div ref = {gapDrop}>
-				<Gap backgroundColor = { isOver2 && canDrop2 ? "#5B75E6" : ""}>
-					{document.title}
-				</Gap>
+				<Gap 
+					marginLeft = {`${props.marginLeft}rem`} 
+					backgroundColor = { isOver2 && canDrop2 ? "#5B75E6" : ""}
+				/>
 			</div>
 			<div ref = {drop}>
 				<CurrentReference 
@@ -161,29 +171,32 @@ const DraggableDocument = (props) => {
 					onMouseLeave = {() => { setCreate(false) }} 
 					onClick = {() => props.renderDocumentUrl()}
 					marginLeft = {`${props.marginLeft}rem`}
+					width = {`${props.marginLeft}`}
 					active = {checkActive(document)}
 					opacity = {isDragging ? "0.3": ""}
 				>
 					{props.renderLeftIcon()}
 					<IconBorder3>
-						<RiFileList2Line style = {{fontSize: "1.5rem", marginRight: "1rem"}}/>
+						<RiFileList2Line style = {{fontSize: "1.5rem", marginRight: "0.7rem"}}/>
 					</IconBorder3>
 					<Title >{extractTitle(document)}</Title>
 					<IconContainer>
 						<IconBorder display = {createDisplay} onClick = {(e) => {props.createDocument(e)}}>
-							<ion-icon style = {{fontSize: "1.5rem"}} name="add-outline"></ion-icon>
+							<FiPlus/>
 						</IconBorder>
 					</IconContainer>
 				</CurrentReference>
 			</div>
-				{props.last &&
-					<div ref = {lastGapDrop}>
-						<Gap backgroundColor = { isOver3 && canDrop3 ? "#5B75E6" : ""}>
-							{`LAST ${document.title}`}
-						</Gap>
-					</div>
-				}
+				
 			{props.children.length !== 0 && props.open && props.renderChildren()}
+			{props.last &&
+					<div ref = {lastGapDrop}>
+						<Gap 
+							marginLeft = {`${props.marginLeft}rem`} 
+							backgroundColor = { isOver3 && canDrop3 ? "#5B75E6" : ""}
+						/>
+					</div>
+			}
 		</>
 	)
 }
@@ -197,13 +210,15 @@ const Title = styled.div`
     overflow: hidden;
 	font-weight: 500;
 	width: ${props => props.width}rem;
+	font-size: 1.25rem;
 `
 
 const Gap = styled.div`
 	/*height: 0.3rem;*/
-	padding: 1rem;
+	height: 0.3rem;
 	background-color: ${props => props.backgroundColor};
 	transition:  background-color 0.05s ease-out;
+	margin-left: ${props => props.marginLeft};
 `
 
 const IconContainer = styled.div`
@@ -225,12 +240,11 @@ const IconBorder = styled.div`
     opacity: 0.8;
 	align-items: center;
     justify-content: center;
-	background-color: #2B2F3A;
+	background-color: #f7f9fb;
 	cursor: pointer;
-	
+	font-size: 1.3rem;
     &: hover {
         opacity: 1;
-        
     }
 `
 
@@ -245,19 +259,18 @@ const CurrentReference = styled.div`
     align-items: center;
 	font-size: 1.35rem;
 	border: none;
-
     &:hover {
-        background-color: #414858;
+        background-color: #e3e7ed
 	}
-	background-color: ${props => props.active ? "#414858" : ""};
-
+	background-color: ${props => props.active ? "#e3e7ed" : ""};
     transition: background-color 0.05s ease-out;
-    padding-left: ${props => props.marginLeft};
-    padding-right: 2rem;
+	margin-left: ${props => props.marginLeft};
+	padding-right: 1rem;
     height: 2.9rem;
 	cursor: pointer;
 	font-weight: 500;
 	border: ${props => props.border};
 	opacity: ${props => props.opacity};
-	width: 100%;
+	width: ${props => `${20.8 - props.marginLeft}rem`} ;
+	border-radius: 0.3rem;
 `

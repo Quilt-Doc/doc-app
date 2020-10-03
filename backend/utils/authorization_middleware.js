@@ -202,7 +202,19 @@ const repositoryMiddleware = async (req, res, next) => {
         }
     }
 
+    // User routes
 
+    // poll and validate are temporarily enabled for everything
+    if (requestedPath.includes('/repositories/retrieve')) {
+        if (requesterRole == 'dev') {
+            console.log('repositoryMiddleware dev token');
+            return next();
+        }
+        // TODO: Fix temporarily allowing everyone to call this.
+        else {
+            return next();
+        }
+    }
 
     // Verify membership in workspace for calling user, if :repositoryId then verify repository is in workspace
     else {
@@ -413,7 +425,8 @@ const userMiddleware = async (req, res, next) => {
     }
     var foundUser = undefined;
     if (searchUserId) {
-        foundUser = await Tag.findById(searchUserId);
+        console.log("THIS IS THE USER ID", searchUserId);
+        foundUser = await User.findById(searchUserId);
     }
 
 

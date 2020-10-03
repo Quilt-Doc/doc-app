@@ -7,6 +7,8 @@ const Tag = require('../models/Tag');
 
 const UserStatsController = require('./reporting/UserStatsController');
 
+const createDocument = require('../controllers/DocumentController').createDocument;
+
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
@@ -18,6 +20,7 @@ const jobs = require('../apis/jobs');
 const jobConstants = require('../constants/index').jobs;
 
 const logger = require('../logging/index').logger;
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -109,7 +112,7 @@ createWorkspace = async (req, res) => {
         return res.json({success: false, error: "createWorkspace error: workspace population failed", trace: err});
     }
 
-    await logger.info({source: 'backend-api', });
+    //await logger.info({source: 'backend-api', });
 
     return res.json({success: true, result: workspace});
 }

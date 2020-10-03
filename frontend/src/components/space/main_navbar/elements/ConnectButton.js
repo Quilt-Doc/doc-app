@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 
 // history
-import history from '../../../history';
+import history from '../../../../history';
 
 // button to create linkages on the main navbar
 class ConnectButton extends React.Component {

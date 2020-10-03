@@ -122,7 +122,7 @@ checkInstallation = async (req, res) => {
         installationResponse = await client.get("/user/installations",  
             { headers: {
                     Authorization: `token ${req.body.accessToken}`,
-                    Accept: 'application/vnd.github.machine-man-preview+json'
+                    Accept: 'application/vnd.github.v3+json'
                 }
             });
     }
@@ -131,8 +131,8 @@ checkInstallation = async (req, res) => {
                             errorDescription: `Error fetching installation - userId: ${req.tokenPayload.userId}`, function: 'checkInstallation'});
         return res.json({success: false, error: err});
     }
-    // KARAN TODO: Format this result properly
-    return res.json(response.data.installations);
+
+    return res.json({success: true, result: installationResponse.data.installations})
 }
 
 

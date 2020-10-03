@@ -188,7 +188,7 @@ const MenuButton = styled.div`
         background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
-    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#172A4e"}; 
 `
 
 const Title = styled.div`

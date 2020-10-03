@@ -84,9 +84,10 @@ class DocumentOptionsMenu extends React.Component {
     }
 
     deleteDoc = () => {
-        let { workspaceId } = this.props.match.params;
-        history.push(`/workspaces/${workspaceId}/dashboard`);
-        this.props.deleteDocument({documentId: this.props.document._id, workspaceId});
+        const {  deleteDocument, document: {_id}, match } = this.props;
+        let { workspaceId } = match.params;
+        history.push(`/workspaces/${workspaceId}/document`);
+        deleteDocument({documentId: _id, workspaceId});
     }
 
 

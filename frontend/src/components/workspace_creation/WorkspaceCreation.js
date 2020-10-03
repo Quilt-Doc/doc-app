@@ -9,9 +9,10 @@ import logo from '../../images/logo.svg';
 import { CSSTransition } from 'react-transition-group';
 
 //views
-import ChooseProvider from './ChooseProvider';
-import ChooseRepos from './ChooseRepos';
-import ChooseName from './ChooseName';
+import ChooseProvider from './views/ChooseProvider';
+import ChooseRepos from './views/ChooseRepos';
+import ChooseName from './views/ChooseName';
+import WaitCreation from './views/WaitCreation';
 
 //component that is used to go through the flow of workspace creation 
 //(choosing repos, name workspace, etc)
@@ -22,8 +23,20 @@ class WorkspaceCreation extends Component {
 
         this.state = {
             // determines the current view of workspace creation
-            page: 0
+            page: 0,
+            // the repositories selected for workspace creation
+            active: [],
+            // the id of the created workspace
+            createdWorkspaceId: null
         }
+    }
+
+    setCreatedWorkspaceId = (createdWorkspaceId) => {
+        this.setState({createdWorkspaceId});
+    }
+
+    setActive = (active) => {
+        this.setState({active});
     }
 
     // changes the view
@@ -52,23 +65,26 @@ class WorkspaceCreation extends Component {
 
     // renders each view during workspace creation process
     renderSubContent = () => {
-        let {page} = this.state;
+        let {page, active, createdWorkspaceId} = this.state;
 
         let provider = <ChooseProvider changePage = {this.changePage}/>;
-        let repos = <ChooseRepos changePage = {this.changePage}/>;
-        let name = <ChooseName/>;
+        let repos = <ChooseRepos active = {active} setActive = {this.setActive} changePage = {this.changePage}/>;
+        let name = <ChooseName active = {active} setCreatedWorkspaceId = {this.setCreatedWorkspaceId} changePage = {this.changePage}/>;
+        let wait = <WaitCreation  workspaceId = {createdWorkspaceId}/>;
 
         return (
             <>
                 {this.renderTransitionWrapper(page === 0, true, provider)}
                 {this.renderTransitionWrapper(page === 1, false, repos)}
                 {this.renderTransitionWrapper(page === 2, false, name)}
+                {this.renderTransitionWrapper(page === 3, false, wait)}
             </>
         );
     }   
 
 
     render(){
+        const {page} = this.state;
         return(
             <Container>
                 <Top>

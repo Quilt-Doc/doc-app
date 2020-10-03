@@ -4,7 +4,7 @@ import chroma from 'chroma-js';
 
 import {RiEdit2Line, RiCheckFill} from 'react-icons/ri';
 import {CgOptions} from 'react-icons/cg';
-import DocumentOptionsMenu from '../../../menus/DocumentOptionsMenu';
+import DocumentOptionsMenu from '../../../../menus/DocumentOptionsMenu';
 
 class MainToolbar extends React.Component {
 
@@ -32,19 +32,22 @@ class MainToolbar extends React.Component {
     }
 
     renderPath(){
-        
-        let paths = this.props.document.path.split('/');
-        if (this.props.document.title === ""){
-            paths.pop();
-            paths.push("Untitled");
-        }
-        return paths.map((path, i) => {
-            if (i == paths.length - 1) {
-                return (<PathSection>{path}</PathSection>);
-            } else {
-                return (<><PathSection>{path}</PathSection><Slash>/</Slash></>);
+        const { document } = this.props;
+        if (document) {
+            let paths = this.props.document.path.split('/').slice(1);
+            if (this.props.document.title === ""){
+                paths.pop();
+                paths.push("Untitled");
             }
-        })
+            return paths.map((path, i) => {
+                if (i == paths.length - 1) {
+                    return (<PathSection>{path}</PathSection>);
+                } else {
+                    return (<><PathSection>{path}</PathSection><Slash>/</Slash></>);
+                }
+            })
+        }
+        return "";
     }
 
     render(){
@@ -96,14 +99,17 @@ export default MainToolbar;
 const PathSection = styled.div`
     &:hover {
         text-decoration: underline;
+        opacity: 1;
     }
     cursor: pointer;
+    opacity: 0.85;
 `
 
 const Status = styled.div`
     display: inline-flex;
-    background-color: #19e5be;
-    color: white;
+    background-color: ${chroma('#19e5be').alpha(0.2)};
+    color: #19e5be;
+    border: 1px solid #19e5be;
     font-weight: 500;
     border-radius: 0.3rem;
     font-size: 1.3rem;
@@ -140,6 +146,7 @@ const Button = styled.div`
 const Slash = styled.div`
     margin-left: 1rem;
     margin-right: 1rem;
+    opacity: 0.85;
 `
 
 const Path = styled.div`
@@ -158,7 +165,6 @@ const Container = styled.div`
     padding-top: 2rem;
     padding-bottom: 2rem;
     align-items: center;
-    background-color: #f7f9fb;
     border-top-left-radius: 0.4rem;
     border-top-right-radius: 0.4rem;
 `

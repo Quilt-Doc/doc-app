@@ -21,13 +21,33 @@ export const createDocument = (formValues) => async (dispatch) => {
     const response = await api.post(`/documents/${workspaceId}/create`, formValues );
 
     if (response.data.success == false) {
-        console.log(response.data.error.toString());
-        throw new Error("createDocument Error: ", response.data.error.toString());
+        if (response.data.alert) {
+            alert(response.data.alert)
+            return false
+        } else {
+            throw new Error(response.data.error);
+        }
     }
     else {
         dispatch({ type: CREATE_DOCUMENT, payload: response.data.result });
         return response.data.result;
     }
+}
+
+export const setDocumentOpen = (formValues) => (dispatch) => {
+    const { documentId, open } = formValues;
+
+    console.log("PARAMS", { documentId, open });
+    if (!documentId) {
+        throw new Error("setDocumentOpen: documentId not provided");
+    }
+
+    if (open === undefined || open === null) {
+        throw new Error("setDocumentOpen: open not provided")
+    }
+
+    console.log("HERE ABOUT TO CLOSE");
+    dispatch({ type: EDIT_DOCUMENT, payload: {_id: documentId, open}});
 }
 
 // DONE
@@ -47,7 +67,8 @@ export const moveDocument = (formValues) => async (dispatch) => {
     const response = await api.put(`/documents/${workspaceId}/move/${documentId}`, formValues );
 
     if (response.data.success == false) {
-        throw new Error("createDocument Error: ", response.data.error.toString());
+        console.log("MOVE DOC RESPONSE", response.data);
+        throw new Error(response.data.error);
     }
     else {
         dispatch({ type: MOVE_DOCUMENT, payload: response.data.result });
@@ -90,15 +111,20 @@ export const getDocument = (formValues) => async dispatch => {
         throw new Error("getDocument: documentId not provided");
     }
 
+
     const response = await api.get(`/documents/${workspaceId}/get/${documentId}`);
 
     if (response.data.success == false) {
-        throw new Error("getDocument Error: ", response.data.error.toString());
+        throw new Error(response.data.error);
     }
     else {
         dispatch({ type: GET_DOCUMENT, payload: response.data.result });
         return response.data.result
     }
+}
+
+export const testRoute = (formValues) => async () => {
+    await api.post(`/testRoute`, formValues);
 }
 
 // DONE
@@ -118,10 +144,16 @@ export const renameDocument = (formValues) => async dispatch => {
     const response = await api.put(`/documents/${workspaceId}/rename/${documentId}`, formValues);
 
     if (response.data.success == false) {
-        throw new Error("renameDocument Error: ", response.data.error.toString());
+        if (response.data.alert) {
+            alert(response.data.alert)
+            return false
+        } else {
+            throw new Error(response.data.error);
+        }
     }
     else {
         dispatch({ type: RENAME_DOCUMENT, payload: response.data.result });
+        return true
     }
 }
 
@@ -158,7 +190,7 @@ export const retrieveDocuments = (formValues, wipe, passback) => async dispatch 
     const response = await api.post(`/documents/${workspaceId}/retrieve`, formValues );
 
     if (response.data.success == false) {
-        throw new Error("retrieveDocuments Error: ", response.data.error.toString());
+        throw new Error(response.data.error);
     }
     else if (!passback) {
         dispatch({ type: RETRIEVE_DOCUMENTS, payload: response.data.result, wipe});
@@ -191,6 +223,7 @@ export const retrieveMoreDocuments = (formValues) => async dispatch => {
 // DONE
 export const deleteDocument = (formValues) => async dispatch => {
 
+    console.log("ENTERED HERE");
     const workspaceId = formValues.workspaceId;
     const documentId = formValues.documentId;
 
@@ -202,10 +235,11 @@ export const deleteDocument = (formValues) => async dispatch => {
         throw new Error("deleteDocument: documentId not provided");
     }
 
+    console.log("ABOUT TO DELETE");
     const response = await api.delete(`/documents/${workspaceId}/delete/${documentId}`);
 
     if (response.data.success == false) {
-        throw new Error("deleteDocument Error: ", response.data.error.toString());
+        throw new Error(response.data.error);
     }
     else {
         dispatch({ type: DELETE_DOCUMENT, payload: response.data.result });
@@ -214,10 +248,10 @@ export const deleteDocument = (formValues) => async dispatch => {
 }
 
 export const editDocument = (formValues) => async dispatch => {
-
+   
     const workspaceId = formValues.workspaceId;
     const documentId = formValues.documentId;
-
+   
     if (!workspaceId) {
         throw new Error("editDocument: workspaceId not provided");
     }
@@ -226,11 +260,11 @@ export const editDocument = (formValues) => async dispatch => {
         throw new Error("editDocument: documentId not provided");
     }
 
-
     const response = await api.put(`/documents/${workspaceId}/edit/${documentId}`, formValues);
+    
 
     if (response.data.success == false) {
-        throw new Error("editDocument Error: ", response.data.error.toString());
+        throw new Error(response.data.error);
     }
     else {
         dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });

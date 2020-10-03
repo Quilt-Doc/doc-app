@@ -8,7 +8,8 @@ import { Router, Route  } from 'react-router-dom';
 //components
 import Space from './space/Space';
 import UserSettings from './settings/UserSettings';
-import MainNavbar from './main_navbar/MainNavbar';
+import WorkspaceCreation from './workspace_creation/WorkspaceCreation';
+import Home from './home/Home';
 
 //styles
 import styled from "styled-components";
@@ -17,18 +18,27 @@ import styled from "styled-components";
 const Application = () => {
     return ( 
         <Container>
-            <MainNavbar/>
             <Router history = {history}>
-                  <Route path = "/workspaces/:workspaceId" component = {Space} />
-                  <Route path = "/settings" component = {UserSettings} />
+                <Route path = "/workspaces/:workspaceId" component = {Space} />
+                <Route path = "/create_workspace" component = {WorkspaceCreation}/>
+                <Route exact path = "/" component = {Home}/>
+                <Route exact path = "/workspaces" component = {Home} />
+                <Route path = "/settings" component = {UserSettings} />
             </Router>
         </Container>
     )
 }
 
+{/*   <Route path = "/create_workspace" component = {WorkspaceCreation}/>
+                <Route exact path = "/" component = {Home}/>
+                <Route exact path = "/workspaces" component = {Home} />
+                <Route path = "/workspaces/:workspaceId" component = {Space} />
+<Route path = "/settings" component = {UserSettings} />*/}
+
 export default Application;
 
 const Container = styled.div`
+    
     display: flex;
     flex-direction:column;
     height: 100vh;

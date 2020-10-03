@@ -23,19 +23,29 @@ export const deleteUser = id => async dispatch => {
     dispatch({ type: DELETE_USER, payload: response.data });
 }
 
-export const editUser = (id, formValues) => async dispatch => {
-    const response = await api.put(`/users/edit/${id}`, formValues);
-    dispatch({ type: EDIT_USER, payload: response.data });
+export const editUser = (formValues) => async dispatch => {
+    const { userId } = formValues;
+
+    if (!userId) throw new Error("editUser: userId not provided");
+
+    const response = await api.put(`/users/edit/${userId}`, formValues);
+
+    const {success, result} = response.data;
+    if (!success) {
+        throw new Error("createWorkspace Error: ", response.data.error.toString());
+    } else {
+        dispatch({ type: EDIT_USER, payload: result });
+    }
 }
 
 export const userAttachWorkspace = (id, workspaceId) => async (dispatch) => {
     const response = await api.put(`/users/attach_workspace/${id}`, { workspaceId });
-    dispatch({ type: USER_ATTACH_WORKSPACE, payload: response.data });
+    dispatch({ type: EDIT_USER, payload: response.data });
 }
 
 export const userRemoveWorkspace = (id, workspaceId) => async (dispatch) => {
     const response = await api.put(`/users/remove_workspace/${id}`, { workspaceId });
-    dispatch({ type: USER_REMOVE_WORKSPACE, payload: response.data });
+    dispatch({ type: EDIT_USER, payload: response.data });
 }
 
 

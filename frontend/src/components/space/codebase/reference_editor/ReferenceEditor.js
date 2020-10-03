@@ -37,6 +37,7 @@ import { RiScissorsLine } from 'react-icons/ri';
 
 //prism
 import Prism from 'prismjs';
+
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-php';
 import 'prismjs/components/prism-sql';

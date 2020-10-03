@@ -28,7 +28,6 @@ passport.use(
             callbackURL: "/api/auth/github/redirect"
         },
         async (accessToken, refreshToken, profile, done) => {
-            console.log("ENTERED HERE")
             let currentUser = await User.findOne({
                 domain: 'github',
                 profileId: profile.id,
@@ -42,14 +41,11 @@ passport.use(
                     refreshToken: refreshToken
                 }).save();
                 if (user) {
-                    console.log("ENTERED HERE2")
                     done(null, user);
                 }
             }
             else {
                 let updatedUser = await User.findByIdAndUpdate(currentUser._id, { accessToken, refreshToken }, { new: true })
-                console.log("ENTERED HERE3")
-                console.log("Updated User", updatedUser)
                 done(null, updatedUser)
             }
         }

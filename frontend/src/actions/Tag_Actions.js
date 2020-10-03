@@ -21,7 +21,15 @@ export const getTag = id => async dispatch => {
 }
 
 export const retrieveTags = (formValues) => async dispatch => {
-    const response = await api.post(`/tags/retrieve`, formValues );
+
+    const workspaceId = formValues.workspaceId;
+
+    if (!workspaceId) {
+        throw new Error("retrieveTags: workspaceId not provided");
+    }
+
+    const response = await api.post(`/tags/${workspaceId}/retrieve`, formValues );
+
     dispatch({ type: RETRIEVE_TAGS, payload: response.data });
 }
 

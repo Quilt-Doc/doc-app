@@ -13,7 +13,7 @@ import styled from "styled-components";
 import {IoMdNotificationsOutline} from 'react-icons/io'
 
 //images
-import logo from '../../images/logo.svg';
+import logo from '../../../images/logo.svg';
 
 
 const MainNavbar = () => {
@@ -75,7 +75,7 @@ const Company = styled.div`
 const Container = styled.div`
     min-height: 5.5rem;
     max-height: 5.5rem;
-    background-color:#252832; 
+    background-color:#272a35;
     color:white;
     display: flex;
     z-index: 5;
