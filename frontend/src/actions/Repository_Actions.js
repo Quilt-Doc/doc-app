@@ -147,10 +147,8 @@ export const pollRepositories = (formValues) => async () => {
 
 
 export const retrieveCreationRepositories = (formValues) => async dispatch => {
-    console.log("ENTERED IN RETRIEVE CREATION REPOS");
     const response = await api.post(`/repositories/retrieve`, formValues);
     
-    console.log("RESPONSE RETRIEVE CREATION", response);
     if (response.data.success == false) {
         throw new Error("retrieveCreationRepositories Error: ", response.data.error.toString());
     }

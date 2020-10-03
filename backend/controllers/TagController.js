@@ -3,6 +3,8 @@ const Workspace = require('../models/Workspace');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+const logger = require('../logging/index').logger;
+
 checkValid = (item) => {
     if (item !== null && item !== undefined) {
         return true
@@ -20,8 +22,12 @@ createTag = async (req, res) => {
     
     try {
         color = await Tag.count({workspace: workspaceId}).exec();
-    } catch (err) {
-        return res.json({success: true, result: returnedSnippets});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: `Error count query failed - workspaceId: ${workspaceId}`,
+                                function: 'createTag'});
+        return res.json({success: true, error: 'Error count query failed'});
     }
 
     let tag = new Tag(
@@ -35,9 +41,16 @@ createTag = async (req, res) => {
     try {
         tag = await tag.save();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error saving tag - workspaceId: ${workspaceId}`,
+                                function: 'createTag'});
         return res.json({success: false, error: "createTag Error: save query failed", trace: err});
     }
 
+    await logger.info({source: 'backend-api',
+                        message: `Successfully created tag - tagId, workspaceId, label: ${tag._id.toString()}, ${workspaceId}, ${label}`,
+                        function: 'createTag'});
     return res.json({success: true, result: tag});
 }
 
@@ -50,6 +63,10 @@ getTag = async (req, res) => {
     try {
         returnedTag = await Tag.findOne({_id: tagId, workspace: workspaceId}).lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findOne query failed - tagId, workspaceId: ${tagId}, ${workspaceId}`,
+                                function: 'getTag'});
         return res.json({success: false, error: "getTag Error: findById query failed", trace: err});
     }
 
@@ -68,9 +85,16 @@ editTag = async (req, res) => {
     try {
         returnedTag = await Tag.findByIdAndUpdate(tagId, { $set: update }, { new: true }).lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findByIdAndUpdate query failed - tagId, update: ${tagId}, ${JSON.stringify(update)}`,
+                                function: 'editTag'});
         return res.json({success: false, error: "editTag Error: findByIdAndUpdate query failed", trace: err});
     }
     
+    await logger.info({source: 'backend-api',
+                            message: `Successfully edited tag - tagId, update: ${tagId}, ${JSON.stringify(update)}`,
+                            function: 'editTag'});
     return res.json({success:true, result: returnedTag});
 }
 
@@ -83,9 +107,17 @@ deleteTag = async (req, res) => {
     try {
         deletedTag = await Tag.findByIdAndRemove(tagId).select('_id').lean().exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error findByIdAndRemove query failed - tagId: ${tagId}`,
+                                function: 'deleteTag'});
         return res.json({success: false, error: "deleteTag Error: findByIdAndRemove query failed", trace: err});
     }
-   
+    
+    await logger.info({source: 'backend-api',
+                        message: `Successfully deleted tag - tagId: ${tagId}`,
+                        function: 'deleteTag'});
+
     return res.json({success:true, result: deletedTag});
 }
 
@@ -101,14 +133,25 @@ retrieveTags = async (req, res) => {
     if (checkValid(color)) query.where('color').equals(color);
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
+
+    // KARAN TODO: Does this dash have a purpose?
     query.sort('-label');
 
     let returnedTags;
     try {
         returnedTags = await query.lean.exec();
     } catch (err) {
+        await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error find query failed - workspaceId, tagIds, label, color: ${workspaceId}, ${JSON.stringify(tagIds)}, ${label}, ${color}`,
+                                function: 'retrieveTags'});
+
         return res.json({success: false, error: "retrieveTags Error: find query failed", trace: err});
     }
+
+    await logger.info({source: 'backend-api',
+        message: `Successfully retrieve ${returnedTags.length} tags - workspaceId: ${workspaceId}`,
+        function: 'retrieveTags'});
 
     return res.json({success: true, result: returnedTags});
 }

@@ -134,6 +134,9 @@ const scanRepositories = async () => {
         repositoryListCommits = await Promise.all(requestPromiseList);
     }
     catch (err) {
+        await worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', message: err,
+                                                    function: 'scanRepositories'}});
+
         await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
                                                     errorDescription: `Error getting repository commits urlList: ${urlList}`,
                                                     function: 'scanRepositories'}});

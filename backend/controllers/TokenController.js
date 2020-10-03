@@ -33,7 +33,10 @@ createToken = async (req, res) => {
        installationToken = await apis.requestInstallationToken(appToken, installationId);
     }
     catch (err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `Error requesting 'INSTALL' token, installationId: ${installationId}`, function: 'requestInstallationToken'});
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error requesting 'INSTALL' token, installationId: ${installationId}`,
+                            function: 'requestInstallationToken'});
+
         return res.json({success: false, error: `Error requesting 'INSTALL' token, installationId: ${installationId}`});
     }
 
@@ -45,11 +48,16 @@ createToken = async (req, res) => {
         token = await token.save();
     }
     catch (err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `Error saving 'INSTALL' token, installationId: ${installationId}`, function: 'createToken'});
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error saving 'INSTALL' token, installationId: ${installationId}`,
+                            function: 'createToken'});
+
         return res.json({success: false, error: `Error saving 'INSTALL' token, installationId: ${installationId}`});
     }
 
-    await logger.info({source: 'backend-api', message: `Successfully created 'INSTALL' token for installationId: ${installationId}`, function: 'createToken'});
+    await logger.info({source: 'backend-api',
+                        message: `Successfully created 'INSTALL' token for installationId: ${installationId}`,
+                        function: 'createToken'});
 
     return res.json({success: true, result: token});
 }
@@ -68,6 +76,10 @@ deleteInstallationToken = async (req, res) => {
         await logger.error({source: 'backend-api', message: err, errorDescription: `Error deleting 'INSTALL' token, installationId: ${installationId}`, function: 'deleteInstallationToken'});
         return res.json({success: false, error: `Error deleting 'INSTALL' token, installationId: ${installationId}`});
     }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully deleted 'INSTALL' token for installationId: ${installationId}`,
+                        function: 'deleteToken'});
 
     return res.json({success: true});
 }

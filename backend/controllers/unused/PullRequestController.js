@@ -1,17 +1,14 @@
 
 
-const apis = require('../apis/api');
+const apis = require('../../apis/api');
 const api = apis.requestGithubClient();
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 
-const PullRequest = require('../models/PullRequest');
+const PullRequest = require('../../models/unused/PullRequest');
 
-
-
-const logger = require('../logging/index').logger;
 
 
 
@@ -54,7 +51,6 @@ const createPullRequest = async (req, res) => {
         pullRequest = await pullRequest.save();
     }
     catch(err) {
-        logger.error({});
         return res.json({success: false, error: err});
     }
 

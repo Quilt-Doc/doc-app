@@ -1,8 +1,18 @@
+//models
 const Document = require('../models/Document');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+
+const UserStatsController = require('../controllers/reporting/UserStatsController');
+const ActivityFeedItemController = require('../controllers/reporting/ActivityFeedItemController');
 
 var mongoose = require('mongoose');
+const UserStats = require('../models/reporting/UserStats');
 const { ObjectId } = mongoose.Types;
+const logger = require('../logging/index').logger;
 
+const jobs = require('../apis/jobs');
+const jobConstants = require('../constants/index').jobs;
 
 
 checkValid = (item) => {
@@ -101,6 +111,28 @@ createDocument = async (req, res) => {
         document = await document.save();
     } catch (err) {
         return res.json({success: false, error: "createDocument Error: document creation failed", trace: err});
+    }
+
+    // Update UserStats.documentsCreatedNum (increase by 1)
+    try {
+        await UserStatsController.updateDocumentsCreatedNum({userUpdates: [{updateNum: 1, userId: authorId}], workspaceId});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error updating documentsCreatedNum userId, workspaceId: ${authorId}, ${workspaceId}`,
+                            function: `createDocument`});
+        return res.json({success: false, error: "updateDocumentsCreatedNum Error: UserStats update failed", trace: err});
+    }
+
+    // Create ActivityFeedItem
+    try {
+        await ActivityFeedItemController.createActivityFeedItem({type: 'create', date: Date.now(), userId: authorId, workspaceId, userUpdates: [{documentId: document._id.toString()}]});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error creating ActivityFeedItem workspaceId, userId, documentId: ${workspaceId}, ${authorId}, ${document._id.toString()}`,
+                                function: `createDocument`});
+        return res.json({success: false, error: `Error creating ActivityFeedItem workspaceId, userId, documentId: ${workspaceId}, ${authorId}, ${document._id.toString()}`, trace: err});
     }
 
     // add document to parent's children
@@ -273,20 +305,21 @@ deleteDocument = async (req, res) => {
         } catch (err) { 
             return res.json({success: false, error: "deleteDocument Error: unable to retrieve parent from path", trace: err});
         }
-        
+
         // filter the children of the parent to remove the deleted top level document
         parent.children = parent.children.filter(child => !(child._id.equals(documentObj._id)));
 
         try {
-            parent = parent.save();
+            parent = await parent.save();
         } catch (err) {
             return res.json({success: false, error: "deleteDocument Error: unable to save parent", trace: err});
         }
 
+
         // add the parent to finalResult
         finalResult.parent = parent;
     }
-   
+
     // find all documents that are about to be deleted (toplevel doc included for cleanliness)
     try {
         deletedDocuments = await Document.find({path: regex, workspace: workspaceId}).select("_id").lean().exec();
@@ -294,14 +327,119 @@ deleteDocument = async (req, res) => {
         return res.json({success: false, error: "deleteDocument Error: unable to retrieve document and/or descendants for deletion", trace: err});
     }
 
+    var deletedDocumentInfo;
+
     // query to delete all docs using the ids of the docs
     try {
         let deletedIds = deletedDocuments.map((doc) => doc._id);
+        
+        // Reporting Section ---------
+        // Need list of userId's attached to deleted Documents
+        // Get all titles of deleted Documents
+        deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author", "title", "status").lean().exec();
+        // Reporting Section End ---------
+        
         await Document.deleteMany({_id: {$in: deletedIds}}).exec();
     } catch (err) {
         return res.json({success: false, error: "deleteDocument Error: unable to delete document and/or descendants", trace: err});
     }
-    
+
+
+    // Reporting Section ---------------------------------------------------------------
+    // Update documentsCreatedNum by finding the number of Document's deleted per userId 
+    var userUpdateNums = {};
+    deletedDocumentInfo.forEach(infoObj => {
+        userUpdateNums[infoObj.author.toString()] = (userUpdateNums[infoObj.author.toString()] || 0) + 1;
+    });
+
+    var userUpdateList = [];
+
+    Object.keys(userUpdateNums).forEach(key => {
+        userUpdateList.push({ userId: key, updateNum: userUpdateNums[key] });
+    });
+
+    // Update documentsCreatedNum for all User's whose documents have been deleted
+    try {
+        await UserStatsController.updateDocumentsCreatedNum({userUpdates: userUpdateList, workspaceId});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error updating documentsCreatedNum userUpdateList, workspaceId: ${userUpdateList}, ${workspaceId}`,
+                            function: `deleteDocument`});
+        return res.json({success: false, error: "updateDocumentsCreatedNum Error: UserStats update failed", trace: err});
+    }
+
+    var activityFeedInfo = [];
+    deletedDocumentInfo.forEach(infoObj => {
+        activityFeedInfo.push({documentId: infoObj.author.toString(), title: infoObj.title});
+    });
+
+    // Update documentsBrokenNum for all User's whose invalid documents have been deleted
+
+    var userBrokenDocumentNums = {};
+    var userBrokenDocumentUpdateList = [];
+
+    deletedDocumentInfo.filter(infoObj => infoObj.status == 'invalid')
+                        .forEach(infoObj => {
+                            userBrokenDocumentNums[infoObj.author.toString()] = (userBrokenDocumentNums[infoObj.author.toString()] || 0) + 1;
+                        });
+    Object.keys(userBrokenDocumentNums).forEach(key => {
+        userBrokenDocumentUpdateList.push({ userId: key, updateNum: userUpdateNums[key] });
+    });
+
+    try {
+        if (userBrokenDocumentUpdateList.length > 0) {
+            await UserStatsController.updateDocumentsBrokenNum({userUpdates: userBrokenDocumentUpdateList, workspaceId});
+        }
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error updating updateDocumentsBrokenNum userBrokenDocumentUpdateList, workspaceId: ${userBrokenDocumentUpdateList}, ${workspaceId}`,
+                            function: `deleteDocument`});
+        return res.json({success: false, error: `Error updating updateDocumentsBrokenNum userBrokenDocumentUpdateList, workspaceId: ${userBrokenDocumentUpdateList}, ${workspaceId}`, trace: err});
+    }
+
+    // Kick off Check update job
+
+    var validatedDocuments = deletedDocumentInfo.filter(infoObj => infoObj.status == 'invalid')
+                                                .forEach(infoObj => {
+                                                    infoObj._id.toString();
+                                                });
+    if (validatedDocuments.length > 0) {
+        var runUpdateChecksData = {};
+        runUpdateChecksData['repositoryId'] = documentObj.repository.toString();
+        runUpdateChecksData['validatedDocuments'] = validatedDocuments;
+        runUpdateChecksData['validatedSnippets'] = [];
+
+        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+        try {
+            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`,
+                            function: 'deleteDocument'});
+            return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`});
+        }
+    }
+
+
+
+    // Create ActivityFeedItems for every deleted Document
+    try {
+        await ActivityFeedItemController.createActivityFeedItem({type: 'delete', date: Date.now(), userId: req.tokenPayload.userId,
+                                                                    workspaceId, userUpdates: activityFeedInfo})
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error creating ActivityFeedItems on Document delete workspaceId, userId, activityFeedInfo: ${workspaceId}, ${userId}, ${JSON.stringify(activityFeedInfo)}`,
+                            function: `deleteDocument`});
+        return res.json({success: false, error: `Error creating ActivityFeedItems on Document delete workspaceId, userId, activityFeedInfo: ${workspaceId}, ${userId}, ${JSON.stringify(activityFeedInfo)}`, trace: err});
+    }
+    // Reporting Section End ---------------------------------------------------------------
+
+
     // since delete many does not return documents, but we only need ids, we can use previous extracted deletedDocuments
     finalResult.deletedDocuments = deletedDocuments;
 
@@ -584,7 +722,7 @@ attachDocumentReference = async (req, res) => {
 //originally removeReference
 // update only references
 removeDocumentReference = async (req, res) => {
-    
+
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
     const referenceId = req.referenceObj._id.toString();
@@ -600,11 +738,112 @@ removeDocumentReference = async (req, res) => {
     query.select('_id references');
 
     try {
-        returnDocument = await query.exec()
+        returnDocument = await query.exec();
     } catch (err) {
-        return res.json({ success: false, error: "removeReferenceDocument Error: remove reference on documents mongodb query failed", trace: err });
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error remove reference DB query failed documentId, referenceId: ${documentId}, ${referenceId}`,
+                                function: `removeDocumentReference`});
+
+        return res.json({ success: false, error: `Error remove reference DB query failed documentId, referenceId: ${documentId}, ${referenceId}`, trace: err });
     }
- 
+
+
+    // Spec:
+    //  If removed Reference.status == 'invalid'
+    //      If Document has no References set status to 'valid'
+    //      If Document now has only valid References set status to 'valid'
+    // Now that Reference has been removed, update the Document's status, if necessary
+    // Kick off Update Checks Job
+
+    var setStatusValid = false;
+
+    if (req.referenceObj.status == 'invalid' && returnDocument.status == 'invalid') {
+        // Fetch all References currently on the Document
+        var referenceIds = returnDocument.references;
+        var attachedReferences;
+
+        try {
+            attachedReferences = await Reference.find({ _id: { $in: referenceIds.map(id => ObjectId(id.toString())) } }).lean().exec();
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `Error finding attached References - documentId, referenceIds: ${documentId}, ${JSON.stringify(referenceIds)}`,
+                                    function: `removeDocumentReference`});
+
+            return res.json({ success: false, error: `Error finding attached References - documentId, referenceIds: ${documentId}, ${JSON.stringify(referenceIds)}`,
+                                trace: err });
+        }
+
+        // If Document has no References set status to 'valid'
+        if (attachedReferences.length == 0) {
+            setStatusValid = true;
+        }
+        
+        else {
+            var invalidReferenceExists = attachedReferences.some(refObj => {refObj.status == 'invalid'});
+            if (!invalidReferenceExists) {
+                setStatusValid = true;
+            }
+        }
+
+        // Set the Document status to 'valid'
+        if (setStatusValid) {
+            try {
+                var setDocumentValidResponse = await Document.findByIdAndUpdate(documentId, {$set: {status: 'valid'}}).lean().exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                        errorDescription: `Error setting document status 'valid' - documentId, workspaceId: ${documentId}, ${workspaceId}`,
+                                        function: `removeDocumentReference`});
+
+                return res.json({ success: false, error: `Error setting document status 'valid' - documentId, workspaceId: ${documentId}, ${workspaceId}`,
+                                    trace: err });
+            }
+        }
+
+
+        // Kick off Check update job
+        var validatedDocuments = [documentId.toString()];
+        if (validatedDocuments.length > 0) {
+            var runUpdateChecksData = {};
+            runUpdateChecksData['repositoryId'] = req.documentObj.repository.toString();
+            runUpdateChecksData['validatedDocuments'] = validatedDocuments;
+            runUpdateChecksData['validatedSnippets'] = [];
+
+            runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+            try {
+                await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                        errorDescription: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`,
+                                        function: 'removeDocumentReference'});
+            return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedDocuments: ${repositoryId}, ${JSON.stringify(validatedDocuments)}`});
+            }
+        }
+
+    }
+
+    // Also update UserStats.documentsBrokenNum
+    if (setStatusValid) {
+        try {
+            var userStatUpdateResponse = await UserStatsController.updateDocumentsBrokenNum({
+                                                                                                userUpdates: [{userId: req.tokenPayload.userId.toString(), updateNum: -1}],
+                                                                                                workspaceId
+                                                                                            });
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `Error updating documentsBrokenNum - userId, documentId, workspaceId: ${req.tokenPayload.userId.toString()}, ${documentId}, ${workspaceId}`,
+                                    function: `removeDocumentReference`});
+
+            return res.json({ success: false, error: `Error updating documentsBrokenNum - userId, documentId, workspaceId: ${req.tokenPayload.userId.toString()}, ${documentId}, ${workspaceId}`,
+                                trace: err });
+
+        }
+    }
+
     return res.json({ success: true, result: returnDocument});
 }
 

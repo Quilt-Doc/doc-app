@@ -12,8 +12,8 @@ const dispatchScanRepositoriesJob = async (jobData) => {
     var sqsScanData = {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
-        MessageDeduplicationId: timestamp,
-        MessageGroupId: jobData.workspaceId,
+        // MessageDeduplicationId: timestamp,
+        // MessageGroupId: jobData.workspaceId,
         QueueUrl: queueUrl
     };
 
@@ -37,8 +37,8 @@ const dispatchUpdateReferencesJob = async (jobData) => {
     var sqsReferenceData = {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
-        MessageDeduplicationId: timestamp,
-        MessageGroupId: jobData.installationId,
+        // MessageDeduplicationId: timestamp,
+        // MessageGroupId: jobData.installationId,
         QueueUrl: queueUrl
     };
 
@@ -54,7 +54,32 @@ const dispatchUpdateReferencesJob = async (jobData) => {
     }
 }
 
+const dispatchUpdateChecksJob = async (jobData) => {
+
+    var timestamp = Date.now().toString();
+
+    var sqsCheckData = {
+        MessageAttributes: {},
+        MessageBody: JSON.stringify(jobData),
+        // MessageDeduplicationId: timestamp,
+        // MessageGroupId: jobData.installationId,
+        QueueUrl: queueUrl
+    };
+
+    // Send the update data to the SQS queue
+    try {
+        await sqs.sendMessage(sqsCheckData).promise();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error sending SQS message to update Checks jobData: ${JSON.stringify(jobData)}`,
+                                function: 'dispatchUpdateChecksJob'});
+        throw err;
+    }
+}
+
 module.exports = {
     dispatchScanRepositoriesJob,
-    dispatchUpdateReferencesJob
+    dispatchUpdateReferencesJob,
+    dispatchUpdateChecksJob
 }

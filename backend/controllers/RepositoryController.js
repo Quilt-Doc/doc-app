@@ -32,6 +32,9 @@ initRepository = async (req, res) => {
     if (!checkValid(fullName)) return res.json({success: false, error: 'no repository fullName provided'});
     if (!checkValid(installationId)) return res.json({success: false, error: 'no repository installationId provided'});
 
+    await logger.info({source: 'backend-api', message: `Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`,
+                        function: 'initRepository'});
+
     let repository = new Repository({
         fullName,
         installationId,
@@ -61,6 +64,20 @@ initRepository = async (req, res) => {
         return res.json({success: false, error: `Error saving rootReference`, trace: err});
     }
 
+    try {
+        await Reference.create({repository: repository._id, 
+            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create"});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error saving rootReference - repositoryId: ${repository._id.toString()}`,
+                        function: 'initRepository'});
+        return res.json({success: false, error: `Error saving rootReference`, trace: err});
+    }
+
+    await logger.info({source: 'backend-api', message: `Successfully initialized Repository - fullName, installationId: ${fullName}, ${installationId}`,
+                        function: 'initRepository'});
+
     return res.json({success: true, result: repository});
 }
 
@@ -77,28 +94,65 @@ getRepositoryFile = async (req, res) => {
     }
 
     if (referenceId) {
-        const reference = await Reference.findOne({_id: referenceId}).lean().select('path').exec();
+        var reference;
+        try {
+            reference = await Reference.findOne({_id: referenceId}).lean().select('path').exec();
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err, errorDescription: `Error querying findOne on Reference - referenceId: `,
+                                function: 'getRepositoryFile'});
+            return res.json({success: false, error: err});
+        }
         pathInRepo = reference.path;
     }
 
 
-    var installationClient = await apis.requestInstallationClient(installationId);
-    var fileResponse = await installationClient.get(`/repos/${fullName}/contents/${pathInRepo}`)
-            .catch(err => {
-                return res.json({success: false, error: 'getRepositoryFile error fetching fileSha: ' + err});
-            });
+    var installationClient;
+    try {
+        installationClient = await apis.requestInstallationClient(installationId);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err, errorDescription: `Error fetching installationClient - installationId: ${installationId}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: err});
+    }
+
+    var fileResponse;
+    try {
+        fileResponse = await installationClient.get(`/repos/${fullName}/contents/${pathInRepo}`)
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error requesting '/repos/fullName/contents' - fullName, pathInRepo: ${fullName}, ${pathInRepo}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: `Error requesting '/repos/fullName/contents' - fullName, pathInRepo: ${fullName}, ${pathInRepo}`});
+    }
+
     if (!fileResponse.data.hasOwnProperty('sha')) {
+        await logger.error({source: 'backend-api', message: `Error provided pathInRepo did not resolve to a file - fullName, pathInRepo: ${fullName}, ${pathInRepo}`,
+                            function: 'getRepositoryFile'});
         return res.json({success: false, error: 'getRepositoryFile error: provided path did not resolve to a file'});
     }
+
     var fileSha = fileResponse.data.sha;
     // repos/:username/:reponame/git/blobs/:sha
-    var blobResponse = await installationClient.get(`/repos/${fullName}/git/blobs/${fileSha}`)
-            .catch(err => {
-                return res.json({success: false, error: 'getRepositoryFile error getting file blob'});
-            });
+    var blobResponse;
+    try {
+        blobResponse = await installationClient.get(`/repos/${fullName}/git/blobs/${fileSha}`);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error Getting blob - fullName, fileSha: ${fullName}, ${fileSha}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: 'getRepositoryFile error getting file blob'});
+    }
     if(!blobResponse.data.hasOwnProperty('content')) {
+        await logger.error({source: 'backend-api', message: `Error blob has no 'content' property - fullName, fileSha: ${fullName}, ${fileSha}`,
+                                function: 'getRepositoryFile'});
         return res.json({success: false, error: 'getRepositoryFile error: provided fileSha did not return a blob'});
     }
+
+    
     var blobContent = blobResponse.data.content;
     var fileContent = Buffer.from(blobContent, 'base64').toString('binary');
 
@@ -106,6 +160,7 @@ getRepositoryFile = async (req, res) => {
 }
 
 
+// KARAN TODO: We can just return 'req.repositoryObj'
 getRepository = async (req, res) => {
 
     const repositoryId = req.repositoryObj._id.toString();
@@ -114,10 +169,14 @@ getRepository = async (req, res) => {
 
     try {
         returnedRepository = await Repository.findById(repositoryId).lean().exec();
-    } catch (err) {
-        return res.json({success: false, error: 'getRepository error: repository find by id query failed', trace: err});
     }
-    
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error findById Repository - repositoryId: ${repositoryId}`,
+                                function: 'getRepository'});
+        return res.json({success: false, error: `Error findById Repository - repositoryId: ${repositoryId}`, trace: err});
+    }
+
     return res.json({success: true, result: returnedRepository});
 }
 
@@ -130,8 +189,15 @@ deleteRepository = async (req, res) => {
     try {
         returnedRepository = await Repository.findByIdAndRemove(repositoryId).lean().select("_id").exec();
     } catch (err) {
-        return res.json({success: false, error: 'deleteRepository error: repository find by id and remove query failed', trace: err});
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error findByIdAndRemove Repository - repositoryId: ${repositoryId}`,
+                                function: 'deleteRepository'});
+        return res.json({success: false, error: `Error findByIdAndRemove Repository - repositoryId: ${repositoryId}`, trace: err});
     }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully deleted Repository - fullName, installationId: ${returnedRepository.fullName}, ${returnedRepository.installationId}`,
+                        function: 'deleteRepository'});
 
     return res.json({success: true, result: returnedRepository});
 }
@@ -152,9 +218,14 @@ retrieveRepositories = async (req, res) => {
 
     try {
         returnedRepositories = await query.lean().exec()
-    } catch (err) {
-        return res.json({success: false, error: 'retrieveRepositories error: repository retrieve \
-            query failed', trace: err});
+    } 
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error find repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
+                                function: 'deleteRepository'});
+        return res.json({success: false,
+                            error: `Error find repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
+                            trace: err});
     }
     
     // make sure that repository is in accessible workspace
@@ -203,71 +274,23 @@ jobRetrieveRepositories = async (req, res) => {
 
     try {
         returnedRepositories = await query.lean().exec()
-    } catch (err) {
+    } 
+    catch (err) {
         await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error job fetching repositories, fullName, installationId: ${fullName}, ${installationId}`,
+                                errorDescription: `Error job fetching repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
                                 function: 'jobRetrieveRepositories'});
 
-        return res.json({success: false, error: 'retrieveRepositories error: repository retrieve \
-            query failed', trace: err});
+        return res.json({success: false,
+                            error: `Error job fetching repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
+                            trace: err});
     }
 
     return res.json({success: true, result: returnedRepositories});
 }
 
 
-validateRepositories = async (req, res) => {
-    let repositories = [];
 
-
-    let ids = Object.keys(req.body.selected)
-    for (let i = 0; i < ids.length; i++){
-        let id = ids[i]
-        let fullName = req.body.selected[id]
-        let repository = await Repository.findOne({fullName: fullName, installationId: req.body.installationId}).exec();
-
-        if (!repository) {
-            repositories.push(fullName)
-            /*
-            console.log("REPOSITORY Id:", id)
-            console.log("INSTALLATION Id:", req.body.installationId)
-            console.log("ACCESS TOKEN:", req.body.accessToken)
-
-            const response = 
-                await api.put(`/user/installations/${req.body.installationId}/repositories/${id}`, 
-                    { headers: {
-                        Authorization: `token ${req.body.accessToken}`,
-                        Accept: 'application/json'
-                    }
-                })
-            
-            console.log(response)*/
-        }
-    }
-    /*
-    req.body.fullNames.map(fullName => {
-        let repository = await Repository.findOne({fullName, installationId: req.body.installationId})
-        if (!repository) {
-            repositories.push(fullName)
-        }
-    })*/
-    return res.json({success: true, result: repositories})
-}
-
-
-pollRepositories = async (req, res) => {
-    let { fullNames, installationId } = req.body
-    for (let i = 0; i < fullNames.length; i++) {
-        let fullName = fullNames[i]
-        let repository = await Repository.findOne({fullName: fullName, installationId: installationId})
-        if (!repository || repository.doxygenJobStatus !== jobConstants.JOB_STATUS_FINISHED || repository.semanticJobStatus !== jobConstants.JOB_STATUS_FINISHED) {
-            return res.json({success: true, result: false})
-        }
-    }
-    return res.json({success: true, result: true})
-}
-
-
+// KARAN TODO: Add filtering here on 'ref', to prevent updating on pushes to other branches
 updateRepository = async (req, res) => {
     const {fullName, ref, installationId, headCommit, cloneUrl} = req.body;
 
@@ -275,8 +298,8 @@ updateRepository = async (req, res) => {
     if (!checkValid(installationId)) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
 
 
-    if (typeof headCommit == 'undefined' || headCommit == null) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
-    if (typeof cloneUrl == 'undefined' || cloneUrl == null) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});
+    if (!checkValid(headCommit)) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
+    if (!checkValid(cloneUrl)) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});
 
     var repository;
 
@@ -292,9 +315,14 @@ updateRepository = async (req, res) => {
 
     // If repository is unscanned, we don't update
     if (repository.scanned == false || repository.scanned == true) {
+
+        await logger.info({source: 'backend-api', message: `Ignoring update on unscanned repository fullName, installationId: ${fullName}, ${installationId}`,
+                            function: 'updateRepository'});
+
         return res.json({success: true, result: `Ignoring update on unscanned repository fullName, installationId: ${fullName}, ${installationId}`});
     }
 
+    // KARAN TODO: Remove Hard-coded Commit SHA here
     var runReferencesData = {};
     runReferencesData['fullName'] = fullName;
     runReferencesData['installationId'] = installationId;
@@ -312,6 +340,10 @@ updateRepository = async (req, res) => {
         return res.json({success: false, error: `Error dispatching update references job on repository fullName, installationId: ${fullName}, ${installationId}`});
     }
 
+    await logger.info({source: 'backend-api',
+                        message: `Successfully began updating repository - headCommit, fullName, installationId: ${headCommit}, ${fullName}, ${installationId}`,
+                        function: 'updateRepository'});
+
     return res.json({success: true, result: true});
 }
 
@@ -319,6 +351,5 @@ updateRepository = async (req, res) => {
 module.exports = {
     initRepository, getRepositoryFile, getRepository,
     deleteRepository, retrieveRepositories,
-    validateRepositories, pollRepositories, updateRepository,
-    jobRetrieveRepositories, retrieveCreationRepositories
+    updateRepository, jobRetrieveRepositories, retrieveCreationRepositories
 }
