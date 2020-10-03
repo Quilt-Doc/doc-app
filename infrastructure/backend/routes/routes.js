@@ -2,7 +2,7 @@
 const passport = require("passport");
 
 // KARAN TODO: Replace these with environment variables
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000/workspaces";
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
 const INSTALLED_URL = "http://localhost:3000/installed";
 
 const express = require('express');
@@ -60,6 +60,7 @@ router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referen
 
 // Validate workspace membership for calling user; all methods
 const documentController = require('../controllers/DocumentController');
+router.post('/testRoute', documentController.testRoute);
 router.post('/documents/:workspaceId/create', authorizationMiddleware.documentMiddleware, documentController.createDocument);
 router.get('/documents/:workspaceId/get/:documentId', authorizationMiddleware.documentMiddleware, documentController.getDocument);
 router.put('/documents/:workspaceId/edit/:documentId', authorizationMiddleware.documentMiddleware, documentController.editDocument);
@@ -124,12 +125,11 @@ router.post('/repositories/job_retrieve', authorizationMiddleware.repositoryMidd
 // get_file - verify user is in a workspace with this repository added
 // get - verify user is in a workspace with this repository added
 // delete - verify user is in a workspace with this repository added
-
+router.post('/repositories/retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.retrieveCreationRepositories );
 router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepositoryFile);
 router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.retrieveRepositories);
 router.get('/repositories/:workspaceId/get/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepository);
 router.delete('/repositories/:workspaceId/delete/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.deleteRepository);
-
 
 // create - verify user exists
 
@@ -179,7 +179,6 @@ router.get('/auth/logout', authController.logout);
 // router.get('/auth/github', passport.authenticate("github"));
 router.get('/auth/github', function(req, res, next) {
     passport.authenticate('github', {session: false}, function(err, user, info) {
-      console.log('FIRST CALLBACK');
       if (err) { return next(err); }
       // TODO: Change this to appropriate route
       if (!user) { console.log('!user == true'); return res.redirect('/login'); }

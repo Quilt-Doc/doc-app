@@ -8,6 +8,7 @@ import history from '../../../history';
 
 //icons
 import { RiPencilLine } from 'react-icons/ri';
+import { FiPlus } from 'react-icons/fi';
 
 //button to create a new document
 class CreateButton extends React.Component {
@@ -18,9 +19,9 @@ class CreateButton extends React.Component {
     render(){
         return(
             <>
-                <NavbarElement onClick = {() => history.push(`?create_document=true`)} >
-                    <RiPencilLine/>
-                </NavbarElement>
+                <NavbarIcon onClick = {() => history.push(`?create_document=true`)} >
+                    <FiPlus/>
+                </NavbarIcon>
             </>
         )
     }
@@ -30,18 +31,21 @@ class CreateButton extends React.Component {
 export default CreateButton;
 
 
-const NavbarElement = styled.div`
-    font-size: 1.8rem;
-    background-color: #292d38;
-    height: 3.3rem;
-    padding: 0 1rem;
-    margin-right: 1rem;
+const NavbarIcon = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 5.5rem;
+    width: 100%;
+    font-size: 2.1rem;
+    font-weight: 500;
+    /*background-color:${props => props.active ? '#464c5d' : '#3b404f'};*/
     cursor: pointer;
+    &:hover {
+        background-color:#464c5d;
+    }
+    margin-top: auto;
+    transition: background-color 0.1s ease-in;
+    border-top: 1px solid #4f5569;
     color: white;
-    border: 1px solid #70EAE1;
-    border-radius: 0.3rem;
-    cursor: pointer;
 `

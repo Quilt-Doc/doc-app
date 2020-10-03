@@ -7,7 +7,8 @@ import {IoLogoBitbucket} from 'react-icons/io';
 import {RiGitlabFill} from 'react-icons/ri';
 
 //actions
-import {checkInstallation} from '../../actions/Auth_Actions';
+import {checkInstallation} from '../../../actions/Auth_Actions';
+import { retrieveCreationRepositories } from '../../../actions/Repository_Actions';
 
 //redux
 import { connect } from 'react-redux';
@@ -23,7 +24,8 @@ class ChooseProvider extends React.Component {
     openWindow = () => {
         let width = 900;
         let height = 700;
-        let url = "https://github.com/settings/apps/get-quilt/installations/new?state=installing";
+        
+        let url = "https://github.com/apps/get-quilt/installations/new?state=installing";
         let leftPosition = (window.screen.width / 2) - ((width / 2) + 10);
         //Allow for title and status bars.
         let topPosition = (window.screen.height / 2) - ((height / 2) + 50);
@@ -36,11 +38,12 @@ class ChooseProvider extends React.Component {
 
     // checks if an installation exists for the user  // TODO: Validate that installations change
     async checkInstall(){
-        let { checkInstallation, installations } = this.props;
-        await checkInstallation({accessToken: this.props.user.accessToken, platform: "github"})
+        let { checkInstallation, user } = this.props;
+        await checkInstallation({accessToken: user.accessToken, platform: "github"});
+        const { installations } = this.props;
         let installs = installations.filter(inst => inst.account.type === 'User' 
-            && inst.account.id == this.props.user.profileId)
-        return installs.length !== 0
+            && inst.account.id == user.profileId);
+        return installs.length !== 0;
     }
 
     // polls installation every few seconds to check whether the user has gone through the process
@@ -55,6 +58,7 @@ class ChooseProvider extends React.Component {
             let installed = await this.checkInstall();
             if (installed){   
                 clearInterval(this.interval)
+                await retrieveCreationRepositories();
                 changePage(1)
             }
             return true
@@ -68,11 +72,22 @@ class ChooseProvider extends React.Component {
         const { changePage } = this.props;
         let installed = await this.checkInstall();
         if (installed){
-            changePage(1)
+            await this.retrieveCreationRepos();
+            changePage(1);
         } else {
             this.interval = setInterval(this.pollInstall, 3000);
-            this.openWindow()
+            this.openWindow();
         }
+    }
+
+    // retrieves the repositories associated with the user's installationId
+    retrieveCreationRepos = async () => {
+        const { installations, user, retrieveCreationRepositories } = this.props;
+
+        const installationId = installations.filter(inst => inst.account.type === 'User' 
+            && inst.account.id == user.profileId)[0].id;
+            
+        await retrieveCreationRepositories({installationId});
     }
     
     render(){
@@ -114,7 +129,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {checkInstallation})(ChooseProvider);
+export default connect(mapStateToProps, { checkInstallation, retrieveCreationRepositories })(ChooseProvider);
 
 const ContentContainer = styled.div`
     display: flex;

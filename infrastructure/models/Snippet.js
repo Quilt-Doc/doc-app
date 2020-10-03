@@ -4,6 +4,7 @@ const { ObjectId } = Schema.Types;
 
 
 let snippetSchema = new Schema({
+    created: {type: Date, default: Date.now },
     name: String,
     annotation: {type: String, required: true},
     code: {type: [String], required: true},

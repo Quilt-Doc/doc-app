@@ -5,6 +5,13 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 const logger = require('../../logging/index').logger;
 
+checkValid = (item) => {
+    if (item !== undefined && item !== null) {
+        return true
+    }
+    return false
+}
+
 
 getUser = async (req, res) => {
     const userId = req.userObj._id.toString();
@@ -23,11 +30,14 @@ getUser = async (req, res) => {
 
 editUser = async (req, res) => {
     const userId = req.userObj._id.toString();
-    const { username, email} = req.body;
+    const { username, email, firstName, lastName, onboarded } = req.body;
 
     let update = {}
-    if (username) update.username = username; 
-    if (email) update.email = email;
+    if (checkValid(username)) update.username = username; 
+    if (checkValid(email)) update.email = email;
+    if (checkValid(firstName)) update.firstName = firstName;
+    if (checkValid(lastName)) update.lastName = lastName;
+    if (checkValid(onboarded)) update.onboarded = onboarded;
 
     let returnedUser;
 

@@ -113,3 +113,15 @@ export const retrieveRepositories = (formValues) => async dispatch => {
         dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });
     }
 }
+
+
+export const retrieveCreationRepositories = (formValues) => async dispatch => {
+    const response = await api.post(`/repositories/retrieve`, formValues);
+    
+    if (response.data.success == false) {
+        throw new Error("retrieveCreationRepositories Error: ", response.data.error.toString());
+    }
+    else {
+        dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });
+    }
+}

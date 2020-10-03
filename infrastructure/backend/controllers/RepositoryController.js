@@ -50,7 +50,18 @@ initRepository = async (req, res) => {
         await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
                         function: 'initRepository'});
-        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`});
+        return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`, trace: err});
+    }
+
+    try {
+        await Reference.create({repository: repository._id, 
+            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create"});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error saving rootReference`,
+                        function: 'initRepository'});
+        return res.json({success: false, error: `Error saving rootReference`, trace: err});
     }
 
     try {
@@ -223,6 +234,33 @@ retrieveRepositories = async (req, res) => {
     return res.json({success: true, result: returnedRepositories});
 }
 
+retrieveCreationRepositories = async (req, res) => {
+    const { fullName, installationId, fullNames } = req.body;
+    let query = Repository.find();
+
+    if (checkValid(fullName)) query.where('fullName').equals(fullName);
+
+    // installationId required for this route
+    if (checkValid(installationId)) {
+        query.where('installationId').equals(installationId);
+    } else {
+        return res.json({success: false, error: 'retrieveCreationRepositories error: no installationId Provided'});
+    }
+
+    if (checkValid(fullNames)) query.where('fullName').in(fullNames);
+
+    let returnedRepositories;
+
+    try {
+        returnedRepositories = await query.lean().exec()
+    } catch (err) {
+        return res.json({ success: false, error: 'retrieveCreationRepositories error: repository retrieve \
+            query failed', trace: err });
+    }
+
+    return res.json({success: true, result: returnedRepositories});
+}
+
 jobRetrieveRepositories = async (req, res) => {
    const {fullName, installationId, fullNames} = req.body;
 
@@ -313,5 +351,5 @@ updateRepository = async (req, res) => {
 module.exports = {
     initRepository, getRepositoryFile, getRepository,
     deleteRepository, retrieveRepositories,
-    updateRepository, jobRetrieveRepositories
+    updateRepository, jobRetrieveRepositories, retrieveCreationRepositories
 }

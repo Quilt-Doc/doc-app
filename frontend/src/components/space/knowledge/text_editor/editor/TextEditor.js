@@ -21,6 +21,7 @@ import Sidebar from '../toolbars/Sidebar';
 import MainToolbar from '../toolbars/MainToolbar';
 import AttachmentToolbar from '../toolbars/AttachmentToolbar';
 import EditorToolbar from '../toolbars/EditorToolbar';
+import DocumentInfo from './DocumentInfo';
 
 //reducer
 import editorReducer from './EditorReducer';
@@ -190,12 +191,13 @@ const TextEditor = (props) => {
 							
 									 
 									<MarkupMenu dispatch={dispatch} range={range} state={state} />
+									<DocumentInfo write  = {write} />
 									{write ? 
 										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
 										:
 										<HeaderDiv active = {props.title} paddingLeft = {"10rem"}>{props.title ? props.title : "Untitled"}</HeaderDiv>
 									}
-									{/*<DocumentInfo write  = {write} />*/}
+									
 									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}
 									<StyledEditable
 										onClick={() => {
@@ -241,7 +243,7 @@ const EditorContainer2 = styled.div`
 	flex-direction: column;
 	display: flex;
 	width: 100%;
-	padding-top: 5rem; /*1.5rem;*/
+	padding-top:1.5rem;
 `
 
 const EditorContainer = styled.div`
@@ -249,7 +251,7 @@ const EditorContainer = styled.div`
 	width: 94rem;
 	margin-top: ${props => props.documentModal ? "" : "1.5rem"};
 	background-color: white;
-	box-shadow: ${props => props.documentModal ? "": "0 1px 2px rgba(0, 0, 0, 0.2)"};
+	/*box-shadow: ${props => props.documentModal ? "": "0 1px 2px rgba(0, 0, 0, 0.2)"};*/
 	border-radius: 0.2rem;
 
 `
@@ -277,7 +279,7 @@ const Header = styled(TextareaAutosize)`
 	resize: none;
     outline: none;
     border: none;
-	/*margin-top: 3.5rem;*/
+	margin-top: 3.5rem;
 	padding-left: ${props => props.paddingLeft};
 	padding-right: 10rem;
 	font-family: -apple-system,BlinkMacSystemFont, sans-serif;
@@ -296,4 +298,5 @@ const StyledEditable = styled(Editable)`
   cursor: ${props => props.cursortype ? "text" : "default"};
   padding-left: ${props => props.paddingLeft};
   padding-right: 10rem;
+  
 `	

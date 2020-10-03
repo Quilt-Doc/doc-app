@@ -12,7 +12,7 @@ import { faAlignLeft, faAlignRight, faAlignCenter, faListUl, faListOl  } from '@
 
 
 //actions
-import { getDocument, editDocument, getParent, renameDocument } from '../../../../actions/Document_Actions';
+import { getDocument, editDocument, getParent, renameDocument } from '../../../../../actions/Document_Actions';
 
 //redux
 import { connect } from 'react-redux';

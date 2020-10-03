@@ -4,9 +4,12 @@ import React from 'react';
 import styled from "styled-components";
 
 //components
-import EditorWrapper from './text_editor/EditorWrapper';
+import EditorWrapper from './knowledge/text_editor/EditorWrapper';
 import Infobank from './infobank/Infobank';
 import SideNavbar from './side_navbar/SideNavbar';
+import DocumentNavbar from './side_navbar/DocumentNavbar';
+import MainNavbar from './main_navbar/MainNavbar';
+import Knowledge from './knowledge/Knowledge';
 import Dashboard from './dashboard/Dashboard';
 import ReferenceEditor from './codebase/reference_editor/ReferenceEditor';
 import DirectoryNavigator from './codebase/directory_navigator/DirectoryNavigator';
@@ -22,7 +25,10 @@ import history from '../../history';
 import { connect } from 'react-redux';
 
 //actions
-import { retrieveWorkspaces } from '../../actions/Workspace_Actions';
+import { getWorkspace } from '../../actions/Workspace_Actions';
+import { retrieveDocuments } from '../../actions/Document_Actions';
+import { retrieveReferences } from '../../actions/Reference_Actions';
+import { retrieveTags } from '../../actions/Tag_Actions';
 
 // component that holds the features of an individual workspace
 class Space extends React.Component {
@@ -35,13 +41,26 @@ class Space extends React.Component {
         }
     }
 
-    // loads all the workspaces so that belong to the user
+    // loads the resources needed for the workspace
     async componentDidMount(){
-        const { user, retrieveWorkspaces } = this.props;
-        if (user) {
-            await retrieveWorkspaces({memberUserIds: [user._id]});
-            this.setState({loaded: true})
-        }
+        const { retrieveDocuments, getWorkspace, match } = this.props;
+        const { workspaceId } = match.params;
+
+        await Promise.all([
+            // get the workspace from workspaceId
+            getWorkspace(workspaceId),
+            // retrieve the root document of the workspace and clear on root retrieval
+            retrieveDocuments({workspaceId, root: true, minimal: true}, true)
+        ])
+
+        const { retrieveReferences, workspace } = this.props;
+        const { repositories } = workspace;
+        const repositoryId = repositories[0]._id;
+
+        // retrieve the root reference of the workspace
+        await retrieveReferences({ workspaceId, repositoryId, path: ""})
+        
+        this.setState({loaded: true})
     }
 
     // checks whether a modal should be open by checking the url params 
@@ -72,23 +91,28 @@ class Space extends React.Component {
                     timeout={500}
                     classNames="sidenav"
                 >
-                    <Container>
-                        <SideNavbar/>
-                        <RightView id = {"rightView"} >
-                            <Router history = {history}>
-                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId?" component = { DirectoryNavigator } />
-                                <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
-                                <Route path = "/workspaces/:workspaceId/document/:documentId" component = { EditorWrapper } />
-                                <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
-                                <Route path = "/workspaces/:workspaceId/infobank" component = { Infobank } />
-                            </Router>
-                        </RightView>
-                    </Container>
-                </CSSTransition>
+                    <div>
+                        
+                        <Container>
+                            <SideNavbar/>
+                            
+                            <RightView id = {"rightView"} >
+                                <Router history = {history}>
+                                    <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
+                                    <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId" component = { DirectoryNavigator } />
+                                    <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
+                                    <Route path = "/workspaces/:workspaceId/document/:documentId?" component = { Knowledge } />
+                                    <Route path = "/workspaces/:workspaceId/infobank" component = { Infobank } />
+                                </Router>
+                            </RightView>
+                        </Container>
+                    </div>
+                    </CSSTransition>
                 {this.renderModal()}
             </>
         )
     }
+
 
     // renders the content body if loaded
     render() {
@@ -97,27 +121,40 @@ class Space extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (state, ownProps) => {
+    let { documents, workspaces, references, auth: { user } } = state;
+    let { workspaceId } = ownProps.match.params;
+    
+    const rootDocument = Object.values(documents).filter(document => document.root)[0];
+    const rootReference = Object.values(references).filter(reference => reference.path === "")[0];
+
     return {
-        user: state.auth.user
+        rootReference,
+        rootDocument,
+        workspace: workspaces[workspaceId],
+        user
     }
 }
 
 
-export default connect(mapStateToProps, { retrieveWorkspaces })(Space);
+export default connect(mapStateToProps, { getWorkspace, retrieveDocuments, retrieveReferences, retrieveTags })(Space);
 
 
 // Styled Components
+
 const Container = styled.div`
     display: flex;
     flex: 1;
+    background-color:#272a35;
 `
 
 const RightView = styled.div`
-    /*box-shadow: 0 2px 4px rgba(0,0,0,0.1);*/
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     width: 100%;
     overflow-y: scroll;
-    height: calc(100vh - 5.5rem);
+    /*height: calc(100vh - 5.5rem);*/
     z-index: 1;
-    background-color: #f7f9fb;
+    border-top-left-radius: 1.2rem;
+    background-color: #f6f7f9;
 `

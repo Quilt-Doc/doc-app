@@ -123,16 +123,11 @@ deleteTag = async (req, res) => {
 
 retrieveTags = async (req, res) => {
 
-    let { search, label, color, tagIds, limit, skip } = req.body;
+    let { label, color, tagIds, limit, skip } = req.body;
     const workspaceId = req.workspaceObj._id.toString();
 
-    let query;
-    if (search) {
-        query = Tag.find({workspace: workspaceId, label: { $regex: new RegExp(search, 'i')} })
-    } else {
-        query =  Tag.find({workspace: workspaceId});
-    }
-   
+    let query = Tag.find({workspace: workspaceId});
+    
     if (checkValid(tagIds)) query.where('_id').in(tagIds);
     if (checkValid(label)) query.where('label').equals(label);
     if (checkValid(color)) query.where('color').equals(color);
@@ -154,29 +149,9 @@ retrieveTags = async (req, res) => {
         return res.json({success: false, error: "retrieveTags Error: find query failed", trace: err});
     }
 
-    if (checkValid(tagIds) && checkValid(limit) && returnedTags.length < limit) {
-        query = Tag.find();
-        query.limit(Number(limit - returnedTags.length));
-        query.where('_id').nin(tagIds)
-
-        let moreTags;
-        
-        try {
-            moreTags = query.lean().exec();
-        } catch (err) {
-            await logger.error({source: 'backend-api',
-                                    message: err,
-                                    errorDescription: `Error find query failed - workspaceId, tagIds, label, color: ${workspaceId}, ${JSON.stringify(tagIds)}, ${label}, ${color}`,
-                                    function: 'retrieveTags'});
-            return res.json({success: false, error: "retrieveTags Error: find more with limit query failed", trace: err});
-        }
-
-        returnedTags = [...returnedTags, ...moreTags];
-    }
-
     await logger.info({source: 'backend-api',
-                        message: `Successfully retrieve ${returnedTags.length} tags - workspaceId: ${workspaceId}`,
-                        function: 'retrieveTags'});
+        message: `Successfully retrieve ${returnedTags.length} tags - workspaceId: ${workspaceId}`,
+        function: 'retrieveTags'});
 
     return res.json({success: true, result: returnedTags});
 }

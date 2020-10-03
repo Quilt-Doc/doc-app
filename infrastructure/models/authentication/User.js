@@ -6,6 +6,8 @@ const { ObjectId } = Schema.Types;
 
 let userSchema = new Schema({
     username: {type: String, index: true},
+    firstName: {type: String},
+    lastName: {type: String},
     accessToken: String,
     refreshToken: String, 
     profileId: String,
@@ -13,6 +15,7 @@ let userSchema = new Schema({
     created: {type: Date, default: Date.now },
     domain: String,
     workspaces: [{type: ObjectId, ref: 'Workspace'}],
+    onboarded: {type: Boolean, default: false},
     // 'dev', 'user'
     role: {type: String, default: 'user'}
 });

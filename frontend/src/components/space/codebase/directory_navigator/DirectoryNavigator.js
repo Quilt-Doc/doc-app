@@ -185,7 +185,6 @@ export default connect(makeMapStateToProps, { retrieveReferences,
     retrieveDocuments, getRepository })(DirectoryNavigator);
 
 const Background = styled.div`
-    background-color:#f7f9fb;
     min-height: 100%;
     padding-bottom: 5rem;
 `

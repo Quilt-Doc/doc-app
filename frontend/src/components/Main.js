@@ -17,15 +17,22 @@ class Main extends Component {
     // checks to see whether the user is logged in
     // validated through a JWT in the backend
     componentDidMount(){
-        const {checkLogin} = this.props;
+        const { checkLogin } = this.props;
         checkLogin();
     }
 
+    checkValid = (item) => {
+        if (item !== null && item !== undefined) {
+            return true
+        }
+        return false
+    }
     // depending on authentication, show the login view or the dashboard (core app)
     render(){
         const { authenticated, user } = this.props;
-        console.log("USER", user)
-        return (authenticated && user) ? <Application/> : <Login/> 
+        return this.checkValid(authenticated) 
+            ? (authenticated && user) ? <Application/> : <Login/> 
+            : null
     }
 }
 

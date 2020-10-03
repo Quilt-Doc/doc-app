@@ -35,7 +35,7 @@ createReferences = async (req, res) => {
     let insertedReferences;
 
     try {
-        insertedReferences = await Reference.insertMany(references).populate({path: populationString}).exec();
+        insertedReferences = await Reference.insertMany(references).populate({path: populationString});
     } catch (err) {
         await logger.error({source: 'backend-api', message: err,
                             errorDescription: `Error insertMany failed for ${references.length} References`,
@@ -181,7 +181,7 @@ editReference = async (req, res) => {
 
     // make sure repository of reference is accessible to the user
     try {
-        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
+        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}});
         if (!repositoryValid) {
             await logger.error({source: 'backend-api',
                                     message: Error(`Error Reference does not exist in accessible repository - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`),
@@ -248,7 +248,7 @@ deleteReference = async (req, res) => {
 
     // make sure repository of reference is accessible to the user
     try {
-        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}}).exec();
+        let repositoryValid = await Reference.exists({_id: referenceId, repository: {$in: repositoryIds}});
         if (!repositoryValid) {
             await logger.error({source: 'backend-api',
                                     message: Error(`Error Reference does not exist in accessible repository - referenceId, repositoryIds, userId: ${referenceId}, ${JSON.stringify(repositoryIds)}, ${req.tokenPayload.userId}`),

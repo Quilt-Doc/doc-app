@@ -8,7 +8,7 @@ import history from '../../../history';
 import {withRouter} from 'react-router-dom';
 
 //components
-import EditorWrapper from '../text_editor/EditorWrapper';
+import EditorWrapper from '../knowledge/text_editor/EditorWrapper';
 import { CSSTransition } from 'react-transition-group';
 
 //spinner
