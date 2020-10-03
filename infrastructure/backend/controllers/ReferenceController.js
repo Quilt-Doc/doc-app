@@ -2,6 +2,8 @@ const Reference = require('../../models/Reference');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+const logger = require('../logging/index').logger;
+
 // string to populate the fields needed on Reference
 const populationString = "repository tags"
 const minSelectionString = "name kind path _id created status"

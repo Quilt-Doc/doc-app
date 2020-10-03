@@ -92,7 +92,7 @@ updateDocumentsCreatedNum = async (params) => {
             })
         });
 
-       await UserStats.bulkWrite(bulkIncrementOps).exec();
+       await UserStats.bulkWrite(bulkIncrementOps);
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -127,7 +127,7 @@ updateDocumentsBrokenNum = async (params) => {
                 }
             })
         });
-       await UserStats.bulkWrite(bulkDecrementOps).exec();
+       await UserStats.bulkWrite(bulkDecrementOps);
     }
     catch (err) {
         logger.error({source: 'backend-api', message: err,
