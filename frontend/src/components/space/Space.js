@@ -83,6 +83,7 @@ class Space extends React.Component {
     // renders the content of the workspace (SideNavbar and feature in RightView)... depending on url form
     // we will show one of our features components
     renderBody = () => {
+        console.log("ENTERED HERE")
         return (
             <>
                 <CSSTransition

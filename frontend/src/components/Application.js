@@ -16,6 +16,7 @@ import styled from "styled-components";
 
 // component that houses the core application
 const Application = () => {
+   
     return ( 
         <Container>
             <Router history = {history}>
