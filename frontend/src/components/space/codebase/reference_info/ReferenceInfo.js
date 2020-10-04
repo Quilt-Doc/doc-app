@@ -190,14 +190,7 @@ class ReferenceInfo extends React.Component {
         return(
             <>
                 {this.renderToolbar()}
-                <MainToolbar>
-                    <Button 
-                        active = {setOptions}
-                        onClick = {() => {this.setState({setOptions: !setOptions})}}
-                    >
-                        <CgOptions/>
-                    </Button>
-                </MainToolbar>
+              
                 <Container>
                     <Header>
                         {this.renderRepositoryName()}
@@ -241,8 +234,6 @@ export default withRouter(connect(mapStateToProps, { attachReferenceTag, removeR
 
 
 const Container = styled.div`
-    padding-left: 5rem;
-    padding-right: 5rem;
 `
 
 const MainToolbar = styled.div`

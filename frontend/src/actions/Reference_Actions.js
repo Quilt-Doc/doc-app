@@ -6,6 +6,25 @@ import {
 import { api } from '../apis/api';
 
 // DONE
+export const searchReferences = (formValues) => async () => {
+    const workspaceId = formValues.workspaceId;
+    if (!workspaceId) {
+        throw new Error("searchReferences: workspaceId not provided");
+    }
+
+    const repositoryId = formValues.repositoryId;
+    if (!repositoryId) {
+        throw new Error("searchReferences: repositoryId not provided");
+    }
+
+    const response = await api.post(`/references/${workspaceId}/search`, formValues);
+    if (response.data.success == false) {
+        throw new Error("retrieveReferences Error: ", response.data.error.toString());
+    } else {
+        return response.data.result;
+    }
+}
+
 export const retrieveReferences = (formValues, passBack) => async dispatch => {
     
     const workspaceId = formValues.workspaceId;
@@ -18,11 +37,9 @@ export const retrieveReferences = (formValues, passBack) => async dispatch => {
         throw new Error("retrieveReferences Error: ", response.data.error.toString());
     }
     else {
-        console.log("RESPONSE", response.data.result);
         if (passBack) return response.data.result;
         dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });
     }
-
 }
 
 // DONE

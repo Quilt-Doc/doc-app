@@ -9,6 +9,9 @@ import DirectoryItem from './DirectoryItem';
 import Loader from 'react-loader-spinner'
 import ReferenceInfo from '../reference_info/ReferenceInfo';
 
+//loader
+import { Oval } from 'svg-loaders-react';
+
 //actions
 import { retrieveReferences } from '../../../../actions/Reference_Actions';
 import { retrieveDocuments } from '../../../../actions/Document_Actions';
@@ -63,6 +66,16 @@ class DirectoryNavigator extends React.Component {
         }
     }
 
+    renderLoader = () => {
+        return(
+            <LoaderContainer>
+                <Oval
+                    stroke="#E0E4E7"
+                />
+            </LoaderContainer>
+        )
+    }
+
     // directory_navigator first renders the child references that are
     // directories (sorted in alphabetical order)
     renderFolders = () => {
@@ -108,45 +121,54 @@ class DirectoryNavigator extends React.Component {
         })
     }
 
+    renderRepoName = () => {
+        const { currentRepository: { fullName }} = this.props;
+        return fullName.split('/').slice(1).join("/").toUpperCase();
+    }
+
+    renderRefName = () => {
+        const { currentReference: {name},   currentRepository: { fullName }} = this.props;
+        if (name === fullName) return name.split('/').slice(1).join("/")
+        return name;
+    }
+
     //2 FARAZ TODO: Check whether loaded is all that is needed
     render() {
         const { currentRepository, currentReference, documents, match} = this.props;
-        const { referenceId } =match.params;
+        const { referenceId } = match.params;
         const { loaded } = this.state;
         if (!referenceId){
             referenceId = ""
         }
         return (
             <>
-                { loaded ?
+                { (loaded && currentRepository && currentReference && documents) ?
                         <Background>
-                            <ReferenceInfo
-                                currentRepository = {currentRepository}
-                                currentReference = {currentReference}
-                                documents = {documents}
-                                directoryNavigator = {true}
-                            />
-                            <DirectoryContainer>
-                                <ListToolBar>
-                                    <GoFileCode style= {{fontSize: "1.8rem", marginRight: "0.7rem"}} />
-                                    backend.js
-                                    <Statistics>
-                                        <ListName><b>8</b>&nbsp; documents</ListName>
-                                        <ListName><b>15</b>&nbsp; snippets</ListName>
-                                    </Statistics>
-                                </ListToolBar>
-                                {this.renderFolders()}
-                                {this.renderFiles()}
-                            </DirectoryContainer>
+                            <Top>
+                                <Header>
+                                    {this.renderRepoName()}
+                                </Header>
+                            </Top>
+                            <Container>
+                                <Content>
+                                    <ReferenceInfo
+                                        currentRepository = {currentRepository}
+                                        currentReference = {currentReference}
+                                        documents = {documents}
+                                        directoryNavigator = {true}
+                                    />
+                                    <DirectoryContainer>
+                                        <ListToolBar>
+                                            {this.renderRefName()}
+                                        </ListToolBar>
+                                        {this.renderFolders()}
+                                        {this.renderFiles()}
+                                    </DirectoryContainer>
+                                </Content>
+                            </Container>
                         </Background>
                             
-                    :   <Loader
-                            type="ThreeDots"
-                            color="#5B75E6"
-                            height={50}
-                            width={50}
-                            style = {{marginLeft: "8rem", marginTop: "5rem"}}
-                        />
+                    :  this.renderLoader()
                 }
             </>
         )
@@ -166,10 +188,8 @@ const makeMapStateToProps = () => {
 
         let currentReference = getCurrentReference({referenceId, references});
         documents = getReferenceDocuments({documents, currentReference});
-        console.log("CURRENT REFERENCE", currentReference);
-        console.log("REFERENCES", references)
         references = filterCurrentReference({referenceId, references});
-
+        console.log("REPOSITORIES", repositories);
         return {
             currentRepository: repositories[repositoryId],
             documents,
@@ -184,9 +204,54 @@ const makeMapStateToProps = () => {
 export default connect(makeMapStateToProps, { retrieveReferences, 
     retrieveDocuments, getRepository })(DirectoryNavigator);
 
+const Content = styled.div`
+    width: 80%;
+    max-width: 110rem;
+    min-width: 80rem;
+`
+/*
+display: flex;
+flex-direction: column;
+width: calc(100vw - 10.2rem);
+margin-top: 2rem;
+justify-content: center;
+*/
+const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 2rem;
+    align-items: center;
+`
+
+const LoaderContainer = styled.div`
+    height: 30rem;
+    width: 100%;
+    margin-left: 0.2rem;
+    display: flex;
+`
+
+const Top = styled.div`
+    display: flex;
+    align-items: center;
+`
+
+const Header = styled.div`
+    font-size: 1.1rem;
+    font-weight: 400;
+    display: inline-flex;
+    border-bottom: 2px solid #172A4E;
+    height: 2.8rem;
+    padding-right: 3.5rem;
+    display: flex;
+    align-items: center;
+`
+
 const Background = styled.div`
     min-height: 100%;
+    padding: 2.1rem;
     padding-bottom: 5rem;
+    background-color: #f6f7f9;
 `
 
 const DirectoryContainer = styled.div`
@@ -201,9 +266,6 @@ const DirectoryContainer = styled.div`
     border-radius: 0.4rem;
     padding-bottom: 0.1rem;
     align-self: stretch;
-    min-width: 80rem;
-    margin-left: 5rem;
-    margin-right: 5rem;
 `
 
 const ListToolBar = styled.div`
@@ -213,7 +275,7 @@ const ListToolBar = styled.div`
     font-weight: 500;
     align-items: center;
     border-bottom: 1px solid #EDEFF1;
-    padding: 0rem 3rem;
+    padding: 0rem 2rem;
 `
 
 const Statistics = styled.div`

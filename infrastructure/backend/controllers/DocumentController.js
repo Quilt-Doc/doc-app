@@ -959,10 +959,102 @@ removeDocumentSnippet = async (req, res) => {
     }
  
     return res.json({ success: true, result: returnDocument});
-
 }
 
-module.exports = { testRoute,
+searchDocuments = async (req, res) => {
+    const { userQuery, repositoryId, tagIds, minimalDocuments, includeImage, searchContent,
+        referenceIds, creatorIds, skip, limit, sort } = req.body;
+    
+    const workspaceId = req.workspaceObj._id.toString();
+
+    let documentAggregate;
+    
+    if (checkValid(userQuery) && userQuery !== "") {
+        // make search for title
+        let shouldFilter = [ 
+            {
+            "autocomplete": {
+                    "query": userQuery,
+                    "path": "title"
+                }
+            }];
+
+        // make search for textual content
+        if (checkValid(searchContent) && searchContent) shouldFilter.push({
+                "text": {
+                    "query": userQuery,
+                    "path": "content"
+                }
+            });
+        
+        documentAggregate = Document.aggregate([
+            { 
+                $search: {
+                    "compound": {
+                        "should": shouldFilter,
+                        "minimumShouldMatch": 1
+                    } 
+                }  
+            },
+        ]);
+    } else {
+        documentAggregate = Document.aggregate([]);
+    }
+
+    documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
+    
+    documentAggregate.match({workspace: ObjectId(workspaceId)});
+    
+    if (checkValid(repositoryId)) documentAggregate.match({repository: ObjectId(repositoryId)});
+
+    if (checkValid(tagIds)) documentAggregate.match({
+        tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }
+    });
+
+    if (checkValid(referenceIds)) documentAggregate.match({
+        references: { $in: referenceIds.map((refId) => ObjectId(refId)) }
+    });
+
+    if (checkValid(creatorIds)) documentAggregate.match({
+        author: { $in: creatorIds.map((creatorId) =>  ObjectId(creatorId)) }
+    });
+    
+    if (checkValid(sort)) documentAggregate.sort(sort);
+
+    if (checkValid(skip))  documentAggregate.skip(skip);
+    
+    if (checkValid(limit))  documentAggregate.limit(limit);
+
+    
+    let minimalProjectionString = "_id created author title status isDocument";
+    let populationString = "author references workspace repository tags";
+    
+    if (checkValid(minimalDocuments) && minimalDocuments) {
+        if (checkValid(includeImage)) minimalProjectionString += " image";
+        documentAggregate.project(minimalProjectionString);
+        populationString = "author";
+    }
+    
+    try {   
+        documents = await documentAggregate.exec();
+    } catch(err) {
+        return res.json({ success: false, error: "searchDocuments: Failed to aggregate documents", trace: err});
+    }
+   
+    try {
+        documents = await Document.populate(documents, 
+            {
+                path: populationString
+            }
+        );
+    } catch (err) {
+        return res.json({ success: false, error: "searchDocuments: Failed to populate documents", trace: err});
+    }
+
+    return res.json({success: true, result: documents});
+}
+
+module.exports = { testRoute, searchDocuments,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }

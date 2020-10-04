@@ -178,6 +178,22 @@ export const retrieveChildren = (formValues) => async () => {
 }
 */
 
+export const searchDocuments = (formValues) => async () => {
+    const workspaceId = formValues.workspaceId;
+    
+    if (!workspaceId) {
+        throw new Error("retrieveDocuments: workspaceId not provided");
+    }
+
+    const response = await api.post(`/documents/${workspaceId}/search`);
+
+    if (response.data.success == false) {
+        throw new Error(response.data.error);
+    } else {
+        return response.data.result;
+    }
+}
+
 // DONE
 export const retrieveDocuments = (formValues, wipe, passback) => async dispatch => {
 

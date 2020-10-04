@@ -84,9 +84,10 @@ class SideNavbar extends React.Component {
     }
 
     renderBottomSection = () => {
+        const { setSearch } = this.props;
         return (
             <Section marginTop = {'auto'} marginBottom = {'5rem'}>
-                <IconBorder>
+                <IconBorder onClick = {() => setSearch(true)}>
                     <CgSearch/>
                 </IconBorder>
                 <IconBorder>
@@ -129,7 +130,10 @@ export default withRouter(connect(mapStateToProps, { })(SideNavbar));
 const IconBorder = styled.div`
     height: 4.5rem;
     width: 4.5rem;
-
+    &:first-of-type {
+        margin-bottom: 0.5rem;
+    }
+   
     font-size: 2.2rem;
     display: flex;
     align-items: center;

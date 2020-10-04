@@ -18,14 +18,16 @@ import { CSSTransition } from 'react-transition-group';
 
 //FARAZ TODO: REPLACE retrieveDocuments
 //actions
-import { retrieveDocuments, attachDocumentReference, removeDocumentReference } from '../../actions/Document_Actions';
+import { searchDocuments, retrieveDocuments, attachDocumentReference, removeDocumentReference } from '../../actions/Document_Actions';
+
+//icons
+import { RiStackLine } from 'react-icons/ri';
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
-import { RiStackLine } from 'react-icons/ri';
+
 
 class DocumentMenu extends React.Component {
-    
     constructor(props){
         super(props)
 
@@ -38,7 +40,6 @@ class DocumentMenu extends React.Component {
             position: 0,
             documents: []
         }
-
         this.menuRef = React.createRef();
     }
 
@@ -71,23 +72,12 @@ class DocumentMenu extends React.Component {
                         this.setState({documents, position: -1})
                     })
                 } else {
-                    this.props.retrieveDocuments({search: this.state.search, workspaceId, sort: "-title",  limit: 9}, true).then((documents) => {
+                    this.props.searchDocuments({userQuery: this.state.search, workspaceId, sort: "-title",  limit: 9}, true).then((documents) => {
                         this.setState({documents, position: -1})
                     });
                 }
             }, 200)
         });
-    }
-
-    renderMarginTop() {
-        return 0;
-        if (this.props.marginTop){
-            return this.props.marginTop
-        } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
-            return "-30rem"
-        } else {
-            return "-5rem"
-        }
     }
 
     handleSelect(setBool, documentId){
@@ -104,13 +94,12 @@ class DocumentMenu extends React.Component {
         // UP
         let { workspaceId } = this.props.match.params;
         if (e.key === "Enter" && this.state.position >= 0) {
-            let doc = this.state.documents[this.state.position]
-            this.setState({loaded: false})
-            let documentIds = this.props.setDocuments.map(document => document._id)
+            let doc = this.state.documents[this.state.position];
+            this.setState({loaded: false});
+            let documentIds = this.props.setDocuments.map(document => document._id);
             await this.handleSelect(documentIds.includes(doc._id), doc._id)
-            this.props.retrieveDocuments({limit: 9, documentIds, workspaceId}, true).then((documents) => {
-                this.setState({loaded: true, search: '', documents})
-            })
+            let documents = await this.props.retrieveDocuments({limit: 9, documentIds, workspaceId}, true);
+            this.setState({loaded: true, search: '', documents});
         } else {
             if (e.keyCode === 38) {
                 if (this.state.position <= 0){
@@ -245,7 +234,7 @@ const mapStateToProps = (state, ownProps) => {
 
 
 
-export default withRouter(connect(mapStateToProps, { attachDocumentReference, removeDocumentReference, retrieveDocuments })(DocumentMenu));
+export default withRouter(connect(mapStateToProps, { attachDocumentReference, removeDocumentReference, retrieveDocuments, searchDocuments })(DocumentMenu));
 
 const Title = styled.div`
     font-size: 1.2rem;

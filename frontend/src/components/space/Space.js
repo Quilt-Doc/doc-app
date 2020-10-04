@@ -15,8 +15,9 @@ import ReferenceEditor from './codebase/reference_editor/ReferenceEditor';
 import DirectoryNavigator from './codebase/directory_navigator/DirectoryNavigator';
 import DocumentModal from './modals/DocumentModal';
 import DocumentCreationModal from './modals/DocumentCreationModal';
+import Search from './search/Search';
 import { CSSTransition } from 'react-transition-group';
-                                                                                        
+
 //react-router
 import { Router, Route } from 'react-router-dom';
 import history from '../../history';
@@ -37,7 +38,8 @@ class Space extends React.Component {
         super(props);
         this.state = {
             // checks whether the data needed for the component is loaded
-            loaded: false
+            loaded: false, 
+            search: false
         }
     }
 
@@ -79,6 +81,16 @@ class Space extends React.Component {
         if (this.checkParam('document')) return <DocumentModal/>;
         if (this.checkParam('create_document')) return <DocumentCreationModal/>;
     }
+    
+    renderSearch = () => {
+        const { search } = this.state;
+        console.log("SEARCH", search);
+        return search ? <Search setSearch = {this.setSearch}/> : null;
+    }
+
+    setSearch = (search) => {
+        this.setState({search});
+    }
 
     // renders the content of the workspace (SideNavbar and feature in RightView)... depending on url form
     // we will show one of our features components
@@ -95,7 +107,7 @@ class Space extends React.Component {
                     <div>
                         
                         <Container>
-                            <SideNavbar/>
+                            <SideNavbar setSearch = {this.setSearch}/>
                             
                             <RightView id = {"rightView"} >
                                 <Router history = {history}>
@@ -109,6 +121,7 @@ class Space extends React.Component {
                         </Container>
                     </div>
                     </CSSTransition>
+                {this.renderSearch()}
                 {this.renderModal()}
             </>
         )

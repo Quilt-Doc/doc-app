@@ -28,7 +28,7 @@ export default combineReducers({
     references: referenceReducer, // DONE (attachTags, removeTags not done)
     auth: authReducer,
     ui: uiReducer,
-    searchResults: searchReducer, // Standardize
+    search: searchReducer, // Standardize
     linkages: linkageReducer, // Standardize
     //fileContents: fileContentsReducer
 });
