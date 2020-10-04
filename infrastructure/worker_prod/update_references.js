@@ -393,7 +393,7 @@ const runUpdateProcedure = async () => {
         }
 
         var fileReferencesToCreate = trackedFiles.filter(file => file.isNewRef && !file.deleted);
-        
+
         // When to Update:
         // If !file.isNewRef && !file.deleted && file.ref != file.oldRef
         // AND file.ref != file.oldRef
@@ -419,7 +419,7 @@ const runUpdateProcedure = async () => {
             }
 
             try {
-               const insertResults = await Reference.insertMany(references);
+               const insertResults = await Reference.insertMany(refCreateData);
                worker.send({action: 'log', info: {level: 'debug', message: `Insert results for 'file' References on repository: ${repoId}\n${insertResults}`,
                                                     source: 'worker-instance', function:'runUpdateProcedure'}})
             }
@@ -432,10 +432,13 @@ const runUpdateProcedure = async () => {
 
         // Handling Deleted File References
         if (fileReferencesToDelete.length > 0) {
+            worker.send({action: 'log', info: {level: 'info', 
+                                                message: `Updating 'file' References for deletion on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToDelete.map(file => file.oldRef))}`,
+                                                source: 'worker-instance', function:'runUpdateProcedure', }})
 
             var brokenReferences;
             try {
-                brokenReference = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
+                brokenReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
                                                         path: {$in: fileReferencesToDelete.map(file => file.oldRef)}});
             }
             catch (err) {
@@ -444,7 +447,7 @@ const runUpdateProcedure = async () => {
                 throw new Error(`Error fetching 'file' References to invalidate on repository: ${repoId}`);
             }
 
-            worker.send({action: 'log', info: {level: 'info', 
+            await worker.send({action: 'log', info: {level: 'info', 
                                                 message: `Fetched ${brokenReferences.length} ids for the following 'file' References to delete on repository: ${repoId}\n${fileReferencesToDelete}`,
                                                 source: 'worker-instance', function:'runUpdateProcedure', }})
 
@@ -586,9 +589,14 @@ const runUpdateProcedure = async () => {
             throw new Error(`Error deleting repository ${repoId} at:  ${repoDiskPath}`);
         }
 
+
+
         // TODO: Create a Check at the end
 
+        // TODO: Update UserStats.documentsBrokenNum
 
+        await worker.send({action: 'log', info: {level: 'info', message: `Update Reference Job Success - fullName, headCommit: ${repoObj.fullName}, ${headCommit}`,
+                                                    source: 'worker-instance', function: 'runUpdateProcedure'}});
     });
 }
 
