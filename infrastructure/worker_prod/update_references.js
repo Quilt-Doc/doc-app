@@ -212,7 +212,7 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
         updateOne: {
                 filter: { _id: dirObj._id },
                 // Where field is the field you want to update
-                update: { $set: { status: dirObj.status } },
+                update: { $set: { status: dirObj.status, breakCommit: headCommit } },
                 upsert: false
         }
     }));
