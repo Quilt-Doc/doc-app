@@ -1,8 +1,8 @@
-const Workspace = require('../../models/Workspace');
-const Repository = require('../../models/Repository');
-const Reference = require('../../models/Reference');
-const Tag = require('../../models/Tag');
-const User = require('../../models/authentication/User');
+const Workspace = require('../models/Workspace');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+const Tag = require('../models/Tag');
+const User = require('../models/authentication/User');
 
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;

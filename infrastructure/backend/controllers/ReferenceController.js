@@ -1,4 +1,4 @@
-const Reference = require('../../models/Reference');
+const Reference = require('../models/Reference');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 

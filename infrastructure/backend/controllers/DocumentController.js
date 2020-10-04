@@ -1,18 +1,18 @@
 //models
-const Document = require('../../models/Document');
-const Repository = require('../../models/Repository');
-const Reference = require('../../models/Reference');
+const Document = require('../models/Document');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
 
 const UserStatsController = require('../controllers/reporting/UserStatsController');
 const ActivityFeedItemController = require('../controllers/reporting/ActivityFeedItemController');
 
 var mongoose = require('mongoose');
-const UserStats = require('../../models/reporting/UserStats');
+const UserStats = require('../models/reporting/UserStats');
 const { ObjectId } = mongoose.Types;
 const logger = require('../logging/index').logger;
 
 const jobs = require('../apis/jobs');
-const jobConstants = require('../../constants/index').jobs;
+const jobConstants = require('../constants/index').jobs;
 
 
 checkValid = (item) => {

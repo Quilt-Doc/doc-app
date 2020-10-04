@@ -1,6 +1,6 @@
 //models
-const ActivityFeedItem = require('../../../models/reporting/ActivityFeedItem');
-const Document = require('../../../models/Document');
+const ActivityFeedItem = require('../../models/reporting/ActivityFeedItem');
+const Document = require('../../models/Document');
 
 
 //controllers

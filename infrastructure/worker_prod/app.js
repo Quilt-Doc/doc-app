@@ -4,7 +4,7 @@ const updateChecks = require('./update_checks');
 
 const {serializeError, deserializeError} = require('serialize-error');
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
 var express = require('express');
 var bodyParser = require('body-parser');

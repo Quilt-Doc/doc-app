@@ -1,6 +1,6 @@
 const passport = require("passport");
 const GithubStrategy = require("passport-github2").Strategy;
-const User = require("../../models/authentication/User");
+const User = require("../models/authentication/User");
 
 /*
 passport.serializeUser((user, done) => {

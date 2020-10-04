@@ -1,12 +1,12 @@
 
 require('dotenv').config();
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
 const apis = require('./apis/api');
 
-const Repository = require('../models/Repository');
-const Check = require('../models/Check');
+const Repository = require('./models/Repository');
+const Check = require('./models/Check');
 
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;

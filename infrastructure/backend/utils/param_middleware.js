@@ -1,10 +1,10 @@
-const Workspace = require('../../models/Workspace');
-const Reference = require('../../models/Reference');
-const Document = require('../../models/Document');
-const Tag = require('../../models/Document');
-const Snippet = require('../../models/Snippet');
-const Repository = require('../../models/Repository');
-const User = require('../../models/authentication/User');
+const Workspace = require('../models/Workspace');
+const Reference = require('../models/Reference');
+const Document = require('../models/Document');
+const Tag = require('../models/Document');
+const Snippet = require('../models/Snippet');
+const Repository = require('../models/Repository');
+const User = require('../models/authentication/User');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 

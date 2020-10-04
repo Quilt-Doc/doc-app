@@ -15,7 +15,7 @@ const SNIPPET_STATUS_NEW_REGION = 'NEW_REGION';
 const SNIPPET_STATUS_VALID = 'VALID';
 */
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
 // fileData: new fileContents, finalResult: final selected snippet region, windowSize: size of max snippet range
 const trimSnippet = (fileData, finalResult, windowSize) => {

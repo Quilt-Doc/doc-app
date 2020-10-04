@@ -71,7 +71,7 @@ exports.handler = async (event) => {
         }
         catch (err) {
             await logger.error({source: 'github-lambda', message: err,
-                                    errorDescription: `error calling update repository route - fullName, installationId: ${fullName}, ${installationId}`,
+                                    errorDescription: `error calling update repository route - repositoryFullName, installationId: ${repositoryFullName}, ${installationId}`,
                                     function: 'handler'});
                         
                 let response = {

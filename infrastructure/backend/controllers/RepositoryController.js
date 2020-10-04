@@ -5,13 +5,13 @@ var request = require("request");
 const apis = require('../apis/api');
 
 const jobs = require('../apis/jobs');
-const jobConstants = require('../../constants/index').jobs;
+const jobConstants = require('../constants/index').jobs;
 
 const logger = require('../logging/index').logger;
 
-const Repository = require('../../models/Repository');
-const Reference = require('../../models/Reference');
-const Document = require('../../models/Document');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+const Document = require('../models/Document');
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -314,7 +314,7 @@ updateRepository = async (req, res) => {
     }
 
     // If repository is unscanned, we don't update
-    if (repository.scanned == false || repository.scanned == true) {
+    if (repository.scanned == false) {
 
         await logger.info({source: 'backend-api', message: `Ignoring update on unscanned repository fullName, installationId: ${fullName}, ${installationId}`,
                             function: 'updateRepository'});
@@ -326,7 +326,7 @@ updateRepository = async (req, res) => {
     var runReferencesData = {};
     runReferencesData['fullName'] = fullName;
     runReferencesData['installationId'] = installationId;
-    runReferencesData['headCommit'] = '9d87a041d7f12f1f59df90fb2e9485d9b067ac37';
+    runReferencesData['headCommit'] = headCommit;
     runReferencesData['cloneUrl'] = cloneUrl;
     runReferencesData['jobType'] = jobConstants.JOB_UPDATE_REFERENCES.toString();
 

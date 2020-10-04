@@ -1,9 +1,9 @@
 
-const Workspace = require('../../models/Workspace');
-const Repository = require('../../models/Repository');
-const Reference = require('../../models/Reference');
-const Document = require('../../models/Document');
-const Tag = require('../../models/Tag');
+const Workspace = require('../models/Workspace');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+const Document = require('../models/Document');
+const Tag = require('../models/Tag');
 
 const UserStatsController = require('./reporting/UserStatsController');
 
@@ -17,7 +17,7 @@ const quickScore = require("quick-score").quickScore;
 const PAGE_SIZE = 10;
 
 const jobs = require('../apis/jobs');
-const jobConstants = require('../../constants/index').jobs;
+const jobConstants = require('../constants/index').jobs;
 
 const logger = require('../logging/index').logger;
 

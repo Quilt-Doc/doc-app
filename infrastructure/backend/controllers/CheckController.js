@@ -7,9 +7,9 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 
-const Document = require('../../models/Document');
-const Snippet = require('../../models/Snippet');
-const Check = require('../../models/Check');
+const Document = require('../models/Document');
+const Snippet = require('../models/Snippet');
+const Check = require('../models/Check');
 
 
 

@@ -34,10 +34,10 @@ const tokenUtils = require('./utils/token_utils');
 require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
-const Snippet = require('../models/Snippet');
-const Reference = require('../models/Reference');
+const Snippet = require('./models/Snippet');
+const Reference = require('./models/Reference');
 
 const {serializeError, deserializeError} = require('serialize-error');
 

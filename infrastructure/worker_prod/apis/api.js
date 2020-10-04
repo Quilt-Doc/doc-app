@@ -1,5 +1,5 @@
 var jwtUtils = require('../utils/jwt');
-const Token = require('../../models/Token');
+const Token = require('../models/Token');
 const fs = require('fs');
 
 // Load the AWS SDK for Node.js

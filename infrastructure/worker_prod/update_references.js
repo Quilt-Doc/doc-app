@@ -12,7 +12,7 @@ const { runSnippetValidation } = require('./update_snippets');
 require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
 
 const mongoose = require("mongoose")
@@ -20,9 +20,9 @@ const { ObjectId } = mongoose.Types;
 
 const tokenUtils = require('./utils/token_utils');
 
-const Reference = require('../models/Reference');
-const Document = require('../models/Document');
-const Repository = require('../models/Repository');
+const Reference = require('./models/Reference');
+const Document = require('./models/Document');
+const Repository = require('./models/Repository');
 
 const {serializeError, deserializeError} = require('serialize-error');
 
@@ -182,6 +182,9 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
         throw new Error(`Error fetching 'dir' References on repository ${repoId}`);
     }
 
+    // Filter our root Reference
+    oldDirectories = oldDirectories.filter(dirObj => dirObj.path.length > 0);
+
     var oldDirectoryPaths = oldDirectories.map(dirObj => dirObj.path);
 
     // Don't need to do anything for these References?
@@ -305,7 +308,7 @@ const runUpdateProcedure = async () => {
     var headCommit = process.env.headCommit;
 
     // TODO: Remove this hardcoding
-    repoCommit = 'a66ea370ff0e039f7e9e9f807d4c6863d0b07522';
+    // repoCommit = 'a66ea370ff0e039f7e9e9f807d4c6863d0b07522';
 
 
     await worker.send({action: 'log', info: {level: 'info', message: `Using repoCommit..headCommit: ${repoCommit}..${headCommit}`,

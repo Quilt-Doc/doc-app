@@ -1,4 +1,4 @@
-const Token = require('../../models/Token');
+const Token = require('../models/Token');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 const logger = require('../logging/index').logger;
