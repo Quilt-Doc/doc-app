@@ -154,9 +154,6 @@ const CreationDate = styled.div`
 `
 
 const Card = styled.div`
-    &:first-of-type {
-        margin-left: 4rem;
-    }
     height: 16rem;
     min-width: 23rem;
     border-radius: 0.5rem;

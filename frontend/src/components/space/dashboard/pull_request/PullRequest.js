@@ -46,8 +46,10 @@ const Container = styled.div`
     flex-direction: column;
     border-radius: 0.3rem;
     z-index: 1;
+    /*
     padding-left: 4rem;
     padding-right: 4rem;
+    */
     margin-top: 1.5rem;
 `
 
@@ -64,7 +66,7 @@ const Content = styled.div`
 `
 
 const PullRequestList = styled.div`
-    width: 38rem;
+    width: 100%;
     height: 100%;
     overflow-y: scroll;
 `

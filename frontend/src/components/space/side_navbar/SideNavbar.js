@@ -11,8 +11,9 @@ import { Link, withRouter } from 'react-router-dom';
 import history from '../../../history';
 
 //icons
-import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine} from 'react-icons/ri'
-import { BiGridAlt } from 'react-icons/bi';
+import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine, RiNotification2Line} from 'react-icons/ri'
+import { BiBell, BiGridAlt } from 'react-icons/bi';
+import { CgBell, CgSearch } from 'react-icons/cg';
 
 //components
 import CreateButton from './CreateButton';
@@ -82,11 +83,25 @@ class SideNavbar extends React.Component {
         );
     }
 
+    renderBottomSection = () => {
+        return (
+            <Section marginTop = {'auto'} marginBottom = {'5rem'}>
+                <IconBorder>
+                    <CgSearch/>
+                </IconBorder>
+                <IconBorder>
+                    <BiBell/>
+                </IconBorder>
+            </Section>
+        )
+    }
+
     render(){
         return (
             <SideNavbarContainer>
                 <WorkspaceIcon>P</WorkspaceIcon>
                 {this.renderTopSection()}
+                {this.renderBottomSection()}
                 <CreateButton/>
             </SideNavbarContainer>
         )
@@ -111,6 +126,20 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, { })(SideNavbar));
 
 //Styled Components
+const IconBorder = styled.div`
+    height: 4.5rem;
+    width: 4.5rem;
+
+    font-size: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    &:hover {
+        background-color: #3b404f;
+    }
+    cursor: pointer;
+`
 
 const SideNavbarContainer = styled.div`
     /*border-top: 2px solid #252832;*/
@@ -132,25 +161,8 @@ const SideNavbarContainer = styled.div`
 `
 
 const Section = styled.div`
-    margin-top: ${props => props.margin};
-`
-
-const NavbarButton = styled(Link)`
-    display: flex;
-    align-items: center;
-    font-size: 1.3rem;
-    font-weight: 500;
-    text-decoration: none;
-    color: white;
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-    margin-bottom: 0.4rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    &:hover {
-        background-color: #414858;
-    }
-    background-color: ${props => props.active ? '#414858' : ""};
+    margin-top: ${props => props.marginTop};
+    margin-bottom: ${props => props.marginBottom};
 `
 
 const NavbarIcon = styled(Link)`

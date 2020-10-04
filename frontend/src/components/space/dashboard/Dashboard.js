@@ -9,22 +9,29 @@ import PullRequest from './pull_request/PullRequest';
 import People from './people/People';
 import Breakage from './breakage/Breakage';
 import Feed from './feed/Feed';
+import Team from './team/Team';
 
 // initial page on the workspace, contains tracking information (breakage), actionable components (pull requests)
 const Dashboard = () => {
     return(
         <>
         <Container>
-            <Top>
-                <Header>DASHBOARD</Header>
-                {/*
-                <NavbarElement>
-                    <RiPencilLine/>
-                </NavbarElement>*/}
-            </Top>
+            <LeftContainer>
+                <Top>
+                    <Header>DASHBOARD</Header>
+                    {/*
+                    <NavbarElement>
+                        <RiPencilLine/>
+                    </NavbarElement>*/}
+                </Top>
+                <ContentContainer>
+                    <Team/>
+                    <Breakage/>
+                    <PullRequest/>
+                </ContentContainer>
+            </LeftContainer>
             <RightContainer>
-                <Breakage/>
-                <PullRequest/>
+
             </RightContainer>
         </Container>
         </>
@@ -51,10 +58,27 @@ const Header = styled.div`
     align-items: center;
 `
 
-const RightContainer = styled.div`
-    width: calc(100% - 32rem);
+const ContentContainer = styled.div`
     padding: 2rem 0rem;
     padding-right: 0rem;
+    width: 90%;
+    max-width: 90rem;
+    margin-left: 5%;
+`
+
+const LeftContainer = styled.div`
+    padding: 2.1rem;
+    width: calc(100vw - 31rem - 6rem);
+    flex-direction: column;
+`
+
+const RightContainer = styled.div`
+    margin-left: auto;
+    width: 31rem;
+    background-color: white;
+    height: 100vh;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-top-left-radius: 4rem;
 `
 
 const Todos = styled.div`
@@ -84,5 +108,9 @@ const Leftbar = styled.div`
 const Container = styled.div`
     background-color: #f6f7f9;
     height: 100vh;
-    padding: 2.1rem;
+    display: flex;
+`
+
+const FlexContainer = styled.div`
+    display: flex;
 `
