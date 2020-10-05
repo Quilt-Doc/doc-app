@@ -130,6 +130,9 @@ const requestInstallationClient = async (installationId) => {
             },
             get: {
                 Authorization: 'token ' + installationToken.value
+            },
+            patch: {
+                Authorization: 'token ' + installationToken.value
             }
           }
     });

@@ -59,17 +59,6 @@ initRepository = async (req, res) => {
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
-                        errorDescription: `Error saving rootReference`,
-                        function: 'initRepository'});
-        return res.json({success: false, error: `Error saving rootReference`, trace: err});
-    }
-
-    try {
-        await Reference.create({repository: repository._id, 
-            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create"});
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error saving rootReference - repositoryId: ${repository._id.toString()}`,
                         function: 'initRepository'});
         return res.json({success: false, error: `Error saving rootReference`, trace: err});

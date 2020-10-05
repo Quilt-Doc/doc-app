@@ -196,7 +196,7 @@ const createCheck = async (req, res) => {
 
     console.log('githubId: ', check.githubId);
 
-    /*
+    
     var checkUpdateResponse;
     try {
         checkUpdateResponse = await installationClient.patch(`/repos/${fullName}/check-runs/${check.githubId}`, checkObj);
@@ -215,7 +215,7 @@ const createCheck = async (req, res) => {
         function: "createCheckRunObj"});
         return res.json({success: false, error: 'Error Creating Check Content'});
     }
-    */
+    
     
 
     return res.json({success: true, result: check});

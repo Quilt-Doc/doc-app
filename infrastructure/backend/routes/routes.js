@@ -237,6 +237,9 @@ router.post('/tokens/delete', authorizationMiddleware.tokenMiddleware, tokenCont
 const checkController = require('../controllers/CheckController');
 router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, checkController.createCheck);
 
+const emailVerifyController = require('../controllers/authentication/EmailVerifyController');
+router.get('/verify/:verifyEmailHash', emailVerifyController.verifyEmail);
+
 /*
     const pullRequestController = require('../controllers/unused/PullRequestController');
     router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pullRequestController.createPullRequest);
