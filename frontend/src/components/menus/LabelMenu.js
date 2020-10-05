@@ -53,7 +53,7 @@ class LabelMenu extends React.Component {
     searchTags = () => {
 
         const { tags } = this.props;
-        const search = this.input.value;
+        const search = this.input ? this.input.value : "";
 
         if (search === "") {
             this.reset();
@@ -67,11 +67,10 @@ class LabelMenu extends React.Component {
         const { setTags, tags } = this.props;
 
         let ids = setTags.map(tag => tag._id)
-
         let currentTags = setTags.slice(0, 9);
-
         if (setTags.length < 9) {
-            const filtered = tags.filter(tag => !ids.includes(tag._id)).slice(0, 9 - setTags.length);
+            let filtered = tags.filter(tag => !(ids.includes(tag._id)))
+            filtered = filtered.slice(0, 9 - setTags.length);
             currentTags = [...currentTags, ...filtered];
         }
 
@@ -79,14 +78,14 @@ class LabelMenu extends React.Component {
     }
 
     createTag = async () => {
-        const { createTag, match, attachTag, setTags } = this.props;
+        const { createTag, match, attachTag, setTags, form } = this.props;
         const { workspaceId } = match.params;
 
         this.setState({ loaded: false });
 
-        const tag = await createTag({label: this.input.value, workspaceId});
+        const tag = await createTag({label: this.input ? this.input.value : "", workspaceId});
 
-        await attachTag(tag._id);
+        await attachTag(tag);
 
         this.reset();
     }
@@ -98,12 +97,11 @@ class LabelMenu extends React.Component {
         const ids = setTags.map(tag => tag._id);
         const isIncluded = ids.includes(tag._id);
 
-        const item = form ? tag._id : tag;
 
         if (isIncluded) {
-            removeTag(item);
+            removeTag(tag);
         } else {
-            attachTag(item);
+            attachTag(tag);
         }
     }
 
@@ -139,23 +137,28 @@ class LabelMenu extends React.Component {
     }
 
     renderColor = (tag) => {
-        return tag.color < this.colors.length ? this.colors[tag.color] :
-            this.colors[tag.color - Math.floor(tag.color/this.colors.length) * this.colors.length];
+        let colors = ['#5352ed', '#ff4757', '#20bf6b','#1e90ff', '#ff6348', 
+            '#e84393', '#1e3799', '#b71540', '#079992'];
+
+         return tag.color < colors.length ? colors[tag.color] : 
+            colors[tag.color - Math.floor(tag.color/colors.length) * colors.length];
     }
 
     renderListItems(){
-        const { setTags } = this.props;
+        //console.log("HERE LOADED LIST ITEMS");
+        const { setTags, tags } = this.props;
         const { currentTags, position } = this.state;
-
+        
+        console.log("SET TAGS", setTags);
+        
         const selectedLabels = setTags.map(tag => tag.label);
-
-        return currentTags.map((tag, i) => {
+        let contentJSX = currentTags.map((tag, i) => {
             let isSelected = selectedLabels.includes(tag.label);
-
+            
             let color = this.renderColor(tag);
             let border = position === i ? `1px solid ${color}` : '';
             let shadow = position === i ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :'';
-            
+           
             return(
                 <ListItem 
                     onClick = {(e) => { e.preventDefault(); this.handleSelect(tag)}} 
@@ -172,13 +175,27 @@ class LabelMenu extends React.Component {
                 </ListItem>
             )
         })
+
+        const value = this.input ? this.input.value : "";
+        const labels = tags.map(tag => tag.label);
+        const canCreate = (!labels.includes(value) && value !== "");
+
+        if (canCreate) {
+            contentJSX.push(
+                <ListCreate onClick = {() => {this.createTag()}}>
+                    {`Create "${value}"`}
+                </ListCreate>
+            )
+        }
+            
+        return contentJSX;
     }
 
     openMenu(e){
         e.preventDefault()
         document.addEventListener('mousedown', this.handleClickOutside, false);
-        this.setState({ open: true });
         this.reset();
+        this.setState({ open: true });
     }
 
     closeMenu(){
@@ -207,18 +224,18 @@ class LabelMenu extends React.Component {
     renderListContainer = () => {
         const { loaded } = this.state;
         const { tags } = this.props;
-        const labels = tags.map(tag => tag.label);
-        const canCreate = (!labels.includes(this.input.value) && this.input.value !== "");
-        return (
-            <ListContainer>
-                { loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
-                { canCreate &&
-                    <ListCreate onClick = {() => {this.createTag()}}>
-                        {`Create "${this.state.create}"`}
-                    </ListCreate>
-                }
-            </ListContainer>
-        )
+        const value = this.input ? this.input.value : "";
+        if (value !== "" || tags.length > 0) {
+            return (
+                <ListContainer>
+                    { loaded ?  this.renderListItems() : <LoaderContainer><MoonLoader size = {12}/></LoaderContainer>}
+                </ListContainer>
+            )
+        } else {
+            return (
+                <Placeholder>No tags in workspace. Type to create!</Placeholder>
+            )
+        }
     }
 
     renderSearchContainer = () => {
@@ -273,7 +290,7 @@ class LabelMenu extends React.Component {
                     active = {open}
                 >
                     <RiAddLine />
-                </AddButton> :
+                </AddButton>
                 <CSSTransition
                     in = {open}
                     unmountOnExit
@@ -287,7 +304,7 @@ class LabelMenu extends React.Component {
                         flip = {flip}
                         form = {form}
                     >
-                        {this.input && this.renderListContent(flip)}
+                        {this.renderListContent(flip)}
                     </Container>
                 </CSSTransition>
             </MenuContainer>
@@ -297,7 +314,7 @@ class LabelMenu extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    let {tags} = state;
+    let { tags } = state;
     return {
        tags: Object.values(tags)
     }
@@ -318,7 +335,7 @@ const AddButton = styled.div`
     align-items: center;
     justify-content: center;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "white"};
     &:hover {
         background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
     }
@@ -336,9 +353,9 @@ const Container = styled.div`
     font-size: 1.4rem;
     z-index: 3;
     background-color: white;
-    bottom:${props => props.flip[0] ? `${props.flip[1]}px` : ""};
-    top: ${props => !props.flip[0] ? `${props.flip[1]}px` : ""};
-    margin-left: ${props => props.form ? "" : "-16.8rem"};
+    ${props => (props.form && props.flip[0]) ? `bottom: ${props.flip[1]}px` : ""};
+    ${props => (props.form && !props.flip[0]) ? `top: ${props.flip[1]}px` : ""};
+    margin-top: ${props => !props.form ? "10px": ""};
 `
 
 const SearchbarContainer = styled.div`
@@ -365,6 +382,21 @@ const ListContainer = styled.div`
     display: flex;
     flex-direction: column;
     padding: 1rem;
+`
+
+const LoaderContainer = styled.div`
+    height: 10rem;
+`
+
+const Placeholder = styled.div`
+    height: 10rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #172A4E;
+    font-weight: 500;
+    opacity: 0.7;
+    font-size: 1.3rem;
 `
 
 const ListItem = styled.div`

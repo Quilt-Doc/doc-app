@@ -20,7 +20,8 @@ export default (state = {}, action) => {
         case EDIT_TAG:
             return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_TAGS:
-            return  { ..._.mapKeys(action.payload, '_id') };
+            console.log("RETRIEVE TAGS", { ..._.mapKeys(action.payload, '_id') })
+            return  _.mapKeys(action.payload, '_id');
         default:
             return state
     }

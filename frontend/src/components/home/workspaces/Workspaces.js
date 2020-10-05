@@ -76,7 +76,7 @@ class Workspaces extends Component {
         workspaces = workspaces.filter(space => space.setupComplete);
         return workspaces.map(space => {
             return (
-                <Space to = {`/workspaces/${space._id}`}>
+                <Space to = {`/workspaces/${space._id}/dashboard`}>
                     <WorkspaceDetail>
                         <WorkspaceIcon>{space.name[0]}</WorkspaceIcon>
                         <WorkspaceName>{space.name}</WorkspaceName>
@@ -181,6 +181,9 @@ const Space = styled(Link)`
     outline: none;
     color: white;
     margin-bottom: 2rem;
+    &:last-of-type {
+        margin-bottom: 10rem;
+    }
 `
 
 

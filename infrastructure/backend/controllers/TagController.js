@@ -139,7 +139,7 @@ retrieveTags = async (req, res) => {
 
     let returnedTags;
     try {
-        returnedTags = await query.lean.exec();
+        returnedTags = await query.lean().exec();
     } catch (err) {
         await logger.error({source: 'backend-api',
                                 message: err,

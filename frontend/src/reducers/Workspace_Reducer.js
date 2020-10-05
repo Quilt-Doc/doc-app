@@ -9,6 +9,21 @@ import {
 import _ from 'lodash';
 
 
+const merge = (state, payload) => {
+    state = {...state};
+    payload.map(item => {
+        const { _id } = item;
+        if (_id in state) {
+            const currentItem = state[item._id];
+            state[_id] = {...currentItem, ...item};
+        } else {
+            state[_id] = item;
+        }
+    });
+    
+    return state;
+}
+
 // NEED TO UPDATE CURRENT WORKSPACE ON WORKSPACE CHANGE
 export default (state = {}, action) => {
     switch (action.type) {
@@ -19,7 +34,7 @@ export default (state = {}, action) => {
         case DELETE_WORKSPACE:
             return _.omit(state, action.payload._id); 
         case EDIT_WORKSPACE:
-            return _.merge({...state}, {[action.payload._id]: action.payload});
+            return merge(state, [action.payload]);
         case RETRIEVE_WORKSPACES:
             return { ..._.mapKeys(action.payload, '_id') };
         default: 

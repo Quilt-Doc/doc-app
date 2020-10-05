@@ -125,17 +125,24 @@ const makeMapStateToProps = () => {
     const mapStateToProps = (state, ownProps) => {
         let {workspaceId} = ownProps.match.params;
         let {documents, auth, workspaces, references} = state;
-        
+
+        const workspace = workspaces[workspaceId];
+
         const rootDocument = Object.values(documents).filter(document => document.root)[0];
         documents = getChildDocuments({parent: rootDocument, documents});
-        const rootReference = Object.values(references).filter(reference => reference.path === "")[0];
+        
+        const rootReference = Object.values(references).filter(
+            reference => 
+                (reference.path === "" 
+                    && reference.repository._id === workspace.repositories[0]._id)
+            )[0];
 
         return {
             rootReference,
             rootDocument,
             documents,
             user: auth.user,
-            workspace: workspaces[workspaceId],
+            workspace
         }
     }
 

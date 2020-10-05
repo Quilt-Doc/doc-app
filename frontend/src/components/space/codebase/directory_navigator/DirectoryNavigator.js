@@ -2,13 +2,13 @@ import React from 'react';
 
 //styles 
 import styled from "styled-components"
-import "react-loader-spinner/dist/loader/css/react-spinner-loader.css"
+import chroma from 'chroma-js';
 
 //components
 import DirectoryItem from './DirectoryItem';
 import Loader from 'react-loader-spinner'
 import ReferenceInfo from '../reference_info/ReferenceInfo';
-
+import RepositoryMenu from '../../../menus/RepositoryMenu';
 //loader
 import { Oval } from 'svg-loaders-react';
 
@@ -24,7 +24,9 @@ import { makeFilterCurrentReference, makeGetCurrentReference, makeGetReferenceDo
 import { connect } from 'react-redux';
 
 //icons
-import {GoFileCode} from 'react-icons/go'
+import {RiEdit2Line} from 'react-icons/ri'
+import { FiChevronDown } from 'react-icons/fi';
+
 
 // component that is used to navigate through directories in codebase 
 // can view (edit) tags, child files/folders, associated documents, path, etc
@@ -33,6 +35,7 @@ class DirectoryNavigator extends React.Component {
         super(props)
         this.state = {
             loaded: false,
+            edit: false
         }
     }
 
@@ -70,7 +73,7 @@ class DirectoryNavigator extends React.Component {
         return(
             <LoaderContainer>
                 <Oval
-                    stroke="#E0E4E7"
+                    stroke="#d9d9e2"
                 />
             </LoaderContainer>
         )
@@ -136,7 +139,7 @@ class DirectoryNavigator extends React.Component {
     render() {
         const { currentRepository, currentReference, documents, match} = this.props;
         const { referenceId } = match.params;
-        const { loaded } = this.state;
+        const { loaded, edit } = this.state;
         if (!referenceId){
             referenceId = ""
         }
@@ -145,13 +148,19 @@ class DirectoryNavigator extends React.Component {
                 { (loaded && currentRepository && currentReference && documents) ?
                         <Background>
                             <Top>
-                                <Header>
-                                    {this.renderRepoName()}
-                                </Header>
+                                <RepositoryMenu repoName = {this.renderRepoName()}/>
+                                <Toolbar>
+                                <Button active = {edit}
+                                    onClick = {() => {this.setState({edit: !this.state.edit})}}
+                                >
+                                    <RiEdit2Line/>
+                                </Button>
+                                </Toolbar>
                             </Top>
                             <Container>
                                 <Content>
                                     <ReferenceInfo
+                                        edit = {edit}
                                         currentRepository = {currentRepository}
                                         currentReference = {currentReference}
                                         documents = {documents}
@@ -178,7 +187,7 @@ class DirectoryNavigator extends React.Component {
 const makeMapStateToProps = () => {
     // memoize current reference selection, extracting the documents of the current reference
     // and filtering the current reference from all the references
-    const getCurrentReference = makeGetCurrentReference();
+    //const getCurrentReference = makeGetCurrentReference();
     const getReferenceDocuments = makeGetReferenceDocuments();
     const filterCurrentReference = makeFilterCurrentReference();
     
@@ -186,10 +195,10 @@ const makeMapStateToProps = () => {
         let { repositoryId, referenceId } = ownProps.match.params;
         let { references, documents, repositories } = state;
 
-        let currentReference = getCurrentReference({referenceId, references});
+        let currentReference = references[referenceId];
         documents = getReferenceDocuments({documents, currentReference});
         references = filterCurrentReference({referenceId, references});
-        console.log("REPOSITORIES", repositories);
+
         return {
             currentRepository: repositories[repositoryId],
             documents,
@@ -204,18 +213,38 @@ const makeMapStateToProps = () => {
 export default connect(makeMapStateToProps, { retrieveReferences, 
     retrieveDocuments, getRepository })(DirectoryNavigator);
 
+const Toolbar = styled.div`
+    margin-left: auto;
+    padding-right: 4rem;
+`
+
+const Button = styled.div`
+    &:last-of-type {
+        margin-right: 0rem;
+    }
+    margin-right: 1.3rem;
+    width: 3rem;
+	height: 3rem;
+    display: flex;
+    font-size: 2.4rem;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 0;
+    border-radius: 0.3rem;
+    &:hover {
+        background-color:  ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
+    }
+    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
+    cursor: pointer;
+`
+
 const Content = styled.div`
     width: 80%;
     max-width: 110rem;
     min-width: 80rem;
 `
-/*
-display: flex;
-flex-direction: column;
-width: calc(100vw - 10.2rem);
-margin-top: 2rem;
-justify-content: center;
-*/
+
 const Container = styled.div`
     display: flex;
     flex-direction: column;
@@ -225,24 +254,15 @@ const Container = styled.div`
 `
 
 const LoaderContainer = styled.div`
-    height: 30rem;
+    height: 100%;
     width: 100%;
     margin-left: 0.2rem;
     display: flex;
-`
-
-const Top = styled.div`
-    display: flex;
+    justify-content: center;
     align-items: center;
 `
 
-const Header = styled.div`
-    font-size: 1.1rem;
-    font-weight: 400;
-    display: inline-flex;
-    border-bottom: 2px solid #172A4E;
-    height: 2.8rem;
-    padding-right: 3.5rem;
+const Top = styled.div`
     display: flex;
     align-items: center;
 `

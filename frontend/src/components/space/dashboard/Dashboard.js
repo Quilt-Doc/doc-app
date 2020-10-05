@@ -19,10 +19,6 @@ const Dashboard = () => {
             <LeftContainer>
                 <Top>
                     <Header>DASHBOARD</Header>
-                    {/*
-                    <NavbarElement>
-                        <RiPencilLine/>
-                    </NavbarElement>*/}
                 </Top>
                 <ContentContainer>
                     <Team/>

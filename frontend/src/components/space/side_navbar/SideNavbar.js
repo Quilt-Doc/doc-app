@@ -36,6 +36,7 @@ class SideNavbar extends React.Component {
         const { workspaceId } = match.params;
 
         const repositoryId = repositories[0]._id;
+        console.log("ROOTREFERENCE", rootReference);
         const referenceId = rootReference._id;
         
         return `/workspaces/${workspaceId}/repository/${repositoryId}/dir/${referenceId}`;
@@ -100,7 +101,7 @@ class SideNavbar extends React.Component {
     render(){
         return (
             <SideNavbarContainer>
-                <WorkspaceIcon>P</WorkspaceIcon>
+                <WorkspaceIcon to = {"/workspaces"}>P</WorkspaceIcon>
                 {this.renderTopSection()}
                 {this.renderBottomSection()}
                 <CreateButton/>
@@ -192,39 +193,7 @@ const NavbarIcon = styled(Link)`
     color: white;
 `
 
-const NavbarIcon2 = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 5.5rem;
-    width: 100%;
-    font-size: 2.1rem;
-    font-weight: 500;
-    /*background-color:${props => props.active ? '#464c5d' : '#3b404f'};*/
-    cursor: pointer;
-    &:hover {
-        background-color:#464c5d;
-    }
-    margin-top: auto;
-    transition: background-color 0.1s ease-in;
-    border-top: 1px solid #19e5be;
-    color: white;
-`
-
-const WorkspaceDetail = styled.div`
-    display: flex;
-    align-items: center;
-    margin-top: 1rem;
-    margin-bottom: 2rem;
-    &:hover {
-        background-color: #414858;
-    }
-    padding:1rem 2rem;
-    cursor: pointer;
-`
-
-
-const WorkspaceIcon = styled.div`
+const WorkspaceIcon = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -234,4 +203,12 @@ const WorkspaceIcon = styled.div`
     border-radius: 0.3rem;
     font-size: 1.3rem;
     margin-bottom: 1.3rem;
+    border: none;
+    color: white;
+    text-decoration: none;
+    &:hover {
+        background-color: #7a8feb;
+    }
+    transition: background-color 0.1s ease-in;
+    cursor: pointer;
 `

@@ -45,12 +45,14 @@ class Space extends React.Component {
 
     // loads the resources needed for the workspace
     async componentDidMount(){
-        const { retrieveDocuments, getWorkspace, match } = this.props;
+        const { retrieveDocuments, retrieveTags, getWorkspace, match } = this.props;
         const { workspaceId } = match.params;
 
         await Promise.all([
             // get the workspace from workspaceId
             getWorkspace(workspaceId),
+            // get the tags of the workspace
+            retrieveTags({workspaceId}),
             // retrieve the root document of the workspace and clear on root retrieval
             retrieveDocuments({workspaceId, root: true, minimal: true}, true)
         ])
@@ -139,13 +141,10 @@ class Space extends React.Component {
 const mapStateToProps = (state, ownProps) => {
     let { documents, workspaces, references, auth: { user } } = state;
     let { workspaceId } = ownProps.match.params;
-    
-    const rootDocument = Object.values(documents).filter(document => document.root)[0];
-    const rootReference = Object.values(references).filter(reference => reference.path === "")[0];
+
+    const workspace = workspaces[workspaceId];
 
     return {
-        rootReference,
-        rootDocument,
         workspace: workspaces[workspaceId],
         user
     }

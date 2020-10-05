@@ -38,7 +38,7 @@ body {
 
 .selected-code {
   background-color: rgba(25, 229, 190, 0.05) !important;
-  border-left: 1.5px solid #19E5BE !important;
+  border-left: 2px solid #19E5BE !important;
   /*box-shadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;*/
 }
 

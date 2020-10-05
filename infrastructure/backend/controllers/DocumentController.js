@@ -443,7 +443,6 @@ deleteDocument = async (req, res) => {
 
     // since delete many does not return documents, but we only need ids, we can use previous extracted deletedDocuments
     finalResult.deletedDocuments = deletedDocuments;
-    console.log("FINAL RESULT", finalResult);
     return res.json({success: true, result: finalResult});
 }
 
@@ -546,8 +545,7 @@ testRoute = async (req, res) => {
 
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
-    console.log("ENTERED EDIT DOCUMENT");
-    const { title, markup, repositoryId, image, content } = req.body;
+    const { title, markup, referenceIds, repositoryId, image, content } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
@@ -582,7 +580,7 @@ editDocument = async (req, res) => {
     if (checkValid(repositoryId)) {
         update.repository = repositoryId
         selection += " repository";
-        population += "repository";
+        population += " repository";
     }
 
     if (checkValid(image)) {
@@ -593,6 +591,12 @@ editDocument = async (req, res) => {
     if (checkValid(content)) {
         update.content = content;
         selection += " content";
+    }
+
+    if (checkValid(referenceIds)){
+        update.references = referenceIds.map(refId => ObjectId(refId));
+        selection += " references";
+        population += " references";
     }
 
     try {
@@ -668,7 +672,7 @@ retrieveHelper = async (body, req) => {
 retrieveDocuments = async (req, res) => {
 
     let { root, documentIds, referenceIds, limit, skip, minimal, fill } = req.body;
-
+    console.log("PARAMS", req.body);
     // use helper above to retrieve queried documents
     let response = await retrieveHelper({ root, documentIds, referenceIds, limit, skip, minimal }, req);
     
@@ -676,9 +680,10 @@ retrieveDocuments = async (req, res) => {
     if (!response.success)   return res.json(response);
 
     let returnedDocuments = response.result;
-
+    console.log("RETURNED DOCS", returnedDocuments);
     // if queried documents are specific to docIds but we want to fill to limit, query the rest
     if (fill && checkValid(documentIds) && returnedDocuments.length < limit) {
+        console.log("ENTERED HERE");
         let secondResponse = await retrieveHelper({notInDocumentIds: documentIds,  referenceIds, limit: limit - returnedDocuments.length, skip, minimal }, req);
         if (!secondResponse.success)  return res.json(secondResponse);
         let moreDocuments = secondResponse.result;

@@ -139,7 +139,7 @@ retrieveReferences = async (req, res) => {
         if (reference.path === "") {
             regex = new RegExp(`^([^\/]+)?$`);
         } else {
-            let refPath = escapeRegex(reference.path);
+            let refPath = escapeRegExp(reference.path);
             regex = new RegExp(`^${refPath}(\/[^\/]+)?$`);
         }
 
@@ -313,10 +313,9 @@ deleteReference = async (req, res) => {
 
 // merge reference with existing reference
 attachReferenceTag = async (req, res) => {
-
-    const referenceId = req.referenceObj._id.toString();
-    const tagId = req.tagObj._id.toString();
-
+    const { referenceId, tagId } = req.params;
+    //const referenceId = req.referenceObj._id.toString();
+    //const tagId = req.tagObj._id.toString();
 	let update = {}
 	update.tags = ObjectId(tagId);
     
@@ -328,7 +327,7 @@ attachReferenceTag = async (req, res) => {
 
     let returnedReference;
     try {
-        returnedReference = query.exec();
+        returnedReference = await query.exec();
     } catch (err) {
         await logger.error({source: 'backend-api',
                                 message: err,
@@ -337,9 +336,7 @@ attachReferenceTag = async (req, res) => {
 
         return res.json({success: false, error: "attachReferenceTag Error: error executing tag update query", trace: err});
     }
-    
     return res.json({success: true, result: returnedReference});
-
 }
 
 
@@ -360,7 +357,7 @@ removeReferenceTag = async (req, res) => {
 
     let returnedReference;
     try {
-        returnedReference = query.exec();
+        returnedReference = await query.lean().exec();
     } catch (err) {
         await logger.error({source: 'backend-api',
                                 message: err,
@@ -369,7 +366,6 @@ removeReferenceTag = async (req, res) => {
 
         return res.json({success: false, error: "removeReferenceTag Error: error executing tag update query", trace: err});
     }
-
     return res.json({success: true, result: returnedReference});
 }
 

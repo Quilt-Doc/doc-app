@@ -96,14 +96,15 @@ class Search extends Component {
     } 
 
     renderSearchResults = () => {
-        const { results, match } = this.props;
+        const { results, match, setSearch } = this.props;
         const { workspaceId } = match.params;
         if (results.length > 0) {
             return results.map(result => {
                 if (result.isDocument) {
                     return (
-                        <SearchResult onClick = {() => 
-                            history.push(`/workspaces/${workspaceId}/document/${result._id}`)}
+                        <SearchResult onClick = {() => {
+                            setSearch(false);
+                            history.push(`/workspaces/${workspaceId}/document/${result._id}`)}}
                         >
                             <IconContainer>
                             <RiFileList2Line  style = {{

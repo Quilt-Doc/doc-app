@@ -8,9 +8,12 @@ import chroma from 'chroma-js';
 //components
 import Annotation from './Annotation';
 import TextareaAutosize from 'react-textarea-autosize';
-import Loader from 'react-loader-spinner'
 import ReferenceInfo from '../reference_info/ReferenceInfo';
 import { CSSTransition } from 'react-transition-group';
+import RepositoryMenu from '../../../menus/RepositoryMenu';
+
+//loader
+import { Oval } from 'svg-loaders-react';
 
 //actions
 import { retrieveSnippets, createSnippet, editSnippet, deleteSnippet } from '../../../../actions/Snippet_Actions'
@@ -33,7 +36,7 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import _ from 'lodash';
 
 //icons
-import { RiScissorsLine } from 'react-icons/ri';
+import { RiEdit2Line, RiScissorsLine } from 'react-icons/ri';
 
 //prism
 import Prism from 'prismjs';
@@ -45,6 +48,7 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
+import { remove } from 'js-cookie';
 
 Prism.languages.python = Prism.languages.extend('python', {})
 Prism.languages.javascript = Prism.languages.extend('javascript', {})
@@ -72,6 +76,8 @@ class ReferenceEditor extends Component {
             activatedSnippet: {},
             //checks whether the component is ready to render properly 
             loaded: false,
+            //checks whether the component is being edited in terms of attachments
+            edit: false
         }
 
         // contains all the lines that are linked to a snippet (maps from line number to the line)
@@ -82,6 +88,8 @@ class ReferenceEditor extends Component {
         this.annotations = {};
         // css class identifier that caused selected lines to be green
         this.selectionIdentifier = 'selected-code';
+
+        this.selectedItems = [];
     }
 
 
@@ -111,14 +119,14 @@ class ReferenceEditor extends Component {
 
         // selection is disabled on mount
         this.selection.disable();
-
+        
         // store all lines that belong to snippets with the associated snippet in this.lines
         this.storeSnippetLines();
-
+        
         // adds an event listener for when the down key is pressed
         // so that a snippet can be activated
         window.addEventListener('keydown', this.handleKeyDown, false);
-
+       
         // saves all relevant data to local state
         this.setState({fileContents, allLinesJSX, loaded: true});
     }
@@ -150,14 +158,32 @@ class ReferenceEditor extends Component {
 
         const selectionIdentifier = this.selectionIdentifier;
 
-        selection.on('start', ({inst, selected, oe}) => {
+        selection.on('start', ({inst, selected, oe, changed}) => {
             // clear the selection before starting a new selection
-            inst.clearSelection();
+            
             selected.map(item => item.classList.remove(selectionIdentifier));
-        }).on('move', ({changed: {removed, added}}) => {
+            inst.clearSelection();
+            //if (!this.state.selectionStart) this.setState({selectionStart: true});
+        }).on('move', ({inst, selected, changed: {removed, added}}) => {
+           
+           
             // on selection change, modify the added/removed appropriately
+            /*
+            this.selectedItems.map(item => {
+                if (removed.includes(item)){
+                    console.log("BRUBUA");
+                }
+            })*/
+            //this.selectedItems = [...this.selectedItems, ...added];
+            //this.selectedItems = this.selectedItems.filter(item => removed.includes(item));
             removed.map(item => item.classList.remove(selectionIdentifier));
             added.map(item => item.classList.add(selectionIdentifier));
+            inst.keepSelection();
+            if (added.length === selected.length) this.setState({first: added});
+        }).on('stop', ({inst}) => {
+            inst.keepSelection();
+            // The last event can be used to call functions like keepSelection() in case the user wants
+            // to select multiple elements.
         });
 
         return selection;
@@ -265,7 +291,7 @@ class ReferenceEditor extends Component {
     deselectLines = () => {
         let selectedLines = this.selection.getSelection()
         selectedLines.map(line => line.classList.remove(this.selectionIdentifier));
-        this.selection.clearSelection();
+        //this.selection.clearSelection();
     }
 
     
@@ -290,6 +316,7 @@ class ReferenceEditor extends Component {
         
         // tokenize
         const tokens = Prism.tokenize(fileContents, grammar);
+
         // push new line at end so last line is pushed always
         tokens.push("\n");
 
@@ -319,7 +346,7 @@ class ReferenceEditor extends Component {
                         </ColoredSpan>);
                 } else {
                     // otherwise just push the content (unhighlighted)
-                    currLineJSX.push({contentToken});
+                    currLineJSX.push(contentToken);
                 }
 
                 // we only want to push a line once its completed... aka don't push the last
@@ -331,7 +358,7 @@ class ReferenceEditor extends Component {
                 }
             });
         })
-            
+        
         return allLinesJSX
     }
 
@@ -456,7 +483,7 @@ class ReferenceEditor extends Component {
             lineJSX = this.wrapLine(lineJSX, i, isSnippet);
             isSnippet ? snippetJSX.push(lineJSX) : codeJSX.push(lineJSX);
 
-            if (i == snippet.start + snippet.code.length - 1){
+            if (isSnippet && i == snippet.start + snippet.code.length - 1){
                 codeJSX.push(this.renderSnippet(snippetJSX, snippet));
             }
         });
@@ -469,6 +496,10 @@ class ReferenceEditor extends Component {
 
     // wraps each code line with a functional wrapper
     wrapLine = (lineJSX, i, isSnippet) => {
+        if (lineJSX.length === 1) {
+            if (lineJSX[0] === "") lineJSX = "     ";
+        }
+
         return ( 
             < WrapContainer
                 // hover activates snippet on mouse enter
@@ -481,11 +512,11 @@ class ReferenceEditor extends Component {
                 // adds the line node to the this.lines declaration if the line is included in a snippet
                 ref = {node => {if (this.lines[i]) this.lines[i].node = node; }}
             >
-                <Linenumber>{i}</Linenumber>
+                <Linenumber>{i + 1}</Linenumber>
                 <Wrapper 
                     // renders color and border dependent on whether the line is a snippet and currently activated
                     color = {this.lines[i] ? chroma("#5B75E6").alpha(isSnippet ? 0.07 : 0.04) : "#ffffff"}   
-                    border = {this.lines[i] ?  `1.5px solid #5B75E6` : "1.5px solid #ffffff"} 
+                    border = {this.lines[i] ?  `2px solid #5B75E6` : "2px solid #ffffff"}
                     className = {'codeline'}
                 >
                     <CodeLine>
@@ -598,12 +629,16 @@ class ReferenceEditor extends Component {
         const { creating } = this.state;
 
         const code = this.renderCode();
+        
         const annotations = this.renderAnnotations();
+
+        console.log(this.selection.getSelection());
+        const isSelecting = this.selection.getSelection().length > 0;
 
         return (
                 <>
                     {code} 
-                    {creating &&
+                    {isSelecting &&
                         <MiddleContainer>
                             {this.renderAddButton()}
                         </MiddleContainer>
@@ -644,42 +679,74 @@ class ReferenceEditor extends Component {
         this.storeSnippetLines();
     }
 
+    renderRepoName = () => {
+        const { currentRepository: { fullName }} = this.props;
+        return fullName.split('/').slice(1).join("/").toUpperCase();
+    }
+
+    renderRefName = () => {
+        const { currentReference: {name} } = this.props;
+        return name;
+    }
+
+
+    renderLoader = () => {
+        return(
+            <LoaderContainer>
+                <Oval
+                    stroke="#d9d9e2"
+                />
+            </LoaderContainer>
+        )
+    }
+
+
     render() {
-        const { loaded, canSelect } = this.state;
+        const { loaded, canSelect, edit } = this.state;
         const { currentRepository, currentReference, documents } = this.props;
-        if (loaded) {
+        /*toggleSelection = {this.toggleSelection}
+                                        canSelect = {canSelect}*/
+        if (loaded && currentRepository && currentReference && documents) {
             return (
                 <Background>
-                        <ReferenceInfo
-                            currentRepository = {currentRepository}
-                            currentReference = {currentReference}
-                            documents = {documents}
-                            referenceEditor = {true}
-                            toggleSelection = {this.toggleSelection}
-                            canSelect = {canSelect}
-                        />
-                        <EditorContainer>
-                            <ListToolbar> 
-                                <ListName><b>8</b>&nbsp; documents</ListName>
-                                <ListName><b>15</b>&nbsp; snippets</ListName>
-                            </ListToolbar>
-                            <CodeContainer >
-                                {this.renderContent()}
-                            </CodeContainer>
-                        </EditorContainer>
+                    <Top>
+                        <RepositoryMenu repoName = {this.renderRepoName()}/>
+                        <Toolbar>
+                            <Button active = {edit}
+                                onClick = {() => {this.setState({edit: !this.state.edit})}}
+                            >
+                                <RiEdit2Line/>
+                            </Button>
+                            <Button 
+                                active = {canSelect}
+                                onClick = {() => {this.toggleSelection()}}
+                            >
+                                <RiScissorsLine/>
+                            </Button>
+                        </Toolbar>
+                    </Top>
+                    <Container>
+                        <Content>
+                            <ReferenceInfo
+                                edit = {edit}
+                                currentRepository = {currentRepository}
+                                currentReference = {currentReference}
+                                documents = {documents}  
+                            />
+                            <EditorContainer>
+                                <ListToolbar onClick = {() => console.log(this.selection.getSelection())}> 
+                                    {this.renderRefName()}
+                                </ListToolbar>
+                                <CodeContainer>
+                                    {this.renderContent()}
+                                </CodeContainer>
+                            </EditorContainer>
+                        </Content>
+                    </Container>
                 </Background>
             );
         } else {
-            return <Container>
-                        <Loader
-                                type="ThreeDots"
-                                color="#5B75E6"
-                                height={50}
-                                width={50}
-                                //3 secs
-                        
-                            />
-                    </Container>
+            return this.renderLoader();
         }
     }
 }
@@ -725,6 +792,43 @@ const MiddleContainer = styled.div`
     position: relative;
 `
 
+const LoaderContainer = styled.div`
+    height: 100%;
+    width: 100%;
+    margin-left: 0.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+`
+
+const Content = styled.div`
+    width:85%;
+    max-width: 130rem;
+    min-width: 80rem;
+`
+
+const Button = styled.div`
+    &:last-of-type {
+        margin-right: 0rem;
+    }
+    margin-right: 1.3rem;
+    width: 3rem;
+	height: 3rem;
+    display: flex;
+    font-size: 2.4rem;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 0;
+    border-radius: 0.3rem;
+    &:hover {
+        background-color:  ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
+    }
+    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
+    cursor: pointer;
+`
+
+
 const Linenumber = styled.div`
     width: 3rem;
     font-size: 1.2rem;
@@ -753,17 +857,23 @@ const ListName = styled.div`
 `
 
 const Background = styled.div`
-    background-color: #f7f9fb;
     min-height: 100%;
+    padding: 2.1rem;
     padding-bottom: 5rem;
+    background-color: #f6f7f9;
+`
+
+const Top = styled.div`
+    display: flex;
+    align-items: center;
 `
 
 const Container = styled.div`
-    padding-bottom: 4rem;
-    margin-top: 5rem;
-    margin-left: 8rem;
-    margin-right: 8rem;
-    margin-bottom: 5rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 2rem;
+    align-items: center;
 `
 
 const EditorContainer = styled.div`
@@ -773,8 +883,6 @@ const EditorContainer = styled.div`
     border-radius:0.4rem;
     min-width: 80rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    margin-left: 8rem;
-    margin-right: 8rem;
 `
 
 const CodeContainer = styled.div`
@@ -783,14 +891,23 @@ const CodeContainer = styled.div`
     border-radius: 0rem 0rem 0.4rem 0.4rem !important;
 `
 
-
 const ListToolbar = styled.div`
-    height: 4.5rem;
-    display: flex;
     align-items: center;
     background-color: white;
     border-radius: 0.4rem 0.4rem 0rem 0rem !important;
+    font-size: 1.5rem;
+    height: 4.5rem;
+    display: flex;
+    font-weight: 500;
+    align-items: center;
     border-bottom: 1px solid #EDEFF1;
+    padding: 0rem 2rem;
+`
+
+const Toolbar = styled.div`
+    margin-left: auto;
+    padding-right: 4rem;
+    display: flex;
 `
 
 const Overflow_Wrapper = styled.div`
@@ -854,7 +971,9 @@ const AddButton = styled.div`
     text-align: center;
     color: #19E5BE;
     border: 1.5px solid #19E5BE;
-    
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
 
     &:hover {

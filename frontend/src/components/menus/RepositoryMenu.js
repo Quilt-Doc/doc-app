@@ -15,6 +15,9 @@ import chroma from 'chroma-js';
 //components
 import { CSSTransition } from 'react-transition-group';
 
+//actions
+import { retrieveReferences } from '../../actions/Reference_Actions';
+
 //styles
 import styled from "styled-components";
 
@@ -49,16 +52,25 @@ class RepositoryMenu extends React.Component {
         }
     }
 
+    changeRepository = async (repo) => {
+        const { match, retrieveReferences } = this.props;
+        const { workspaceId } = match.params;
+        let references = await retrieveReferences({ workspaceId, repositoryId: repo._id, path: ""}, true);
+
+        const location = `/workspaces/${workspaceId}/repository/${repo._id}/dir/${references[0]._id}`;
+        history.push(location); 
+        this.closeMenu();
+    }
+
     renderListItems(){
         let {workspaceId} = this.props.match.params
         return this.props.repositories.map((repo, i) => {
-            const location = `/workspaces/${workspaceId}/repository/${repo._id}/dir`;
             return(
                 <ListItem 
-                    onClick = {() => {history.push(location); this.closeMenu()}} 
+                    onClick = {() => {this.changeRepository(repo)}} 
                 >
-                    <RiGitRepositoryLine style = {{marginRight: "0.7rem"}}/>
-                    {repo.fullName}
+                    <VscRepo style = {{marginRight: "0.7rem"}}/>
+                    <Title>{repo.fullName}</Title>
                 </ListItem>
             )
         })
@@ -82,24 +94,19 @@ class RepositoryMenu extends React.Component {
 
 
     render() {
-        let {repositoryId, workspaceId} = this.props.match.params;
         return(
             <MenuContainer >
-                  <SwitchButton active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
-                    <VscRepo style = {{
-                            marginRight: "0.5rem",
-                            fontSize: "1.7rem",
-                            marginTop: "0.1rem"
-                        }}/>
+                <Header  active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
                     {this.props.repoName}
                     <FiChevronDown 
                         style = {{
-                            marginLeft: "0.3rem",
-                            marginTop: "0.2rem",
-                            fontSize: "1.3rem"
+                            marginLeft: "3.5rem",
+                            marginRight: "0.5rem",
+                            marginTop: "0.3rem",
+                            fontSize: "1.45rem"
                         }}
                     />
-                </SwitchButton>
+                </Header>   
                 <CSSTransition
                     in={this.state.open }
                     enter = {true}
@@ -118,7 +125,6 @@ class RepositoryMenu extends React.Component {
             </MenuContainer>
         )
     }
-    
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -131,89 +137,26 @@ const mapStateToProps = (state, ownProps) => {
 
 
 
-export default withRouter(connect( mapStateToProps )(RepositoryMenu));
-
-const Title = styled.div`
-    font-size: 1.3rem;
-    margin-right: 0.3rem;
-    font-weight: 500;
-`
-
-
-
-const SwitchButton = styled.div`
-    display: flex;
-    align-items: center;
-    font-size: 1.2rem;
-    padding: 0rem 1rem;
-    border-radius: 0.4rem;
-    height: 3rem;
-    font-weight: 500;
-    opacity: ${props => props.active ? 1 : 0.9};
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
-    &:hover {
-        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
-    }
-    cursor: pointer;
-    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
-`
-
-
-
-const PageIcon = styled.div`
-    margin-right: 1.5rem;
-    display: flex;
-    align-items: center;
-    font-size: 1.5rem;
-   
-   /*color: white;*/
-    /*background-color: #4c5367;*/
-   /* opacity: 0.8;*/
-   padding: 0.5rem 1rem;
-    &:hover {
-        background-color: #F4F4F6;
-        
-    }
-    cursor: pointer;
-    border-radius: 0.3rem;
-    background-color: ${props => props.active ? "#F4F4F6" : ""};
-`
+export default withRouter(connect( mapStateToProps, {retrieveReferences} )(RepositoryMenu));
 
 const MenuContainer = styled.div`
 `
 
-
-const DropButton = styled.div`
-    width: 1.5rem;
-    height: 1.5rem;
-    margin-left: 0.6rem;
-    margin-top: 0.4rem;
-    border-radius: 0.3rem;
+const Header = styled.div`
+    font-size: 1.1rem;
+    font-weight: 400;
+    display: inline-flex;
+    border-bottom: 2px solid #172A4E;
+    height: 2.8rem;
     display: flex;
     align-items: center;
-    justify-content:  center;
     &:hover {
-        background-color: white;
+        background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
     }
-    font-size: 1rem;
-`
-
-const RepositoryButton = styled(Link)`
-    text-decoration: none;
-    background-color:#414758; /* ${chroma("#5B75E6").alpha(0.15)}; */
-    color: white;/*#5B75E6;*/
-    font-weight: 500;
-    padding: 0.8rem 0.9rem;
-    display: inline-flex;
-    border-radius: 0.3rem;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
-    align-items: center;
+    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
     cursor: pointer;
-    &: hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    }
-    height: 3.4rem;
-    letter-spacing: 1;
+    border-top-left-radius: 0.2rem;
+    border-top-right-radius: 0.2rem;
 `
 
 const Container = styled.div`
@@ -231,45 +174,6 @@ const Container = styled.div`
     margin-top: 0.5rem;
 `
 
-const SearchbarContainer = styled.div`
-    height: 5.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom:  1px solid #E0E4E7;
-`
-
-const SearchbarWrapper = styled.div`
-    width: 22rem;
-    height: 3.5rem;
-    border: 1px solid  #E0E4E7;
-    background-color: ${props => props.backgroundColor};
-    border: ${props => props.border};
-    border-radius: 0.4rem;
-    padding: 1.5rem;
-    align-items: center;
-    display: flex;
-`
-
-
-const Searchbar = styled.input`
-    width: 18rem;
-    margin-left: 0.9rem;
-    &::placeholder {
-        color: #172A4E;
-        opacity: 0.4;
-    }
-    &:focus {
-        background-color: white;
-    }
-    background-color: #F7F9FB;
-    border: none;
-    outline: none;
-    font-size: 1.4rem;
-    color: #172A4E;
-    
-`
-
 const HeaderContainer = styled.div`
     height: 3.5rem;
     display: flex;
@@ -281,22 +185,10 @@ const HeaderContainer = styled.div`
     border-bottom: 1px solid #E0E4E7;
 `
 
-const ListHeader = styled.div`
-    height: 3rem;
-  
-    padding: 1.5rem;
-    align-items: center;
-    display: flex;
-    font-size: 1.4rem;
-    opacity: 0.8;
-
-`
-
 const ListContainer = styled.div`
     display: flex;
     flex-direction: column;
     padding: 1rem;
-    padding-top: 0rem;
 `
 
 const ListItem = styled.div`
@@ -307,13 +199,12 @@ const ListItem = styled.div`
     padding: 1rem;
     display: flex;
     align-items: center;
-    
+    font-weight: 600;
     background-color: white;
     /*border: 1px solid #E0E4E7;*/
     &:hover {
         background-color: #F4F4F6;
     }
-   
     cursor: pointer;
     color: ${props => props.color};
     background-color: ${props => props.backgroundColor};
@@ -321,17 +212,12 @@ const ListItem = styled.div`
     box-shadow: ${props => props.shadow};
 `
 
-const ListCreate = styled.div`
-    height: 3.5rem;
-    border-radius: 0.4rem;
-    margin-bottom: 0.7rem;
-    background-color: #F7F9FB;
- 
-    color: #172A4E;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: ${props => props.shadow};
-    border-bottom: ${props => props.border};
+const Title = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 500;
+    width: 18rem;
+    font-size: 1.25rem;
 `

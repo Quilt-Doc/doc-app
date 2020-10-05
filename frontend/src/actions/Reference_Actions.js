@@ -19,14 +19,13 @@ export const searchReferences = (formValues) => async () => {
 
     const response = await api.post(`/references/${workspaceId}/search`, formValues);
     if (response.data.success == false) {
-        throw new Error("retrieveReferences Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     } else {
         return response.data.result;
     }
 }
 
 export const retrieveReferences = (formValues, passBack) => async dispatch => {
-    
     const workspaceId = formValues.workspaceId;
     if (!workspaceId) {
         throw new Error("retrieveReferences: workspaceId not provided");
@@ -37,6 +36,7 @@ export const retrieveReferences = (formValues, passBack) => async dispatch => {
         throw new Error("retrieveReferences Error: ", response.data.error.toString());
     }
     else {
+        console.log("RESULT", response.data.result);
         if (passBack) return response.data.result;
         dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });
     }
@@ -106,21 +106,21 @@ export const attachReferenceTag = (formValues) => async dispatch => {
     const workspaceId = formValues.workspaceId;
     const referenceId = formValues.referenceId;
     const tagId = formValues.tagId;
-
+    console.log("FORMVALUES TO ATTACH", formValues);
     if (!workspaceId) {
-        throw new Error("attachTag: workspaceId not provided");
+        throw new Error("attachReferenceTag: workspaceId not provided");
     }
     if (!referenceId) {
-        throw new Error("attachTag: referenceId not provided");
+        throw new Error("attachReferenceTag: referenceId not provided");
     }
     if (!tagId) {
-        throw new Error("attachTag: referenceId not provided");
+        throw new Error("attachReferenceTag: tagId not provided");
     }
-
+    console.log("STRING TO BE SENT", `/references/${workspaceId}/${referenceId}/attach_tag/${tagId}`);
     const response = await api.put(`/references/${workspaceId}/${referenceId}/attach_tag/${tagId}`);
 
     if (response.data.success == false) {
-        throw new Error("attachTag Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: EDIT_REFERENCE, payload: response.data.result });
@@ -133,7 +133,7 @@ export const removeReferenceTag = (formValues) => async dispatch => {
     const workspaceId = formValues.workspaceId;
     const referenceId = formValues.referenceId;
     const tagId = formValues.tagId;
-
+   
     if (!workspaceId) {
         throw new Error("removeTag: workspaceId not provided");
     }
@@ -150,6 +150,7 @@ export const removeReferenceTag = (formValues) => async dispatch => {
         throw new Error("removeTag Error: ", response.data.error.toString());
     }
     else {
+        console.log("RESPONSE OF REMOVAL HERE", response.data.result);
         dispatch({ type: EDIT_REFERENCE, payload: response.data.result });
     }
 }
