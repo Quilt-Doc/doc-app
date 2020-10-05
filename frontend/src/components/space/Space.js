@@ -169,5 +169,6 @@ const RightView = styled.div`
     /*height: calc(100vh - 5.5rem);*/
     z-index: 1;
     border-top-left-radius: 1.2rem;
+    height: 100vh;
     background-color: #f6f7f9;
 `

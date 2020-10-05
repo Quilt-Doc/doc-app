@@ -3,16 +3,18 @@ import PropTypes from 'prop-types';
 
 //styles 
 import styled from "styled-components"
+import chroma from 'chroma-js';
 
-const Annotation = ({ snippet, activateSnippet, active, annotation }) => {
+const Annotation = ({ snippet, activateSnippet, active }) => {
     // need to set css depending on if active
+    const { start, annotation, code } = snippet;
     return (
         <AnnotationCard 
             active = {active}
             onClick= {() => activateSnippet()}   
         >
-            <Header><Block>FS</Block> {`Lines ${snippet.start} - ${snippet.start + snippet.code.length - 1}`}
-                {active && <IconBorder></IconBorder>}
+            <Header><Creator>F</Creator> 
+                <Length>{`Lines ${start + 1} - ${start + code.length}`}</Length>
             </Header>
             <Note>
                 {annotation}
@@ -48,12 +50,12 @@ const AnnotationCard = styled.div`
     line-height: 1.8;
     letter-spacing: 0.2px;
     padding: 1.6rem 2rem;
-    border-radius: 0.2rem;
+    border-radius: 0.5rem;
     /* font-family: 'Source Sans Pro', sans-serif; */
     opacity: .4;
     cursor: text;
-    transition: opacity .1s ease;
-    margin-bottom: 1rem;
+    transition: opacity .1s ease-in;
+    margin-bottom: 1.5rem;
     font-weight: 400;
     background-color: ${props => props.active ? 'white' : ''};
     box-shadow: ${props => props.active ? 
@@ -61,7 +63,6 @@ const AnnotationCard = styled.div`
     opacity: ${props => props.active ? 1 : 0.4};
     word-wrap: break-word;
     cursor: pointer;
-    border-top: ${props => props.active ? "0.25rem solid #70EAE1" : "0.25rem solid transparent"};
 `
 
 const Header = styled.div`
@@ -77,15 +78,20 @@ const Note = styled.p`
     margin-bottom: 0px !important;
 `
 
-const Block = styled.div`
-    background-color: #5A75E6;
-    color: white;
-    height: 2rem;
-    width: 2rem;
+
+const Creator = styled.div`
+    height: 2.5rem;
+    width: 2.5rem;
+    background-color: ${chroma('#1e90ff').alpha(0.2)};
+    color:#1e90ff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
-    border-radius: 0.2rem;
-    margin-right: 1rem;
+    font-size: 1.4rem;
+    border-radius: 0.3rem;
+    font-weight: 500;
+`
+
+const Length = styled.div`
+    margin-left: auto;
 `

@@ -36,7 +36,7 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import _ from 'lodash';
 
 //icons
-import { RiEdit2Line, RiScissorsLine } from 'react-icons/ri';
+import { RiCheckFill, RiCloseFill, RiEdit2Line, RiScissorsLine } from 'react-icons/ri';
 
 //prism
 import Prism from 'prismjs';
@@ -134,6 +134,7 @@ class ReferenceEditor extends Component {
     // translate annotation pane when a different snippet is activated
     componentDidUpdate(_prevProps, prevState){
         const { activatedSnippet } = this.state;
+
         if (!_.isEmpty(activatedSnippet) && activatedSnippet.snippetId !== prevState.activatedSnippet.snippetId) {
             this.translateAnnotation();
         } 
@@ -192,9 +193,9 @@ class ReferenceEditor extends Component {
     // translates the annotation pane so that you can see the activated annotation + snippet pair
     translateAnnotation = () => {
         // extract relevant data from the activated snippet
+        console.log("ENTERED HEREE");
         const { activatedSnippet: {snippetId, line, throughKey} } = this.state;
         const annotation = this.annotations[snippetId];
-        
         // get the offset of the codetext (contains the syntax highlighted lines)
         const offset_codetext = document.getElementById('codeholder').offsetTop;
         // get the offset of the snippet from the codetext -- offset of snippet from top - offset of codetext
@@ -207,9 +208,15 @@ class ReferenceEditor extends Component {
         const offset_difference = -1 * (offset_annotation - offset_snippet);
 
         // save the translation
-        this.setState({ translateY: offset_difference })
+        //depends on the translation of the pane currently
+        this.setState({ translateY: offset_difference})
 
         // if the translation occurred through keydown -- scroll both the annotation and snippet into view
+        
+        if (snippetId === -1 && this.creationTextArea) {
+            setTimeout(() => this.creationTextArea.focus(), 500);
+        }
+
         if (throughKey) {
             scrollIntoView(ReactDOM.findDOMNode(annotation).parentNode, {
                 scrollMode: 'if-needed',
@@ -221,7 +228,7 @@ class ReferenceEditor extends Component {
     }
     
     // handles the key down to select the next snippet without mouse
-    handleKeyDown = (e) => {
+    handleKeyDown = (e) => {/*
         const { activatedSnippet: { snippetId }, canSelect } = this.state;
         const { snippets } = this.props;
 
@@ -237,7 +244,7 @@ class ReferenceEditor extends Component {
                 this.activateSnippet(this.lines[snippet.start], snippet._id, false, false, true);
                 window.addEventListener('mousedown', this.deactivateSnippetListener, false);
             }
-        }
+        }*/
     }
 
     // returns correct, next snippet in accordance to the previous snippet and which direction (down or up)
@@ -274,7 +281,7 @@ class ReferenceEditor extends Component {
     // toggles selection mode
     toggleSelection = () => {
         const {canSelect} = this.state;
-
+        
         if (canSelect) {
             // if selection mode is on, deselect the lines and disable selection
             this.deselectLines();
@@ -291,6 +298,7 @@ class ReferenceEditor extends Component {
     deselectLines = () => {
         let selectedLines = this.selection.getSelection()
         selectedLines.map(line => line.classList.remove(this.selectionIdentifier));
+        this.selection.clearSelection();
         //this.selection.clearSelection();
     }
 
@@ -388,6 +396,7 @@ class ReferenceEditor extends Component {
             }
         })
         this.lines = lines
+        this.setState({storing: true});
     }
 
     // begin the creation process by disabling selection and activating the creation annotation
@@ -395,7 +404,8 @@ class ReferenceEditor extends Component {
         e.preventDefault();
         e.stopPropagation();
         this.selection.disable();
-        this.activateSnippet({node: this.selection.getSelection()[0]}, -1, false, true, false);
+        const selectedLine =  this.selection.getSelection()[0];
+        this.activateSnippet({node: selectedLine.parentNode}, -1, false, true, false);
     }
 
     // render the addition button near the first line of selection
@@ -409,26 +419,20 @@ class ReferenceEditor extends Component {
         let { scrollTop } = document.getElementById("rightView");
 
         return(
-            <CSSTransition
-                in = {true}
-                appear = {true}
-                timeout = {150}
-                classNames = "dropmenu"
+            <AddButton
+                onMouseDown = {(e) =>  {this.startCreation(e)}}
+                top = {firstLineTop + scrollTop - codeTextOffsetTop - 20}
             >
-                <AddButton
-                    onMouseDown = {(e) =>  {this.startCreation(e)}}
-                    top = {firstLineTop + scrollTop - codeTextOffsetTop - 20}
-                >
-                    <RiScissorsLine  /> {/*style={{'margin-top': "0.9rem"}}*/}
-                </AddButton>
-            </CSSTransition>
+                <RiScissorsLine  /> {/*style={{'margin-top': "0.9rem"}}*/}
+            </AddButton>
         )
     }
 
     // activates the snippet so it becomes focused
     activateSnippet = (line, snippetId, hover, creating, throughKey) => {
-        const { activatedSnippet: { isActivated }, canSelect } = this.state;
-
+        const { activatedSnippet, canSelect } = this.state;
+        const isActivated = activatedSnippet.isActivated;
+        const activatedSnippetId = activatedSnippet.snippetId;
         // if selection mode is on, snippets can only activated during 
         // creation (aka the creation snippet/annotation itself)
         if (!canSelect || creating) {
@@ -461,14 +465,17 @@ class ReferenceEditor extends Component {
             if ((hover && !isActivated) || !hover)  state = {activatedSnippet: {}};
             // if the snippet is currently being created, we want to turn creating off and set the translation on the
             // annotation pane to 0
-            if (creating) {state.creating = false; state.translateY = 0;}
+            if (creating) {
+                state.creating = false; 
+                this.selection.enable();
+            }
             this.setState(state);
         }
     }
 
     // renders the code in the code text portion 
     renderCode = () => {
-        const { allLinesJSX, canSelect, activatedSnippet: { snippetId } } = this.state;
+        const { allLinesJSX, canSelect, activatedSnippet: { snippetId }, creating } = this.state;
         const { snippetsObject } = this.props;
 
         // checks whether there is a snippet and extracts snippet
@@ -488,7 +495,7 @@ class ReferenceEditor extends Component {
             }
         });
 
-        let classString = `codetext${canSelect ? ' marker-mode' : ''}`
+        let classString = `codetext${canSelect && !creating ? ' marker-mode' : ''}`
 
         return(<CodeText id = {'codeholder'} className = {classString}> {codeJSX} </CodeText>)
     }
@@ -496,6 +503,8 @@ class ReferenceEditor extends Component {
 
     // wraps each code line with a functional wrapper
     wrapLine = (lineJSX, i, isSnippet) => {
+        const { snippetsObject } = this.props;
+        const { canSelect } = this.state;
         if (lineJSX.length === 1) {
             if (lineJSX[0] === "") lineJSX = "     ";
         }
@@ -505,7 +514,9 @@ class ReferenceEditor extends Component {
                 // hover activates snippet on mouse enter
                 onMouseEnter = {() =>  {
                     if (this.lines[i]) {
-                        this.activateSnippet(this.lines[i], this.lines[i].snippetIds[0], true, false, false);
+                        const snippetStart = snippetsObject[this.lines[i].snippetIds[0]].start;
+                        const startLine = this.lines[snippetStart];
+                        this.activateSnippet(startLine, this.lines[i].snippetIds[0], true, false, false);
                     }
                 }}
                 key = {i}
@@ -514,10 +525,12 @@ class ReferenceEditor extends Component {
             >
                 <Linenumber>{i + 1}</Linenumber>
                 <Wrapper 
+                    id = {`codeline-${i}`}
                     // renders color and border dependent on whether the line is a snippet and currently activated
                     color = {this.lines[i] ? chroma("#5B75E6").alpha(isSnippet ? 0.07 : 0.04) : "#ffffff"}   
                     border = {this.lines[i] ?  `2px solid #5B75E6` : "2px solid #ffffff"}
                     className = {'codeline'}
+                    cursorType = {(!canSelect && this.lines[i])  ? "pointer" : ""}
                 >
                     <CodeLine>
                         {lineJSX}
@@ -532,10 +545,11 @@ class ReferenceEditor extends Component {
         return (
             <Snippet 
                 // click activates the snippet on mouse click
+                /*
                 onClick = {() => {
                     this.activateSnippet(this.lines[snippet.start], snippet._id, false, false, false);
                     window.addEventListener('mousedown', this.deactivateSnippetListener, false);
-                }}
+                }}*/
                 // hover deactivates snippet on mouse leave
                 onMouseLeave = {() =>  {this.deactivateSnippet(true, false)}} 
             >
@@ -559,11 +573,11 @@ class ReferenceEditor extends Component {
         snippets.map(snippet => {
             // add the create annotation before the first snippet annotatiion that starts after 
             // the new about-to-be snippet
-            if ( selectedLine && selectedLine.getAttribute('key') < snippet.start) {
+            if ( selectedLine && parseInt(selectedLine.id.split('-')[1]) < snippet.start) {
                 selectedLine = pushCreation(this.renderCreateAnnotation());
             }
             annotationsJSX.push(
-                this.renderAnnotation(snippet, activatedSnippet.snippetId = snippet._id)
+                this.renderAnnotation(snippet, activatedSnippet.snippetId === snippet._id)
             );
         });
         
@@ -585,18 +599,20 @@ class ReferenceEditor extends Component {
     // renders a single annotation card
     renderAnnotation = (snippet, active) => {
         return (
-            <Annotation 
-                key = {snippet._id}
-                active = {active}
+            <div
                 ref = {(node) => {this.annotations[snippet._id] = node}}
-                snippet = {snippet}
-                activateSnippet = {() => {
-                    this.activateSnippet(this.lines[snippet.start], snippet._id, 
-                        false, false, false);
-                    window.addEventListener('mousedown', this.deactivateSnippetListener, false);
-                }}
-                deactivateSnippet = {this.deactivateSnippet}
-            />
+            >
+                <Annotation 
+                    key = {snippet._id}
+                    active = {active}
+                    snippet = {snippet}
+                    activateSnippet = {() => {
+                        this.activateSnippet(this.lines[snippet.start], snippet._id, false, false, false);
+                        window.addEventListener('mousedown', this.deactivateSnippetListener, false);
+                    }}
+                    deactivateSnippet = {this.deactivateSnippet}
+                />
+            </div>
         )
     }
 
@@ -609,17 +625,25 @@ class ReferenceEditor extends Component {
                 ref={(node) => { this.annotations[-1] = node }}
             >
                 <StyledTextareaAutosize 
-                    autoFocus
                     minRows = {6}
                     placeholder="Add an annotation..."
                     ref={node => this.creationTextArea = node} 
                 />
                 <ButtonHolder>
-                    <CreateAnnotation onClick = {() => {this.createSnippet()}}>Create</CreateAnnotation>
+                    <CreateAnnotation onClick = {() => {this.createSnippet()}}>
+                        <RiCheckFill/>
+                    </CreateAnnotation>
                     <CancelAnnotation onClick = {() => {
                         this.deselectLines();
                         this.deactivateSnippet(false, true);
-                    }}>Cancel</CancelAnnotation>
+                    }}>
+                        <RiCloseFill
+                            style = 
+                            {{
+                                fontSize: "1.7rem"
+                            }}
+                        />
+                    </CancelAnnotation>
                 </ButtonHolder>
             </AnnotationCardInput>
         )
@@ -631,14 +655,14 @@ class ReferenceEditor extends Component {
         const code = this.renderCode();
         
         const annotations = this.renderAnnotations();
+    
 
-        console.log(this.selection.getSelection());
         const isSelecting = this.selection.getSelection().length > 0;
 
         return (
                 <>
                     {code} 
-                    {isSelecting &&
+                    {(isSelecting && !creating) &&
                         <MiddleContainer>
                             {this.renderAddButton()}
                         </MiddleContainer>
@@ -655,15 +679,23 @@ class ReferenceEditor extends Component {
         const { fileContents } = this.state;
         let {referenceId, workspaceId} = match.params
 
+        // extract the annotation typed by the user
+        let annotation = this.creationTextArea.value;
+        if (annotation === "") return alert("Please provide an annotation");
+
         //acquire the start from the selection, find all lines from start to endline
         let selectedLines = this.selection.getSelection();
-        let start = selectedLines[0].getAttribute('key');
+        let start = null;
+        selectedLines.map(line => {
+                let num = parseInt(line.id.split('-')[1]);
+                if (start == null || num < start) start = num;
+            }
+        );
+
         let length = selectedLines.length;
 
         // extract the code associated with the selection 
         let code = fileContents.split("\n").slice(start, start + length);
-        // extract the annotation typed by the user
-        let annotation = this.creationTextArea.value;
 
         // deselect all lines css wise and clear selection object
         this.deselectLines();
@@ -734,7 +766,7 @@ class ReferenceEditor extends Component {
                                 documents = {documents}  
                             />
                             <EditorContainer>
-                                <ListToolbar onClick = {() => console.log(this.selection.getSelection())}> 
+                                <ListToolbar> 
                                     {this.renderRefName()}
                                 </ListToolbar>
                                 <CodeContainer>
@@ -957,6 +989,7 @@ const Wrapper = styled.div`
     position: relative;
     z-index: 0;
     width: 100%;
+    cursor: ${props => props.cursorType};
 `
 
 const AddButton = styled.div`
@@ -987,10 +1020,11 @@ const AddButton = styled.div`
 const AnnotationCardInput = styled.div`
     width: 31rem;
     padding: 1.6rem 2rem;
-    border-radius: 0.1rem;
+    border-radius: 0.5rem;
     background-color: white;
     box-shadow: 0 6px 8px rgba(102,119,136,.03), 0 1px 2px rgba(102,119,136,.3);
     text-align: center;
+    margin-bottom: 1.5rem;
 `
 
 const StyledTextareaAutosize = styled(TextareaAutosize)`
@@ -1020,35 +1054,40 @@ const ButtonHolder = styled.div`
 `
 const CreateAnnotation = styled.div`
     margin-top: 0.5rem;
-    width: 8.5rem;
-    padding: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    border-radius: 0.4rem;
-    color: #19E5BE;
-    border: 1px solid #19E5BE;
+    width: 3.3rem;
+    height: 3.3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #19e5be;
+    background-color: white;
+    border: 1px solid  #19e5be;
     &:hover {
         color: white;
-        background-color: #19E5BE;
+        background-color: #19e5be;
     }
     cursor: pointer;
+    border-radius: 50%;
+    font-size: 1.9rem;
 `
 
 const CancelAnnotation = styled.div`
     margin-top: 0.5rem;
     margin-left: 1rem;
-    width: 8.5rem;
-    padding: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    border-radius: 0.4rem;
-    color: #f53b57;
+    width: 3.3rem;
+    height: 3.3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     border: 1px solid #f53b57;
+    color:#f53b57;
     &:hover {
         color: white;
         background-color: #f53b57;
     }
     cursor: pointer;
+    border-radius: 50%;
+    font-size: 2.2rem;
 `
 
 const ColoredSpan = styled.span`

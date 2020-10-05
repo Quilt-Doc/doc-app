@@ -36,7 +36,6 @@ class SideNavbar extends React.Component {
         const { workspaceId } = match.params;
 
         const repositoryId = repositories[0]._id;
-        console.log("ROOTREFERENCE", rootReference);
         const referenceId = rootReference._id;
         
         return `/workspaces/${workspaceId}/repository/${repositoryId}/dir/${referenceId}`;
@@ -99,9 +98,10 @@ class SideNavbar extends React.Component {
     }
 
     render(){
+        const {workspace: {name}} = this.props;
         return (
             <SideNavbarContainer>
-                <WorkspaceIcon to = {"/workspaces"}>P</WorkspaceIcon>
+                <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 {this.renderTopSection()}
                 {this.renderBottomSection()}
                 <CreateButton/>

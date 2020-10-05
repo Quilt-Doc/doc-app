@@ -30,6 +30,7 @@ export const createSnippet = (formValues) => async (dispatch) => {
         throw new Error("createSnippet Error: ", response.data.error.toString());
     }
     else {
+        console.log("SNIPPET HERE", response.data.result);
         dispatch({ type: CREATE_SNIPPET, payload: response.data.result });
     }
 }

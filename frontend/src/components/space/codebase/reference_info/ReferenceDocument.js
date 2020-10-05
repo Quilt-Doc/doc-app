@@ -38,7 +38,7 @@ class ReferenceDocument extends Component {
     }
 
     renderCard = () => {
-        const { doc, index, placeholder } = this.props;
+        const { doc } = this.props;
         const { _id, title, author } = doc;
         return(
             <Card  onClick = { () => history.push(`?document=${_id}`) }> 
@@ -140,7 +140,8 @@ const Creator = styled.div`
     font-size: 1.4rem;
     margin-left: auto;
     margin-top: -0.1rem;
-    border-radius: 50%;
+    border-radius: 0.3rem;
+    font-weight: 500;
 `
 
 const CreationDate = styled.div`
