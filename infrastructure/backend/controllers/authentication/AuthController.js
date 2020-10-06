@@ -1,4 +1,9 @@
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
+var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_REPOSITORY_URL;
+
+if (process.env.IS_PRODUCTION) {
+    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_REPOSITORY_URL;
+}
+
 const client = require("../../apis/api").requestGithubClient();
 
 const User = require('../../models/authentication/User');

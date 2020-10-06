@@ -1,9 +1,17 @@
 // TODO: Add Workspace, Repository Delete Routes and methods 
 const passport = require("passport");
+var cors = require('cors');
 
-// KARAN TODO: Replace these with environment variables
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
-const INSTALLED_URL = "http://localhost:3000/installed";
+var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_HOME_PAGE_URL;
+
+if (process.env.IS_PRODUCTION) {
+    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_HOME_PAGE_URL;
+}
+
+var INSTALLED_URL = process.env.LOCALHOST_INSTALLED_URL;
+if (process.env.INSTALLED_URL) {
+    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_INSTALLED_URL;
+}
 
 const express = require('express');
 const router = express.Router({mergeParams: true});
