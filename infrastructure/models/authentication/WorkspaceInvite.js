@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let workspaceInviteSchema = new Schema({
-    workspace: {type: ObjectId, ref: 'Workspace'},
+    workspace: {type: ObjectId, ref: 'Workspace', required: true},
     invitedEmail: {type: String, required: true},
     created: {type: Date, default: Date.now },
 });

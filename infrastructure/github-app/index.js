@@ -62,9 +62,29 @@ exports.handler = async (event) => {
         var repositoryFullName = event.body.repository.full_name;
         var cloneUrl = event.body.repository.clone_url;
         var installationId = event.body.installation.id;
+
+        var pusher = event.body.pusher.name;
+
+        // Get the head commit message
+        var message;
+        var currentCommit;
+
+        for (i = 0; i < event.body.commits.length; i++) {
+            currentCommit = event.body.commits[i];
+
+            if (currentCommit.sha == headCommit) {
+                message = curentCommit.message;
+                break;
+            }
+        }
+        // If message is null or undefined, set it to empty string
+        if (!message && message != '') {
+            message = '';
+        }
+        
         // TODO: Fix controller method, so doesn't update non-scanned repositories
         try {
-            var updateResponse = await backendClient.post("/repositories/update", { ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId });
+            var updateResponse = await backendClient.post("/repositories/update", { ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId, message, pusher });
             if (updateResponse.data.success == false) {
                 throw Error(`repositories/update success == false: ${updateResponse.error}`);
             }

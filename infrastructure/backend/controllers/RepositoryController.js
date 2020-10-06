@@ -281,7 +281,7 @@ jobRetrieveRepositories = async (req, res) => {
 
 // KARAN TODO: Add filtering here on 'ref', to prevent updating on pushes to other branches
 updateRepository = async (req, res) => {
-    const {fullName, ref, installationId, headCommit, cloneUrl} = req.body;
+    const {fullName, ref, installationId, headCommit, cloneUrl, message, pusher} = req.body;
 
     if (!checkValid(fullName)) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
     if (!checkValid(installationId)) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
@@ -289,6 +289,9 @@ updateRepository = async (req, res) => {
 
     if (!checkValid(headCommit)) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
     if (!checkValid(cloneUrl)) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});
+
+    if (!checkValid(message)) return res.json({success: false, error: 'updateRepository: no message provided on `push` event'});
+    if (!checkValid(pusher)) return res.json({success: false, error: 'updateRepository: no pusher provided on `push` event'});
 
     var repository;
 
@@ -318,6 +321,8 @@ updateRepository = async (req, res) => {
     runReferencesData['headCommit'] = headCommit;
     runReferencesData['cloneUrl'] = cloneUrl;
     runReferencesData['jobType'] = jobConstants.JOB_UPDATE_REFERENCES.toString();
+    runReferencesData['message'] = message;
+    runReferencesData['pusher'] = pusher;
 
     try {
         await jobs.dispatchUpdateReferencesJob(runReferencesData);

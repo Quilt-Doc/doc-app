@@ -9,6 +9,10 @@ let checkSchema = new Schema({
     brokenSnippets: [{type: ObjectId, ref: 'Snippet'}],
     repository: {type: ObjectId, ref: 'Repository', required: true},
     githubId: {type: Number},
+
+    checkUrl: {type: String},
+    commitMessage: {type: String, required: true},
+    pusher: {type: String, required: true},
 });
 
 let Check = mongoose.model("Check", checkSchema);

@@ -704,6 +704,8 @@ const runUpdateProcedure = async () => {
         checkCreateData.commit = headCommit
         checkCreateData.brokenDocuments = brokenDocuments;
         checkCreateData.brokenSnippets = brokenSnippets;
+        checkCreateData.message = process.env.message;
+        checkCreateData.pusher = process.env.pusher;
 
         // Create Check
         try {

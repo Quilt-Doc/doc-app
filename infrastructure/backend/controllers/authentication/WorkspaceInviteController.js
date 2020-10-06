@@ -1,6 +1,7 @@
 // TODO: Need to validate email (both syntax, and for uniqueness)
 
 const WorkspaceInvite = require('../../models/authentication/WorkspaceInvite');
+const Workspace = require('../../models/Workspace');
 const User = require('../../models/authentication/User');
 
 var mongoose = require('mongoose');
@@ -33,12 +34,30 @@ sendInvite = async (req, res) => {
 
     // If a User exists, add them to the Workspace
     if (userWithEmail) {
-
+        var updatedWorkspace;
+        try {
+            updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { $push: { memberUsers: ObjectId(userWithEmail._id.toString()) } }, { new: true });
+        }
+        catch (err) {
+            return res.json({success: false, error: `Error Workspace findOneAndUpdate query failed - workspaceId, userId: ${workspaceId}, ${userWithEmail._id.toString()}`});
+        }
     }
 
     // If a User doesn't exist, create an invitation object
     else {
-
+        let workspaceInvite = new WorkspaceInvite(
+            {
+                workspace: ObjectId(workspaceId),
+                invitedEmail: email
+            },
+        );
+        
+        try {
+            workspaceInvite = await workspaceInvite.save();
+        }
+        catch (err) {
+            return res.json({success: false, error: `Error saving WorkspaceInvite - workspaceId, email: ${workspaceId}, ${email}`});
+        }
     }
 
 
@@ -50,7 +69,7 @@ sendInvite = async (req, res) => {
         subject: `You've been invited to ${req.workspaceObj.name} on Quilt`,
         // text: 'and easy to do anywhere, even with Node.js',
         html: `<strong>Click this link to join on Quilt.</strong><br><a href="https://getquilt.app">Join</a>`,
-      }
+    }
 
     try {
         await sgMail.send(msg);
@@ -65,6 +84,9 @@ sendInvite = async (req, res) => {
         return res.json({success: false,
             error: `Error Response when sending email - email, error.response.body: ${email} \n ${error.response.body}`});
     }
+
+    return res.json({success: true});
+
 }
 
 
