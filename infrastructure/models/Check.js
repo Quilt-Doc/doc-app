@@ -13,6 +13,7 @@ let checkSchema = new Schema({
     checkUrl: {type: String},
     commitMessage: {type: String, required: true},
     pusher: {type: String, required: true},
+    addedReferences: [{type: ObjectId, ref: 'Reference'}],
 });
 
 let Check = mongoose.model("Check", checkSchema);

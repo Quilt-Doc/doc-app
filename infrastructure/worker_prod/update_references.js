@@ -103,7 +103,7 @@ const breakAttachedDocuments = async (repoId, refUpdateData, worker) => {
     if (bulkDocumentInvalidateOps.length > 0) {
         try {
             const bulkResult = await Document.collection.bulkWrite(bulkDocumentInvalidateOps);
-            worker.send({action: 'log', info: {level: 'debug', message: `bulk Document invalidate results: ${bulkResult}`,
+            worker.send({action: 'log', info: {level: 'info', message: `bulk Document invalidate results: ${JSON.stringify(bulkResult)}`,
                                                 source: 'worker-instance', function: 'breakAttachedDocuments'}});
 
         }
@@ -295,7 +295,7 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
     if (bulkDirectoryInvalidateOps.length > 0) {
         try {
             var bulkResult = await Reference.collection.bulkWrite(bulkDirectoryInvalidateOps);
-            worker.send({action: 'log', info: {level: 'debug', message: `bulk 'dir' Reference invalidate results: ${bulkResult}`,
+            worker.send({action: 'log', info: {level: 'info', message: `bulk 'dir' Reference invalidate results: ${JSON.stringify(bulkResult)}`,
                                                 source: 'worker-instance', function: 'validateDirectories'}})
         }
         catch (err) {
@@ -325,11 +325,14 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
                 status: 'valid', repository: repoId, parseProvider: 'update'}
     });
 
+    var newDirIds = [];
+
     if (createdDirectories.length > 0) {
         try {
-            const insertResults = await Reference.insertMany(createdDirectories);
-            worker.send({action: 'log', info: {level: 'debug', message: `New 'dir' Reference bulk insert results repository: ${repoId}\n${insertResults}`,
+            const insertResults = await Reference.insertMany(createdDirectories, {rawResult: true});
+            worker.send({action: 'log', info: {level: 'info', message: `New 'dir' Reference bulk insert results repository: ${repoId}\n${JSON.stringify(Object.values(insertResults.insertedIds))}`,
                             source: 'worker-instance', function: 'validateDirectories'}});
+            newDirIds = Object.values(insertResults.insertedIds).map(id => id.toString());
         }
         catch (err) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error bulk inserting new 'dir' References on repository: ${repoId}`,
@@ -338,7 +341,9 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
         }
     }
 
-    return brokenDocuments;
+
+
+    return { brokenDocuments, newDirIds };
 }
 
 /*
@@ -365,6 +370,7 @@ const runUpdateProcedure = async () => {
 
     var brokenDocuments = [];
     var brokenSnippets = [];
+    var addedReferences = [];
 
     var backendClient = apis.requestBackendClient();
 
@@ -468,7 +474,9 @@ const runUpdateProcedure = async () => {
 
         // Validate and update directory references here
         try {
-            brokenDocuments = brokenDocuments.concat( await validateDirectories(repoId, repoDiskPath, headCommit, worker) );
+            var validateResult = await validateDirectories(repoId, repoDiskPath, headCommit, worker);
+            addedReferences = addedReferences.concat(validateResult.newDirIds);
+            brokenDocuments = brokenDocuments.concat( validateResult.brokenDocuments );
         }
         catch (err) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`,
@@ -512,8 +520,9 @@ const runUpdateProcedure = async () => {
             }
 
             try {
-               const insertResults = await Reference.insertMany(refCreateData);
-               worker.send({action: 'log', info: {level: 'debug', message: `Insert results for 'file' References on repository: ${repoId}\n${insertResults}`,
+               const insertResults = await Reference.insertMany(refCreateData, {rawResult: true});
+               addedReferences = addedReferences.concat(Object.values(insertResults.insertedIds).map(id => id.toString()));
+               worker.send({action: 'log', info: {level: 'info', message: `Insert results for 'file' References on repository: ${repoId}\n${JSON.stringify(Object.values(insertResults.insertedIds))}`,
                                                     source: 'worker-instance', function:'runUpdateProcedure'}})
             }
             catch (err) {
@@ -577,8 +586,8 @@ const runUpdateProcedure = async () => {
             if (bulkReferenceInvalidateOps.length > 0) {
                 try {
                     const invalidateResults = await Reference.collection.bulkWrite(bulkReferenceInvalidateOps);
-                    worker.send({action: 'log', info: {level: 'debug',
-                                                        message: `Invalidate results for bulk invalidate on 'file' References on repository: ${repoId}\n${invalidateResults}`,
+                    worker.send({action: 'log', info: {level: 'info',
+                                                        message: `Invalidate results for bulk invalidate on 'file' References on repository: ${repoId}\n${JSON.stringify(invalidateResults)}`,
                                                         source: 'worker-instance', function:'runUpdateProcedure'}})
                 }
                 catch (err) {
@@ -640,8 +649,8 @@ const runUpdateProcedure = async () => {
                                     parseProvider: 'update'});
             }
 
-            worker.send({action: 'log', info: {level: 'debug', 
-                                                message: `refUpdateData for Reference update on repository: ${repoId}\n${refUpdateData}`,
+            worker.send({action: 'log', info: {level: 'info', 
+                                                message: `refUpdateData for Reference update on repository: ${repoId}\n${JSON.stringify(refUpdateData)}`,
                                                 source: 'worker-instance', function:'runUpdateProcedure'}});
 
 
@@ -658,8 +667,8 @@ const runUpdateProcedure = async () => {
             if (bulkReferenceRenameOps.length > 0) {
                 try {
                     const renameResults = await Reference.collection.bulkWrite(bulkReferenceRenameOps);
-                    worker.send({action: 'log', info: {level: 'debug',
-                                                        message: `Rename results for bulk rename on 'file' References on repository: ${repoId}\n${renameResults}`,
+                    worker.send({action: 'log', info: {level: 'info',
+                                                        message: `Rename results for bulk rename on 'file' References on repository: ${repoId}\n${JSON.stringify(renameResults)}`,
                                                         source: 'worker-instance', function:'runUpdateProcedure'}})
                 }
                 catch (err) {
@@ -706,6 +715,7 @@ const runUpdateProcedure = async () => {
         checkCreateData.brokenSnippets = brokenSnippets;
         checkCreateData.message = process.env.message;
         checkCreateData.pusher = process.env.pusher;
+        checkCreateData.addedReferences = addedReferences.map(refId => refId.toString());
 
         // Create Check
         try {

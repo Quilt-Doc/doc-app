@@ -8,6 +8,9 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 const logger = require('../../logging/index').logger;
 
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -64,7 +67,7 @@ sendInvite = async (req, res) => {
 
     // Send the email regardless
     const msg = {
-        to: userEmail, // Change to your recipient
+        to: email, // Change to your recipient
         from: 'karan@getquilt.app', // Change to your verified sender
         subject: `You've been invited to ${req.workspaceObj.name} on Quilt`,
         // text: 'and easy to do anywhere, even with Node.js',
@@ -89,47 +92,6 @@ sendInvite = async (req, res) => {
 
 }
 
-
-verifyEmail = async (req, res) => {
-    var hash = req.params.verifyEmailHash;
-
-    if (hash.length != 128) {
-        return res.json({success: false, error: 'Invalid Link'});
-    }
-
-    var verifiedEmail;
-    try {
-        verifiedEmail = await EmailVerify.findOne({hash});
-    }
-    catch (err) {
-        return res.json({success: false, error: `Error findOne query failed \n ${err}`});
-    }
-
-    if (!verifiedEmail) {
-        return res.json({success: false, error: 'Link does not match an email.'});
-    }
-
-    var verifiedUserId = verifiedEmail.user.toString();
-
-    var verifiedUser;
-    try {
-        verifiedUser = await User.findByIdAndUpdate(verifiedUserId, {$set: { active: true } });
-    }
-    catch (err) {
-        return res.json({success: false, error: `Error findByIdAndUpdate query failed \n ${err}`});
-    }
-
-    try {
-        await EmailVerify.findByIdAndDelete(verifiedEmail._id.toString());
-    }
-    catch (err) {
-        return res.json({success: false, error: `Error findByIdAndDelete query failed \n ${err}`});
-    }
-
-    return res.json({success: true, result: verifiedUser});
-}
-
 module.exports = {
-    beginEmailVerification,
-    verifyEmail
+    sendInvite
 }

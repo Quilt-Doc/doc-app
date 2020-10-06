@@ -69,11 +69,15 @@ exports.handler = async (event) => {
         var message;
         var currentCommit;
 
+        console.log('headCommit: ', headCommit);
+
+        console.log('Commits Array: ');
+        console.log(JSON.stringify(event.body.commits));
         for (i = 0; i < event.body.commits.length; i++) {
             currentCommit = event.body.commits[i];
-
-            if (currentCommit.sha == headCommit) {
-                message = curentCommit.message;
+            // KARAN TODO: The Commits array doesn't seem to have 'sha' fields, rather 'id' fields
+            if (currentCommit.id == headCommit) {
+                message = currentCommit.message;
                 break;
             }
         }
@@ -81,6 +85,10 @@ exports.handler = async (event) => {
         if (!message && message != '') {
             message = '';
         }
+        await logger.info({source: 'github-lambda',
+                            message: `updating Repository - ref, headCommit, fullName, cloneUrl, installationId, message, pusher: ${ref}, ${headCommit}, ${repositoryFullName}, ${cloneUrl}, ${installationId}, ${message}, ${pusher}`,
+                            function: 'handler'});
+
         
         // TODO: Fix controller method, so doesn't update non-scanned repositories
         try {
@@ -100,6 +108,7 @@ exports.handler = async (event) => {
                 };
                 return response;
         }
+        
         await logger.info({source: 'github-lambda', message: 'Successfully handled Push Event', function: 'handler'});
     }
 
