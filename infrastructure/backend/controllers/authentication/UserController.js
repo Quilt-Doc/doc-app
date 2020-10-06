@@ -4,6 +4,7 @@ const User = require('../../models/authentication/User');
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 const logger = require('../../logging/index').logger;
+const beginEmailVerification = require('./EmailVerifyController').beginEmailVerification;
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -36,7 +37,14 @@ editUser = async (req, res) => {
 
     let update = {}
     if (checkValid(username)) update.username = username; 
-    if (checkValid(email)) update.email = email;
+    if (checkValid(email)) {
+        update.email = email;
+        try {
+            await beginEmailVerification(userId, email);
+        } catch (err) {
+            return res.json({ success: false, error:"editUser: beginEmailVerification of email for edit failed", trace: err })
+        }
+    }
     if (checkValid(firstName)) update.firstName = firstName;
     if (checkValid(lastName)) update.lastName = lastName;
     if (checkValid(onboarded)) update.onboarded = onboarded;

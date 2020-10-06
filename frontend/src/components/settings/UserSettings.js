@@ -15,6 +15,7 @@ import { withRouter } from 'react-router-dom';
 
 //actions
 import { editUser } from '../../actions/User_Actions';
+import { sendInvite } from '../../actions/Auth_Actions';
 
 //email validation
 import * as EmailValidator from 'email-validator';
@@ -25,7 +26,9 @@ class UserSettings extends Component {
     }
 
     sendInvite = () => {
-        const { memberUsers } = this.props;
+        const { memberUsers, sendInvite, match } = this.props;
+        const { workspaceId } = match.params;
+
         let email = this.email.value;
         if (!EmailValidator.validate(this.email.value)){
             alert("Invalid Email");
@@ -36,6 +39,8 @@ class UserSettings extends Component {
             alert("User email already exists in workspace")
             return
         }
+
+        sendInvite({workspaceId, email})
     }
 
     validateLength = (formValue) => {
@@ -61,7 +66,7 @@ class UserSettings extends Component {
         formValues.userId = user._id;
 
         editUser(formValues);
-        alert("USER SETTINGS CHANGED");
+        alert("User settings were successfully changed.");
     }
 
     render() {
@@ -84,6 +89,11 @@ class UserSettings extends Component {
                                             <Field>
 
                                                 <FieldName>Invite User By Email</FieldName>
+                                                {!user.verified && 
+                                                    <Description>
+                                                        You must verify your email before adding people to this workspace.
+                                                    </Description>
+                                                }
                                                 <InviteContainer active = {user.verified ? true : false}>
                                                     <FieldInput 
                                                         ref = {node => this.invite = node}>
@@ -94,7 +104,7 @@ class UserSettings extends Component {
                                                             if (user.verified) {
                                                                 this.sendInvite();
                                                             } else {
-                                                                alert("Please verify your email before sending invites");
+                                                                alert("Please verify your email before sending invites.");
                                                             }
                                                         }}>
                                                         <FiPlus/>
@@ -196,6 +206,16 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, {editUser})(UserSettings));
+
+const Description = styled.div`
+    color: 172a4e;
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 1.3rem;
+    height: 2rem;
+    opacity: 0.5;
+`
+
 
 const Name = styled.div`
     font-size: 1.3rem;

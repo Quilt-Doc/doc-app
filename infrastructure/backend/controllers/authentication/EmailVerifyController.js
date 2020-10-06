@@ -2,6 +2,9 @@
 
 const EmailVerify = require('../../models/authentication/EmailVerify');
 const User = require('../../models/authentication/User');
+const WorkspaceInvite = require('../../models/authentication/WorkspaceInvite');
+const Workspace = require('../../models/Workspace');
+const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
 
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
@@ -11,8 +14,6 @@ const logger = require('../../logging/index').logger;
 const crypto = require('crypto');
 
 const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
         return true
@@ -29,7 +30,7 @@ beginEmailVerification = async (userId, userEmail) => {
         from: 'karan@getquilt.app', // Change to your verified sender
         subject: 'Verify Your Quilt Account Email',
         // text: 'and easy to do anywhere, even with Node.js',
-        html: `<a href="https://getquilt.app/verify/${hash}">Verify</a>`,
+        html: `<a href="https://api.getquilt.app/api/verify/${hash}">Verify</a>`,
     }
 
     try {
@@ -69,7 +70,7 @@ verifyEmail = async (req, res) => {
 
     var verifiedUser;
     try {
-        verifiedUser = await User.findByIdAndUpdate(verifiedUserId, {$set: { active: true } });
+        verifiedUser = await User.findByIdAndUpdate(verifiedUserId, {$set: { verified: true } });
     }
     catch (err) {
         return res.json({success: false, error: `Error findByIdAndUpdate query failed \n ${err}`});
@@ -82,7 +83,22 @@ verifyEmail = async (req, res) => {
         return res.json({success: false, error: `Error findByIdAndDelete query failed \n ${err}`});
     }
 
-    return res.json({success: true, result: verifiedUser});
+    let workspaceIds;
+    try {
+        workspaceIds = await WorkspaceInvite.find({invitedEmail: verifiedEmail});
+    } catch (err) {
+        return res.json({ success: false, 
+            error: `verifyEmail Error: retrieval of workspaces did not work`, trace: err });
+    }
+
+    try {
+        await  Workspace.updateMany({_id: { $in: workspaceIds }},  {$push: {memberUsers: ObjectId(verifiedUserId)}})
+    } catch (err) {
+        return res.json({ success: false, 
+            error: `verifyEmail Error: workspace update did not work`, trace: err });
+    }
+
+    return res.redirect(CLIENT_HOME_PAGE_URL);
 }
 
 module.exports = {

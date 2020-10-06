@@ -11,7 +11,6 @@ let userSchema = new Schema({
     accessToken: String,
     refreshToken: String, 
     profileId: String,
-    active: {type: Boolean, default: false},
     email: {type: String, index: true},
     created: {type: Date, default: Date.now },
     domain: String,
