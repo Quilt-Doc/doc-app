@@ -25,6 +25,7 @@ passport.use(
         {
             clientID: process.env.GITHUB_CLIENT_ID, /*"Iv1.42c86ad42af65b91",*/ /*process.env.GITHUB_CLIENT_Id,*/
             clientSecret:  process.env.GITHUB_CLIENT_SECRET, /* "a7dad0ce0330652d3dc0bf403f685a3de9d7b04b",*/
+            // Test
             callbackURL: "https://api.getquilt.app/api/auth/github/redirect"
         },
         async (accessToken, refreshToken, profile, done) => {
