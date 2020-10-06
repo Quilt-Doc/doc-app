@@ -7,6 +7,8 @@ let snippetSchema = new Schema({
     created: {type: Date, default: Date.now },
     name: String,
     annotation: {type: String, required: true},
+    originalCode: {type: [String], required: true},
+    originalSize: {type: Number, required: true},
     code: {type: [String], required: true},
     start: {type: Number, required: true},
     status: {type: String, required: true, enum: ['VALID', 'INVALID'], default: 'VALID'},

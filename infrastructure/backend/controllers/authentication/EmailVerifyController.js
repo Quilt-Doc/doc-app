@@ -21,7 +21,7 @@ checkValid = (item) => {
 }
 
 beginEmailVerification = async (userId, userEmail) => {
-    
+
     var hash = crypto.randomBytes(64).toString('hex');
 
     const msg = {
@@ -29,7 +29,7 @@ beginEmailVerification = async (userId, userEmail) => {
         from: 'karan@getquilt.app', // Change to your verified sender
         subject: 'Verify Your Quilt Account Email',
         // text: 'and easy to do anywhere, even with Node.js',
-        html: `<a href="https://getquilt.app/verify/${hash}">Verify</a>`,
+        html: `<a href="https://api.getquilt.app/api/verify/${hash}">Verify</a>`,
     }
 
     try {

@@ -91,7 +91,7 @@ app.use(
         
 );
 
-const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect'];
+const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect', '/api/verify/'];
 
 app.use(function (req, res, next) {
   req.path = req.path.trim();

@@ -62,6 +62,8 @@ createSnippet = async (req, res) => {
            reference: ObjectId(referenceId),
            repository: ObjectId(repositoryId),
            code,
+           originalCode: code,
+           originalSize: code.length,
            annotation,
            start,
            status,
