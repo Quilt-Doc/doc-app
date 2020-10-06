@@ -97,7 +97,7 @@ createSnippet = async (req, res) => {
                         message: `Successfully created Snippet - creatorId, workspaceId, referenceId, repositoryId: ${creatorId}, ${workspaceId}, ${referenceId}, ${repositoryId}`,
                         function: 'createSnippet'});
 
-    return res.json({success: true, snippet});
+    return res.json({success: true, result: snippet});
 }
 
 
@@ -118,7 +118,7 @@ getSnippet = async (req, res) => {
         return res.json({success: false, error: "getSnippet error: findOne query failed", trace: err});
     }
 
-    return res.json({success: true, returnedSnippet});
+    return res.json({success: true, result: returnedSnippet});
 }
 
 editSnippet = async (req, res) => {

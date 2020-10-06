@@ -32,8 +32,10 @@ const Header = styled.div`
     font-size: 1.7rem;
     font-weight: 600;
     margin-bottom: 1rem;
+    /*
     padding-left: 4rem;
     padding-right: 4rem;
+    */
 `
 
 const ListView = styled.div`
@@ -41,11 +43,15 @@ const ListView = styled.div`
     padding-bottom: 1rem;
     height: 100%;
     overflow-x: scroll;
+    width: 100%;
+    /*
     width: calc(100vw - 32rem - 25rem);
+    */
 `
 
 const BreakageContainer = styled.div`
     width: 100%;
     display: flex;
     flex-direction: column;
+    margin-top: 1.5rem;
 `

@@ -88,6 +88,8 @@ const requestInstallationToken = async (appToken, installationId) => {
 const requestInstallationClient = async (installationId) => {
     const axios = require('axios');
 
+    console.log(`Searching for Installation Token for ID: ${installationId}`);
+
     var appToken = await fetchAppToken();
     console.log('Received App Token');
     console.log(appToken);
@@ -102,6 +104,9 @@ const requestInstallationClient = async (installationId) => {
                 Authorization: 'token ' + installationToken.value
             },
             get: {
+                Authorization: 'token ' + installationToken.value
+            },
+            patch: {
                 Authorization: 'token ' + installationToken.value
             }
           }

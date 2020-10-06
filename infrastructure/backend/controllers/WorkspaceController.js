@@ -232,8 +232,9 @@ retrieveWorkspaces = async (req, res) => {
 //FARAZ TODO: Need to figure out import (or maybe not?)
 searchDocuments = async (req, res, searchWorkspace) => {
     const { userQuery, repositoryId, tagIds, returnDocuments, minimalDocuments, includeImage, searchContent,
-        referenceIds, creatorIds, docSkip, limit, sort, mix } = req.body;
+        referenceIds, creatorIds, docSkip, limit, sort } = req.body;
     
+    //console.log("PARAMS", req.body);
     const workspaceId = req.workspaceObj._id.toString();
 
     if (!returnDocuments) {
@@ -247,7 +248,7 @@ searchDocuments = async (req, res, searchWorkspace) => {
     }
 
     let documentAggregate;
-        
+    
     if (checkValid(userQuery) && userQuery !== "") {
         // make search for title
         let shouldFilter = [ 
@@ -265,7 +266,7 @@ searchDocuments = async (req, res, searchWorkspace) => {
                     "path": "content"
                 }
             });
-
+        
         documentAggregate = Document.aggregate([
             { 
                 $search: {
@@ -281,9 +282,9 @@ searchDocuments = async (req, res, searchWorkspace) => {
     }
 
     documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
-
+    
     documentAggregate.match({workspace: ObjectId(workspaceId)});
-
+    
     if (checkValid(repositoryId)) documentAggregate.match({repository: ObjectId(repositoryId)});
 
     if (checkValid(tagIds)) documentAggregate.match({
@@ -301,18 +302,19 @@ searchDocuments = async (req, res, searchWorkspace) => {
     if (checkValid(sort)) documentAggregate.sort(sort);
 
     if (checkValid(docSkip))  documentAggregate.skip(docSkip);
-
+    
     if (checkValid(limit))  documentAggregate.limit(limit);
 
-    let minimalProjectionString = "_id created author title status";
+    
+    let minimalProjectionString = "_id created author title status isDocument";
     let populationString = "author references workspace repository tags";
-
+    
     if (checkValid(minimalDocuments) && minimalDocuments) {
         if (checkValid(includeImage)) minimalProjectionString += " image";
         documentAggregate.project(minimalProjectionString);
         populationString = "author";
     }
-
+    
     try {   
         documents = await documentAggregate.exec();
     } catch(err) {
@@ -323,7 +325,7 @@ searchDocuments = async (req, res, searchWorkspace) => {
             return res.json(response);
         }
     }
-
+   
     try {
         documents = await Document.populate(documents, 
             {
@@ -396,7 +398,9 @@ searchReferences = async (req, res, searchWorkspace) => {
 
     if (checkValid(limit))  referenceAggregate.limit(limit);
     
-    if (checkValid(minimalReferences) && minimalReferences) referenceAggregate.project("name kind path _id created status");
+    if (checkValid(minimalReferences) && minimalReferences) referenceAggregate.project("name kind repository path _id created status isReference");
+
+    let populationString = minimalReferences ? "repository tags" : "repository";
 
     try {
         references = await referenceAggregate.exec()
@@ -409,22 +413,22 @@ searchReferences = async (req, res, searchWorkspace) => {
         }
     }
 
-    if (!minimalReferences) {
-        try {
-            references = await Reference.populate(references, 
-                {
-                    path: "repository tags"
-                }
-            )
-        } catch (err) {
-            let response = { success: false, error: "searchReferences: Failed to populate references", trace: err};
-            if (searchWorkspace) {
-                return response;
-            } else {
-                return res.json(response);
+
+    try {
+        references = await Reference.populate(references, 
+            {
+                path: populationString
             }
+        )
+    } catch (err) {
+        let response = { success: false, error: "searchReferences: Failed to populate references", trace: err};
+        if (searchWorkspace) {
+            return response;
+        } else {
+            return res.json(response);
         }
     }
+
     // Need to include time filtering
     let response = {success: true, result: references};
 
@@ -437,21 +441,21 @@ searchReferences = async (req, res, searchWorkspace) => {
 
 //TODO: Search workspace return values needs to be reflected in reducer
 searchWorkspace = async (req, res) => {
-    const { userQuery, repositoryId, tagIds, referenceIds, creatorIds, includeImage,
-        returnReferences, returnDocuments, docSkip, refSkip, limit, sort, mix } = req.body;
-
+    const { userQuery, returnReferences, returnDocuments, limit, sort } = req.body;
     if (!checkValid(userQuery)) return res.json({success: false, result: null, error: 'userQuery: error no userQuery provided.'});
     if (!checkValid(returnReferences)) return res.json({success: false, result: null, error: 'returnReference: error no returnReferences provided.'});
     if (!checkValid(returnDocuments)) return res.json({success: false, result: null, error: 'returnDocuments: error no returnDocuments provided.'});
 
+   
     let documentResponse = await searchDocuments(req, res, true);
-
+  
     if (!documentResponse.success) {
         let {trace, error} = documentResponse;
         return res.json({success: false, error: `searchWorkspace: ${error}`, trace})
     }
 
-    let {documents} = documentResponse;
+    let documents  = documentResponse.result;
+    //console.log("DOCS OUTPUT", documents.map(doc => doc.title));
 
     let referenceResponse = await searchReferences(req, res, true);
 
@@ -460,45 +464,37 @@ searchWorkspace = async (req, res) => {
         return res.json({success: false, error: `searchWorkspace: ${error}`, trace})
     }
 
-    let {references} = referenceResponse;
+    let references = referenceResponse.result;
 
-    let searchResults = {}
 
     let newDocSkip = 0;
     let newRefSkip = 0;
 
     let finalResult = {}
     // NEED TO INCLUDE PROPER SORTING ON MIX
-    if (mix) {
-        searchResults = [...documents, ...references];
-        if (sort) {
-            searchResults.sort((a, b) => {
-                if (a.created.getTime() > b.created.getTime()) {
-                    return -1
-                } else {
-                    return 1
-                }
-            })
-        }
-        
-        searchResults = searchResults.slice(0, limit);
-
-        searchResults.map((seResult) => {
-            if (seResult.isDocument) {
-                newDocSkip += 1;
-            } else if (seResult.isReference) {
-                newRefSkip += 1;
+    searchResults = [...documents, ...references];
+    //console.log(searchResults);
+    if (sort) {
+        searchResults.sort((a, b) => {
+            if (a.created.getTime() > b.created.getTime()) {
+                return -1
+            } else {
+                return 1
             }
         })
-
-        finalResult = { searchResults, docSkip: newDocSkip, refSkip: newRefSkip };
-    } else {
-        searchResults.documents = documents;
-        searchResults.references = references;
-        finalResult = { searchResults };
     }
+        
+    searchResults = searchResults.slice(0, limit);
 
-    
+    searchResults.map((seResult) => {
+        if (seResult.isDocument) {
+            newDocSkip += 1;
+        } else if (seResult.isReference) {
+            newRefSkip += 1;
+        }
+    })
+
+    finalResult = { searchResults, docSkip: newDocSkip, refSkip: newRefSkip };
     return res.json({success: true, result: finalResult});
 }
 

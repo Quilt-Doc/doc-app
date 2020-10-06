@@ -144,7 +144,8 @@ const ToolbarContainer = styled.div`
     padding-left: ${props => props.modal ? "4rem" : "12rem"};
     padding-right: 4rem;
     box-shadow: ${props => props.modal ? "none" : '0 2px 2px rgba(0,0,0,0.1)'};
-    border-top:  ${props => props.modal ? '3px solid #70EAE1' : ''};
+    border-top-left-radius:  0.3rem;
+    border-top-right-radius: 0.3rem;
     border-bottom: ${props => props.modal ? '1px solid #E0E4E7': ''};
 `
 

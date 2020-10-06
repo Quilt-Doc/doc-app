@@ -30,7 +30,7 @@ beginEmailVerification = async (userId, userEmail) => {
         subject: 'Verify Your Quilt Account Email',
         // text: 'and easy to do anywhere, even with Node.js',
         html: `<a href="https://getquilt.app/verify/${hash}">Verify</a>`,
-      }
+    }
 
     try {
         await sgMail.send(msg);

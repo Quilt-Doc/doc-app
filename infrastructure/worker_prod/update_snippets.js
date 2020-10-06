@@ -118,8 +118,8 @@ const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
 
   // Look for new regions for snippets that haven't been successfully validated
   for (i = 0; i < snippetData.length; i++) {
-    // {startLine: finalResult.idx, numLines: finalResult.size, status: 'NEW_REGION'}
-    
+    // {startLine: finalResult.idx, numLines: finalResult.size, status: 'VALID'}
+
     // If Snippet start and end lines don't both match anymore.
     if (snippetData[i].status == constants.snippets.SNIPPET_STATUS_INVALID) {
       console.log('Looking for new snippet region, idx: ', i);
@@ -249,7 +249,7 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
   /*
     code: {type: [String], required: true},
     start: {type: Number, required: true},
-    status: {type: String, required: true, enum: ['VALID', 'NEW_REGION','INVALID'], default: 'VALID'},
+    status: {type: String, required: true, enum: ['VALID', 'INVALID'], default: 'VALID'},
   */
 
   const bulkSnippetUpdateOps = snippetUpdateData.map(snippetObj => ({
@@ -276,6 +276,9 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
         throw new Error(`Error updatings Snippets on repository: ${repoId}`);
     }
   }
+
+  return snippetUpdateData.filter(snippetObj => snippetObj.status == constants.snippets.SNIPPET_STATUS_INVALID)
+            .map(snippetObj => snippetObj._id.toString());
 
 }
 

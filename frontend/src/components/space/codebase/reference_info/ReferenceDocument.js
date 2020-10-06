@@ -1,63 +1,133 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 
 //styles
 import styled from 'styled-components';
 import chroma from 'chroma-js';
 
+//icons
+import { AiOutlineClockCircle, AiOutlineExclamation } from 'react-icons/ai';
+import { RiCheckFill, RiCloseFill, RiFileList2Fill } from 'react-icons/ri'
+
 //history
 import history from '../../../../history';
 
-//icons
-import { RiFileList2Fill, RiCheckFill } from 'react-icons/ri';
-import { AiOutlineClockCircle } from 'react-icons/ai';
+// Card representing document that is broken
+class ReferenceDocument extends Component {
 
-// individual document in document list in reference info
-const ReferenceDocument = ({doc, index}) => {
-    const { _id, title } = doc;
-
-    return (
-        <ListItem 
-            onClick = { () => history.push(`?document=${_id}`) }
-            active = { index %2 == 0 ? false : true} 
-        >
-            <RiFileList2Fill  
-                style = 
-                {{  
-                    marginRight: "1rem",
-                    fontSize: "2rem",
-                    color: '#2684FF'
-                }}
-            />
-            <Title>{title && title !== "" ? title : "Untitled"}</Title>
-            <Status>
-                <RiCheckFill 
+    // depending on whether this is a warning card (from props) or not
+    // display correct status
+    renderStatus(){
+        //let { warning } = this.props;
+        return (
+            <Status color = {"#19e5be"}>
+                <RiCheckFill
                     style = 
-                    {{ 
-                        marginRight: "0.3rem",
-                        fontSize: "1.5rem"
+                    {{
+                        fontSize: "1.7rem"
                     }}
                 />
-                Valid
-            </Status> {/*REPEATED COMPONENT STATUS*/}
-            <Creator> 
-                F
-            </Creator> {/*REPEATED COMPONENT AUTHOR*/}
-            <CreationDate> 
-                <AiOutlineClockCircle
-                    style = {{marginRight: "0.5rem"}}
-                />
-                August 12, 2015
-            </CreationDate> {/*REPEATED CREATION DATE*/}
-        </ListItem>
-    )
-}
+            </Status>
+        ) 
+    }
 
-ReferenceDocument.propTypes = {
-    doc : PropTypes.object
+    getDateItem = (doc) => {
+        let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let item =  new Date(doc.created)
+        let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
+        return dateString
+    }
+
+    renderCard = () => {
+        const { doc } = this.props;
+        const { _id, title, author } = doc;
+        return(
+            <Card  onClick = { () => history.push(`?document=${_id}`) }> 
+                <Title>
+                    <TitleText>{title}</TitleText>
+                    {this.renderStatus()}
+                </Title>
+                <Content>
+                    <RiFileList2Fill style = {{
+                        color: '#2684FF',
+                    }}/>
+                </Content> 
+                <Detail>
+                    <CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
+                        <AiOutlineClockCircle
+                            style = {{marginRight: "0.5rem"}}
+                        />
+                        {this.getDateItem(doc)}
+                    </CreationDate>
+                    <Creator> 
+                        {author.firstName.charAt(0)}
+                    </Creator>
+                </Detail>
+            </Card>
+        )
+    }
+
+    renderPlaceholder = () => {
+        return <PlaceholderCard >Add Document</PlaceholderCard>
+    }
+
+    render(){
+        const { placeholder } = this.props;
+        return placeholder ? this.renderPlaceholder() : this.renderCard();
+    }
 }
 
 export default ReferenceDocument;
+
+const Status = styled.div`
+    display: inline-flex;
+    background-color: ${props => chroma(props.color).alpha(0.15)};
+    color:${props => props.color};
+    border: 1px solid ${props => props.color};
+    font-weight: 500;
+    border-radius: 0.3rem;
+    font-size: 1.4rem;
+    align-items: center;
+    height: 2rem;
+    width: 2.7rem;
+    margin-top: -0rem;
+    margin-left: auto;
+    justify-content: center;
+`
+
+const Title = styled.div`
+    display: flex;
+    font-weight: 500;
+    font-size: 1.4rem;
+    align-items: center;
+`
+
+const TitleText = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 500;
+    width: 13rem;
+    font-size: 1.25rem;
+`
+
+//3 Faraz TODO: add a border on this guy
+const Content = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22rem;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+    font-size: 3.5rem;
+`
+
+const Detail = styled.div`
+    display: flex;
+    font-size: 1.1rem;
+    align-items: center;
+    margin-top: auto;
+`
 
 const Creator = styled.div`
     height: 2.5rem;
@@ -67,11 +137,11 @@ const Creator = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.3rem;
     font-size: 1.4rem;
     margin-left: auto;
     margin-top: -0.1rem;
-    margin-right: 3rem;
+    border-radius: 0.3rem;
+    font-weight: 500;
 `
 
 const CreationDate = styled.div`
@@ -83,36 +153,34 @@ const CreationDate = styled.div`
     font-weight:500;
     border-radius: 0.3rem;
     color: #8996A8;
-    font-size: 1.1rem;
 `
 
-const Title = styled.div`
-    font-weight: 500;
-    font-size: 1.35rem;
-    width: 40%;
+const Card = styled.div`
+    height: 16rem;
+    width: 23rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background-color: white;
+    padding: 1.5rem 2rem;
+    padding-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    margin-right: 3rem;
+    cursor: pointer;
+    &:hover {
+        background-color: #F4F4F6;
+    }
 `
 
-const Status = styled.div`
-    display: inline-flex;
-    background-color: ${chroma('#19e5be').alpha(0.15)};
-    color: #19e5be;
-    font-weight: 500;
-    border-radius: 0.3rem;
-    font-size: 1.3rem;
-    padding: 0rem 1rem;
-    align-items: center;
-    margin-left: 2rem;
-    height: 2rem;
-    margin-top: -0rem;
-`
-
-const ListItem = styled.div`
+const PlaceholderCard = styled.div`
+    height: 16rem;
+    min-width: 23rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background-color: white;
     display: flex;
     align-items: center;
-    padding-left: 3rem;
-    padding-right: 3rem;
-    min-height: 4rem;
-    max-height: 4rem;
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.04) : ''};
-    font-size: 1.5rem;
+    justify-content: center;
+    margin-right: 3rem;
+    opacity: 0.5;
 `

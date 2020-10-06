@@ -16,19 +16,15 @@ import styled from "styled-components";
 import { CSSTransition } from 'react-transition-group';
 
 //icons
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCube, faPlus } from '@fortawesome/free-solid-svg-icons'
-import {RiCheckFill, RiGitRepositoryLine, RiFileFill, RiFileLine, RiAddLine} from 'react-icons/ri'
+import {RiCheckFill, RiFileLine, RiAddLine} from 'react-icons/ri'
 import {AiFillFolder} from 'react-icons/ai';
-import {BiCubeAlt} from 'react-icons/bi';
 
 //actions
 import { attachDocumentReference, removeDocumentReference } from '../../actions/Document_Actions';
-import { retrieveReferences } from '../../actions/Reference_Actions';
+import { retrieveReferences, searchReferences} from '../../actions/Reference_Actions';
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
-import { BiCube } from 'react-icons/bi';
 
 class FileReferenceMenu extends React.Component {
     
@@ -58,100 +54,101 @@ class FileReferenceMenu extends React.Component {
         }
     }
 
+    searchReferences = async () => {
 
-    searchReferences = (event) => {
+        const { typingTimeout } = this.state; 
+        const { document: {repository}, searchReferences } = this.props;
 
-        if (this.state.typingTimeout) {
+        if (typingTimeout) {
            clearTimeout(this.state.typingTimeout);
         }
 
-        let repositoryId  =  this.props.document.repository._id
-        let setIds = this.props.setReferences.map(ref => ref._id)
+        let repositoryId  = repository._id;
 
         this.setState({
-           search: event.target.value,
+           search: this.input.value,
            typing: false,
-           typingTimeout: setTimeout(() => {
+           typingTimeout: setTimeout(async () => {
                let { workspaceId } = this.props.match.params;
                 if ( this.state.search === ""){
-                    this.props.retrieveReferences({workspaceId, limit: 9, referenceIds: setIds, repositoryId,  sort: "-name"}, true).then((references) => {
-                        this.setState({references, position: -1})
-                    })
+                   this.reset();
                 } else {
-                    this.props.retrieveReferences({workspaceId, search: this.state.search,  repositoryId,  sort: "-name",  limit: 9}, true).then((references) => {
-                        this.setState({references, position: -1})
-                    }); 
+                    let references = await searchReferences({workspaceId, userQuery: this.state.search,  repositoryId,  sort: "-name",  limit: 9}, true);
+                    this.setState({references, position: -1});
                 }
-            }, 200)
+            }, 150)
         });
     }
 
-    renderMarginTop() {
-        /*
-        if (this.props.marginTop){
-            return this.props.marginTop
-        } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
-            return "-30rem"
-        } else {
-            return "-5rem"
-        }*/
-        return 0;
+    reset = async () => {
+        const { setReferences, retrieveReferences, match } = this.props;
+        const { workspaceId } = match.params;
+        const { document: { repository: {_id} }, searchReferences } = this.props;
+
+        let setIds = setReferences.map(ref => ref._id);
+        
+        let references = await retrieveReferences({workspaceId, 
+            limit: 9, referenceIds: setIds, repositoryId: _id,  sort: "-name"}, true);
+        this.setState({references, position: -1, loaded: true, search: ""});
     }
 
-    handleSelect(setBool, referenceId, reference){
-        if (!this.props.form){
+    handleSelect = (reference) => {
+        const { setReferences, form, formRemoveReference, formAttachReference,
+            removeDocumentReference, attachDocumentReference} = this.props;
+
+        let setIds = setReferences.map(ref => ref._id);
+        let isSelected = setIds.includes(reference._id);
+
+        if (!form){
             let documentId = this.props.document._id
             let { workspaceId } = this.props.match.params;
-            if (setBool) {
-                this.props.removeDocumentReference({workspaceId, documentId, referenceId});
+            if (isSelected) {
+                removeDocumentReference({workspaceId, documentId, referenceId: reference._id});
             } else {
-                this.props.attachDocumentReference({workspaceId, documentId, referenceId});
+                attachDocumentReference({workspaceId, documentId, referenceId: reference._id});
             }
         } else {
-            if (setBool) {
-                this.props.formRemoveReference(reference)
+            if (isSelected) {
+                formRemoveReference(reference)
             } else {
-                this.props.formAttachReference(reference)
+                formAttachReference(reference)
             }
         }
      
     }
 
     async setPosition(e) {
-        // UP
-        let repositoryId = this.props.document.repository._id;
-        let workspaceId = this.props.match.params;
-        if (e.key === "Enter" && this.state.position >= 0) {
-            let ref = this.state.references[this.state.position]
-            this.setState({loaded: false})
-            let referenceIds = this.props.setReferences.map(reference => reference._id)
-            await this.handleSelect(referenceIds.includes(ref._id), ref._id)
-            this.props.retrieveReferences({workspaceId, limit: 9, referenceIds, repositoryId}, true).then((references) => {
-                this.setState({loaded: true, search: '', references})
-            })
+        const { references, position } = this.state;
+
+        if (e.key === "Enter" && position >= 0) {
+            let ref = references[position];
+            this.setState({loaded: false});
+            await this.handleSelect(ref);
+            this.reset()
         } else {
             if (e.keyCode === 38) {
-                if (this.state.position <= 0){
-                    this.setState({position: this.state.references.length - 1})
+                if (position < 0){
+                    this.setState({position: references.length - 1});
                 } else {
-                    this.setState({position: this.state.position - 1})
+                    this.setState({position: position - 1});
                 }
             } else if (e.keyCode === 40) {
-                if (this.state.position >  this.state.references.length - 2){
-                    this.setState({position: 0})
+                if (position === references.length - 1){
+                    this.setState({position: -1});
                 } else {
-                    this.setState({position: this.state.position + 1})
+                    this.setState({position: position + 1})
                 }
             }
         } 
     }
 
-    renderFolders(){
+    renderListItems(){
+        let { references, position} = this.state;
+        const { setReferences } = this.props;
 
-    }
+        const setIds = setReferences.map(ref => ref._id);
 
-    renderListItems(setIds){
-        let references = [...this.state.references];
+        references = [...references];
         references.sort((a, b) => {
             if (a.name > b.name){
                 return 1
@@ -170,20 +167,19 @@ class FileReferenceMenu extends React.Component {
         let jsx = []
         let i = 0;
         dirs.map((ref) => {
-            let setBool = setIds.includes(ref._id)
+            let isSelected = setIds.includes(ref._id);
             let temp = i
             jsx.push(            
                 <ListItem 
-                    onClick = {() => {this.handleSelect(setBool, ref._id, ref)}} 
+                    onClick = {() => {this.handleSelect(ref)}} 
                     onMouseEnter = {() => {this.setState({position: temp})}}
-                
-                    backgroundColor = {this.state.position === temp ? '#F4F4F6' : ""}
+                    backgroundColor = {position === temp ? '#F4F4F6' : ""}
                  >
                     <AiFillFolder
                         style = {{fontSize: "1.5rem", marginRight: "1rem"}} 
                     />
                     {ref.name ? ref.name : "Untitled"}
-                    {setBool && 
+                    {isSelected && 
                         <RiCheckFill
                             style = {{ color: "#19e5be", marginLeft: "auto", fontSize: "2rem"}} 
                         />
@@ -194,20 +190,19 @@ class FileReferenceMenu extends React.Component {
         })
 
         files.map((ref) => {
-            let setBool = setIds.includes(ref._id)
+            let isSelected = setIds.includes(ref._id);
             let temp = i
             jsx.push(
                 <ListItem 
-                    onClick = {() => {this.handleSelect(setBool, ref._id, ref)}} 
+                    onClick = {() => {this.handleSelect(ref)}} 
                     onMouseEnter = {() => {this.setState({position: temp})}}
-                
-                    backgroundColor = {this.state.position === temp ? '#F4F4F6' : ""}
+                    backgroundColor = {position === temp ? '#F4F4F6' : ""}
                  >
-                     <RiFileLine
-                            style = {{fontSize: "1.5rem", marginRight: "1rem"}}
+                    <RiFileLine
+                        style = {{fontSize: "1.5rem", marginRight: "1rem"}}
                     />
                     {ref.name ? ref.name : "Untitled"}
-                    {setBool && 
+                    {isSelected && 
                         <RiCheckFill
                             style = {{ color: "#19e5be", marginLeft: "auto", fontSize: "2rem"}} 
                         />
@@ -220,18 +215,10 @@ class FileReferenceMenu extends React.Component {
     }
 
     openMenu(e){
-        e.preventDefault()
+        e.preventDefault();
         document.addEventListener('mousedown', this.handleClickOutside, false);
-        this.setState({
-            open: true
-        })
-        let ids = this.props.setReferences.map(ref => ref._id)
-        let repositoryId = this.props.document.repository._id
-        let { workspaceId } = this.props.match.params;
-
-        this.props.retrieveReferences({workspaceId, limit: 9, referenceIds: ids, repositoryId}, true).then((references) => {
-            this.setState({references, loaded: true })
-        })
+        this.setState({ open: true });
+        this.reset();
     }
 
     closeMenu(){
@@ -246,55 +233,44 @@ class FileReferenceMenu extends React.Component {
             position: -1})
     }
 
-    renderListContent = (flip, setIds) => {
+    renderSearchBar = () => {
+        const {focused} = this.state;
+        return (
+            <SearchbarContainer>
+                <SearchbarWrapper 
+                    backgroundColor = {focused ? "white" : "#F7F9FB"}
+                    border = {focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
+                >
+                    <Searchbar 
+                        onFocus = {() => {this.setState({focused: true})}} 
+                        onBlur = {() => {this.setState({focused: false})}} 
+                        onKeyDown = {(e) => this.setPosition(e)}  
+                        onChange = {(e) => {this.searchReferences(e)}} 
+                        autoFocus 
+                        placeholder = {"Find references..."}/>
+                </SearchbarWrapper>
+            </SearchbarContainer>
+        )
+    }
+
+    renderListContent = (flip) => {
         if (flip[0]){
             return(
                 <>
                     <ListContainer>
-                        {this.state.loaded ?  this.renderListItems(setIds) : <MoonLoader size = {12}/>}
+                        {this.state.loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
                     </ListContainer>
-                    <SearchbarContainer>
-                        <SearchbarWrapper 
-                            backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
-                            border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
-                        >
-                        
-                            <Searchbar 
-                                onFocus = {() => {this.setState({focused: true})}} 
-                                onBlur = {() => {this.setState({focused: false})}} 
-                                onKeyDown = {(e) => this.setPosition(e)}  
-                                onChange = {(e) => {this.searchReferences(e)}} 
-                                value = {this.state.search}
-                                autoFocus 
-                                placeholder = {"Find references..."}/>
-                        </SearchbarWrapper>
-                    </SearchbarContainer>
+                    {this.renderSearchBar()}
                     <HeaderContainer>Attach References</HeaderContainer>
-                    
                 </>
             )
         } else {
             return(
                 <>
                     <HeaderContainer>Attach References</HeaderContainer>
-                    <SearchbarContainer>
-                        <SearchbarWrapper 
-                            backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
-                            border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
-                        >
-                        
-                            <Searchbar 
-                                onFocus = {() => {this.setState({focused: true})}} 
-                                onBlur = {() => {this.setState({focused: false})}} 
-                                onKeyDown = {(e) => this.setPosition(e)}  
-                                onChange = {(e) => {this.searchReferences(e)}} 
-                                value = {this.state.search}
-                                autoFocus 
-                                placeholder = {"Find references..."}/>
-                        </SearchbarWrapper>
-                    </SearchbarContainer>
+                    {this.renderSearchBar()}
                     <ListContainer>
-                        {this.state.loaded ?  this.renderListItems(setIds) : <MoonLoader size = {12}/>}
+                        {this.state.loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
                     </ListContainer>
                 </>
             )
@@ -315,33 +291,34 @@ class FileReferenceMenu extends React.Component {
 
 
     render() {
-        let setIds = this.props.setReferences.map(ref => ref._id)
         let flip = this.renderFlip()
+        const { form } = this.props;
+        const { open } = this.state;
         return(
             <MenuContainer >
-                    <AddButton 
-                        ref = {addButton => this.addButton = addButton} 
-                        onClick = {(e) => this.openMenu(e)}
-                        active = {this.state.open}
+                <AddButton 
+                    ref = {addButton => this.addButton = addButton} 
+                    onClick = {(e) => this.openMenu(e)}
+                    active = {open}
+                >
+                    <RiAddLine />
+                </AddButton>
+                <CSSTransition
+                        in = {open}
+                        unmountOnExit
+                        enter = {true}
+                        exit = {true}       
+                        timeout = {150}
+                        classNames = "dropmenu"
+                >
+                    <Container 
+                        form = {form}
+                        ref = {node => this.node = node}
+                        flip = {flip}
                     >
-                        <RiAddLine />
-                    </AddButton>
-                    <CSSTransition
-                         in = {this.state.open}
-                         unmountOnExit
-                         enter = {true}
-                         exit = {true}       
-                         timeout = {150}
-                         classNames = "dropmenu"
-                    >
-                        <Container 
-                            form = {this.props.form}
-                            ref = {node => this.node = node}
-                            flip = {flip}
-                        >
-                            {this.renderListContent(flip, setIds)}
-                        </Container>
-                    </CSSTransition>
+                        {this.renderListContent(flip)}
+                    </Container>
+                </CSSTransition>
             </MenuContainer>
         )
     }
@@ -356,15 +333,7 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 
-export default withRouter(connect(mapStateToProps, { attachDocumentReference, removeDocumentReference, retrieveReferences })(FileReferenceMenu));
-
-
-
-const Title = styled.div`
-    font-size: 1.3rem;
-    margin-right: 0.3rem;
-    font-weight: 500;
-`
+export default withRouter(connect(mapStateToProps, { attachDocumentReference, removeDocumentReference, retrieveReferences, searchReferences })(FileReferenceMenu));
 
 const AddButton = styled.div`
     height: 3rem;
@@ -383,53 +352,8 @@ const AddButton = styled.div`
     cursor: pointer;
 `
 
-
-const AddBigButton = styled.div`
-    background-color: #f4f7fa;
-    display: flex;
-    align-items: center;
-    display: inline-flex;
-    font-weight: 500;
-    font-size: 1.25rem;
-    border-radius: 4px;
-    padding: 0.5rem 0.8rem;
-    cursor: pointer;
-    
-    &:hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-        opacity: 1;
-    }
-    opacity: 1;
-    margin-bottom: 1rem;
-`
-
-/*
-const AddButton = styled.div`
-    width: 2.3rem;
-    height: 2.3rem;
-    background-color: #f4f7fa;
-    border-radius: 0.2rem;
-    opacity: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    &:hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    }
-    color: #172A4E;
-`*/
-
-const NoneMessage = styled.div`
-    font-size: 1.4rem;
-    opacity: 0.5;
-`
-
-
-
 const MenuContainer = styled.div`
 `
-
 
 const Container = styled.div`
     width: 30rem;
@@ -468,7 +392,6 @@ const SearchbarWrapper = styled.div`
     display: flex;
 `
 
-
 const Searchbar = styled.input`
     width: 18rem;
     &::placeholder {
@@ -496,17 +419,6 @@ const HeaderContainer = styled.div`
     font-weight: 500;
 `
 
-const ListHeader = styled.div`
-    height: 3rem;
-  
-    padding: 1.5rem;
-    align-items: center;
-    display: flex;
-    font-size: 1.4rem;
-    opacity: 0.8;
-
-`
-
 const ListContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -521,28 +433,10 @@ const ListItem = styled.div`
     padding: 1rem;
     display: flex;
     align-items: center;
-    
     background-color: white;
-
-   
     cursor: pointer;
     color: ${props => props.color};
     background-color: ${props => props.backgroundColor};
     border-bottom: ${props => props.border};
     box-shadow: ${props => props.shadow};
-`
-
-const ListCreate = styled.div`
-    height: 3.5rem;
-    border-radius: 0.4rem;
-    margin-bottom: 0.7rem;
-    background-color: #F7F9FB;
- 
-    color: #172A4E;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: ${props => props.shadow};
-    border-bottom: ${props => props.border};
 `

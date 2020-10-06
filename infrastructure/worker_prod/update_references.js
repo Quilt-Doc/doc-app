@@ -14,6 +14,8 @@ const { exec, execFile, spawnSync } = require('child_process');
 
 const constants = require('./constants/index');
 
+const apis = require('./apis/api');
+
 
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
@@ -23,6 +25,8 @@ const tokenUtils = require('./utils/token_utils');
 const Reference = require('./models/Reference');
 const Document = require('./models/Document');
 const Repository = require('./models/Repository');
+const UserStats = require('./models/reporting/UserStats');
+
 
 const {serializeError, deserializeError} = require('serialize-error');
 
@@ -58,7 +62,7 @@ Directory Update Procedure:
 
 */
 
-
+// TODO: Update UserStats.documentsBrokenNum
 const breakAttachedDocuments = async (repoId, refUpdateData, worker) => {
     // Find all Documents associated with References that have been broken
     var documentsToBreak;
@@ -109,9 +113,79 @@ const breakAttachedDocuments = async (repoId, refUpdateData, worker) => {
                                                         source: 'worker-instance', function: 'breakAttachedDocuments'}});
             throw new Error(`Error bulk invalidating Documents on repository: ${repoId}`);
         }
-    }
 
-    return docUpdateData;
+        // Update UserStats here
+
+        // We need to get the Document's authors
+
+        var deletedIds = docUpdateData.map(docData => docData._id.toString());
+
+        var deletedDocumentInfo;
+
+        try {
+            deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author status").lean().exec();
+        }
+        catch (err) {
+            worker.send({ action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                    errorDescription: `Error Document find query failed repositoryId, deletedIds: ${repoId}, ${JSON.stringify(deletedIds)}`,
+                                                    function: 'breakAttachedDocuments'}});
+
+            throw new Error(`Error Document find query failed repositoryId, deletedIds: ${repoId}, ${JSON.stringify(deletedIds)}`);
+        }
+
+        var userBrokenDocumentNums = {};
+        var userBrokenDocumentUpdateList = [];
+    
+        deletedDocumentInfo.filter(infoObj => infoObj.status == 'invalid')
+                            .forEach(infoObj => {
+                                userBrokenDocumentNums[infoObj.author.toString()] = (userBrokenDocumentNums[infoObj.author.toString()] || 0) + 1;
+                            });
+        Object.keys(userBrokenDocumentNums).forEach(key => {
+            userBrokenDocumentUpdateList.push({ userId: key, updateNum: userBrokenDocumentNums[key] });
+        });
+    
+        if (userBrokenDocumentUpdateList.length > 0) {
+            var userUpdates = userBrokenDocumentUpdateList;
+
+            // mongoose bulkwrite for one many update db call
+            try {
+                const bulkDecrementOps = userUpdates.map((update) => {
+                    return ({
+                        updateOne: {
+                            filter: { user: update.userId },
+                            // Where field is the field you want to update
+                            update: { $inc: { documentsBrokenNum: update.updateNum } },
+                            upsert: false
+                        }
+                    })
+                });
+               await UserStats.bulkWrite(bulkDecrementOps);
+            }
+            catch (err) {
+                worker.send({ action: 'log', info: {    level: 'error',
+                                                        source: 'worker-instance',
+                                                        message: serializeError(err),
+                                                        errorDescription: `Error bulk updating User Stats for repositoryId, userUpdates: ${repoId}, ${JSON.stringify(userUpdates)}`,
+                                                        function: 'breakAttachedDocuments'}});
+
+                throw new Error(`Error bulk updating User Stats for repositoryId, userUpdates: ${repoId}, ${JSON.stringify(userUpdates)}`);
+            }
+
+            await worker.send({action: 'log', info: { level: 'info',
+                                                        source: 'worker-instance',
+                                                        message: `Successfully updated 'UserStats.documentsBrokenNum' for ${userUpdates.length} Users - repositoryId: ${repoId}`,
+                                                        function: 'breakAttachedDocuments'}});
+        }
+
+
+
+    }
+    await worker.send({ action: 'log', info: {level: 'info',
+                                                source: 'worker-instance',
+                                                message: `Invalidated ${docUpdateData.length} Documents.`,
+                                                function: 'breakAttachedDocuments'
+                                                }});
+    return docUpdateData.map(docData => docData._id.toString());
 }
 
 
@@ -134,6 +208,8 @@ function intersect(a, b) {
 
 
 const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => {
+
+    var brokenDocuments = [];
 
     // Make sure repository is at correct commit
     try {
@@ -230,9 +306,8 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
 
     }
 
-    var brokeDocuments;
     try {
-        brokenDocuments = await breakAttachedDocuments(repoId, unmatchedDirectories, worker);
+        brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, unmatchedDirectories, worker) );
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
@@ -262,6 +337,8 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
             throw new Error(`Error bulk inserting new 'dir' References on repository: ${repoId}`);
         }
     }
+
+    return brokenDocuments;
 }
 
 /*
@@ -285,6 +362,11 @@ Procedure:
 const runUpdateProcedure = async () => {
 
     var worker = require('cluster').worker;
+
+    var brokenDocuments = [];
+    var brokenSnippets = [];
+
+    var backendClient = apis.requestBackendClient();
 
 
     await worker.send({action: 'log', info: {level: 'debug', message: `cloneUrl: ${process.env.cloneUrl}`,
@@ -368,9 +450,11 @@ const runUpdateProcedure = async () => {
         // trackedFile[0].operationList is chronological commit operations, earliest --> latest
         var trackedFiles = getFileChangeList(commitObjects);
         
+        await worker.send({action: 'log', info: {level: 'info', message: ` - repoId, trackedFiles: ${repoId}\n${JSON.stringify(trackedFiles)}`,
+                            source: 'worker-instance', function: 'runUpdateProcedure'}});
 
         try {
-            await runSnippetValidation(process.env.installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker);
+            brokenSnippets = await runSnippetValidation(process.env.installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker);
             // (installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker)
         }
         catch (err) {
@@ -384,7 +468,7 @@ const runUpdateProcedure = async () => {
 
         // Validate and update directory references here
         try {
-            await validateDirectories(repoId, repoDiskPath, headCommit, worker);
+            brokenDocuments = brokenDocuments.concat( await validateDirectories(repoId, repoDiskPath, headCommit, worker) );
         }
         catch (err) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`,
@@ -411,6 +495,15 @@ const runUpdateProcedure = async () => {
 
         // Handling Newly Created File References
         if (fileReferencesToCreate.length > 0) {
+
+            await worker.send({action: 'log', info: {level: 'info', 
+                                                        message: `Updating 'file' References for creation on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate.map(file => file.oldRef))}`,
+                                                        source: 'worker-instance', function:'runUpdateProcedure', }})
+            
+            worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Updating 'file' References for creation on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate)}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+            
             var refCreateData = [];
             for (i = 0; i < fileReferencesToCreate.length; i++) {
                 var pathSplit = fileReferencesToCreate[i].ref.split('/');
@@ -435,6 +528,10 @@ const runUpdateProcedure = async () => {
             worker.send({action: 'log', info: {level: 'info', 
                                                 message: `Updating 'file' References for deletion on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToDelete.map(file => file.oldRef))}`,
                                                 source: 'worker-instance', function:'runUpdateProcedure', }})
+            
+            worker.send({action: 'log', info: {level: 'info', 
+                                                message: `Updating 'file' References for deletion on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToDelete)}`,
+                                                source: 'worker-instance', function:'runUpdateProcedure', }})
 
             var brokenReferences;
             try {
@@ -448,7 +545,7 @@ const runUpdateProcedure = async () => {
             }
 
             await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `Fetched ${brokenReferences.length} ids for the following 'file' References to delete on repository: ${repoId}\n${fileReferencesToDelete}`,
+                                                message: `Fetched ${brokenReferences.length} ids for the following 'file' References to delete on repository: ${repoId}\n${JSON.stringify(fileReferencesToDelete.map(file => file.oldRef))}`,
                                                 source: 'worker-instance', function:'runUpdateProcedure', }})
 
             var refUpdateData = [];
@@ -492,7 +589,7 @@ const runUpdateProcedure = async () => {
                 }
 
                 try {
-                    await breakAttachedDocuments(repoId, refUpdateData, worker);
+                    brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, refUpdateData, worker) );
                 }
                 catch (err) {
                     await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
@@ -505,6 +602,14 @@ const runUpdateProcedure = async () => {
 
         // Handling Updated File References, only updating on rename
         if (fileReferencesToUpdate.length > 0) {
+            worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Updating 'file' References for update on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToUpdate.map(file => file.oldRef))}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+
+            worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Updating 'file' References for update on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToUpdate)}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+
             var renamedReferences;
             try {
                 renamedReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
@@ -531,14 +636,14 @@ const runUpdateProcedure = async () => {
                 // Update Reference with new status and breakCommit sha
                 refUpdateData.push({_id: currentSearchReference._id, status: 'valid',
                                     name: fileName,
-                                    path: fileReferencesToCreate[i].ref,
+                                    path: fileReferencesToUpdate[i].ref,
                                     parseProvider: 'update'});
             }
 
             worker.send({action: 'log', info: {level: 'debug', 
                                                 message: `refUpdateData for Reference update on repository: ${repoId}\n${refUpdateData}`,
                                                 source: 'worker-instance', function:'runUpdateProcedure'}});
-            
+
 
             // Invalidate all the References that have been broken
             const bulkReferenceRenameOps = refUpdateData.map(refObj => ({
@@ -593,7 +698,30 @@ const runUpdateProcedure = async () => {
 
         // TODO: Create a Check at the end
 
-        // TODO: Update UserStats.documentsBrokenNum
+        var checkCreateData = {};
+
+        checkCreateData.installationId = process.env.installationId;
+        checkCreateData.commit = headCommit
+        checkCreateData.brokenDocuments = brokenDocuments;
+        checkCreateData.brokenSnippets = brokenSnippets;
+
+        // Create Check
+        try {
+            var createCheckResponse = await backendClient.post(`/checks/${repoId}/create`, checkCreateData);
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                        errorDescription: `Error creating Check - repoId, installationId, headCommit:  ${repoId}, ${process.env.installationId}, ${headCommit}`,
+                                                        source: 'worker-instance', function: 'runUpdateProcedure'}});
+
+            throw new Error(`Error creating Check - repoId, installationId, headCommit:  ${repoId}, ${process.env.installationId}, ${headCommit}`);
+        }
+
+
+        await worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Successfully created Check for ${brokenDocuments.length} Documents and ${brokenSnippets.length} Snippets - repoId, installationId, headCommit:  ${repoId}, ${process.env.installationId}, ${headCommit}`,
+                                                    source: 'worker-instance', function: 'runUpdateProcedure'}});
+
 
         await worker.send({action: 'log', info: {level: 'info', message: `Update Reference Job Success - fullName, headCommit: ${repoObj.fullName}, ${headCommit}`,
                                                     source: 'worker-instance', function: 'runUpdateProcedure'}});

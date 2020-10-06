@@ -46,10 +46,9 @@ class ReferenceInfo extends React.Component {
         const { _id, tags} = currentReference;
         return(
             <LabelMenu 
-                attachTag = {(tagId) => attachReferenceTag({referenceId: _id, workspaceId, tagId, repositoryId})}
-                removeTag = {(tagId) => removeReferenceTag({referenceId: _id, workspaceId, tagId, repositoryId})}
+                attachTag = {(tag) => attachReferenceTag({referenceId: _id, workspaceId, tagId: tag._id, repositoryId})}
+                removeTag = {(tag) => removeReferenceTag({referenceId: _id, workspaceId, tagId: tag._id, repositoryId})}
                 setTags = {tags}
-                dirview = {directoryNavigator}
             />
         )
     }
@@ -127,7 +126,8 @@ class ReferenceInfo extends React.Component {
         const { match, retrieveReferences } = this.props;
         const { workspaceId, repositoryId } = match.params;
        
-        const { _id } = await retrieveReferences({workspaceId, repositoryId, path, minimal: true}, true)[0];
+        const returnedValue = await retrieveReferences({workspaceId, repositoryId, path, minimal: true}, true);
+        const {_id} = returnedValue[0];
         history.push(`/workspaces/${workspaceId}/repository/${repositoryId}/dir/${_id}`);
     }
 
@@ -182,50 +182,74 @@ class ReferenceInfo extends React.Component {
         );
     }
 
-    render(){
-        const {setOptions} = this.state;
+    renderStaticView = () => {
         const { currentReference, documents } = this.props;
+        const { tags } = currentReference;
+        return (
+            <>
+                {tags.length > 0 && 
+                    <List style = {{marginBottom: "2rem"}}>
+                        <InfoList>
+                            {this.renderTags()}
+                        </InfoList>
+                    </List>
+                }
+                { documents.length > 0 &&
+                    <List style = {{marginBottom: "2rem"}}>
+                        <InfoList2>{this.renderDocuments()}</InfoList2></List>
+                }
+            </>
+        )
+    }
+
+    renderEditView = () => {
+        const { currentReference, documents } = this.props;
+        const { tags } = currentReference;
+
+        return (
+            <>
+                <List style = {{marginBottom: "2rem"}}>
+                    {this.renderLabelMenu()}
+                    {tags.length > 0 ? <InfoList edit = {true}>{this.renderTags()}</InfoList> : 
+                        <Message>
+                            Attach Labels
+                        </Message>
+                    }
+                </List>
+                <List style = {{marginBottom: "2rem"}}>
+                    {this.renderDocumentMenu()}
+                    {documents.length  > 0 ? <InfoList2 edit = {true}>{this.renderDocuments()}</InfoList2> : 
+                        <Message>
+                            Add Documentation
+                        </Message>
+                    }
+                </List>
+            </>
+        )
+    }
+
+    render(){
+        const { setOptions } = this.state;
+        const { currentReference, documents, edit } = this.props;
         const { tags } = currentReference;
 
         return(
             <>
                 {this.renderToolbar()}
-                <MainToolbar>
-                    <Button 
-                        active = {setOptions}
-                        onClick = {() => {this.setState({setOptions: !setOptions})}}
-                    >
-                        <CgOptions/>
-                    </Button>
-                </MainToolbar>
+              
                 <Container>
                     <Header>
                         {this.renderRepositoryName()}
                         {this.renderHeaderPath()}
                     </Header>
-                    {tags.length > 0 && 
-                        <Tags>
-                            {this.renderTags()}
-                        </Tags>
-                    }
-                    <Info>
-                        <Toolbar>
-                            <RiStackLine style = {{fontSize: "1.8rem", marginRight: "0.7rem"}} />
-                            Information
-                        </Toolbar>
-                        <ListView>
-                            { documents.length > 0 ? this.renderDocuments() :
-                                <EmptyMessage>No Information attached</EmptyMessage>
-                            }
-                        </ListView>
-                    </Info>
+                    {edit ? this.renderEditView() : this.renderStaticView()}
                 </Container>
             </>
         )
     }
 }
 
-const mapStateToProps = ( ) => {
+const mapStateToProps = () => {
     return { }
 }
 
@@ -240,9 +264,29 @@ ReferenceInfo.propTypes = {
 export default withRouter(connect(mapStateToProps, { attachReferenceTag, removeReferenceTag, retrieveReferences })(ReferenceInfo));
 
 
+
+const List = styled.div`
+    display: flex;
+    align-items: center;
+`
+
+const InfoList = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-left: ${props => props.edit ? "1.5rem" : ""};
+    margin-bottom: -1rem;
+`
+
+const InfoList2 = styled.div`
+    display: flex;
+    align-items: center;
+    margin-left: ${props => props.edit ? "1.5rem" : ""};
+`
+
+
 const Container = styled.div`
-    padding-left: 5rem;
-    padding-right: 5rem;
+
 `
 
 const MainToolbar = styled.div`
@@ -311,6 +355,14 @@ const PageIcon = styled.div`
     
     cursor: pointer;
     border-radius: 0.3rem;
+`
+
+
+const Message = styled.div`
+    opacity: 0.5;
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin-left: 1.5rem;
 `
 
 const EmptyMessage = styled.div`

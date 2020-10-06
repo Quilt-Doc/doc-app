@@ -11,14 +11,15 @@ let initialState = {
     refSkip: 0,
     linkageSkip: 0,
     infobankResults: [],
+    searchResults: [],
     hasMore: true
 }
 
 export default (state = initialState, action) => {
-   
+    console.log("PAYLOAD", action.payload);
     switch (action.type) {
         case RETRIEVE_SEARCH_RESULTS:
-            return {...state, ...action.payload};
+            return { ...state, searchResults: action.payload.searchResults };
         case RETRIEVE_INFOBANK_RESULTS:
             let {searchResults, docSkip, refSkip, linkageSkip}  = action.payload;
             let {limit, newSearch} = action.misc;

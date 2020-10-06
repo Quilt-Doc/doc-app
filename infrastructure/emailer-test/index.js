@@ -1,48 +1,134 @@
-const user_name     = 'karan@getquilt.app';
-const refresh_token = '';
-const access_token  = '';
-const client_id     = '';
-const client_secret = '';
+// using Twilio SendGrid's v3 Node.js Library
+// https://github.com/sendgrid/sendgrid-nodejs
 
-const email_to = 'porsliana@gmail.com';
+require('dotenv').config();
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+const msg = {
+  to: 'porsliana@gmail.com', // Change to your recipient
+  from: 'karan@getquilt.app', // Change to your verified sender
+  subject: 'Sending with SendGrid is Fun',
+  text: 'and easy to do anywhere, even with Node.js',
+  html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+}
+sgMail
+  .send(msg)
+  .then(() => {
+    console.log('Email sent')
+  })
+  .catch((error) => {
+    console.error(error)
+  })
 
-const nodemailer = require('nodemailer');
 
-let transporter = nodemailer
-.createTransport({
-    service: 'Gmail',
-    auth: {
-        type: 'OAuth2',
-        clientId: client_id,
-        clientSecret: client_secret
-    }
+  const crypto = require('crypto');
+  var id = crypto.randomBytes(64).toString('hex');
+
+
+
+
+
+
+
+
+  require("dotenv").config();
+const express = require("express");
+const mustache = require("mustache-express");
+const bodyParser = require("body-parser");
+const mockDb = require("./mockDb.js");
+const twilioClient = require("twilio")(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+const verificationSID = process.env.TWILIO_VERIFY_SID;
+
+const app = express();
+
+//Templating Engine Setup
+app.engine("html", mustache());
+app.set("view engine", "html");
+app.set("views", __dirname + "/views");
+app.use(express.static(__dirname + "/public"));
+app.use(bodyParser.urlencoded({ extended: false }));
+
+//Fake Database
+const database = new mockDb();
+
+//Sign Up Page
+app.get("/", (req, res) => {
+  res.render("register");
 });
-transporter.on('token', token => {
-    console.log('A new access token was generated');
-    console.log('User: %s', token.user);
-    console.log('Access Token: %s', token.accessToken);
-    console.log('Expires: %s', new Date(token.expires));
-});
-// setup e-mail data with unicode symbols
-let mailOptions = {
-    from    : user_name, // sender address
-    to      : email_to, // list of receivers
-    subject : 'Hello ✔', // Subject line
-    text    : 'Hello world ?', // plaintext body
-    html    : '<b>Hello world ?</b>', // html body
 
-    auth : {
-        user         : user_name,
-        refreshToken : refresh_token,
-        accessToken  : access_token,
-        // expires      : 1494388182480
-    }
-};
+//New User Created
+app.post("/", (req, res) => {
+  const email = req.body.email;
 
-// send mail with defined transport object
-transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-        return console.log(error);
-    }
-    console.log('Message sent: ' + info.response);
+  database.addUser({
+    username: req.body.username,
+    email: email,
+    password: req.body.password,
+    verified: "Not Verified"
+  });
+
+  // //CREATE A NEW VERIFICATION HERE
+  twilioClient.verify
+    .services(verificationSID)
+    .verifications.create({ to: email, channel: "email" })
+    .then(verification => {
+      console.log("Verification email sent");
+      res.redirect(`/verify?email=${email}`);
+    })
+    .catch(error => {
+      console.log(error);
+    });
 });
+
+//Requesting Verification Code
+app.get("/verify", (req, res) => {
+  res.render("verify", { email: req.query.email });
+});
+
+//Verification Code submission
+app.post("/verify", (req, res) => {
+  const userCode = req.body.code;
+  const email = req.body.email;
+
+  console.log(`Code: ${userCode}`);
+  console.log(`Email: ${email}`);
+  //CHECK YOUR VERIFICATION CODE HERE
+
+  twilioClient.verify
+    .services(verificationSID)
+    .verificationChecks.create({ to: email, code: userCode })
+    .then(verification_check => {
+      if (verification_check.status === "approved") {
+        database.verifyUser(email);
+        res.redirect("users");
+      } else {
+        res.render("verify", {
+          email: email,
+          message: "Verification Failed. Please enter the code from your email"
+        });
+      }
+    })
+    .catch(error => {
+      console.log(error);
+      res.render("verify", {
+        email: email,
+        message: "Verification Failed. Please enter the code from your email"
+      });
+    });
+});
+
+app.get("/users", (req, res) => {
+  let users = database.getUsers();
+  res.render("users", {
+    users: {
+      users: users
+    }
+  });
+});
+
+console.log("Listening on Port 3000");
+app.listen(3000);

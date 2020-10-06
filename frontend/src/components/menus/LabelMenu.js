@@ -17,17 +17,15 @@ import chroma from 'chroma-js';
 import styled from "styled-components";
 
 //actions
-import { retrieveTags, createTag } from '../../actions/Tag_Actions';
+import { createTag } from '../../actions/Tag_Actions';
 
 //icons
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTag, faPlus } from '@fortawesome/free-solid-svg-icons'
-import {BiPurchaseTag} from 'react-icons/bi';
-import {BsTag} from 'react-icons/bs';
-import {TiTag} from 'react-icons/ti';
+import { RiCheckFill } from 'react-icons/ri';
+import { RiAddLine } from 'react-icons/ri';
+
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
-import { RiAddLine } from 'react-icons/ri';
+
 
 class LabelMenu extends React.Component {
     
@@ -36,12 +34,9 @@ class LabelMenu extends React.Component {
 
         this.state = {
             open: false,
-            search: '',
-            typing: false,
-            typingTimeout: 0, 
-            create: '',
             loaded: false,
-            position: 0
+            position: 0,
+            currentTags: []
         }
 
         this.menuRef = React.createRef();
@@ -55,155 +50,118 @@ class LabelMenu extends React.Component {
      */
   
 
-    searchTags = (event) => {
+    searchTags = () => {
 
-        if (this.state.typingTimeout) {
-           clearTimeout(this.state.typingTimeout);
-        }
-        
-        let ids = this.props.setTags.map(tag => tag._id)
-       
-        let {workspaceId} = this.props.match.params
-        this.setState({
-           search: event.target.value,
-           typing: false,
-           typingTimeout: setTimeout(() => {
-                if ( this.state.search === ""){
-                    this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId}).then(() => {
-                        this.setState({create: "", position: -1})
-                    })
-                } else {
-                    this.props.retrieveTags({search: this.state.search, limit: 9, workspaceId}).then(() => {
-                        let labels = this.props.tags.map(tag => tag.label)
-                        if (labels.includes(this.state.search)) {
-                            this.setState({create: "", position: -1})
-                        } else {
-                            this.setState({create: this.state.search, position: -1})
-                        }
-                    });
-                }
-            }, 200)
-        });
-    }
+        const { tags } = this.props;
+        const search = this.input ? this.input.value : "";
 
-
-
-    createTag = () => {
-        this.setState({loaded: false, create: ""})
-        this.props.createTag({label: this.state.search, workspaceId: this.props.workspace._id}).then((tag) => {
-            this.props.attachTag(tag._id).then(() => {
-                let ids = this.props.setTags.map(tag => tag._id)
-                this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
-                    this.setState({loaded: true, search: ''})
-                })
-            })
-           
-        })
-    }
-
-    removeTag = (tag) => {
-        this.props.removeTag(tag._id)
-    }
-
-    renderMarginTop() {
-        return "1rem";
-    }
-
-    handleSelect(labelBool, tagId, tag){
-        if (!this.props.form){
-            if (labelBool) {
-                this.props.removeTag(tagId)
-            } else {
-                this.props.attachTag(tagId)
-            }
+        if (search === "") {
+            this.reset();
         } else {
-            if (labelBool) {
-                this.props.removeTag(tag)
-            } else {
-                this.props.attachTag(tag)
-            }
+            let currentTags = tags.filter(tag => tag.label.includes(search)).slice(0, 9);
+            this.setState({position: -1, currentTags});
         }
-       
+    }
+
+    reset = () => {
+        const { setTags, tags } = this.props;
+
+        let ids = setTags.map(tag => tag._id)
+        let currentTags = setTags.slice(0, 9);
+        if (setTags.length < 9) {
+            let filtered = tags.filter(tag => !(ids.includes(tag._id)))
+            filtered = filtered.slice(0, 9 - setTags.length);
+            currentTags = [...currentTags, ...filtered];
+        }
+
+        this.setState({position: -1, currentTags, loaded: true});
+    }
+
+    createTag = async () => {
+        const { createTag, match, attachTag, setTags, form } = this.props;
+        const { workspaceId } = match.params;
+
+        this.setState({ loaded: false });
+
+        const tag = await createTag({label: this.input ? this.input.value : "", workspaceId});
+
+        await attachTag(tag);
+
+        this.reset();
+    }
+
+
+    handleSelect(tag){
+        const { setTags, form, attachTag, removeTag } = this.props;
+
+        const ids = setTags.map(tag => tag._id);
+        const isIncluded = ids.includes(tag._id);
+
+
+        if (isIncluded) {
+            removeTag(tag);
+        } else {
+            attachTag(tag);
+        }
     }
 
     async setPosition(e) {
         // UP
-        if (e.key === "Enter" && this.state.position >= 0) {
+        const { position, currentTags } = this.state;
+       
+        if (e.key === "Enter" && position >= 0) {
+            let tag = currentTags[position];
+
+            this.setState({loaded: false});
             
-            if (this.state.position === this.props.tags.length){
-                this.createTag()
-            } else {
-                let tag = this.props.tags[this.state.position]
-                this.setState({loaded: false, create: ""})
-                await this.handleSelect(this.props.setTags.map(tag => tag.label).includes(tag.label), tag._id, tag)
-                let ids = this.props.setTags.map(tag => tag._id)
-                this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
-                    this.setState({loaded: true, search: ''})
-                })
-            }
-        } else if (this.state.create === "") {
-            if (e.keyCode === 38) {
-                if (this.state.position === 0){
-                    this.setState({position: this.props.tags.length - 1})
-                } else {
-                    this.setState({position: this.state.position - 1})
-                }
-            } else if (e.keyCode === 40) {
-                
-                if (this.state.position > this.props.tags.length - 2){
-                    this.setState({position: 0})
-                } else {
-                    this.setState({position: this.state.position + 1})
-                }
-            }
+            await this.handleSelect(tag);
+
+            this.reset();
         } else {
+            let newPosition;
             if (e.keyCode === 38) {
-                if (this.state.position <= 0){
-                    this.setState({position: this.props.tags.length})
+                if (position === -1) {
+                    newPosition = currentTags.length - 1;
                 } else {
-                    this.setState({position: this.state.position - 1})
+                    newPosition = position - 1;
                 }
             } else if (e.keyCode === 40) {
-                if (this.state.position > this.props.tags.length - 1){
-                    this.setState({position: 0})
+                if (position === currentTags.length - 1) {
+                    newPosition = -1;
                 } else {
-                    this.setState({position: this.state.position + 1})
+                    newPosition = position + 1;
                 }
             }
+            this.setState({position: newPosition});
         }
     }
 
-    renderTop = () => {
-        if (this.addButton){
-            let {top, height} = this.addButton.getBoundingClientRect();
-            console.log(top + height - 100);
-            return top + height + 10;
-        }
-        return 0;
+    renderColor = (tag) => {
+        let colors = ['#5352ed', '#ff4757', '#20bf6b','#1e90ff', '#ff6348', 
+            '#e84393', '#1e3799', '#b71540', '#079992'];
+
+         return tag.color < colors.length ? colors[tag.color] : 
+            colors[tag.color - Math.floor(tag.color/colors.length) * colors.length];
     }
 
-    renderLeft = () => {
-        if (!this.props.dirview && this.addButton){
-            let {left} = this.addButton.getBoundingClientRect();
-            return left;
-        } else if (this.props.dirview ) {
-            return;
-        }
-        return 0;
-    }
-
-    renderListItems(objectLabels){
-        return this.props.tags.map((tag, i) => {
-            let labelBool = objectLabels.includes(tag.label)
-                //let icon =  ref.kind === 'dir' ? <ion-icon style = {{marginRight: "0.5rem", fontSize: "1.3rem"}} name="folder-sharp"></ion-icon> 
-            //: <ion-icon style = {{marginRight: "0.5rem", fontSize: "1rem"}} name="document-outline"></ion-icon>; 
-            let color = tag.color < this.colors.length ? this.colors[tag.color] : 
-                this.colors[tag.color - Math.floor(tag.color/this.colors.length) * this.colors.length];
-            let border = this.state.position === i ? `1px solid ${color}` : '';
-            let shadow = this.state.position === i ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :'';
+    renderListItems(){
+        //console.log("HERE LOADED LIST ITEMS");
+        const { setTags, tags } = this.props;
+        const { currentTags, position } = this.state;
+        
+        console.log("SET TAGS", setTags);
+        
+        const selectedLabels = setTags.map(tag => tag.label);
+        let contentJSX = currentTags.map((tag, i) => {
+            let isSelected = selectedLabels.includes(tag.label);
+            
+            let color = this.renderColor(tag);
+            let border = position === i ? `1px solid ${color}` : '';
+            let shadow = position === i ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :'';
+           
             return(
                 <ListItem 
-                    onClick = {(e) => {e.preventDefault();this.handleSelect(labelBool, tag._id, tag)}} 
+                    onClick = {(e) => { e.preventDefault(); this.handleSelect(tag)}} 
                     onMouseEnter = {() => {this.setState({position: i})}}
                     border = {border}
                     shadow = {shadow}
@@ -211,37 +169,38 @@ class LabelMenu extends React.Component {
                     backgroundColor = {chroma(color).alpha(0.2)}
                 >
                     {tag.label}
-                    {labelBool && <ion-icon 
-                        style = {{marginLeft: "auto", fontSize: "1.5rem"}} 
-                        name="checkmark-outline"></ion-icon>}
+                    { isSelected && 
+                        <RiCheckFill style = {{marginLeft: "auto", fontSize: "2rem"}} />
+                    }
                 </ListItem>
             )
         })
+
+        const value = this.input ? this.input.value : "";
+        const labels = tags.map(tag => tag.label);
+        const canCreate = (!labels.includes(value) && value !== "");
+
+        if (canCreate) {
+            contentJSX.push(
+                <ListCreate onClick = {() => {this.createTag()}}>
+                    {`Create "${value}"`}
+                </ListCreate>
+            )
+        }
+            
+        return contentJSX;
     }
 
     openMenu(e){
         e.preventDefault()
         document.addEventListener('mousedown', this.handleClickOutside, false);
-        this.setState({open: true, 
-                       left: this.renderLeft(), 
-                       top: this.renderTop()
-                        })
-        let ids = this.props.setTags.map(tag => tag._id)
-        this.props.retrieveTags({limit: 9, tagIds: ids, workspaceId: this.props.workspace._id}).then(() => {
-            this.setState({loaded: true})
-        })
+        this.reset();
+        this.setState({ open: true });
     }
 
     closeMenu(){
         document.removeEventListener('mousedown', this.handleClickOutside, false);
-        this.setState({ 
-            open: false,
-            loaded: false,
-            search: '',
-            typing: false,
-            typingTimeout: 0, 
-            create: '',
-            position: -1})
+        this.setState({ open: false, loaded: false, position: -1})
     }
 
     handleClickOutside = (event) => {
@@ -262,32 +221,43 @@ class LabelMenu extends React.Component {
         return [false, 0]
     }
 
-    renderListContent = (flip, objectLabels) => {
+    renderListContainer = () => {
+        const { loaded } = this.state;
+        const { tags } = this.props;
+        const value = this.input ? this.input.value : "";
+        if (value !== "" || tags.length > 0) {
+            return (
+                <ListContainer>
+                    { loaded ?  this.renderListItems() : <LoaderContainer><MoonLoader size = {12}/></LoaderContainer>}
+                </ListContainer>
+            )
+        } else {
+            return (
+                <Placeholder>No tags in workspace. Type to create!</Placeholder>
+            )
+        }
+    }
+
+    renderSearchContainer = () => {
+        return (
+            <SearchbarContainer>
+                <Searchbar 
+                    ref = {node => this.input = node}
+                    onKeyDown = {(e) => this.setPosition(e)}  
+                    onChange = {(e) => {this.searchTags(e)}} 
+                    autoFocus 
+                    placeholder = {"Find labels..."}
+                />
+            </SearchbarContainer>
+        )
+    }
+
+    renderListContent = (flip) => {
         if (flip[0]) {
             return(
                 <>
-                    <ListContainer>
-                        {this.state.loaded ?  this.renderListItems(objectLabels) : <MoonLoader size = {12}/>}
-                        {this.state.create !== "" &&
-                            <ListCreate 
-                                onMouseEnter = {() => this.setState({position: this.props.tags.length})} 
-                                onClick = {() => {this.createTag()}}
-                                border = {this.state.position === this.props.tags.length ? `1px solid ${chroma("#172A4E").alpha(0.7)}` : ''}
-                                shadow = {this.state.position === this.props.tags.length ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :''}
-                            >
-                                {`Create "${this.state.create}"`}
-                            </ListCreate>
-                        }
-                    </ListContainer>
-                    <SearchbarContainer>
-                        <Searchbar 
-                            onKeyDown = {(e) => this.setPosition(e)}  
-                            onChange = {(e) => {this.searchTags(e)}} 
-                            value = {this.state.search}
-                            autoFocus 
-                            placeholder = {"Find labels..."}
-                        />
-                    </SearchbarContainer>
+                    {this.renderListContainer()}
+                    {this.renderSearchContainer()}
                     <HeaderContainer>Add labels</HeaderContainer>
                 </>
             )
@@ -295,28 +265,8 @@ class LabelMenu extends React.Component {
             return(
                 <>
                     <HeaderContainer>Add labels</HeaderContainer>
-                    <SearchbarContainer>
-                        <Searchbar 
-                            onKeyDown = {(e) => this.setPosition(e)}  
-                            onChange = {(e) => {this.searchTags(e)}} 
-                            value = {this.state.search}
-                            autoFocus 
-                            placeholder = {"Find labels..."}
-                        />
-                    </SearchbarContainer>
-                    <ListContainer>
-                        {this.state.loaded ?  this.renderListItems(objectLabels) : <MoonLoader size = {12}/>}
-                        {this.state.create !== "" &&
-                            <ListCreate 
-                                onMouseEnter = {() => this.setState({position: this.props.tags.length})} 
-                                onClick = {() => {this.createTag()}}
-                                border = {this.state.position === this.props.tags.length ? `1px solid ${chroma("#172A4E").alpha(0.7)}` : ''}
-                                shadow = {this.state.position === this.props.tags.length ? 'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px' :''}
-                            >
-                                {`Create "${this.state.create}"`}
-                            </ListCreate>
-                        }
-                    </ListContainer>
+                    {this.renderSearchContainer()}
+                    {this.renderListContainer()}
                 </>
             )
         }
@@ -324,30 +274,25 @@ class LabelMenu extends React.Component {
 
 
     render() {
+        const { open } = this.state;
+        const { form } = this.props;
+
         this.colors = ['#5352ed', 
-        '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
+            '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
         ]
 
-        let objectLabels = this.props.setTags.map(tag => tag.label)
         let flip = this.renderFlip()
         return(
             <MenuContainer  >
-                {this.props.form ?
-                    <AddButton 
-                        ref = {addButton => this.addButton = addButton} 
-                        onClick = {(e) => this.openMenu(e)}
-                        active = {this.state.open}
-                    >
-                        <RiAddLine />
-                    </AddButton> :
-                    <PageIcon 
-                        active = {this.state.open} onClick = {(e) => this.openMenu(e)} ref = {addButton => this.addButton = addButton}>
-                        <TiTag style = {{fontSize: "1.5rem", marginRight: "0.5rem", marginTop: "0.1rem"}}/>
-                        <Title3>Add Labels</Title3>
-                    </PageIcon>
-                }
+                <AddButton 
+                    ref = {addButton => this.addButton = addButton} 
+                    onClick = {(e) => this.openMenu(e)}
+                    active = {open}
+                >
+                    <RiAddLine />
+                </AddButton>
                 <CSSTransition
-                    in = {this.state.open}
+                    in = {open}
                     unmountOnExit
                     enter = {true}
                     exit = {true}       
@@ -357,10 +302,9 @@ class LabelMenu extends React.Component {
                     <Container 
                         ref = {node => this.node = node}
                         flip = {flip}
-                        form = {this.props.form}
-                        dirview = { this.props.dirview }
+                        form = {form}
                     >
-                        {this.renderListContent(flip, objectLabels)}
+                        {this.renderListContent(flip)}
                     </Container>
                 </CSSTransition>
             </MenuContainer>
@@ -369,92 +313,14 @@ class LabelMenu extends React.Component {
     
 }
 
-const mapStateToProps = (state, ownProps) => {
-    let {workspaceId} = ownProps.match.params
+const mapStateToProps = (state) => {
+    let { tags } = state;
     return {
-        tags: Object.values(state.tags).sort((a, b) => {
-            if (a.label > b.label) {
-                return 1
-            } else {
-                return -1
-            }
-        }),
-        workspace: state.workspaces[workspaceId]
+       tags: Object.values(tags)
     }
 }
 
-
-
-export default withRouter(connect(mapStateToProps, { retrieveTags, createTag })(LabelMenu));
-
-
-
-const PageIcon = styled.div`
-    opacity: ${props => props.active ? 1 : 0.9};
-    display: flex;
-    align-items: center;
-    font-size: 1.4rem;
-   
-   /*color: white;*/
-    /*background-color: #4c5367;*/
-   /* opacity: 0.8;*/
-   padding: 0.5rem 1rem;
-    &:hover {
-        background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#F4F4F6"};
-        
-    }
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
-    cursor: pointer;
-    border-radius: 0.3rem;
-`
-
-const Title3 = styled.div`
-    font-size: 1.2rem;
-    margin-right: 0.3rem;
-    font-weight: 400;
-`
-
-const Title = styled.div`
-    font-weight: 500;
-`
-
-const AddBigButton = styled.div`
-    background-color:white;
-    display: flex;
-    align-items: center;
-    display: inline-flex;
-    font-weight: 500;
-    font-size: 1.35rem;
-    border-radius: 4px;
-    padding: 0.35rem 0.8rem;
-    cursor: pointer;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-    &:hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
-        opacity: 1;
-    }
-    opacity: 1;
-    margin-bottom: 1rem;
-`
-
-const ModalToolbarButton = styled.div`
-    display: flex;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    padding: 0.8rem;
-    font-size: 1.3rem;
-    
-    margin-right: 1rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    &:hover {
-        background-color: #F4F4F6; 
-        opacity: 1;
-    }
-    margin-left: ${props => props.marginLeft};
-    opacity: ${props => props.opacity};
-`
+export default withRouter(connect(mapStateToProps, { createTag })(LabelMenu));
 
 const MenuContainer = styled.div`
 `
@@ -469,7 +335,7 @@ const AddButton = styled.div`
     align-items: center;
     justify-content: center;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "white"};
     &:hover {
         background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
     }
@@ -487,9 +353,9 @@ const Container = styled.div`
     font-size: 1.4rem;
     z-index: 3;
     background-color: white;
-    bottom:${props => props.flip[0] ? `${props.flip[1]}px` : ""};
-    top: ${props => !props.flip[0] ? `${props.flip[1]}px` : ""};
-    margin-left: ${props => props.form ? "" : "-16.8rem"};
+    ${props => (props.form && props.flip[0]) ? `bottom: ${props.flip[1]}px` : ""};
+    ${props => (props.form && !props.flip[0]) ? `top: ${props.flip[1]}px` : ""};
+    margin-top: ${props => !props.form ? "10px": ""};
 `
 
 const SearchbarContainer = styled.div`
@@ -512,21 +378,25 @@ const HeaderContainer = styled.div`
   
 `
 
-const ListHeader = styled.div`
-    height: 3rem;
-  
-    padding: 1.5rem;
-    align-items: center;
-    display: flex;
-    font-size: 1.4rem;
-    opacity: 0.8;
-
-`
-
 const ListContainer = styled.div`
     display: flex;
     flex-direction: column;
     padding: 1rem;
+`
+
+const LoaderContainer = styled.div`
+    height: 10rem;
+`
+
+const Placeholder = styled.div`
+    height: 10rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #172A4E;
+    font-weight: 500;
+    opacity: 0.7;
+    font-size: 1.3rem;
 `
 
 const ListItem = styled.div`
@@ -559,8 +429,10 @@ const ListCreate = styled.div`
     display: flex;
     align-items: center;
     cursor: pointer;
-    box-shadow: ${props => props.shadow};
-    border-bottom: ${props => props.border};
+    &:hover {
+        border: 1px solid ${chroma("#172A4E").alpha(0.7)};
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
+    }
 `
 
 const Searchbar = styled.input`

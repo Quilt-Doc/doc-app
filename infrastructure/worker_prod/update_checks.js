@@ -40,7 +40,7 @@ const runUpdateProcedure = async () => {
     // Get Repository Document & Installation Client 
     var repositoryObj;
     try {
-        repositoryObj = Repository.findById(repositoryId);
+        repositoryObj = await Repository.findById(repositoryId);
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
@@ -66,14 +66,14 @@ const runUpdateProcedure = async () => {
     var findFilter = {};
 
     if (validatedDocuments.length > 0) {
-        findFilter.brokenDocuments = { $in: [validatedDocuments.map(id => ObjectId(id.toString()))] };
+        findFilter.brokenDocuments = { $in: validatedDocuments.map(id => ObjectId(id.toString())) };
     }
     
     if (validatedSnippets.length > 0) {
-        findFilter.brokenSnippets = { $in: [validatedSnippets.map(id => ObjectId(id.toString()))] };
+        findFilter.brokenSnippets = { $in: validatedSnippets.map(id => ObjectId(id.toString())) };
     }
 
-    findFilter.repositoryId = repositoryId;
+    findFilter.repository = repositoryId;
 
     // Find all Checks with any validatedDocuments or validatedSnippets Ids attached
     var modifiedChecks;
@@ -97,16 +97,23 @@ const runUpdateProcedure = async () => {
 
 
     // Remove 'validatedDocuments' Ids from the Checks we've found
-    if (brokenDocuments.length > 0) {
+
+    if (validatedDocuments.length > 0) {
         modifiedChecks = modifiedChecks.map(checkObj => {
+
+            checkObj.brokenDocuments = checkObj.brokenDocuments.map(docId => docId.toString());
+
             checkObj.brokenDocuments = _.difference(checkObj.brokenDocuments, validatedDocuments);
+            return checkObj;
         });
     }
+
 
     // Remove 'validatedSnippets' Ids from the Checks we've found
     if (brokenDocuments.length > 0) {
         modifiedChecks = modifiedChecks.map(checkObj => {
             checkObj.brokenSnippets = _.difference(checkObj.brokenSnippets, validatedSnippets);
+            return checkObj;
         });
     }
 

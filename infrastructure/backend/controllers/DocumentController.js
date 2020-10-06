@@ -339,11 +339,12 @@ deleteDocument = async (req, res) => {
         // Reporting Section ---------
         // Need list of userId's attached to deleted Documents
         // Get all titles of deleted Documents
-        deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author", "title", "status").lean().exec();
+        deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author title status").lean().exec();
         // Reporting Section End ---------
         
-        await Document.deleteMany({_id: {$in: deletedIds}}).exec();
+        await Document.deleteMany({_id: {$in: deletedIds}})
     } catch (err) {
+        console.log(err);
         return res.json({success: false, error: "deleteDocument Error: unable to delete document and/or descendants", trace: err});
     }
 
@@ -445,7 +446,6 @@ deleteDocument = async (req, res) => {
 
     // since delete many does not return documents, but we only need ids, we can use previous extracted deletedDocuments
     finalResult.deletedDocuments = deletedDocuments;
-
     return res.json({success: true, result: finalResult});
 }
 
@@ -548,8 +548,7 @@ testRoute = async (req, res) => {
 
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
-    console.log("ENTERED EDIT DOCUMENT");
-    const { title, markup, repositoryId, image, content } = req.body;
+    const { title, markup, referenceIds, repositoryId, image, content } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
@@ -584,7 +583,7 @@ editDocument = async (req, res) => {
     if (checkValid(repositoryId)) {
         update.repository = repositoryId
         selection += " repository";
-        population += "repository";
+        population += " repository";
     }
 
     if (checkValid(image)) {
@@ -595,6 +594,12 @@ editDocument = async (req, res) => {
     if (checkValid(content)) {
         update.content = content;
         selection += " content";
+    }
+
+    if (checkValid(referenceIds)){
+        update.references = referenceIds.map(refId => ObjectId(refId));
+        selection += " references";
+        population += " references";
     }
 
     try {
@@ -670,7 +675,7 @@ retrieveHelper = async (body, req) => {
 retrieveDocuments = async (req, res) => {
 
     let { root, documentIds, referenceIds, limit, skip, minimal, fill } = req.body;
-
+    console.log("PARAMS", req.body);
     // use helper above to retrieve queried documents
     let response = await retrieveHelper({ root, documentIds, referenceIds, limit, skip, minimal }, req);
     
@@ -678,9 +683,10 @@ retrieveDocuments = async (req, res) => {
     if (!response.success)   return res.json(response);
 
     let returnedDocuments = response.result;
-
+    console.log("RETURNED DOCS", returnedDocuments);
     // if queried documents are specific to docIds but we want to fill to limit, query the rest
     if (fill && checkValid(documentIds) && returnedDocuments.length < limit) {
+        console.log("ENTERED HERE");
         let secondResponse = await retrieveHelper({notInDocumentIds: documentIds,  referenceIds, limit: limit - returnedDocuments.length, skip, minimal }, req);
         if (!secondResponse.success)  return res.json(secondResponse);
         let moreDocuments = secondResponse.result;
@@ -961,10 +967,102 @@ removeDocumentSnippet = async (req, res) => {
     }
  
     return res.json({ success: true, result: returnDocument});
-
 }
 
-module.exports = { testRoute,
+searchDocuments = async (req, res) => {
+    const { userQuery, repositoryId, tagIds, minimalDocuments, includeImage, searchContent,
+        referenceIds, creatorIds, skip, limit, sort } = req.body;
+    
+    const workspaceId = req.workspaceObj._id.toString();
+
+    let documentAggregate;
+    
+    if (checkValid(userQuery) && userQuery !== "") {
+        // make search for title
+        let shouldFilter = [ 
+            {
+            "autocomplete": {
+                    "query": userQuery,
+                    "path": "title"
+                }
+            }];
+
+        // make search for textual content
+        if (checkValid(searchContent) && searchContent) shouldFilter.push({
+                "text": {
+                    "query": userQuery,
+                    "path": "content"
+                }
+            });
+        
+        documentAggregate = Document.aggregate([
+            { 
+                $search: {
+                    "compound": {
+                        "should": shouldFilter,
+                        "minimumShouldMatch": 1
+                    } 
+                }  
+            },
+        ]);
+    } else {
+        documentAggregate = Document.aggregate([]);
+    }
+
+    documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
+    
+    documentAggregate.match({workspace: ObjectId(workspaceId)});
+    
+    if (checkValid(repositoryId)) documentAggregate.match({repository: ObjectId(repositoryId)});
+
+    if (checkValid(tagIds)) documentAggregate.match({
+        tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }
+    });
+
+    if (checkValid(referenceIds)) documentAggregate.match({
+        references: { $in: referenceIds.map((refId) => ObjectId(refId)) }
+    });
+
+    if (checkValid(creatorIds)) documentAggregate.match({
+        author: { $in: creatorIds.map((creatorId) =>  ObjectId(creatorId)) }
+    });
+    
+    if (checkValid(sort)) documentAggregate.sort(sort);
+
+    if (checkValid(skip))  documentAggregate.skip(skip);
+    
+    if (checkValid(limit))  documentAggregate.limit(limit);
+
+    
+    let minimalProjectionString = "_id created author title status isDocument";
+    let populationString = "author references workspace repository tags";
+    
+    if (checkValid(minimalDocuments) && minimalDocuments) {
+        if (checkValid(includeImage)) minimalProjectionString += " image";
+        documentAggregate.project(minimalProjectionString);
+        populationString = "author";
+    }
+    
+    try {   
+        documents = await documentAggregate.exec();
+    } catch(err) {
+        return res.json({ success: false, error: "searchDocuments: Failed to aggregate documents", trace: err});
+    }
+   
+    try {
+        documents = await Document.populate(documents, 
+            {
+                path: populationString
+            }
+        );
+    } catch (err) {
+        return res.json({ success: false, error: "searchDocuments: Failed to populate documents", trace: err});
+    }
+
+    return res.json({success: true, result: documents});
+}
+
+module.exports = { testRoute, searchDocuments,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }

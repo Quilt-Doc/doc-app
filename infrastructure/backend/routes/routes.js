@@ -57,6 +57,7 @@ router.delete('/references/:workspaceId/delete/:referenceId', authorizationMiddl
 router.put('/references/:workspaceId/:referenceId/attach_tag/:tagId', authorizationMiddleware.referenceMiddleware, referenceController.attachReferenceTag);
 router.put('/references/:workspaceId/:referenceId/remove_tag/:tagId', authorizationMiddleware.referenceMiddleware, referenceController.removeReferenceTag);
 router.post('/references/:workspaceId/retrieve', authorizationMiddleware.referenceMiddleware, referenceController.retrieveReferences);
+router.post('/references/:workspaceId/search', authorizationMiddleware.referenceMiddleware, referenceController.searchReferences);
 
 // Validate workspace membership for calling user; all methods
 const documentController = require('../controllers/DocumentController');
@@ -68,7 +69,7 @@ router.delete('/documents/:workspaceId/delete/:documentId', authorizationMiddlew
 router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware.documentMiddleware, documentController.renameDocument);
 router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.documentMiddleware, documentController.moveDocument);
 router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
-
+router.post('/documents/:workspaceId/search', authorizationMiddleware.documentMiddleware, documentController.searchDocuments);
 
 router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, documentController.attachDocumentTag);
 router.put('/documents/:workspaceId/:documentId/remove_tag/:tagId', authorizationMiddleware.documentMiddleware, documentController.removeDocumentTag);

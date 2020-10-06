@@ -157,14 +157,6 @@ class DirectoryItem extends Component {
                        {this.renderTags()}
                     </TagContainer>
                     <RightContainer>
-                        <Statistic>
-                            <RiFileList2Line style={{color: '#172A4E', fontSize: '1.55rem', marginRight: "0.6rem"}}/>
-                            <Count>{Math.round(Math.random() * 50)}</Count>
-                        </Statistic>
-                        <Statistic>
-                            <RiScissorsLine style={{color: '#172A4E', fontSize: '1.55rem', marginRight: "0.6rem"}}/>
-                            <Count>{Math.round(Math.random() * 50)}</Count>
-                        </Statistic>
                         <ViewBorder 
                             onClick = {(e) => this.showDocuments(e)}
                             active = { documents.length > 0 }
@@ -248,7 +240,7 @@ const ViewBorder = styled.div`
     width: 2.5rem;
     background-color:#ebf0f5;
     border-radius: 0.3rem;
-    opacity: ${props => props.active ? 1.2 : 0};
+    opacity: ${props => props.active ? 1 : 0.5};
     &:hover {
         box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
     }

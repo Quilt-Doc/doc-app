@@ -109,9 +109,10 @@ class EditorWrapper extends React.Component {
           
             // acquire a picture canvas for preview with html2canvas
             let canvas;
+            /*
             if (!listener) {
                 canvas = await html2canvas(document.getElementById("#editorContainer"), {scale: 0.5, height: 1000});
-            }
+            }*/
             
             // retrieve markup from the state
             const { markup } = this.state;

@@ -77,12 +77,6 @@ class MainToolbar extends React.Component {
                             >
                                 <RiEdit2Line/>
                             </Button>
-                            <Button 
-                                active = {this.props.setOptions}
-                                onClick = {this.props.toggleOptions}
-                            >
-                                <CgOptions/>
-                            </Button>
                             <DocumentOptionsMenu 
                                 document = {this.props.document}
                             />

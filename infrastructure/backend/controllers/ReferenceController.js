@@ -46,7 +46,7 @@ createReferences = async (req, res) => {
         return res.json({success: false, error: 'createReferences Error: insertMany query failed', trace: err});
     }
 
-    await logger.info({source: 'backend-api', message: `Successfully inserted ${references.length} new References`, function: 'createReferences'});
+    await logger.info({source: 'backend-api', message: `Successfully inserted ${insertedReferences.length} new References`, function: 'createReferences'});
     
     return res.json({success: true, result: insertedReferences});
 }
@@ -75,7 +75,7 @@ getReference = async (req, res) => {
 /// new mapping of references in state
 retrieveReferences = async (req, res) => {
 
-    let { kinds, path, referenceId, repositoryId, minimal, limit, skip } = req.body;
+    let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip } = req.body;
 
     var validRepositoryIds = req.workspaceObj.repositories;
     
@@ -83,6 +83,7 @@ retrieveReferences = async (req, res) => {
 
     if (checkValid(kinds)) query.where('kind').in(kinds);
     if (checkValid(path)) query.where('path').equals(path);
+    if (checkValid(referenceIds)) query.where('_id').in(referenceIds);
     // make sure that repositoryId provided exists and is accessible from workspace
     
     if (checkValid(repositoryId)) {
@@ -138,7 +139,7 @@ retrieveReferences = async (req, res) => {
         if (reference.path === "") {
             regex = new RegExp(`^([^\/]+)?$`);
         } else {
-            let refPath = escapeRegex(reference.path);
+            let refPath = escapeRegExp(reference.path);
             regex = new RegExp(`^${refPath}(\/[^\/]+)?$`);
         }
 
@@ -164,6 +165,27 @@ retrieveReferences = async (req, res) => {
                                 function: 'retrieveReferences'});
 
         return res.json({success: false, error: "retrieveReferences Error: direct retrieve query execution failed", trace: err});
+    }
+
+    if (limit && returnedReferences.length < limit && referenceIds) {
+        let query2 = Reference.find({repository: repositoryId});
+
+        query2.where('_id').nin(referenceIds);
+        query2.limit(limit - returnedReferences.length);
+        minimal === true ? query2.select(minSelectionString) : query2.populate({path: populationString});
+        if (checkValid(sort)) query2.sort(sort);
+
+        let returnedReferences2;
+        try {
+            returnedReferences2 = query2.lean().exec();
+        } catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+            errorDescription: `Error find query failed - repositoryId: ${repositoryId}`,
+            function: 'retrieveReferences'});
+
+            return res.json({success: false, error: "retrieveReferences Error: direct retrieve query execution failed on 2nd limiting retrieve", trace: err});
+        }
+        returnedReferences = [...returnedReferences, returnedReferences2];
     }
 
     await logger.info({source: 'backend-api', message: `Successfully retrieved ${returnedReferences.length} References`, function: 'retrieveReferences'});
@@ -291,10 +313,9 @@ deleteReference = async (req, res) => {
 
 // merge reference with existing reference
 attachReferenceTag = async (req, res) => {
-
-    const referenceId = req.referenceObj._id.toString();
-    const tagId = req.tagObj._id.toString();
-
+    const { referenceId, tagId } = req.params;
+    //const referenceId = req.referenceObj._id.toString();
+    //const tagId = req.tagObj._id.toString();
 	let update = {}
 	update.tags = ObjectId(tagId);
     
@@ -306,7 +327,7 @@ attachReferenceTag = async (req, res) => {
 
     let returnedReference;
     try {
-        returnedReference = query.exec();
+        returnedReference = await query.exec();
     } catch (err) {
         await logger.error({source: 'backend-api',
                                 message: err,
@@ -315,9 +336,7 @@ attachReferenceTag = async (req, res) => {
 
         return res.json({success: false, error: "attachReferenceTag Error: error executing tag update query", trace: err});
     }
-    
     return res.json({success: true, result: returnedReference});
-
 }
 
 
@@ -338,7 +357,7 @@ removeReferenceTag = async (req, res) => {
 
     let returnedReference;
     try {
-        returnedReference = query.exec();
+        returnedReference = await query.lean().exec();
     } catch (err) {
         await logger.error({source: 'backend-api',
                                 message: err,
@@ -347,10 +366,73 @@ removeReferenceTag = async (req, res) => {
 
         return res.json({success: false, error: "removeReferenceTag Error: error executing tag update query", trace: err});
     }
-
     return res.json({success: true, result: returnedReference});
 }
 
+
+searchReferences = async (req, res) => {
+    const { userQuery, repositoryId, tagIds, referenceIds,
+      minimalReferences, skip, limit, sort } = req.body;
+
+    let referenceAggregate;
+    
+    if (checkValid(userQuery) && userQuery !== "") {
+        referenceAggregate = Reference.aggregate([
+            { 
+                $search: {
+                    "autocomplete": {
+                            "query": userQuery,
+                            "path": "name"
+                    }
+                } 
+            }
+        ]);
+    } else {
+        referenceAggregate = Reference.aggregate([]);
+    }
+    
+    referenceAggregate.addFields({isReference : true, score: { $meta: "searchScore" }});
+    
+    referenceAggregate.match({repository: ObjectId(repositoryId)});
+
+    if (checkValid(tagIds)) referenceAggregate.match({
+        tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }
+    });
+
+    if (checkValid(referenceIds)) referenceAggregate.match({
+        _id: { $in: referenceIds.map((refId) => ObjectId(refId)) }
+    });
+    
+    if (checkValid(sort)) referenceAggregate.sort(sort);
+
+    if (checkValid(skip))  referenceAggregate.skip(skip);
+
+    if (checkValid(limit))  referenceAggregate.limit(limit);
+    
+    if (checkValid(minimalReferences) && minimalReferences) referenceAggregate.project("name kind repository path _id created status isReference");
+
+    let populationString = minimalReferences ? "repository tags" : "repository";
+
+    try {
+        references = await referenceAggregate.exec()
+    } catch (err) {
+        return res.json({ success: false, error: "searchReferences: Failed to aggregate references", trace: err});
+    }
+
+
+    try {
+        references = await Reference.populate(references, 
+            {
+                path: populationString
+            }
+        )
+    } catch (err) {
+        return res.json({success: false, error: "searchReferences: Failed to populate references", trace: err});
+    }
+
+    // Need to include time filtering
+    return res.json({success: true, result: references});
+}
 
 module.exports =
 {
@@ -361,4 +443,5 @@ module.exports =
     deleteReference,
     attachReferenceTag, 
     removeReferenceTag,
+    searchReferences
 }

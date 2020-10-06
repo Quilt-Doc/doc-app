@@ -39,9 +39,9 @@ class MainSearchbar extends React.Component {
 
     openSearch = () => {
         if (this.input) {
-            this.retrieveSearchResults()
-            this.input.focus()
-            this.setState({searchOpen: true})
+            this.retrieveSearchResults();
+            this.input.focus();
+            this.setState({searchOpen: true});
         }
     }
 
@@ -54,7 +54,7 @@ class MainSearchbar extends React.Component {
         }
 
         this.setState({
-            typingTimeout: setTimeout(() => this.retrieveSearchResults(), 50)
+            typingTimeout: setTimeout(() => this.retrieveSearchResults(), 100)
         })
     }
 

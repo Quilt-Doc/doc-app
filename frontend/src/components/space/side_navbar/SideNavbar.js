@@ -11,8 +11,9 @@ import { Link, withRouter } from 'react-router-dom';
 import history from '../../../history';
 
 //icons
-import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine} from 'react-icons/ri'
-import { BiGridAlt } from 'react-icons/bi';
+import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine, RiNotification2Line} from 'react-icons/ri'
+import { BiBell, BiGridAlt } from 'react-icons/bi';
+import { CgBell, CgSearch } from 'react-icons/cg';
 
 //components
 import CreateButton from './CreateButton';
@@ -82,11 +83,27 @@ class SideNavbar extends React.Component {
         );
     }
 
+    renderBottomSection = () => {
+        const { setSearch } = this.props;
+        return (
+            <Section marginTop = {'auto'} marginBottom = {'5rem'}>
+                <IconBorder onClick = {() => setSearch(true)}>
+                    <CgSearch/>
+                </IconBorder>
+                <IconBorder>
+                    <BiBell/>
+                </IconBorder>
+            </Section>
+        )
+    }
+
     render(){
+        const {workspace: {name}} = this.props;
         return (
             <SideNavbarContainer>
-                <WorkspaceIcon>P</WorkspaceIcon>
+                <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 {this.renderTopSection()}
+                {this.renderBottomSection()}
                 <CreateButton/>
             </SideNavbarContainer>
         )
@@ -111,6 +128,23 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, { })(SideNavbar));
 
 //Styled Components
+const IconBorder = styled.div`
+    height: 4.5rem;
+    width: 4.5rem;
+    &:first-of-type {
+        margin-bottom: 0.5rem;
+    }
+   
+    font-size: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    &:hover {
+        background-color: #3b404f;
+    }
+    cursor: pointer;
+`
 
 const SideNavbarContainer = styled.div`
     /*border-top: 2px solid #252832;*/
@@ -132,25 +166,8 @@ const SideNavbarContainer = styled.div`
 `
 
 const Section = styled.div`
-    margin-top: ${props => props.margin};
-`
-
-const NavbarButton = styled(Link)`
-    display: flex;
-    align-items: center;
-    font-size: 1.3rem;
-    font-weight: 500;
-    text-decoration: none;
-    color: white;
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-    margin-bottom: 0.4rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    &:hover {
-        background-color: #414858;
-    }
-    background-color: ${props => props.active ? '#414858' : ""};
+    margin-top: ${props => props.marginTop};
+    margin-bottom: ${props => props.marginBottom};
 `
 
 const NavbarIcon = styled(Link)`
@@ -176,39 +193,7 @@ const NavbarIcon = styled(Link)`
     color: white;
 `
 
-const NavbarIcon2 = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 5.5rem;
-    width: 100%;
-    font-size: 2.1rem;
-    font-weight: 500;
-    /*background-color:${props => props.active ? '#464c5d' : '#3b404f'};*/
-    cursor: pointer;
-    &:hover {
-        background-color:#464c5d;
-    }
-    margin-top: auto;
-    transition: background-color 0.1s ease-in;
-    border-top: 1px solid #19e5be;
-    color: white;
-`
-
-const WorkspaceDetail = styled.div`
-    display: flex;
-    align-items: center;
-    margin-top: 1rem;
-    margin-bottom: 2rem;
-    &:hover {
-        background-color: #414858;
-    }
-    padding:1rem 2rem;
-    cursor: pointer;
-`
-
-
-const WorkspaceIcon = styled.div`
+const WorkspaceIcon = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -218,4 +203,12 @@ const WorkspaceIcon = styled.div`
     border-radius: 0.3rem;
     font-size: 1.3rem;
     margin-bottom: 1.3rem;
+    border: none;
+    color: white;
+    text-decoration: none;
+    &:hover {
+        background-color: #7a8feb;
+    }
+    transition: background-color 0.1s ease-in;
+    cursor: pointer;
 `

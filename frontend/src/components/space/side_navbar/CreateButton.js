@@ -44,7 +44,6 @@ const NavbarIcon = styled.div`
     &:hover {
         background-color:#464c5d;
     }
-    margin-top: auto;
     transition: background-color 0.1s ease-in;
     border-top: 1px solid #4f5569;
     color: white;

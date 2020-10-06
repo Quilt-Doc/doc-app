@@ -15,8 +15,9 @@ import ReferenceEditor from './codebase/reference_editor/ReferenceEditor';
 import DirectoryNavigator from './codebase/directory_navigator/DirectoryNavigator';
 import DocumentModal from './modals/DocumentModal';
 import DocumentCreationModal from './modals/DocumentCreationModal';
+import Search from './search/Search';
 import { CSSTransition } from 'react-transition-group';
-                                                                                        
+
 //react-router
 import { Router, Route } from 'react-router-dom';
 import history from '../../history';
@@ -37,18 +38,21 @@ class Space extends React.Component {
         super(props);
         this.state = {
             // checks whether the data needed for the component is loaded
-            loaded: false
+            loaded: false, 
+            search: false
         }
     }
 
     // loads the resources needed for the workspace
     async componentDidMount(){
-        const { retrieveDocuments, getWorkspace, match } = this.props;
+        const { retrieveDocuments, retrieveTags, getWorkspace, match } = this.props;
         const { workspaceId } = match.params;
 
         await Promise.all([
             // get the workspace from workspaceId
             getWorkspace(workspaceId),
+            // get the tags of the workspace
+            retrieveTags({workspaceId}),
             // retrieve the root document of the workspace and clear on root retrieval
             retrieveDocuments({workspaceId, root: true, minimal: true}, true)
         ])
@@ -79,10 +83,21 @@ class Space extends React.Component {
         if (this.checkParam('document')) return <DocumentModal/>;
         if (this.checkParam('create_document')) return <DocumentCreationModal/>;
     }
+    
+    renderSearch = () => {
+        const { search } = this.state;
+        console.log("SEARCH", search);
+        return search ? <Search setSearch = {this.setSearch}/> : null;
+    }
+
+    setSearch = (search) => {
+        this.setState({search});
+    }
 
     // renders the content of the workspace (SideNavbar and feature in RightView)... depending on url form
     // we will show one of our features components
     renderBody = () => {
+        
         return (
             <>
                 <CSSTransition
@@ -94,7 +109,7 @@ class Space extends React.Component {
                     <div>
                         
                         <Container>
-                            <SideNavbar/>
+                            <SideNavbar setSearch = {this.setSearch}/>
                             
                             <RightView id = {"rightView"} >
                                 <Router history = {history}>
@@ -108,6 +123,7 @@ class Space extends React.Component {
                         </Container>
                     </div>
                     </CSSTransition>
+                {this.renderSearch()}
                 {this.renderModal()}
             </>
         )
@@ -125,13 +141,10 @@ class Space extends React.Component {
 const mapStateToProps = (state, ownProps) => {
     let { documents, workspaces, references, auth: { user } } = state;
     let { workspaceId } = ownProps.match.params;
-    
-    const rootDocument = Object.values(documents).filter(document => document.root)[0];
-    const rootReference = Object.values(references).filter(reference => reference.path === "")[0];
+
+    const workspace = workspaces[workspaceId];
 
     return {
-        rootReference,
-        rootDocument,
         workspace: workspaces[workspaceId],
         user
     }
@@ -156,5 +169,6 @@ const RightView = styled.div`
     /*height: calc(100vh - 5.5rem);*/
     z-index: 1;
     border-top-left-radius: 1.2rem;
+    height: 100vh;
     background-color: #f6f7f9;
 `
