@@ -7,9 +7,10 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 
-const Document = require('../../models/Document');
-const Snippet = require('../../models/Snippet');
-const Check = require('../../models/Check');
+const Document = require('../models/Document');
+const Snippet = require('../models/Snippet');
+const Check = require('../models/Check');
+const Repository = require('../models/Repository');
 
 
 
@@ -122,12 +123,15 @@ const createCheck = async (req, res) => {
 
     const repositoryId = req.repositoryObj._id.toString();
 
-    const {installationId, commit, brokenDocuments, brokenSnippets} = req.body;
+    const {installationId, commit, brokenDocuments, brokenSnippets, message, pusher, addedReferences} = req.body;
 
     if (!checkValid(installationId)) return res.json({success: false, error: 'no check installationId provided'});
     if (!checkValid(commit)) return res.json({success: false, error: 'no check commit provided'});
     if (!checkValid(brokenDocuments)) return res.json({success: false, error: 'no check brokenDocuments provided'});
     if (!checkValid(brokenSnippets)) return res.json({success: false, error: 'no check brokenSnippets provided'});
+    if (!checkValid(message)) return res.json({success: false, error: 'no check message provided'});
+    if (!checkValid(pusher)) return res.json({success: false, error: 'no check pusher provided'});
+    if (!checkValid(addedReferences)) return res.json({success: false, error: 'no check addedReferences provided'});
 
     const fullName = req.repositoryObj.fullName;
 
@@ -142,13 +146,34 @@ const createCheck = async (req, res) => {
 
     // KARAN TODO: Validate that there isn't already a Check on this commit
 
+    // Get Repository html URL
+    var repositoryHtmlUrl;
+    try {
+        repositoryHtmlUrl = await Repository.findById(repositoryId).select('htmlUrl').lean().exec();
+        repositoryHtmlUrl = repositoryHtmlUrl.htmlUrl;
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error Repository findById query failed - repositoryId: ${repositoryId}`,
+                            function: "createCheck"});
+
+        return res.json({success: false, error: `Error Repository findById query failed - repositoryId: ${repositoryId}`});
+    }
+
+    await logger.info({source: 'backend-api',
+                        message: `Creating new Check - sha, repositoryId, commitMessage, pusher: ${commit}, ${repositoryId}, ${message}, ${pusher}`,
+                        function: 'createCheck'});
 
 
     let check = new Check({
         sha: commit,
         brokenDocuments,
         brokenSnippets,
-        repository: repositoryId
+        repository: repositoryId,
+        commitMessage: message,
+        pusher,
+        addedReferences
     });
 
     // Save new Check
@@ -156,7 +181,13 @@ const createCheck = async (req, res) => {
         check = await check.save();
     }
     catch (err) {
-        
+        console.log(err);
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error saving new Check sha, repositoryId, pusher, message: ${commit}, ${repositoryId}, ${pusher}, ${message}`,
+                            function: "createCheck"});
+
+        return res.json({success: false, error: 'error accessing installationClient'});
     }
 
     // Create initial 'in_progress' Check
@@ -172,6 +203,7 @@ const createCheck = async (req, res) => {
     try {
         checkCreateBegin = await installationClient.post(`/repos/${fullName}/check-runs`, beginObject);
         check.githubId = checkCreateBegin.data.id;
+        check.checkUrl = `${repositoryHtmlUrl}/runs/${checkCreateBegin.data.id}`
         check = await check.save();
     }
     catch (err) {
@@ -191,12 +223,8 @@ const createCheck = async (req, res) => {
         return res.json({success: false, error: 'Error Creating Check Content'});
     }
 
-    console.log('checkObj: ');
-    console.log(JSON.stringify(checkObj));
 
-    console.log('githubId: ', check.githubId);
-
-    /*
+    
     var checkUpdateResponse;
     try {
         checkUpdateResponse = await installationClient.patch(`/repos/${fullName}/check-runs/${check.githubId}`, checkObj);
@@ -211,16 +239,40 @@ const createCheck = async (req, res) => {
     catch (err) {
 
         await logger.error({source: 'backend-api', message: err,
-        errorDescription: `Error creating updated check object for Github API call: ${commit}`,
-        function: "createCheckRunObj"});
+                            errorDescription: `Error creating updated check object for Github API call: ${commit}`,
+                            function: "createCheckRunObj"});
         return res.json({success: false, error: 'Error Creating Check Content'});
     }
-    */
+    
     
 
     return res.json({success: true, result: check});
 }
 
+const retrieveChecks = async (req, res) => {
+    const repositoryId = req.repositoryObj._id.toString();
+
+    var { skip, limit } = req.body;
+
+
+    if (!checkValid(skip)) skip = 0;
+    
+    if (!checkValid(limit))  limit = 10;
+
+    try {
+        var retrieveResponse = await Check.find({repository: repositoryId}).populate('addedReferences').limit(limit).skip(skip).sort({created: -1}).exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error retrieving Checks - repositoryId, limit, skip: ${repositoryId}, ${limit}, ${skip}`,
+                            function: "retrieveChecks"});
+        return res.json({success: false, error: `Error retrieving Checks - repositoryId, limit, skip: ${repositoryId}, ${limit}, ${skip}`});
+    }
+
+    return res.json({success: true, result: retrieveResponse});
+}
+
 module.exports = {
-    createCheck
+    createCheck,
+    retrieveChecks
 }

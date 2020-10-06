@@ -1,10 +1,10 @@
-const Workspace = require('../../models/Workspace');
-const Reference = require('../../models/Reference');
-const Document = require('../../models/Document');
-const Tag = require('../../models/Tag');
-const Snippet = require('../../models/Snippet');
-const Repository = require('../../models/Repository');
-const User = require('../../models/authentication/User');
+const Workspace = require('../models/Workspace');
+const Reference = require('../models/Reference');
+const Document = require('../models/Document');
+const Tag = require('../models/Document');
+const Snippet = require('../models/Snippet');
+const Repository = require('../models/Repository');
+const User = require('../models/authentication/User');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
@@ -15,7 +15,7 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
     }
     // try to get the workspace object and attach it to the request object
     try {
-        var foundWorkspace = await Workspace.findById(workspaceId);
+        var foundWorkspace = await Workspace.findById(workspaceId).lean().exec();
         if (!foundWorkspace) {
             next(new Error("workspaceIdParam: workspaceId doesn't exist"));
         }
@@ -33,7 +33,7 @@ const referenceIdParam = async (req, res, next, referenceId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundReference = await Reference.findById(referenceId);
+        var foundReference = await Reference.findById(referenceId).lean().exec();
         if (!foundReference) {
             next(new Error("referenceIdParam: referenceId doesn't exist"));
         }
@@ -51,7 +51,7 @@ const documentIdParam = async (req, res, next, documentId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundDocument = await Document.findById(documentId);
+        var foundDocument = await Document.findById(documentId).lean().exec();
         if (!foundDocument) {
             next(new Error("documentIdParam: documentId doesn't exist"));
         }
@@ -69,7 +69,7 @@ const tagIdParam = async (req, res, next, tagId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundTag = await Tag.findById(tagId);
+        var foundTag = await Tag.findById(tagId).lean().exec();
         if (!foundTag) {
             next(new Error("tagIdParam: tagId doesn't exist"));
         }
@@ -87,7 +87,7 @@ const snippetIdParam = async (req, res, next, snippetId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundSnippet = await Snippet.findById(snippetId);
+        var foundSnippet = await Snippet.findById(snippetId).lean().exec();
         if (!foundSnippet) {
             next(new Error("snippetIdParam: snippetId doesn't exist"));
         }
@@ -106,7 +106,7 @@ const repositoryIdParam = async (req, res, next, repositoryId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundRepository = await Repository.findById(repositoryId);
+        var foundRepository = await Repository.findById(repositoryId).lean().exec();
         if (!foundRepository) {
             next(new Error("repositoryIdParam: repositoryId doesn't exist"));
         }
@@ -125,7 +125,7 @@ const userIdParam = async (req, res, next, userId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundUser = await User.findById(userId);
+        var foundUser = await User.findById(userId).lean().exec();
         if (!foundUser) {
             next(new Error("userIdParam: userId doesn't exist"));
         }
@@ -137,25 +137,6 @@ const userIdParam = async (req, res, next, userId) => {
     next();
 }
 
-/*
-const linkageIdParam = async (req, res, next, linkageId) => {
-    if (req.linkageObj) {
-        next();
-    }
-    // try to get the linkage object and attach it to the request object
-    try {
-        var foundLinkage = await Linkage.findById(linkageId);
-        if (!foundLinkage) {
-            next(new Error("linkageIdParam: linkageId doesn't exist"));
-        }
-        req.linkageObj = foundLinkage;
-    }
-    catch(err) {
-        next(err);
-    }
-    next();
-}
-*/
 
 
 

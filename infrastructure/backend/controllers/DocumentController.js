@@ -1,18 +1,18 @@
 //models
-const Document = require('../../models/Document');
-const Repository = require('../../models/Repository');
-const Reference = require('../../models/Reference');
+const Document = require('../models/Document');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
 
 const UserStatsController = require('../controllers/reporting/UserStatsController');
 const ActivityFeedItemController = require('../controllers/reporting/ActivityFeedItemController');
 
 var mongoose = require('mongoose');
-const UserStats = require('../../models/reporting/UserStats');
+const UserStats = require('../models/reporting/UserStats');
 const { ObjectId } = mongoose.Types;
 const logger = require('../logging/index').logger;
 
 const jobs = require('../apis/jobs');
-const jobConstants = require('../../constants/index').jobs;
+const jobConstants = require('../constants/index').jobs;
 
 
 checkValid = (item) => {
@@ -59,7 +59,7 @@ createDocument = async (req, res) => {
         if (!validRepositoryIds.includes(repositoryId)) {
             return res.json({success: false, error: "createDocument Error: request on repository user does not have access to."});
         }
-    } 
+    }
     
      // Check that authorId matches the userId in the JWT (only the user can create a document for themselves)
     if (authorId != req.tokenPayload.userId) {
@@ -113,26 +113,28 @@ createDocument = async (req, res) => {
         return res.json({success: false, error: "createDocument Error: document creation failed", trace: err});
     }
 
-    // Update UserStats.documentsCreatedNum (increase by 1)
-    try {
-        await UserStatsController.updateDocumentsCreatedNum({userUpdates: [{updateNum: 1, userId: authorId}], workspaceId});
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                            errorDescription: `Error updating documentsCreatedNum userId, workspaceId: ${authorId}, ${workspaceId}`,
-                            function: `createDocument`});
-        return res.json({success: false, error: "updateDocumentsCreatedNum Error: UserStats update failed", trace: err});
-    }
-
-    // Create ActivityFeedItem
-    try {
-        await ActivityFeedItemController.createActivityFeedItem({type: 'create', date: Date.now(), userId: authorId, workspaceId, userUpdates: [{documentId: document._id.toString()}]});
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error creating ActivityFeedItem workspaceId, userId, documentId: ${workspaceId}, ${authorId}, ${document._id.toString()}`,
+    if (document.root != true) {
+        // Update UserStats.documentsCreatedNum (increase by 1)
+        try {
+            await UserStatsController.updateDocumentsCreatedNum({userUpdates: [{updateNum: 1, userId: authorId}], workspaceId});
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error updating documentsCreatedNum userId, workspaceId: ${authorId}, ${workspaceId}`,
                                 function: `createDocument`});
-        return res.json({success: false, error: `Error creating ActivityFeedItem workspaceId, userId, documentId: ${workspaceId}, ${authorId}, ${document._id.toString()}`, trace: err});
+            return res.json({success: false, error: "updateDocumentsCreatedNum Error: UserStats update failed", trace: err});
+        }
+
+        // Create ActivityFeedItem
+        try {
+            await ActivityFeedItemController.createActivityFeedItem({type: 'create', date: Date.now(), userId: authorId, workspaceId, userUpdates: [{documentId: document._id.toString()}]});
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `Error creating ActivityFeedItem workspaceId, userId, documentId: ${workspaceId}, ${authorId}, ${document._id.toString()}`,
+                                    function: `createDocument`});
+            return res.json({success: false, error: `Error creating ActivityFeedItem workspaceId, userId, documentId: ${workspaceId}, ${authorId}, ${document._id.toString()}`, trace: err});
+        }
     }
 
     // add document to parent's children
@@ -332,7 +334,8 @@ deleteDocument = async (req, res) => {
     // query to delete all docs using the ids of the docs
     try {
         let deletedIds = deletedDocuments.map((doc) => doc._id);
-        
+        console.log('DELETED IDS');
+        console.log(deletedIds);
         // Reporting Section ---------
         // Need list of userId's attached to deleted Documents
         // Get all titles of deleted Documents
@@ -741,7 +744,7 @@ removeDocumentReference = async (req, res) => {
     // populate and select only whats needed -- refs and id
     let query = Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }).lean();
     query.populate('references');
-    query.select('_id references');
+    query.select('_id status references');
 
     try {
         returnDocument = await query.exec();
@@ -765,11 +768,11 @@ removeDocumentReference = async (req, res) => {
 
     if (req.referenceObj.status == 'invalid' && returnDocument.status == 'invalid') {
         // Fetch all References currently on the Document
-        var referenceIds = returnDocument.references;
+        var referenceIds = returnDocument.references.map(refObj => refObj._id.toString());
         var attachedReferences;
 
         try {
-            attachedReferences = await Reference.find({ _id: { $in: referenceIds.map(id => ObjectId(id.toString())) } }).lean().exec();
+            attachedReferences = await Reference.find({ _id: { $in: referenceIds.map(id => ObjectId(id) )}}).lean().exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api', message: err,
@@ -784,7 +787,7 @@ removeDocumentReference = async (req, res) => {
         if (attachedReferences.length == 0) {
             setStatusValid = true;
         }
-        
+        // If Document has no invalid reference attached remaining
         else {
             var invalidReferenceExists = attachedReferences.some(refObj => {refObj.status == 'invalid'});
             if (!invalidReferenceExists) {

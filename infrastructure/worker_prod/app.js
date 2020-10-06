@@ -4,7 +4,7 @@ const updateChecks = require('./update_checks');
 
 const {serializeError, deserializeError} = require('serialize-error');
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -89,7 +89,7 @@ app.post('/job', async function(req, res) {
     // Update Reference Job
     else if (jobType == constants.jobs.JOB_UPDATE_REFERENCES) {
 
-        const { cloneUrl, installationId, fullName, headCommit } = req.body;
+        const { cloneUrl, installationId, fullName, headCommit, message, pusher } = req.body;
 
         if (!checkValid(cloneUrl))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No cloneUrl provided for updateReferences job`)),
@@ -115,6 +115,18 @@ app.post('/job', async function(req, res) {
                                 source: 'worker-instance', function: 'app.js'}});
             res.status(400).end();
         }
+        if (!checkValid(message))  {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No message provided for updateReferences job`)),
+                                errorDescription: 'No message provided for updateReferences job',
+                                source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
+        if (!checkValid(pusher))  {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No pusher provided for updateReferences job`)),
+                                errorDescription: 'No pusher provided for updateReferences job',
+                                source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
 
 
         worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', function: 'app.js',
@@ -125,6 +137,9 @@ app.post('/job', async function(req, res) {
         process.env.installationId = installationId;
         process.env.fullName = fullName;
         process.env.headCommit = headCommit;
+        process.env.message = message;
+        process.env.pusher = pusher;
+
         try {
             await updateReferences.runUpdateProcedure();
         }

@@ -1,4 +1,4 @@
-const ActivityFeedItem = require('../../../models/reporting/ActivityFeedItem');
+const ActivityFeedItem = require('../../models/reporting/ActivityFeedItem');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 

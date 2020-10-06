@@ -6,7 +6,7 @@
 
 # Don't include build artifacts
 **/build*
-backend/semantic*
+
 # Don't include credentials
 **/.env
 
@@ -26,11 +26,18 @@ backend/semantic*
 # ignore git_repos
 **/git_repo*
 
-# Ignore doxygen related files
-backend/doxygen*
+# Ignore github-app build artifacts
+infrastructure/github-app/models*
+infrastructure/github-app/constants*
 
-# Ignore semantic related files
-backend/semantic
+# Ignore worker_prod build artifacts
+infrastructure/worker_prod/models*
+infrastructure/worker_prod/constants*
+
+
+# Ignore backend build artifacts
+infrastructure/backend/models*
+infrastructure/backend/constants*
 
 # Ignore Windows service executables
 **/daemon*

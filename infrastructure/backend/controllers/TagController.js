@@ -1,5 +1,5 @@
-const Tag = require('../../models/Tag');
-const Workspace = require('../../models/Workspace');
+const Tag = require('../models/Tag');
+const Workspace = require('../models/Workspace');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 

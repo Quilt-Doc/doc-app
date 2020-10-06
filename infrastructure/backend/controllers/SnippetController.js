@@ -1,10 +1,10 @@
-const Snippet = require('../../models/Snippet');
+const Snippet = require('../models/Snippet');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 const logger = require('../logging/index').logger;
 const jobs = require('../apis/jobs');
-const jobConstants = require('../../constants/index').jobs;
+const jobConstants = require('../constants/index').jobs;
 
 
 checkValid = (item) => {

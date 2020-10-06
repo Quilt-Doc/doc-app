@@ -1,7 +1,7 @@
 const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
 const client = require("../../apis/api").requestGithubClient();
 
-const User = require('../../../models/authentication/User');
+const User = require('../../models/authentication/User');
 
 const querystring = require('querystring');
 

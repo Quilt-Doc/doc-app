@@ -1,6 +1,6 @@
 
-const Document = require('../../models/Document');
-const Snippet = require('../../models/Snippet');
+const Document = require('../models/Document');
+const Snippet = require('../models/Snippet');
 
 const generateCheckSummary = (brokenDocuments, brokenSnippets) => {
     if (brokenDocuments.length == 0 && brokenSnippets.length == 0) {

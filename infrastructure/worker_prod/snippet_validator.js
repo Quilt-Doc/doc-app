@@ -11,11 +11,10 @@ const SNIPPET_VALID_REGION_THRESHOLD = 0.5;
 const NUM_VALID_SNIPPET_START_LINES = 3;
 
 const SNIPPET_STATUS_INVALID = 'INVALID';
-const SNIPPET_STATUS_NEW_REGION = 'NEW_REGION';
 const SNIPPET_STATUS_VALID = 'VALID';
 */
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
 // fileData: new fileContents, finalResult: final selected snippet region, windowSize: size of max snippet range
 const trimSnippet = (fileData, finalResult, windowSize) => {
@@ -213,7 +212,7 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
   var newSnippet = snippetObj;
   newSnippet.startLine = finalResult.idx;
   newSnippet.numLines = finalResult.size;
-  newSnippet.status = constants.snippets.SNIPPET_STATUS_NEW_REGION;
+  newSnippet.status = constants.snippets.SNIPPET_STATUS_VALID;
   newSnippet.code = [];
   for( i = newSnippet.startLine; i < newSnippet.numLines; i++ ) {
     newSnippet.code.push(fileData[i]);

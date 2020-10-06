@@ -1,4 +1,4 @@
-const Token = require('../../models/Token');
+const Token = require('../models/Token');
 const logger = require('../logging/index').logger;
 
 // Load the AWS SDK for Node.js
@@ -129,6 +129,9 @@ const requestInstallationClient = async (installationId) => {
                 Authorization: 'token ' + installationToken.value
             },
             get: {
+                Authorization: 'token ' + installationToken.value
+            },
+            patch: {
                 Authorization: 'token ' + installationToken.value
             }
           }

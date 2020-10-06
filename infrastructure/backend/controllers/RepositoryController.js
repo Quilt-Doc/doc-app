@@ -5,13 +5,13 @@ var request = require("request");
 const apis = require('../apis/api');
 
 const jobs = require('../apis/jobs');
-const jobConstants = require('../../constants/index').jobs;
+const jobConstants = require('../constants/index').jobs;
 
 const logger = require('../logging/index').logger;
 
-const Repository = require('../../models/Repository');
-const Reference = require('../../models/Reference');
-const Document = require('../../models/Document');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+const Document = require('../models/Document');
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -51,17 +51,6 @@ initRepository = async (req, res) => {
                         errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
                         function: 'initRepository'});
         return res.json({success: false, error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`, trace: err});
-    }
-
-    try {
-        await Reference.create({repository: repository._id, 
-            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create"});
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                        errorDescription: `Error saving rootReference`,
-                        function: 'initRepository'});
-        return res.json({success: false, error: `Error saving rootReference`, trace: err});
     }
 
     try {
@@ -292,7 +281,7 @@ jobRetrieveRepositories = async (req, res) => {
 
 // KARAN TODO: Add filtering here on 'ref', to prevent updating on pushes to other branches
 updateRepository = async (req, res) => {
-    const {fullName, ref, installationId, headCommit, cloneUrl} = req.body;
+    const {fullName, ref, installationId, headCommit, cloneUrl, message, pusher} = req.body;
 
     if (!checkValid(fullName)) return res.json({success: false, error: 'updateRepository: no repository fullName provided'});
     if (!checkValid(installationId)) return res.json({success: false, error: 'updateRepository: no repository installationId provided'});
@@ -300,6 +289,9 @@ updateRepository = async (req, res) => {
 
     if (!checkValid(headCommit)) return res.json({success: false, error: 'updateRepository: no headCommit provided on `push` event'});
     if (!checkValid(cloneUrl)) return res.json({success: false, error: 'updateRepository: no cloneUrl provided on `push` event'});
+
+    if (!checkValid(message)) return res.json({success: false, error: 'updateRepository: no message provided on `push` event'});
+    if (!checkValid(pusher)) return res.json({success: false, error: 'updateRepository: no pusher provided on `push` event'});
 
     var repository;
 
@@ -314,7 +306,7 @@ updateRepository = async (req, res) => {
     }
 
     // If repository is unscanned, we don't update
-    if (repository.scanned == false || repository.scanned == true) {
+    if (repository.scanned == false) {
 
         await logger.info({source: 'backend-api', message: `Ignoring update on unscanned repository fullName, installationId: ${fullName}, ${installationId}`,
                             function: 'updateRepository'});
@@ -326,9 +318,11 @@ updateRepository = async (req, res) => {
     var runReferencesData = {};
     runReferencesData['fullName'] = fullName;
     runReferencesData['installationId'] = installationId;
-    runReferencesData['headCommit'] = '9d87a041d7f12f1f59df90fb2e9485d9b067ac37';
+    runReferencesData['headCommit'] = headCommit;
     runReferencesData['cloneUrl'] = cloneUrl;
     runReferencesData['jobType'] = jobConstants.JOB_UPDATE_REFERENCES.toString();
+    runReferencesData['message'] = message;
+    runReferencesData['pusher'] = pusher;
 
     try {
         await jobs.dispatchUpdateReferencesJob(runReferencesData);

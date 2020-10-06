@@ -5,11 +5,11 @@ const apis = require('./apis/api');
 
 require('dotenv').config();
 
-const constants = require('../constants/index');
+const constants = require('./constants/index');
 
-const Workspace = require('../models/Workspace');
-const Repository = require('../models/Repository');
-const Reference = require('../models/Reference');
+const Workspace = require('./models/Workspace');
+const Repository = require('./models/Repository');
+const Reference = require('./models/Reference');
 
 
 const mongoose = require("mongoose")

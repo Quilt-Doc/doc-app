@@ -1,8 +1,8 @@
-const Workspace = require('../../models/Workspace');
-const Repository = require('../../models/Repository');
-const Reference = require('../../models/Reference');
-const Tag = require('../../models/Tag');
-const User = require('../../models/authentication/User');
+const Workspace = require('../models/Workspace');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
+const Tag = require('../models/Tag');
+const User = require('../models/authentication/User');
 
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
@@ -80,7 +80,6 @@ const referenceMiddleware = async (req, res, next) => {
         if (foundTag) req.tagObj = foundTag;
 
         if (requesterRole == 'dev') {
-            console.log('referenceMiddleware dev token');
             return next();
         }
 
@@ -102,7 +101,6 @@ const referenceMiddleware = async (req, res, next) => {
                 }
             }
 
-            console.log('Valid reference request');
             return next();
         }
         else {
@@ -130,13 +128,11 @@ const documentMiddleware = async (req, res, next) => {
     req.workspaceObj = foundWorkspace;
 
     if (req.tokenPayload.role == 'dev') {
-        console.log('documentMiddleware dev token');
         return next();
     }
     var requesterId = req.tokenPayload.userId.toString();
     var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
     if (validUsers.indexOf(requesterId) > -1) {
-        console.log('Valid document request');
         return next();
     }
     else {
@@ -161,13 +157,11 @@ const snippetMiddleware = async (req, res, next) => {
     req.workspaceObj = foundWorkspace;
 
     if (req.tokenPayload.role == 'dev') {
-        console.log('snippetMiddleware dev token');
         return next();
     }
     var requesterId = req.tokenPayload.userId.toString();
     var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
     if (validUsers.indexOf(requesterId) > -1) {
-        console.log('Valid snippet request');
         return next();
     }
     else {
@@ -194,7 +188,6 @@ const repositoryMiddleware = async (req, res, next) => {
         )) {
         
         if (requesterRole == 'dev') {
-            console.log('repositoryMiddleware dev token');
             return next();
         }
         else {
@@ -207,7 +200,6 @@ const repositoryMiddleware = async (req, res, next) => {
     // poll and validate are temporarily enabled for everything
     if (requestedPath.includes('/repositories/retrieve')) {
         if (requesterRole == 'dev') {
-            console.log('repositoryMiddleware dev token');
             return next();
         }
         // TODO: Fix temporarily allowing everyone to call this.
@@ -255,13 +247,11 @@ const repositoryMiddleware = async (req, res, next) => {
         }
 
         if (requesterRole == 'dev') {
-            console.log('referenceMiddleware dev token');
             return next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
-            console.log('Valid repository request');
             return next();
         }
         else {
@@ -287,7 +277,6 @@ const workspaceMiddleware = async (req, res, next) => {
     }
 
     if (requestedPath.includes('/workspaces/retrieve')) {
-        console.log('Moving on');
         return next();
     }
 
@@ -298,7 +287,6 @@ const workspaceMiddleware = async (req, res, next) => {
         catch (err) {
             return next(new Error("Error: invalid workspaceId format"));
         }
-        console.log('Searching for workspaceId: ', searchWorkspaceId.toString());
         var foundWorkspace = await Workspace.findById(searchWorkspaceId);
         if (!foundWorkspace) {
             return next(new Error("Error: workspaceId invalid"));
@@ -306,13 +294,11 @@ const workspaceMiddleware = async (req, res, next) => {
         req.workspaceObj = foundWorkspace;
 
         if (requesterRole == 'dev') {
-            console.log('workspaceMiddleware dev token');
             return next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
-            console.log('Valid workspace request');
             return next();
         }
         else {
@@ -374,13 +360,11 @@ const tagMiddleware = async (req, res, next) => {
 
 
     if (requesterRole == 'dev') {
-        console.log('tagMiddleware dev token');
         return next();
     }
 
     var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
     if (validUsers.indexOf(requesterId) > -1) {
-        console.log('Valid tag request');
         return next();
     }
     else {
@@ -407,7 +391,7 @@ const userMiddleware = async (req, res, next) => {
     // Verify membership in workspace for calling user, if :tagId then verify tag is in workspace
     // Default case
     try {
-        if (searchWorkspaceId) {
+        if (workspaceId) {
             searchWorkspaceId = ObjectId(workspaceId);
         }
         if (userId) {
@@ -425,7 +409,6 @@ const userMiddleware = async (req, res, next) => {
     }
     var foundUser = undefined;
     if (searchUserId) {
-        console.log("THIS IS THE USER ID", searchUserId);
         foundUser = await User.findById(searchUserId);
     }
 
@@ -447,7 +430,6 @@ const userMiddleware = async (req, res, next) => {
 
     if (foundUser) {
         if (requesterId == foundUser._id.toString()) {
-            console.log('Valid user request');
             return next();
         }
         else {
@@ -459,13 +441,11 @@ const userMiddleware = async (req, res, next) => {
     // Verify user is in workspace
     if (foundWorkspace) {
         if (requesterRole == 'dev') {
-            console.log('userMiddleware dev token');
             return next();
         }
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
-            console.log('Valid user request');
             return next();
         }
         else {
@@ -487,131 +467,56 @@ const tokenMiddleware = (req, res, next) => {
 }
 
 
-const checkMiddleware = (req, res, next) => {
+const checkMiddleware = async (req, res, next) => {
     var requesterId = req.tokenPayload.userId.toString();
     var requesterRole = req.tokenPayload.role;
+
+    const { workspaceId, repositoryId } = req.params;    
 
     if (requesterRole == 'dev') {
         return next();
     }
-    else {
-        return next(new Error("Error: only dev tokens can access the check API"));
-    }
-}
 
-/*
-const pullRequestMiddleware = (req, res, next) => {
-    var requesterId = req.tokenPayload.userId.toString();
-    var requesterRole = req.tokenPayload.role;
-
-    if (requesterRole == 'dev') {
-        return next();
-    }
-    else {
-        return next(new Error("Error: only dev tokens can access the pull request API"));
-    }
-}
-*/
-
-/*
-const linkage_controller = require('../controllers/LinkageController');
-router.post('/linkages/:workspaceId/create', linkage_controller.createLinkage);
-router.get('/linkages/:workspaceId/get/:linkageId', linkage_controller.getLinkage);
-router.put('/linkages/:workspaceId/edit/:linkageId', linkage_controller.editLinkage);
-router.delete('/linkages/:workspaceId/delete/:linkageId', linkage_controller.deleteLinkage);
-router.post('/linkages/:workspaceId/retrieve', linkage_controller.retrieveLinkages);
-router.put('/linkages/:workspaceId/:linkageId/attach_reference/:referenceId', linkage_controller.attachLinkageReference);
-router.put('/linkages/:workspaceId/:linkageId/remove_reference/:referenceId', linkage_controller.removeLinkageReference);
-router.put('/linkages/:workspaceId/:linkageId/attach_tag/:tagId', linkage_controller.attachLinkageTag);
-router.put('/linkages/:workspaceId/:linkageId/remove_tag/:tagId', linkage_controller.removeLinkageTag);
-*/
-
-//linkageId, workspaceId, tagId, referenceId
-
-/*
-const linkageMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
-
-    const { workspaceId, linkageId, tagId, referenceId } = req.params;
-
-    var searchWorkspaceId;
-    var searchLinkageId;
-    var searchTagId;
-    var searchReferenceId;
+    var searchWorkspaceId = undefined;
+    var searchRepositoryId = undefined;
 
     try {
-        searchWorkspaceId = ObjectId(workspaceId);
-        if (linkageId) searchLinkageId = ObjectId(linkageId);
-        if (tagId) searchTagId = ObjectId(tagId);
-        if (referenceId) searchReferenceId = ObjectId(referenceId);
+        if (workspaceId) {
+            searchWorkspaceId = ObjectId(workspaceId);
+        }
+        if (repositoryId) {
+            searchRepositoryId = ObjectId(repositoryId);
+        }
     }
     catch (err) {
-        return next(new Error("Error: invalid workspaceId, linkageId, tagId, referenceId format"));
+        return next(new Error("Error: invalid workspaceId or repositoryId format"));
     }
 
-    var foundWorkspace = await Workspace.findById(searchWorkspaceId);
-    if (!foundWorkspace) {
-        return next(new Error("Error: workspaceId invalid"));
-    }
-    req.workspaceObj = foundWorkspace;
+    var foundWorkspace = undefined;
+    if (searchWorkspaceId){
+        foundWorkspace = await Workspace.findById(searchWorkspaceId).lean().exec();
 
-    var foundLinkage;
-
-    if (searchLinkageId) {
-        foundLinkage = await Linkage.findOne({_id: searchLinkageId, workspace: foundWorkspace._id});
-        if (!foundLinkage) {
-            return next(new Error("Error: linkageId invalid"));
+        // Verify Repository is accessible from Workspace
+        if (searchRepositoryId) {
+            var validRepositories = foundWorkspace.repositories.map(id => id.toString());
+            if (validRepositories.includes(searchRepositoryId.toString()) == -1) {
+                return next(new Error("Error: repositoryId not accessible from workspace"));
+            }
         }
 
-        req.linkageObj = foundLinkage;
-    }
-
-    var foundTag;
-
-    if (searchTagId) {
-        foundTag = await Tag.findOne({_id: searchTagId, workspace: foundWorkspace._id});
-        if (!foundTag) {
-            return next(new Error("Error: tagId invalid"));
+        // Verify User can access Workspace
+        var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
+        if (validUsers.indexOf(requesterId) > -1) {
+            return next();
         }
-
-        req.tagObj = foundTag;
-    }
-
-    var foundReference;
-    
-    if (searchReferenceId) {
-        foundReference = await Reference.findById({_id: searchReferenceId, workspace: foundWorkspace._id});
-        if (!foundReference) {
-            return next(new Error("Error: referenceId invalid"));
+        else {
+            return next(new Error("Error: requesting user not a member of target workspace"));
         }
-
-        var referenceRepository = foundReference.repository.toString();
-        var validRepositories = foundWorkspace.repositories.map(id => id.toString());
-        if (validRepositories.includes(referenceRepository) == -1) {
-            return next(new Error("Error: referenceId not accessible from workspace"));
-        }
-
-        req.referenceObj = foundReference;
-    }
-
-    if (req.tokenPayload.role == 'dev') {
-        console.log('linkageMiddleware dev token');
-        return next();
-    }
-    var requesterId = req.tokenPayload.userId.toString();
-    var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
-    if (validUsers.indexOf(requesterId) > -1) {
-        console.log('Valid linkage request');
-        return next();
-    }
-    else {
-        return next(new Error("Error: requesting user not a member of target workspace"));
     }
 }
-*/
+
 
 const reportingMiddleware = async (req, res, next) => {
-    console.log('req.path.trim(): ', req.path.trim());
     const { workspaceId } = req.params;
     var searchWorkspaceId;
     try {
@@ -628,13 +533,11 @@ const reportingMiddleware = async (req, res, next) => {
     req.workspaceObj = foundWorkspace;
 
     if (req.tokenPayload.role == 'dev') {
-        console.log('reportingMiddleware dev token');
         next();
     }
     var requesterId = req.tokenPayload.userId.toString();
     var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
     if (validUsers.indexOf(requesterId) > -1) {
-        console.log('Valid reporting request');
         next();
     }
     else {

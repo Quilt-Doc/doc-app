@@ -237,6 +237,13 @@ router.post('/tokens/delete', authorizationMiddleware.tokenMiddleware, tokenCont
 
 const checkController = require('../controllers/CheckController');
 router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, checkController.createCheck);
+router.post('/checks/:workspaceId/retrieve/:repositoryId', authorizationMiddleware.checkMiddleware, checkController.retrieveChecks);
+
+const emailVerifyController = require('../controllers/authentication/EmailVerifyController');
+router.get('/verify/:verifyEmailHash', emailVerifyController.verifyEmail);
+
+const workspaceInviteController = require('../controllers/authentication/WorkspaceInviteController');
+router.post('/invites/:workspaceId', workspaceInviteController.sendInvite);
 
 /*
     const pullRequestController = require('../controllers/unused/PullRequestController');

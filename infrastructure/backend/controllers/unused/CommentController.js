@@ -1,5 +1,5 @@
 /*
-const Comment = require('../../../models/unused/Comment');
+const Comment = require('../../models/unused/Comment');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 

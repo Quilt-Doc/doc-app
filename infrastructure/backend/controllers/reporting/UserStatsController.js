@@ -1,4 +1,4 @@
-const UserStats = require('../../../models/reporting/UserStats');
+const UserStats = require('../../models/reporting/UserStats');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
