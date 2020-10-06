@@ -3,7 +3,7 @@ import Cookies from 'js-cookie';
 var apiEndpoint;
 
 console.log('Running!');
-if(process.env.a) { 
+if(process.env.REACT_APP_NETLIFY_API_URL) { 
     apiEndpoint = process.env.REACT_APP_NETLIFY_API_URL;
 }
 else { 

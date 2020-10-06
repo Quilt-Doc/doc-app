@@ -93,7 +93,7 @@ const breakAttachedDocuments = async (repoId, refUpdateData, worker) => {
     const bulkDocumentInvalidateOps = docUpdateData.map(docObj => ({
 
         updateOne: {
-                filter: { _id: docObj._id },
+                filter: { _id: ObjectId(docObj._id.toString()) },
                 // Where field is the field you want to update
                 // TODO: Instead of using `new Date()` use the actual date on the git push
                 update: { $set: { status: docObj.status, breakCommit: docObj.breakCommit, breakDate: new Date() } },
@@ -152,7 +152,7 @@ const breakAttachedDocuments = async (repoId, refUpdateData, worker) => {
                 const bulkDecrementOps = userUpdates.map((update) => {
                     return ({
                         updateOne: {
-                            filter: { user: update.userId },
+                            filter: { user: ObjectId(update.userId.toString()) },
                             // Where field is the field you want to update
                             update: { $inc: { documentsBrokenNum: update.updateNum } },
                             upsert: false
@@ -286,7 +286,7 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
     const bulkDirectoryInvalidateOps = unmatchedDirectories.map(dirObj => ({
         
         updateOne: {
-                filter: { _id: dirObj._id },
+                filter: { _id: ObjectId(dirObj._id.toString()) },
                 // Where field is the field you want to update
                 update: { $set: { status: dirObj.status, breakCommit: headCommit } },
                 upsert: false
@@ -577,7 +577,7 @@ const runUpdateProcedure = async () => {
             const bulkReferenceInvalidateOps = refUpdateData.map(refObj => ({
         
                 updateOne: {
-                        filter: { _id: refObj._id },
+                        filter: { _id: ObjectId(refObj._id.toString()) },
                         // Where field is the field you want to update
                         update: { $set: { status: refObj.status, breakCommit: refObj.breakCommit } },
                         upsert: false
@@ -658,7 +658,7 @@ const runUpdateProcedure = async () => {
             const bulkReferenceRenameOps = refUpdateData.map(refObj => ({
         
                 updateOne: {
-                        filter: { _id: refObj._id },
+                        filter: { _id: ObjectId(refObj._id.toString()) },
                         // Where field is the field you want to update
                         update: { $set: { status: refObj.status, name: refObj.name, path: refObj.path, parseProvider: refObj.parseProvider } },
                         upsert: false

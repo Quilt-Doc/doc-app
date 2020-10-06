@@ -17,7 +17,7 @@ const SNIPPET_STATUS_VALID = 'VALID';
 const constants = require('./constants/index');
 
 // fileData: new fileContents, finalResult: final selected snippet region, windowSize: size of max snippet range
-const trimSnippet = (fileData, finalResult, windowSize) => {
+const trimSnippet = (targetData, fileData, finalResult, windowSize) => {
   // Now we will trim it on both sides so the range starts and ends with code from original snippet
 
   var newSize = 0;
@@ -25,8 +25,7 @@ const trimSnippet = (fileData, finalResult, windowSize) => {
   // Trim from the front
   var frontTrim = 0;
   for(i = 0; i < windowSize; i++) {
-    // console.log('include index: ', i+finalResult.idx);
-    // console.log('Checking includes: ', fileData[i+finalResult.idx].val);
+    console.log('include index: ', i+newIdx);
     if (targetData.includes(fileData[i+newIdx].val)) {
       break;
     }
@@ -34,13 +33,14 @@ const trimSnippet = (fileData, finalResult, windowSize) => {
       frontTrim = frontTrim + 1;
     }
   }
-  // console.log('FrontTrim: ', frontTrim);
+  console.log('FrontTrim: ', frontTrim);
   newSize = windowSize - frontTrim;
   newIdx = newIdx + frontTrim;
 
   // Trim from the back
   var backTrim = 0;
   for(i = (windowSize-1-frontTrim); i >= 0; i--) {
+    console.log('include index: ', i+newIdx);
     if (targetData.includes(fileData[i+newIdx].val)) {
       break;
     }
@@ -48,7 +48,7 @@ const trimSnippet = (fileData, finalResult, windowSize) => {
       backTrim = backTrim + 1;
     }
   }
-  // console.log('BackTrim: ', backTrim);
+  console.log('BackTrim: ', backTrim);
   newSize = newSize - backTrim;
   return [ newSize,  newIdx];
 }
@@ -78,11 +78,8 @@ const getMaxCandidateScore = (possibleRegions) => {
 
 
 const findNewSnippetRegion = (snippetObj, fileContents) => {
-  // var snippetObj = {startLine: 2, numLines: 5, code: ['test1();', 'test2();', 'test3();', 'test4();', 'test5();']};
-  var snippetCode = snippetObj.code.join('\n');
-  // var first_diff = '# Snippet #1\n{\ntest1();\ntest2();\ntest3();\ntest4();\nINSERT LINE\nmethodCall();\n}\n# Snippet #2\nmethodDef(CHANGE_METHOD SIGNATURE) {\nvar x = 4;\nprint(x)\nINSERT LINE\nsendMessage()\n}\n# Snippet #3\nmethodDef() {\nvar x = 4;\nprint(x)\nsendMessage()\n}\nGITHUB APP TEST\nGITHUB APP TEST 2';
-  // var second_diff = '# Snippet #1\n{\ntest1();\ntest2();\ntest3();\nmethodCall();\n}\n# Snippet #2\nmethodDef(CHANGE_METHOD SIGNATURE) {\nvar x = 4;\nprint(x)\nDIFFERENT LINE\nsendMessage()\n}\n# Snippet #3\nmethodDef() {\nvar x = 4;\nprint(x)\nsendMessage()\n}\nGITHUB APP TEST\nGITHUB APP TEST 3\nGITHUB APP TEST 4\nGITHUB APP TEST 5\nGITHUB APP TEST 6\ninsertion';
-  //var fileContents = '# Snippet #1\n{\nmethodCall();\n}\n# Snippet #2\nmethodDef(CHANGE_METHOD SIGNATURE) {\nvar x = 4;\nprint(x)\nDIFFERENT LINE\nsendMessage()\n}\ntest3();\ntest2();\n# Snippet #3\nmethodDef() {\nvar x = 4;\nprint(x)\ntest2();\ntest4();\ntest3();\ntest4();\nsendMessage()\n}\nGITHUB APP TEST\nGITHUB APP TEST 3\nGITHUB APP TEST 4\ntest1();\ntest3();\nGITHUB APP TEST 5\nGITHUB APP TEST 6\ninsertion';
+  // var snippetObj = {startLine: 2, numLines: 5, originalSize, originalCode, code: ['test1();', 'test2();', 'test3();', 'test4();', 'test5();']};
+  var snippetCode = snippetObj.originalCode.join('\n');
 
 
   // Replace all whitespace except `\n`
@@ -90,17 +87,12 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
   fileContents = fileContents.replace(/[ \t\r]+/g,"");
 
 
-  console.log('snippetObj code: ');
-  console.log(snippetCode.split('\n'));
-
-  console.log('fileContents: ');
-  console.log(fileContents.split('\n'));
 
   var line_versions = dmp.diff_linesToChars_(snippetCode, fileContents);
 
 
   var targetData = '';
-  for (i = 0; i < snippetObj.numLines; i++) {
+  for (i = 0; i < snippetObj.originalSize; i++) {
     targetData = targetData + line_versions.chars1[i];
   }
 
@@ -110,10 +102,6 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
       }
       return {val: -1, idx: -1};
   });
-  console.log('fileData: ');
-  console.log(fileData);
-
-  var n = fileData.length;
 
   var snippetSize = targetData.length;
 
@@ -160,12 +148,9 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
             }
         }
     }
-    console.log('LIS: ', lis);
     windowMaxes.push(Math.max(...lis));
   }
 
-  console.log('windowMaxes');
-  console.log(windowMaxes);
 
   // We did not find any increasing subsequences
   if (Math.max(...windowMaxes) < 2) {
@@ -173,20 +158,24 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
     return snippetObj;
   }
 
-  var snippetCenterLine = ((snippetObj.startLine + snippetObj.numLines-1)/2);
+  var snippetCenterLine = ((snippetObj.startLineNum + snippetObj.numLines-1)/2);
     // val: number of in order lines from original snippet - We normalize this by dividing by snippet length
     // idx: start location of proposed region
     // numLines: number of lines of original snippet present in the region - We normalize this by dividing by snippet length
     // distance: ratio of distance from original snippet center - We normalize this by dividing by snippet length
+
+  // KARAN TODO: Why is distance alwyas NaN
   var possibleRegions = windowMaxes.map((value, index) => {
     if (value > (snippetSize * constants.snippets.SNIPPET_VALID_REGION_THRESHOLD)) {
+      var regionLines = fileData.slice(index, index+windowSize);
       return {
         val: value / targetData.length,
         idx: index,
         numLines:
-        fileData.slice(index, index+windowSize).filter(function(item) {
-          return targetData.includes(item.val);
-        }).length / targetData.length,
+          regionLines.filter(function(item) {
+            return targetData.includes(item.val);
+          }).length / targetData.length,
+        // KARAN TODO: This line is really sus, I don't think it's doing what the above comment says
         distance: ( Math.abs(snippetCenterLine-(index+windowSize-1)) / fileData.length)
       };
     }
@@ -206,16 +195,18 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
   // This is our selected new snippet
   var finalResult = possibleRegions[maxScoreIdx];
 
-  [finalResult.size, finalResult.idx] = trimSnippet(fileData, finalResult, windowSize);
+  [finalResult.size, finalResult.idx] = trimSnippet(targetData, fileData, finalResult, windowSize);
 
   // Create New Snippet Obj
   var newSnippet = snippetObj;
-  newSnippet.startLine = finalResult.idx;
+  newSnippet.startLineNum = finalResult.idx;
   newSnippet.numLines = finalResult.size;
   newSnippet.status = constants.snippets.SNIPPET_STATUS_VALID;
   newSnippet.code = [];
-  for( i = newSnippet.startLine; i < newSnippet.numLines; i++ ) {
-    newSnippet.code.push(fileData[i]);
+  var fileContentsLines = fileContents.split('\n');
+  // KARAN TODO: Fix this so it is appending the actual file content, not the hashed lines
+  for( i = newSnippet.startLineNum; i < newSnippet.numLines; i++ ) {
+    newSnippet.code.push(fileContentsLines[i]);
   }
   console.log('Returning: ');
 
@@ -226,9 +217,7 @@ const findNewSnippetRegion = (snippetObj, fileContents) => {
 
 
 module.exports = { findNewSnippetRegion };
-/*export default {
-  findNewSnippetRegion
-}*/
+
 
 
 // Now I want to get the correct alignment for the window around these increasing segments which maximizes the amount of snippet lines in the window

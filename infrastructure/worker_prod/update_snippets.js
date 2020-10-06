@@ -39,6 +39,9 @@ const constants = require('./constants/index');
 const Snippet = require('./models/Snippet');
 const Reference = require('./models/Reference');
 
+const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Types;
+
 const {serializeError, deserializeError} = require('serialize-error');
 
 
@@ -52,10 +55,10 @@ const validateSnippetsOnFiles = async (snippetData, trackedFiles, repoDiskPath, 
     var relevantSnippets = snippetData.filter((snippetObj) => {
       return snippetObj.pathInRepository == currentFile.ref;
     });
-
-    worker.send({action: 'log', info: {level: 'debug', message: `relevantSnippets on repository: ${repoId}\n${relevantSnippets}`,
+    /*
+    worker.send({action: 'log', info: {level: 'debug', message: `relevantSnippets on repository: ${repoId}\n${JSON.stringify(relevantSnippets)}`,
                                         source: 'worker-instance', function: 'validateSnippetsOnFiles'}});
-
+    */
     return fileContentValidation(currentFile, relevantSnippets, repoDiskPath);
   });
 
@@ -80,10 +83,11 @@ const validateSnippetsOnFiles = async (snippetData, trackedFiles, repoDiskPath, 
 
 // Check if start and end lines in same place, snippet automatically valid
 const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
-
-  if (fileObj.deleted) {
-    snippetData = snippetData.map ( (obj) => {
-      obj.status = 'INVALID';
+  var fileDeletedIndexList = [];
+  if (fileObj.deleted == true) {
+    snippetData = snippetData.map ( (obj, index) => {
+      obj.status = constants.snippets.SNIPPET_STATUS_INVALID;
+      fileDeletedIndexList.push(index);
       return obj;
     });
     return snippetData;
@@ -96,6 +100,11 @@ const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
   // Section Start: Find Snippets whose start & end haven't moved
   for (i = 0; i < snippetData.length; i++) {
     var currentSnippet = snippetData[i];
+
+    if (currentSnippet.status == constants.snippets.SNIPPET_STATUS_INVALID) {
+      continue;
+    }
+
     var status = constants.snippets.SNIPPET_STATUS_INVALID;
   
     var snippetStartLine = currentSnippet.firstLine.replace(/\s+/g, '');
@@ -120,8 +129,10 @@ const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
   for (i = 0; i < snippetData.length; i++) {
     // {startLine: finalResult.idx, numLines: finalResult.size, status: 'VALID'}
 
+
     // If Snippet start and end lines don't both match anymore.
-    if (snippetData[i].status == constants.snippets.SNIPPET_STATUS_INVALID) {
+    // Prevent looking for new Snippet regions for Snippets whose files have been deleted.
+    if (snippetData[i].status == constants.snippets.SNIPPET_STATUS_INVALID && !fileDeletedIndexList.includes(i)) {
       console.log('Looking for new snippet region, idx: ', i);
       snippetData[i] = findNewSnippetRegion(snippetData[i], lines);
     }
@@ -158,11 +169,11 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
     throw new Error(`Error resetting repository ${repoId} to commit ${headCommit}`);
   }
 
-
+  // Get all 'file' References for Repository
   var fileReferences;
 
   try {
-    fileReferences = await Reference.find({repository: repoId, kind: "file", status: "valid"});
+    fileReferences = await Reference.find({repository: repoId, kind: "file", status: "valid"}).lean().exec();
   }
   catch (err) {
     await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error fetching 'file' References on repository: ${repoId}`,
@@ -175,12 +186,11 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
     return referenceObj._id.toString();
   });
 
-
-  // TODO: We have to get all Snippets attached to this repository and validate them all, not by workspace
+  // Find all of the Snippets, use the old 'file' References here since Snippets have not yet been updated.
   var repoSnippets;
-  
+
   try {
-    repoSnippets = await Snippet.find({_id: {$in: fileReferences}, repository: repoId});
+    repoSnippets = await Snippet.find({reference: {$in: fileReferences}, repository: repoId, status: constants.snippets.SNIPPET_STATUS_VALID});
   }
   catch (err) {
     await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error fetching Snippets from 'file' References on repository: ${repoId}`,
@@ -191,15 +201,21 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
   // List of each unique file with snippets attached
   // Strip out branch name
   var snippetData = repoSnippets.map(snippetObj => {
-    return { _id: snippetObj._id.toString(), startLineNum: snippetObj.start, numLines: snippetObj.code.length,
-              firstLine: snippetObj.code[0], endLine: snippetObj.code[snippetObj.code.length-1],
-              reference: snippetObj.reference
+    return { _id: snippetObj._id.toString(),
+              startLineNum: snippetObj.start,
+              numLines: snippetObj.code.length,
+              firstLine: snippetObj.code[0],
+              endLine: snippetObj.code[snippetObj.code.length-1],
+              reference: snippetObj.reference,
+              originalCode: snippetObj.originalCode,
+              originalSize: snippetObj.originalSize
           }
   });
 
-  // Get Snippet file paths and match them to Snippet
+  // Get list of distinct Reference ids attached to snippetData
   var snippetReferences = [...new Set(snippetData.map(snippetObj => snippetObj.reference.toString()))];
 
+  // Get all References attached to snippets in snippetData
   try {
     snippetReferences = await Reference.find({_id: {$in: snippetReferences}});
   }
@@ -210,20 +226,22 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
     throw new Error(`Error fetching References from list of References assigned to all Snippets on repository: ${repoId}`);
   }
 
+  // Get Reference file paths and match them to respective Snippets
   snippetData = snippetData.map(snippetObj => {
-    var refIdx = snippetReferences.findIndex(refObj => refObj._id.toString() == snippetObj.toString());
+    var refIdx = snippetReferences.findIndex(refObj => refObj._id.toString() == snippetObj.reference.toString());
     snippetObj.pathInRepository = snippetReferences[refIdx].path;
+    return snippetObj;
   });
 
   // Get list of distinct files our snippets are attached to
   snippetFiles = [...new Set(snippetData.map(snippetObj => snippetObj.pathInRepository))];
 
-  // TODO: Filter trackedFiles by snippetFiles, use oldRef for filtering
+  // Filter trackedFiles by snippetFiles, use oldRef for filtering
   trackedFiles = trackedFiles.filter(fileObj => snippetFiles.includes(fileObj.oldRef));
 
   // Update snippet pathInRepository if it's file has moved
   for(i = 0; i < trackedFiles.length; i++) {
-    if (trackedFiles[i].oldRef) {
+    if (trackedFiles[i].oldRef != trackedFiles[i].ref) {
       snippetData = snippetData.map(snippetObj => {
         if (snippetObj.pathInRepository == trackedFiles[i].oldRef) {
           snippetObj.pathInRepository = trackedFiles[i].ref;
@@ -233,16 +251,17 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
     }
   }
 
-  // TODO: Update Snippets in DB
+  // Do we invalidate a Snippet if it's file has been deleted?
+
   
 
-  /*
-  Format: { _id: snippetObj._id.toString(), startLineNum: snippetObj.start, numLines: snippetObj.code.length,
-  firstLine: snippetObj.code[0], endLine: snippetObj.code[snippetObj.code.length-1],
-  reference: snippetObj.reference
-  }
-  */
+
   var snippetUpdateData = await validateSnippetsOnFiles(snippetData, trackedFiles, repoDiskPath, repoId, worker);
+
+  await worker.send({action: 'log', info: { level: 'info',
+                                            source: 'worker-instance',
+                                            message: `snippetUpdateData: ${JSON.stringify(snippetUpdateData)}`,
+                                            function: 'runSnippetValidation'}});
 
   // Can we just do a bulk update on all of the snippets? We don't ever actually create or delete a snippet
   // Update these fields:
@@ -252,21 +271,24 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
     status: {type: String, required: true, enum: ['VALID', 'INVALID'], default: 'VALID'},
   */
 
-  const bulkSnippetUpdateOps = snippetUpdateData.map(snippetObj => ({
-        
-    updateOne: {
-            filter: { _id: snippetObj._id },
+  const bulkSnippetUpdateOps = snippetUpdateData.map(snippetObj => {
+    return  {
+      updateOne: {
+            filter: { _id: ObjectId(snippetObj._id.toString()) },
             // Where field is the field you want to update
-            update: { $set: { status: snippetObj.status, code: snipeptObj.code, start: snippetObj.start } },
+            update: { $set: { status: snippetObj.status, code: snippetObj.code, start: snippetObj.startLineNum } },
             upsert: false
+      }
     }
-  }));
+  });
+
+
 
   if (bulkSnippetUpdateOps.length > 0) {
     try {
         const updateResults = await Snippet.collection.bulkWrite(bulkSnippetUpdateOps);
-        worker.send({action: 'log', info: {level: 'debug',
-                                            message: `Update results for bulk update on Snippets on repository: ${repoId}\n${updateResults}`,
+        worker.send({action: 'log', info: {level: 'info',
+                                            message: `Update results for bulk update on Snippets on repository: ${repoId}\n${JSON.stringify(updateResults)}`,
                                             source: 'worker-instance', function:'runSnippetValidation'}})
     }
     catch (err) {

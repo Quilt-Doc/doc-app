@@ -22,7 +22,7 @@ checkValid = (item) => {
 }
 
 beginEmailVerification = async (userId, userEmail) => {
-    
+
     var hash = crypto.randomBytes(64).toString('hex');
 
     const msg = {
