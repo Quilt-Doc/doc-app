@@ -27,8 +27,7 @@ export const checkLogin = () => async (dispatch) => {
 
 export const checkInstallation = (formValues) => async (dispatch) => {
     const response = await api.post('/auth/check_installation', formValues)
-
-    console.log("CHECKINSTALLATIONRESPONSE", response)
+    
     if (response.data.success == false) {
         throw new Error("checkInstallation Error: ", response.data.error.toString());
     }
@@ -40,4 +39,26 @@ export const checkInstallation = (formValues) => async (dispatch) => {
 export const retrieveDomainRepositories = (formValues) => async (dispatch) => {
     const response = await api.post('/auth/retrieve_domain_repositories', formValues)
     dispatch({ type: RETRIEVE_DOMAIN_REPOSITORIES, payload: response.data });
+}
+
+export const sendInvite = (formValues) => async (dispatch) => {
+    const { workspaceId, email } = formValues;
+
+    if (!workspaceId) {
+        throw new Error("sendInvite: workspaceId not provided");
+    }
+
+    if (!email) {
+        throw new Error("sendInvite: email not provided");
+    }
+
+    const response = await api.post(`/invites/${workspaceId}`);
+
+    const {success, error} = response.data;
+
+    if (success === false) {
+        throw new Error(error);
+    } else {
+        return true
+    }
 }

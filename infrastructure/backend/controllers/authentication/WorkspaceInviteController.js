@@ -29,7 +29,7 @@ sendInvite = async (req, res) => {
 
     var userWithEmail;
     try {
-        userWithEmail = await User.findOne({email});
+        userWithEmail = await User.findOne({email, verified: true});
     }
     catch (err) {
         return res.json({success: false, error: `Error User findOne query failed - email: ${email}`});
