@@ -8,7 +8,7 @@ import { RiGitCommitLine } from 'react-icons/ri'
 import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
 
 // Card representing a single pull request
-const PullRequestCard = () => {
+const CheckCard = () => {
     return (
         <Container>
             <Status>
@@ -36,7 +36,7 @@ const PullRequestCard = () => {
     );
 }
 
-export default PullRequestCard;
+export default CheckCard;
 
 const Member = styled.div`
     background-color: #00579B;

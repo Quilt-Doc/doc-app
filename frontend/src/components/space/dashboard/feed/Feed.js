@@ -8,10 +8,10 @@ import FeedLog from './FeedLog';
 const Feed = () => {
     return (
         <FeedContainer>
-            <Header>
-                Feed
-            </Header>
             <ListView>
+                <FeedLog/>
+                <FeedLog/>
+                <FeedLog/>
                 <FeedLog/>
             </ListView>
         </FeedContainer>
@@ -33,16 +33,14 @@ const Header = styled.div`
 const ListView = styled.div`
     display: flex;
     flex-direction: column;
+    /*
     background-color: white;
     padding-bottom: 1rem;
-    height: 100%;
     padding: 2rem;
-    border-radius: 0.4rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    background-color: white;
+    */
+
 `
 
 const FeedContainer = styled.div`
-    margin-top: 2rem;
-    margin-left: 4rem;
+    margin-top: 2.7rem;
 `

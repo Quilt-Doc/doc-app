@@ -10,7 +10,7 @@ import { CgArrowsExpandRight } from 'react-icons/cg';
 import { FiChevronDown, FiFilter } from 'react-icons/fi';
 
 // Toolbar to sort/search/switch for the pull request component
-const PullRequestToolbar = () => {
+const CheckToolbar = () => {
     return (
         <Toolbar>
             <SwitchButton> {/*TODO: REPEATED COMPONENT SELECT*/}
@@ -27,18 +27,11 @@ const PullRequestToolbar = () => {
                     }}
                 />
             </SwitchButton>
-            <SearchButton>
-                <BiSearch style={{ 'fontSize': '2rem'}}  />
-            </SearchButton>
-            <FilterButton>
-                <FiFilter/>
-            </FilterButton>
-            <CgArrowsExpandRight style = {{fontSize: "1.9rem", marginLeft: "1rem"}}/>
         </Toolbar>
     )
 }
 
-export default PullRequestToolbar;
+export default CheckToolbar;
 
 const SearchButton = styled.div`
     height: 3.5rem;

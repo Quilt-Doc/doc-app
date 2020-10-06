@@ -11,7 +11,7 @@ import { RiFileList2Fill, RiFlagFill } from 'react-icons/ri';
 const Member = () => {
     return (
         <MemberContainer>
-            <PersonIcon color = {'#1e90ff'}>F</PersonIcon>
+            <Creator>F</Creator>
             <Name >Faraz Sanal</Name>
             <Metrics>
                 <Metric>
@@ -40,19 +40,6 @@ const Member = () => {
 
 export default Member;
 
-const PersonIcon = styled.div`
-    min-height: 3rem;
-    min-width: 3rem;
-    background-color: ${props => chroma(props.color).alpha(0.2)};
-    color:${props => props.color};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.3rem;
-    font-size: 1.5rem;
-    margin-right: 1.5rem;
-`
-
 const Metric =styled.div`
     font-size: 1.35rem;
     font-weight: 500;
@@ -76,14 +63,35 @@ const Number = styled.div`
 const MemberContainer = styled.div`
     display: flex;
     align-items: center;
-    height: 5rem;
+    height: 7rem;
     font-size: 1.3rem;
+    background-color: white;
+    padding: 2rem;
     /*border-bottom: 1px solid #E0e4e7;*/
+    border-radius: 0.6rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    width: 30rem;
 `
 
 const Name = styled.div`
     font-size: 1.3rem;
     font-weight: 500;
-    width: 13rem;
+    width: 10rem;
+    margin-right: 1rem;
+`
+
+const Creator = styled.div`
+    height: 2.5rem;
+    width: 2.5rem;
+    background-color: ${chroma('#1e90ff').alpha(0.2)};
+    color:#1e90ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-top: -0.1rem;
+    border-radius: 0.3rem;
+    font-weight: 500;
     margin-right: 1rem;
 `

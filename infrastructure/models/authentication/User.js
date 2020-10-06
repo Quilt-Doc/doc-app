@@ -14,8 +14,12 @@ let userSchema = new Schema({
     email: {type: String, index: true},
     created: {type: Date, default: Date.now },
     domain: String,
+    bio: String,
+    organization: String,
+    position: String,
     workspaces: [{type: ObjectId, ref: 'Workspace'}],
     onboarded: {type: Boolean, default: false},
+    verified: {type: Boolean, default: false},
     // 'dev', 'user'
     role: {type: String, default: 'user'}
 });

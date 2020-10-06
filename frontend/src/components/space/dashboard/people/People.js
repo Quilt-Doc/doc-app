@@ -26,7 +26,6 @@ export default People;
 
 const PeopleContainer = styled.div`
     margin-top: 1rem;
-    padding: 0 3rem;
 `
 
 const Header = styled.div`
@@ -34,12 +33,11 @@ const Header = styled.div`
     display: flex;
     align-items: center;
     font-size: 1.7rem;
-    font-weight: 600;
+    font-weight: 500;
+    margin-bottom: 1rem;
 `
 
 const ListView = styled.div`
     display: flex;
     flex-direction: column;
-    height: 15.5rem;
-    overflow-y: scroll;
 `

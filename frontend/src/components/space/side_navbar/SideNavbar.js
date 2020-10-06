@@ -49,6 +49,12 @@ class SideNavbar extends React.Component {
         return `/workspaces/${workspaceId}/document/${childId}`;
     }
 
+    renderSettingsLink = () => {
+        const { match } = this.props;
+        const { workspaceId } = match.params;
+        return `/workspaces/${workspaceId}/settings`;
+    }
+
     renderTopSection = () => {
         return (
             <Section>
@@ -76,7 +82,10 @@ class SideNavbar extends React.Component {
                 >
                     <RiStackLine/>
                 </NavbarIcon>
-                <NavbarIcon>
+                <NavbarIcon
+                    active = {history.location.pathname.split("/")[3] === "infobank"}
+                    to = {this.renderSettingsLink()}
+                >
                     <RiSettings5Line/>
                 </NavbarIcon>  
             </Section>  
@@ -89,9 +98,6 @@ class SideNavbar extends React.Component {
             <Section marginTop = {'auto'} marginBottom = {'5rem'}>
                 <IconBorder onClick = {() => setSearch(true)}>
                     <CgSearch/>
-                </IconBorder>
-                <IconBorder>
-                    <BiBell/>
                 </IconBorder>
             </Section>
         )

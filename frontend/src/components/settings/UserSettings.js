@@ -1,127 +1,298 @@
 import React, {Component} from 'react';
-import styled from 'styled-components';
 
+//styles
+import styled from 'styled-components';
+import chroma from 'chroma-js';
+
+//icons
+import { FiPlus } from 'react-icons/fi';
+
+//react-redux
+import { connect } from 'react-redux';
+
+//react-router
+import { withRouter } from 'react-router-dom';
+
+//actions
+import { editUser } from '../../actions/User_Actions';
+
+//email validation
+import * as EmailValidator from 'email-validator';
+ 
 class UserSettings extends Component {
     constructor(props) {
         super(props)
     }
 
+    sendInvite = () => {
+        const { memberUsers } = this.props;
+        let email = this.email.value;
+        if (!EmailValidator.validate(this.email.value)){
+            alert("Invalid Email");
+            return
+        } 
+        const emails = memberUsers.map(user => user.email);
+        if (emails.includes(email)) {
+            alert("User email already exists in workspace")
+            return
+        }
+    }
+
+    validateLength = (formValue) => {
+        if (formValue.length === 0) return false;
+        return true;
+    }
+
+    saveUserSettings = () => {
+        const { user, editUser } = this.props;
+        let formValues = {};
+        if (this.validateLength(this.firstName.value) && this.firstName.value !== user.firstName) formValues.firstName = this.firstName.value;
+        if (this.validateLength(this.lastName.value) && this.lastName.value !== user.lastName) formValues.lastName = this.lastName.value;
+        if (this.validateLength(this.email.value) && this.email.value !== user.email) {
+            if (!EmailValidator.validate(this.email.value)){
+                alert("Invalid Email");
+            }
+            formValues.email = this.email.value;
+        } 
+        if (this.validateLength(this.bio.value) && this.bio.value !== user.bio) formValues.bio = this.bio.value;
+        if (this.validateLength(this.position.value) && this.position.value !== user.position) formValues.position = this.position.value;
+        if (this.validateLength(this.org.value) && this.org.value !== user.organization) formValues.organization = this.org.value;
+
+        formValues.userId = user._id;
+
+        editUser(formValues);
+        alert("USER SETTINGS CHANGED");
+    }
+
     render() {
+        const { workspace, user, memberUsers } = this.props;
+        let renderWorkspaceSettings = workspace.creator._id === user._id;
+        
         return <Container>
-                    <Menu>
-                        <Header>
-                            Personal Settings
-                        </Header>
-                        <Setting>
-                            Profile
-                        </Setting>
-                        <Setting>
-                            Account {/* Password, Username, Email*/}
-                        </Setting>
-                        <Setting>
-                            Connections
-                        </Setting>
-                        <Setting>
-                            Notifications
-                        </Setting>
-                        <Setting>
-                            Workspaces
-                        </Setting>
-                    </Menu>
-                    <Content>
-                        <SettingHeader>
-                            Profile
-                        </SettingHeader>
-                        <DualSection>
-                            <Section>
-                                <Field>
-                                    <FieldName>Name</FieldName>
-                                    <FieldInput></FieldInput>
-                                </Field>
-                                <Field>
-                                    <FieldName>Bio</FieldName>
-                                    <FieldTextArea></FieldTextArea>
-                                </Field>
-                                <Field>
-                                    <FieldName>Job Title</FieldName>
-                                    <FieldInput></FieldInput>
-                                </Field>
-                                <Field>
-                                    <FieldName>Organization</FieldName>
-                                    <FieldInput></FieldInput>
-                                </Field>
-                                <Field>
-                                    <FieldName>Location</FieldName>
-                                    <FieldInput></FieldInput>
-                                </Field>
-                            </Section>
-                            <Section marginLeft = {"8rem"}>
-                                <FieldName>Profile Picture</FieldName>
-                                <ProfileButton>FS</ProfileButton>
-                            </Section>
-                        </DualSection>
-                        <SettingHeader>
-                            Account
-                        </SettingHeader>
-                        <Section>
-                            <Field>
-                                <FieldName>Primary Email</FieldName>
-                                <FieldInput></FieldInput>
-                            </Field>
-                            <Field>
-                                <FieldName>Username</FieldName>
-                                <FieldButton>Change Username</FieldButton>
-                            </Field>
-                            <Field>
-                                <FieldName>Password</FieldName>
-                                <FieldButton>Change Password</FieldButton>
-                            </Field>
-                            
-                        </Section>
-                        <SettingHeader>
-                            Connections
-                        </SettingHeader>
-                        <Section>
-                            <Field>
-                                <FieldName>Connect to Github</FieldName>
-                                <ConnectButton>
-                                    <IconBorder width = {"3.5rem"}>
-                                        <ion-icon style = {{'fontSize':'2.5rem',  
-                                                            'color': '#172A4E'}} 
-                                                    name="logo-github">     
-                                        </ion-icon>
-                                    </IconBorder>
-                                    Connect to Github
-                                </ConnectButton>
-                            </Field>
-                            <Field>
-                                <FieldName>Connect to Bitbucket</FieldName>
-                                <ConnectButton>
-                                    <IconBorder  >
-                                        <ion-icon style = {{'fontSize':'2rem', 
-                                                            'color': '#172A4E'}} 
-                                                    name="logo-bitbucket">     
-                                        </ion-icon>
-                                    </IconBorder>
-                                    Connect to Bitbucket
-                                </ConnectButton>
-                            </Field>
-                            
-                        </Section>
-                    </Content>
+                    <Top>
+                        <Header>SETTINGS</Header>
+                    </Top>
+                    <SubContainer>
+                        <Content>
+                            { renderWorkspaceSettings && 
+                                <Block>
+                                    <SettingHeader>
+                                        Workspace Settings
+                                    </SettingHeader>
+                                    <DualSection>
+                                        <Section>
+                                            <Field>
+
+                                                <FieldName>Invite User By Email</FieldName>
+                                                <InviteContainer active = {user.verified ? true : false}>
+                                                    <FieldInput 
+                                                        ref = {node => this.invite = node}>
+                                                    </FieldInput>
+                                                    <InviteButton 
+                                                        active = {user.verified ? true : false}
+                                                        onClick = {() => {
+                                                            if (user.verified) {
+                                                                this.sendInvite();
+                                                            } else {
+                                                                alert("Please verify your email before sending invites");
+                                                            }
+                                                        }}>
+                                                        <FiPlus/>
+                                                    </InviteButton>
+                                                </InviteContainer>
+                                            </Field>
+                                            <Field>
+                                                <FieldName2>Team</FieldName2>
+                                                {
+                                                    memberUsers.map(memberUser => {
+                                                        return (
+                                                            <MemberContainer>
+                                                                <Creator>{memberUser.firstName.charAt(0)}</Creator>
+                                                                <Name >{`${memberUser.firstName} ${memberUser.lastName}`}</Name>
+                                                            </MemberContainer>
+                                                        )
+                                                    })
+                                                }
+                                            </Field>
+                                        </Section>
+                                    </DualSection>
+                                </Block>
+                            }
+                            <Block>
+                                <SettingHeader>
+                                    User Settings
+                                </SettingHeader>
+                                <DualSection>
+                                    <Section>
+                                        <Field>
+                                            <FieldName>First Name</FieldName>
+                                            <FieldInput 
+                                                defaultValue = {user.firstName}
+                                                ref = {node => this.firstName = node}
+                                            />
+                                        </Field>
+                                        <Field>
+                                            <FieldName>Last Name</FieldName>
+                                            <FieldInput
+                                                defaultValue = {user.lastName}
+                                                ref = {node => this.lastName = node}
+                                            />
+                                        </Field>
+                                        <Field>
+                                            <FieldName>Primary Email</FieldName>
+                                            <FieldInput
+                                                defaultValue = {user.email}
+                                                ref = {node => this.email = node}
+                                            />
+                                        </Field>
+                                        <Field>
+                                            <FieldName>Bio</FieldName>
+                                            <FieldTextArea
+                                                defaultValue = {user.bio}
+                                                ref = {node => this.bio = node}
+                                            />
+                                        </Field>
+                                        <Field>
+                                            <FieldName>Position</FieldName>
+                                            <FieldInput
+                                                defaultValue = {user.position}
+                                                 ref = {node => this.position = node}
+                                            />
+                                        </Field>
+                                        <Field>
+                                            <FieldName>Organization</FieldName>
+                                            <FieldInput
+                                                defaultValue = {user.organization}
+                                                ref = {node => this.org = node}
+                                            />
+                                        </Field>
+                                    </Section>
+                                </DualSection>
+                                <Bottom>
+                                    <SaveButton onClick = {() => this.saveUserSettings()}>
+                                        Save User Settings
+                                    </SaveButton>
+                                </Bottom>
+                            </Block>
+                           
+                        </Content>
+                    </SubContainer>
                 </Container>
     }
 }
 
-export default UserSettings
+const mapStateToProps = (state, ownProps) => {
+
+    const { workspaces, auth: {user}} = state;
+    const { workspaceId } = ownProps.match.params;
+    const workspace = workspaces[workspaceId]
+    const memberUsers = Object.values( workspace.memberUsers);
+
+    return {
+        user,
+        workspace,
+        memberUsers
+    }
+}
+
+export default withRouter(connect(mapStateToProps, {editUser})(UserSettings));
+
+const Name = styled.div`
+    font-size: 1.3rem;
+    width: 10rem;
+    margin-right: 1rem;
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+	font-weight: 500;
+    width: 10rem;
+`
+
+const Creator = styled.div`
+    height: 2.5rem;
+    width: 2.5rem;
+    background-color: ${chroma('#1e90ff').alpha(0.2)};
+    color:#1e90ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-top: -0.1rem;
+    border-radius: 0.3rem;
+    font-weight: 500;
+    margin-right: 1rem;
+`
+
+const MemberContainer = styled.div`
+    display: flex;
+    align-items: center;
+    height: 6rem;
+    font-size: 1.3rem;
+    background-color: white;
+    padding: 2rem;
+    border: 1px solid #E0e4e7;
+    border-radius: 0.6rem;
+    margin-bottom: 1.5rem;
+    width: 22rem;
+    
+`
+
+const Bottom = styled.div`
+    background-color:#f7f9fb;
+    min-height: 7.5rem;
+    max-height: 7.5rem;
+    padding-left: 4rem;
+    padding-right: 4rem;
+    align-items: center;
+    display: flex;
+    width: 100%;
+    border-top: 1px solid #E0E4e7;
+    border-bottom-left-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
+`
+
+const SubContainer = styled.div`
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    margin-top: 4rem;
+`   
+
+const Header = styled.div`
+    font-size: 1.1rem;
+    font-weight: 400;
+    display: inline-flex;
+    border-bottom: 2px solid #172A4E;
+    height: 2.8rem;
+    padding-right: 3.5rem;
+    display: flex;
+    align-items: center;
+`
+
+const Top = styled.div`
+    display: flex;
+    align-items: center;
+`
+
+const Block = styled.div`
+    &:first-of-type {
+        margin-bottom: 3rem;
+    }
+    background-color: white;
+    width: 75rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    border-radius: 0.4rem;
+`
 
 const Container = styled.div`
-    margin: 0 auto; 
-    margin-top: 3rem;
-    width: 90rem;
-    height: 50rem;
-    display: flex;
-
+    width: 100%
+    min-height: 100%;
+    padding: 2.1rem;
+    padding-bottom: 5rem;
+    background-color: #f6f7f9;
 `
 
 const Menu = styled.div`
@@ -131,20 +302,7 @@ const Menu = styled.div`
 `
 
 const Content = styled.div`
-    width: 70rem;
-
-    margin-left: 3rem;
-`
-
-const Header = styled.div`
-    color: #172A4E;
-    height: 4rem;
-    display: flex;
-    align-items: center;
-    font-size: 1.8rem;
-    font-weight: bold;
-    padding: 1rem;
-    margin-bottom: 2rem;
+    
 `
 
 const Setting = styled.div`
@@ -177,18 +335,23 @@ const HeaderTitle = styled.div`
 `
 
 const SettingHeader = styled.div`
-    height: 4rem;
+    height: 7rem;
     display: flex;
     align-items: center;
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #172A4E;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #EDEFF1;
+    font-size: 1.8rem;
+    font-weight:600;
+    color: white;
+    margin-bottom: 1.5rem;
+    background-color: #373a49;
+    padding: 0rem 4rem;
+    border-top-left-radius: 0.4rem;
+    border-top-right-radius: 0.4rem;
 `
 
 const DualSection = styled.div`
     display: flex;
+    justify-content: center;
+    padding: 1.5rem 4rem;
 `
 
 const Section = styled.div`
@@ -197,51 +360,98 @@ const Section = styled.div`
     padding-top: 2rem;
     padding-bottom: 2rem;
     margin-left: ${props => props.marginLeft};
-    margin-bottom: 2.5rem;
+    width: 100%;
+    
 `
 
 const FieldName = styled.div`
-    font-weight: bold;
+    font-size: 1.6rem;
+    font-weight: 600;
     color: #172A4E;
     margin-bottom: 1rem;
+`
+
+
+const FieldName2 = styled.div`
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #172A4E;
+    margin-bottom: 1.3rem;
 `
 
 const Field = styled.div`
     margin-bottom: 2.5rem;
 `
 
+const InviteContainer = styled.div`
+    width: 100%;
+    display: flex;
+    opacity: ${props => props.active ? 1 : 0.5};
+`
+
+const InviteButton = styled.div`
+    background-color: #373a49;  
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 9rem;
+    font-size: 1.8rem;
+    border-top-right-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
+    cursor: pointer;
+    &:hover {
+        background-color: ${props => props.active ? "#4f5369" : ""};
+    }
+`
+
 const FieldInput = styled.input`
-    outline: none;
     height: 3.5rem;
-    width: 30rem;
     border-radius: 0.3rem;
-    border: 1px solid #DFDFDF;
+    border: 1px solid #E0E4E7;
     padding: 1rem;
     color: #172A4E;
     font-size: 1.5rem;
-    background-color: #FAFBFC;
-
+    font-weight: 500;
     &:focus {
         background-color: white;
-        border: 1px solid #19E5BE;
+    }
+    width: 100%;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+`
+
+const SaveButton = styled.div`
+    background-color: white;
+    margin-left: auto;
+    border: 1px solid  #E0E4e7;
+    display: inline-flex;
+    font-size: 1.5rem;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-radius: 0.4rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+    cursor: pointer;
+    &:hover {
+        background-color: #f7f9fb;
     }
 `
 
 const FieldTextArea = styled.textarea`
-    outline: none;
-    width: 30rem;
+    font-weight: 500;
     height: 7rem;
     border-radius: 0.3rem;
-    border: 1px solid #DFDFDF;
-    background-color: #FAFBFC;
+    border: 1px solid #E0E4E7;
     font-size: 1.5rem;
     color: #172A4E;
     padding: 1rem;
     resize: none;
     &:focus {
         background-color: white;
-        border: 1px solid #19E5BE;
     }
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+    width: 100%;
 `
 
 const FieldButton = styled.div`

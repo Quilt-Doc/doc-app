@@ -30,7 +30,7 @@ const Header = styled.div`
     display: flex;
     align-items: center;
     font-size: 1.7rem;
-    font-weight: 600;
+    font-weight: 500;
     margin-bottom: 1rem;
     /*
     padding-left: 4rem;
@@ -43,7 +43,7 @@ const ListView = styled.div`
     padding-bottom: 1rem;
     height: 100%;
     overflow-x: scroll;
-    width: 100%;
+    min-width: calc((100vw - 6rem - 32rem) * 0.925);
     /*
     width: calc(100vw - 32rem - 25rem);
     */

@@ -30,7 +30,9 @@ getUser = async (req, res) => {
 
 editUser = async (req, res) => {
     const userId = req.userObj._id.toString();
-    const { username, email, firstName, lastName, onboarded } = req.body;
+    const { username, email, firstName, lastName, onboarded, verified, 
+        domain, bio, organization, position
+    } = req.body;   
 
     let update = {}
     if (checkValid(username)) update.username = username; 

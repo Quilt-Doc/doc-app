@@ -276,6 +276,7 @@ const InfoList = styled.div`
     align-items: center;
     margin-left: ${props => props.edit ? "1.5rem" : ""};
     margin-bottom: -1rem;
+    margin-top: -1rem;
 `
 
 const InfoList2 = styled.div`
@@ -452,7 +453,7 @@ const Tag = styled.div`
 `
 
 const Header = styled.div`
-    font-size: 2rem;
+    font-size: 1.7rem;
     font-weight: 500;
     display: flex;
     align-items: center;

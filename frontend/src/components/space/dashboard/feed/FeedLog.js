@@ -44,15 +44,14 @@ const Document = styled.b`
 const CreationDate = styled.div`
     display: inline-flex;
     align-items: center;
-    background-color: #f5f7fa;
     height: 2.3rem;
     padding: 0rem 0.8rem;
     font-weight:500;
     border-radius: 0.3rem;
-    color: #8996A8;
+    opacity: 0.7;
     font-size: 1.1rem;
     float: right;
-    margin-top: 0.6rem;
+    margin-top: 2rem;
 `
 
 const ListItem = styled.div`
@@ -61,6 +60,12 @@ const ListItem = styled.div`
     /*background-color: #f7f9fb;*/
     font-size: 1.5rem;
     margin-bottom: 2rem;
+    padding:2rem 1.5rem;
+    padding-bottom: 1rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background-color:#373a49;
+    color: white;
+    border-radius: 0.5rem;
 `
 
 const Icon = styled.div`
@@ -74,9 +79,8 @@ const Detail = styled.div`
 
 const Content = styled.div`
     font-size: 1.25rem;
-    opacity: 0.8;
     margin-top: 0.1rem;
-    line-height:1.5;
+    line-height:1.6;
 `
 
 const IconBorder = styled.div`

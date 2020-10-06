@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import chroma from 'chroma-js';
 
 // components
-import PullRequest from './pull_request/PullRequest';
+import Checks from './checks/Checks';
 import People from './people/People';
 import Breakage from './breakage/Breakage';
 import Feed from './feed/Feed';
@@ -20,14 +20,13 @@ const Dashboard = () => {
                 <Top>
                     <Header>DASHBOARD</Header>
                 </Top>
-                <ContentContainer>
-                    <Team/>
-                    <Breakage/>
-                    <PullRequest/>
-                </ContentContainer>
+                <Feed/>
             </LeftContainer>
             <RightContainer>
-
+                <Content>
+                    <Breakage/>
+                    <Checks/>
+                </Content>
             </RightContainer>
         </Container>
         </>
@@ -36,6 +35,11 @@ const Dashboard = () => {
 
 export default Dashboard;
 
+/* <ContentContainer>
+                    <Team/>
+                    <Breakage/>
+                    <PullRequest/>
+                </ContentContainer>*/
 // Styled Components
 
 const Top = styled.div`
@@ -64,18 +68,41 @@ const ContentContainer = styled.div`
 
 const LeftContainer = styled.div`
     padding: 2.1rem;
-    width: calc(100vw - 31rem - 6rem);
+    min-width: 32rem;
+    max-width: 32rem;
+    background-color: white;
+    box-shadow: 5px 0 3px -3px rgba(0,0,0,0.1);
     flex-direction: column;
 `
 
 const RightContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    overflow-y: scroll;
+`
+
+const Content = styled.div`
+    width: 85%;
+    max-width: 110rem;
+    min-width: 80rem;
+`
+/*
+const RightContainer = styled.div`
+
     margin-left: auto;
     width: 31rem;
     background-color: white;
     height: 100vh;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border-top-left-radius: 4rem;
+    border-top-left-radius: 2rem;
+
+    height: 100vh;
+    margin-left: 3rem;
 `
+*/
+
 
 const Todos = styled.div`
     margin-left: auto;

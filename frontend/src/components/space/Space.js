@@ -16,6 +16,7 @@ import DirectoryNavigator from './codebase/directory_navigator/DirectoryNavigato
 import DocumentModal from './modals/DocumentModal';
 import DocumentCreationModal from './modals/DocumentCreationModal';
 import Search from './search/Search';
+import Settings from './settings/Settings';
 import { CSSTransition } from 'react-transition-group';
 
 //react-router
@@ -118,6 +119,7 @@ class Space extends React.Component {
                                     <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
                                     <Route path = "/workspaces/:workspaceId/document/:documentId?" component = { Knowledge } />
                                     <Route path = "/workspaces/:workspaceId/infobank" component = { Infobank } />
+                                    <Route path = "/workspaces/:workspaceId/settings" component = { Settings } />
                                 </Router>
                             </RightView>
                         </Container>

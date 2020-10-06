@@ -18,10 +18,11 @@ class Onboarding extends React.Component {
         const { editUser, user: {_id}} = this.props;
         const firstName = this.firstNameInput.value;
         const lastName = this.lastNameInput.value;
+        const email = this.emailInput.value;
 
         if (!firstName) alert("Please enter a first name");
         if (!lastName) alert("Please enter a last name");
-
+        if (!email) alert("Please enter an email");
         editUser({userId: _id, firstName, lastName, onboarded: true});
     }   
 
@@ -36,16 +37,23 @@ class Onboarding extends React.Component {
                         Provide us some info so we can tailor your experience.
                     </SubHeader>
                     <SubContent>   
-                        <NameInput 
-                            ref = {node => this.firstNameInput = node}
+                        <Top>
+                            <NameInput 
+                                ref = {node => this.firstNameInput = node}
+                                spellCheck = {false} 
+                                autoFocus placeholder = 
+                                {"First Name"}/>
+                            <NameInput 
+                                ref = {node => this.lastNameInput = node}
+                                spellCheck = {false} 
+                                placeholder = 
+                                {"Last Name"}/>
+                        </Top>
+                        <EmailInput  
+                            ref = {node => this.emailInput = node}
                             spellCheck = {false} 
-                            autoFocus placeholder = 
-                            {"First name"}/>
-                        <NameInput 
-                            ref = {node => this.lastNameInput = node}
-                            spellCheck = {false} 
-                            placeholder = 
-                            {"Last name"}/>
+                            placeholder = {"Email"} 
+                        />
                         <NextButton onClick = {() => this.onboardUser()}>
                             Next
                         </NextButton>
@@ -80,6 +88,11 @@ export default connect(mapStateToProps, { editUser })(Onboarding);
                                     />
                                 </div> 
                             </CSSTransition>*/}
+
+const Top = styled.div`
+    display: flex;
+    margin-bottom: 2rem;
+`
 
 const NextButton = styled.div`
     background-color: #23262f;
@@ -122,11 +135,37 @@ const NameInput = styled.input`
     &:focus{
         border: 1px solid #19e5be;
     }
-    &:first-of-type {
-        margin-bottom: 2rem;
-    }
    width: 35rem;
-`                           
+   &:first-of-type {
+        margin-right: 2rem;
+   }    
+   width: 29rem;
+`         
+
+
+const EmailInput = styled.input`
+    height: 4.5rem;
+    font-size: 1.7rem;
+    display: flex;
+    align-items: center;
+    background-color: #23262f;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    color: white;
+    border-radius: 0.3rem;
+    border: 1px solid #3e4251;
+    letter-spacing: 0.5px;
+    outline: none;
+    &::placeholder {
+        color: white;
+        opacity: 0.3;
+    }
+    &:focus{
+        border: 1px solid #19e5be;
+    }
+    margin-bottom: 2rem;
+    width: 100%;
+`          
 
 const Container = styled.div`
     background-color:#16181d;

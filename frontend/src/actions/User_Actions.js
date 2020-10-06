@@ -30,9 +30,9 @@ export const editUser = (formValues) => async dispatch => {
 
     const response = await api.put(`/users/edit/${userId}`, formValues);
 
-    const {success, result} = response.data;
+    const {success, result, error} = response.data;
     if (!success) {
-        throw new Error("createWorkspace Error: ", response.data.error.toString());
+        throw new Error(error.toString());
     } else {
         dispatch({ type: EDIT_USER, payload: result });
     }

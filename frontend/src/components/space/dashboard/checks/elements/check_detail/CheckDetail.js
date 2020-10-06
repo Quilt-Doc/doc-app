@@ -10,7 +10,7 @@ import { BiLink } from 'react-icons/bi';
 import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
 
 // Content on the right view of the pull request component
-const PullRequestDetail = () => {
+const CheckDetail = () => {
     return(
         <RequestBody>
             <Options>
@@ -126,7 +126,7 @@ const PullRequestDetail = () => {
     )
 }
 
-export default PullRequestDetail;
+export default CheckDetail;
 
 const ReferenceList = styled.div`
     display: flex;
