@@ -5,15 +5,10 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let userSchema = new Schema({
-    username: {type: String, index: true},
     firstName: {type: String},
     lastName: {type: String},
-    accessToken: String,
-    refreshToken: String, 
-    profileId: String,
     email: {type: String, index: true},
     created: {type: Date, default: Date.now },
-    domain: String,
     bio: String,
     organization: String,
     position: String,
@@ -21,7 +16,20 @@ let userSchema = new Schema({
     onboarded: {type: Boolean, default: false},
     verified: {type: Boolean, default: false},
     // 'dev', 'user'
-    role: {type: String, default: 'user'}
+    role: {type: String, default: 'user'},
+
+    // Github Attributes:
+
+    username: {type: String, index: true},
+    profileId: String,
+    domainGithub: {type: Boolean, default: false},
+
+
+    // Deprecated
+    domain: String,
+    // accessToken: String,
+    // refreshToken: String,
+
 });
 
 let User = mongoose.model("User", userSchema);

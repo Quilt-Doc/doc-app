@@ -24,6 +24,7 @@ export const deleteUser = id => async dispatch => {
 }
 
 export const editUser = (formValues) => async dispatch => {
+    console.log('EDIT USER CALLED');
     const { userId } = formValues;
 
     if (!userId) throw new Error("editUser: userId not provided");

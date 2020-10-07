@@ -78,17 +78,20 @@ app.use(passport.initialize());
 // deserialize cookie from the browser
 // app.use(passport.session());
 
-/*
-app.use(cors());
-*/
+// app.use(cors());
+// app.options('*', cors());
+
+
+// app.use(cors({credentials: true}));
+
+
 app.use(
     cors({
             // allow server to accept request from different origin
-            origin: true,
+            origin: true,// ['http://localhost:3000', 'https://getquilt.app', 'https://www.getquilt.app'],
             methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
             credentials: true // allow session cookie from browser to pass through
         })
-        
 );
 
 const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect', '/api/verify/'];

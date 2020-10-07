@@ -30,6 +30,11 @@
 infrastructure/github-app/models*
 infrastructure/github-app/constants*
 
+# Ignore token-manager build artifacts
+infrastructure/token-manager/models*
+infrastructure/token-manager/constants*
+
+
 # Ignore worker_prod build artifacts
 infrastructure/worker_prod/models*
 infrastructure/worker_prod/constants*

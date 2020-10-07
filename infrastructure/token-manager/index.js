@@ -4,9 +4,11 @@ const fs = require('fs');
 var jwt = require('jsonwebtoken');
 
 
-var mongoose = require('mongoose')
+const mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
-const Token = require('../models/Token');
+const Token = require('./models/Token');
+const GithubAuthProfile = require("./models/authentication/GithubAuthProfile");
+
 const {serializeError, deserializeError} = require('serialize-error');
 
 
@@ -23,6 +25,154 @@ let db = mongoose.connection;
 
 db.once('open', () => console.log('connected to the database'));
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+
+const refreshGithubTokens = async () => {
+    // Refresh tokens if they are expiring less than one hour from now
+    var currentMillis = new Date().getTime();
+    var expiringAuthProfiles;
+    try {
+        expiringAuthProfiles = await GithubAuthProfile.find({ status: 'valid', 
+                                                        $or: [{ accessTokenExpireTime: { $lte: (currentMillis + (60*60*1000))} },
+                                                                { refreshTokenExpireTime: { $lte: (currentMillis + (60*60*1000))} }],
+                                                    }).lean().exec();
+    }
+    catch (err) {
+        await logger.error({source: 'token-lambda',
+                            message: err,
+                            errorDescription: `Error GithubAuthProfile find valid tokens expiring in less than an hour failed`,
+                            function: 'refreshGithubTokens'});
+        throw err;
+    }
+    
+    // Return if no GithubAuthProfiles found
+    if (expiringAuthProfiles.length < 1) {
+        return;
+    }
+
+    // Match refresh tokens to their users, useful later
+    var refreshTokenOwnerLookup = {};
+
+    expiringAuthProfiles.map(authProfileObj => {
+        refreshTokenOwnerLookup[authProfileObj.refreshToken] = authProfileObj.user.toString();
+    });
+
+    var refreshTokenList = expiringAuthProfiles.map(authProfileObj => {
+        return authProfileObj.refreshToken;
+    });
+
+    var refreshTokenDataList = refreshTokenList.map(token => ({
+        refresh_token: token,
+        grant_type: "refresh_token",
+        client_id:  process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+      }));
+
+    var requestList = refreshTokenDataList.map(async (dataObj) => {
+        var response;
+        var userId = refreshTokenOwnerLookup[dataObj.refresh_token]
+        try {
+            response = await axios.post('https://github.com/lgin/oauth/access_token', dataObj);
+        }
+        catch (err) {
+            return {error: undefined, userId};
+        }
+        var parsed = queryString.parse(response.data);
+        parsed.userId = userId;
+        return parsed;
+    });
+
+    // Execute all requests
+    var results;
+    try {
+      results = await Promise.allSettled(requestList);
+    }
+    catch (err) {
+        await logger.error({source: 'token-lambda',
+                            message: err,
+                            errorDescription: `Error Promise.allSettled refreshing ${refreshTokenDataList.length} Github tokens`,
+                            function: 'refreshGithubTokens'});
+        throw err;
+    }
+
+    // We will update GithubAuthProfiles for successful calls
+    // Invalidate for unsuccessful calls
+
+    // Non-error responses
+    validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error)
+
+    // Error responses
+    invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error)
+
+    console.log('VALID RESULTS: ');
+    console.log(validResults);
+    
+    /*
+    accessToken: {type: String, required: true},
+    accessTokenExpireTime: {type: Number, required: true},
+
+    refreshToken: {type: String, required: true},
+    refreshTokenExpireTime: {type: Number, required: true}, 
+    */
+
+    const bulkAuthProfileUpdateOps = validResults.map((queryObj) => {
+        return ({
+            updateOne: {
+                filter: { user: ObjectId(queryObj.userId), status: 'valid' },
+                // Where field is the field you want to update
+                update: { $set: { accessToken: queryObj.access_token,
+                                    accessTokenExpireTime: (currentMillis + queryObj.expires_in),
+                                    refreshToken: queryObj.refresh_token,
+                                    refreshTokenExpireTime: (currentMillis + queryObj.refresh_token_expires_in) } },
+                upsert: false
+            }
+        })
+    });
+
+    if (bulkAuthProfileUpdateOps.length > 0) {
+        try {
+            await GithubAuthProfile.bulkWrite(bulkAuthProfileUpdateOps);
+        }
+        catch (err) {
+            await logger.error({source: 'token-lambda',
+                                    message: err,
+                                    errorDescription: `Error GithubAuthProfile bulkAuthProfileUpdateOps failed`,
+                                    function: 'refreshGithubTokens'});
+            throw err;
+        }
+    }
+
+
+    const bulkAuthProfileInvalidateOps = invalidResults.map((queryObj) => {
+        return ({
+            updateOne: {
+                filter: { user: ObjectId(queryObj.userId), status: 'valid' },
+                // Where field is the field you want to update
+                update: { $set: { status: 'invalid' } },
+                upsert: false
+            }
+        })
+    });
+
+    if (bulkAuthProfileInvalidateOps.length > 0) {
+        try {
+            await GithubAuthProfile.bulkWrite(bulkAuthProfileInvalidateOps);
+        }
+        catch (err) {
+            await logger.error({source: 'token-lambda',
+                                    message: err,
+                                    errorDescription: `Error GithubAuthProfile bulkAuthProfileInvalidateOps failed`,
+                                    function: 'refreshGithubTokens'});
+            throw err;
+        }
+    }
+
+
+    await logger.info({source: 'token-lambda',
+                        message: `refreshGithubTokens: ${validResults.length} Github tokens refreshed, ${invalidResults.length} tokens invalidated.`,
+                        function: 'refreshGithubTokens'});
+    return true;
+
+}
 
 createAppJWTToken = () => {
     
@@ -201,6 +351,25 @@ exports.handler = async (event) => {
 
     currentAppToken.value = currentAppToken.value.replace(regex, '');
     // App Token Section END ------
+
+
+    // Github Token Refresh Section START ------
+    try {
+        await refreshGithubTokens();
+    }
+    catch (err) {
+        await logger.error({source: 'token-lambda',
+                            message: err,
+                            errorDescription: `Error refreshing Github tokens`,
+                            function: 'handler'});
+
+        const response = {
+            statusCode: 500,
+            body: {success: false, error: `Error refreshing Github tokens`},
+        };
+        return response;
+    }
+    // Github Token Refresh Section END ------
 
 
     const axios = require('axios');

@@ -29,12 +29,21 @@ class UserSettings extends Component {
         const { memberUsers, sendInvite, match } = this.props;
         const { workspaceId } = match.params;
 
-        let email = this.email.value;
-        if (!EmailValidator.validate(this.email.value)){
+        let email = this.invite.value;
+        if (!EmailValidator.validate(this.invite.value)){
             alert("Invalid Email");
             return
-        } 
+        }
+        console.log('MEMBER USERS: ');
+        console.log(memberUsers);
+
         const emails = memberUsers.map(user => user.email);
+
+        console.log('MEMBER EMAILS: ');
+        console.log(emails);
+
+        console.log('TARGET EMAIL: ');
+        console.log(email);
         if (emails.includes(email)) {
             alert("User email already exists in workspace")
             return
@@ -205,7 +214,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, { editUser, sendInvite })(UserSettings));
+export default withRouter(connect(mapStateToProps, {editUser, sendInvite})(UserSettings));
 
 const Description = styled.div`
     color: 172a4e;

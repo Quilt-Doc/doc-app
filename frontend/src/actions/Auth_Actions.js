@@ -52,7 +52,7 @@ export const sendInvite = (formValues) => async (dispatch) => {
         throw new Error("sendInvite: email not provided");
     }
 
-    const response = await api.post(`/invites/${workspaceId}`);
+    const response = await api.post(`/invites/${workspaceId}`, formValues);
 
     const {success, error} = response.data;
 

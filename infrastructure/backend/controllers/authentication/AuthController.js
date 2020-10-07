@@ -1,4 +1,9 @@
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000/repository";
+var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_REPOSITORY_URL;
+
+if (process.env.IS_PRODUCTION) {
+    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_REPOSITORY_URL;
+}
+
 const client = require("../../apis/api").requestGithubClient();
 
 const User = require('../../models/authentication/User');
@@ -14,6 +19,7 @@ const logger = require('../../logging/index').logger;
 
 const fs = require('fs');
 var jwt = require('jsonwebtoken');
+const GithubAuthProfile = require("../../models/authentication/GithubAuthProfile");
 
 
 checkValid = (item) => {
@@ -49,10 +55,36 @@ loginSuccess = async (req, res) => {
     try {
         var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
 
-        var user = await User.findById(decoded.userId);
+        var user = await User.findById(decoded.userId).lean().exec();
+
+        // Check that User's Github refresh Token has not expired
+        var refreshTokenExpireTime = await GithubAuthProfile.findOne({user: decoded.userId, status: 'valid'}).select("refreshTokenExpireTime").lean().exec();
+
+        // If no GithubAuthProfile found, return false
+        if (!refreshTokenExpireTime) {
+            return res.json({
+                success: false,
+                authenticated: false,
+                user: {}
+            })
+        }
+
+        refreshTokenExpireTime = refreshTokenExpireTime.refreshTokenExpireTime;
+
+        const currentMillis = new Date().getTime();
+        // Force user to re-login to Github to get a new refresh Token
+        if (currentMillis >= refreshTokenExpireTime) {
+            return res.json({
+                success: false,
+                authenticated: false,
+                user: {}
+            });
+        }
+
 
         await logger.info({source: 'backend-api', message: `User ${decoded.userId} successfully authenticated.`, function: 'loginSuccess'});
 
+        // res.clearCookie('user-jwt');
         return res.json({
             success: true,
             authenticated: true,
@@ -66,42 +98,6 @@ loginSuccess = async (req, res) => {
                              function: 'loginSuccess'});
         return res.status(403);
     }
-    
-    
-    
-    /*
-    // Apparently standard practice is to run a new JWT on every sign-in
-    // If they don't have a JWT yet, let's make one for them
-    if (!req.cookies['user-jwt']) {
-        
-    }
-    */
-    
-    // Check if req.user is an actual user, normally we would be using username/password to authenticate req.user
-    // Since we don't have this, this is the current stopgap
-    
-    /*
-    var requestUser = await User.findOne({ _id: req.user._id, domain: req.user.domain, username: req.user.username, profileId: req.user.profileId });
-    if (requestUser) {
-        var jwtToken = createUserJWTToken(req.user._id, req.user.role);
-
-        res.cookie('user-jwt', jwtToken, { httpOnly: true });
-
-        // req.cookies['token'] = {"user-jwt": jwtToken};
-        return res.json({
-            success: true,
-            authenticated: true,
-            message: "user has successfully authenticated",
-            user: req.user,
-            cookies: req.cookies
-        });
-    }
-    return res.json({
-        success: false,
-        authenticated: false,
-        user: {}
-    })
-    */
 }
 
 loginFailed = (req, res) => {
@@ -117,11 +113,26 @@ logout = (req, res) => {
 }
 
 checkInstallation = async (req, res) => {
+
+    const { userId } = req.body;
+
+    if (!checkValid(userId)) return res.json({success: false, error: `No userId provided to checkInstallation method.`});
+
+    try {
+       var userAccessToken = await GithubAuthProfile.findOne({user: userId, status: 'valid'}).select("accessToken").lean().exec();
+       userAccessToken = userAccessToken.accessToken;
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error fetching GithubAuthProfile - userId: ${userId}`, function: 'checkInstallation'});
+        return res.json({success: false, error: err});
+    }
+
     var installationResponse;
     try {
         installationResponse = await client.get("/user/installations",  
             { headers: {
-                    Authorization: `token ${req.body.accessToken}`,
+                    Authorization: `token ${userAccessToken}`,
                     Accept: 'application/vnd.github.v3+json'
                 }
             });
@@ -131,12 +142,11 @@ checkInstallation = async (req, res) => {
                             errorDescription: `Error fetching installation - userId: ${req.tokenPayload.userId}`, function: 'checkInstallation'});
         return res.json({success: false, error: err});
     }
-
     return res.json({success: true, result: installationResponse.data.installations})
 }
 
 
-
+/*
 retrieveDomainRepositories = async (req, res) => {
     var userRepositoriesResponse;
     try {
@@ -157,7 +167,8 @@ retrieveDomainRepositories = async (req, res) => {
     // KARAN TODO: Format this result properly
     return res.json(filteredResponse)
 }
+*/
 
 module.exports = {
-    loginSuccess, loginFailed, logout, checkInstallation, retrieveDomainRepositories
+    loginSuccess, loginFailed, logout, checkInstallation // , retrieveDomainRepositories
 }
