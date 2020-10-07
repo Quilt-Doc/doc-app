@@ -39,7 +39,7 @@ class ChooseProvider extends React.Component {
     // checks if an installation exists for the user  // TODO: Validate that installations change
     async checkInstall(){
         let { checkInstallation, user } = this.props;
-        await checkInstallation({accessToken: user.accessToken, platform: "github"});
+        await checkInstallation({userId: user._id, platform: "github"});
         const { installations } = this.props;
         let installs = installations.filter(inst => inst.account.type === 'User' 
             && inst.account.id == user.profileId);

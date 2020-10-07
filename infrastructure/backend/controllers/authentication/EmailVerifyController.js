@@ -22,6 +22,7 @@ checkValid = (item) => {
 }
 
 beginEmailVerification = async (userId, userEmail) => {
+    console.log('Beginning Verification');
 
     var hash = crypto.randomBytes(64).toString('hex');
 

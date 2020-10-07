@@ -91,7 +91,7 @@ app.use(
             origin: true,// ['http://localhost:3000', 'https://getquilt.app', 'https://www.getquilt.app'],
             methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
             credentials: true // allow session cookie from browser to pass through
-        }) 
+        })
 );
 
 const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect', '/api/verify/'];

@@ -6,7 +6,9 @@ var jwt = require('jsonwebtoken');
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
-const Token = require('../models/Token');
+const Token = require('./models/Token');
+const GithubAuthProfile = require("./models/authentication/GithubAuthProfile");
+
 const {serializeError, deserializeError} = require('serialize-error');
 
 
@@ -23,6 +25,16 @@ let db = mongoose.connection;
 
 db.once('open', () => console.log('connected to the database'));
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+
+const refreshGithubTokens = async () => {
+    // Refresh tokens if they are expiring less than one hour from now
+    var currentMillis = new Date().getTime();
+    var expiringAuthProfiles = await GithubAuthProfile.find({ status: 'valid', 
+                                                        $or: [{ accessTokenExpireTime: { $lte: (currentMillis + (60*60*1000))} },
+                                                                { refreshTokenExpireTime: { $lte: (currentMillis + (60*60*1000))} }],
+                                                    }).lean().exec();
+    
+}
 
 createAppJWTToken = () => {
     

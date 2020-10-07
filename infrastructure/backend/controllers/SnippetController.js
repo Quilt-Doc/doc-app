@@ -3,8 +3,8 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 const logger = require('../logging/index').logger;
-const jobs = require('../apis/jobs');
-const jobConstants = require('../constants/index').jobs;
+const ReportingController = require('./reporting/ReportingController');
+const snippetConstants = require('../constants/index').snippets;
 
 
 checkValid = (item) => {
@@ -145,10 +145,10 @@ editSnippet = async (req, res) => {
         update.status = status;
         selectionString += " status";
         
-        if (req.snippetObj.status == 'INVALID' && status == 'VALID') {
+        if (req.snippetObj.status == snippetConstants.SNIPPET_STATUS_INVALID && status == snippetConstants.SNIPPET_STATUS_VALID) {
             isValidatingSnippet = true;
         }
-    
+
     }
 
     if (code) {
@@ -175,27 +175,18 @@ editSnippet = async (req, res) => {
 
     // Kick off Check update job
     if (isValidatingSnippet) {
-
-        var validatedSnippets = [req.snippetObj._id.toString()];
-
-        var runUpdateChecksData = {};
-        runUpdateChecksData['repositoryId'] = documentObj.repository.toString();
-        runUpdateChecksData['validatedDocuments'] = [];
-        runUpdateChecksData['validatedSnippets'] = validatedSnippets;
-
-        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
-
         try {
-            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+            await ReportingController.handleSnippetEdit(req.snippetObj._id.toString(), req.snippetObj.repository.toString());
         }
         catch (err) {
-            await logger.error({source: 'backend-api', message: err,
-                            errorDescription: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`,
-                            function: 'editSnippet'});
-            return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error handleSnippetEdit - snippetId, repositoryId: ${req.snippetObj._id.toString()}, ${req.snippetObj.repository.toString()}`,
+                                function: 'handleSnippetEdit'});
+            return res.json({success: false,
+                                error: `Error handleSnippetEdit - snippetId, repositoryId: ${req.snippetObj._id.toString()}, ${req.snippetObj.repository.toString()}`,
+                                trace: err});
         }
-
-        await logger.info({source: 'backend-api', message: `Successfully began updating Checks for validated Snippet`, function: 'editSnippet'});
     }
 
     await logger.info({source: 'backend-api',
@@ -220,27 +211,19 @@ deleteSnippet = async (req, res) => {
     }
 
     // Kick off Check update job if Snippet was 'invalid'
-    if (deletedSnippet.status == 'INVALID') {
-        var validatedSnippets = [deletedSnippet._id.toString()];
-        
-        var runUpdateChecksData = {};
-        runUpdateChecksData['repositoryId'] = req.snippetObj.repository.toString();
-        runUpdateChecksData['validatedDocuments'] = [];
-        runUpdateChecksData['validatedSnippets'] = validatedSnippets;
-
-        runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+    if (deletedSnippet.status == snippetConstants.SNIPPET_STATUS_INVALID) {
 
         try {
-            await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
+            await ReportingController.handleSnippetDelete(deletedSnippet, deletedSnippet.repository.toString());
         }
         catch (err) {
-            await logger.error({source: 'backend-api', message: err,
-                                    errorDescription: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`,
+            await logger.error({source: 'backend-api',
+                                    message: err,
+                                    errorDescription: `Error handleSnippetDelete - snippetId, repositoryId, validatedSnippets: ${snippetId}, ${repositoryId}, ${JSON.stringify(validatedSnippets)}`,
                                     function: 'deleteSnippet'});
-        return res.json({success: false, error: `Error dispatching update Checks job - repositoryId, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
-        }
 
-        await logger.info({source: 'backend-api', message: `Successfully dispatched update Checks job for invalid Snippet deletion`, function: 'deleteSnippet'});
+            return res.json({success: false, error: `Error handleSnippetDelete - snippetId, repositoryId, validatedSnippets: ${snippetId}, ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
+        }
     }
     
     await logger.info({source: 'backend-api', message: `Successfully deleted Snippet - snippetId, workspaceId: ${snippetId}, ${workspaceId}`, function: 'deleteSnippet'});

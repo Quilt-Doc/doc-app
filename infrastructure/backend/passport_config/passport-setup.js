@@ -1,6 +1,10 @@
 const passport = require("passport");
 const GithubStrategy = require("passport-github2").Strategy;
 const User = require("../models/authentication/User");
+const GithubAuthProfile = require('../models/authentication/GithubAuthProfile');
+
+var mongoose = require('mongoose')
+const { ObjectId } = mongoose.Types;
 
 /*
 passport.serializeUser((user, done) => {
@@ -33,21 +37,57 @@ passport.use(
                 domain: 'github',
                 profileId: profile.id,
             })
+
+            const currentMillis = new Date().getTime();
+            // Access Tokens expire in 8 hours
+            // I'm setting to 1 hour, to force the token-manager to refresh it and get an expire time from github
+            var accessTokenExpireTime = currentMillis + (1*60*60*1000);
+            // Refresh Tokens expire in 6 months
+            // I'm setting to 1 hour, to force the token-manager to refresh it and get an expire time from github
+            var refreshTokenExpireTime = currentMillis + (1 * 60 * 60 * 1000);
+
+
             if (!currentUser) {
+                // KARAN TODO: Remove 'accessToken', 'refreshToken', 'domain' fields from here
                 const user = await new User({
                     domain: 'github',
+                    domainGithub: true,
                     username: profile.username,
                     profileId: profile.id,
-                    accessToken: accessToken,
-                    refreshToken: refreshToken
+                    // accessToken: accessToken,
+                    // refreshToken: refreshToken
                 }).save();
+
+                const githubAuthProfile = await new GithubAuthProfile({
+                    user: ObjectId(user._id.toString()),
+                    accessToken: accessToken,
+                    accessTokenExpireTime,
+                    refreshToken: refreshToken,
+                    refreshTokenExpireTime,
+                    status: 'valid',
+                }).save();
+
                 if (user) {
                     done(null, user);
                 }
             }
             else {
-                let updatedUser = await User.findByIdAndUpdate(currentUser._id, { accessToken, refreshToken }, { new: true })
-                done(null, updatedUser)
+                // let updatedUser = await User.findByIdAndUpdate(currentUser._id, { accessToken, refreshToken }, { new: true });
+
+                // Delete old GithubAuthProfiles
+                var deleteManyResponse = await GithubAuthProfile.deleteMany({user: ObjectId(currentUser._id.toString())});
+
+                // Create new GithubAuthProfile
+                var newGithubAuthProfile = await new GithubAuthProfile({
+                    user: ObjectId(currentUser._id.toString()),
+                    accessToken: accessToken,
+                    accessTokenExpireTime,
+                    refreshToken: refreshToken,
+                    refreshTokenExpireTime,
+                    status: 'valid',
+                }).save();
+
+                done(null, currentUser)
             }
         }
     )

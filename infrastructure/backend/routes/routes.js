@@ -219,7 +219,7 @@ router.get('/auth/github/redirect', passport.authenticate("github", {session: fa
 });
 
 router.post('/auth/check_installation', authorizationMiddleware.authMiddleware, authController.checkInstallation);
-router.post('/auth/retrieve_domain_repositories', authorizationMiddleware.authMiddleware, authController.retrieveDomainRepositories);
+// router.post('/auth/retrieve_domain_repositories', authorizationMiddleware.authMiddleware, authController.retrieveDomainRepositories);
 
 
 
