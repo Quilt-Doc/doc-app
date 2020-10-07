@@ -7,8 +7,6 @@ import styled from 'styled-components';
 import TopBlock from './TopBlock';
 import SecondBlock from './SecondBlock';
 
-import logo from '../../images/logo.svg';
-
 class Landing extends React.Component {
     constructor(props){
         super(props)

@@ -160,44 +160,6 @@ class DocumentInfo extends React.Component {
     }
 }
 
-/*
-:
-                    <>
-                        <RepositoryMenu2
-                            document={this.props.document}
-                        />
-                      
-                        {   
-                            this.props.document.repository &&
-                                <InfoList2>
-                                    { this.props.document.references &&
-                                        <>
-                                            {this.renderFolders()}
-                                            {this.renderFiles()}
-                                        </>
-                                    }
-                                    <FileReferenceMenu
-                                            emptyButton = {!this.props.document.references || this.props.document.references.length === 0}
-                                            setReferences={this.props.document.references}//this.props.request.tags}
-                                            marginTop={"-1rem"}
-                                            
-                                            document={this.props.document}
-                                    />
-                                </InfoList2>
-                        }
-                        <InfoList>
-                            {this.props.document.tags && this.renderTags()}
-                            <LabelMenu
-                                emptyButton={!this.props.document.tags || this.props.document.tags.length === 0}
-                                attachTag={(tagId) => this.props.attachTag(this.props.document._id, tagId)}//this.props.attachTag(requestId, tagId)}
-                                removeTag={(tagId) => this.props.removeTag(this.props.document._id, tagId)}//this.props.removeTag(requestId, tagId)}
-                                setTags={this.props.document.tags}//this.props.request.tags}
-                                marginTop={"1rem"}
-                            />
-                        </InfoList>
-                    </>
-            }*/
-
 const mapStateToProps = (state, ownProps) => {
     let { documentId } = ownProps.match.params
     if (documentId === null || documentId === undefined) {

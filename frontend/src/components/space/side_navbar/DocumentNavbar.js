@@ -106,10 +106,7 @@ class DocumentNavbar extends React.Component {
             <Container id = "sidenavbar">
                 <Top>
                     <Header>KNOWLEDGE</Header>
-                    {/*
-                    <NavbarElement>
-                        <RiPencilLine/>
-                    </NavbarElement>*/}
+
                 </Top>
                 <DocumentContainer>
                     {this.renderDocumentSection()}
@@ -195,7 +192,8 @@ const Container = styled.div`
     border-top-left-radius: 1rem;
 
     background-color: #f6f7f9;
-    
+    height: 100vh;
+    overflow-y: scroll;
 `
 
 const DocumentContainer = styled.div`

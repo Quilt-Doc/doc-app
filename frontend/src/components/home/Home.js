@@ -7,9 +7,6 @@ import Workspaces from './workspaces/Workspaces';
 //styles
 import styled from 'styled-components';
 
-//images
-import logo from '../../images/logo.svg';
-
 //react-redux
 import { connect } from 'react-redux';
 
@@ -24,7 +21,6 @@ class Home extends Component {
         return (
             <Container>
                 <Top>
-                    <StyledIcon src = {logo} />
                     <Company>quilt</Company>
                 </Top>
                 {this.renderBody()}
@@ -55,6 +51,8 @@ const Container = styled.div`
 
 const Top = styled.div`
     height: 10rem;
+    padding-left: 4rem;
+    padding-right: 4rem;
     color:#D6E0EE;
     display: flex;
     align-items: center;

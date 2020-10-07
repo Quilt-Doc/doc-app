@@ -15,7 +15,7 @@ const { ObjectId } = mongoose.Types;
 
 retrieveBrokenDocuments = async (req, res) => {
     const { limit, skip } = req.body;
-
+    console.log("BROKEN DOCS");
     const workspaceId = req.workspaceObj._id.toString();
 
     let query;

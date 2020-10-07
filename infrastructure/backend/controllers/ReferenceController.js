@@ -75,8 +75,7 @@ getReference = async (req, res) => {
 /// new mapping of references in state
 retrieveReferences = async (req, res) => {
 
-    let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip } = req.body;
-
+    let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip, sort } = req.body;
     var validRepositoryIds = req.workspaceObj.repositories;
     
     let query = Reference.find();
@@ -177,7 +176,7 @@ retrieveReferences = async (req, res) => {
 
         let returnedReferences2;
         try {
-            returnedReferences2 = query2.lean().exec();
+            returnedReferences2 = await query2.lean().exec();
         } catch (err) {
             await logger.error({source: 'backend-api', message: err,
             errorDescription: `Error find query failed - repositoryId: ${repositoryId}`,
@@ -185,7 +184,8 @@ retrieveReferences = async (req, res) => {
 
             return res.json({success: false, error: "retrieveReferences Error: direct retrieve query execution failed on 2nd limiting retrieve", trace: err});
         }
-        returnedReferences = [...returnedReferences, returnedReferences2];
+        
+        returnedReferences = [...returnedReferences, ...returnedReferences2];
     }
 
     await logger.info({source: 'backend-api', message: `Successfully retrieved ${returnedReferences.length} References`, function: 'retrieveReferences'});

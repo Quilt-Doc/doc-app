@@ -97,7 +97,7 @@ class RepositoryMenu extends React.Component {
         return(
             <MenuContainer >
                 <Header  active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
-                    {this.props.repoName}
+                    <LimitedTitle>{this.props.repoName}</LimitedTitle>
                     <FiChevronDown 
                         style = {{
                             marginLeft: "3.5rem",
@@ -138,6 +138,14 @@ const mapStateToProps = (state, ownProps) => {
 
 
 export default withRouter(connect( mapStateToProps, {retrieveReferences} )(RepositoryMenu));
+
+const LimitedTitle = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 25rem;
+`
 
 const MenuContainer = styled.div`
 `

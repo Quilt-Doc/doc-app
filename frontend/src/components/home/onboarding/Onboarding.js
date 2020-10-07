@@ -23,7 +23,7 @@ class Onboarding extends React.Component {
         if (!firstName) alert("Please enter a first name");
         if (!lastName) alert("Please enter a last name");
         if (!email) alert("Please enter an email");
-        editUser({userId: _id, firstName, lastName, onboarded: true});
+        editUser({userId: _id, firstName, lastName, onboarded: true, email});
     }   
 
     render(){

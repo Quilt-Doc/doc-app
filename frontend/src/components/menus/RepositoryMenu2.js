@@ -56,18 +56,20 @@ class RepositoryMenu extends React.Component {
     
 
     renderListItems(){
-        return this.props.repositories.map((repo, i) => {
+        const { emptyReferences, repositories } = this.props;
+        return repositories.map((repo, i) => {
             return(
                 <ListItem 
                     onClick = {() => {
-                        this.selectRepository(repo)
+                        if (emptyReferences) emptyReferences();
+                        this.selectRepository(repo);
                     }} 
                 >
-                    <RiGitRepositoryLine style = {
+                    <VscRepo style = {
                         {fontSize: "1.5rem", marginRight: "0.7rem"}
                         }
                     />
-                    {repo.fullName}
+                     <Title>{repo.fullName}</Title>
                 </ListItem>
             )
         })
@@ -119,7 +121,7 @@ class RepositoryMenu extends React.Component {
                             <VscRepo/>
                         </IconBorder>
                     
-                        {repoName}
+                        <LimitedTitle>{repoName}</LimitedTitle>
                         <FiChevronDown 
                                 style = {{
                                     marginLeft: "0.5rem",
@@ -165,6 +167,14 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect( mapStateToProps, {editDocument} )(RepositoryMenu));
 
+const LimitedTitle = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 22rem;
+`
+
 const IconBorder = styled.div`
     font-size: 1.8rem;
     margin-right: 0.7rem;
@@ -188,16 +198,18 @@ const MenuButton = styled.div`
         background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
-    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#172A4e"}; 
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4E7"}; 
 `
 
 const Title = styled.div`
-    font-size: 1.3rem;
-    margin-right: 0.3rem;
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
     font-weight: 500;
+    width: 18rem;
+    font-size: 1.3rem;
 `
-
-
 
 const PageIcon = styled.div`
     margin-right: 1.5rem;

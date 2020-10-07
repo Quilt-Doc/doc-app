@@ -12,14 +12,9 @@ import styled from "styled-components";
 //icons
 import {IoMdNotificationsOutline} from 'react-icons/io'
 
-//images
-import logo from '../../../images/logo.svg';
-
-
 const MainNavbar = () => {
     return(
         <Container>
-            <StyledIcon src = {logo} />
             <Company>quilt</Company>
             <CreateButton/>
             <ConnectButton/>

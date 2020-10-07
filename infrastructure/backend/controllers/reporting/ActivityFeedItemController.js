@@ -60,7 +60,7 @@ retrieveActivityFeedItems = async (req, res) => {
     if (checkValid(skip)) query.skip(Number(skip));
     
     query.sort({date: -1});
-    query.populate('user');
+    query.populate('user').populate('workspace').populate({path: 'document', select: 'title'});
     var items;
     try {
         items = await query.exec();

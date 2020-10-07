@@ -35,9 +35,9 @@ class MainToolbar extends React.Component {
         const { document } = this.props;
         if (document) {
             let paths = this.props.document.path.split('/').slice(1);
-            if (this.props.document.title === ""){
-                paths.pop();
-                paths.push("Untitled");
+
+            if (paths.length > 3) {
+                paths = [paths[0], '...', paths[paths.length - 2], paths[paths.length - 1]];
             }
             return paths.map((path, i) => {
                 if (i == paths.length - 1) {
@@ -97,6 +97,10 @@ const PathSection = styled.div`
     }
     cursor: pointer;
     opacity: 0.85;
+    max-width: 15rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 `
 
 const Status = styled.div`

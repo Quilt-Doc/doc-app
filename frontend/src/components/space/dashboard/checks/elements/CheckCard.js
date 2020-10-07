@@ -2,89 +2,139 @@ import React from 'react';
 
 //styles
 import styled from 'styled-components';
+import chroma from 'chroma-js';
 
-//icons
-import { RiGitCommitLine } from 'react-icons/ri'
+//components
 import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
+import { AiOutlineClockCircle } from 'react-icons/ai';
+import { FiGitCommit } from 'react-icons/fi';
 
-// Card representing a single pull request
-const CheckCard = () => {
+
+const CheckCard = ({check, setCheck}) => {
+    const {sha, brokenDocuments, brokenSnippets, commitMessage, pusher, created} = check;
     return (
-        <Container>
-            <Status>
+        <Check onClick = {() => setCheck()}>
+            <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
+                <IoMdCheckmarkCircleOutline/>
             </Status>
-            <Title>
-                Report Metrics
-                <IoMdCheckmarkCircleOutline
-                    style = {{color: "#19e5be", fontSize: "1.8rem", marginLeft: "auto"}}
-                />
-            </Title>
-            <Chronology>August 21, 2020</Chronology> {/*TODO: REPEATED COMPONENT CHRONOLOGY*/}
-            <Bar>
-                <Metrics>
-                        <RiGitCommitLine
+            <CheckContent>
+                <Commit>
+                        <FiGitCommit
                             style = {{
-                                fontSize: "2.2rem",
-                                marginRight: "0.35rem"
+                                fontSize: "1.2rem",
+                                marginTop: "0.1rem",
+                                marginRight: "0.2rem",
                             }}
                         />
-                        3
-                </Metrics>
-                <Member>F</Member> {/*TODO: REPEATED COMPONENT MEMBER*/}
-            </Bar>
-        </Container>
-    );
+                        {sha.slice(0, 7)}
+                </Commit>
+                <Title>{commitMessage}</Title>
+                <Detail>
+                    <Bottom>
+                        <Creator>{pusher.charAt(0)}</Creator>
+                        <CreationDate> 
+                            <AiOutlineClockCircle
+                                style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
+                            />
+                            {getDateItem(created)}
+                        </CreationDate>
+                    </Bottom>
+                </Detail>
+            </CheckContent>
+        </Check>
+    )   
+}
+
+const getDateItem = (created) => {
+    let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    let item =  new Date(created)
+    let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
+    return dateString
 }
 
 export default CheckCard;
 
-const Member = styled.div`
-    background-color: #00579B;
-    color: white;
-    height: 1.8rem;
-    width: 1.8rem;
+const Check = styled.div`
+    height: 11rem;
+    width: 100%;
+    border-radius: 0.7rem;
+    background-color: white;
+    margin-bottom: 1.5rem;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    margin-left: auto;
-    border-radius: 50%;
 `
 
-const Metrics = styled.div`
+const CheckContent = styled.div`
+    width: 100%;
+    border-top: 1px solid #E0E4E7;
+    border-right: 1px solid #E0E4E7;
+    border-bottom: 1px solid #E0E4E7;
+    border-top-right-radius: 0.8rem;
+    border-bottom-right-radius: 0.8rem;
+    padding: 1rem 1.8rem;
     display: flex;
-    align-items: center;
-`
-
-const Bar = styled.div`
-    display: flex;
-    align-items: center;
-    margin-top: 0.6rem;
-`
-
-const Status = styled.div`
-    
+    flex-direction: column;
 `
 
 const Title = styled.div`
-    font-size: 1.2rem;
     font-weight: 500;
+    font-size: 1.3rem;
+    
+`
+
+const Status = styled.div`
+    color: ${props => props.active ? '#19e5be' : '#6f7390'};
+    font-size: 2.7rem;
+    padding: 1rem;
+    background-color:#373a49;
+    border-top-left-radius: 0.8rem;
+    border-bottom-left-radius: 0.8rem;
+
+`
+
+const Commit = styled.div`
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
+    opacity: 0.7;
+    font-weight: 500;
+    margin-bottom: 0.7rem;
 `
 
-const Chronology = styled.div`
-    margin-top: 0.7rem;
-    opacity: 0.6;
-    font-size: 1rem;
-`
-
-const Container = styled.div`
+//3 Faraz TODO: add a border on this guy
+const Creator = styled.div`
+    height: 2.5rem;
+    width: 2.5rem;
+    background-color: ${chroma('#1e90ff').alpha(0.2)};
+    color:#1e90ff;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-top: -0.1rem;
     border-radius: 0.3rem;
-    z-index: 1;
-    padding-left: 4rem;
-    padding-right: 4rem;
-    margin-top: 1.5rem;
+    font-weight: 500;
 `
+
+const Bottom = styled.div`
+    display: flex;
+    width: 100%;
+`   
+
+const Detail = styled.div`
+    display: flex;
+    font-size: 1.1rem;
+    align-items: center;
+    margin-top: auto;
+`
+
+const CreationDate = styled.div`
+    display: inline-flex;
+    align-items: center;
+    height: 2.3rem;
+    
+    font-weight:500;
+    border-radius: 0.3rem;
+    color: #8996A8;
+    margin-left: auto;
+`
+

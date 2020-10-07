@@ -178,9 +178,11 @@ class EditorWrapper extends React.Component {
         if (loaded) {
             return(
                 documentModal ? this.renderTextEditor()
-                    :   <SubContainer>
-                            {this.renderTextEditor()}
-                        </SubContainer>
+                    :   <Cont>
+                            <SubContainer>
+                                {this.renderTextEditor()}
+                            </SubContainer>
+                        </Cont>
             )
         } 
         return null
@@ -208,13 +210,18 @@ EditorWrapper.propTypes = {
 
 export default withRouter(connect(mapStateToProps, { getDocument, editDocument, renameDocument, testRoute})(EditorWrapper));
 
+const Cont = styled.div`
+    height: 100vh;
+    overflow-y: scroll;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 2;
+    width: 100%;
+`
+
 const SubContainer = styled.div`
     display: flex;
     flex-direction:column;
     padding-bottom: 2rem;
     background-color: white;
     justify-content: center;
-    width: 100%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    z-index: 2;
 `

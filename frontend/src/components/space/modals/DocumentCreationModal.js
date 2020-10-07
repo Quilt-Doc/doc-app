@@ -221,6 +221,7 @@ class DocumentCreationModal extends React.Component {
                             selectRepository = {(repository) => this.setState({repository})}
                             formRepository = {this.state.repository}
                             form = {true}
+                            emptyReferences = {() => this.setState({references: []})}
                         />
                         <Guide>
                             Code References

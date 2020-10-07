@@ -16,8 +16,8 @@ class BreakageCard extends Component {
     // depending on whether this is a warning card (from props) or not
     // display correct status
     renderStatus(){
-        let { warning } = this.props;
-        return warning ?
+        let { status } = this.props.doc;
+        return status === "invalid" ?
         (<Status color = {"#ff4757"}>
             <RiCloseFill
                 style = 
@@ -36,11 +36,20 @@ class BreakageCard extends Component {
         </Status>)
     }
 
+    getDateItem = () => {
+        const { created } = this.props.feed;
+        let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let item =  new Date(created)
+        let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
+        return dateString
+    }
+    
     render(){
+        const { title, breakDate, breakCommit } = this.props.doc;
         return(
             <Card> {/*REPEATED COMPONENT MINIMAL DOCUMENT*/}
                 <Title>
-                    Probability
+                    {title}
                     {this.renderStatus()}
                 </Title>
                 <Content>
@@ -53,7 +62,7 @@ class BreakageCard extends Component {
                         <AiOutlineClockCircle
                             style = {{marginRight: "0.5rem"}}
                         />
-                        August 12, 2015
+                        {this.getDateItem(breakDate)}
                     </CreationDate>
                     <Commit>
                         <FiGitCommit
@@ -63,16 +72,12 @@ class BreakageCard extends Component {
                                 marginTop: "0.1rem"
                             }}
                         />
-                        b30e5c3
+                       {breakCommit.slice(0, 7)}
                     </Commit>
                 </Detail>
             </Card>
         )
     }
-}
-
-BreakageCard.propTypes = {
-    warning: PropTypes.bool
 }
 
 export default BreakageCard;

@@ -1,11 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import logo from '../../images/logo.svg';
 
 const Installed = () => {
     return(
         <Container>
-            <StyledIcon src = {logo}/>
             Installion Success! Return to quilt. 
         </Container>
     )
