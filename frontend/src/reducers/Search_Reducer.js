@@ -16,7 +16,6 @@ let initialState = {
 }
 
 export default (state = initialState, action) => {
-    console.log("PAYLOAD", action.payload);
     switch (action.type) {
         case RETRIEVE_SEARCH_RESULTS:
             return { ...state, searchResults: action.payload.searchResults };

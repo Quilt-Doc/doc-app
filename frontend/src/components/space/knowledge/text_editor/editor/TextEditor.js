@@ -214,7 +214,7 @@ const TextEditor = (props) => {
 										spellCheck="false"
 										decorate={decorate}
 										readOnly = {!write}
-										
+						
 									/>
 									
 							</EditorContainer2>
@@ -266,6 +266,8 @@ const HeaderDiv = styled.div`
 	font-weight: 500;
 	opacity: ${props => props.active ?  1 : 0.4};
 	line-height: 4rem;
+	overflow-wrap: break-word;
+	hyphens: auto;
 `
 
 const Header = styled(TextareaAutosize)`
@@ -294,7 +296,7 @@ const StyledEditable = styled(Editable)`
   font-size: 16px;
   resize: none !important;
   padding-bottom: 7rem;
-  min-height: 66rem;
+  min-height: 75rem;
   cursor: ${props => props.cursortype ? "text" : "default"};
   padding-left: ${props => props.paddingLeft};
   padding-right: 10rem;

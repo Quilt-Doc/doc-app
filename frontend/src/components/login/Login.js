@@ -3,9 +3,6 @@ import React from 'react';
 //styles
 import styled from 'styled-components';
 
-//images
-import logo from '../../images/logo.svg';
-
 //icons
 import {ImGithub} from 'react-icons/im';
 
@@ -24,7 +21,6 @@ class Login extends React.Component {
         return(
             <Container>
                 <Content>
-                    <StyledIcon src= {logo} />
                     <Company>
                         quilt
                     </Company>

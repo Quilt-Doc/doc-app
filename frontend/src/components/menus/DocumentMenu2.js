@@ -16,13 +16,13 @@ import styled from "styled-components";
 import { CSSTransition } from 'react-transition-group';
 
 //actions
-import { moveDocument, retrieveDocuments } from '../../actions/Document_Actions';
+import { moveDocument, retrieveDocuments, searchDocuments } from '../../actions/Document_Actions';
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
 
 //icons
-import {RiFileTextLine, RiFileList2Fill} from 'react-icons/ri'
+import {RiFileTextLine, RiFileList2Fill, RiFileList2Line} from 'react-icons/ri'
 import {FiChevronDown} from 'react-icons/fi'
 
 class DocumentMenu2 extends React.Component {
@@ -55,6 +55,7 @@ class DocumentMenu2 extends React.Component {
 
 
     searchDocuments = (event) => {
+        const { searchDocuments } = this.props;
 
         if (this.state.typingTimeout) {
            clearTimeout(this.state.typingTimeout);
@@ -65,36 +66,16 @@ class DocumentMenu2 extends React.Component {
         this.setState({
            search: event.target.value,
            typing: false,
-           typingTimeout: setTimeout(() => {
+           typingTimeout: setTimeout(async () => {
                 if ( this.state.search === ""){
-                    if (this.props.parent) {
-                        this.props.retrieveDocuments({limit: 8, workspaceId, sort: "-title"}, false, true).then((documents) => {
-                            documents = [...documents, this.props.parent]
-                            this.setState({documents, position: -1})
-                        })
-                    } else {
-                        this.props.retrieveDocuments({limit: 9, workspaceId, sort: "-title"}, false, true).then((documents) => {
-                            this.setState({documents, position: -1})
-                        })
-                    }
+                    await this.reset();
                 } else {
-                    this.props.retrieveDocuments({search: this.state.search, workspaceId, sort: "-title",  limit: 9}, false, true).then((documents) => {
-                        this.setState({documents, position: -1})
-                    }); 
+                    let documents = await searchDocuments({ minimalDocuments: true, userQuery: this.state.search, 
+                        workspaceId, sort: "-title",  limit: 9});
+                    this.setState({ documents, position: -1 })
                 }
-            }, 200)
+            }, 100)
         });
-    }
-
-    renderMarginTop() {
-        return "-3rem";
-        if (this.props.marginTop){
-            return this.props.marginTop
-        } else if (window.innerHeight - this.addButton.offsetTop + this.addButton.offsetHeight > 300) {
-            return "-30rem"
-        } else {
-            return "-5rem"
-        }
     }
 
     handleSelect(parentId, doc) {
@@ -122,15 +103,7 @@ class DocumentMenu2 extends React.Component {
             let doc = this.state.documents[this.state.position]
             this.setState({loaded: false})
             await this.handleSelect(doc._id, doc)
-            if (this.props.parent){
-            this.props.retrieveDocuments({limit: 8, workspaceId, sort: "-title"}, false, true).then((documents) => {
-                documents = [...documents, this.props.parent]
-                this.setState({documents, loaded: true,  search: '', position: -1})
-            })} else {
-                this.props.retrieveDocuments({limit: 9, workspaceId, sort: "-title"}, false, true).then((documents) => {
-                    this.setState({documents,loaded: true,  search: '', position: -1})
-                })
-            }
+            this.reset();
         } else {
             if (e.keyCode === 38) {
                 if (this.state.position <= 0){
@@ -149,35 +122,38 @@ class DocumentMenu2 extends React.Component {
     }
 
     renderListItems(){
-        return this.state.documents.map((doc, i) => {
+        const { workspace } = this.props;
+        const { documents } = this.state;
+        return documents.map((doc, i) => {
             return(
                 <ListItem 
                     onClick = {() => {this.handleSelect(doc._id, doc)}} 
                     onMouseEnter = {() => {this.setState({position: i})}}
                     backgroundColor = {this.state.position === i ? '#F4F4F6' : ""}
                 >
-                    <RiFileTextLine  style = {{fontSize: "1.5rem", marginRight: "1rem"}}/>
-                    {doc.title ? doc.title : "Untitled"}
+                    {doc.title ? <RiFileList2Line  style = {{fontSize: "1.5rem", marginRight: "1rem"}}/>
+                        : <WorkspaceIcon>{workspace.name.charAt(0)}</WorkspaceIcon>}
+                    <Title>{doc.title ? doc.title : workspace.name}</Title>
                 </ListItem>
             )
         })
     }
 
-    openMenu(){
+    openMenu = async () =>{
         document.addEventListener('mousedown', this.handleClickOutside, false);
-        let { workspaceId } = this.props.match.params
-        this.setState({open: true})
-        if (this.props.parent) {
-            this.props.retrieveDocuments({limit: 8, workspaceId, sort: "-title"}, false, true).then((documents) => {
-                documents = [...documents, this.props.parent]
-                this.setState({documents, position: -1, loaded: true})
-            })
-        } else {
-            this.props.retrieveDocuments({limit: 9, workspaceId, sort: "-title"}, false, true).then((documents) => {
-                this.setState({documents, loaded: true, position: -1})
-            })
-        }
-        
+        this.setState({open: true});
+        await this.reset();
+    }
+
+    reset = async () => {
+        const { rootDocument, match, parent, retrieveDocuments } = this.props;
+        const { workspaceId } = match.params;
+
+        let documentIds = [rootDocument._id];
+        if (parent && parent._id !== rootDocument._id) documentIds.push(parent._id);
+
+        const documents = await retrieveDocuments({ limit: 9, documentIds, workspaceId, sort: "-title", fill: true}, false, true)
+        this.setState({documents, position: -1, loaded: true})
     }
 
     closeMenu(){
@@ -216,7 +192,6 @@ class DocumentMenu2 extends React.Component {
                             backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
                             border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
                         >
-                            <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
                             <Searchbar 
                                 onFocus = {() => {this.setState({focused: true})}} 
                                 onBlur = {() => {this.setState({focused: false})}} 
@@ -239,7 +214,6 @@ class DocumentMenu2 extends React.Component {
                                 backgroundColor = {this.state.focused ? "white" : "#F7F9FB"}
                                 border = {this.state.focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
                             >
-                                <ion-icon name="search-outline" style = {{fontSize: "2.3rem", color: '#172A4E', opacity: 0.4}}></ion-icon>
                                 <Searchbar 
                                     onFocus = {() => {this.setState({focused: true})}} 
                                     onBlur = {() => {this.setState({focused: false})}} 
@@ -258,17 +232,34 @@ class DocumentMenu2 extends React.Component {
         }
     }
     
+    renderParentTitle = () => {
+        const { parent, workspace } = this.props;
+        if (!parent || this.props.parent.title !== "") {
+            return (
+                <>
+                    <IconBorder>
+                        <RiFileList2Fill/>
+                    </IconBorder>
+                    <ParentTitle>{this.props.parent ? this.props.parent.title : "Select Location"}</ParentTitle>
+                </>
+            )
+        }  else {
+            return (
+                <>
+                    <WorkspaceIcon large = {true}>{workspace.name.charAt(0)}</WorkspaceIcon>
+                    <Title>{workspace.name}</Title>
+                </>
+            )
+        }
+    }
+
     render() {
         let flip = this.renderFlip()
         return (
             <MenuContainer  >
                 {this.props.form ?
                      <MenuButton active = {this.state.open} onClick = {() => this.openMenu()} ref = {addButton => this.addButton = addButton}>
-                        <IconBorder>
-                            <RiFileList2Fill/>
-                        </IconBorder>
-                        
-                        {this.props.parent ? this.props.parent.title : "Select Location"}
+                        {this.renderParentTitle()}
                         <FiChevronDown 
                                 style = {{
                                     marginLeft: "0.5rem",
@@ -305,14 +296,57 @@ class DocumentMenu2 extends React.Component {
 
 const mapStateToProps = (state, ownProps) => {
     let {workspaceId} = ownProps.match.params
+    let {documents, workspaces, references} = state;
+    
+    const rootDocument = Object.values(documents).filter(document => document.root)[0];
+
     return {
-        workspace: state.workspaces[workspaceId]
+        workspace: state.workspaces[workspaceId],
+        rootDocument
     }
 }
 
 
 
-export default withRouter(connect(mapStateToProps, { moveDocument, retrieveDocuments })(DocumentMenu2));
+export default withRouter(connect(mapStateToProps, { moveDocument, retrieveDocuments, searchDocuments })(DocumentMenu2));
+
+const WorkspaceIcon = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: ${props => props.large ? "1.8rem" : "1.5rem"};
+    width: ${props => props.large ? "1.8rem" : "1.5rem"};
+    background-color: #5B75E6;
+    border-radius: 0.2rem;
+    font-size: ${props => props.large ? "1.2rem" : "0.8rem"};
+    border: none;
+    color: white;
+    text-decoration: none;
+    &:hover {
+        background-color: #7a8feb;
+    }
+    transition: background-color 0.1s ease-in;
+    cursor: pointer;
+    margin-right: 1rem;
+`
+
+const ParentTitle = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 22rem;
+`
+
+const Title = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 500;
+    width: 18rem;
+    font-size: 1.3rem;
+`
 
 const IconBorder = styled.div`
     font-size: 1.8rem;
@@ -326,7 +360,7 @@ const IconBorder = styled.div`
 const MenuButton = styled.div`
     display: flex;
     align-items: center;
-    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4E7"}; 
     font-size: 1.4rem;
     padding: 0rem 1.5rem;
     border-radius: 0.4rem;
@@ -443,7 +477,6 @@ const SearchbarWrapper = styled.div`
 
 const Searchbar = styled.input`
     width: 18rem;
-    margin-left: 0.9rem;
     &::placeholder {
         color: #172A4E;
         opacity: 0.4;
@@ -456,7 +489,8 @@ const Searchbar = styled.input`
     outline: none;
     font-size: 1.4rem;
     color: #172A4E;
-    
+    font-weight: 500;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
 `
 
 const HeaderContainer = styled.div`
@@ -494,7 +528,7 @@ const ListItem = styled.div`
     padding: 1rem;
     display: flex;
     align-items: center;
-    
+    font-weight: 500;
     background-color: white;
     /*border: 1px solid #E0E4E7;*/
 

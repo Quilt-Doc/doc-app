@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import logo from '../../images/logo.svg';
 
 
 class TopBlock extends React.Component {
@@ -9,7 +8,6 @@ class TopBlock extends React.Component {
         return(
             <BlockContainer>
                 <Company>
-                    <StyledIcon src = {logo} />
                     quilt
                 </Company>
                 <Content margin = {true}>

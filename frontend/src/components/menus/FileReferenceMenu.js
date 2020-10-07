@@ -89,6 +89,7 @@ class FileReferenceMenu extends React.Component {
         
         let references = await retrieveReferences({workspaceId, 
             limit: 9, referenceIds: setIds, repositoryId: _id,  sort: "-name"}, true);
+        
         this.setState({references, position: -1, loaded: true, search: ""});
     }
 
@@ -178,7 +179,7 @@ class FileReferenceMenu extends React.Component {
                     <AiFillFolder
                         style = {{fontSize: "1.5rem", marginRight: "1rem"}} 
                     />
-                    {ref.name ? ref.name : "Untitled"}
+                    <Title>{ref.name ? ref.name : "Untitled"}</Title>
                     {isSelected && 
                         <RiCheckFill
                             style = {{ color: "#19e5be", marginLeft: "auto", fontSize: "2rem"}} 
@@ -201,7 +202,7 @@ class FileReferenceMenu extends React.Component {
                     <RiFileLine
                         style = {{fontSize: "1.5rem", marginRight: "1rem"}}
                     />
-                    {ref.name ? ref.name : "Untitled"}
+                    <Title>{ref.name ? ref.name : "Untitled"}</Title>
                     {isSelected && 
                         <RiCheckFill
                             style = {{ color: "#19e5be", marginLeft: "auto", fontSize: "2rem"}} 
@@ -242,6 +243,7 @@ class FileReferenceMenu extends React.Component {
                     border = {focused ? "2px solid #2684FF" : "1px solid #E0E4E7;"}
                 >
                     <Searchbar 
+                        ref = {node => this.input = node}
                         onFocus = {() => {this.setState({focused: true})}} 
                         onBlur = {() => {this.setState({focused: false})}} 
                         onKeyDown = {(e) => this.setPosition(e)}  
@@ -334,6 +336,18 @@ const mapStateToProps = (state, ownProps) => {
 
 
 export default withRouter(connect(mapStateToProps, { attachDocumentReference, removeDocumentReference, retrieveReferences, searchReferences })(FileReferenceMenu));
+
+
+const Title = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 500;
+    width: 20rem;
+    font-size: 1.3rem;
+`
+
 
 const AddButton = styled.div`
     height: 3rem;

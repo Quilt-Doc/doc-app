@@ -34,10 +34,28 @@ export const createDocument = (formValues) => async (dispatch) => {
     }
 }
 
+export const retrieveBrokenDocuments  = (formValues) => async () => {
+
+    var workspaceId = formValues.workspaceId;
+    if (!workspaceId) {
+        throw new Error("retrieveBrokenDocuments: workspaceId not provided");
+    }
+    console.log("WORKSPACEID", workspaceId);
+
+    const response = await api.post(`/reporting/${workspaceId}/retrieve_broken_documents`, formValues );
+
+    const {success, error, result} = response.data;
+    console.log("BROKEN RESULT", result);
+    if (!success) {
+        throw new Error(error)
+    } else {
+        return result;
+    }
+}
+
 export const setDocumentOpen = (formValues) => (dispatch) => {
     const { documentId, open } = formValues;
 
-    console.log("PARAMS", { documentId, open });
     if (!documentId) {
         throw new Error("setDocumentOpen: documentId not provided");
     }
@@ -46,7 +64,6 @@ export const setDocumentOpen = (formValues) => (dispatch) => {
         throw new Error("setDocumentOpen: open not provided")
     }
 
-    console.log("HERE ABOUT TO CLOSE");
     dispatch({ type: EDIT_DOCUMENT, payload: {_id: documentId, open}});
 }
 
@@ -67,7 +84,6 @@ export const moveDocument = (formValues) => async (dispatch) => {
     const response = await api.put(`/documents/${workspaceId}/move/${documentId}`, formValues );
 
     if (response.data.success == false) {
-        console.log("MOVE DOC RESPONSE", response.data);
         throw new Error(response.data.error);
     }
     else {
@@ -185,7 +201,7 @@ export const searchDocuments = (formValues) => async () => {
         throw new Error("retrieveDocuments: workspaceId not provided");
     }
 
-    const response = await api.post(`/documents/${workspaceId}/search`);
+    const response = await api.post(`/documents/${workspaceId}/search`, formValues);
 
     if (response.data.success == false) {
         throw new Error(response.data.error);

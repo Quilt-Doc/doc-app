@@ -1,8 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import logo from '../../images/logo.svg';
-
 // Fight Deprecation
 
 // Empower developer teams

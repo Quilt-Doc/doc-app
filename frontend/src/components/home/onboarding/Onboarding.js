@@ -9,6 +9,9 @@ import { editUser } from '../../../actions/User_Actions'
 //redux
 import { connect } from 'react-redux';
 
+//email validation
+import * as EmailValidator from 'email-validator';
+
 class Onboarding extends React.Component {
     constructor(props){
         super(props);
@@ -23,7 +26,12 @@ class Onboarding extends React.Component {
         if (!firstName) alert("Please enter a first name");
         if (!lastName) alert("Please enter a last name");
         if (!email) alert("Please enter an email");
-        editUser({userId: _id, firstName, lastName, onboarded: true});
+
+        if (!EmailValidator.validate(email)){
+            alert("Invalid Email");
+        }
+
+        editUser({userId: _id, firstName, lastName, onboarded: true, email});
     }   
 
     render(){

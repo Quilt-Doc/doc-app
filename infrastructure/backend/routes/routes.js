@@ -69,7 +69,6 @@ router.post('/references/:workspaceId/search', authorizationMiddleware.reference
 
 // Validate workspace membership for calling user; all methods
 const documentController = require('../controllers/DocumentController');
-router.post('/testRoute', documentController.testRoute);
 router.post('/documents/:workspaceId/create', authorizationMiddleware.documentMiddleware, documentController.createDocument);
 router.get('/documents/:workspaceId/get/:documentId', authorizationMiddleware.documentMiddleware, documentController.getDocument);
 router.put('/documents/:workspaceId/edit/:documentId', authorizationMiddleware.documentMiddleware, documentController.editDocument);
@@ -245,7 +244,7 @@ router.post('/tokens/delete', authorizationMiddleware.tokenMiddleware, tokenCont
 
 const checkController = require('../controllers/CheckController');
 router.post('/checks/:repositoryId/create', authorizationMiddleware.checkMiddleware, checkController.createCheck);
-router.post('/checks/:workspaceId/retrieve/:repositoryId', authorizationMiddleware.checkMiddleware, checkController.retrieveChecks);
+router.post('/checks/:workspaceId/:repositoryId/retrieve', authorizationMiddleware.checkMiddleware, checkController.retrieveChecks);
 
 const emailVerifyController = require('../controllers/authentication/EmailVerifyController');
 router.get('/verify/:verifyEmailHash', emailVerifyController.verifyEmail);

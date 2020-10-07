@@ -260,7 +260,9 @@ const retrieveChecks = async (req, res) => {
     if (!checkValid(limit))  limit = 10;
 
     try {
-        var retrieveResponse = await Check.find({repository: repositoryId}).populate('addedReferences').limit(limit).skip(skip).sort({created: -1}).exec();
+        var retrieveResponse = await Check.find({repository: repositoryId})
+        .populate({path: 'addedReferences brokenDocuments repository'})
+        .populate({path: 'brokenSnippets', populate: {path: 'reference'}}).limit(limit).skip(skip).sort({created: -1}).exec();
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,

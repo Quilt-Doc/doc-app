@@ -2,9 +2,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-//images
-import logo from '../../images/logo.svg';
-
 //components
 import { CSSTransition } from 'react-transition-group';
 
@@ -88,7 +85,6 @@ class WorkspaceCreation extends Component {
         return(
             <Container>
                 <Top>
-                    <StyledIcon src = {logo} />
                     <Company>quilt</Company>
                 </Top>
                 <CreateBox>

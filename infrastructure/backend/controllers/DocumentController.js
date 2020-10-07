@@ -32,7 +32,6 @@ escapeRegExp = (string) => {
 /// FARAZ TODO: Log times of middleware and of major points in controller methods
 createDocument = async (req, res) => {
     const { authorId, referenceIds, snippetIds, repositoryId, title, tagIds, parentPath, root } = req.body;
-    
     const workspaceId = req.workspaceObj._id.toString();
     
     // validation
@@ -328,7 +327,6 @@ deleteDocument = async (req, res) => {
     // query to delete all docs using the ids of the docs
     try {
         let deletedIds = deletedDocuments.map((doc) => doc._id);
-
         // Reporting Section ---------
         // Need list of userId's attached to deleted Documents
         // Get all titles of deleted Documents
@@ -337,7 +335,6 @@ deleteDocument = async (req, res) => {
         
         await Document.deleteMany({_id: {$in: deletedIds}})
     } catch (err) {
-        console.log(err);
         return res.json({success: false, error: "deleteDocument Error: unable to delete document and/or descendants", trace: err});
     }
 
@@ -450,10 +447,6 @@ getDocument = async (req, res) => {
     return res.json({ success: true, result: returnDocument });
 }
 
-testRoute = async (req, res) => {
-    console.log("ENTERED HERE TEST", req.body);
-}
-
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
     const { title, markup, referenceIds, repositoryId, image, content } = req.body;
@@ -528,7 +521,6 @@ retrieveHelper = async (body, req) => {
 
     let { notInDocumentIds, root, documentIds, referenceIds, limit, skip, minimal } = body;
     const workspaceId = req.workspaceObj._id.toString();
-
     let query = Document.find({workspace: workspaceId}).lean();
     let returnedDocuments;
 
@@ -583,7 +575,6 @@ retrieveHelper = async (body, req) => {
 retrieveDocuments = async (req, res) => {
 
     let { root, documentIds, referenceIds, limit, skip, minimal, fill } = req.body;
-    console.log("PARAMS", req.body);
     // use helper above to retrieve queried documents
     let response = await retrieveHelper({ root, documentIds, referenceIds, limit, skip, minimal }, req);
     
@@ -591,10 +582,8 @@ retrieveDocuments = async (req, res) => {
     if (!response.success)   return res.json(response);
 
     let returnedDocuments = response.result;
-    console.log("RETURNED DOCS", returnedDocuments);
     // if queried documents are specific to docIds but we want to fill to limit, query the rest
     if (fill && checkValid(documentIds) && returnedDocuments.length < limit) {
-        console.log("ENTERED HERE");
         let secondResponse = await retrieveHelper({notInDocumentIds: documentIds,  referenceIds, limit: limit - returnedDocuments.length, skip, minimal }, req);
         if (!secondResponse.success)  return res.json(secondResponse);
         let moreDocuments = secondResponse.result;
@@ -797,7 +786,6 @@ removeDocumentSnippet = async (req, res) => {
 searchDocuments = async (req, res) => {
     const { userQuery, repositoryId, tagIds, minimalDocuments, includeImage, searchContent,
         referenceIds, creatorIds, skip, limit, sort } = req.body;
-    
     const workspaceId = req.workspaceObj._id.toString();
 
     let documentAggregate;
@@ -812,27 +800,29 @@ searchDocuments = async (req, res) => {
                 }
             }];
 
-        // make search for textual content
-        if (checkValid(searchContent) && searchContent) shouldFilter.push({
-                "text": {
-                    "query": userQuery,
-                    "path": "content"
-                }
-            });
-        
-        documentAggregate = Document.aggregate([
-            { 
-                $search: {
-                    "compound": {
-                        "should": shouldFilter,
-                        "minimumShouldMatch": 1
-                    } 
-                }  
-            },
-        ]);
+    // make search for textual content
+    if (checkValid(searchContent) && searchContent) shouldFilter.push({
+            "text": {
+                "query": userQuery,
+                "path": "content"
+            }
+    });
+    
+    documentAggregate = Document.aggregate([
+        { 
+            $search: {
+                "compound": {
+                    "should": shouldFilter,
+                    "minimumShouldMatch": 1
+                } 
+            }  
+        },
+    ]);
     } else {
         documentAggregate = Document.aggregate([]);
     }
+
+    let documents = await documentAggregate.exec();
 
     documentAggregate.addFields({isDocument: true,  score: { $meta: "searchScore" }});
     
@@ -863,7 +853,7 @@ searchDocuments = async (req, res) => {
     let populationString = "author references workspace repository tags";
     
     if (checkValid(minimalDocuments) && minimalDocuments) {
-        if (checkValid(includeImage)) minimalProjectionString += " image";
+        if (checkValid(includeImage) && includeImage) minimalProjectionString += " image";
         documentAggregate.project(minimalProjectionString);
         populationString = "author";
     }
@@ -887,7 +877,7 @@ searchDocuments = async (req, res) => {
     return res.json({success: true, result: documents});
 }
 
-module.exports = { testRoute, searchDocuments,
+module.exports = { searchDocuments,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }

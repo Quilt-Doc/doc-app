@@ -3,9 +3,6 @@ import React, { Component } from 'react';
 //styles
 import styled from 'styled-components';
 
-//images
-import logo from '../../../images/logo.svg';
-
 //redux
 import { connect } from 'react-redux';
 
@@ -80,29 +77,7 @@ class Workspaces extends Component {
                     <WorkspaceDetail>
                         <WorkspaceIcon>{space.name[0]}</WorkspaceIcon>
                         <WorkspaceName>{space.name}</WorkspaceName>
-                        <WorkspaceStats>
-                            <Metric>
-                                <RiFileList2Line
-                                    style = {{
-                                            marginTop: "0rem", 
-                                            marginRight: "0.7rem",
-                                            fontSize: "1.7rem",
-                                            color: 'white'
-                                        }}
-                                />
-                                <Number>5</Number>
-                            </Metric>
-                            <Metric>
-                                <RiFlagLine style = {{
-                                    marginRight: "0.7rem",
-                                    fontSize: "1.7rem",
-                                    color: 'white'
-                                }}/>
-                                <Number>8</Number>
-                            </Metric>
-                        </WorkspaceStats>
                     </WorkspaceDetail>
-                    {this.renderRelevantDocs()}
                 </Space>
             )
         })
@@ -265,7 +240,7 @@ const ContentContainer = styled.div`
 `
 
 const Content = styled.div`
-    width: 60rem;
+    width: 40rem;
 `
 
 const SpaceContainer = styled.div`

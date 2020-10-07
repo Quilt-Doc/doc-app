@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Component} from 'react';
 
 //styles
 import styled from 'styled-components';
@@ -7,31 +7,71 @@ import chroma from 'chroma-js';
 //icons
 import { RiFileList2Fill } from 'react-icons/ri'
 import { AiOutlineClockCircle } from 'react-icons/ai';
+import { FiTrash } from 'react-icons/fi';
 
 //Individual item in Feed
-const FeedLog = () => {
-    return (
-       <ListItem active = {true}>
-            <Icon>
+class FeedLog extends Component {
+
+    renderIcon = () => {
+        const { type } = this.props.feed;
+        if (type === "create") {
+            return (
                 <IconBorder>
                     <RiFileList2Fill 
                         style = {{fontSize: "2.2rem"}}
                     />
                 </IconBorder>
-            </Icon>
-            <Detail>
-                <Content>
-                    <Document>Faraz Sanal</Document> created <Document>Probability Distributions</Document>
-                </Content>
-                <CreationDate>
-                    <AiOutlineClockCircle
-                        style = {{marginRight: "0.5rem"}}
+            )
+        } else {
+            return (
+                <IconBorder red = {true}>
+                    <FiTrash 
+                        style = {{fontSize: "2.2rem"}}
                     />
-                    August 12, 2020
-                </CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
-            </Detail>
-        </ListItem>
-    )
+                </IconBorder>
+            )
+        }
+    }
+
+    renderText = () => {
+        const { user: {firstName, lastName}, type, document} = this.props.feed;
+        return ( 
+            <>
+                <Document>
+                    {`${firstName} ${lastName}`}
+                </Document>
+                {type === "create" ? " created " : " deleted " }
+                <Document>{document ? document.title: ""}</Document>
+            </>
+        )
+    }
+
+    getDateItem = () => {
+        const { date } = this.props.feed;
+        let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let item =  new Date(date)
+        let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
+        return dateString
+    }
+
+    render(){
+        return (
+            <ListItem>
+                {this.renderIcon()}
+                <Detail>
+                    <Content>
+                        {this.renderText()}
+                    </Content>
+                    <CreationDate>
+                        <AiOutlineClockCircle
+                            style = {{marginRight: "0.5rem"}}
+                        />
+                        {this.getDateItem()}
+                    </CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
+                </Detail>
+            </ListItem>
+        )
+    }
 }
 
 export default FeedLog;
@@ -56,8 +96,7 @@ const CreationDate = styled.div`
 
 const ListItem = styled.div`
     display: flex;
-    /*background-color: ${props => props.active ? chroma('#f7f9fb').alpha(1) : ''};*/
-    /*background-color: #f7f9fb;*/
+   
     font-size: 1.5rem;
     margin-bottom: 2rem;
     padding:2rem 1.5rem;
@@ -74,7 +113,8 @@ const Icon = styled.div`
 `
 
 const Detail = styled.div`
-
+    padding-left: 2rem;
+    width: 100%;
 `
 
 const Content = styled.div`
@@ -84,7 +124,8 @@ const Content = styled.div`
 `
 
 const IconBorder = styled.div`
-    width: 4rem;
+    min-width: 4rem;
+    max-width: 4rem;
     height: 4rem;
     background-color: ${props => props.red ? chroma('#ff4757').alpha(0.2) : chroma('#19e5be').alpha(0.2)};
     color: ${props => props.red ? "#ff4757" : '#19e5be'};
