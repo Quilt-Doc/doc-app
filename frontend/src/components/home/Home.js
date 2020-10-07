@@ -13,7 +13,9 @@ import { connect } from 'react-redux';
 class Home extends Component {
 
     renderBody = () => {
+       
         const {user: {onboarded}} = this.props;
+        console.log(onboarded);
         return onboarded ? <Workspaces/> : <Onboarding/>
     }
 
@@ -31,6 +33,7 @@ class Home extends Component {
 
 const mapStateToProps = (state) => {
     const {auth: {user}} = state;
+    console.log("USER", user);
     return {
         user
     }

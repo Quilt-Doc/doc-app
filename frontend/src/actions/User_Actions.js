@@ -1,9 +1,12 @@
 import {
     GET_USER,
-    EDIT_USER,
     DELETE_USER,
     RETRIEVE_USERS
-} from './types/User_Types'
+} from './types/User_Types';
+
+import {
+    EDIT_USER
+} from './types/Auth_Types';
 
 import { api } from '../apis/api';
 
@@ -24,7 +27,6 @@ export const deleteUser = id => async dispatch => {
 }
 
 export const editUser = (formValues) => async dispatch => {
-    console.log('EDIT USER CALLED');
     const { userId } = formValues;
 
     if (!userId) throw new Error("editUser: userId not provided");

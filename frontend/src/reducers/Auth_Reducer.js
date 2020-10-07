@@ -1,6 +1,6 @@
 import {
-    CHECK_LOGIN, CHECK_INSTALLATION, RETRIEVE_DOMAIN_REPOSITORIES
-} from '../actions/types/Auth_Types'
+    CHECK_LOGIN, CHECK_INSTALLATION, RETRIEVE_DOMAIN_REPOSITORIES, EDIT_USER
+} from '../actions/types/Auth_Types';
 
 let initial = {
     authenticated: false,
@@ -18,6 +18,8 @@ export default (state = {}, action) => {
             return { ...state,  installations: action.payload }
         case RETRIEVE_DOMAIN_REPOSITORIES:
                 return { ...state,  domainRepositories: action.payload }
+        case EDIT_USER:
+            return {...state, user: action.payload }
         default: 
             return state
     }
