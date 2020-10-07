@@ -25,6 +25,8 @@ sendInvite = async (req, res) => {
 
     const { email } = req.body;
 
+    if (!checkValid(email)) return res.json({success: false, error: "No email provided"});
+
     // Check if a User with this (verified) email exists
 
     var userWithEmail;

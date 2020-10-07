@@ -1,4 +1,11 @@
-const mongoose = require.main.require("mongoose")
+var mongoose;
+if (process.env.IS_LAMBDA) {
+    mongoose = require("mongoose");
+}
+else {
+    mongoose = require.main.require("mongoose");
+}
+
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 

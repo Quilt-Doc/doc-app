@@ -34,6 +34,18 @@ beginEmailVerification = async (userId, userEmail) => {
         html: `<a href="https://api.getquilt.app/api/verify/${hash}">Verify</a>`,
     }
 
+
+    try {
+        const emailVerify = await new EmailVerify({
+            user: ObjectId(userId.toString()),
+            hash,
+            email: userEmail,
+        }).save();
+    }
+    catch (err) {
+        return res.json({success: false, error: `Error EmailVerify.save() query failed \n ${err}`});
+    }
+
     try {
         await sgMail.send(msg);
     }
@@ -69,12 +81,20 @@ verifyEmail = async (req, res) => {
 
     var verifiedUserId = verifiedEmail.user.toString();
 
+
     var verifiedUser;
     try {
+        verifiedUser = await User.findById(verifiedUserId).exec();
+
+        // Make sure that the EmailVerify.email matches the user's current email, return if the hash is outdated (old email)
+        if (verifiedEmail.email != verifiedUser.email) {
+            return res.json({success: false, error: `Invalid verification (email on User doesn't match) link.`});
+        }
+
         verifiedUser = await User.findByIdAndUpdate(verifiedUserId, {$set: { verified: true } });
     }
     catch (err) {
-        return res.json({success: false, error: `Error findByIdAndUpdate query failed \n ${err}`});
+        return res.json({success: false, error: `Error findById query failed \n ${err}`});
     }
 
     try {
@@ -86,10 +106,11 @@ verifyEmail = async (req, res) => {
 
     let workspaceIds;
     try {
-        workspaceIds = await WorkspaceInvite.find({invitedEmail: verifiedEmail});
-    } catch (err) {
+        workspaceIds = await WorkspaceInvite.find({invitedEmail: verifiedEmail.email});
+    }
+    catch (err) {
         return res.json({ success: false, 
-            error: `verifyEmail Error: retrieval of workspaces did not work`, trace: err });
+            error: `verifyEmail Error: retrieval of Workspace Invites did not work`, trace: err });
     }
 
     try {

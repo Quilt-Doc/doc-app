@@ -30,6 +30,7 @@ getUser = async (req, res) => {
 }
 
 editUser = async (req, res) => {
+    console.log('EDIT USER CALLED');
     const userId = req.userObj._id.toString();
     const { username, email, firstName, lastName, onboarded, verified, 
         domain, bio, organization, position
