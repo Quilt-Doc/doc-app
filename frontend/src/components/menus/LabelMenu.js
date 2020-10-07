@@ -101,6 +101,7 @@ class LabelMenu extends React.Component {
         if (isIncluded) {
             removeTag(tag);
         } else {
+            console.log("ATTACHING", tag);
             attachTag(tag);
         }
     }
