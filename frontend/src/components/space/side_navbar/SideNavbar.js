@@ -106,7 +106,7 @@ class SideNavbar extends React.Component {
     render(){
         const {workspace: {name}} = this.props;
         return (
-            <SideNavbarContainer>
+            <SideNavbarContainer id = "sidenavbar">
                 <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 {this.renderTopSection()}
                 {this.renderBottomSection()}

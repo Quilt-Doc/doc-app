@@ -2,9 +2,10 @@ import React from 'react';
 import styled from 'styled-components';
 import chroma from 'chroma-js';
 
-import {RiEdit2Line, RiCheckFill} from 'react-icons/ri';
+import {RiEdit2Line, RiCheckFill, RiCloseFill} from 'react-icons/ri';
 import {CgOptions} from 'react-icons/cg';
 import DocumentOptionsMenu from '../../../../menus/DocumentOptionsMenu';
+import { AiOutlineExclamation } from 'react-icons/ai';
 
 class MainToolbar extends React.Component {
 
@@ -29,7 +30,7 @@ class MainToolbar extends React.Component {
                 {labels[i]}
             </Tag>
         })
-    }
+    } 
 
     renderPath(){
         const { document } = this.props;
@@ -50,6 +51,56 @@ class MainToolbar extends React.Component {
         return "";
     }
 
+    renderStatus = () => {
+        const { status } = document;
+        switch (status) {
+            case "valid":
+                return  <Status color = {"#19e5be"}>
+                            <RiCheckFill 
+                                style = 
+                                {{
+                                    marginRight: "0.3rem",
+                                    fontSize: "1.5rem"
+                                }}
+                            />
+                            Valid
+                        </Status>
+            case "resolve":
+                return <Status color = {"#5B75E6"}>
+                            <AiOutlineExclamation
+                                style = 
+                                {{
+                                    marginRight: "0.3rem",
+                                    fontSize: "1.5rem"
+                                }}
+                            />
+                            Resolve
+                        </Status>
+            case "invalid":
+                return <Status color = {"#ff4757"}>
+                            <RiCloseFill
+                                style = 
+                                {{
+                                    marginRight: "0.3rem",
+                                    fontSize: "1.5rem"
+                                }}
+                            />
+                            Invalid
+                        </Status>
+            default:
+                return  <Status color = {"#19e5be"}>
+                            <RiCheckFill 
+                                style = 
+                                {{
+                                    marginRight: "0.3rem",
+                                    fontSize: "1.5rem"
+                                }}
+                            />
+                            Valid
+                        </Status>
+        }
+    }
+
     render(){
         return(
             <>
@@ -58,19 +109,7 @@ class MainToolbar extends React.Component {
                             {this.renderPath()}
                             
                         </Path>
-                        <Status>
-                            <RiCheckFill 
-                                style = 
-                                {{
-                                   
-                                    marginRight: "0.3rem",
-                                    fontSize: "1.5rem"
-                            
-                                }}
-
-                            />
-                            Valid
-                        </Status>
+                        {this.renderStatus()}
                         <Left>
                             <Button active = {this.props.write}
                                 onClick = {this.props.setWrite}
@@ -105,9 +144,9 @@ const PathSection = styled.div`
 
 const Status = styled.div`
     display: inline-flex;
-    background-color: ${chroma('#19e5be').alpha(0.2)};
-    color: #19e5be;
-    border: 1px solid #19e5be;
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    color: ${props => props.color};
+    border: 1px solid ${props => props.color};
     font-weight: 500;
     border-radius: 0.3rem;
     font-size: 1.3rem;

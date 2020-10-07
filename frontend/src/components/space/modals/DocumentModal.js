@@ -40,7 +40,7 @@ class DocumentModal extends React.Component {
     render(){
         let {loading} = this.state;
         return(
-            <ModalBackground onClick = {() => {this.undoModal()}}>
+            <ModalBackground id = {"documentModalBackground"} onClick = {() => {this.undoModal()}}>
                 <CSSTransition
                     in={true}
                     appear = {true}

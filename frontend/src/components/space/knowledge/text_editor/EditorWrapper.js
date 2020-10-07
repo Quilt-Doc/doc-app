@@ -67,18 +67,8 @@ class EditorWrapper extends React.Component {
         const doc = await getDocument({workspaceId, documentId});
 
         // placeholder markup if the doc has no markup
-        let markup = [{
-            type: 'paragraph',
-            children: [
-            { text: '' },
-            ],
-        }];
-
-        let title = "";
-        
-        if (doc.markup) markup = JSON.parse(doc.markup);
-
-        if (doc.title) title = doc.title;
+        let { markup, title } = doc;
+        markup = JSON.parse(markup);
         
         // add an event listener to make sure content is saved on unload
         window.addEventListener('beforeunload', () => this.saveMarkup(false, null, true), false);
@@ -178,7 +168,7 @@ class EditorWrapper extends React.Component {
         if (loaded) {
             return(
                 documentModal ? this.renderTextEditor()
-                    :   <Cont>
+                    :   <Cont id = {"editorContainer"}>
                             <SubContainer>
                                 {this.renderTextEditor()}
                             </SubContainer>

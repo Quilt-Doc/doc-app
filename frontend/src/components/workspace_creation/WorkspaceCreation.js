@@ -134,8 +134,8 @@ const Bar = styled.div`
 
 const Container = styled.div`
     background-color:#16181d;
-    min-height: 100vh;
-    width: 100vw;
+    display: flex;
+    flex: 1;
     display: flex;
     flex-direction: column;
     overflow-y: scroll;
@@ -147,6 +147,8 @@ const Top = styled.div`
     color:#D6E0EE;
     display: flex;
     align-items: center;
+    padding-left: 4rem;
+    padding-right: 4rem;
 `
 
 const StyledIcon = styled.img`

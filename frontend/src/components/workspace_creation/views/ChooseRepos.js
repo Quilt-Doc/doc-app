@@ -125,6 +125,7 @@ const NextButton = styled.div`
     &:hover {
         background-color: #2e323d;
     }
+    margin-bottom: 10rem;
 `
 
 const Repository = styled.div`

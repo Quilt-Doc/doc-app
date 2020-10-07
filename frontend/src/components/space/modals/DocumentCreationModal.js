@@ -77,6 +77,14 @@ class DocumentCreationModal extends React.Component {
         const { match, user, createDocument, clearSelected, history } = this.props;
         let { workspaceId } = match.params
 
+        const markup = JSON.stringify(
+            [{
+                type: 'paragraph',
+                children: [
+                { text: '' },
+                ],
+            }]
+        )
 
         let affectedDocuments =  await createDocument({
             authorId: user._id,
@@ -85,8 +93,9 @@ class DocumentCreationModal extends React.Component {
             tagIds: tags.map(tag => tag._id), 
             parentPath: (parent && parent.path) ? parent.path : "",
             repositoryId: repository ? repository._id : null,
-            referenceIds: references.map(item => item._id)}
-        )
+            referenceIds: references.map(item => item._id), 
+            markup
+        })
 
         if (affectedDocuments) {
             const { documents } = this.props;

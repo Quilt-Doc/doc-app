@@ -103,7 +103,7 @@ class DocumentNavbar extends React.Component {
 
     render(){
         return(
-            <Container id = "sidenavbar">
+            <Container id = "docnavbar">
                 <Top>
                     <Header>KNOWLEDGE</Header>
 

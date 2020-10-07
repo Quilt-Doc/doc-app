@@ -32,14 +32,14 @@ escapeRegExp = (string) => {
 /// FARAZ TODO: Make title a required field during document creation (in modal)
 /// FARAZ TODO: Log times of middleware and of major points in controller methods
 createDocument = async (req, res) => {
-    const { authorId, referenceIds, snippetIds, repositoryId, title, tagIds, parentPath, root } = req.body;
+    const { markup, authorId, referenceIds, snippetIds, repositoryId, title, tagIds, parentPath, root } = req.body;
     const workspaceId = req.workspaceObj._id.toString();
     
     // validation
     if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
     if (!checkValid(title) || (title === "" && !root)) return res.json({
         success: false, error: "createDocument error: no title provided.", result: null, alert: "Please provide a title"});
-
+    if (!checkValid(markup) && !root) return res.json({success: false, error: "createDocument error: no markup provided."});
     // make sure title doesn't exist already in space
     try {
         let duplicate = await Document.exists({title, workspace: workspaceId});
@@ -94,7 +94,9 @@ createDocument = async (req, res) => {
             author: ObjectId(authorId),
             workspace: ObjectId(workspaceId),
             title,
-            path: documentPath
+            path: documentPath,
+            markup,
+            status: 'valid'
         },
     );
 

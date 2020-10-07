@@ -100,7 +100,7 @@ class DocumentInfo extends React.Component {
         const { document: {references, repository} } = this.props;
         return (
             <>
-                <RepositoryMenu2 document={this.props.document}/>
+                <RepositoryMenu2 darkBorder = {true} document={this.props.document}/>
                 <List>
                     {this.renderReferenceMenu()}
                     {   (references && references.length > 0) ? 

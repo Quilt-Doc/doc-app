@@ -205,7 +205,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, {editUser})(UserSettings));
+export default withRouter(connect(mapStateToProps, { editUser, sendInvite })(UserSettings));
 
 const Description = styled.div`
     color: 172a4e;

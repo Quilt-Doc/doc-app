@@ -58,7 +58,7 @@ class ChooseProvider extends React.Component {
             let installed = await this.checkInstall();
             if (installed){   
                 clearInterval(this.interval)
-                await retrieveCreationRepositories();
+                await this.retrieveCreationRepos();
                 changePage(1)
             }
             return true

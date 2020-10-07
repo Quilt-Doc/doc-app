@@ -114,9 +114,11 @@ class RepositoryMenu extends React.Component {
     render() {
         let repoName = this.props.form ? this.props.formRepository ? this.props.formRepository.fullName.split("/")[1] : "Select Repository" :
             this.props.document.repository ? this.renderFullName() : "Select Repository"
+        const { darkBorder } = this.props;
+        let borderColor = darkBorder ? "#172A4E" : '#E0E4E7';
         return(
             <MenuContainer >
-                 <MenuButton  active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
+                 <MenuButton borderColor = {borderColor}  active = {this.state.open} onClick = {(e) => this.openMenu(e)}>
                         <IconBorder>    
                             <VscRepo/>
                         </IconBorder>
@@ -198,7 +200,7 @@ const MenuButton = styled.div`
         background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
-    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4E7"}; 
+    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : props.borderColor}; 
 `
 
 const Title = styled.div`

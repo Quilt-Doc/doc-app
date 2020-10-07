@@ -186,7 +186,7 @@ const TextEditor = (props) => {
 						documentModal = {props.documentModal}
 						id = {"#editorContainer"}
 					>
-							{write && <Sidebar toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
+							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
 							<EditorContainer2  >
 							
 									 

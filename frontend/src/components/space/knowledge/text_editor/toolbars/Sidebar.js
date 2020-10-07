@@ -24,11 +24,15 @@ const Sidebar = (props) => {
 
     useEffect(() => {
         if (selection) {
-            let path = [selection.anchor.path[0]]
+            let path = [selection.anchor.path[0]];
             let rect = ReactEditor.toDOMRange(editor, 
                               {anchor: {offset: 0, path}, 
-                focus: {offset: 0, path }}).getBoundingClientRect()
-            changeTop(document.getElementById("rightView").scrollTop + rect.top - 155 + rect.height/2)
+                focus: {offset: 0, path }}).getBoundingClientRect();
+            if (props.documentModal) {
+                changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 180 + rect.height/2);
+            } else {
+                changeTop(document.getElementById("editorContainer").scrollTop + rect.top - 155 + rect.height/2);
+            }
         }
     }
     , [selection, type])
@@ -41,6 +45,7 @@ const Sidebar = (props) => {
                     top = {top} 
                     toggleBlock = {props.toggleBlock}
                     editor = {editor}
+                    documentModal = {props.documentModal}
                 />
             }
        </SidebarContainer>
@@ -132,9 +137,12 @@ class ToolIcon extends React.Component {
     }
 
     renderMarginLeft = () => { 
+        const {documentModal} = this.props;
+
         if (this.tool) {
+            if (documentModal) return -1;
             if (this.tool.getBoundingClientRect().left - this.convertRemToPixels(18) 
-                < document.getElementById("sidenavbar").clientWidth
+                < (document.getElementById("docnavbar").clientWidth + this.convertRemToPixels(5))
             ) {
                 return -1
             }
@@ -357,7 +365,7 @@ const BlockTool = styled.div`
 	display: flex;
     align-items: center;
     
-	border-right: 2px solid ${chroma('#19e5be').alpha(0.6)};
+	border-right: 2px solid ${chroma('#19e5be').alpha(0.4)};
 	padding: 0.4rem 1rem;
     transform: translateY(${props => props.top}px);
     z-index: 1;
@@ -367,6 +375,7 @@ const BlockTool = styled.div`
     }
     transition: transform 0.2s cubic-bezier(0, 0.475, 0.01, 1.035), background-color 0.1s ease-in-out;
     cursor: pointer;
-    border-radius: 0.2rem;
+    border-top-left-radius: 0.2rem;
+    border-bottom-left-radius: 0.2rem;
     background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2) : 'white'};
 `
