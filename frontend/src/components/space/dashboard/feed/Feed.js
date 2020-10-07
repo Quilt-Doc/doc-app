@@ -26,7 +26,7 @@ class Feed extends Component {
         const { retrieveFeeds, match } = this.props;
         const { workspaceId } = match.params;
 
-        await retrieveFeeds({workspaceId});
+        await retrieveFeeds({workspaceId, limit: 9});
         this.setState({loaded:true});
     }
     

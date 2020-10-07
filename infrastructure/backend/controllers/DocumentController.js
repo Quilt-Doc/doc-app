@@ -33,7 +33,6 @@ escapeRegExp = (string) => {
 /// FARAZ TODO: Log times of middleware and of major points in controller methods
 createDocument = async (req, res) => {
     const { authorId, referenceIds, snippetIds, repositoryId, title, tagIds, parentPath, root } = req.body;
-    
     const workspaceId = req.workspaceObj._id.toString();
     
     // validation

@@ -83,7 +83,7 @@ class DocumentCreationModal extends React.Component {
             workspaceId,
             title: this.titleInput.value,
             tagIds: tags.map(tag => tag._id), 
-            parentPath: parent ? parent.path : "",
+            parentPath: (parent && parent.path) ? parent.path : "",
             repositoryId: repository ? repository._id : null,
             referenceIds: references.map(item => item._id)}
         )

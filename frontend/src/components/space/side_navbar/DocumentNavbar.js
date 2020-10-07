@@ -192,12 +192,13 @@ const Container = styled.div`
     border-top-left-radius: 1rem;
 
     background-color: #f6f7f9;
-    height: 100vh;
-    overflow-y: scroll;
+    
 `
 
 const DocumentContainer = styled.div`
     margin-top: 1rem;
+    height: height: calc(100vh - 7.5rem);
+    overflow-y: scroll;
 `
 
 

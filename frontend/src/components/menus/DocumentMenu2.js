@@ -55,6 +55,7 @@ class DocumentMenu2 extends React.Component {
 
 
     searchDocuments = (event) => {
+        const { searchDocuments } = this.props;
 
         if (this.state.typingTimeout) {
            clearTimeout(this.state.typingTimeout);
@@ -123,7 +124,6 @@ class DocumentMenu2 extends React.Component {
     renderListItems(){
         const { workspace } = this.props;
         const { documents } = this.state;
-        console.log("DOCUMENTS", documents);
         return documents.map((doc, i) => {
             return(
                 <ListItem 
