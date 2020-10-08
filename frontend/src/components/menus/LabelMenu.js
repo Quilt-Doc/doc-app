@@ -20,8 +20,9 @@ import styled from "styled-components";
 import { createTag } from '../../actions/Tag_Actions';
 
 //icons
-import { RiCheckFill } from 'react-icons/ri';
+import { RiCheckFill, RiEdit2Line } from 'react-icons/ri';
 import { RiAddLine } from 'react-icons/ri';
+import { TiTags } from 'react-icons/ti';
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
@@ -101,7 +102,6 @@ class LabelMenu extends React.Component {
         if (isIncluded) {
             removeTag(tag);
         } else {
-            console.log("ATTACHING", tag);
             attachTag(tag);
         }
     }
@@ -150,7 +150,6 @@ class LabelMenu extends React.Component {
         const { setTags, tags } = this.props;
         const { currentTags, position } = this.state;
         
-        console.log("SET TAGS", setTags);
         
         const selectedLabels = setTags.map(tag => tag.label);
         let contentJSX = currentTags.map((tag, i) => {
@@ -273,18 +272,22 @@ class LabelMenu extends React.Component {
         }
     }
 
-
-    render() {
+    renderButton = () => {
         const { open } = this.state;
-        const { form } = this.props;
+        const { editor } = this.props;
 
-        this.colors = ['#5352ed', 
-            '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
-        ]
-
-        let flip = this.renderFlip()
-        return(
-            <MenuContainer  >
+        if (editor) {
+            return (
+                <Button 
+                    ref = {addButton => this.addButton = addButton} 
+                    onClick = {(e) => this.openMenu(e)}
+                    active = {open}
+                >
+                    <TiTags/>
+                </Button>
+            )
+        } else {
+            return (
                 <AddButton 
                     ref = {addButton => this.addButton = addButton} 
                     onClick = {(e) => this.openMenu(e)}
@@ -292,6 +295,23 @@ class LabelMenu extends React.Component {
                 >
                     <RiAddLine />
                 </AddButton>
+            )
+        }
+    }
+
+
+    render() {
+        const { open } = this.state;
+        const { form, editor } = this.props;
+
+        this.colors = ['#5352ed', 
+            '#ff4757', '#20bf6b','#1e90ff', '#ff6348', '#e84393', '#1e3799', '#b71540', '#079992'
+        ]
+
+        let flip = this.renderFlip()
+        return(
+            <MenuContainer>
+                {this.renderButton()}
                 <CSSTransition
                     in = {open}
                     unmountOnExit
@@ -304,6 +324,7 @@ class LabelMenu extends React.Component {
                         ref = {node => this.node = node}
                         flip = {flip}
                         form = {form}
+                        editor = {editor}
                     >
                         {this.renderListContent(flip)}
                     </Container>
@@ -324,6 +345,27 @@ const mapStateToProps = (state) => {
 export default withRouter(connect(mapStateToProps, { createTag })(LabelMenu));
 
 const MenuContainer = styled.div`
+`
+
+
+const Button = styled.div`
+
+    margin-right: 1.3rem;
+   
+    width: 3rem;
+	height: 3rem;
+    display: flex;
+    font-size: 2.4rem;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 0;
+    border-radius: 0.3rem;
+    &:hover {
+        background-color:  ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
+    }
+    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
+    cursor: pointer;
 `
 
 const AddButton = styled.div`
@@ -357,6 +399,7 @@ const Container = styled.div`
     ${props => (props.form && props.flip[0]) ? `bottom: ${props.flip[1]}px` : ""};
     ${props => (props.form && !props.flip[0]) ? `top: ${props.flip[1]}px` : ""};
     margin-top: ${props => !props.form ? "10px": ""};
+    margin-left: ${props => props.editor ? "-25rem" : ""};
 `
 
 const SearchbarContainer = styled.div`
@@ -408,7 +451,7 @@ const ListItem = styled.div`
     padding: 1rem;
     display: flex;
     align-items: center;
-   
+    font-weight: 500;
     background-color: rgba(51, 152, 219, 0.1);
 
    

@@ -206,7 +206,7 @@ retrieveWorkspaces = async (req, res) => {
     query = Workspace.find();
 
     if (name) query.where('name').equals(name);
-    if (creatorId) query.where('creator').equals(creatorId);
+    if (creatorId) query.where('creator').equals(creatorId); 
     if (memberUserIds) query.where('memberUsers').in(memberUserIds);
 
     let returnedWorkspaces;
@@ -474,6 +474,7 @@ searchWorkspace = async (req, res) => {
     // NEED TO INCLUDE PROPER SORTING ON MIX
     searchResults = [...documents, ...references];
     //console.log(searchResults);
+    /*
     if (sort) {
         searchResults.sort((a, b) => {
             if (a.created.getTime() > b.created.getTime()) {
@@ -482,7 +483,7 @@ searchWorkspace = async (req, res) => {
                 return 1
             }
         })
-    }
+    }*/
         
     searchResults = searchResults.slice(0, limit);
 

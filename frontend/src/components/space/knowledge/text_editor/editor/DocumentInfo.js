@@ -5,10 +5,9 @@ import styled from "styled-components";
 import chroma from 'chroma-js';
 
 //actions
-import { getDocument, editDocument, attachDocumentTag, removeDocumentTag } from '../../../../../actions/Document_Actions';
+import { getDocument, editDocument } from '../../../../../actions/Document_Actions';
 
 //components
-import LabelMenu from '../../../../menus/LabelMenu';
 import FileReferenceMenu from '../../../../menus/FileReferenceMenu';
 import RepositoryMenu2 from '../../../../menus/RepositoryMenu2'
 
@@ -176,7 +175,7 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, { 
-    getDocument, editDocument, attachDocumentTag, removeDocumentTag })(DocumentInfo));
+    getDocument, editDocument })(DocumentInfo));
 
 const Message = styled.div`
     opacity: 0.5;

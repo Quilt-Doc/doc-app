@@ -6,6 +6,7 @@ import chroma from 'chroma-js';
 //components
 import { AiFillFolder } from 'react-icons/ai';
 import { RiFileFill, RiFileList2Fill, RiScissorsLine } from 'react-icons/ri';
+import { FiPlus } from 'react-icons/fi';
 
 class CheckRightContent extends Component {
 
@@ -16,7 +17,10 @@ class CheckRightContent extends Component {
             return (
                 <Block>
                     <BlockHeader>
-                        New Code References
+                       Code References
+                       <Action color = {"#19e5be"}>
+                            <FiPlus/> {addedReferences.length}
+                        </Action>
                     </BlockHeader>
                     <InfoList>
                         {
@@ -71,27 +75,29 @@ class CheckRightContent extends Component {
 
     renderDepSnippets = () => {
         const { check: { brokenSnippets }} = this.props;
-        return (
-            <Block>
-                <BlockHeader>
-                    Deprecated Snippets
-                </BlockHeader>
-                {brokenSnippets.map(snippet => {
-                    const {start, code, reference: {name}} = snippet;
-                    return(
-                        <BrokenSnippet>
-                            <RiScissorsLine style = {{
-                                width: "2rem",
-                                fontSize: "1.5rem",
-                                marginRight: "0.5rem"
-                            }}/>
-                            <Name>{name}</Name>
-                            <SnippetInfo>{`Lines ${start + 1}-${start + code.length}`}</SnippetInfo>
-                        </BrokenSnippet>
-                    )
-                })}
-            </Block>
-        )
+        if (brokenSnippets.length > 0) {
+            return (
+                <Block>
+                    <BlockHeader>
+                        Deprecated Snippets
+                    </BlockHeader>
+                    {brokenSnippets.map(snippet => {
+                        const {start, code, reference: {name}} = snippet;
+                        return(
+                            <BrokenSnippet>
+                                <RiScissorsLine style = {{
+                                    width: "2rem",
+                                    fontSize: "1.5rem",
+                                    marginRight: "0.5rem"
+                                }}/>
+                                <Name>{name}</Name>
+                                <SnippetInfo>{`Lines ${start + 1}-${start + code.length}`}</SnippetInfo>
+                            </BrokenSnippet>
+                        )
+                    })}
+                </Block>
+            )
+        }
     }
 
     render(){
@@ -136,16 +142,33 @@ const BlockHeader = styled.div`
     font-size: 1.5rem;
     font-weight: 500;
     margin-bottom: 1.7rem;
+    display: flex;
+    align-items: center;
 `
+
+const Action = styled.div`
+    background-color: ${props => chroma(props.color).alpha(0.15)};
+    color: ${props => props.color};
+    margin-left: auto;
+    padding: 0.7rem 1.2rem;
+    font-size: 1.5rem;
+    border-radius: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    border: 1px solid ${props => props.color};
+`
+
 
 const Block = styled.div`
     background-color: white;
-   /* border: 1px solid #E0E4E7;*/
+    border: 1px solid #E0E4E7;
     padding: 1.7rem 2rem;
+    padding-bottom: 3.5rem;
     border-radius: 0.4rem;
     width: 90%;
     margin-bottom: 2rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+   /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
 `
 
 const BrokenDocument = styled.div`

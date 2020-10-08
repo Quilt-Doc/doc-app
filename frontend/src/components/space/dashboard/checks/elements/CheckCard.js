@@ -10,10 +10,10 @@ import { AiOutlineClockCircle } from 'react-icons/ai';
 import { FiGitCommit } from 'react-icons/fi';
 
 
-const CheckCard = ({check, setCheck}) => {
+const CheckCard = ({check, setCheck, active}) => {
     const {sha, brokenDocuments, brokenSnippets, commitMessage, pusher, created} = check;
     return (
-        <Check onClick = {() => setCheck()}>
+        <Check active = {active}  onClick = {() => setCheck()}>
             <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
                 <IoMdCheckmarkCircleOutline/>
             </Status>
@@ -61,6 +61,12 @@ const Check = styled.div`
     background-color: white;
     margin-bottom: 1.5rem;
     display: flex;
+    &:hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    }
+    box-shadow: ${props => props.active ? 
+        'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px' : ''};
+    cursor: pointer;
 `
 
 const CheckContent = styled.div`

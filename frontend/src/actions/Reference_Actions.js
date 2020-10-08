@@ -33,10 +33,9 @@ export const retrieveReferences = (formValues, passBack) => async dispatch => {
 
     const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
     if (response.data.success == false) {
-        throw new Error("retrieveReferences Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
-        console.log("RESULT", response.data.result);
         if (passBack) return response.data.result;
         dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });
     }
@@ -53,7 +52,7 @@ export const localRetrieveReferences = (formValues) => async dispatch => {
     const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
 
     if (response.data.success == false) {
-        throw new Error("localRetrieveReferences Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         return response.data.result;
@@ -71,7 +70,7 @@ export const getReferenceFromPath = (formValues) => async dispatch => {
     const response = await api.post(`/references/${workspaceId}/retrieve`, formValues);
 
     if (response.data.success == false) {
-        throw new Error("getReferenceFromPath Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         return response.data.result;
@@ -93,7 +92,7 @@ export const editReference = (formValues) => async dispatch => {
     const response = await api.put(`/references/${workspaceId}/edit/${referenceId}`, formValues);
 
     if (response.data.success == false) {
-        throw new Error("editReference Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: EDIT_REFERENCE, payload: response.data.result });
@@ -147,7 +146,7 @@ export const removeReferenceTag = (formValues) => async dispatch => {
     const response = await api.put(`/references/${workspaceId}/${referenceId}/remove_tag/${tagId}`);
 
     if (response.data.success == false) {
-        throw new Error("removeTag Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         console.log("RESPONSE OF REMOVAL HERE", response.data.result);
@@ -167,7 +166,7 @@ export const retrieveCodeReferences = (formValues) => async dispatch => {
     const response = await api.post(`/references/${workspaceId}/retrieve_code_references`, formValues);
 
     if (response.data.success == false) {
-        throw new Error("retrieveCodeReferences Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: RETRIEVE_REFERENCES, payload: response.data.result });

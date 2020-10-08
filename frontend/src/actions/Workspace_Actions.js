@@ -13,7 +13,7 @@ export const createWorkspace = (formValues, passback) => async (dispatch) => {
     const response = await api.post('/workspaces/create', formValues);
     
     if (response.data.success == false) {
-        throw new Error("createWorkspace Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: CREATE_WORKSPACE, payload: response.data.result });
@@ -25,7 +25,7 @@ export const retrieveWorkspaces = (formValues) => async dispatch => {
     const response = await api.post(`/workspaces/retrieve`, formValues);
     
     if (response.data.success == false) {
-        throw new Error("retrieveWorkspaces Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: RETRIEVE_WORKSPACES, payload: response.data.result });
@@ -42,7 +42,7 @@ export const searchWorkspace = (formValues) => async () => {
     const response = await api.post(`/workspaces/search/${workspaceId}`, formValues );
 
     if (response.data.success == false) {
-        throw new Error("searchWorkspace Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         return response.data.result
@@ -58,7 +58,7 @@ export const getWorkspace = workspaceId => async dispatch => {
     const response = await api.get(`/workspaces/get/${workspaceId}`);
     
     if (response.data.success == false) {
-        throw new Error("getWorkspace Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: GET_WORKSPACE, payload: response.data.result });
@@ -74,7 +74,7 @@ export const deleteWorkspace = (workspaceId) => async dispatch => {
     const response = await api.delete(`/workspaces/delete/${workspaceId}`);
 
     if (response.data.success == false) {
-        throw new Error("deleteWorkspace Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: DELETE_WORKSPACE, payload: response.data.result });
@@ -94,7 +94,7 @@ export const workspaceAddUser = (workspaceId, userId) => async (dispatch) => {
     const response = await api.put(`/workspaces/add_user/${workspaceId}`, { userId });
 
     if (response.data.success == false) {
-        throw new Error("workspaceAddUser Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: WORKSPACE_ADD_USER, payload: response.data.result });
@@ -114,7 +114,7 @@ export const workspaceRemoveUser = (workspaceId, userId) => async (dispatch) => 
     const response = await api.put(`/workspaces/remove_user/${workspaceId}`, { userId });
 
     if (response.data.success == false) {
-        throw new Error("workspaceRemoveUser Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: WORKSPACE_REMOVE_USER, payload: response.data.result });
