@@ -644,7 +644,7 @@ removeDocumentReference = async (req, res) => {
     // populate and select only whats needed -- refs and id
     let query = Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }).lean();
     query.populate('references');
-    query.select('_id status references');
+    query.select('_id status repository references');
 
     try {
         returnDocument = await query.exec();
@@ -655,6 +655,7 @@ removeDocumentReference = async (req, res) => {
 
         return res.json({ success: false, error: `Error remove reference DB query failed documentId, referenceId: ${documentId}, ${referenceId}`, trace: err });
     }
+
 
     try {
         await ReportingController.handleDocumentReferenceRemove(req.referenceObj.status, returnDocument, userId, workspaceId);
@@ -668,6 +669,8 @@ removeDocumentReference = async (req, res) => {
                             error: `Error handleDocumentReferenceRemove referenceId, referenceStatus, documentId, userId, workspaceId: ${referenceId}, ${req.referenceObj.status}, ${documentId}, ${userId}, ${workspaceId}`,
                             trace: err });
     }
+
+    delete returnDocument.repository;
 
     return res.json({ success: true, result: returnDocument});
 }

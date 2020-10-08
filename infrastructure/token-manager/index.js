@@ -74,7 +74,7 @@ const refreshGithubTokens = async () => {
             response = await axios.post('https://github.com/lgin/oauth/access_token', dataObj);
         }
         catch (err) {
-            return {error: undefined, userId};
+            return {error: 'Error', userId};
         }
         var parsed = queryString.parse(response.data);
         parsed.userId = userId;
@@ -98,10 +98,10 @@ const refreshGithubTokens = async () => {
     // Invalidate for unsuccessful calls
 
     // Non-error responses
-    validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error)
+    validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
 
     // Error responses
-    invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error)
+    invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
 
     console.log('VALID RESULTS: ');
     console.log(validResults);

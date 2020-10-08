@@ -104,17 +104,23 @@ verifyEmail = async (req, res) => {
         return res.json({success: false, error: `Error findByIdAndDelete query failed \n ${err}`});
     }
 
-    let workspaceIds;
+    let workspaceInvites;
     try {
-        workspaceIds = await WorkspaceInvite.find({invitedEmail: verifiedEmail.email});
+        workspaceInvites = await WorkspaceInvite.find({invitedEmail: verifiedEmail.email});
     }
     catch (err) {
         return res.json({ success: false, 
             error: `verifyEmail Error: retrieval of Workspace Invites did not work`, trace: err });
     }
 
+    var workspaceIds = workspaceInvites.map(workspaceInviteObj => workspaceInviteObj.workspace.toString());
+
+    await logger.info({source: 'backend-api',
+                        message: `Adding user with email ${verifiedEmail.email} to workspaceIds: ${JSON.stringify(workspaceIds)}`,
+                        function: 'verifyEmail'});
+
     try {
-        await  Workspace.updateMany({_id: { $in: workspaceIds }},  {$push: {memberUsers: ObjectId(verifiedUserId)}})
+        await  Workspace.updateMany({_id: { $in: workspaceIds.map(id => ObjectId(id)) }},  {$push: {memberUsers: ObjectId(verifiedUserId)}})
     } catch (err) {
         return res.json({ success: false, 
             error: `verifyEmail Error: workspace update did not work`, trace: err });
