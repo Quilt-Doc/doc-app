@@ -88,23 +88,25 @@ class Infobank extends React.Component {
                     <Header>INFOBANK</Header>
                 </Top>
                 <Content>
-                    <InfobankToolbar/>
-                    <Container>
-                        <InfiniteScroll
-                            pageStart={0}
-                            loadMore={() => this.retrieveInfobankResults(false)}
-                            useWindow = {false}
-                            hasMore={hasMore}
-                            initialLoad = {false}
-                            loader={this.renderLoader()}
-                        >
-                            {(infobankResults && infobankResults.length > 0) &&
-                                <CardContainer>
-                                    {this.renderCards()}
-                                </CardContainer>
-                            }
-                        </InfiniteScroll>
-                    </Container>
+                    <BodyContainer>
+                        <InfobankToolbar/>
+                        <Container>
+                            <InfiniteScroll
+                                pageStart={0}
+                                loadMore={() => this.retrieveInfobankResults(false)}
+                                useWindow = {false}
+                                hasMore={hasMore}
+                                initialLoad = {false}
+                                loader={this.renderLoader()}
+                            >
+                                {(infobankResults && infobankResults.length > 0) &&
+                                    <CardContainer>
+                                        {this.renderCards()}
+                                    </CardContainer>
+                                }
+                            </InfiniteScroll>
+                        </Container>
+                    </BodyContainer>
                 </Content>
             </Background>
         )
@@ -144,10 +146,16 @@ const mapStateToProps = (state) => {
 
 export default withRouter(connect( mapStateToProps, { retrieveInfobankResults })(Infobank));
 
+const BodyContainer = styled.div`
+    width: 85%;
+    max-width: 110rem;
+`
+
 const Content = styled.div`
     display: flex;
+    width: 100%;
     margin-top: 3rem;
-    border-radius: 0.3rem;
+    justify-content: center;
 `
 
 const Top = styled.div`
@@ -179,10 +187,8 @@ const CardContainer = styled.div`
     display: grid;
     align-items: center;
     grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
-    grid-gap: 2rem;
+    grid-gap: 3rem;
     padding-bottom: 3rem;
-    padding-left: 5rem;
-    padding-right: 5rem;
 `
 
 const Container = styled.div`

@@ -1,7 +1,7 @@
 import React, { useReducer, useMemo, useCallback, useState, useEffect } from 'react'
 
 //slate
-import { Slate, Editable, withReact, ReactEditor } from 'slate-react'
+import { Slate, Editable, withReact, ReactEditor, useSlate } from 'slate-react'
 import { Node, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import withFunctionality from '../slate/WithFunctionality'
@@ -22,6 +22,9 @@ import MainToolbar from '../toolbars/MainToolbar';
 import AttachmentToolbar from '../toolbars/AttachmentToolbar';
 import EditorToolbar from '../toolbars/EditorToolbar';
 import DocumentInfo from './DocumentInfo';
+import MarkupMenu from '../menus/MarkupMenu';
+import SnippetMenuWrapper from '../menus/snippet_menu/SnippetMenuWrapper';
+import { CSSTransition } from 'react-transition-group';
 
 //reducer
 import editorReducer from './EditorReducer';
@@ -31,10 +34,6 @@ import _ from 'lodash'
 
 //styles
 import styled from "styled-components";
-
-//components
-import MarkupMenu from '../menus/MarkupMenu';
-import { CSSTransition } from 'react-transition-group';
 
 //react dnd
 import { DndProvider } from 'react-dnd'
@@ -77,6 +76,7 @@ const TextEditor = (props) => {
 		]
 
 	const initialState = {
+		snippetMenuActive: false,
 		markupMenuActive: false,
 		text: '',
 		rect: null,
@@ -188,9 +188,21 @@ const TextEditor = (props) => {
 					>
 							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
 							<EditorContainer2  >
-							
-									 
-									<MarkupMenu documentModal = {props.documentModal} dispatch={dispatch} range={range} state={state} />
+									{/*state.snippetMenuActive &&
+										<SnippetMenuWrapper
+											documentModal = {props.documentModal} 
+											dispatch={dispatch} 
+											range={range} 
+											editorState={state} 
+											document = {props.document}
+										/>*/
+									}
+									<MarkupMenu 
+										documentModal = {props.documentModal} 
+										dispatch={dispatch} 
+										range={range} 
+										state={state} 
+									/>
 									<DocumentInfo write  = {write} />
 									{write ? 
 										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
@@ -214,7 +226,6 @@ const TextEditor = (props) => {
 										spellCheck="false"
 										decorate={decorate}
 										readOnly = {!write}
-
 									/>
 									
 							</EditorContainer2>

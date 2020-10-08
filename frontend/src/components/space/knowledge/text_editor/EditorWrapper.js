@@ -99,10 +99,15 @@ class EditorWrapper extends React.Component {
           
             // acquire a picture canvas for preview with html2canvas
             let canvas;
-            /*
-            if (!listener) {
-                canvas = await html2canvas(document.getElementById("#editorContainer"), {scale: 0.5, height: 1000});
-            }*/
+            
+            
+            try {
+                if (!listener) {
+                    canvas = await html2canvas(document.getElementById("#editorContainer"), {scale: 0.5, height: 1000});
+                }
+            } catch (err) {
+
+            }
             
             // retrieve markup from the state
             const { markup } = this.state;
@@ -114,7 +119,6 @@ class EditorWrapper extends React.Component {
             editDocument({workspaceId, documentId: doc._id, markup: JSON.stringify(markup), content});
 
             // if the image was successfully produced, save the image
-            
             if (canvas && canvas.toDataURL()){
                 editDocument({workspaceId, documentId: doc._id, image: canvas.toDataURL()});
             }

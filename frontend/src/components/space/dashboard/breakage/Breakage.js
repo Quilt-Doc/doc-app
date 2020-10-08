@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 //components
 import BreakageCard from './BreakageCard';
+import BreakagePlaceholder from './BreakagePlaceholder';
 
 //react-redux
 import { connect } from 'react-redux';
@@ -37,7 +38,7 @@ class Breakage extends Component {
     renderBrokenCards = () => {
         const { broken } = this.state;
         if (broken.length > 0) return broken.map(doc => <BreakageCard doc = {doc}/>);
-        return <Message>All documents in this workspace are valid.</Message>
+        return <BreakagePlaceholder/>
     }
 
     render(){

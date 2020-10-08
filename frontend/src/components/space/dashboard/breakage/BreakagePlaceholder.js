@@ -11,46 +11,12 @@ import { RiCloseFill, RiFileList2Fill } from 'react-icons/ri'
 import { FiGitCommit } from 'react-icons/fi';
 
 // Card representing document that is broken
-class BreakageCard extends Component {
-
-    // depending on whether this is a warning card (from props) or not
-    // display correct status
-    renderStatus(){
-        let { status } = this.props.doc;
-        return status === "invalid" ?
-        (<Status color = {"#ff4757"}>
-            <RiCloseFill
-                style = 
-                {{
-                    fontSize: "1.7rem"
-                }}
-            />
-        </Status>) :
-        (<Status color = {"#5B75E6"}>
-            <AiOutlineExclamation
-                style = 
-                {{
-                    fontSize: "1.5rem"
-                }}
-            />
-        </Status>)
-    }
-
-    getDateItem = () => {
-        const { created } = this.props.doc;
-        let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        let item =  new Date(created)
-        let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
-        return dateString
-    }
-    
+class BreakagePlaceholder extends Component {
     render(){
-        const { title, breakDate, breakCommit } = this.props.doc;
         return(
             <Card> {/*REPEATED COMPONENT MINIMAL DOCUMENT*/}
                 <Title>
-                    {title}
-                    {this.renderStatus()}
+                    
                 </Title>
                 <Content>
                     <RiFileList2Fill style = {{
@@ -58,29 +24,14 @@ class BreakageCard extends Component {
                     }}/>
                 </Content> 
                 <Detail>
-                    <CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
-                        <AiOutlineClockCircle
-                            style = {{marginRight: "0.5rem"}}
-                        />
-                        {this.getDateItem(breakDate)}
-                    </CreationDate>
-                    <Commit>
-                        <FiGitCommit
-                            style = {{
-                                fontSize: "1.2rem",
-                                marginRight: "0.3rem",
-                                marginTop: "0.1rem"
-                            }}
-                        />
-                       {breakCommit.slice(0, 7)}
-                    </Commit>
+                    
                 </Detail>
             </Card>
         )
     }
 }
 
-export default BreakageCard;
+export default BreakagePlaceholder;
 
 const Commit = styled.div`
     font-size: 0.95rem;
@@ -171,6 +122,7 @@ const Card = styled.div`
     align-self: ${props => props.top ? "flex-start" : ""};
     margin-right: 2rem;
     margin-right: 3rem;
+    opacity: 0.6;
 `
 
 

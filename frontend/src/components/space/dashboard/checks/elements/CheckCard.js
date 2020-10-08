@@ -17,7 +17,7 @@ const CheckCard = ({check, setCheck, active}) => {
             <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
                 <IoMdCheckmarkCircleOutline/>
             </Status>
-            <CheckContent>
+            <CheckContent active = {active}>
                 <Commit>
                         <FiGitCommit
                             style = {{
@@ -58,22 +58,21 @@ const Check = styled.div`
     height: 11rem;
     width: 100%;
     border-radius: 0.7rem;
-    background-color: white;
+    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.1) : 'white'};
     margin-bottom: 1.5rem;
     display: flex;
     &:hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+        background-color: ${chroma("#5B75E6").alpha(0.1)};
     }
-    box-shadow: ${props => props.active ? 
-        'rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px' : ''};
     cursor: pointer;
+    transition: background-color 0.1s ease-in;
 `
 
 const CheckContent = styled.div`
     width: 100%;
-    border-top: 1px solid #E0E4E7;
-    border-right: 1px solid #E0E4E7;
-    border-bottom: 1px solid #E0E4E7;
+    border-top: 1px solid  ${props => props.active ? "": "#E0E4E7"};
+    border-right: 1px solid ${props => props.active ? "" : "#E0E4E7"};
+    border-bottom: 1px solid ${props => props.active ? "" : "#E0E4E7"};
     border-top-right-radius: 0.8rem;
     border-bottom-right-radius: 0.8rem;
     padding: 1rem 1.8rem;
