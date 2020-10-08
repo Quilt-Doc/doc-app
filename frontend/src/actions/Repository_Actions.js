@@ -28,7 +28,7 @@ export const getRepositoryFile = (fileDesc) => async (dispatch) => {
 
     if (response.data.success == false) {
         console.log(response.data.error.toString());
-        throw new Error("getRepositoryFile Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: GET_REPOSITORY_FILE, payload: response.data.result, fileName: fileDesc.fileName});
@@ -40,7 +40,7 @@ export const createRepository = (formValues) => async (dispatch) => {
     const response = await api.post('/repositories/create', formValues);
 
     if (response.data.success == false) {
-        throw new Error("createRepository Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: CREATE_REPOSITORY, payload: response.data.result });
@@ -65,7 +65,7 @@ export const getRepository = formValues => async dispatch => {
     const response = await api.get(`/repositories/${workspaceId}/get/${repositoryId}`);
 
     if (response.data.success == false) {
-        throw new Error("getRepository Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: GET_REPOSITORY, payload: response.data.result });
@@ -89,7 +89,7 @@ export const deleteRepository = formValues => async dispatch => {
     const response = await api.delete(`/repositories/${workspaceId}/delete/${repositoryId}`);
 
     if (response.data.success == false) {
-        throw new Error("deleteRepository Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: DELETE_REPOSITORY, payload: response.data.result });
@@ -107,7 +107,7 @@ export const retrieveRepositories = (formValues) => async dispatch => {
     const response = await api.post(`/repositories/${workspaceId}/retrieve`, formValues);
     
     if (response.data.success == false) {
-        throw new Error("retrieveRepositories Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });
@@ -119,7 +119,7 @@ export const retrieveCreationRepositories = (formValues) => async dispatch => {
     const response = await api.post(`/repositories/retrieve`, formValues);
     
     if (response.data.success == false) {
-        throw new Error("retrieveCreationRepositories Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: RETRIEVE_REPOSITORIES, payload: response.data.result });

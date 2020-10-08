@@ -29,7 +29,7 @@ export const checkInstallation = (formValues) => async (dispatch) => {
     const response = await api.post('/auth/check_installation', formValues)
     
     if (response.data.success == false) {
-        throw new Error("checkInstallation Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: CHECK_INSTALLATION, payload: response.data.result });

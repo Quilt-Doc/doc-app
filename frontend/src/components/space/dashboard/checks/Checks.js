@@ -40,8 +40,10 @@ class Checks extends Component {
 
     renderChecks = () => {
         const { checks } = this.props;
-        checks.map(check => {
-            return <CheckCard  
+        const { currentCheck } = this.state;
+        return checks.map(check => {
+            return <CheckCard 
+                active = {currentCheck._id === check._id} 
                 setCheck = {() => this.setState({currentCheck: check})} 
                 check = {check}
             />
@@ -57,10 +59,13 @@ class Checks extends Component {
                 </Header>
                 <BodyContainer>
                     {currentCheck ? 
-                        <LeftBar>
-                            { this.renderChecks() }
+                        <>
+                            <LeftBar>
+                                { this.renderChecks() }
+                            </LeftBar> 
                             <CheckRightContent check = {currentCheck}/>
-                        </LeftBar> :
+                        </>
+                        :
                         <Centered>
                             <Message>Push code to your repository to see checks</Message>
                         </Centered>
@@ -101,7 +106,7 @@ const Centered = styled.div`
 `
 
 const LeftBar = styled.div`
-    width: 40rem;
+    width: 50rem;
     min-height: 100%;
     overflow-y: scroll;
     background-color: white;
@@ -133,7 +138,7 @@ const Container = styled.div`
 
 const BodyContainer = styled.div`
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    background-color: white;
+    background-color: #f7f9fb;
     border-radius: 0.5rem;
     min-height: 45rem;
     display: flex;

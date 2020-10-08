@@ -190,7 +190,7 @@ const TextEditor = (props) => {
 							<EditorContainer2  >
 							
 									 
-									<MarkupMenu dispatch={dispatch} range={range} state={state} />
+									<MarkupMenu documentModal = {props.documentModal} dispatch={dispatch} range={range} state={state} />
 									<DocumentInfo write  = {write} />
 									{write ? 
 										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
@@ -214,7 +214,7 @@ const TextEditor = (props) => {
 										spellCheck="false"
 										decorate={decorate}
 										readOnly = {!write}
-						
+
 									/>
 									
 							</EditorContainer2>

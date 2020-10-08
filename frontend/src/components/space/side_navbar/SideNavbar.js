@@ -83,7 +83,7 @@ class SideNavbar extends React.Component {
                     <RiStackLine/>
                 </NavbarIcon>
                 <NavbarIcon
-                    active = {history.location.pathname.split("/")[3] === "infobank"}
+                    active = {history.location.pathname.split("/")[3] === "settings"}
                     to = {this.renderSettingsLink()}
                 >
                     <RiSettings5Line/>

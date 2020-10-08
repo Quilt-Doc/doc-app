@@ -40,12 +40,11 @@ export const retrieveBrokenDocuments  = (formValues) => async () => {
     if (!workspaceId) {
         throw new Error("retrieveBrokenDocuments: workspaceId not provided");
     }
-    console.log("WORKSPACEID", workspaceId);
 
     const response = await api.post(`/reporting/${workspaceId}/retrieve_broken_documents`, formValues );
 
     const {success, error, result} = response.data;
-    console.log("BROKEN RESULT", result);
+
     if (!success) {
         throw new Error(error)
     } else {
@@ -320,13 +319,14 @@ export const attachDocumentTag = (formValues) => async (dispatch) => {
     if (!tagId) {
         throw new Error("attachDocumentTag: tagId not provided");
     }
-
+    console.log("TAG ATTACHMENT FORMVALUES", formValues);
     const response = await api.put(`/documents/${workspaceId}/${documentId}/attach_tag/${tagId}`);
 
     if (response.data.success == false) {
-        throw new Error("attachDocumentTag Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
+        console.log("RESULT", response.data.result);
         dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });
     }
 }
@@ -352,7 +352,7 @@ export const removeDocumentTag = (formValues) => async (dispatch) => {
     const response = await api.put(`/documents/${workspaceId}/${documentId}/remove_tag/${tagId}`);
 
     if (response.data.success == false) {
-        throw new Error("removeDocumentTag Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });
@@ -381,7 +381,7 @@ export const attachDocumentReference = (formValues) =>  async (dispatch) => {
     const response = await api.put(`/documents/${workspaceId}/${documentId}/attach_reference/${referenceId}`);
 
     if (response.data.success == false) {
-        throw new Error("attachDocumentReference Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });
@@ -409,7 +409,7 @@ export const removeDocumentReference = (formValues) =>  async (dispatch) => {
     const response = await api.put(`/documents/${workspaceId}/${documentId}/remove_reference/${referenceId}`);
 
     if (response.data.success == false) {
-        throw new Error("removeReference Error: ", response.data.error.toString());
+        throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: EDIT_DOCUMENT, payload: response.data.result });

@@ -29,7 +29,7 @@ const Sidebar = (props) => {
                               {anchor: {offset: 0, path}, 
                 focus: {offset: 0, path }}).getBoundingClientRect();
             if (props.documentModal) {
-                changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 180 + rect.height/2);
+                changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 183 + rect.height/2);
             } else {
                 changeTop(document.getElementById("editorContainer").scrollTop + rect.top - 155 + rect.height/2);
             }

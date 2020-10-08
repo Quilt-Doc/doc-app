@@ -72,7 +72,8 @@ const MarkupMenu = (props) => {
 
 	useEffect(() => {
 		if (props.state.markupMenuActive && editor.selection) {
-			document.getElementById("rightView").style.overflowY = "hidden"
+			let editorContainer = document.getElementById("editorContainer");
+			if (editorContainer) editorContainer.style.overflowY = "hidden"
 			//const domSelection= window.getSelection()
 			
 			let path = [editor.selection.anchor.path[0]]
@@ -85,7 +86,8 @@ const MarkupMenu = (props) => {
 			changeOpen(true)
         } else {
 			//document.removeEventListener("mousedown", handleClickOutside, false)
-			document.getElementById("rightView").style.overflowY = "scroll"
+			let editorContainer = document.getElementById("editorContainer");
+			if (editorContainer) editorContainer.style.overflowY = "scroll";
 			changeOpen(false)
 		}
 	}, [props.state.markupMenuActive])
@@ -182,6 +184,7 @@ const MarkupMenu = (props) => {
 	return (
 		<>
 			<MenuContents 
+				documentModal = {props.documentModal}
 				open = {open}
 				renderMenu = {renderMenu}
 				rect = {rect}
@@ -217,13 +220,22 @@ class MenuContents extends React.Component {
 	}
 
 	render(){
-		let {open, renderMenu, rect} = this.props
-		if (rect){
+		let {open, renderMenu, rect, documentModal} = this.props
+		if (rect) {
+			
+			if (documentModal) {	
+				let background = document.getElementById("documentModalBackground");
+				console.log("OLD VALUE", rect.top);
+				console.log("SCROLL", background.scrollTop)
+				console.log("NEW VALUE", rect.top - background.scrollTop);
+				rect = {left: rect.left, height: rect.height, top: rect.top + background.scrollTop};
+			}
+			
 			let height = this.convertRemToPixels(40);
 			if (rect.top + height - 100 > window.innerHeight){
 				rect = {top: rect.top - height , left: rect.left, height: rect.height}
 				//rect.top = rect.top - height - rect.height;
-			}	
+			}
 		}
 		
 		return(

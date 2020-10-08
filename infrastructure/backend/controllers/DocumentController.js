@@ -687,7 +687,7 @@ attachDocumentTag = async (req, res) => {
     update.tags = ObjectId(tagId);
 
     // populate and select only whats needed -- tag and id
-    let query = Document.findByOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }).lean();
+    let query = Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $push: update }, { new: true }).lean();
     query.populate('tags');
     query.select('_id tags');
 
@@ -772,7 +772,7 @@ removeDocumentSnippet = async (req, res) => {
     update.snippets = ObjectId(snippetId);
   
     // populate and select only whats needed -- snippets and id
-    let query = Document.findByIdAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }).lean();
+    let query = Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $pull: update }, { new: true }).lean();
     query.populate('snippets');
     query.select('_id snippets');
 

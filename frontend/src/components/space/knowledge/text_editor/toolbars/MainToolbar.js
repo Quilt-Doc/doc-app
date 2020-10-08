@@ -7,6 +7,19 @@ import {CgOptions} from 'react-icons/cg';
 import DocumentOptionsMenu from '../../../../menus/DocumentOptionsMenu';
 import { AiOutlineExclamation } from 'react-icons/ai';
 
+//components
+import LabelMenu from '../../../../menus/LabelMenu';
+
+//actions
+import { attachDocumentTag, removeDocumentTag } from '../../../../../actions/Document_Actions';
+
+//react-redux
+import { connect } from 'react-redux';
+
+//react-router
+import { withRouter } from 'react-router-dom';
+
+
 class MainToolbar extends React.Component {
 
     renderTags(){
@@ -102,6 +115,9 @@ class MainToolbar extends React.Component {
     }
 
     render(){
+        const { document, match, attachDocumentTag, removeDocumentTag} = this.props
+        const { workspaceId } = match.params;
+
         return(
             <>
                 <Container documentModal = {this.props.documentModal}>
@@ -116,6 +132,16 @@ class MainToolbar extends React.Component {
                             >
                                 <RiEdit2Line/>
                             </Button>
+                            <LabelMenu 
+                                editor = {true}
+                                attachTag = {(tag) => {
+                                    attachDocumentTag({workspaceId, 
+                                        documentId: document._id, tagId: tag._id})}}
+                                removeTag = {(tag) => {
+                                    removeDocumentTag({workspaceId, 
+                                        documentId: document._id, tagId: tag._id})}}
+                                setTags = {document.tags}
+                            />
                             <DocumentOptionsMenu 
                                 document = {this.props.document}
                             />
@@ -127,7 +153,14 @@ class MainToolbar extends React.Component {
     }
 }
 
-export default MainToolbar;
+const mapStateToProps = () => {
+    return {
+
+    }
+}
+
+export default withRouter(connect(mapStateToProps, {
+    attachDocumentTag, removeDocumentTag })(MainToolbar));
 
 const PathSection = styled.div`
     &:hover {

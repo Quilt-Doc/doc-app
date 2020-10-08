@@ -22,45 +22,37 @@ class InfobankToolbar extends React.Component {
     }
 
     render(){
-        return(
+        return (
             <Container>
-                <Main>
-                    <SearchbarWrapper>
-                        <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
-                        <SearchButton>
-                            <IoIosSearch/>
-                        </SearchButton>
-                    </SearchbarWrapper>
-                    <Leftbar>
-                        <SortButton>
-                            <Pretense>Sort by</Pretense>
-                            <Sorted>Relevance</Sorted>
-                            <FiChevronDown 
-                                style = {{
-                                    marginLeft: "0.5rem",
-                                    marginTop: "0.25rem",
-                                    fontSize: "1.45rem"
-                                }}
-                            />
-                        </SortButton>
-                        <FilterButton>
-                            <TiFilter
-                                style = {{ opacity: 1, marginTop: "0.2rem"}}
-                            />
-                        </FilterButton>
-                    </Leftbar>
-                </Main>
-                <Second>
-                    <Type active = {true}>Documents</Type>
-                    <Type>Linkages</Type>
-                    <Type>Code</Type>
-                </Second>
+                <SearchbarWrapper>
+                    <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
+                    <SearchButton>
+                        <IoIosSearch/>
+                    </SearchButton>
+                </SearchbarWrapper>
             </Container>
         )
     }
+    
 }
 
+/* <SearchbarWrapper>
+                    <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
+                    <SearchButton>
+                        <IoIosSearch/>
+                    </SearchButton>
+                </SearchbarWrapper>*/
+
 export default InfobankToolbar;
+
+const Container = styled.div`
+    width: 40rem;
+    height: 88vh;
+    background-color: white;
+    padding: 3.5rem 2.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+`
 
 const Type = styled.div`
     padding: 0.5rem 1.5rem;
@@ -130,16 +122,14 @@ const FilterButton = styled.div`
 
 
 const SearchbarWrapper = styled.div`
-    width: 35rem;
+    width: 4 0rem;
     height: 4.5rem;
-    background-color: #ecf0f3;
-    border-radius: 0.3rem;
+    background-color: #eff3f5;
+    border-radius: 0.4rem;
     padding: 0rem 1.5rem;
     padding-right: 0rem;
     cursor: text;
     display: flex;
-    flex: 1 1 35rem;
-    max-width: 65rem;
     align-items: center;
     &:hover {
     }
@@ -195,7 +185,7 @@ const Second = styled.div`
     align-items: center;
     margin-top: 1.5rem;
 `
-
+/*
 const Container = styled.div`
     
     padding-left: 5rem;
@@ -208,5 +198,39 @@ const Container = styled.div`
     margin-bottom: 1rem;
     position: sticky;
     top: 0;
-`
+`*/
 
+
+/*
+    render(){
+        return(
+            <Container>
+                <Main>
+                   
+                    <Leftbar>
+                        <SortButton>
+                            <Pretense>Sort by</Pretense>
+                            <Sorted>Relevance</Sorted>
+                            <FiChevronDown 
+                                style = {{
+                                    marginLeft: "0.5rem",
+                                    marginTop: "0.25rem",
+                                    fontSize: "1.45rem"
+                                }}
+                            />
+                        </SortButton>
+                        <FilterButton>
+                            <TiFilter
+                                style = {{ opacity: 1, marginTop: "0.2rem"}}
+                            />
+                        </FilterButton>
+                    </Leftbar>
+                </Main>
+                <Second>
+                    <Type active = {true}>Documents</Type>
+                    <Type>Linkages</Type>
+                    <Type>Code</Type>
+                </Second>
+            </Container>
+        )
+    }*/
