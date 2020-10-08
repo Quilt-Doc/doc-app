@@ -3,6 +3,9 @@ require('dotenv').config();
 const fs = require('fs');
 var jwt = require('jsonwebtoken');
 
+const axios = require("axios");
+const queryString = require('query-string');
+
 
 const mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
@@ -71,9 +74,10 @@ const refreshGithubTokens = async () => {
         var response;
         var userId = refreshTokenOwnerLookup[dataObj.refresh_token]
         try {
-            response = await axios.post('https://github.com/lgin/oauth/access_token', dataObj);
+            response = await axios.post('https://github.com/login/oauth/access_token', dataObj);
         }
         catch (err) {
+            console.log(err);
             return {error: 'Error', userId};
         }
         var parsed = queryString.parse(response.data);
@@ -97,14 +101,15 @@ const refreshGithubTokens = async () => {
     // We will update GithubAuthProfiles for successful calls
     // Invalidate for unsuccessful calls
 
+    console.log('RESULTS: ');
+    console.log(results);
+
     // Non-error responses
     validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
 
     // Error responses
     invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
 
-    console.log('VALID RESULTS: ');
-    console.log(validResults);
     
     /*
     accessToken: {type: String, required: true},
@@ -113,16 +118,16 @@ const refreshGithubTokens = async () => {
     refreshToken: {type: String, required: true},
     refreshTokenExpireTime: {type: Number, required: true}, 
     */
-
+    // NOTE: GITHUB TIMES ARE IN SECONDS NOT MILLISECONDS
     const bulkAuthProfileUpdateOps = validResults.map((queryObj) => {
         return ({
             updateOne: {
-                filter: { user: ObjectId(queryObj.userId), status: 'valid' },
+                filter: { user: ObjectId(queryObj.value.userId), status: 'valid' },
                 // Where field is the field you want to update
-                update: { $set: { accessToken: queryObj.access_token,
-                                    accessTokenExpireTime: (currentMillis + queryObj.expires_in),
-                                    refreshToken: queryObj.refresh_token,
-                                    refreshTokenExpireTime: (currentMillis + queryObj.refresh_token_expires_in) } },
+                update: { $set: { accessToken: queryObj.value.access_token,
+                                    accessTokenExpireTime: (currentMillis + (parseInt(queryObj.value.expires_in, 10)*1000)),
+                                    refreshToken: queryObj.value.refresh_token,
+                                    refreshTokenExpireTime: (currentMillis + (parseInt(queryObj.value.refresh_token_expires_in, 10)*1000)) } },
                 upsert: false
             }
         })
@@ -142,16 +147,20 @@ const refreshGithubTokens = async () => {
     }
 
 
+
     const bulkAuthProfileInvalidateOps = invalidResults.map((queryObj) => {
         return ({
             updateOne: {
-                filter: { user: ObjectId(queryObj.userId), status: 'valid' },
+                filter: { user: ObjectId(queryObj.value.userId), status: 'valid' },
                 // Where field is the field you want to update
                 update: { $set: { status: 'invalid' } },
                 upsert: false
             }
         })
     });
+
+    console.log('bulkAuthProfileInvalidateOps: ');
+    console.log(JSON.stringify(bulkAuthProfileInvalidateOps));
 
     if (bulkAuthProfileInvalidateOps.length > 0) {
         try {
@@ -372,7 +381,6 @@ exports.handler = async (event) => {
     // Github Token Refresh Section END ------
 
 
-    const axios = require('axios');
     var githubAppClient = axios.create({
         baseURL: process.env.GITHUB_API_URL,
         headers: {
