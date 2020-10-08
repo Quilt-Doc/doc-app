@@ -15,6 +15,8 @@ const Reference = require('./models/Reference');
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
+const { filterVendorFiles } = require('./utils/validate_utils');
+
 
 const {serializeError, deserializeError} = require('serialize-error');
 
@@ -191,6 +193,7 @@ const scanRepositories = async () => {
     }
 
     var treeReferences = [];
+    var validPaths = [];
     // Extract References from trees
     for (i = 0; i < repositoryTreeResponseList.length; i++) {
         var currentTree = repositoryTreeResponseList[i].data.tree;
@@ -203,9 +206,38 @@ const scanRepositories = async () => {
             let path = pathSplit.join('/');
             let kind = item.type == 'blob' ? 'file' : 'dir'
 
+            // Add trailing slashes for vendor filtering
+            if (kind == 'dir') {
+                path = path.endsWith('/') ? path : path + '/'
+            }
+
+            validPaths.push(path);
             treeReferences.push({ name, path, kind, repository: ObjectId(unscannedRepositories[i]._id), parseProvider: 'create' });
         }
     }
+
+    // console.log('Paths to test: ');
+    // console.log(JSON.stringify(validPaths));
+    validPaths = filterVendorFiles(validPaths);
+
+    console.log('validPaths: ');
+    console.log(JSON.stringify(validPaths));
+
+    // Remove invalid paths (vendor paths) from treeReferences
+    treeReferences = treeReferences.filter(treeRefObj => validPaths.includes(treeRefObj.path));
+
+    // Remove trailing slashes from directories
+    treeReferences = treeReferences.map(treeRefObj => {
+        var temp = treeRefObj.path;
+        if (treeRefObj.kind == 'dir') {
+            // directories are not stored with a trailing slash
+            temp = temp.endsWith('/') ? temp.slice(0,-1) : temp
+            // Strip out './' from start of paths
+            temp = temp.startsWith('./') ? temp.slice(2, temp.length) : temp;
+            return Object.assign({}, treeRefObj, {path: temp});
+        }
+        return treeRefObj;
+    });
 
 
     // Bulk insert tree references
