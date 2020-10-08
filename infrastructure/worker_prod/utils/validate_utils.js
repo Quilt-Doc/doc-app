@@ -12,12 +12,12 @@ const filterVendorFiles = (filePaths) => {
   var regexFilters = yaml.safeLoad(fs.readFileSync('vendor.yml', 'utf8'));
   regexFilters = regexFilters.map(filter => RegExp(filter));
   
+  // Return all elements that don't match any regex filters
   return filePaths.filter(function (fileName) {
     return !regexFilters.some(function (regex) {
         return regex.test(fileName);
     });
-});
-
+  });
 }
 
 

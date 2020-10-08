@@ -89,7 +89,6 @@ retrieveReferences = async (req, res) => {
     if (checkValid(path)) query.where('path').equals(path);
     if (checkValid(referenceIds)) query.where('_id').in(referenceIds);
     if (onlyValid) {
-        console.log('only valid');
         query.where('status').equals('valid');
     }
     // make sure that repositoryId provided exists and is accessible from workspace
