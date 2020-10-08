@@ -59,7 +59,7 @@ editUser = async (req, res) => {
         await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to findByIdAndUpdate User - userId: ${userId}`, function: 'editUser'});
         return res.json({success: false, error: "editUser Error: findbyIdAndUpdate query failed", trace: err});
     }
-   
+    console.log("RETURNED USER",  returnedUser);
     return res.json({success: true, result: returnedUser});
 }
 
