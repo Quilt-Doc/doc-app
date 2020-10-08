@@ -17,6 +17,7 @@ const checkUtils = require('./utils/check_utils');
 
 const _ = require('underscore');
 
+
 const {serializeError, deserializeError} = require('serialize-error');
 
 
@@ -96,23 +97,35 @@ const runUpdateProcedure = async () => {
     }
 
 
+
+
     // Remove 'validatedDocuments' Ids from the Checks we've found
+
+    validatedDocuments = validatedDocuments.map(id => id.toString());
 
     if (validatedDocuments.length > 0) {
         modifiedChecks = modifiedChecks.map(checkObj => {
 
             checkObj.brokenDocuments = checkObj.brokenDocuments.map(docId => docId.toString());
 
-            checkObj.brokenDocuments = _.difference(checkObj.brokenDocuments, validatedDocuments);
+            var x = checkObj.brokenDocuments.map(docId => docId.toString());
+            checkObj.brokenDocuments = _.difference(x, validatedDocuments);
+
             return checkObj;
         });
     }
 
 
     // Remove 'validatedSnippets' Ids from the Checks we've found
-    if (brokenDocuments.length > 0) {
+    if (validatedSnippets.length > 0) {
         modifiedChecks = modifiedChecks.map(checkObj => {
-            checkObj.brokenSnippets = _.difference(checkObj.brokenSnippets, validatedSnippets);
+
+            checkObj.brokenSnippets = checkObj.brokenSnippets.map(docId => docId.toString());
+
+            var x = checkObj.brokenSnippets.map(docId => docId.toString());
+
+            checkObj.brokenSnippets = _.difference(x, validatedSnippets);
+
             return checkObj;
         });
     }
@@ -157,12 +170,15 @@ const runUpdateProcedure = async () => {
     const bulkCheckUpdateOps = modifiedChecks.map(checkObj => ({
         updateOne: {
             // Error Here
-            filter: { _id: checkObj._id.toString() },
+            filter: { _id: ObjectId(checkObj._id.toString()) },
             // Where field is the field you want to update
             update: { $set: { brokenDocuments: checkObj.brokenDocuments, brokenSnippets: checkObj.brokenSnippets} },
             upsert: false
         }
     }));
+
+    console.log('bulkCheckUpdateOps: ');
+    console.log(JSON.stringify(bulkCheckUpdateOps));
 
     try {
         await Check.collection.bulkWrite(bulkCheckUpdateOps);

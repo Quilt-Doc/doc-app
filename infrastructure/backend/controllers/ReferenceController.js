@@ -75,14 +75,23 @@ getReference = async (req, res) => {
 /// new mapping of references in state
 retrieveReferences = async (req, res) => {
 
-    let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip, sort } = req.body;
+    let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip, sort, onlyValid } = req.body;
     var validRepositoryIds = req.workspaceObj.repositories;
+
+    console.log('RETRIEVE BODY: ');
+    console.log(req.body);
     
     let query = Reference.find();
+
+    if (!checkValid(onlyValid)) onlyValid = true;
 
     if (checkValid(kinds)) query.where('kind').in(kinds);
     if (checkValid(path)) query.where('path').equals(path);
     if (checkValid(referenceIds)) query.where('_id').in(referenceIds);
+    if (onlyValid) {
+        console.log('only valid');
+        query.where('status').equals('valid');
+    }
     // make sure that repositoryId provided exists and is accessible from workspace
     
     if (checkValid(repositoryId)) {
@@ -169,6 +178,10 @@ retrieveReferences = async (req, res) => {
     if (limit && returnedReferences.length < limit && referenceIds) {
         let query2 = Reference.find({repository: repositoryId});
 
+        if (onlyValid) {
+            query2.where('status').equals('valid');
+        }
+
         query2.where('_id').nin(referenceIds);
         query2.limit(limit - returnedReferences.length);
         minimal === true ? query2.select(minSelectionString) : query2.populate({path: populationString});
@@ -189,7 +202,7 @@ retrieveReferences = async (req, res) => {
     }
 
     await logger.info({source: 'backend-api', message: `Successfully retrieved ${returnedReferences.length} References`, function: 'retrieveReferences'});
-
+    
     return res.json({success: true, result: returnedReferences});
 }
 
@@ -373,6 +386,10 @@ removeReferenceTag = async (req, res) => {
 searchReferences = async (req, res) => {
     const { userQuery, repositoryId, tagIds, referenceIds,
       minimalReferences, skip, limit, sort } = req.body;
+    
+    var { onlyValid } = req.body;
+
+    if (!checkValid(onlyValid)) onlyValid = true;
 
     let referenceAggregate;
     
@@ -394,6 +411,11 @@ searchReferences = async (req, res) => {
     referenceAggregate.addFields({isReference : true, score: { $meta: "searchScore" }});
     
     referenceAggregate.match({repository: ObjectId(repositoryId)});
+
+    if (onlyValid) {
+        console.log('matching only valid');
+        referenceAggregate.match({status: 'valid'});
+    }
 
     if (checkValid(tagIds)) referenceAggregate.match({
         tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }

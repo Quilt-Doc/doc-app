@@ -149,6 +149,8 @@ app.post('/job', async function(req, res) {
                                 source: 'worker-instance', function: 'app.js'}});
             res.status(500).end();
         }
+
+        res.status(200).end();
     }
 
 
@@ -176,6 +178,14 @@ app.post('/job', async function(req, res) {
                                                         source: 'worker-instance', function: 'app.js'}});
             res.status(400).end();
         }
+
+        worker.send({action: 'log', info: {level: 'info', 
+                                            source: 'worker-instance',
+                                            message: `Running Update Checks Job repositoryId, validatedDocuments, validatedSnippets: ${repositoryId}, ${JSON.stringify(validatedDocuments)}, ${JSON.stringify(validatedSnippets)}`,
+                                            function: 'app.js',
+                                        }});
+
+
         process.env.repositoryId = repositoryId;
         process.env.validatedDocuments = JSON.stringify(validatedDocuments);
         process.env.validatedSnippets = JSON.stringify(validatedSnippets);
@@ -189,6 +199,8 @@ app.post('/job', async function(req, res) {
                                 source: 'worker-instance', function: 'app.js'}});
             res.status(500).end();
         }
+
+        res.status(200).end();
     }
 });
 

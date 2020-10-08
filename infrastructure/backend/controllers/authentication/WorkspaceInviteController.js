@@ -27,6 +27,9 @@ sendInvite = async (req, res) => {
 
     if (!checkValid(email)) return res.json({success: false, error: "No email provided"});
 
+    var addedToWorkspace = false;
+    var updatedWorkspace;
+
     // Check if a User with this (verified) email exists
 
     var userWithEmail;
@@ -39,9 +42,9 @@ sendInvite = async (req, res) => {
 
     // If a User exists, add them to the Workspace
     if (userWithEmail) {
-        var updatedWorkspace;
         try {
             updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { $push: { memberUsers: ObjectId(userWithEmail._id.toString()) } }, { new: true });
+            addedToWorkspace = true;
         }
         catch (err) {
             return res.json({success: false, error: `Error Workspace findOneAndUpdate query failed - workspaceId, userId: ${workspaceId}, ${userWithEmail._id.toString()}`});
@@ -90,7 +93,13 @@ sendInvite = async (req, res) => {
             error: `Error Response when sending email - email, error.response.body: ${email} \n ${error.response.body}`});
     }
 
-    return res.json({success: true});
+    // Return the updated Workspace to instantly update the frontend
+    if (addedToWorkspace) {
+        return res.json({success: true, result: updatedWorkspace});
+    }
+    else {
+        return res.json({success: true});
+    }
 
 }
 

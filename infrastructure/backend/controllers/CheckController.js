@@ -16,11 +16,7 @@ const Repository = require('../models/Repository');
 
 const logger = require('../logging/index').logger;
 
-const DOCUMENT_MAX = 10;
-const SNIPPET_MAX = 5;
-
-const SNIPPET_CHAR_MAX = 20;
-
+const checkConstants = require('../constants/index').checks;
 
 
 checkValid = (item) => {
@@ -51,7 +47,7 @@ generateCheckText = async (brokenDocuments, brokenSnippets) => {
 
     // Append broken Document text
     for (i = 0; i < brokenDocuments.length; i++) {
-        if (i >= DOCUMENT_MAX) break;
+        if (i >= checkConstants.CHECK_DOCUMENT_MAX_NUM) break;
         var documentObj;
         try {
             documentObj = await Document.findById(brokenDocuments[i].toString(), 'title').exec();
@@ -64,7 +60,7 @@ generateCheckText = async (brokenDocuments, brokenSnippets) => {
 
     // Append broken Snippet text
     for (i = 0; i < brokenSnippets.length; i++) {
-        if (i >= SNIPPET_MAX) break;
+        if (i >= checkConstants.CHECK_SNIPPET_MAX_NUM) break;
         var snippetObj;
         try {
             snippetObj = await Snippet.findById(brokenSnippets[i]);
@@ -72,7 +68,7 @@ generateCheckText = async (brokenDocuments, brokenSnippets) => {
         catch (err) {
             throw new Error(`Error fetching Snippet: ${brokenSnippets[i]}`);
         }
-        if (snippetObj) text += `${snippetObj.annotation.slice(0, SNIPPET_CHAR_MAX)}\n`
+        if (snippetObj) text += `${snippetObj.annotation.slice(0, checkConstants.CHECK_SNIPPET_CHAR_MAX)}\n`
     }
 
     return text;

@@ -239,12 +239,18 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
     // Get all directories to track for References
     newDirectories = filterVendorFiles(newDirectories);
 
-    // directories are not stored with a trailing slash
     newDirectories = newDirectories.map(dirPath => {
-        if (dirPath.slice(-1) == '/') {
-            return dirPath.slice(0, -1);
+        var temp = dirPath;
+        
+        // directories are not stored with a trailing slash
+        if (temp.slice(-1) == '/') {
+            temp = temp.slice(0, -1);
         }
-        return dirPath;
+
+        // Strip out './' from start of paths
+        temp = temp.startsWith('./') ? temp.slice(2, temp.length) : temp;
+
+        return temp;
     });
 
     // Get all directory Reference currently existing
@@ -321,6 +327,8 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
     createdDirectories = createdDirectories.map(dirPath => {
         var pathSplit = dirPath.split('/');
         var dirName = pathSplit.slice(pathSplit.length - 1)[0]
+
+
         return {name: dirName, path: dirPath, kind: 'dir',
                 status: 'valid', repository: repoId, parseProvider: 'update'}
     });

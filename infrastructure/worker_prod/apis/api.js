@@ -42,8 +42,6 @@ const fetchAppToken = async () => {
     return await Token.findOne({'type': 'APP'})
     .then((foundToken) => {
         token = foundToken;
-        console.log('Token found is: ');
-        console.log(token);
         return token;
     })
     .catch((err) => {
@@ -72,15 +70,12 @@ const requestNewInstallationToken = async (installationId) => {
 const requestInstallationToken = async (appToken, installationId) => {
 
     var tokenFetch = await Token.findOne({ installationId });
-    console.log('requestInstallationToken tokenFetch: ');
-    console.log(tokenFetch);
 
     if (tokenFetch) {
         return tokenFetch
     }
 
     else {
-        console.log('Requesting new installation token');
         return await requestNewInstallationToken(installationId);
     }
 }
@@ -91,11 +86,7 @@ const requestInstallationClient = async (installationId) => {
     console.log(`Searching for Installation Token for ID: ${installationId}`);
 
     var appToken = await fetchAppToken();
-    console.log('Received App Token');
-    console.log(appToken);
     var installationToken = await requestInstallationToken(appToken, installationId);
-    console.log('Received Installation Token');
-    console.log(installationToken);
 
     var installationApi = axios.create({
         baseURL: "https://api.github.com/",
