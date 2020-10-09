@@ -5,7 +5,7 @@ import chroma from 'chroma-js';
 
 //components
 import { AiFillFolder } from 'react-icons/ai';
-import { RiFileFill, RiFileList2Fill, RiScissorsLine } from 'react-icons/ri';
+import { RiCloseFill, RiFileFill, RiFileList2Fill, RiScissorsLine } from 'react-icons/ri';
 import { FiPlus } from 'react-icons/fi';
 
 class CheckRightContent extends Component {
@@ -50,6 +50,9 @@ class CheckRightContent extends Component {
                 <Block>
                     <BlockHeader>
                         Broken Documents
+                        <Action color = {"#ff4757"}>
+                            <RiCloseFill/> {brokenDocuments.length}
+                        </Action>
                     </BlockHeader>
                     {
                         brokenDocuments.map(doc => {
@@ -80,6 +83,9 @@ class CheckRightContent extends Component {
                 <Block>
                     <BlockHeader>
                         Deprecated Snippets
+                        <Action color = {"#ff4757"}>
+                            <RiCloseFill/> {brokenSnippets.length}
+                        </Action>
                     </BlockHeader>
                     {brokenSnippets.map(snippet => {
                         const {start, code, reference: {name}} = snippet;
@@ -162,13 +168,13 @@ const Action = styled.div`
 
 const Block = styled.div`
     background-color: white;
-    border: 1px solid #E0E4E7;
+  /*  border: 1px solid #E0E4E7;*/
     padding: 1.7rem 2rem;
     padding-bottom: 3.5rem;
     border-radius: 0.4rem;
     width: 90%;
     margin-bottom: 2rem;
-   /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 `
 
 const BrokenDocument = styled.div`
