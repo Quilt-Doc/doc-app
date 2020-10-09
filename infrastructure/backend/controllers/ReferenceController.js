@@ -388,6 +388,7 @@ searchReferences = async (req, res) => {
     
     var { onlyValid } = req.body;
 
+
     if (!checkValid(onlyValid)) onlyValid = true;
 
     let referenceAggregate;
@@ -403,7 +404,8 @@ searchReferences = async (req, res) => {
                 } 
             }
         ]);
-    } else {
+    }
+    else {
         referenceAggregate = Reference.aggregate([]);
     }
     
@@ -454,6 +456,7 @@ searchReferences = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: "searchReferences: Failed to populate references", trace: err});
     }
+
 
     // Need to include time filtering
     return res.json({success: true, result: references});
