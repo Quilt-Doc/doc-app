@@ -84,6 +84,7 @@ class CheckRightContent extends Component {
 
     renderDepSnippets = () => {
         const { check: { brokenSnippets }} = this.props;
+        let rat = "file";
         if (brokenSnippets.length > 0) {
             return (
                 <Block>
