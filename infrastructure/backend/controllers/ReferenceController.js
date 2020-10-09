@@ -388,6 +388,7 @@ searchReferences = async (req, res) => {
     console.log("REFERENCE CONTROLLER REQ.BODY", req.body);
     var { onlyValid } = req.body;
 
+
     if (!checkValid(onlyValid)) onlyValid = true;
 
     let referenceAggregate;
@@ -403,7 +404,8 @@ searchReferences = async (req, res) => {
                 } 
             }
         ]);
-    } else {
+    }
+    else {
         referenceAggregate = Reference.aggregate([]);
     }
     
