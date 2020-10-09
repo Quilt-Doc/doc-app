@@ -37,8 +37,15 @@ class ReferenceDocument extends Component {
         return dateString
     }
 
+    selectColor = (index) => {
+        let colors = ['#5352ed',  '#e84393', '#20bf6b', '#1e3799', '#b71540', '#079992', '#ff4757', '#1e90ff', '#ff6348'];
+
+        return index < colors.length ? colors[index] : 
+            colors[index - Math.floor(index/colors.length) * colors.length];
+    }
+
     renderCard = () => {
-        const { doc } = this.props;
+        const { doc, color } = this.props;
         const { _id, title, author } = doc;
         return(
             <Card  onClick = { () => history.push(`?document=${_id}`) }> 
@@ -52,15 +59,15 @@ class ReferenceDocument extends Component {
                     }}/>
                 </Content> 
                 <Detail>
+                    <Creator color = {this.selectColor(color)} > 
+                        {author.firstName.charAt(0)}
+                    </Creator>
                     <CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
                         <AiOutlineClockCircle
-                            style = {{marginRight: "0.5rem"}}
+                            style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
                         />
                         {this.getDateItem(doc)}
                     </CreationDate>
-                    <Creator> 
-                        {author.firstName.charAt(0)}
-                    </Creator>
                 </Detail>
             </Card>
         )
@@ -132,27 +139,27 @@ const Detail = styled.div`
 const Creator = styled.div`
     height: 2.5rem;
     width: 2.5rem;
+    /*
     background-color: ${chroma('#1e90ff').alpha(0.2)};
-    color:#1e90ff;
+    color:#1e90ff;*/
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
-    margin-left: auto;
-    margin-top: -0.1rem;
     border-radius: 0.3rem;
-    font-weight: 500;
+    font-size: 1.4rem;
+    margin-top: -0.1rem;
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    color: ${props => props.color};
 `
 
 const CreationDate = styled.div`
     display: inline-flex;
     align-items: center;
-    background-color: #f5f7fa;
     height: 2.3rem;
-    padding: 0rem 0.8rem;
     font-weight:500;
     border-radius: 0.3rem;
     color: #8996A8;
+    margin-left: auto;
 `
 
 const Card = styled.div`

@@ -84,7 +84,6 @@ class CheckRightContent extends Component {
 
     renderDepSnippets = () => {
         const { check: { brokenSnippets }} = this.props;
-        let rat = "file";
         if (brokenSnippets.length > 0) {
             return (
                 <Block>
@@ -227,7 +226,7 @@ const BrokenDocument = styled.div`
 `
 
 const BrokenSnippet = styled.div`
-    height: 3.5rem;
+    height: 3.2rem;
     border-radius: 0.6rem;
     display: flex;
     font-weight: 500;

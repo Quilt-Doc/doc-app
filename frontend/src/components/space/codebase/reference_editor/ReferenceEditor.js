@@ -306,7 +306,7 @@ class ReferenceEditor extends Component {
     // tokenize the fileContents using prism and create highlighted spans
     renderLines = (fileContents) => {
 
-        const grammar = Prism.languages["python"];
+        const grammar = Prism.languages["javascript"];
 
         // maps the token types to relevant color and text-type
         const identifiers = {

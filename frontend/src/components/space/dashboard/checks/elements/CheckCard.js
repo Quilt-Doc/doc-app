@@ -64,6 +64,7 @@ const getDateItem = (created) => {
 export default CheckCard;
 
 const Check = styled.div`
+
     height: 11rem;
     width: 100%;
     border-radius: 0.7rem;
@@ -92,7 +93,10 @@ const CheckContent = styled.div`
 const Title = styled.div`
     font-weight: 500;
     font-size: 1.3rem;
-    
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 20rem;
 `
 
 const Status = styled.div`

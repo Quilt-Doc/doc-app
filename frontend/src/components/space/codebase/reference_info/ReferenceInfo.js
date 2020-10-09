@@ -65,8 +65,17 @@ class ReferenceInfo extends React.Component {
     }
 
     renderDocuments = () => {
-        const { documents } = this.props;
-        return documents.map((doc, i) => <ReferenceDocument key = {i} index = {i} doc = {doc} />);
+        const { documents, workspace: {memberUsers} } = this.props;
+        return documents.map((doc, i) => {
+            const { author } = doc;
+            let color = 0;
+            memberUsers.map((user, i) => {
+                if (user._id === author._id) {
+                    color = i;
+                }
+            })
+            return <ReferenceDocument color = {color} key = {i} index = {i} doc = {doc} />
+        });
     }
 
     // selects the color for the tagss depending on the tag color field (a number)
@@ -214,7 +223,7 @@ class ReferenceInfo extends React.Component {
                         <Message>
                             Attach Labels
                         </Message>
-                    }
+                    }  
                 </List>
                 <List style = {{marginBottom: "2rem"}}>
                     {this.renderDocumentMenu()}
@@ -236,7 +245,6 @@ class ReferenceInfo extends React.Component {
         return(
             <>
                 {this.renderToolbar()}
-              
                 <Container>
                     <Header>
                         {this.renderRepositoryName()}
@@ -249,8 +257,12 @@ class ReferenceInfo extends React.Component {
     }
 }
 
-const mapStateToProps = () => {
-    return { }
+const mapStateToProps = (state, ownProps) => {
+    const { workspaceId } = ownProps.match.params;
+    const { workspaces } = state;
+    return { 
+        workspace: workspaces[workspaceId]
+    }
 }
 
 

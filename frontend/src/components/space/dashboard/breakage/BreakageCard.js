@@ -69,7 +69,6 @@ class BreakageCard extends Component {
     
     render(){
         const { color, doc: { author, title, breakDate, breakCommit } } = this.props;
-        console.log("AUTHOR", author);
         return(
             <Card> {/*REPEATED COMPONENT MINIMAL DOCUMENT*/}
                 <Title>

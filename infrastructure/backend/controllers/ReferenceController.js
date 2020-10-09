@@ -385,7 +385,7 @@ removeReferenceTag = async (req, res) => {
 searchReferences = async (req, res) => {
     const { userQuery, repositoryId, tagIds, referenceIds,
       minimalReferences, skip, limit, sort } = req.body;
-    
+    console.log("REFERENCE CONTROLLER REQ.BODY", req.body);
     var { onlyValid } = req.body;
 
     if (!checkValid(onlyValid)) onlyValid = true;
@@ -454,6 +454,7 @@ searchReferences = async (req, res) => {
     } catch (err) {
         return res.json({success: false, error: "searchReferences: Failed to populate references", trace: err});
     }
+
 
     // Need to include time filtering
     return res.json({success: true, result: references});

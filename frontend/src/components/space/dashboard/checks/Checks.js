@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 
 //styles
 import styled from 'styled-components';
+import chroma from 'chroma-js';
 
 //components
 import CheckCard from './elements/CheckCard';
@@ -15,6 +16,8 @@ import { connect } from 'react-redux';
 
 //router
 import { withRouter } from 'react-router-dom';
+import { VscRepo } from 'react-icons/vsc';
+import { FiChevronDown } from 'react-icons/fi';
 
 // component that retrieve pull requests from version control
 // and keeps track of doc/reference updating and deprecation with regard to the request
@@ -71,7 +74,24 @@ class Checks extends Component {
                     {currentCheck ? 
                         <>
                             <LeftBar>
-                                { this.renderChecks() }
+                                <RepositorySection>
+                                    <MenuButton >
+                                        <IconBorder>    
+                                            <VscRepo/>
+                                        </IconBorder>
+                                        <LimitedTitle>react-select</LimitedTitle>
+                                        <FiChevronDown 
+                                                style = {{
+                                                    marginLeft: "0.5rem",
+                                                    marginTop: "0.3rem",
+                                                    fontSize: "1.45rem"
+                                                }}
+                                            />
+                                    </MenuButton>
+                                </RepositorySection>
+                                <CheckBar>
+                                    { this.renderChecks() }
+                                </CheckBar>
                             </LeftBar> 
                             <CheckRightContent check = {currentCheck}/>
                         </>
@@ -101,6 +121,60 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { retrieveChecks })(Checks));
 
+
+const MenuButton = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 1.4rem;
+    padding: 0rem 1.5rem;
+    border-radius: 0.4rem;
+    height: 3.5rem;
+    font-weight: 500;
+    display: inline-flex;
+    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    &:hover {
+        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
+    }
+    cursor: pointer;
+    border: 1px solid #172A4e;
+`
+
+const IconBorder = styled.div`
+    font-size: 1.8rem;
+    margin-right: 0.7rem;
+    width: 2rem;
+    display: flex;
+    align-items: center;
+    margin-top: 0.1rem;
+`
+
+const LimitedTitle = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 22rem;
+`
+
+
+
+
+
+
+
+
+
+
+
+const RepositorySection = styled.div`
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    padding-left: 2rem;
+    border-bottom: 1px solid #E0E4E7;
+    width: 100%;
+`
+
 const Message = styled.div`
     opacity: 0.5;
     font-size: 1.4rem;
@@ -115,13 +189,16 @@ const Centered = styled.div`
     align-items: center;
 `
 
+const CheckBar = styled.div`
+    overflow-y: scroll;
+    padding: 2rem;
+`
+
 const LeftBar = styled.div`
     width: 50rem;
     min-height: 100%;
-    overflow-y: scroll;
     background-color: white;
     border-right: 1px solid #E0E4E7;
-    padding: 2rem;
     border-top-left-radius: 0.5rem;
     border-bottom-left-radius: 0.5rem;
 `
