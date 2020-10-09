@@ -39,13 +39,23 @@ class Checks extends Component {
     }
 
     renderChecks = () => {
-        const { checks } = this.props;
+        const { checks, workspace } = this.props;
         const { currentCheck } = this.state;
         return checks.map(check => {
+            let {pusher} = check;
+            let color = 0;
+            workspace.memberUsers.map((user, i) => {
+                if (user.username === pusher) {
+                    pusher = user.firstName
+                    color = i;
+                }
+            });
             return <CheckCard 
                 active = {currentCheck._id === check._id} 
                 setCheck = {() => this.setState({currentCheck: check})} 
                 check = {check}
+                pusher = {pusher}
+                color = {color}
             />
         })
     }
@@ -121,7 +131,7 @@ const Header = styled.div`
     display: flex;
     align-items: center;
     font-size: 1.7rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 1rem;
 `
 

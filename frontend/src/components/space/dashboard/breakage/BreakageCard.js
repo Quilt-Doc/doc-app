@@ -16,15 +16,20 @@ class BreakageCard extends Component {
     // depending on whether this is a warning card (from props) or not
     // display correct status
     renderStatus(){
-        let { status } = this.props.doc;
+        let { status, breakCommit } = this.props.doc;
         return status === "invalid" ?
         (<Status color = {"#ff4757"}>
-            <RiCloseFill
-                style = 
-                {{
-                    fontSize: "1.7rem"
-                }}
-            />
+          
+            <Commit>
+                <FiGitCommit
+                    style = {{
+                        fontSize: "1.2rem",
+                        marginRight: "0.3rem",
+                        marginTop: "0.1rem"
+                    }}
+                />
+                {breakCommit.slice(0, 7)}
+            </Commit>
         </Status>) :
         (<Status color = {"#5B75E6"}>
             <AiOutlineExclamation
@@ -33,6 +38,16 @@ class BreakageCard extends Component {
                     fontSize: "1.5rem"
                 }}
             />
+            <Commit>
+                    <FiGitCommit
+                        style = {{
+                            fontSize: "1.2rem",
+                            marginRight: "0.3rem",
+                            marginTop: "0.1rem"
+                        }}
+                    />
+                    {breakCommit.slice(0, 7)}
+            </Commit>
         </Status>)
     }
 
@@ -43,13 +58,22 @@ class BreakageCard extends Component {
         let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
         return dateString
     }
+
+
+    selectColor = (index) => {
+        let colors = ['#5352ed',  '#e84393', '#20bf6b', '#1e3799', '#b71540', '#079992', '#ff4757', '#1e90ff', '#ff6348'];
+
+        return index < colors.length ? colors[index] : 
+            colors[index - Math.floor(index/colors.length) * colors.length];
+    }
     
     render(){
-        const { title, breakDate, breakCommit } = this.props.doc;
+        const { color, doc: { author, title, breakDate, breakCommit } } = this.props;
+        console.log("AUTHOR", author);
         return(
             <Card> {/*REPEATED COMPONENT MINIMAL DOCUMENT*/}
                 <Title>
-                    {title}
+                    <Name>{title}</Name>
                     {this.renderStatus()}
                 </Title>
                 <Content>
@@ -58,22 +82,15 @@ class BreakageCard extends Component {
                     }}/>
                 </Content> 
                 <Detail>
+                    <Creator color = {this.selectColor(color)} > 
+                        {author.firstName.charAt(0)}
+                    </Creator>
                     <CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
                         <AiOutlineClockCircle
-                            style = {{marginRight: "0.5rem"}}
+                            style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
                         />
                         {this.getDateItem(breakDate)}
                     </CreationDate>
-                    <Commit>
-                        <FiGitCommit
-                            style = {{
-                                fontSize: "1.2rem",
-                                marginRight: "0.3rem",
-                                marginTop: "0.1rem"
-                            }}
-                        />
-                       {breakCommit.slice(0, 7)}
-                    </Commit>
                 </Detail>
             </Card>
         )
@@ -82,6 +99,16 @@ class BreakageCard extends Component {
 
 export default BreakageCard;
 
+const CreationDate = styled.div`
+    display: inline-flex;
+    align-items: center;
+    height: 2.3rem;
+    font-weight:500;
+    border-radius: 0.3rem;
+    color: #8996A8;
+    margin-left: auto;
+`
+
 const Commit = styled.div`
     font-size: 0.95rem;
     margin-left: auto;
@@ -89,7 +116,6 @@ const Commit = styled.div`
     align-items: center;
     opacity: 0.7;
     font-weight: 500;
-    margin-top: 0.6rem;
 `
 
 const Status = styled.div`
@@ -102,10 +128,10 @@ const Status = styled.div`
     font-size: 1.4rem;
     align-items: center;
     height: 2rem;
-    width: 2.7rem;
     margin-top: -0rem;
     margin-left: auto;
     justify-content: center;
+    padding: 0 1rem;
 `
 
 const Title = styled.div`
@@ -113,6 +139,16 @@ const Title = styled.div`
     font-weight: 500;
     font-size: 1.4rem;
     align-items: center;
+`
+
+const Name = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 500;
+    width: 10rem;
+    font-size: 1.25rem;
 `
 
 //3 Faraz TODO: add a border on this guy
@@ -136,26 +172,17 @@ const Detail = styled.div`
 const Creator = styled.div`
     height: 2.5rem;
     width: 2.5rem;
+    /*
     background-color: ${chroma('#1e90ff').alpha(0.2)};
-    color:#1e90ff;
+    color:#1e90ff;*/
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 0.3rem;
     font-size: 1.4rem;
-    margin-left: auto;
     margin-top: -0.1rem;
-`
-
-const CreationDate = styled.div`
-    display: inline-flex;
-    align-items: center;
-    background-color: #f5f7fa;
-    height: 2.3rem;
-    padding: 0rem 0.8rem;
-    font-weight:500;
-    border-radius: 0.3rem;
-    color: #8996A8;
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    color: ${props => props.color};
 `
 
 const Card = styled.div`

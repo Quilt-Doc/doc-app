@@ -19,12 +19,13 @@ const { ObjectId } = mongoose.Types;
 
 retrieveBrokenDocuments = async (req, res) => {
     const { limit, skip } = req.body;
-    console.log("BROKEN DOCS");
     const workspaceId = req.workspaceObj._id.toString();
 
     let query;
 
     query = Document.find({ workspace: workspaceId, status: {$in: ['invalid', 'resolve']} });
+
+    query.populate('author');
 
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));

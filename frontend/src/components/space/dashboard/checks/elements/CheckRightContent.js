@@ -17,7 +17,10 @@ class CheckRightContent extends Component {
             return (
                 <Block>
                     <BlockHeader>
-                       Code References
+                        <Content>
+                            <BlockTitle>Code References</BlockTitle>
+                            <BlockSubtitle>Create new content from newly added code.</BlockSubtitle>
+                        </Content>
                        <Action color = {"#19e5be"}>
                             <FiPlus/> {addedReferences.length}
                         </Action>
@@ -49,7 +52,10 @@ class CheckRightContent extends Component {
             return (
                 <Block>
                     <BlockHeader>
-                        Broken Documents
+                        <Content>
+                            <BlockTitle>Broken Documents</BlockTitle>
+                            <BlockSubtitle>Resolve deleted references on documents.</BlockSubtitle>
+                        </Content>
                         <Action color = {"#ff4757"}>
                             <RiCloseFill/> {brokenDocuments.length}
                         </Action>
@@ -59,7 +65,7 @@ class CheckRightContent extends Component {
                             return(
                                 <BrokenDocument>
                                     <RiFileList2Fill  style = {{
-                                        
+                                        color: '#2684FF',
                                         width: "2rem",
                                         fontSize: "1.6rem",
                                         marginRight: "0.5rem"
@@ -82,7 +88,10 @@ class CheckRightContent extends Component {
             return (
                 <Block>
                     <BlockHeader>
-                        Deprecated Snippets
+                        <Content>
+                            <BlockTitle>Deprecated Snippets</BlockTitle>
+                            <BlockSubtitle>Reselect or delete invalidated snippets.</BlockSubtitle>
+                        </Content>
                         <Action color = {"#ff4757"}>
                             <RiCloseFill/> {brokenSnippets.length}
                         </Action>
@@ -119,6 +128,33 @@ class CheckRightContent extends Component {
 
 export default CheckRightContent;
 
+const Content = styled.div`
+    display: flex;
+    flex-direction: column;
+`
+
+const BlockSubtitle = styled.div`
+    color: 172a4e;
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 1.3rem;
+    height: 2rem;
+    opacity: 0.5;
+`
+
+const BlockTitle = styled.div`
+    color: 172a4e;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    height: 2rem;
+    margin-top: 4.5rem;
+    &:first-of-type {
+        margin-top: 0rem;
+    }
+`
 
 const ReferenceTitle = styled.div`
     color: #172A4e;
@@ -163,6 +199,7 @@ const Action = styled.div`
     display: flex;
     align-items: center;
     border: 1px solid ${props => props.color};
+    align-self: flex-start;
 `
 
 
@@ -178,24 +215,25 @@ const Block = styled.div`
 `
 
 const BrokenDocument = styled.div`
-    height: 3rem;
+    height: 2.8rem;
     border-radius: 0.3rem;
-    display: flex;
     font-weight: 500;
     align-items: center;
     font-size: 1.25rem;
+    background-color: #f5f7fa;
+    padding: 0rem 0.8rem;
+    display: inline-flex;
 `
 
 const BrokenSnippet = styled.div`
     height: 3.5rem;
-    border-radius: 0.3rem;
+    border-radius: 0.6rem;
     display: flex;
     font-weight: 500;
     align-items: center;
     font-size: 1.25rem;
-    background-color: #f7f9fb;
     padding: 0rem 1.5rem;
-    border: 1px solid #E0E4E7;
+    border: 1px solid #172A4E;
     margin-bottom: 1rem;
     padding-left: 1rem;
 `

@@ -10,8 +10,9 @@ import { AiOutlineClockCircle } from 'react-icons/ai';
 import { FiGitCommit } from 'react-icons/fi';
 
 
-const CheckCard = ({check, setCheck, active}) => {
-    const {sha, brokenDocuments, brokenSnippets, commitMessage, pusher, created} = check;
+const CheckCard = ({check, setCheck, active, pusher, color}) => {
+    const {sha, brokenDocuments, brokenSnippets, commitMessage, created} = check;
+    let selectedColor = selectColor(color);
     return (
         <Check active = {active}  onClick = {() => setCheck()}>
             <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
@@ -31,7 +32,7 @@ const CheckCard = ({check, setCheck, active}) => {
                 <Title>{commitMessage}</Title>
                 <Detail>
                     <Bottom>
-                        <Creator>{pusher.charAt(0)}</Creator>
+                        <Creator color = {selectedColor}>{pusher.charAt(0)}</Creator>
                         <CreationDate> 
                             <AiOutlineClockCircle
                                 style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
@@ -43,6 +44,14 @@ const CheckCard = ({check, setCheck, active}) => {
             </CheckContent>
         </Check>
     )   
+}
+
+const selectColor = (index) => {
+    let colors = ['#5352ed', '#ff4757', '#20bf6b','#1e90ff', '#ff6348', 
+        '#e84393', '#1e3799', '#b71540', '#079992'];
+
+    return index < colors.length ? colors[index] : 
+        colors[index - Math.floor(index/colors.length) * colors.length];
 }
 
 const getDateItem = (created) => {
@@ -109,8 +118,10 @@ const Commit = styled.div`
 const Creator = styled.div`
     height: 2.5rem;
     width: 2.5rem;
-    background-color: ${chroma('#1e90ff').alpha(0.2)};
-    color:#1e90ff;
+   /* background-color: ${chroma('#1e90ff').alpha(0.2)};
+    color:#1e90ff;*/
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    color: ${props => props.color};
     display: flex;
     align-items: center;
     justify-content: center;

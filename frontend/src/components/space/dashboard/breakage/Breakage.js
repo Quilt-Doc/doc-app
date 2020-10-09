@@ -37,7 +37,20 @@ class Breakage extends Component {
     
     renderBrokenCards = () => {
         const { broken } = this.state;
-        if (broken.length > 0) return broken.map(doc => <BreakageCard doc = {doc}/>);
+        const { workspace: {memberUsers} } = this.props;
+        if (broken.length > 0) return broken.map(doc => {
+            const { author } = doc;
+            let color = 0;
+            memberUsers.map((user, i) => {
+                if (user._id === author._id) {
+                    console.log("MATCH");
+                    color = i;
+                }
+            })
+            console.log("COLOR", color);
+            return <BreakageCard color = {color} doc = {doc}/>
+        }
+        );
         return <BreakagePlaceholder/>
     }
 
@@ -56,9 +69,12 @@ class Breakage extends Component {
     }
 }
 
-const mapStateToProps = () => {
-    return {
+const mapStateToProps = (state, ownProps) => {
+    const { workspaces } = state;
+    const { workspaceId } = ownProps.match.params
 
+    return {
+        workspace: workspaces[workspaceId]
     }
 }
 
@@ -77,7 +93,7 @@ const Header = styled.div`
     display: flex;
     align-items: center;
     font-size: 1.7rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 1rem;
     /*
     padding-left: 4rem;
