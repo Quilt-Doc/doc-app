@@ -15,6 +15,7 @@ var referenceSchema = new Schema({
 	position: String,
 	created: {type: Date, default: Date.now },
 	tags: [{type: ObjectId, ref: 'Tag'}],
+	root: {type: Boolean, default: false},
 
 	// Reporting Attributes
 	status: {type: String, enum: ['valid', 'invalid'], default: 'valid', required: true},

@@ -18,6 +18,9 @@ export const retrieveChecks = (formValues) => async dispatch => {
 
     const response = await api.post(`/checks/${workspaceId}/${repositoryId}/retrieve`, formValues );
 
+    console.log('RETRIEVE CHECKS RECEIVED: ');
+    console.log(response.data);
+
     const { success, error, result } = response.data;
 
     if (!success) {

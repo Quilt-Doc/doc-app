@@ -16,7 +16,7 @@ exports.handler = async (event) => {
     const secret = process.env.WEBHOOK_SECRET;
     const sigHeaderName = 'x-hub-signature'
     const sig = event.headers[sigHeaderName] || ''
-    
+
     var hmac = crypto.createHmac("sha1", secret)
     hmac.update(event.body, 'binary')
     var expected = 'sha1=' + hmac.digest('hex')
@@ -223,13 +223,12 @@ exports.handler = async (event) => {
                     body: JSON.stringify({ message: "200 OK"})
                 };
                 return response;
-
             }
         }
 
         else if (action == 'removed') {
             var removed = event.body.repositories_removed;
-        }        
+        }
     }
 
     else if (githubAction == "check_suite") {

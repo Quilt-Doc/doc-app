@@ -202,6 +202,7 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
   // Strip out branch name
   var snippetData = repoSnippets.map(snippetObj => {
     return { _id: snippetObj._id.toString(),
+              code: snippetObj.code,
               startLineNum: snippetObj.start,
               numLines: snippetObj.code.length,
               firstLine: snippetObj.code[0],

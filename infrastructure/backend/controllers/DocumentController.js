@@ -116,7 +116,7 @@ createDocument = async (req, res) => {
     // Reporting Section
     if (document.root != true) {
         try {
-            await ReportingController.handleDocumentCreate(authorId, workspaceId, document._id.toString());
+            await ReportingController.handleDocumentCreate(authorId, workspaceId, title, document._id.toString());
         }
         catch (err) {
             await logger.error({source: 'backend-api',

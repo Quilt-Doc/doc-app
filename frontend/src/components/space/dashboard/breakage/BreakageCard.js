@@ -37,7 +37,7 @@ class BreakageCard extends Component {
     }
 
     getDateItem = () => {
-        const { created } = this.props.feed;
+        const { created } = this.props.doc;
         let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         let item =  new Date(created)
         let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;

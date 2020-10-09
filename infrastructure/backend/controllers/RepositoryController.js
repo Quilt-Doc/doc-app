@@ -55,7 +55,7 @@ initRepository = async (req, res) => {
 
     try {
         await Reference.create({repository: repository._id, 
-            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create"});
+            name: repository.fullName, kind: 'dir', path: "", parseProvider: "create", root: true});
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -340,6 +340,11 @@ updateRepository = async (req, res) => {
 
     return res.json({success: true, result: true});
 }
+
+
+// removeRepositoryInstallation = async (req, res) => {
+
+// }
 
 
 module.exports = {

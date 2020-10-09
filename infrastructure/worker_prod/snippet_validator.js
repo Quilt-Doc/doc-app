@@ -5,14 +5,7 @@ var dmp = new diff_match_patch();
 
 // TODO - Make sure that only first 3-4 lines of snippets can create a new snippet candidate region
 // TODO - Don't search the whole file for the new snippet regions, instead search some factor of `windowSize` around old region
-/*
-const SNIPPET_EXPANSION_FACTOR = 1.5;
-const SNIPPET_VALID_REGION_THRESHOLD = 0.5;
-const NUM_VALID_SNIPPET_START_LINES = 3;
 
-const SNIPPET_STATUS_INVALID = 'INVALID';
-const SNIPPET_STATUS_VALID = 'VALID';
-*/
 
 const constants = require('./constants/index');
 

@@ -4,20 +4,26 @@ const checkConstants = require('../constants/index').checks;
 const Document = require('../models/Document');
 const Snippet = require('../models/Snippet');
 
-const generateCheckSummary = (brokenDocuments, brokenSnippets) => {
+generateCheckSummary = (brokenDocuments, brokenSnippets) => {
+
+    var documentWord = (brokenDocuments.length > 0 && brokenDocuments.length < 2) ? 'document' : 'documents'
+    var snippetWord = (brokenSnippets.length > 0 && brokenSnippets.length < 2) ? 'snippet' : 'snippets'
+
+
     if (brokenDocuments.length == 0 && brokenSnippets.length == 0) {
-        return 'This push broke no documentation!';
+        return 'This push broke no documentats or snippets!';
     }
     else if (brokenDocuments.length > 0 && brokenSnippets.length == 0) {
-        return `This push broke ${brokenDocuments.length} documents`;
+        return `This push broke ${brokenDocuments.length} ${documentWord}`;
     }
     else if (brokenDocuments.length == 0 && brokenSnippets.length > 0) {
-        return `This push broke ${brokenSnippets.length} snippets`;
+        return `This push broke ${brokenSnippets.length} ${snippetWord}`;
     }
     else if (brokenDocuments.length > 0 && brokenSnippets.length > 0) {
-        return `This push broke ${brokenDocuments.length} documents and ${brokenSnippets.length} snippets`;
+        return `This push broke ${brokenDocuments.length} ${documentWord} and ${brokenSnippets.length} ${snippetWord}`;
     }
 }
+
 
 
 const generateCheckText = async (brokenDocuments, brokenSnippets) => {

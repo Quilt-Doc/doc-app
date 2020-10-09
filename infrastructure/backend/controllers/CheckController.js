@@ -27,20 +27,26 @@ checkValid = (item) => {
 }
 
 generateCheckSummary = (brokenDocuments, brokenSnippets) => {
+
+    var documentWord = (brokenDocuments.length > 0 && brokenDocuments.length < 2) ? 'document' : 'documents'
+    var snippetWord = (brokenSnippets.length > 0 && brokenSnippets.length < 2) ? 'snippet' : 'snippets'
+
+
     if (brokenDocuments.length == 0 && brokenSnippets.length == 0) {
-        return 'This push broke no documentation!';
+        return 'This push broke no documentats or snippets!';
     }
     else if (brokenDocuments.length > 0 && brokenSnippets.length == 0) {
-        return `This push broke ${brokenDocuments.length} documents`;
+        return `This push broke ${brokenDocuments.length} ${documentWord}`;
     }
     else if (brokenDocuments.length == 0 && brokenSnippets.length > 0) {
-        return `This push broke ${brokenSnippets.length} snippets`;
+        return `This push broke ${brokenSnippets.length} ${snippetWord}`;
     }
     else if (brokenDocuments.length > 0 && brokenSnippets.length > 0) {
-        return `This push broke ${brokenDocuments.length} documents and ${brokenSnippets.length} snippets`;
+        return `This push broke ${brokenDocuments.length} ${documentWord} and ${brokenSnippets.length} ${snippetWord}`;
     }
 }
 
+// TODO: Make documents link to themselves
 generateCheckText = async (brokenDocuments, brokenSnippets) => {
     var text = '';
 
@@ -50,7 +56,7 @@ generateCheckText = async (brokenDocuments, brokenSnippets) => {
         if (i >= checkConstants.CHECK_DOCUMENT_MAX_NUM) break;
         var documentObj;
         try {
-            documentObj = await Document.findById(brokenDocuments[i].toString(), 'title').exec();
+            documentObj = await Document.findById(brokenDocuments[i].toString(), 'title workspace').exec();
         }
         catch (err) {
             throw new Error(`Error fetching Document: ${brokenDocuments[i]}`);

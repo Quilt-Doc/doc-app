@@ -78,9 +78,6 @@ retrieveReferences = async (req, res) => {
     let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip, sort, onlyValid } = req.body;
     var validRepositoryIds = req.workspaceObj.repositories;
 
-    console.log('RETRIEVE BODY: ');
-    console.log(req.body);
-    
     let query = Reference.find();
 
     if (!checkValid(onlyValid)) onlyValid = true;
@@ -91,6 +88,9 @@ retrieveReferences = async (req, res) => {
     if (onlyValid) {
         query.where('status').equals('valid');
     }
+    // Don't retrieve Root reference
+    // query.where('root').equals(false);
+
     // make sure that repositoryId provided exists and is accessible from workspace
     
     if (checkValid(repositoryId)) {
@@ -415,6 +415,10 @@ searchReferences = async (req, res) => {
         console.log('matching only valid');
         referenceAggregate.match({status: 'valid'});
     }
+
+    // Don't retrieve Root reference
+    referenceAggregate.match({root: false});
+
 
     if (checkValid(tagIds)) referenceAggregate.match({
         tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }
