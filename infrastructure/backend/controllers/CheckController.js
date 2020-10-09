@@ -258,7 +258,7 @@ const retrieveChecks = async (req, res) => {
 
 
     if (!checkValid(skip)) skip = 0;
-    
+
     if (!checkValid(limit))  limit = 10;
 
     try {
