@@ -107,10 +107,10 @@ class SideNavbar extends React.Component {
         const {workspace: {name}} = this.props;
         return (
             <SideNavbarContainer id = "sidenavbar">
+                <CreateButton/>
                 <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 {this.renderTopSection()}
                 {this.renderBottomSection()}
-                <CreateButton/>
             </SideNavbarContainer>
         )
     }
@@ -163,7 +163,6 @@ const SideNavbarContainer = styled.div`
     overflow-y: scroll;
     height: 100vh;
     align-items: center;
-    padding-top: 2.5rem;
     /*
     border-radius: 1.7rem;
     border-top-left-radius: 0rem;
