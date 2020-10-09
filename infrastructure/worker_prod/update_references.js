@@ -247,6 +247,10 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker) => 
             temp = temp.slice(0, -1);
         }
 
+        // Remove all Escaped Spaces in directory names
+
+        temp = temp.split("\\ ").join(" ");
+
         // Strip out './' from start of paths
         temp = temp.startsWith('./') ? temp.slice(2, temp.length) : temp;
 
