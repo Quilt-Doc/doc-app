@@ -79,7 +79,7 @@ class Checks extends Component {
                                         <IconBorder>    
                                             <VscRepo/>
                                         </IconBorder>
-                                        <LimitedTitle>react-select</LimitedTitle>
+                                        <LimitedTitle>doc-app</LimitedTitle>
                                         <FiChevronDown 
                                                 style = {{
                                                     marginLeft: "0.5rem",
@@ -192,6 +192,7 @@ const Centered = styled.div`
 const CheckBar = styled.div`
     overflow-y: scroll;
     padding: 2rem;
+    height: 45.5rem;
 `
 
 const LeftBar = styled.div`

@@ -223,6 +223,8 @@ const BrokenDocument = styled.div`
     background-color: #f5f7fa;
     padding: 0rem 0.8rem;
     display: inline-flex;
+    margin-right: 2rem;
+    border: 1px solid #e0e4e7;
 `
 
 const BrokenSnippet = styled.div`

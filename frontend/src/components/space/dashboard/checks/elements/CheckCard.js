@@ -5,8 +5,8 @@ import styled from 'styled-components';
 import chroma from 'chroma-js';
 
 //components
-import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
-import { AiOutlineClockCircle } from 'react-icons/ai';
+import { IoMdCheckmarkCircle, IoMdCheckmarkCircleOutline, IoMdCloseCircle, IoMdCloseCircleOutline } from 'react-icons/io';
+import { AiOutlineClockCircle, AiOutlineCloseCircle } from 'react-icons/ai';
 import { FiGitCommit } from 'react-icons/fi';
 
 
@@ -16,7 +16,7 @@ const CheckCard = ({check, setCheck, active, pusher, color}) => {
     return (
         <Check active = {active}  onClick = {() => setCheck()}>
             <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
-                <IoMdCheckmarkCircleOutline/>
+                {renderStatus(brokenDocuments, brokenSnippets)}
             </Status>
             <CheckContent active = {active}>
                 <Commit>
@@ -44,6 +44,12 @@ const CheckCard = ({check, setCheck, active, pusher, color}) => {
             </CheckContent>
         </Check>
     )   
+}
+
+const renderStatus = (brokenDocuments, brokenSnippets) => {
+    return (brokenDocuments.length === 0 && brokenSnippets.length === 0) ?
+        <IoMdCheckmarkCircleOutline/> :
+        <AiOutlineCloseCircle/>
 }
 
 const selectColor = (index) => {
@@ -100,7 +106,7 @@ const Title = styled.div`
 `
 
 const Status = styled.div`
-    color: ${props => props.active ? '#19e5be' : '#6f7390'};
+    color: ${props => props.active ? '#19e5be' : '#ff4757'};
     font-size: 2.7rem;
     padding: 1rem;
     background-color:#373a49;
