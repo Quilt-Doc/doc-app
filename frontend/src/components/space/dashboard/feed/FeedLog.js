@@ -34,14 +34,14 @@ class FeedLog extends Component {
     }
 
     renderText = () => {
-        const { user: {firstName, lastName}, type, document} = this.props.feed;
+        const { user: {firstName, lastName}, type, title} = this.props.feed;
         return ( 
             <>
                 <Document>
                     {`${firstName} ${lastName}`}
                 </Document>
                 {type === "create" ? " created " : " deleted " }
-                <Document>{document ? document.title: ""}</Document>
+                <Document>{title ? title : ""}</Document>
             </>
         )
     }
