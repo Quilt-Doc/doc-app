@@ -165,7 +165,6 @@ const withFunctionality = (editor, dispatch) => {
 				if (lastSeen === "/") {
 					dispatch({type: 'markupMenuOff'})
 				}  else if  (lastSeen === "*") {
-					console.log("ENTERED *")
 					dispatch({type: 'referenceMenuOff'})
 				}
 			}

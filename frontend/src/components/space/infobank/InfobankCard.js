@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import chroma from 'chroma-js';
 
-import {RiSlackLine, RiCheckFill} from 'react-icons/ri';
+import {RiSlackLine, RiCheckFill, RiFileList2Fill} from 'react-icons/ri';
 import {FaConfluence} from 'react-icons/fa';
 import {FaTrello, FaJira} from 'react-icons/fa';
 import {SiAsana, SiNotion} from 'react-icons/si';
@@ -27,6 +27,7 @@ class InfobankCard extends React.Component {
     }
 
     renderLink = (doc) => {
+        let rat = "john";
         let { workspaceId } = this.props.match.params;
         return `/workspaces/${workspaceId}/document/${doc._id}`;
     }
@@ -57,7 +58,9 @@ class InfobankCard extends React.Component {
                             {result.image ? 
                                 <StyledImg src = {result.image} />
                                 :   <StyledIcon>
-                                        <FaJira style = {{ color: '#2684FF'}}/>
+                                        <RiFileList2Fill style = {{
+                                            color: '#2684FF',
+                                        }}/>
                                     </StyledIcon>
                             }
                         </ImageContainer> 
@@ -101,14 +104,14 @@ const StyledIcon = styled.div`
     display:flex;
     border: 1px solid #E0E4E7;
     border-radius: 0.2rem;
-    font-size: 2.7rem;
+    font-size: 3.5rem;
 `
 
 const StyledImg = styled.img`
     width: 20rem;
     height: auto;
-    border: 1px solid #E0E4E7;
-    border-radius: 0.2rem;
+    border: 1px solid #373a49;;
+    border-radius: 0.3rem;
 `
 
 const Status = styled.div`
@@ -134,7 +137,7 @@ const Title = styled.div`
     align-items: center;
     padding: 2rem;
     padding-bottom: 3rem;
-    background-color: #333643;
+    background-color: #373a49;
     color: white;
     border-top-left-radius: 0.3rem;
     border-top-right-radius: 0.3rem;

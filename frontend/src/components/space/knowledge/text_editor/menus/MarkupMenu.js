@@ -59,7 +59,15 @@ const MarkupMenu = (props) => {
 				ReactEditor.focus(editor)
 				props.dispatch({type: 'referenceMenuOn'})
 			} */
-			editor.insertBlock({type}, range)
+
+			editor.insertBlock({type}, range);
+			/*
+			if (type === 'code-snippet') {
+				props.dispatch({type: "markupMenuOff"});
+				props.dispatch({type: "snippetMenuOn"});
+			} else {
+				editor.insertBlock({type}, range)
+			}*/
 		}, []
 	)
 
@@ -72,23 +80,23 @@ const MarkupMenu = (props) => {
 
 	useEffect(() => {
 		if (props.state.markupMenuActive && editor.selection) {
-			let editorContainer = document.getElementById("editorContainer");
-			if (editorContainer) editorContainer.style.overflowY = "hidden"
+			//let editorContainer = document.getElementById("editorContainer");
+			//if (editorContainer) editorContainer.style.overflowY = "hidden"
 			//const domSelection= window.getSelection()
 			
 			let path = [editor.selection.anchor.path[0]]
 			let offset = editor.selection.anchor.offset - 1
 			let newRect = ReactEditor.toDOMRange(editor, 
 							{anchor: {offset, path}, 
-							focus: {offset, path }}).getBoundingClientRect()
-			changeRect(newRect)
+							focus: {offset, path }}).getBoundingClientRect();
+			changeRect(newRect);
 			//document.addEventListener("mousedown", handleClickOutside, false)
-			changeOpen(true)
+			changeOpen(true);
         } else {
 			//document.removeEventListener("mousedown", handleClickOutside, false)
-			let editorContainer = document.getElementById("editorContainer");
-			if (editorContainer) editorContainer.style.overflowY = "scroll";
-			changeOpen(false)
+			//let editorContainer = document.getElementById("editorContainer");
+			//if (editorContainer) editorContainer.style.overflowY = "scroll";
+			changeOpen(false);
 		}
 	}, [props.state.markupMenuActive])
 
@@ -203,8 +211,13 @@ class MenuContents extends React.Component {
 	}
 
 	componentDidUpdate(prevProps) {
-		if (this.props.open && prevProps.open !== this.props.open) {
-			document.addEventListener('mousedown', this.handleClickOutside, false)
+		const {open} = this.props;
+		if (prevProps.open !== open) {
+			if (open) {
+				document.addEventListener('mousedown', this.handleClickOutside, false);
+			} else {
+				document.removeEventListener('mousedown', this.handleClickOutside, false);
+			}
 		}
 	}
 	
@@ -225,11 +238,8 @@ class MenuContents extends React.Component {
 			
 			if (documentModal) {	
 				let background = document.getElementById("documentModalBackground");
-				console.log("OLD VALUE", rect.top);
-				console.log("SCROLL", background.scrollTop)
-				console.log("NEW VALUE", rect.top - background.scrollTop);
 				rect = {left: rect.left, height: rect.height, top: rect.top + background.scrollTop};
-			}
+			} 
 			
 			let height = this.convertRemToPixels(40);
 			if (rect.top + height - 100 > window.innerHeight){
