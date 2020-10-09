@@ -45,6 +45,8 @@ const NavbarIcon = styled.div`
         background-color:#464c5d;
     }
     transition: background-color 0.1s ease-in;
-    border-top: 1px solid #4f5569;
+    border-bottom: 1px solid #4f5569;
+    border-radius: 0.3rem;
+    margin-bottom: 2.5rem;
     color: white;
 `
