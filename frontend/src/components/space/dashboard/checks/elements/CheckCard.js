@@ -86,9 +86,9 @@ const Check = styled.div`
 
 const CheckContent = styled.div`
     width: 100%;
-    border-top: 1px solid  ${props => props.active ? "": "#E0E4E7"};
-    border-right: 1px solid ${props => props.active ? "" : "#E0E4E7"};
-    border-bottom: 1px solid ${props => props.active ? "" : "#E0E4E7"};
+    border-top: 1px solid  ${props => props.active ? "#373a49": "#E0E4E7"};
+    border-right: 1px solid ${props => props.active ? "#373a49" : "#E0E4E7"};
+    border-bottom: 1px solid ${props => props.active ? "#373a49" : "#E0E4E7"};
     border-top-right-radius: 0.8rem;
     border-bottom-right-radius: 0.8rem;
     padding: 1rem 1.8rem;

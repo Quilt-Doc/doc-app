@@ -60,21 +60,23 @@ class CheckRightContent extends Component {
                             <RiCloseFill/> {brokenDocuments.length}
                         </Action>
                     </BlockHeader>
-                    {
-                        brokenDocuments.map(doc => {
-                            return(
-                                <BrokenDocument>
-                                    <RiFileList2Fill  style = {{
-                                        color: '#2684FF',
-                                        width: "2rem",
-                                        fontSize: "1.6rem",
-                                        marginRight: "0.5rem"
-                                    }}/>
-                                    {doc.title}
-                                </BrokenDocument>
-                            )
-                        })
-                    } 
+                    <InfoList>
+                        {
+                            brokenDocuments.map(doc => {
+                                return(
+                                    <BrokenDocument>
+                                        <RiFileList2Fill  style = {{
+                                            color: '#2684FF',
+                                            width: "2rem",
+                                            fontSize: "1.6rem",
+                                            marginRight: "0.5rem"
+                                        }}/>
+                                        {doc.title}
+                                    </BrokenDocument>
+                                )
+                            })
+                        } 
+                    </InfoList>
                 </Block>
             )
         } else {
@@ -225,6 +227,7 @@ const BrokenDocument = styled.div`
     display: inline-flex;
     margin-right: 2rem;
     border: 1px solid #e0e4e7;
+    margin-bottom: 1rem;
 `
 
 const BrokenSnippet = styled.div`
