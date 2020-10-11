@@ -192,7 +192,7 @@ const Centered = styled.div`
 const CheckBar = styled.div`
     overflow-y: scroll;
     padding: 2rem;
-    height: 45.5rem;
+    height: 54.0rem;
 `
 
 const LeftBar = styled.div`
