@@ -34,7 +34,7 @@ const RightAsset = styled.img`
 const Container = styled.div`
     height: 85rem;
     width: 100%;
-    background-color: #1f2229;
+    background-color: #1a1d23;
     display: flex;
     color: white;
     flex-direction: column;

@@ -3,7 +3,7 @@ import { render } from 'react-dom';
 import { Router, Route, Switch } from 'react-router-dom';
 
 import dashboardGIF from '../../images/dashboard.gif';
-import terminalGIF from '../../images/terminal.gif';
+import terminalMP4 from '../../images/terminal_6.mp4';
 
 import styled from 'styled-components';
 import chroma from 'chroma-js';
@@ -28,14 +28,16 @@ const DashboardPanel = () => {
                             <Number bColor = {'#2c303a'}>1</Number>
                             Make Changes
                         </Top>
-                        <StyledGif src = {terminalGIF}/>
+                        <StyledVideo muted autoPlay loop >
+                            <source src = {terminalMP4} type = "video/mp4"></source>
+                        </StyledVideo>
                     </Block>
                     <Block>
                         <Top>
                             <Number bColor = {'#5B75E6'}>2</Number>
                             Update Documentation
                         </Top>
-                        <StyledGif src = {dashboardGIF}/>
+                       
                     </Block>
                 </BlockContainer>
             </Body>
@@ -46,7 +48,7 @@ const DashboardPanel = () => {
 
 export default DashboardPanel;
 
-const StyledGif = styled.img`
+const StyledVideo = styled.video`
     margin-top: 2rem;
     width: 100%;
     height: auto;
