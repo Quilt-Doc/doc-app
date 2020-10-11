@@ -1,7 +1,7 @@
 import React from 'react';
 
 import styled from 'styled-components';
-import snippetGIF from '../../images/snippet_mov.gif'
+import snippetMP4 from '../../images/snippet.mp4'
 
 const SnippetPanel = () => {
     return(
@@ -15,7 +15,9 @@ const SnippetPanel = () => {
                         <Mark>Information shouldn't be separated from code. </Mark>Stay in context with attached and tracked snippet annotations.
                     </SubHeader>
                 </SmallContainer>
-                <RightAsset src = {snippetGIF}/>
+                <StyledVideo muted autoPlay loop = {false} >
+                    <source src = {snippetMP4} type = "video/mp4"></source>
+                </StyledVideo>
             </Content>
         </Container>
     )
@@ -24,7 +26,7 @@ const SnippetPanel = () => {
 export default SnippetPanel;
 
 
-const RightAsset = styled.img`
+const StyledVideo = styled.video`
     width: 55%;
     margin-right: 8rem;
     border-radius: 0.5rem;

@@ -37,7 +37,7 @@ const DashboardPanel = () => {
                             <Number bColor = {'#5B75E6'}>2</Number>
                             Update Documentation
                         </Top>
-                       
+                        
                     </Block>
                 </BlockContainer>
             </Body>
