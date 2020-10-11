@@ -129,7 +129,7 @@ const Leftbar = styled.div`
 `
 
 const Container = styled.div`
-    background-color: #f6f7f9;
+    background-color: white;/*FIX ME CSS #f6f7f9;*/
     height: 100vh;
     display: flex;
 `

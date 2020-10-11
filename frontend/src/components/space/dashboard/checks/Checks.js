@@ -18,6 +18,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { VscRepo } from 'react-icons/vsc';
 import { FiChevronDown } from 'react-icons/fi';
+import { RiRefreshLine } from 'react-icons/ri';
 
 // component that retrieve pull requests from version control
 // and keeps track of doc/reference updating and deprecation with regard to the request
@@ -63,6 +64,11 @@ class Checks extends Component {
         })
     }
 
+    refresh = async () => {
+        const { retrieveChecks, match, workspace } = this.props;
+        const { workspaceId } = match.params;
+        await retrieveChecks({ workspaceId, repositoryId: workspace.repositories[0]._id })
+    }
     render(){
         const { currentCheck } = this.state;
         return(
@@ -79,7 +85,7 @@ class Checks extends Component {
                                         <IconBorder>    
                                             <VscRepo/>
                                         </IconBorder>
-                                        <LimitedTitle>doc-app</LimitedTitle>
+                                        <LimitedTitle>doc-app</LimitedTitle> 
                                         <FiChevronDown 
                                                 style = {{
                                                     marginLeft: "0.5rem",
@@ -88,6 +94,9 @@ class Checks extends Component {
                                                 }}
                                             />
                                     </MenuButton>
+                                    <IconBorder5>
+                                        <RiRefreshLine onClick = {this.refresh}/>
+                                    </IconBorder5>
                                 </RepositorySection>
                                 <CheckBar>
                                     { this.renderChecks() }
@@ -121,6 +130,21 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { retrieveChecks })(Checks));
 
+const IconBorder5 = styled.div`
+    border-radius: 50%;
+    margin-left: auto;
+    margin-right: 3rem;
+    width: 4rem;
+    height: 4rem;
+    font-size: 2.3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    &:hover {
+        background-color: #f7f9fb;
+        cursor: pointer;
+    }
+`
 
 const MenuButton = styled.div`
     display: flex;
@@ -225,7 +249,7 @@ const Container = styled.div`
 `
 
 const BodyContainer = styled.div`
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+   /* FIX ME CSS box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
     background-color: #f7f9fb;
     border-radius: 0.5rem;
     min-height: 45rem;
