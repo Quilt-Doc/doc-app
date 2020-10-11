@@ -7,6 +7,17 @@ var AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 
 
+const requestTestingBackendClient = () => {
+	const axios = require('axios');
+	return axios.create({
+        baseURL: process.env.TESTING_API_URL,
+        headers: {
+            "Authorization": `Bearer ${process.env.DEV_TOKEN}`
+        }
+	})
+}
+
+
 const requestGithubClient = () => {
     const axios = require('axios');
     return axios.create({
@@ -140,6 +151,7 @@ const requestInstallationClient = async (installationId) => {
 }
 
 module.exports = {
+    requestTestingBackendClient,
     requestGithubClient,
     requestSQSServiceObject,
     fetchAppToken,

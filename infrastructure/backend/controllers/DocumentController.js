@@ -368,6 +368,7 @@ moveDocument = async (req, res) => {
                         message: `Successfully Moved Document ${documentId} from old parent ${oldParentId} to new parent ${newParentId} - workspaceId: ${workspaceId}`,
                         function: 'moveDocument'});
 
+
     return sameDir ? res.json({success: true, result: [newParent]}) : res.json({success: true, result: [oldParent, newParent, ...modifiedDocuments]});
 }
 
@@ -378,6 +379,8 @@ deleteDocument = async (req, res) => {
     const documentObj = req.documentObj;
     const workspaceId = req.workspaceObj._id.toString();
     const userId = req.tokenPayload.userId.toString();
+
+    const repositoryId = req.documentObj.repository._id.toString();
 
     // escape the path of the document so regex characters don't affect the query
     const escapedPath = escapeRegExp(`${documentObj.path}`);
@@ -463,7 +466,7 @@ deleteDocument = async (req, res) => {
     }
 
     try {
-        await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, documentObj.repository.toString(), userId);
+        await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, repositoryId, userId);
     }
     catch (err) {
         await logger.error({source: 'backend-api',
@@ -481,6 +484,9 @@ deleteDocument = async (req, res) => {
     await logger.info({source: 'backend-api',
                         message: `Successfully deleted ${finalResult.deletedDocuments.length} documents - workspaceId, userId, deletedDocuments: ${workspaceId}, ${userId}, ${JSON.stringify(deletedDocuments)}`,
                         function: 'deleteDocument'});
+
+    console.log('Delete Document Returning: ');
+    console.log(finalResult);
 
     return res.json({success: true, result: finalResult});
 }

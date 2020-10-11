@@ -8,7 +8,7 @@ var repositorySchema = new Schema({
 	fullName: {type: String, index: true},
 	lastProcessedCommit: { type: String, default: ''},
 	defaultBranch: {type: String},
-	installationId: {type: Number, index: true},
+	installationIds: {type: Number, index: true},
 	htmlUrl: String,
 	cloneUrl: String,
 	created: {type: Date, default: Date.now },
