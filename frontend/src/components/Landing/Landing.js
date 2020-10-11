@@ -2,7 +2,7 @@ import React from 'react';
 import { Router, Route, Switch } from 'react-router-dom';
 
 import styled from 'styled-components';
-import smalldoc from '../../images/small-doc.png';
+import knowledgePNG from '../../images/doc.png'
 
 import DashboardPanel from './DashboardPanel';
 import KnowledgePanel from './KnowledgePanel';
@@ -42,9 +42,7 @@ class Landing extends React.Component {
                                 </SignUpButton>
                             </SignUpForm>
                         </LeftText>
-                        <RightAsset>
-                            
-                        </RightAsset>
+                        <RightAsset src = {knowledgePNG}/>
                     </Content>
                 </IntroPanel>
                 <Gradient/>
@@ -118,8 +116,13 @@ const Gradient = styled.div`
     clip-path: polygon(0 0, 0 100%, 100% 2rem, 100% 0)
 `
 
-const RightAsset = styled.div`
-    
+const RightAsset = styled.img`
+    height: 55rem;
+    width: auto;
+    border-radius: 0.3rem;
+    border-radius: 0.8rem;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    margin-left: 8rem;
 `
 
 const SignUpButton = styled.div`
@@ -178,7 +181,7 @@ const SubHeader = styled.div`
 `
 
 const LeftText = styled.div`
-    width: 45%;
+    min-width: 40%;
     display: flex;
     flex-direction: column;
 `
@@ -202,7 +205,7 @@ const IntroPanel = styled.div`
 
 const Content = styled.div`
     height: 60rem;
-    
+    margin-top: 5rem;
     display: flex;
     align-items: center;
 `

@@ -15,7 +15,7 @@ const SnippetPanel = () => {
                         <Mark>Information shouldn't be separated from code. </Mark>Stay in context with attached and tracked snippet annotations.
                     </SubHeader>
                 </SmallContainer>
-                <StyledVideo muted autoPlay loop = {false} >
+                <StyledVideo muted autoPlay loop >
                     <source src = {snippetMP4} type = "video/mp4"></source>
                 </StyledVideo>
             </Content>
@@ -29,8 +29,8 @@ export default SnippetPanel;
 const StyledVideo = styled.video`
     width: 55%;
     margin-right: 8rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4); 
+    border-radius: 0.8rem;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
 `
 
 const Container = styled.div`

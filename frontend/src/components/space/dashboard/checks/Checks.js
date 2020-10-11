@@ -67,8 +67,9 @@ class Checks extends Component {
     refresh = async () => {
         const { retrieveChecks, match, workspace } = this.props;
         const { workspaceId } = match.params;
-        await retrieveChecks({ workspaceId, repositoryId: workspace.repositories[0]._id })
+        await retrieveChecks({ workspaceId, repositoryId: workspace.repositories[0]._id });
     }
+
     render(){
         const { currentCheck } = this.state;
         return(
@@ -249,7 +250,7 @@ const Container = styled.div`
 `
 
 const BodyContainer = styled.div`
-   /* FIX ME CSS box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     background-color: #f7f9fb;
     border-radius: 0.5rem;
     min-height: 45rem;

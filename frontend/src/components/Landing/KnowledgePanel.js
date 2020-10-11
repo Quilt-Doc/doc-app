@@ -2,6 +2,7 @@ import React from 'react';
 
 import styled from 'styled-components';
 import knowledgePNG from '../../images/doc.png'
+import knowledgeMOV from '../../images/final_know2.mov'
 
 const KnowledgePanel = () => {
     return(
@@ -27,8 +28,8 @@ export default KnowledgePanel;
 const RightAsset = styled.img`
     width: 55%;
     margin-left: 8rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4); 
+    border-radius: 0.8rem;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
 `
 
 const Container = styled.div`
