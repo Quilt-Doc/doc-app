@@ -64,12 +64,6 @@ class Checks extends Component {
         })
     }
 
-    refresh = async () => {
-        const { retrieveChecks, match, workspace } = this.props;
-        const { workspaceId } = match.params;
-        await retrieveChecks({ workspaceId, repositoryId: workspace.repositories[0]._id });
-    }
-
     render(){
         const { currentCheck } = this.state;
         return(
@@ -95,9 +89,6 @@ class Checks extends Component {
                                                 }}
                                             />
                                     </MenuButton>
-                                    <IconBorder5>
-                                        <RiRefreshLine onClick = {this.refresh}/>
-                                    </IconBorder5>
                                 </RepositorySection>
                                 <CheckBar>
                                     { this.renderChecks() }
@@ -130,22 +121,6 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, { retrieveChecks })(Checks));
-
-const IconBorder5 = styled.div`
-    border-radius: 50%;
-    margin-left: auto;
-    margin-right: 3rem;
-    width: 4rem;
-    height: 4rem;
-    font-size: 2.3rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    &:hover {
-        background-color: #f7f9fb;
-        cursor: pointer;
-    }
-`
 
 const MenuButton = styled.div`
     display: flex;
@@ -217,7 +192,8 @@ const Centered = styled.div`
 const CheckBar = styled.div`
     overflow-y: scroll;
     padding: 2rem;
-    height: 54.0rem;
+    min-height: 39rem;
+    height: calc(60vh - 6rem);
 `
 
 const LeftBar = styled.div`

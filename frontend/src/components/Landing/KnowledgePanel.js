@@ -1,8 +1,8 @@
 import React from 'react';
 
 import styled from 'styled-components';
-import knowledgePNG from '../../images/doc.png'
-import knowledgeMOV from '../../images/final_know2.mov'
+import knowledgeMOV from '../../images/kno_fin2.mov'
+import knowledgePNG from '../../images/doc.png';
 
 const KnowledgePanel = () => {
     return(
@@ -16,7 +16,9 @@ const KnowledgePanel = () => {
                         <Mark>Documents designed for a moving codebase.</Mark> Attach references from any part of your repository and stay informed when something's left behind.
                     </SubHeader>
                 </SmallContainer>
-                <RightAsset src = {knowledgePNG}/>
+                <StyledVideo>
+                    <source src = {knowledgeMOV}></source>
+                </StyledVideo>
             </Content>
         </Container>
     )
@@ -24,8 +26,14 @@ const KnowledgePanel = () => {
 
 export default KnowledgePanel;
 
+const RightView = styled.img`
+    width: 55%;
+    margin-left: 8rem;
+    border-radius: 0.8rem;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+`
 
-const RightAsset = styled.img`
+const StyledVideo = styled.video`
     width: 55%;
     margin-left: 8rem;
     border-radius: 0.8rem;

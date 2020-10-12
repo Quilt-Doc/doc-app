@@ -1,12 +1,15 @@
 import React from 'react';
-import { Router, Route, Switch } from 'react-router-dom';
 
 import styled from 'styled-components';
-import knowledgePNG from '../../images/doc.png'
 
 import DashboardPanel from './DashboardPanel';
 import KnowledgePanel from './KnowledgePanel';
 import SnippetPanel from './SnippetPanel';
+
+import knowledgePNG from '../../images/doc.png';
+import snippetPNG from '../../images/snippet_11.png';
+import dashboardPNG from '../../images/dash.png';
+import infoPNG from '../../images/info_3.png';
 
 class Landing extends React.Component {
     constructor(props){
@@ -42,7 +45,10 @@ class Landing extends React.Component {
                                 </SignUpButton>
                             </SignUpForm>
                         </LeftText>
-                        <RightAsset src = {knowledgePNG}/>
+                        <RightContainer>
+                            <StyledVideo src = {dashboardPNG} />
+                            <StyledVideo2 src = {infoPNG} />
+                        </RightContainer>
                     </Content>
                 </IntroPanel>
                 <Gradient/>
@@ -116,13 +122,42 @@ const Gradient = styled.div`
     clip-path: polygon(0 0, 0 100%, 100% 2rem, 100% 0)
 `
 
-const RightAsset = styled.img`
-    height: 55rem;
-    width: auto;
+const StyledVideo2 = styled.img`
+    width: 70%;
+    position: absolute;
+    border-radius: 0.3rem;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    top: 55%;
+    left: 20%;
+    z-index: 1;
+`
+
+const StyledVideo3 = styled.img`
+    width: 45%;
+    position: absolute;
+    border-radius: 0.4rem;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.2), 0 1px 18px 0 rgba(0, 0, 0, 0.2), 0 3px 5px -1px rgba(0, 0, 0, 0.5);
+    top: 0%;
+    left: 45%;
+`
+
+const StyledVideo = styled.img`
+    width: 70%;
+    position: absolute;
+    border-radius: 0.3rem;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.2), 0 1px 18px 0 rgba(0, 0, 0, 0.2), 0 3px 5px -1px rgba(0, 0, 0, 0.5);
+    top: 0;
+    left: 0;
+    z-index: 1;
+`
+
+const RightContainer = styled.div`
+    width: 50%;
     border-radius: 0.3rem;
     border-radius: 0.8rem;
-    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
     margin-left: 8rem;
+    height: 70%;
+    position: relative;
 `
 
 const SignUpButton = styled.div`
@@ -181,7 +216,8 @@ const SubHeader = styled.div`
 `
 
 const LeftText = styled.div`
-    min-width: 40%;
+    min-width: 43%;
+    max-width: 43%;
     display: flex;
     flex-direction: column;
 `

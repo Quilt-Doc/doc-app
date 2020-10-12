@@ -64,7 +64,7 @@ class Infobank extends React.Component {
     renderCards(){
         let {infobankResults} = this.props;
         return infobankResults.map((result, i) => {
-            if (result.isDocument) {
+            if (result.isDocument && result.title !== "") {
                 return (
                     <InfobankCard key = {i} result = {result} />
                 )
@@ -148,7 +148,7 @@ export default withRouter(connect( mapStateToProps, { retrieveInfobankResults })
 
 const BodyContainer = styled.div`
     width: 85%;
-    max-width: 110rem;
+    max-width: 125rem;
 `
 
 const Content = styled.div`
