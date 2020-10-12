@@ -10,10 +10,6 @@ import chroma from 'chroma-js';
 
 class DashboardPanel extends Component {
 
-    componentDidMount = () => {
-        setTimeout(() => {document.getElementById("dashVideo").play();}, 5000);
-    }
-
     render(){
         return(
             <Container>
@@ -92,7 +88,7 @@ const Body = styled.div`
     height: 100%;
     display: flex;
     justify-content: center;
-    padding-bottom: 10rem;
+    padding-bottom: 8rem;
 `
 
 const BlockContainer = styled.div`
@@ -101,6 +97,7 @@ const BlockContainer = styled.div`
 const Block = styled.div`
     height: 50rem;
     width: 44vw;
+    max-width: 60rem;
     &:first-of-type {
         margin-right: 6rem;
     }

@@ -71,16 +71,27 @@ class Workspaces extends Component {
     renderSpaces = () => {
         let { workspaces } = this.props;
         workspaces = workspaces.filter(space => space.setupComplete);
-        return workspaces.map(space => {
+        if (workspaces.length > 0) {
+            return workspaces.map(space => {
+                return (
+                    <Space to = {`/workspaces/${space._id}/dashboard`}>
+                        <WorkspaceDetail>
+                            <WorkspaceIcon>{space.name[0]}</WorkspaceIcon>
+                            <WorkspaceName>{space.name}</WorkspaceName>
+                        </WorkspaceDetail>
+                    </Space>
+                )
+            })
+        } else {
             return (
-                <Space to = {`/workspaces/${space._id}/dashboard`}>
+                <Space opacity = {0.6} to = {`/home/create_workspace`}>
                     <WorkspaceDetail>
-                        <WorkspaceIcon>{space.name[0]}</WorkspaceIcon>
-                        <WorkspaceName>{space.name}</WorkspaceName>
+                        <WorkspaceIcon2><FiPlus/></WorkspaceIcon2>
+                        <WorkspaceName>Create a Workspace</WorkspaceName>
                     </WorkspaceDetail>
                 </Space>
             )
-        })
+        }
     }
 
     render(){
@@ -90,7 +101,7 @@ class Workspaces extends Component {
                 <Content>
                     <Header>
                         Workspaces
-                        <AddButton onClick = {() => history.push('/create_workspace')}>
+                        <AddButton onClick = {() => history.push('/home/create_workspace')}>
                             <FiPlus/>
                         </AddButton>
                     </Header>
@@ -150,6 +161,7 @@ const Space = styled(Link)`
     flex-direction: column;
     cursor: pointer;
     &:hover {
+        opacity: 1;
         box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
     }
     text-decoration: none;
@@ -159,6 +171,7 @@ const Space = styled(Link)`
     &:last-of-type {
         margin-bottom: 10rem;
     }
+    opacity: ${props => props.opacity};
 `
 
 
@@ -224,6 +237,20 @@ const WorkspaceIcon = styled.div`
     font-size: 1.3rem;
 `
 
+
+const WorkspaceIcon2 = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.9rem;
+    width: 2.9rem;
+    border: 1px solid white;
+    border-radius: 0.3rem;
+    margin-right: 1.3rem;
+    font-size: 1.3rem;
+    color: white;
+`
+
 const WorkspaceStats = styled.div`
     display: flex;
     margin-left: auto;
@@ -232,7 +259,7 @@ const WorkspaceStats = styled.div`
 const ContentContainer = styled.div`
     width: 100%;
     height: 100%;
-    padding-top: 1rem;
+    padding-top: 3rem;
     display: flex;
     justify-content: center;
     padding-left: 4.5rem;

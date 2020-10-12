@@ -7,8 +7,8 @@ import {IoLogoBitbucket} from 'react-icons/io';
 import {RiGitlabFill} from 'react-icons/ri';
 
 //actions
-import {checkInstallation} from '../../../actions/Auth_Actions';
-import { retrieveCreationRepositories } from '../../../actions/Repository_Actions';
+import {checkInstallation} from '../../../../actions/Auth_Actions';
+import { retrieveCreationRepositories } from '../../../../actions/Repository_Actions';
 
 //redux
 import { connect } from 'react-redux';

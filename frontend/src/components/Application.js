@@ -7,8 +7,6 @@ import { Router, Route  } from 'react-router-dom';
 
 //components
 import Space from './space/Space';
-import UserSettings from './settings/UserSettings';
-import WorkspaceCreation from './workspace_creation/WorkspaceCreation';
 import Home from './home/Home';
 
 //styles
@@ -16,14 +14,11 @@ import styled from "styled-components";
 
 // component that houses the core application
 const Application = () => {
-   
     return ( 
         <Container>
             <Router history = {history}>
                 <Route path = "/workspaces/:workspaceId" component = {Space} />
-                <Route path = "/create_workspace" component = {WorkspaceCreation}/>
-                <Route exact path = "/workspaces" component = {Home} />
-                <Route path = "/settings" component = {UserSettings} />
+                <Route path = "/home" component = {Home} />
             </Router>
         </Container>
     )

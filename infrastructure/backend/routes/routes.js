@@ -10,7 +10,12 @@ if (process.env.IS_PRODUCTION) {
 
 var INSTALLED_URL = process.env.LOCALHOST_INSTALLED_URL;
 if (process.env.INSTALLED_URL) {
-    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_INSTALLED_URL;
+    INSTALLED_URL = process.env.PRODUCTION_INSTALLED_URL;
+}
+
+var ONBOARD_URL = process.env.LOCALHOST_ONBOARD_URL;
+if (process.env.ONBOARD_URL) {
+    ONBOARD_URL = process.env.PRODUCTION_ONBOARD_URL;
 }
 
 const express = require('express');
@@ -189,7 +194,16 @@ router.get('/auth/logout', authController.logout);
 
 // router.get('/auth/github', passport.authenticate("github"));
 router.get('/auth/github', function(req, res, next) {
-    passport.authenticate('github', {session: false}, function(err, user, info) {
+    const { email } = req.query;
+    let options = { session: false };
+    if (email) {
+        console.log("EMAIL", email);
+        const state = Buffer.from(JSON.stringify({ email })).toString('base64');
+        options = {...options, scope: [], state};
+    }
+
+    console.log("OPTIONS", options);
+    passport.authenticate('github', options, function(err, user, info) {
       if (err) { return next(err); }
       // TODO: Change this to appropriate route
       if (!user) { console.log('!user == true'); return res.redirect('/login'); }
@@ -214,9 +228,26 @@ router.get('/auth/github/redirect', passport.authenticate("github", {session: fa
     res.cookie('user-jwt', jwtToken, { httpOnly: true });
     
     if (req.query.state === "installing") {
-        res.redirect(INSTALLED_URL);
+        return res.redirect(INSTALLED_URL);
     } else {
-        res.redirect(CLIENT_HOME_PAGE_URL);
+        
+        if (!req.user.onboarded) {
+            const { state } = req.query;
+            if (state) {
+                try {
+                    const { email } = JSON.parse(Buffer.from(state, 'base64').toString());
+                    if (typeof email === 'string') {
+                        return res.redirect(`${ONBOARD_URL}?email=${email}`);
+                    }
+                } catch (err) {
+                    console.log(er)
+                }
+            }
+
+            return res.redirect(ONBOARD_URL); 
+        }
+       
+        return res.redirect(CLIENT_HOME_PAGE_URL);
     }
 });
 

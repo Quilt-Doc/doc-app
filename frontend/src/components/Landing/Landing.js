@@ -1,7 +1,10 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 import styled from 'styled-components';
+import chroma from 'chroma-js';
 
+//components
 import DashboardPanel from './DashboardPanel';
 import KnowledgePanel from './KnowledgePanel';
 import SnippetPanel from './SnippetPanel';
@@ -9,28 +12,57 @@ import SnippetPanel from './SnippetPanel';
 //email validation
 import * as EmailValidator from 'email-validator';
 
+//actions
 import { addUserToContacts } from '../../actions/User_Actions';
+import history from '../../history';
 
-
+//images
 import dashboardPNG from '../../images/dash.png';
 import infoPNG from '../../images/info_3.png';
+
+//utility
+import scrollIntoView from 'scroll-into-view-if-needed'
+
+//react-redux
+import { connect } from 'react-redux';
 
 class Landing extends React.Component {
     constructor(props){
         super(props)
+        this.state = {
+            focused : false
+        }
     }
 
     addContact = () => {
+        const { addUserToContacts } = this.props;
+
         const email = this.emailInput.value;
 
-        if (!email) alert("Please enter an email");
+        if (!email) return alert("Please enter an email");
+        if (!EmailValidator.validate(email)) return alert("Invalid Email");
 
-
-        if (!EmailValidator.validate(email)){
-            alert("Invalid Email");
-        }
-        console.log(`Sending Email: ${email}`);
         addUserToContacts(email);
+        history.push(`/login?email=${email}`);
+    }
+
+    focusInput = () => {
+        this.emailInput.focus();
+
+        scrollIntoView(this.emailInput, {
+            block: 'center',
+            inline: 'center',
+            behavior: 'smooth'
+        });
+    }
+
+    renderOpacity = () => {
+        const { focused } = this.state;
+        if ( focused ) {
+            return 1;
+        } else {
+            return 0.65;
+        }
     }
 
     render(){
@@ -41,7 +73,7 @@ class Landing extends React.Component {
                         <BrandName>
                             quilt
                         </BrandName>
-                        <DemoButton>
+                        <DemoButton onClick = {() => this.focusInput()}>
                             Request Access
                         </DemoButton>
                     </TopBar>
@@ -55,8 +87,10 @@ class Landing extends React.Component {
                                 Quilt monitors your evolving codebase 
                                 to keep information actionable and up to date. 
                             </SubHeader>
-                            <SignUpForm>
+                            <SignUpForm opacity = {this.renderOpacity()}>
                                 <Searchbar 
+                                    onFocus = {() => this.setState({focused: true})}
+                                    onBlur = {() => this.setState({focused: false})}
                                     placeholder = {"Enter your email"}
                                     ref = {node => this.emailInput = node}
                                 />
@@ -80,60 +114,11 @@ class Landing extends React.Component {
     }
 }
 
-/*<Block>
-                    <Company>
-                        <StyledIcon src = {logo} />
-                        quilt
-                    </Company>
-                    <Content margin = {true}>
-                        <ContentText>
-                            <ContentHeader>
-                            Worry about code, not docs.
-                            </ContentHeader>
-                            <ContentSubHeader>
-                                {Keep your knowledge productive}
-                                Quilt integrates with your codebase to keep your knowledge accessible and up to date.
-                            </ContentSubHeader>
-                        </ContentText>
-                        
-                        <ContentCollage>
+const mapStateToProps = () => {
+    return {}
+}
 
-                        </ContentCollage>
-                    </Content>
-                </Block>
-
-                <Block2>
-                    <Content2>
-                        
-                        <Gifbox>
-
-                        </Gifbox>
-                        <ContentText color = {"#262626"}>
-                            <ContentHeader2>
-                                Link docs to an evolving codebase
-                            </ContentHeader2>
-                            <ContentSubHeader active = {true}>
-                                Quilt keeps your documents in sync with the code that they were made for...
-                                so that you can create knowledge that has lasting importance.  
-                            </ContentSubHeader>
-                        </ContentText>
-                    </Content2>
-                </Block2>
-                <Block3 bColor = {"#16181d"} >
-                    <Content2>
-                        <ContentText3 >
-                            <ContentHeader2>
-                                Keep your knowledge productive
-                            </ContentHeader2>
-                            <ContentSubHeader>
-                                Quilt keeps your docs in sync with the code that they were made for...
-                                so that you can create knowledge that has lasting importance.  
-                            </ContentSubHeader>
-                        </ContentText3>
-                    
-                    </Content2>
-                </Block3>*/
-export default Landing;
+export default connect(mapStateToProps, { addUserToContacts })(Landing);
 
 
 const Gradient = styled.div`
@@ -194,13 +179,17 @@ const SignUpButton = styled.div`
     border-top-right-radius: 0.3rem;
     border-bottom-right-radius: 0.3rem;
     cursor: pointer;
+    
+    &:hover {
+        background-color: #2e323d;
+    }
 `
 
 const SignUpForm = styled.div`
     margin-top: 5rem;
     height: 5rem;
     width: 40rem;
-    border: 1px solid #5B75E6;
+    border: 1px solid ${props => chroma('#5B75E6').alpha(props.opacity)};
     border-radius: 0.3rem;
     display:flex;
 `
@@ -293,6 +282,10 @@ const DemoButton = styled.div`
     justify-content: center;
     margin-right: 8.5rem;
     cursor: pointer;
+
+    &:hover {
+        background-color: #2e323d;
+    }
 `
 /*
 const Company = styled.div`

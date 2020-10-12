@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 //actions
-import { createWorkspace } from '../../../actions/Workspace_Actions';
+import { createWorkspace } from '../../../../actions/Workspace_Actions';
 
 //redux
 import { connect } from 'react-redux';
