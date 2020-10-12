@@ -32,7 +32,8 @@ const requestSendGridClient = () => {
     return axios.create({
         baseURL: process.env.SENDGRID_API_URL,
         headers: {
-            "Authorization": `Bearer ${process.env.SENDGRID_API_KEY}`
+            "Authorization": `Bearer ${process.env.SENDGRID_API_KEY.trim()}`,
+            'Content-Type': 'application/json',
         }
     });
 }

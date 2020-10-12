@@ -25,10 +25,11 @@ class Landing extends React.Component {
 
         if (!email) alert("Please enter an email");
 
+
         if (!EmailValidator.validate(email)){
             alert("Invalid Email");
         }
-
+        console.log(`Sending Email: ${email}`);
         addUserToContacts(email);
     }
 
@@ -192,6 +193,7 @@ const SignUpButton = styled.div`
     justify-content: center;
     border-top-right-radius: 0.3rem;
     border-bottom-right-radius: 0.3rem;
+    cursor: pointer;
 `
 
 const SignUpForm = styled.div`
@@ -290,6 +292,7 @@ const DemoButton = styled.div`
     align-items: center;
     justify-content: center;
     margin-right: 8.5rem;
+    cursor: pointer;
 `
 /*
 const Company = styled.div`
