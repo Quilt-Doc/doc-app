@@ -132,6 +132,11 @@ verifyEmail = async (req, res) => {
 }
 
 addContact = async (req, res) => {
+
+    const { email } = req.body;
+
+    if (!checkValid(email)) return res.json({sucess: false, error: 'no email provided'});
+
     var sendGridClient;
     try {
         sendGridClient = await apis.requestSendGridClient();
@@ -144,10 +149,10 @@ addContact = async (req, res) => {
 
         return res.json({success: false, error: err});
     }
-    
+
     var sendGridResponse;
     try {
-        sendGridResponse = await sendGridClient.put(`/marketing/contacts`, {});
+        sendGridResponse = await sendGridClient.put(`/marketing/contacts`, {contacts: [{email}]});
     }
     catch (err) {
         await logger.error({source: 'backend-api',

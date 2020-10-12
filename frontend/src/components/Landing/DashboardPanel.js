@@ -37,7 +37,7 @@ const DashboardPanel = () => {
                             <Number bColor = {'#5B75E6'}>2</Number>
                             Update Documentation
                         </Top>
-                        <StyledVideo muted autoPlay loop >
+                        <StyledVideo muted autoPlay >
                             <source src = {dashboardMP4} type = "video/mp4"></source>
                         </StyledVideo>
                     </Block>
