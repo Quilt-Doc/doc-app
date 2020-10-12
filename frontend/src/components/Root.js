@@ -17,7 +17,7 @@ const Root = () => {
                 <Router history = {history}>
                   <Switch>
                     <Route path = "/installed" component = {Installed} />
-                    <Route path = "/landing" component = {Landing} />
+                    <Route exact path = "/" component = {Landing} />
                     <Route path = "" component = {Main} />
                   </Switch>
                 </Router>
