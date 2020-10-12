@@ -92,6 +92,7 @@ const Body = styled.div`
     height: 100%;
     display: flex;
     justify-content: center;
+    padding-bottom: 10rem;
 `
 
 const BlockContainer = styled.div`
@@ -111,7 +112,6 @@ const Mark = styled.b`
 `
 
 const Container = styled.div`
-    height: 80rem;
     width: 100%;
     display: flex;
     color: #172A4e;
@@ -119,7 +119,7 @@ const Container = styled.div`
 `
 
 const TopBar = styled.div`
-    height: 50rem;
+    height: 30rem;
     padding-left: 15rem;
     padding-right: 15rem;
     display: flex;
