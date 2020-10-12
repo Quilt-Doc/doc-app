@@ -52,7 +52,6 @@ const deleteRepositories = async () => {
     /repositories/:workspaceId/delete/:repositoryId
     */
 
-
    var repositoryDeleteRoutes = createdRepositoryIds.map(repositoryId => `/repositories/${createdWorkspaceId}/delete/${repositoryId}`);
 
 
@@ -86,7 +85,7 @@ const deleteRepositories = async () => {
     */
 }
 
-const createWorkspace = async(repositoryIds) => {
+const createWorkspace = async (repositoryIds) => {
     var backendClient = await api.requestTestingUserBackendClient();
 
     var postData = { name: "Testing Workspace",
@@ -150,7 +149,6 @@ beforeAll(async () => {
     catch (err) {
         console.log('Error creating Workspace');
         throw err;
-
     }
 
 });
@@ -172,12 +170,11 @@ afterAll(async () => {
     }
     catch (err) {
 
-    }
-    
+    }  
 });
 
 describe("Filter function", () => {
     test("it should filter by a search term (link)", () => {
       expect(1==1).toEqual(true);
     });
-  });
+});
