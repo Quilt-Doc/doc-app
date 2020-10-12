@@ -6,6 +6,11 @@ import DashboardPanel from './DashboardPanel';
 import KnowledgePanel from './KnowledgePanel';
 import SnippetPanel from './SnippetPanel';
 
+//email validation
+import * as EmailValidator from 'email-validator';
+
+import { addUserToContacts } from '../../actions/User_Actions';
+
 
 import dashboardPNG from '../../images/dash.png';
 import infoPNG from '../../images/info_3.png';
@@ -13,6 +18,18 @@ import infoPNG from '../../images/info_3.png';
 class Landing extends React.Component {
     constructor(props){
         super(props)
+    }
+
+    addContact = () => {
+        const email = this.emailInput.value;
+
+        if (!email) alert("Please enter an email");
+
+        if (!EmailValidator.validate(email)){
+            alert("Invalid Email");
+        }
+
+        addUserToContacts(email);
     }
 
     render(){
@@ -38,8 +55,11 @@ class Landing extends React.Component {
                                 to keep information actionable and up to date. 
                             </SubHeader>
                             <SignUpForm>
-                                <Searchbar placeholder = {"Enter your email"}/>
-                                <SignUpButton>
+                                <Searchbar 
+                                    placeholder = {"Enter your email"}
+                                    ref = {node => this.emailInput = node}
+                                />
+                                <SignUpButton onClick = {() => this.addContact()}>
                                     Request
                                 </SignUpButton>
                             </SignUpForm>
