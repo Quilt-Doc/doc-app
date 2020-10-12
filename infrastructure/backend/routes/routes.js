@@ -251,6 +251,7 @@ router.post('/checks/:workspaceId/:repositoryId/retrieve', authorizationMiddlewa
 
 const emailVerifyController = require('../controllers/authentication/EmailVerifyController');
 router.get('/verify/:verifyEmailHash', emailVerifyController.verifyEmail);
+router.post('/verify/add_contact', emailVerifyController.addContact);
 
 const workspaceInviteController = require('../controllers/authentication/WorkspaceInviteController');
 router.post('/invites/:workspaceId', workspaceInviteController.sendInvite);

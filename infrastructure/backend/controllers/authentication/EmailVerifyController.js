@@ -10,6 +10,8 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 const logger = require('../../logging/index').logger;
 
+const apis = require('../../apis/api');
+
 
 const crypto = require('crypto');
 
@@ -129,7 +131,38 @@ verifyEmail = async (req, res) => {
     return res.redirect(CLIENT_HOME_PAGE_URL);
 }
 
+addContact = async (req, res) => {
+    var sendGridClient;
+    try {
+        sendGridClient = await apis.requestSendGridClient();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error getting SendGrid client`,
+                            function: 'addContact'});
+
+        return res.json({success: false, error: err});
+    }
+    
+    var sendGridResponse;
+    try {
+        sendGridResponse = await sendGridClient.put(`/marketing/contacts`, {});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error adding contact to SendGrid`,
+                            function: 'addContact'});
+
+        return res.json({success: false, error: err});
+    }
+
+    return res.json({success: true, result: true});
+}
+
 module.exports = {
     beginEmailVerification,
-    verifyEmail
+    verifyEmail,
+    addContact
 }

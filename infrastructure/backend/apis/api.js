@@ -27,6 +27,16 @@ const requestTestingDevBackendClient = () => {
     })
 }
 
+const requestSendGridClient = () => {
+    const axios = require('axios');
+    return axios.create({
+        baseURL: process.env.SENDGRID_API_URL,
+        headers: {
+            "Authorization": `Bearer ${process.env.SENDGRID_API_KEY}`
+        }
+    });
+}
+
 
 const requestGithubClient = () => {
     const axios = require('axios');
@@ -163,6 +173,7 @@ const requestInstallationClient = async (installationId) => {
 module.exports = {
     requestTestingUserBackendClient,
     requestTestingDevBackendClient,
+    requestSendGridClient,
     requestGithubClient,
     requestSQSServiceObject,
     fetchAppToken,

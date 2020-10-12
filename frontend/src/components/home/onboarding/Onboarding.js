@@ -32,7 +32,7 @@ class Onboarding extends React.Component {
         }
 
         editUser({userId: _id, firstName, lastName, onboarded: true, email});
-    }   
+    }
 
     render(){
         return(
@@ -44,7 +44,7 @@ class Onboarding extends React.Component {
                     <SubHeader>
                         Provide us some info so we can tailor your experience.
                     </SubHeader>
-                    <SubContent>   
+                    <SubContent>
                         <Top>
                             <NameInput 
                                 ref = {node => this.firstNameInput = node}
@@ -57,7 +57,7 @@ class Onboarding extends React.Component {
                                 placeholder = 
                                 {"Last Name"}/>
                         </Top>
-                        <EmailInput  
+                        <EmailInput
                             ref = {node => this.emailInput = node}
                             spellCheck = {false} 
                             placeholder = {"Email"} 
