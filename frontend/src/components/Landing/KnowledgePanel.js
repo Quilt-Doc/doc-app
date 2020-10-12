@@ -2,7 +2,6 @@ import React from 'react';
 
 import styled from 'styled-components';
 import knowledgeMOV from '../../images/kno_fin2.mov'
-import knowledgePNG from '../../images/doc.png';
 
 const KnowledgePanel = () => {
     return(
