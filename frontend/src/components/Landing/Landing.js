@@ -6,8 +6,7 @@ import DashboardPanel from './DashboardPanel';
 import KnowledgePanel from './KnowledgePanel';
 import SnippetPanel from './SnippetPanel';
 
-import knowledgePNG from '../../images/doc.png';
-import snippetPNG from '../../images/snippet_11.png';
+
 import dashboardPNG from '../../images/dash.png';
 import infoPNG from '../../images/info_3.png';
 
