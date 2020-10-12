@@ -4,7 +4,12 @@ const EmailVerify = require('../../models/authentication/EmailVerify');
 const User = require('../../models/authentication/User');
 const WorkspaceInvite = require('../../models/authentication/WorkspaceInvite');
 const Workspace = require('../../models/Workspace');
-const CLIENT_HOME_PAGE_URL = "http://localhost:3000";
+
+var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_HOME_PAGE_URL;
+
+if (process.env.IS_PRODUCTION) {
+    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_HOME_PAGE_URL;
+}
 
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
@@ -133,6 +138,8 @@ verifyEmail = async (req, res) => {
 
 addContact = async (req, res) => {
 
+    console.log('Received Request');
+
     const { email } = req.body;
 
     if (!checkValid(email)) return res.json({sucess: false, error: 'no email provided'});
@@ -150,11 +157,15 @@ addContact = async (req, res) => {
         return res.json({success: false, error: err});
     }
 
+    console.log(`SendGrid PUT body: ${JSON.stringify({ contacts: [{ email }] })}`);
+
     var sendGridResponse;
     try {
-        sendGridResponse = await sendGridClient.put(`/marketing/contacts`, {contacts: [{email}]});
+        sendGridResponse = await sendGridClient.put(`/marketing/contacts`, { contacts: [{ email }] });
     }
     catch (err) {
+        console.log('ERROR: ');
+        console.log(err);
         await logger.error({source: 'backend-api',
                             error: err,
                             errorDescription: `Error adding contact to SendGrid`,
@@ -163,7 +174,7 @@ addContact = async (req, res) => {
         return res.json({success: false, error: err});
     }
 
-    return res.json({success: true, result: true});
+    return res.redirect(CLIENT_HOME_PAGE_URL);
 }
 
 module.exports = {

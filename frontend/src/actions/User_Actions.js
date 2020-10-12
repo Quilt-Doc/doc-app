@@ -51,7 +51,7 @@ export const userRemoveWorkspace = (id, workspaceId) => async (dispatch) => {
     dispatch({ type: EDIT_USER, payload: response.data });
 }
 
-export const addUserToContacts = (email) => async () => {
+export const addUserToContacts = async (email) => {
     const response = await api.post(`/verify/add_contact`, { email });
     const {success, result, error} = response.data;
     if (!success) {
