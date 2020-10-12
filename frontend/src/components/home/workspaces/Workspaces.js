@@ -8,6 +8,7 @@ import { connect } from 'react-redux';
 
 //actions
 import { retrieveWorkspaces } from '../../../actions/Workspace_Actions';
+import { logout } from '../../../actions/Auth_Actions';
 
 //router
 import { Link } from 'react-router-dom';
@@ -81,6 +82,11 @@ class Workspaces extends Component {
                 </Space>
             )
         })
+    }
+
+    userLogout = async () => {
+        await logout();
+        history.push(`/login`);
     }
 
     render(){

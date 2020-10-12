@@ -191,8 +191,8 @@ exports.handler = async (event) => {
             var tokenDeleteResponse;
             try {
                 tokenDeleteResponse = await backendClient.post("/tokens/delete", {installationId});
-                if (tokenCreateResponse.data.success == false) {
-                    throw Error(`tokens/delete success == false: ${tokenCreateResponse.error}`);
+                if (tokenDeleteResponse.data.success == false) {
+                    throw Error(`tokens/delete success == false: ${tokenDeleteResponse.error}`);
                 }
             }
             catch (err) {
@@ -206,7 +206,7 @@ exports.handler = async (event) => {
                 };
                 return response;
             }
-            await logger.info({source: 'github-lambda', message: `Succesfully deleted 'INSTALL' token installationId: ${installationId}`, function: 'handler'});
+            await logger.info({source: 'github-lambda', message: `Succesfully deleted 'INSTALL' token and removed installation installationId: ${installationId}`, function: 'handler'});
         }
     }
 

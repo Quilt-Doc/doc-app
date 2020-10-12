@@ -62,3 +62,10 @@ export const sendInvite = (formValues) => async (dispatch) => {
         return true
     }
 }
+
+export const logout = async () => {
+
+    const logoutResponse = await api.get(`/auth/logout`);
+    return true;
+
+}

@@ -1,7 +1,7 @@
-var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_REPOSITORY_URL;
+var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_HOME_PAGE_URL;
 
 if (process.env.IS_PRODUCTION) {
-    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_REPOSITORY_URL;
+    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_HOME_PAGE_URL;
 }
 
 const client = require("../../apis/api").requestGithubClient();
@@ -108,8 +108,9 @@ loginFailed = (req, res) => {
 }
 
 logout = (req, res) => {
-    req.logout()
-    res.redirect(CLIENT_HOME_PAGE_URL);
+    res.clearCookie('user-jwt', { path: '/' });
+    res.json({success: true, result: true});
+    // res.redirect(CLIENT_HOME_PAGE_URL);
 }
 
 checkInstallation = async (req, res) => {

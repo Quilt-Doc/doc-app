@@ -10,8 +10,18 @@ import chroma from 'chroma-js';
 
 class DashboardPanel extends Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {playFirstVideo: true,
+                        playSecondVideo: false};
+    }
+
     componentDidMount = () => {
         setTimeout(() => {document.getElementById("dashVideo").play();}, 5000);
+    }
+
+    playSecondVideo = () => {
+        this.state.playSecondVideo = true;
     }
 
     render(){
@@ -34,7 +44,7 @@ class DashboardPanel extends Component {
                                 <Number bColor = {'#2c303a'}>1</Number>
                                 Make Changes
                             </Top>
-                            <StyledVideo muted autoPlay >
+                            <StyledVideo muted {...(this.state.playFirstVideo ? {autoPlay: true} : {})} onended={() => this.playSecondVideo()} >
                                 <source src = {terminalMP4} type = "video/mp4"></source>
                             </StyledVideo>
                         </Block>
@@ -43,7 +53,7 @@ class DashboardPanel extends Component {
                                 <Number bColor = {'#5B75E6'}>2</Number>
                                 Update Documentation
                             </Top>
-                            <StyledVideo id = {"dashVideo"} active = {true} muted autoPlay >
+                            <StyledVideo id = {"dashVideo"} {...(this.state.playSecondVideo ? {autoPlay: true} : {})} active = {true} muted >
                                 <source src = {dashboardMP4} type = "video/mp4"></source>
                             </StyledVideo>
                         </Block>

@@ -155,7 +155,7 @@ beforeAll(async () => {
 
 });
 
-  
+
 afterAll(async () => {
 
     try {
@@ -180,4 +180,4 @@ describe("Filter function", () => {
     test("it should filter by a search term (link)", () => {
       expect(1==1).toEqual(true);
     });
-  });
+});
