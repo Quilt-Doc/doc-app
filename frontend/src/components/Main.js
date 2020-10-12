@@ -3,6 +3,10 @@ import React, {Component}  from 'react';
 // react-redux
 import { connect } from 'react-redux';
 
+//router
+import { Router, Route, Switch } from 'react-router-dom';
+import history from '../history';
+
 //actions
 import { checkLogin } from '../actions/Auth_Actions'
 
@@ -31,7 +35,10 @@ class Main extends Component {
     render(){
         const { authenticated, user } = this.props;
         return this.checkValid(authenticated) 
-            ? (authenticated && user) ? <Application/> : <Login/> 
+            ? (authenticated && user) ? <Application/> : 
+                <Router history = {history}>
+                     <Route path = "/login" component = {Login} />
+                </Router>
             : null
     }
 }

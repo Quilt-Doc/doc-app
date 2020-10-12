@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Component} from 'react';
 import { render } from 'react-dom';
 import { Router, Route, Switch } from 'react-router-dom';
 
@@ -8,44 +8,52 @@ import dashboardMP4 from '../../images/modern_dashboard.mp4';
 import styled from 'styled-components';
 import chroma from 'chroma-js';
 
-const DashboardPanel = () => {
-    return(
-        <Container>
-            <TopBar>
-                <Content>
-                    <Header>
-                        Remove Process
-                    </Header>   
-                    <SubHeader>
-                        <Mark>Integrated into your workflow.</Mark> Across changes to source code, Quilt delivers radical clarity and actionable insights for documentation work.
-                    </SubHeader>
-                </Content>
-            </TopBar>
-            <Body>
-                <BlockContainer>
-                    <Block>
-                        <Top>
-                            <Number bColor = {'#2c303a'}>1</Number>
-                            Make Changes
-                        </Top>
-                        <StyledVideo muted autoPlay >
-                            <source src = {terminalMP4} type = "video/mp4"></source>
-                        </StyledVideo>
-                    </Block>
-                    <Block>
-                        <Top>
-                            <Number bColor = {'#5B75E6'}>2</Number>
-                            Update Documentation
-                        </Top>
-                        <StyledVideo muted autoPlay >
-                            <source src = {dashboardMP4} type = "video/mp4"></source>
-                        </StyledVideo>
-                    </Block>
-                </BlockContainer>
-            </Body>
-        </Container>
-    )
+class DashboardPanel extends Component {
+
+    componentDidMount = () => {
+        setTimeout(() => {document.getElementById("dashVideo").play();}, 5000);
+    }
+
+    render(){
+        return(
+            <Container>
+                <TopBar>
+                    <Content>
+                        <Header>
+                            Remove Process
+                        </Header>   
+                        <SubHeader>
+                            <Mark>Integrated into your workflow.</Mark> Across changes to source code, Quilt delivers radical clarity and actionable insights for documentation work.
+                        </SubHeader>
+                    </Content>
+                </TopBar>
+                <Body>
+                    <BlockContainer>
+                        <Block>
+                            <Top>
+                                <Number bColor = {'#2c303a'}>1</Number>
+                                Make Changes
+                            </Top>
+                            <StyledVideo muted autoPlay >
+                                <source src = {terminalMP4} type = "video/mp4"></source>
+                            </StyledVideo>
+                        </Block>
+                        <Block>
+                            <Top>
+                                <Number bColor = {'#5B75E6'}>2</Number>
+                                Update Documentation
+                            </Top>
+                            <StyledVideo id = {"dashVideo"} active = {true} muted autoPlay >
+                                <source src = {dashboardMP4} type = "video/mp4"></source>
+                            </StyledVideo>
+                        </Block>
+                    </BlockContainer>
+                </Body>
+            </Container>
+        )
+    }
 }
+
 
 
 export default DashboardPanel;
@@ -55,7 +63,7 @@ const StyledVideo = styled.video`
     width: 100%;
     height: auto;
     border-radius: 0.5rem;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: ${props => props.active ? "0 1px 5px rgba(0, 0, 0, 0.2)" : ""}; 
 `
 
 const Top = styled.div`
@@ -84,6 +92,7 @@ const Body = styled.div`
     height: 100%;
     display: flex;
     justify-content: center;
+    padding-bottom: 10rem;
 `
 
 const BlockContainer = styled.div`
@@ -103,16 +112,14 @@ const Mark = styled.b`
 `
 
 const Container = styled.div`
-    height: 80rem;
     width: 100%;
     display: flex;
     color: #172A4e;
     flex-direction: column;
-
 `
 
 const TopBar = styled.div`
-    height: 50rem;
+    height: 30rem;
     padding-left: 15rem;
     padding-right: 15rem;
     display: flex;

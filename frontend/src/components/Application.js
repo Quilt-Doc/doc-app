@@ -22,7 +22,6 @@ const Application = () => {
             <Router history = {history}>
                 <Route path = "/workspaces/:workspaceId" component = {Space} />
                 <Route path = "/create_workspace" component = {WorkspaceCreation}/>
-                <Route exact path = "/" component = {Home}/>
                 <Route exact path = "/workspaces" component = {Home} />
                 <Route path = "/settings" component = {UserSettings} />
             </Router>

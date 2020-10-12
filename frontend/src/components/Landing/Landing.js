@@ -147,7 +147,7 @@ const StyledVideo2 = styled.img`
     position: absolute;
     border-radius: 0.3rem;
     box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
-    top: 55%;
+    top: 45%;
     left: 20%;
     z-index: 1;
 `
@@ -166,7 +166,7 @@ const StyledVideo = styled.img`
     position: absolute;
     border-radius: 0.3rem;
     box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.2), 0 1px 18px 0 rgba(0, 0, 0, 0.2), 0 3px 5px -1px rgba(0, 0, 0, 0.5);
-    top: 0;
+    top: 15%;
     left: 0;
     z-index: 1;
 `
@@ -176,7 +176,7 @@ const RightContainer = styled.div`
     border-radius: 0.3rem;
     border-radius: 0.8rem;
     margin-left: 8rem;
-    height: 70%;
+    height: 100%;
     position: relative;
 `
 
