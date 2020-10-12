@@ -2,8 +2,8 @@ import React from 'react';
 import { render } from 'react-dom';
 import { Router, Route, Switch } from 'react-router-dom';
 
-import dashboardGIF from '../../images/modern_dashboard.mp4';
 import terminalMP4 from '../../images/terminal_8.mp4';
+import dashboardMP4 from '../../images/modern_dashboard.mp4';
 
 import styled from 'styled-components';
 import chroma from 'chroma-js';
@@ -37,10 +37,9 @@ const DashboardPanel = () => {
                             <Number bColor = {'#5B75E6'}>2</Number>
                             Update Documentation
                         </Top>
-                        <StyledVideo muted autoPlay >
-                            <source src = {dashboardGIF} type = "video/mp4"></source>
+                        <StyledVideo muted autoPlay loop >
+                            <source src = {dashboardMP4} type = "video/mp4"></source>
                         </StyledVideo>
-                        
                     </Block>
                 </BlockContainer>
             </Body>
@@ -55,6 +54,8 @@ const StyledVideo = styled.video`
     margin-top: 2rem;
     width: 100%;
     height: auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
 `
 
 const Top = styled.div`
@@ -90,7 +91,7 @@ const BlockContainer = styled.div`
 `
 const Block = styled.div`
     height: 50rem;
-    width: 42vw;
+    width: 44vw;
     &:first-of-type {
         margin-right: 6rem;
     }
@@ -102,12 +103,12 @@ const Mark = styled.b`
 `
 
 const Container = styled.div`
-    height: 100rem;
+    height: 80rem;
     width: 100%;
-    background-color: white;
     display: flex;
     color: #172A4e;
     flex-direction: column;
+
 `
 
 const TopBar = styled.div`

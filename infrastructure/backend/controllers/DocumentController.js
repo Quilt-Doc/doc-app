@@ -12,13 +12,14 @@ const UserStats = require('../models/reporting/UserStats');
 const { ObjectId } = mongoose.Types;
 const logger = require('../logging/index').logger;
 
+let db = mongoose.connection;
 
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
-        return true
+        return true;
     }
-    return false
+    return false;
 }
 
 
@@ -157,7 +158,6 @@ createDocument = async (req, res) => {
             return res.json({success: false,
                                 error: `Error handleDocumentCreate - authorId, workspaceId, documentId: ${authorId}, ${workspaceId}, ${documentObj._id.toString()}`,
                                 trace: err});
-
         }
     }
 
@@ -198,178 +198,196 @@ createDocument = async (req, res) => {
 // paths of modifiedDocs are changed, children of parents are changed
 moveDocument = async (req, res) => {
 
+    const session = await db.startSession();
     // extract old and new parent as well as the new index of placement
-    const { oldParentId, newParentId, newIndex } = req.body;
-    const documentId = req.documentObj._id.toString();
-    const workspaceId = req.workspaceObj._id.toString();
+    let output;
 
-    const documentObj = req.documentObj;
-
-    let oldParent, newParent, modifiedDocuments;
-
-    // check if we're moving the document into the same directory or not
-    let sameDir = oldParentId === newParentId;
-
-    await logger.info({source: 'backend-api',
-                        message: `Move Document attempting to move ${documentId} from old parent ${oldParentId} to new parent ${newParentId} - workspaceId: ${workspaceId}`,
-                        function: 'moveDocument'});
-
-    // checks if both parentIds are provided else throws error
-    if (checkValid(oldParentId) && checkValid(newParentId)) {
-        // trys to retrieve the oldParent, does some validation to make sure oldParent is indeed the current parent
-        try {
-            oldParent = await Document.findOne({_id: oldParentId, workspace: workspaceId})
-                .select('_id path children').exec();
-            if (oldParent.path >= documentObj.path || 
-                documentObj.path.slice(0, oldParent.path.length) !== oldParent.path) {
-                    await logger.error({source: 'backend-api',
-                                        error: Error(`Old parent path does not match Document's parent's path`),
-                                        errorDescription: `Old parent path does not match Document's parent path - workspaceId, document path, oldParent path: ${workspaceId}, ${documentObj.path.slice(0, oldParent.path.length)}, ${oldParent.path}`,
-                                        function: 'moveDocument'});
-
-                    return res.json({success: false, error: `moveDocument Error: oldParent is not correct oldParent`});
-                }
-        } catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `Move Document Error invalid oldParentId - workspaceId, oldParentId: ${workspaceId}, ${oldParentId}`,
-                                function: 'moveDocument'});
-
-            return res.json({success: false, error: `moveDocument Error: invalid oldParentId`, trace: err});
-        }
-
-        // filter out the doc from it's old parent's children and save the old parent
-        oldParent.children = oldParent.children.filter((childId) => childId.toString() !== documentId);
-
-        try {
-            oldParent = await oldParent.save();
-        } catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `Move Document Error oldParent save failed - workspaceId, oldParentId: ${workspaceId}, ${oldParentId}`,
-                                function: 'moveDocument'});
-
-            return res.json({success: false, error: `moveDocument Error: oldParent save failed`, trace: err});
-        }
-
-        // if we're moving the doc in same dir, no need to find parent again
-        if (sameDir) {
-            newParent = oldParent;
-        } else {
-            // find newParent if actually new
+    await session.withTransaction(async () => {
+        const { oldParentId, newParentId, newIndex } = req.body;
+        const documentId = req.documentObj._id.toString();
+        const workspaceId = req.workspaceObj._id.toString();
+    
+        const documentObj = req.documentObj;
+    
+        let oldParent, newParent, modifiedDocuments;
+    
+        // check if we're moving the document into the same directory or not
+        let sameDir = oldParentId === newParentId;
+    
+        await logger.info({source: 'backend-api',
+                            message: `Move Document attempting to move ${documentId} from old parent ${oldParentId} to new parent ${newParentId} - workspaceId: ${workspaceId}`,
+                            function: 'moveDocument'});
+    
+        // checks if both parentIds are provided else throws error
+        if (checkValid(oldParentId) && checkValid(newParentId)) {
+            // trys to retrieve the oldParent, does some validation to make sure oldParent is indeed the current parent
             try {
-                newParent = await Document.findOne({_id: newParentId, workspace: workspaceId})
+                oldParent = await Document.findOne({_id: oldParentId, workspace: workspaceId})
                     .select('_id path children').exec();
-
-                // validation here to check that the newParent is not a child of the movedDocument
-                if (documentObj.path.length  <= newParent.path.length
-                    && newParent.path.slice(0, documentObj.path.length) === documentObj.path) {
+                if (oldParent.path >= documentObj.path || 
+                    documentObj.path.slice(0, oldParent.path.length) !== oldParent.path) {
                         await logger.error({source: 'backend-api',
-                                                error: Error(`newParent is child of movedDocument`),
-                                                errorDescription: `newParent is child of movedDocument - workspaceId, document path, newParent path: ${workspaceId}, ${documentObj.path}, ${newParent.path.slice(0, documentObj.path.length)}`,
-                                                function: 'moveDocument'});
-
-                        return res.json({success: false, error: `moveDocument Error: newParent is child of movedDocument`});
+                                            error: Error(`Old parent path does not match Document's parent's path`),
+                                            errorDescription: `Old parent path does not match Document's parent path - workspaceId, document path, oldParent path: ${workspaceId}, ${documentObj.path.slice(0, oldParent.path.length)}, ${oldParent.path}`,
+                                            function: 'moveDocument'});
+    
+                        output = {success: false, error: `moveDocument Error: oldParent is not correct oldParent`};
+                        throw new Error(`moveDocument Error: oldParent is not correct oldParent`);
                     }
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Move Document Error invalid oldParentId - workspaceId, oldParentId: ${workspaceId}, ${oldParentId}`,
+                                    function: 'moveDocument'});
+                output = {success: false, error: `moveDocument Error: invalid oldParentId`, trace: err};
+                throw new Error(`moveDocument Error: invalid oldParentId`);
+            }
+    
+            // filter out the doc from it's old parent's children and save the old parent
+            oldParent.children = oldParent.children.filter((childId) => childId.toString() !== documentId);
+    
+            try {
+                oldParent = await oldParent.save();
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Move Document Error oldParent save failed - workspaceId, oldParentId: ${workspaceId}, ${oldParentId}`,
+                                    function: 'moveDocument'});
+    
+                output = {success: false, error: `moveDocument Error: oldParent save failed`, trace: err};
+                throw new Error(`moveDocument Error: oldParent save failed`);
+            }
+    
+            // if we're moving the doc in same dir, no need to find parent again
+            if (sameDir) {
+                newParent = oldParent;
+            } else {
+                // find newParent if actually new
+                try {
+                    newParent = await Document.findOne({_id: newParentId, workspace: workspaceId})
+                        .select('_id path children').exec();
+    
+                    // validation here to check that the newParent is not a child of the movedDocument
+                    if (documentObj.path.length  <= newParent.path.length
+                        && newParent.path.slice(0, documentObj.path.length) === documentObj.path) {
+                            await logger.error({source: 'backend-api',
+                                                    error: Error(`newParent is child of movedDocument`),
+                                                    errorDescription: `newParent is child of movedDocument - workspaceId, document path, newParent path: ${workspaceId}, ${documentObj.path}, ${newParent.path.slice(0, documentObj.path.length)}`,
+                                                    function: 'moveDocument'});
+    
+                            output = {success: false, error: `moveDocument Error: newParent is child of movedDocument`};
+                            throw new Error(`moveDocument Error: newParent is child of movedDocument`);
+                        }
+                } catch (err) {
+                    await logger.error({source: 'backend-api',
+                                        error: err,
+                                        errorDescription: `Move Document Error invalid newParentId - workspaceId, newParentId: ${workspaceId}, ${newParentId}`,
+                                        function: 'moveDocument'});
+    
+                    output = {success: false, error: `moveDocument Error: invalid newParentId`, trace: err};
+                    throw new Error(`moveDocument Error: invalid newParentId`);
+                }
+            }
+    
+            //splice the movedDocument into the right location in the newParents children
+            newParent.children.splice(newIndex, 0, documentId);
+            try {
+                newParent = await newParent.save();
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
                                     errorDescription: `Move Document Error invalid newParentId - workspaceId, newParentId: ${workspaceId}, ${newParentId}`,
                                     function: 'moveDocument'});
-
-                return res.json({success: false, error: `moveDocument Error: invalid newParentId`, trace: err});
+    
+                output = {success: false, error: `moveDocument Error: newParent save failed`, trace: err};
+                throw new Error(`moveDocument Error: newParent save failed`);
             }
-        }
-
-        //splice the movedDocument into the right location in the newParents children
-        newParent.children.splice(newIndex, 0, documentId);
-        try {
-            newParent = await newParent.save();
-        } catch (err) {
+    
+        } else {
             await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `Move Document Error invalid newParentId - workspaceId, newParentId: ${workspaceId}, ${newParentId}`,
+                                error: Error(`parentIds not provided`),
+                                errorDescription: `parentIds not provided - workspaceId: ${workspaceId}`,
                                 function: 'moveDocument'});
-
-            return res.json({success: false, error: `moveDocument Error: newParent save failed`, trace: err});
-        }
-
-    } else {
-        await logger.error({source: 'backend-api',
-                            error: Error(`parentIds not provided`),
-                            errorDescription: `parentIds not provided - workspaceId: ${workspaceId}`,
-                            function: 'moveDocument'});
-        return res.json({success: false, error: "moveDocument Error: parentIds not provided"});
-    }
-
-
-    // if we've moved into a new directory, we need to change the paths of movedDoc and movedDoc's descendants
-    if ( !sameDir ) {
-        try {
-            // escape the path of the document so regex characters don't affect the query
-            let escapedPath = escapeRegExp(`${documentObj.path}/`)
-            let regex =  new RegExp(`^${escapedPath}`)
-            
-            // find all descendants using the prefix regex on the path
-            modifiedDocuments = await Document.find({path: regex, workspace: workspaceId}).lean()
-                .select('path _id').exec();
-        } catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `Move Document Error failed retrieving document descendants for update - workspaceId, document path: ${workspaceId}, ${documentObj.path}`,
-                                function: 'moveDocument'});
-
-            return res.json({success: false, error: "moveDocument Error: failed retrieving document descendants for update", trace: err});
+            output = {success: false, error: "moveDocument Error: parentIds not provided"};
+            throw new Error("moveDocument Error: parentIds not provided");
         }
     
-        // add the movedDoc to all the docs that need to have their paths changed
-        modifiedDocuments.push(documentObj);
-        // create a list of operations for updating many docs with one db call
-        let bulkWritePathOps = modifiedDocuments.map((doc) => {
-            let newPath = newParent.path + doc.path.slice(oldParent.path.length);
-            return ({
-                updateOne: {
-                    filter: { _id: doc._id },
-                    // Where field is the field you want to update
-                    update: { $set: { path: newPath } },
-                    upsert: false
-                }
+    
+        // if we've moved into a new directory, we need to change the paths of movedDoc and movedDoc's descendants
+        if ( !sameDir ) {
+            try {
+                // escape the path of the document so regex characters don't affect the query
+                let escapedPath = escapeRegExp(`${documentObj.path}/`)
+                let regex =  new RegExp(`^${escapedPath}`)
+                
+                // find all descendants using the prefix regex on the path
+                modifiedDocuments = await Document.find({path: regex, workspace: workspaceId}).lean()
+                    .select('path _id').exec();
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Move Document Error failed retrieving document descendants for update - workspaceId, document path: ${workspaceId}, ${documentObj.path}`,
+                                    function: 'moveDocument'});
+    
+                output = {success: false, error: "moveDocument Error: failed retrieving document descendants for update", trace: err};
+                throw new Error("moveDocument Error: failed retrieving document descendants for update");
+            }
+        
+            // add the movedDoc to all the docs that need to have their paths changed
+            modifiedDocuments.push(documentObj);
+            // create a list of operations for updating many docs with one db call
+            let bulkWritePathOps = modifiedDocuments.map((doc) => {
+                let newPath = newParent.path + doc.path.slice(oldParent.path.length);
+                return ({
+                    updateOne: {
+                        filter: { _id: doc._id },
+                        // Where field is the field you want to update
+                        update: { $set: { path: newPath } },
+                        upsert: false
+                    }
+                })
             })
-        })
-
-        // mongoose bulkwrite for one many update db call
-        try {
-           await Document.bulkWrite(bulkWritePathOps);
-        } catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `Move Document Error bulk write of paths failed - workspaceId: ${workspaceId}`,
-                                function: 'moveDocument'});
-
-            return res.json({success: false, error: "moveDocument Error: bulk write of paths failed", trace: err});
+    
+            // mongoose bulkwrite for one many update db call
+            try {
+               await Document.bulkWrite(bulkWritePathOps);
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Move Document Error bulk write of paths failed - workspaceId: ${workspaceId}`,
+                                    function: 'moveDocument'});
+    
+                output = {success: false, error: "moveDocument Error: bulk write of paths failed", trace: err};
+                throw new Error("moveDocument Error: bulk write of paths failed");
+            }
+    
+            // get the modified docs once again through query as update + bulkwrite does not return the docs affected
+            try {
+                let modifiedIds = modifiedDocuments.map((doc) => doc._id);
+                modifiedDocuments = await Document.find({_id: { $in: modifiedIds } }).lean()
+                    .select('path _id').exec();
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Move Document Error retrieve modifiedDocs failed - workspaceId, modifiedIds: ${workspaceId}, ${JSON.stringify(modifiedIds)}`,
+                                    function: 'moveDocument'});
+    
+                output = {success: false, error: "moveDocument Error: unable to retrieve modifiedDocs", trace: err};
+                throw new Error("moveDocument Error: unable to retrieve modifiedDocs");
+            }
         }
+    
+        await logger.info({source: 'backend-api',
+                            message: `Successfully Moved Document ${documentId} from old parent ${oldParentId} to new parent ${newParentId} - workspaceId: ${workspaceId}`,
+                            function: 'moveDocument'});
+    
+        output = sameDir ? {success: true, result: [newParent]} : {success: true, result: [oldParent, newParent, ...modifiedDocuments]};
+        return 
+    });
+    
+    session.endSession();
 
-        // get the modified docs once again through query as update + bulkwrite does not return the docs affected
-        try {
-            let modifiedIds = modifiedDocuments.map((doc) => doc._id);
-            modifiedDocuments = await Document.find({_id: { $in: modifiedIds } }).lean()
-                .select('path _id').exec();
-        } catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `Move Document Error retrieve modifiedDocs failed - workspaceId, modifiedIds: ${workspaceId}, ${JSON.stringify(modifiedIds)}`,
-                                function: 'moveDocument'});
-
-            return res.json({success: false, error: "moveDocument Error: unable to retrieve modifiedDocs", trace: err});
-        }
-    }
-
-    await logger.info({source: 'backend-api',
-                        message: `Successfully Moved Document ${documentId} from old parent ${oldParentId} to new parent ${newParentId} - workspaceId: ${workspaceId}`,
-                        function: 'moveDocument'});
-
-
-    return sameDir ? res.json({success: true, result: [newParent]}) : res.json({success: true, result: [oldParent, newParent, ...modifiedDocuments]});
+    return res.json(output);
 }
 
 

@@ -768,6 +768,13 @@ class ReferenceEditor extends Component {
                             <EditorContainer>
                                 <ListToolbar> 
                                     {this.renderRefName()}
+                                    <Button 
+                                        style = {{marginLeft: "auto"}}
+                                        active = {canSelect}
+                                        onClick = {() => {this.toggleSelection()}}
+                                    >
+                                        <RiScissorsLine/>
+                                    </Button>
                                 </ListToolbar>
                                 <CodeContainer>
                                     {this.renderContent()}
