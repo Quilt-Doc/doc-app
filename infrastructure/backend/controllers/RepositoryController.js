@@ -373,7 +373,7 @@ removeInstallation = async (req, res) => {
                             error: `Error finding installationRepositories - installationId, repositories: ${installationId}, ${JSON.stringify(repositories)}`});
     }
 
-    var deleteIds = installationRepositories.map(repositoryObj => repositoryObj.toString());
+    var deleteIds = installationRepositories.map(repositoryObj => repositoryObj._id.toString());
     // Delete all Repositories installation as installed was on
     try {
         await Repository.deleteMany({_id: { $in: deleteIds.map(id => ObjectId(id)) }});
