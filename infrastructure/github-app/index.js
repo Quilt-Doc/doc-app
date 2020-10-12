@@ -135,7 +135,7 @@ exports.handler = async (event) => {
                 await logger.error({source: 'github-lambda', message: err,
                                     errorDescription: `error creating install token installationId: ${installationId}`,
                                     function: 'handler'});
-                        
+
                 let response = {
                     statusCode: 200,
                     body: JSON.stringify({message: "200 OK"})
@@ -167,6 +167,27 @@ exports.handler = async (event) => {
 
         
         else if (action == 'deleted') {
+
+            var repositoryDataList = repositories.map(repositoryObj => repositoryObj.full_name );
+
+            var removeInstallResponse;
+
+            try {
+                removeInstallResponse = await backendClient.post("/repositories/remove_installation", {installationId, repositories: repositoryDataList});
+            }
+            catch (err) {
+                await logger.error({source: 'github-lambda', message: err,
+                                    errorDescription: `Error Removing Installation - repositoryDataList: ${JSON.stringify(repositoryDataList)}`,
+                                    function: 'handler'});
+
+                let response = {
+                    statusCode: 200,
+                    body: JSON.stringify({ message: "200 OK" })
+                };
+                return response;
+            }
+
+            // Delete the installation token
             var tokenDeleteResponse;
             try {
                 tokenDeleteResponse = await backendClient.post("/tokens/delete", {installationId});
@@ -228,6 +249,25 @@ exports.handler = async (event) => {
 
         else if (action == 'removed') {
             var removed = event.body.repositories_removed;
+            
+            var repositoryDataList = removed.map(repositoryObj => repositoryObj.full_name );
+
+            var removeInstallResponse;
+
+            try {
+                removeInstallResponse = await backendClient.post("/repositories/remove_installation", {installationId, repositories: repositoryDataList});
+            }
+            catch (err) {
+                await logger.error({source: 'github-lambda', message: err,
+                                    errorDescription: `Error Removing Installation - repositoryDataList: ${JSON.stringify(repositoryDataList)}`,
+                                    function: 'handler'});
+
+                let response = {
+                    statusCode: 200,
+                    body: JSON.stringify({ message: "200 OK" })
+                };
+                return response;
+            }
         }
     }
 

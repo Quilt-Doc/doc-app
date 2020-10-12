@@ -120,6 +120,8 @@ const repositoryController = require('../controllers/RepositoryController');
 router.post('/repositories/init', authorizationMiddleware.repositoryMiddleware, repositoryController.initRepository);
 router.post('/repositories/update', authorizationMiddleware.repositoryMiddleware, repositoryController.updateRepository);
 router.post('/repositories/job_retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.jobRetrieveRepositories);
+router.post('/repositories/remove_installation', authorizationMiddleware.repositoryMiddleware, repositoryController.removeInstallation);
+
 
 // User accessible
 

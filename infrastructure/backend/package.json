@@ -4,7 +4,7 @@
   "description": "backend of DocApp",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
@@ -39,5 +39,8 @@
   },
   "optionalDependencies": {
     "node-windows": "^1.0.0-beta.1"
+  },
+  "devDependencies": {
+    "jest": "^26.5.3"
   }
 }

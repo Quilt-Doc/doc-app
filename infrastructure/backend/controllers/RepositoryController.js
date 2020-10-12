@@ -9,6 +9,7 @@ const jobConstants = require('../constants/index').jobs;
 
 const logger = require('../logging/index').logger;
 
+const Workspace = require('../models/Workspace');
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 const Document = require('../models/Document');
@@ -169,7 +170,7 @@ getRepository = async (req, res) => {
     return res.json({success: true, result: returnedRepository});
 }
 
-
+// KARAN TODO: Make this a transaction
 deleteRepository = async (req, res) => {
     const repositoryId = req.repositoryObj._id.toString();
 
@@ -177,15 +178,28 @@ deleteRepository = async (req, res) => {
 
     try {
         returnedRepository = await Repository.findByIdAndRemove(repositoryId).lean().select("_id").exec();
-    } catch (err) {
+    }
+    catch (err) {
         await logger.error({source: 'backend-api', message: err,
                                 errorDescription: `Error findByIdAndRemove Repository - repositoryId: ${repositoryId}`,
                                 function: 'deleteRepository'});
         return res.json({success: false, error: `Error findByIdAndRemove Repository - repositoryId: ${repositoryId}`, trace: err});
     }
 
+
+    var referenceDeleteResult;
+    try {
+        referenceDeleteResult = await Reference.deleteMany({repository: ObjectId(repositoryId)});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error deleteMany Reference - repositoryId: ${repositoryId}`,
+                                function: 'deleteRepository'});
+        return res.json({success: false, error: `Error deleteMany Reference - repositoryId: ${repositoryId}`, trace: err});
+    }
+
     await logger.info({source: 'backend-api',
-                        message: `Successfully deleted Repository - fullName, installationId: ${returnedRepository.fullName}, ${returnedRepository.installationId}`,
+                        message: `Successfully deleted Repository & References - fullName, installationId: ${returnedRepository.fullName}, ${returnedRepository.installationId}`,
                         function: 'deleteRepository'});
 
     return res.json({success: true, result: returnedRepository});
@@ -342,13 +356,71 @@ updateRepository = async (req, res) => {
 }
 
 
-// removeRepositoryInstallation = async (req, res) => {
+removeInstallation = async (req, res) => {
+    const { repositories, installationId } = req.body;
 
-// }
+    // Get all Repositories installation was installed on
+    var installationRepositories;
+    try {
+        installationRepositories = await Repository.find({fullName: { $in: repositories } }).select('_id fullName installationId').lean().exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error finding installationRepositories - installationId, repositories: ${installationId}, ${JSON.stringify(repositories)}`,
+                            function: 'removeInstallation'});
+        return res.json({success: false,
+                            error: `Error finding installationRepositories - installationId, repositories: ${installationId}, ${JSON.stringify(repositories)}`});
+    }
+
+    var deleteIds = installationRepositories.map(repositoryObj => repositoryObj._id.toString());
+    // Delete all Repositories installation as installed was on
+    try {
+        await Repository.deleteMany({_id: { $in: deleteIds.map(id => ObjectId(id)) }});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error deleting Repositories - repositories: ${JSON.stringify(deleteIds)}`,
+                            function: 'removeInstallation'});
+        return res.json({success: false, error: `Error deleting Repositories - repositories: ${JSON.stringify(deleteIds)}`});
+    }
+
+    // Delete corresponding References
+    try {
+        await Reference.deleteMany({repository: { $in: deleteIds.map(id => ObjectId(id)) } });
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error deleting References - repositoryIds: ${JSON.stringify(deleteIds)}`,
+                            function: 'removeInstallation'});
+        return res.json({success: false, error: `Error deleting References - repositoryIds: ${JSON.stringify(deleteIds)}`});
+    }
+
+    // Remove from Workspaces
+    try {
+        await Workspace.updateMany({repositories: { $in: deleteIds.map(id => ObjectId(id))}}, { $pull: { repositories:  deleteIds.map(id => ObjectId(id))} });
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error Removing Repository Ids from Workspace - repositoryIds: ${JSON.stringify(deleteIds)}`,
+                            function: 'removeInstallation'});
+        return res.json({success: false, error: `Error Removing Repository Ids from Workspace - repositoryIds: ${JSON.stringify(deleteIds)}`});
+    }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully Deleted ${deleteIds.length} Repositories - repositoryIds: ${JSON.stringify(deleteIds)}`,
+                        function: 'removeInstallation'});
+
+    return res.json({success: true, result: deleteIds});
+}
 
 
 module.exports = {
     initRepository, getRepositoryFile, getRepository,
     deleteRepository, retrieveRepositories,
-    updateRepository, jobRetrieveRepositories, retrieveCreationRepositories
+    updateRepository, jobRetrieveRepositories, retrieveCreationRepositories,
+    removeInstallation
 }

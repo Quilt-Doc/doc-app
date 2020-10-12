@@ -49,6 +49,9 @@ const documentIdParam = async (req, res, next, documentId) => {
     if (req.documentObj) {
         next();
     }
+
+    console.log(`Searching for documentId: ${documentId}`);
+
     // try to get the reference object and attach it to the request object
     try {
         var foundDocument = await Document.findById(documentId).lean().exec();
