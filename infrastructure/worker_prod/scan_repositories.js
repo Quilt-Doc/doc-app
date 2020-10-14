@@ -66,7 +66,8 @@ const scanRepositories = async () => {
         }
         await worker.send({action: 'log', info: {level: 'info', message: `No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`,
                                                     source: 'worker-instance', function: 'scanRepositories'}});
-        throw new Error(`No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`);
+        return true;
+        // throw new Error(`No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`);
     }
 
 
@@ -136,9 +137,6 @@ const scanRepositories = async () => {
         repositoryListCommits = await Promise.all(requestPromiseList);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', message: err,
-                                                    function: 'scanRepositories'}});
-
         await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
                                                     errorDescription: `Error getting repository commits urlList: ${urlList}`,
                                                     function: 'scanRepositories'}});

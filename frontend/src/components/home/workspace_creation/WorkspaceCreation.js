@@ -84,9 +84,6 @@ class WorkspaceCreation extends Component {
         const {page} = this.state;
         return(
             <Container>
-                <Top>
-                    <Company>quilt</Company>
-                </Top>
                 <CreateBox>
                     <Content>
                         <Progress>

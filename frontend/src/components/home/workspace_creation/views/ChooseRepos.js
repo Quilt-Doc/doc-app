@@ -8,7 +8,7 @@ import {ImGithub} from 'react-icons/im';
 import { RiCheckboxCircleFill} from 'react-icons/ri';
 
 //actions
-import { checkInstallation } from '../../../actions/Auth_Actions';
+import { checkInstallation } from '../../../../actions/Auth_Actions';
 
 //redux
 import { connect } from 'react-redux';

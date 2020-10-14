@@ -144,7 +144,7 @@ const runUpdateProcedure = async () => {
         patchDataList = await Promise.all(newCheckRunObjList);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: err,
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
                                                     errorDescription: `Error creating Check Run Object - modifiedChecks: ${JSON.stringify(modifiedChecks.map(checkObj => checkObj._id.toString()))}`,
                                                     function: 'updateChecks'}});
         throw Error(`Error creating Check Run Object - modifiedChecks: ${JSON.stringify(modifiedChecks.map(checkObj => checkObj._id.toString()))}`);
@@ -159,7 +159,7 @@ const runUpdateProcedure = async () => {
         await Promise.all(requestPromiseList);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: err,
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
                                                     errorDescription: `Error patching Check Run - modifiedChecks: ${JSON.stringify(modifiedChecks.map(checkObj => checkObj._id.toString()))}`,
                                                     function: 'updateChecks'}});
         throw Error(`Error patching Check Run - modifiedChecks: ${JSON.stringify(modifiedChecks.map(checkObj => checkObj._id.toString()))}`);
@@ -184,7 +184,7 @@ const runUpdateProcedure = async () => {
         await Check.collection.bulkWrite(bulkCheckUpdateOps);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: err,
+        await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
                                                     errorDescription: `Error updating Checks in MongoDB - modifiedChecks: ${JSON.stringify(modifiedChecks.map(checkObj => checkObj._id.toString()))}`,
                                                     function: 'updateChecks'}});
         throw Error(`Error updating Checks in MongoDB - modifiedChecks: ${JSON.stringify(modifiedChecks.map(checkObj => checkObj._id.toString()))}`);

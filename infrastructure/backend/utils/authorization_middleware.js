@@ -300,13 +300,23 @@ const workspaceMiddleware = async (req, res, next) => {
 
         var validUsers = foundWorkspace.memberUsers.map(userId => userId.toString());
         if (validUsers.indexOf(requesterId) > -1) {
+
+            // Only the creator can delete a Workspace
+            if (requestedPath.includes('/workspaces/delete')) {
+                if (foundWorkspace.creator.toString() ==  userId.toString()) {
+                    return next();
+                }
+                else {
+                    return next(new Error("Error: only the creator of a workspace can delete it"));
+                }
+            }
+
             return next();
         }
         else {
             return next(new Error("Error: requesting user not a member of target workspace"));
         }
     }
-
 }
 
 const tagMiddleware = async (req, res, next) => {

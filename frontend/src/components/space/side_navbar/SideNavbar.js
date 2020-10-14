@@ -108,7 +108,7 @@ class SideNavbar extends React.Component {
         return (
             <SideNavbarContainer id = "sidenavbar">
                 <CreateButton/>
-                <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
+                <WorkspaceIcon to = {"/home/workspaces"}>{name[0]}</WorkspaceIcon>
                 {this.renderTopSection()}
                 {this.renderBottomSection()}
             </SideNavbarContainer>

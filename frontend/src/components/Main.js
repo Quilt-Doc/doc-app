@@ -20,9 +20,31 @@ class Main extends Component {
 
     // checks to see whether the user is logged in
     // validated through a JWT in the backend
-    componentDidMount(){
+    componentDidMount = async () => {
         const { checkLogin } = this.props;
-        checkLogin();
+        await checkLogin();
+
+        const { authenticated, user } = this.props;
+
+        let path = history.location.pathname;
+        const splitPath = path.split('/');
+
+        if (this.checkValid(authenticated) && !(authenticated && user)) {
+            if (splitPath.length > 1) {
+                if (splitPath[1] !== 'login') history.push('/login');
+            } else {
+                history.push('/login');
+            }
+        } else if (this.checkValid(authenticated) && (authenticated && user)) {
+            if (splitPath.length > 1) {
+                let section = splitPath[1];
+                if (section !== "workspaces" && section !== "home") {
+                    history.push('/home');
+                }
+            } else {
+                history.push('/home');
+            }
+        }
     }
 
     checkValid = (item) => {

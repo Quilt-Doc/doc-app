@@ -6,15 +6,27 @@ import styled from 'styled-components';
 //icons
 import {ImGithub} from 'react-icons/im';
 
+//router
+import history from '../../history';
+
 // endpoint used by axios api to backend
 import { apiEndpoint } from '../../apis/api';
 
 // component that the user sees to login
 class Login extends React.Component {
+
     // opens up the backend route set by passport 
     // instantiates the login process for github
     goLogin = () => {
-        window.open(apiEndpoint + "/auth/github", "_self");
+        let { search } = history.location;
+        let params = new URLSearchParams(search)
+        let email = params.get('email');
+
+        if ( email !== null && email !== undefined ){
+            window.open(`${apiEndpoint}/auth/github?email=${email}`, "_self");
+        } else {
+            window.open(apiEndpoint + "/auth/github", "_self");
+        }
     }
 
     render(){
@@ -48,9 +60,9 @@ const StyledIcon = styled.img`
 `
 
 const Company = styled.div`
-    font-size: 4rem;
-    letter-spacing: 1.5px;
-    font-weight: 500;
+    letter-spacing: 1px;
+    font-weight: 400;
+    font-size: 5rem;
     display: flex;
     align-items: center;
 `

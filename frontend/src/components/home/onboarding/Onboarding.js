@@ -9,6 +9,9 @@ import { editUser } from '../../../actions/User_Actions'
 //redux
 import { connect } from 'react-redux';
 
+//router
+import history from '../../../history';
+
 //email validation
 import * as EmailValidator from 'email-validator';
 
@@ -17,7 +20,7 @@ class Onboarding extends React.Component {
         super(props);
     }
 
-    onboardUser = () => {
+    onboardUser = async () => {
         const { editUser, user: {_id}} = this.props;
         const firstName = this.firstNameInput.value;
         const lastName = this.lastNameInput.value;
@@ -31,12 +34,18 @@ class Onboarding extends React.Component {
             alert("Invalid Email");
         }
 
-        editUser({userId: _id, firstName, lastName, onboarded: true, email});
+        await editUser({userId: _id, firstName, lastName, onboarded: true, email});
+        history.push('/home/workspaces')
     }
 
     render(){
+        const { user } = this.props;
+        let { search } = history.location;
+        let params = new URLSearchParams(search)
+        let email = params.get('email');
+        console.log("USER", user);
+        console.log("EMAIL", email);
         return(
-
                 <Content>
                     <Header>
                         Welcome!
@@ -47,17 +56,19 @@ class Onboarding extends React.Component {
                     <SubContent>
                         <Top>
                             <NameInput 
+                                defaultValue = {user.firstName}
                                 ref = {node => this.firstNameInput = node}
                                 spellCheck = {false} 
-                                autoFocus placeholder = 
-                                {"First Name"}/>
+                                autoFocus 
+                                placeholder = {"First Name"}/>
                             <NameInput 
+                                defaultValue = {user.lastName}
                                 ref = {node => this.lastNameInput = node}
                                 spellCheck = {false} 
-                                placeholder = 
-                                {"Last Name"}/>
+                                placeholder = {"Last Name"}/>
                         </Top>
                         <EmailInput
+                            defaultValue = {email}
                             ref = {node => this.emailInput = node}
                             spellCheck = {false} 
                             placeholder = {"Email"} 

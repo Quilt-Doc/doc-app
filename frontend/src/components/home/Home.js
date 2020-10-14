@@ -3,6 +3,13 @@ import React, { Component } from 'react';
 //components
 import Onboarding from './onboarding/Onboarding';
 import Workspaces from './workspaces/Workspaces';
+import WorkspaceCreation from './workspace_creation/WorkspaceCreation';
+
+//router
+import { Router, Route  } from 'react-router-dom';
+
+//history
+import history from '../../history';
 
 //styles
 import styled from 'styled-components';
@@ -12,20 +19,35 @@ import { connect } from 'react-redux';
 
 class Home extends Component {
 
-    renderBody = () => {
-       
+    componentDidMount() {
         const {user: {onboarded}} = this.props;
-        console.log(onboarded);
-        return onboarded ? <Workspaces/> : <Onboarding/>
+        if (!onboarded) {
+            let splitPath = history.location.pathname.split('/');
+            if (splitPath.length > 2) {
+                if (splitPath[2] !== "onboarding") {
+                    history.push('/home/onboarding');
+                }
+            } else {
+                history.push('/home/onboarding');
+            }
+           
+        } else if (history.location.pathname !== "/home/create_workspace") {
+            history.push('/home/workspaces');
+        }
     }
 
     render() {
+
         return (
             <Container>
                 <Top>
                     <Company>quilt</Company>
                 </Top>
-                {this.renderBody()}
+                <Router history = {history}>
+                    <Route path = "/home/onboarding" component = {Onboarding} />
+                    <Route path = "/home/workspaces" component = {Workspaces} />
+                    <Route path = "/home/create_workspace" component = {WorkspaceCreation}/>
+                </Router>
             </Container>
         )
     }
@@ -33,7 +55,6 @@ class Home extends Component {
 
 const mapStateToProps = (state) => {
     const {auth: {user}} = state;
-    console.log("USER", user);
     return {
         user
     }
@@ -54,8 +75,8 @@ const Container = styled.div`
 
 const Top = styled.div`
     height: 10rem;
-    padding-left: 4rem;
-    padding-right: 4rem;
+    padding-left: 8.5rem;
+    padding-right: 8.5rem;
     color:#D6E0EE;
     display: flex;
     align-items: center;
@@ -68,10 +89,10 @@ const StyledIcon = styled.img`
 `
 
 const Company = styled.div`
-    font-size: 3rem;
+    font-size: 3.5rem;
+    letter-spacing: 1px;
+    font-weight: 400;
     color:white;
-    font-weight: 500;
-    letter-spacing: 1.5px;
     margin-right: 15rem;
     margin-top: -0.25rem;
 `

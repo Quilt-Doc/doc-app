@@ -132,9 +132,8 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
     // Kick off Check update job
 
     var validatedDocuments = deletedDocumentInfo.filter(infoObj => infoObj.status == 'invalid')
-                                                .map(infoObj => {
-                                                    infoObj._id.toString();
-                                                });
+                                                .map(infoObj => infoObj._id.toString());
+
     if (validatedDocuments.length > 0) {
         var runUpdateChecksData = {};
         runUpdateChecksData['repositoryId'] = repositoryId.toString();
@@ -142,6 +141,10 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
         runUpdateChecksData['validatedSnippets'] = [];
 
         runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+        await logger.info({source: 'backend-api',
+                            message: `Dispatching Update Checks Job - runUpdateChecksData: ${JSON.stringify(runUpdateChecksData)}`,
+                            function: 'handleDocumentDelete'});
 
         try {
             await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
@@ -235,6 +238,10 @@ handleDocumentReferenceRemove = async (referenceStatus, returnDocument, userId, 
 
             runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
 
+            await logger.info({source: 'backend-api',
+                                message: `Dispatching Update Checks Job - runUpdateChecksData: ${JSON.stringify(runUpdateChecksData)}`,
+                                function: 'handleDocumentReferenceRemove'});
+
             try {
                 await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
             }
@@ -277,6 +284,10 @@ handleSnippetEdit = async (snippetId, repositoryId) => {
 
     runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
 
+    await logger.info({source: 'backend-api',
+                        message: `Dispatching Update Checks Job - runUpdateChecksData: ${JSON.stringify(runUpdateChecksData)}`,
+                        function: 'handleSnippetEdit'});
+
     try {
         await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
     }
@@ -302,6 +313,10 @@ handleSnippetDelete = async (deletedSnippet, repositoryId) => {
     runUpdateChecksData['validatedSnippets'] = validatedSnippets;
 
     runUpdateChecksData['jobType'] = jobConstants.JOB_UPDATE_CHECKS.toString();
+
+    await logger.info({source: 'backend-api',
+                        message: `Dispatching Update Checks Job - runUpdateChecksData: ${JSON.stringify(runUpdateChecksData)}`,
+                        function: 'handleSnippetDelete'});
 
     try {
         await jobs.dispatchUpdateChecksJob(runUpdateChecksData);
