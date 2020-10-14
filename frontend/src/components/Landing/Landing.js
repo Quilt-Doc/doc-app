@@ -19,6 +19,7 @@ import history from '../../history';
 //images
 import dashboardPNG from '../../images/dash.png';
 import infoPNG from '../../images/info_3.png';
+import logoSVG from '../../images/final_logo.svg';
 
 //utility
 import scrollIntoView from 'scroll-into-view-if-needed'
@@ -70,6 +71,9 @@ class Landing extends React.Component {
             <Container>
                 <IntroPanel>
                     <TopBar>
+                        <IconBorder>
+                            <StyledIcon src = {logoSVG} />
+                        </IconBorder>
                         <BrandName>
                             quilt
                         </BrandName>
@@ -120,6 +124,14 @@ const mapStateToProps = () => {
 
 export default connect(mapStateToProps, { addUserToContacts })(Landing);
 
+const IconBorder = styled.div`
+`
+
+const StyledIcon = styled.img`
+    max-width: 3.5rem;
+    margin-right: 1rem;
+    margin-top: 1rem;
+`
 
 const Gradient = styled.div`
     height: 10rem;
