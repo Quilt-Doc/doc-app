@@ -129,8 +129,8 @@ const IconBorder = styled.div`
 
 const StyledIcon = styled.img`
     max-width: 3.5rem;
-    margin-right: 1rem;
-    margin-top: 1rem;
+    margin-right: 0.85rem;
+    margin-top: 1.2rem;
 `
 
 const Gradient = styled.div`
