@@ -64,9 +64,7 @@ const DraggableDocument = (props) => {
 		accept: ItemTypes.DOCUMENT,
 		canDrop: (item) => notChild(item, document, false),
 		drop: (item) => {
-			console.log("DOCUMENT", item);
-			console.log("OLD PARENT", item.parent);
-			console.log("NEW PARENT", document);
+
 			props.moveDocument({ 
 				workspaceId, 
 				documentId: item.document._id, 
@@ -89,16 +87,10 @@ const DraggableDocument = (props) => {
 			let newParentId = parent._id;
 			let oldParentId = item.parent._id;
 
-			console.log("NEW PARENT", parent);
-			console.log("OLD PARENT", item.parent);
-
 			let { workspaceId } = props.match.params;
 
 			let newOrder = order;
 			let oldOrder = item.order;
-
-			console.log("NEW ORDER", newOrder);
-			console.log("OLD ORDER", oldOrder);
 
 			if (newParentId === oldParentId && newOrder > oldOrder) {
 				newOrder -= 1;

@@ -32,166 +32,194 @@ escapeRegExp = (string) => {
 /// FARAZ TODO: Make title a required field during document creation (in modal)
 /// FARAZ TODO: Log times of middleware and of major points in controller methods
 createDocument = async (req, res) => {
-    const { markup, authorId, referenceIds, snippetIds, repositoryId, title, tagIds, parentPath, root } = req.body;
-    const workspaceId = req.workspaceObj._id.toString();
-
-    await logger.info({source: 'backend-api',
-                        message: `Creating Document - workspaceId, authorId, referenceIds, snippetIds, repositoryId, title: ${workspaceId}, ${authorId}, ${JSON.stringify(referenceIds)}, ${JSON.stringify(snippetIds)}, ${repositoryId}, ${title}`,
-                        function: 'createDocument'});
+    const session = await db.startSession();
     
-    // validation
-    if (!checkValid(authorId)) return res.json({success: false, error: "createDocument error: no authorId provided.", result: null});
-    if (!checkValid(title) || (title === "" && !root)) return res.json({
-        success: false, error: "createDocument error: no title provided.", result: null, alert: "Please provide a title"});
-    if (!checkValid(markup) && !root) return res.json({success: false, error: "createDocument error: no markup provided."});
-    // make sure title doesn't exist already in space
-    try {
-        let duplicate = await Document.exists({title, workspace: workspaceId});
-        if (duplicate) {
-            await logger.info({source: 'backend-api',
-                                message: `Create Document duplicate title - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
-                                function: 'createDocument'});
-            return res.json({success: false, error: "createDocument Error: duplicate title.", alert: "Duplicate title in space.. Please select a unique title"})
-        }
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            error: err,
-                            errorDescription: `Create Document Error validation on duplicate title failed - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
-                            function: 'createDocument'});
-        return res.json({success: false, error: "createDocument Error: validation on duplicate title failed.", trace: err});
-    }
-    
+    let output;
 
-    // Check that repositoryId is in accessible workspace
-    const validRepositoryIds = req.workspaceObj.repositories;
+    await session.withTransaction(async () => {
+        const { markup, authorId, referenceIds, snippetIds, repositoryId, title, tagIds, parentPath, root } = req.body;
+        const workspaceId = req.workspaceObj._id.toString();
 
-    if (checkValid(repositoryId)) {
-        if (!validRepositoryIds.includes(repositoryId)) {
-            await logger.info({source: 'backend-api',
-                                message: `Create Document User can't access Repository - workspaceId, repositoryId authorId: ${workspaceId}, ${repositoryId}, ${authorId}`,
-                                function: 'createDocument'});
-            return res.json({success: false, error: "createDocument Error: request on repository user does not have access to."});
-        }
-    }
-    
-     // Check that authorId matches the userId in the JWT (only the user can create a document for themselves)
-    if (authorId != req.tokenPayload.userId && req.tokenPayload.role != 'dev') {
         await logger.info({source: 'backend-api',
-                            message: `Create Document userId doesn't match authorId - authorId, userId, workspaceId: ${authorId}, ${req.tokenPayload.userId}, ${workspaceId}`,
+                            message: `Creating Document - workspaceId, authorId, referenceIds, snippetIds, repositoryId, title: ${workspaceId}, ${authorId}, ${JSON.stringify(referenceIds)}, ${JSON.stringify(snippetIds)}, ${repositoryId}, ${title}`,
                             function: 'createDocument'});
-        return res.json({success: false, error: "createDocument Error: userId in JWT doesn't match authorId."});
-    }
+        
+        // validation
+        if (!checkValid(authorId)) {
+            output = {success: false, error: "createDocument error: no authorId provided.", result: null};
+            throw new Error("createDocument error: no authorId provided.");
+        }
 
-    // Get parent of newly created document to add to parent's children 
-    let parent;
+        if (!checkValid(title) || (title === "" && !root)) {
+            output = {success: false, error: "createDocument error: no title provided.", result: null, alert: "Please provide a title"};
+            throw new Error("createDocument error: no title provided.");
+        }
 
-    if (checkValid(parentPath)) {
-        try {   
-            parent = await Document.findOne({path: parentPath, workspace: workspaceId})
-                                    .select('_id path children').exec();
+        if (!checkValid(markup) && !root) {
+            output = {success: false, error: "createDocument error: no markup provided."};
+            throw new Error("createDocument error: no markup provided.");
+        }
+        // make sure title doesn't exist already in space
+        try {
+            let duplicate = await Document.exists({title, workspace: workspaceId});
+            if (duplicate) {
+                await logger.info({source: 'backend-api',
+                                    message: `Create Document duplicate title - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
+                                    function: 'createDocument'});
+                output = {success: false, error: "createDocument Error: duplicate title.", alert: "Duplicate title in space.. Please select a unique title"};
+                throw new Error("createDocument Error: duplicate title.");
+            }
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 error: err,
-                                errorDescription: `Create Document Error invalid parentPath - workspaceId, parentPath: ${workspaceId}, ${parentPath}`,
+                                errorDescription: `Create Document Error validation on duplicate title failed - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
                                 function: 'createDocument'});
-
-            return res.json({success: false, error: `createDocument Error: invalid parentPath`, trace: err});
+            output = {success: false, error: "createDocument Error: validation on duplicate title failed.", trace: err};
+            throw new Error("createDocument Error: validation on duplicate title failed.");
         }
-    // if created document is root, no need to update a "parent"
-    } else if (!root) {
-        await logger.error({source: 'backend-api',
-                            error: err,
-                            errorDescription: `Create Document Error no parentPath provided  - workspaceId, authorId: ${workspaceId}, ${authorId}`,
+        
+
+        // Check that repositoryId is in accessible workspace
+        const validRepositoryIds = req.workspaceObj.repositories;
+
+        if (checkValid(repositoryId)) {
+            if (!validRepositoryIds.includes(repositoryId)) {
+                await logger.info({source: 'backend-api',
+                                    message: `Create Document User can't access Repository - workspaceId, repositoryId authorId: ${workspaceId}, ${repositoryId}, ${authorId}`,
+                                    function: 'createDocument'});
+                output = {success: false, error: "createDocument Error: request on repository user does not have access to."};
+                throw new Error( "createDocument Error: request on repository user does not have access to.");
+            }
+        }
+        
+        // Check that authorId matches the userId in the JWT (only the user can create a document for themselves)
+        if (authorId != req.tokenPayload.userId && req.tokenPayload.role != 'dev') {
+            await logger.info({source: 'backend-api',
+                                message: `Create Document userId doesn't match authorId - authorId, userId, workspaceId: ${authorId}, ${req.tokenPayload.userId}, ${workspaceId}`,
+                                function: 'createDocument'});
+            output = {success: false, error: "createDocument Error: userId in JWT doesn't match authorId."};
+            throw new Error("createDocument Error: userId in JWT doesn't match authorId.");
+        }
+
+        // Get parent of newly created document to add to parent's children 
+        let parent;
+
+        if (checkValid(parentPath)) {
+            try {   
+                parent = await Document.findOne({path: parentPath, workspace: workspaceId})
+                                        .select('_id path children').exec();
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Create Document Error invalid parentPath - workspaceId, parentPath: ${workspaceId}, ${parentPath}`,
+                                    function: 'createDocument'});
+
+                output = {success: false, error: `createDocument Error: invalid parentPath`, trace: err};
+                throw new Error(`createDocument Error: invalid parentPath`);
+            }
+        // if created document is root, no need to update a "parent"
+        } else if (!root) {
+            await logger.error({source: 'backend-api',
+                                error: err,
+                                errorDescription: `Create Document Error no parentPath provided  - workspaceId, authorId: ${workspaceId}, ${authorId}`,
+                                function: 'createDocument'});
+            output = {success: false, error: "createDocument Error: no parentPath provided."};
+            throw newError("createDocument Error: no parentPath provided.");
+        }
+
+        let documentPath = "";
+
+        // Remove dash from title for new path creation, path is only dependent on title and parentPath if root doesn't exist
+        // TODO: will need to add validation with regard to backslash (possibly)
+        if (!root) {    
+            let dashRemovedTitle = title.replace('/', "<replacedDash>");
+            documentPath = `${parent.path}/${dashRemovedTitle}`
+        }
+
+        let document = new Document(
+            {
+                author: ObjectId(authorId),
+                workspace: ObjectId(workspaceId),
+                title,
+                path: documentPath,
+                markup,
+                status: 'valid'
+            },
+        );
+
+        // set optional fields of document
+        if (checkValid(root)) document.root = root;
+        if (checkValid(tagIds)) document.tags = tagIds.map(tagId => ObjectId(tagId));
+        if (checkValid(repositoryId)) document.repository = repositoryId;
+        if (checkValid(referenceIds)) document.references = referenceIds.map(referenceId => ObjectId(referenceId));
+        if (checkValid(snippetIds)) document.snippets = snippetIds.map(snippetId => ObjectId(snippetId));
+        
+        // save document
+        try {
+            document = await document.save();
+        } catch (err) {
+            await logger.error({source: 'backend-api',
+                                error: err,
+                                errorDescription: `Create Document Error document.save() failed - workspaceId, authorId, title, path: ${workspaceId}, ${authorId}, ${title}, ${documentPath}`,
+                                function: 'createDocument'});
+            output = {success: false, error: "createDocument Error: document creation failed", trace: err};
+            throw new Error("createDocument Error: document creation failed");
+        }
+
+        // Reporting Section
+        if (document.root != true) {
+            try {
+                await ReportingController.handleDocumentCreate(authorId, workspaceId, title, document._id.toString());
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                        message: err,
+                                        errorDescription: `Error handleDocumentCreate - authorId, workspaceId, documentId: ${authorId}, ${workspaceId}, ${documentObj._id.toString()}`,
+                                        function: `handleDocumentDelete`});
+
+                output = {success: false, error: `Error handleDocumentCreate - authorId, workspaceId, documentId: ${authorId}, ${workspaceId}, ${documentObj._id.toString()}`, trace: err};
+                throw new Error(`Error handleDocumentCreate - authorId, workspaceId, documentId:`);
+            }
+        }
+
+        // add document to parent's children
+        if (!root) {
+            try {
+                parent.children.push(document._id);
+                parent = await parent.save();
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Create Document Error parent update children failed - workspaceId, authorId, parentId, documentId: ${workspaceId}, ${authorId}, ${parent._id.toString()}, ${document._id.toString()}`,
+                                    function: 'createDocument'});
+                output = {success: false, error: "createDocument Error: parent update children failed", trace: err};
+                throw new Error("createDocument Error: parent update children failed");
+            }
+        }
+
+        // populate everything on the document on creation
+        try {
+            document = await Document.populate(document, {path: "author references workspace repository tags snippets"});
+        } catch (err) {
+            await logger.error({source: 'backend-api',
+                                error: err,
+                                errorDescription: `Create Document Error document population failed - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
+                                function: 'createDocument'});
+            output = {success: false, error: "createDocument Error: document population failed", trace: err};
+            throw new Error("createDocument Error: document population failed");
+        }
+
+        await logger.info({source: 'backend-api',
+                            message: `Successfully created document - workspaceId, authorId, documentId, title: ${workspaceId}, ${authorId}, ${document._id.toString()}, ${title}`,
                             function: 'createDocument'});
-        return res.json({success: false, error: "createDocument Error: no parentPath provided."});
-    }
-
-    let documentPath = "";
-
-    // Remove dash from title for new path creation, path is only dependent on title and parentPath if root doesn't exist
-    // TODO: will need to add validation with regard to backslash (possibly)
-    if (!root) {    
-        let dashRemovedTitle = title.replace('/', "<replacedDash>");
-        documentPath = `${parent.path}/${dashRemovedTitle}`
-    }
-
-    let document = new Document(
-        {
-            author: ObjectId(authorId),
-            workspace: ObjectId(workspaceId),
-            title,
-            path: documentPath,
-            markup,
-            status: 'valid'
-        },
-    );
-
-    // set optional fields of document
-    if (checkValid(root)) document.root = root;
-    if (checkValid(tagIds)) document.tags = tagIds.map(tagId => ObjectId(tagId));
-    if (checkValid(repositoryId)) document.repository = repositoryId;
-    if (checkValid(referenceIds)) document.references = referenceIds.map(referenceId => ObjectId(referenceId));
-    if (checkValid(snippetIds)) document.snippets = snippetIds.map(snippetId => ObjectId(snippetId));
     
-    // save document
-    try {
-        document = await document.save();
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            error: err,
-                            errorDescription: `Create Document Error document.save() failed - workspaceId, authorId, title, path: ${workspaceId}, ${authorId}, ${title}, ${documentPath}`,
-                            function: 'createDocument'});
-        return res.json({success: false, error: "createDocument Error: document creation failed", trace: err});
-    }
+        output = root ? {success: true, result: [document]} : {success: true, result: [document, parent]};
+        return
+    })
 
-    // Reporting Section
-    if (document.root != true) {
-        try {
-            await ReportingController.handleDocumentCreate(authorId, workspaceId, title, document._id.toString());
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                    message: err,
-                                    errorDescription: `Error handleDocumentCreate - authorId, workspaceId, documentId: ${authorId}, ${workspaceId}, ${documentObj._id.toString()}`,
-                                    function: `handleDocumentDelete`});
+    session.endSession();
 
-            return res.json({success: false,
-                                error: `Error handleDocumentCreate - authorId, workspaceId, documentId: ${authorId}, ${workspaceId}, ${documentObj._id.toString()}`,
-                                trace: err});
-        }
-    }
-
-    // add document to parent's children
-    if (!root) {
-        try {
-            parent.children.push(document._id);
-            parent = await parent.save();
-        } catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `Create Document Error parent update children failed - workspaceId, authorId, parentId, documentId: ${workspaceId}, ${authorId}, ${parent._id.toString()}, ${document._id.toString()}`,
-                                function: 'createDocument'});
-            return res.json({success: false, error: "createDocument Error: parent update children failed", trace: err});
-        }
-    }
-
-    // populate everything on the document on creation
-    try {
-        document = await Document.populate(document, {path: "author references workspace repository tags snippets"});
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            error: err,
-                            errorDescription: `Create Document Error document population failed - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
-                            function: 'createDocument'});
-        return res.json({success: false, error: "createDocument Error: document population failed", trace: err});
-    }
-
-    await logger.info({source: 'backend-api',
-                        message: `Successfully created document - workspaceId, authorId, documentId, title: ${workspaceId}, ${authorId}, ${document._id.toString()}, ${title}`,
-                        function: 'createDocument'});
-   
-    return root ? res.json({success: true, result: [document]}) : 
-        res.json({success: true, result: [document, parent]});
+    return res.json(output);
 }  
 
 
@@ -199,10 +227,11 @@ createDocument = async (req, res) => {
 moveDocument = async (req, res) => {
 
     const session = await db.startSession();
-    // extract old and new parent as well as the new index of placement
+    
     let output;
 
     await session.withTransaction(async () => {
+        // extract old and new parent as well as the new index of placement
         const { oldParentId, newParentId, newIndex } = req.body;
         const documentId = req.documentObj._id.toString();
         const workspaceId = req.workspaceObj._id.toString();
@@ -394,119 +423,134 @@ moveDocument = async (req, res) => {
 // remove ids of deleted docs if they exist, change parent's children
 deleteDocument = async (req, res) => {
 
-    const documentObj = req.documentObj;
-    const workspaceId = req.workspaceObj._id.toString();
-    const userId = req.tokenPayload.userId.toString();
+    const session = await db.startSession();
+    
+    let output;
 
-    const repositoryId = req.documentObj.repository._id.toString();
-
-    // escape the path of the document so regex characters don't affect the query
-    const escapedPath = escapeRegExp(`${documentObj.path}`);
-    const regex =  new RegExp(`^${escapedPath}`);
-
-    await logger.info({source: 'backend-api',
-                        message: `Delete Document attempting to delete ${documentObj._id.toString()} - workspaceId, userId: ${workspaceId}, ${userId}`,
-                        function: 'deleteDocument'});
-
-    let deletedDocuments;
-
-    let finalResult = {};
-
-    // if the document is not the root, we can find the doc's parent using the doc's path
-    // we will remove the deleted document from the parent's children
-    if (!documentObj.root) {
-        // split by / and join all elements except the last (which would be the document title) to get the parentPath
-        let parentPath = documentObj.path.split("/");
-        parentPath = parentPath.slice(0, parentPath.length - 1).join("/");
-
-        // extract the parent using the parentPath
-        let parent;
+    await session.withTransaction(async () => {
+        const documentObj = req.documentObj;
+        const workspaceId = req.workspaceObj._id.toString();
+        const userId = req.tokenPayload.userId.toString();
+    
+        const repositoryId = req.documentObj.repository._id.toString();
+    
+        // escape the path of the document so regex characters don't affect the query
+        const escapedPath = escapeRegExp(`${documentObj.path}`);
+        const regex =  new RegExp(`^${escapedPath}`);
+    
+        await logger.info({source: 'backend-api',
+                            message: `Delete Document attempting to delete ${documentObj._id.toString()} - workspaceId, userId: ${workspaceId}, ${userId}`,
+                            function: 'deleteDocument'});
+    
+        let deletedDocuments;
+    
+        let finalResult = {};
+    
+        // if the document is not the root, we can find the doc's parent using the doc's path
+        // we will remove the deleted document from the parent's children
+        if (!documentObj.root) {
+            // split by / and join all elements except the last (which would be the document title) to get the parentPath
+            let parentPath = documentObj.path.split("/");
+            parentPath = parentPath.slice(0, parentPath.length - 1).join("/");
+    
+            // extract the parent using the parentPath
+            let parent;
+            try {
+                parent = await Document.findOne({ path: parentPath, workspace: workspaceId }).select("_id children").exec();
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Delete Document Error findOne parent query failed - workspaceId, userId, parentPath: ${workspaceId}, ${userId}, ${parentPath}`,
+                                    function: 'deleteDocument'});
+    
+                output = {success: false, error: "deleteDocument Error: unable to retrieve parent from path", trace: err};
+                throw new Error("deleteDocument Error: unable to retrieve parent from path");
+            }
+    
+            // filter the children of the parent to remove the deleted top level document
+            parent.children = parent.children.filter(child => !(child._id.equals(documentObj._id)));
+    
+            try {
+                parent = await parent.save();
+            } catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Delete Document Error parent.save() query failed - workspaceId, userId, parentId: ${workspaceId}, ${userId}, ${parent._id.toString()}`,
+                                    function: 'deleteDocument'});
+                output = {success: false, error: "deleteDocument Error: unable to save parent", trace: err};
+                throw new Error("deleteDocument Error: unable to save parent");
+            }
+    
+    
+            // add the parent to finalResult
+            finalResult.parent = parent;
+        }
+    
+        // find all documents that are about to be deleted (toplevel doc included for cleanliness)
         try {
-            parent = await Document.findOne({ path: parentPath, workspace: workspaceId }).select("_id children").exec();
+            deletedDocuments = await Document.find({path: regex, workspace: workspaceId}).select("_id").lean().exec();
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 error: err,
-                                errorDescription: `Delete Document Error findOne parent query failed - workspaceId, userId, parentPath: ${workspaceId}, ${userId}, ${parentPath}`,
+                                errorDescription: `Delete Document Error find deletedDocuments query failed - workspaceId, userId, path: ${workspaceId}, ${userId}, ${documentObj.path}`,
                                 function: 'deleteDocument'});
-
-            return res.json({success: false, error: "deleteDocument Error: unable to retrieve parent from path", trace: err});
+    
+            output = {success: false, error: "deleteDocument Error: unable to retrieve document and/or descendants for deletion", trace: err};
+            throw new Error("deleteDocument Error: unable to retrieve document and/or descendants for deletion");
         }
-
-        // filter the children of the parent to remove the deleted top level document
-        parent.children = parent.children.filter(child => !(child._id.equals(documentObj._id)));
-
+    
+        var deletedDocumentInfo;
+    
+        // query to delete all docs using the ids of the docs
         try {
-            parent = await parent.save();
+            let deletedIds = deletedDocuments.map((doc) => doc._id);
+            // Reporting Section ---------
+            // Need list of userId's attached to deleted Documents
+            // Get all titles of deleted Documents
+            deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author title status").lean().exec();
+            // Reporting Section End ---------
+            
+            await Document.deleteMany({_id: {$in: deletedIds}})
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 error: err,
-                                errorDescription: `Delete Document Error parent.save() query failed - workspaceId, userId, parentId: ${workspaceId}, ${userId}, ${parent._id.toString()}`,
+                                errorDescription: `Delete Document Error deleteMany query failed - workspaceId, userId, deletedIds: ${workspaceId}, ${userId}, ${JSON.stringify(deletedIds)}`,
                                 function: 'deleteDocument'});
-            return res.json({success: false, error: "deleteDocument Error: unable to save parent", trace: err});
+    
+            output = {success: false, error: "deleteDocument Error: unable to delete document and/or descendants", trace: err};
+            throw new Error("deleteDocument Error: unable to delete document and/or descendants");
         }
-
-
-        // add the parent to finalResult
-        finalResult.parent = parent;
-    }
-
-    // find all documents that are about to be deleted (toplevel doc included for cleanliness)
-    try {
-        deletedDocuments = await Document.find({path: regex, workspace: workspaceId}).select("_id").lean().exec();
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            error: err,
-                            errorDescription: `Delete Document Error find deletedDocuments query failed - workspaceId, userId, path: ${workspaceId}, ${userId}, ${documentObj.path}`,
+    
+        try {
+            await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, repositoryId, userId);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`,
+                                function: `handleDocumentDelete`});
+    
+            output = {success: false, error: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`, trace: err};
+            throw new Error(`Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`);
+        }
+    
+    
+        // since delete many does not return documents, but we only need ids, we can use previous extracted deletedDocuments
+        finalResult.deletedDocuments = deletedDocuments;
+    
+        await logger.info({source: 'backend-api',
+                            message: `Successfully deleted ${finalResult.deletedDocuments.length} documents - workspaceId, userId, deletedDocuments: ${workspaceId}, ${userId}, ${JSON.stringify(deletedDocuments)}`,
                             function: 'deleteDocument'});
+    
+        console.log('Delete Document Returning: ');
+        console.log(finalResult);
+    
+        output = {success: true, result: finalResult};
+    })
+   
+    session.endSession();
 
-        return res.json({success: false, error: "deleteDocument Error: unable to retrieve document and/or descendants for deletion", trace: err});
-    }
-
-    var deletedDocumentInfo;
-
-    // query to delete all docs using the ids of the docs
-    try {
-        let deletedIds = deletedDocuments.map((doc) => doc._id);
-        // Reporting Section ---------
-        // Need list of userId's attached to deleted Documents
-        // Get all titles of deleted Documents
-        deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author title status").lean().exec();
-        // Reporting Section End ---------
-        
-        await Document.deleteMany({_id: {$in: deletedIds}})
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            error: err,
-                            errorDescription: `Delete Document Error deleteMany query failed - workspaceId, userId, deletedIds: ${workspaceId}, ${userId}, ${JSON.stringify(deletedIds)}`,
-                            function: 'deleteDocument'});
-
-        return res.json({success: false, error: "deleteDocument Error: unable to delete document and/or descendants", trace: err});
-    }
-
-    try {
-        await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, repositoryId, userId);
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`,
-                            function: `handleDocumentDelete`});
-
-        return res.json({success: false, error: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`, trace: err});
-    }
-
-
-    // since delete many does not return documents, but we only need ids, we can use previous extracted deletedDocuments
-    finalResult.deletedDocuments = deletedDocuments;
-
-    await logger.info({source: 'backend-api',
-                        message: `Successfully deleted ${finalResult.deletedDocuments.length} documents - workspaceId, userId, deletedDocuments: ${workspaceId}, ${userId}, ${JSON.stringify(deletedDocuments)}`,
-                        function: 'deleteDocument'});
-
-    console.log('Delete Document Returning: ');
-    console.log(finalResult);
-
-    return res.json({success: true, result: finalResult});
+    return res.json(output);
 }
 
 
@@ -514,104 +558,124 @@ deleteDocument = async (req, res) => {
 renameDocument = async (req, res) => {
 
     // extract new title that will be used to rename
-    const { title } = req.body;
-    if (!checkValid(title)) return res.json({success: false, error: 'renameDocument: error no title provided', alert: "Please provide a title"});
-
+    const session = await db.startSession();
     
-    const workspaceId = req.workspaceObj._id.toString();
-    const { documentObj } = req;
+    let output;
 
-    await logger.info({source: 'backend-api',
-                        message: `Rename Document attempting to rename ${documentObj._id} - workspaceId, userId, oldTitle, newTitle: ${workspaceId}, ${req.tokenPayload.userId}, ${documentObj.title}, ${title}`,
-                        function: 'renameDocument'});
-
-    // make sure title doesn't exist already in space
-    try {
-        let duplicate = await Document.exists({title, workspace: workspaceId});
-        if (duplicate) {
-            await logger.info({source: 'backend-api',
-                                message: `duplicate title.`,
-                                function: 'renameDocument'});
-
-            return res.json({success: false, error: "renameDocument Error: duplicate title.", alert: "Duplicate title in space.. Please select a unique title"})
+    await session.withTransaction(async () => {
+        const { title } = req.body;
+        if (!checkValid(title)) {
+            output = {success: false, error: 'renameDocument: error no title provided', alert: "Please provide a title"};
+            throw new Error('renameDocument: error no title provided');
         }
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Rename Document Error title exists query failed - workspaceId, userId, title: ${workspaceId}, ${req.tokenPayload.userId}, ${title}`,
-                            function: `renameDocument`});
 
-        return res.json({success: false, error: "renameDocument Error: validation on duplicate title failed.", trace: err});
-    }
-    
+        const workspaceId = req.workspaceObj._id.toString();
+        const { documentObj } = req;
 
-    // extract prefix path for all documents that will need to be updated (path) by name change 
-    const escapedPath = escapeRegExp(`${documentObj.path}`);
-    const regex =  new RegExp(`^${escapedPath}`);
+        await logger.info({source: 'backend-api',
+                            message: `Rename Document attempting to rename ${documentObj._id} - workspaceId, userId, oldTitle, newTitle: ${workspaceId}, ${req.tokenPayload.userId}, ${documentObj.title}, ${title}`,
+                            function: 'renameDocument'});
 
-    let renamedDocuments;
+        // make sure title doesn't exist already in space
+        try {
+            let duplicate = await Document.exists({title, workspace: workspaceId});
+            if (duplicate) {
+                await logger.info({source: 'backend-api',
+                                    message: `duplicate title.`,
+                                    function: 'renameDocument'});
 
-    // retrieve all documents that are descendants of renamed doc + the actual renamed doc for convenience
-    try {
-        renamedDocuments = await Document.find({path: regex, workspace: workspaceId}).lean().select('_id path').exec();
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Rename Document Error find() renamed doc descendants query failed - workspaceId, userId, path: ${workspaceId}, ${req.tokenPayload.userId}, ${path}`,
-                            function: `renameDocument`});
-
-        return res.json({success: false, error: "renameDocument Error: unable to retrieve document and/or descendants for rename", trace: err});
-    }
-
-    // the new path of the renamed doc
-    let documentPath = documentObj.path;
-    documentPath = documentPath.slice(0, documentPath.length - documentObj.title.length) + title;
-
-    // create update ops for each descendant of renamed doc + the actual renamed doc
-    let bulkWritePathOps = renamedDocuments.map((doc) => {
-        // new path is the new parent path + (old path without old parent path prefix)
-        let newPath = documentPath + doc.path.slice(documentObj.path.length, doc.path.length);
-        let update = doc._id.equals(documentObj._id) ? { $set: { path: newPath, title } } : { $set: { path: newPath } };
-        return ({
-            updateOne: {
-                filter: { _id: doc._id },
-                // Where field is the field you want to update
-                update,
-                upsert: false
+                output = {success: false, error: "renameDocument Error: duplicate title.", alert: "Duplicate title in space.. Please select a unique title"};
+                throw new Error("renameDocument Error: duplicate title.");
             }
+        } catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Rename Document Error title exists query failed - workspaceId, userId, title: ${workspaceId}, ${req.tokenPayload.userId}, ${title}`,
+                                function: `renameDocument`});
+
+            output = {success: false, error: "renameDocument Error: validation on duplicate title failed.", trace: err};
+            throw new Error("renameDocument Error: validation on duplicate title failed.");
+        }
+        
+
+        // extract prefix path for all documents that will need to be updated (path) by name change 
+        const escapedPath = escapeRegExp(`${documentObj.path}`);
+        const regex =  new RegExp(`^${escapedPath}`);
+
+        let renamedDocuments;
+
+        // retrieve all documents that are descendants of renamed doc + the actual renamed doc for convenience
+        try {
+            renamedDocuments = await Document.find({path: regex, workspace: workspaceId}).lean().select('_id path').exec();
+        } catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Rename Document Error find() renamed doc descendants query failed - workspaceId, userId, path: ${workspaceId}, ${req.tokenPayload.userId}, ${path}`,
+                                function: `renameDocument`});
+
+            output = {success: false, error: "renameDocument Error: unable to retrieve document and/or descendants for rename", trace: err};
+            throw new Error("renameDocument Error: unable to retrieve document and/or descendants for rename");
+        }
+
+        // the new path of the renamed doc
+        let documentPath = documentObj.path;
+        documentPath = documentPath.slice(0, documentPath.length - documentObj.title.length) + title;
+
+        // create update ops for each descendant of renamed doc + the actual renamed doc
+        let bulkWritePathOps = renamedDocuments.map((doc) => {
+            // new path is the new parent path + (old path without old parent path prefix)
+            let newPath = documentPath + doc.path.slice(documentObj.path.length, doc.path.length);
+            let update = doc._id.equals(documentObj._id) ? { $set: { path: newPath, title } } : { $set: { path: newPath } };
+            return ({
+                updateOne: {
+                    filter: { _id: doc._id },
+                    // Where field is the field you want to update
+                    update,
+                    upsert: false
+                }
+            })
         })
+
+        // execute bulkWrite to make one db call for multi-update
+        try {
+        await Document.bulkWrite(bulkWritePathOps);
+        } catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Rename Document Error bulkWrite query failed - workspaceId, userId, documentId: ${workspaceId}, ${req.tokenPayload.userId}, ${documentObj._id.toString()}`,
+                                function: `renameDocument`});
+
+            output = {success: false, error: "renameDocument Error: bulk write of paths failed", trace: err};
+            throw new Error("renameDocument Error: bulk write of paths failed");
+        }
+
+        // extract new renamed Docs after bulk update
+        try {
+            let renamedIds = renamedDocuments.map((doc) => doc._id);
+            renamedDocuments = await Document.find({_id: {$in: renamedIds}}).lean().select('_id title path').exec();
+        } catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Rename Document Error find() renamed doc descendants query failed - workspaceId, userId, path: ${workspaceId}, ${req.tokenPayload.userId}, ${path}`,
+                                function: `renameDocument`});
+            output = { success: false, error: "renameDocument Error: unable to retrieve renamedDocs", trace: err };
+            throw new Error("renameDocument Error: unable to retrieve renamedDocs");
+        }
+
+        await logger.info({source: 'backend-api',
+                            message: ``,
+                            function: 'renameDocument'});
+
+        output = { success: true, result: renamedDocuments };
+        return;
     })
 
-    // execute bulkWrite to make one db call for multi-update
-    try {
-       await Document.bulkWrite(bulkWritePathOps);
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Rename Document Error bulkWrite query failed - workspaceId, userId, documentId: ${workspaceId}, ${req.tokenPayload.userId}, ${documentObj._id.toString()}`,
-                            function: `renameDocument`});
+    session.endSession();
 
-        return res.json({success: false, error: "renameDocument Error: bulk write of paths failed", trace: err});
-    }
+    return res.json(output);
 
-    // extract new renamed Docs after bulk update
-    try {
-        let renamedIds = renamedDocuments.map((doc) => doc._id);
-        renamedDocuments = await Document.find({_id: {$in: renamedIds}}).lean().select('_id title path').exec();
-    } catch (err) {
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Rename Document Error find() renamed doc descendants query failed - workspaceId, userId, path: ${workspaceId}, ${req.tokenPayload.userId}, ${path}`,
-                            function: `renameDocument`});
-        return res.json({ success: false, error: "renameDocument Error: unable to retrieve renamedDocs", trace: err });
-    }
-
-    await logger.info({source: 'backend-api',
-                        message: ``,
-                        function: 'renameDocument'});
-
-    return res.json({ success: true, result: renamedDocuments });
 } 
+
 
 
 // replace or add entire document
@@ -635,7 +699,7 @@ getDocument = async (req, res) => {
 
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
-    const { title, markup, referenceIds, repositoryId, image, content } = req.body;
+    const { markup, referenceIds, repositoryId, image, content, title } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
@@ -656,11 +720,6 @@ editDocument = async (req, res) => {
     let update = {};
     let selection = "_id";
     let population = "";
-
-    if (checkValid(title)) {
-        update.title = title;
-        selection += " title";
-    }
 
     if (checkValid(markup)) {
         update.markup = markup;
@@ -1066,7 +1125,12 @@ searchDocuments = async (req, res) => {
     return res.json({success: true, result: documents});
 }
 
-module.exports = { searchDocuments,
+
+testRoute = async (req, res) => {
+
+}
+
+module.exports = { testRoute, searchDocuments,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }
