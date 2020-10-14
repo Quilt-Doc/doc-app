@@ -43,11 +43,6 @@ if (process.env.USE_EXTERNAL_DB == 0) {
 }
 console.log(dbRoute);
 
-
-
-//mongoose.connect('mongodb://localhost:27017/myDatabase');
-
-
 mongoose.connect(dbRoute, { useNewUrlParser: true });
 
 

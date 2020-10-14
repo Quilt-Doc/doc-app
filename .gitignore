@@ -35,6 +35,10 @@ infrastructure/token-manager/models*
 infrastructure/token-manager/constants*
 
 
+# Ignore dashboard-lambda build artifacts
+infrastructure/dashboard-lambda/models*
+infrastructure/dashboard-lambda/constants*
+
 # Ignore worker_prod build artifacts
 infrastructure/worker_prod/models*
 infrastructure/worker_prod/constants*

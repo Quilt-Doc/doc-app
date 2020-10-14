@@ -6,6 +6,8 @@ const {
 } = require("../common/utils");
 const { getStyles } = require("../getStyles");
 const icons = require("../common/icons");
+const { RiCloseFill, RiFileFill, RiFileList2Fill, RiScissorsLine } = require('react-icons/ri');
+
 const Card = require("../common/Card");
 
 const createTextNode = ({
@@ -82,8 +84,8 @@ const renderStatsCard = (stats = {}, options = { hide: [] }) => {
   // Meta data for creating text nodes with createTextNode function
   const STATS = {
     stars: {
-      icon: icons.star,
-      label: "Total Stars",
+      icon: icons.star, // RiScissorsLine,
+      label: "Total Snippets",
       value: totalStars,
       id: "stars",
     },
