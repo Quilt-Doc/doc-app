@@ -10,6 +10,16 @@ import {
 
 import { api } from '../apis/api';
 
+export const syncEditDocument = (formValues) => (dispatch) => {
+    const { _id } = formValues;
+
+    if (!_id) {
+        throw new Error("syncEditDocument: documentId not provided");
+    }
+
+    dispatch({ type: EDIT_DOCUMENT, payload: formValues});
+}
+
 // DONE
 export const createDocument = (formValues) => async (dispatch) => {
     
@@ -143,7 +153,7 @@ export const testRoute = (formValues) => async () => {
 }
 
 // DONE
-export const renameDocument = (formValues) => async dispatch => {
+export const renameDocument = (formValues) => async (dispatch) => {
 
     const workspaceId = formValues.workspaceId;
     const documentId = formValues.documentId;

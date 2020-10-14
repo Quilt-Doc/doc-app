@@ -2,7 +2,6 @@ import React from 'react';
 
 //styles 
 import styled from "styled-components"
-import "../codebase/directory_navigator/node_modules/react-loader-spinner/dist/loader/css/react-spinner-loader.css"
 import chroma from 'chroma-js';
 
 //images and icons
@@ -11,7 +10,6 @@ import { FiFileText, FiCode } from 'react-icons/fi';
 
 //components
 import DirectoryItem from './DirectoryItem';
-import RotateLoader from "react-spinners/RotateLoader";
 import Loader from 'react-loader-spinner'
 import TagWrapper from '../../General/TagWrapper';
 import LabelMenu from '../../General/Menus/LabelMenu'

@@ -11,6 +11,7 @@ import DraggableDocument from './DraggableDocument';
 
 //actions
 import { moveDocument, retrieveDocuments, setDocumentOpen } from '../../../../actions/Document_Actions';
+import { setDocumentLoaded } from '../../../../actions/UI_Actions';
 
 //router
 import { withRouter } from 'react-router-dom';
@@ -99,12 +100,16 @@ class Document extends Component {
         }
     }
 
-    renderDocumentUrl = () =>{
-        let {workspaceId} = this.props.match.params;
-        const location = {
-            pathname: `/workspaces/${workspaceId}/document/${this.props.document._id}`,
+    renderDocumentUrl = () => {
+        const { setDocumentLoaded, match } = this.props;
+        let { workspaceId } = match.params;
+
+        let pathname = `/workspaces/${workspaceId}/document/${this.props.document._id}`;
+        if (pathname !== history.location.pathname) {
+            const location = { pathname }
+            setDocumentLoaded(false);
+            history.push(location)
         }
-        history.push(location)
     }
 
     render() {
@@ -157,7 +162,7 @@ const makeMapStateToProps = () => {
 
 
 const ConnectedDocument = withRouter(connect(makeMapStateToProps, { 
-    moveDocument, setDocumentOpen, retrieveDocuments })(Document));
+    moveDocument, setDocumentOpen, retrieveDocuments, setDocumentLoaded })(Document));
 
 export default ConnectedDocument;
 

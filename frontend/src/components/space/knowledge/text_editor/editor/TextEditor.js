@@ -66,7 +66,11 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 
 const TextEditor = (props) => {
 
-	const [value, setValue] = [props.markup, props.setValue]
+	let {title, markup} = props.document;
+	console.log("MARKUP", markup);
+	markup = JSON.parse(markup);
+
+
 	const [write, setWrite] = useState(false)
 	const [setOptions, toggleOptions] = useState(false);
 	const blocktypes = ["paragraph", "heading-one", "heading-two", 
@@ -140,8 +144,7 @@ const TextEditor = (props) => {
 	
 	return (
 		<DndProvider backend={HTML5Backend}>
-			<Slate editor={editor} value={value} onChange={value => setValue(value)}>
-			
+			<Slate editor={editor} value={markup} onChange={props.onMarkupChange}>
 				<ToolbarsContainer>
 					<CSSTransition
 						in={setOptions}
@@ -204,10 +207,10 @@ const TextEditor = (props) => {
 										state={state} 
 									/>
 									<DocumentInfo write  = {write} />
-									{write ? 
-										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={props.title} />
+									{ write ? 
+										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={title} />
 										:
-										<HeaderDiv active = {props.title} paddingLeft = {"10rem"}>{props.title ? props.title : "Untitled"}</HeaderDiv>
+										<HeaderDiv active = {title} paddingLeft = {"10rem"}>{title ? title : "Untitled"}</HeaderDiv>
 									}
 									
 									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}

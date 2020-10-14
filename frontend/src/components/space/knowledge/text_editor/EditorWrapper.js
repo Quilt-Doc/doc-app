@@ -3,6 +3,10 @@ import PropTypes from 'prop-types';
 
 //components
 import TextEditor from './editor/TextEditor';
+import { CSSTransition } from 'react-transition-group';
+
+//loader
+import { Oval } from 'svg-loaders-react';
 
 //history
 import history from '../../../../history';
@@ -12,7 +16,8 @@ import styled from "styled-components";
 import html2canvas from 'html2canvas';
 
 //actions
-import { getDocument, editDocument, renameDocument, testRoute } from '../../../../actions/Document_Actions';
+import { getDocument, editDocument, syncEditDocument, renameDocument } from '../../../../actions/Document_Actions';
+import { setDocumentLoaded } from '../../../../actions/UI_Actions';
 import { Node } from 'slate';
 
 //redux
@@ -20,7 +25,6 @@ import { connect } from 'react-redux';
 
 //router
 import { withRouter } from 'react-router-dom';
-import { TiMediaFastForwardOutline } from 'react-icons/ti';
 
 //Change type of markup using toolbar and/or delete markup
 //listen for onscroll events to update dropdown
@@ -30,54 +34,94 @@ import { TiMediaFastForwardOutline } from 'react-icons/ti';
 // on document save
 class EditorWrapper extends React.Component {
 
-    constructor(props) {
-        super(props)
-        this.state = {
-            loaded: false
+    componentDidMount = async () => {
+        await this.loadResources();
+        window.addEventListener('beforeunload', this.saveMarkupWrapper);
+    }
+
+    componentWillUnmount = async () =>  {
+        window.removeEventListener('beforeunload', this.saveMarkupWrapper);
+        
+        const documentId = this.getDocumentId(this.props);
+        const canvas = await this.acquireCanvas();
+        this.saveMarkup(documentId, canvas);
+    }
+
+    saveMarkupWrapper = () => {
+        const documentId = this.getDocumentId(this.props);
+        this.saveMarkup(documentId);
+    }
+
+    componentDidUpdate = async (prevProps) => {
+        if (prevProps.location.pathname !== this.props.location.pathname) {
+
+            const canvas = await this.acquireCanvas();
+
+            this.loadResources();
+
+            const documentId = this.getDocumentId(prevProps);
+            if (documentId) this.saveMarkup(documentId, canvas);
         }
     }
 
-    componentDidMount() {
-        this.loadResources();
+    getDocumentId = (props) => {
+        const { documentModal, match } = props;
+        let { documentId } = match.params;
+
+        // if the editor is a modal, the id is in the params
+        if (documentModal) {
+            let search = history.location.search;
+            let params = new URLSearchParams(search);
+            documentId = params.get('document');
+        }
+
+        return documentId;
     }
 
-    componentDidUpdate(prevProps) {
-        if (prevProps.location.pathname !== this.props.location.pathname) {
-            this.setState({loaded: false});
-            if (prevProps.document) {
-                this.saveMarkup(true, prevProps.document)
-                this.loadResources();
+    onMarkupChange = (markup) => {
+        const { syncEditDocument } = this.props;
+        let documentId = this.getDocumentId(this.props);
+
+        syncEditDocument({_id: documentId, markup: JSON.stringify(markup)});
+    }   
+
+    onTitleChange = async (e) => {
+        const { syncEditDocument, documents } = this.props;
+        const documentId = this.getDocumentId(this.props);
+
+        const document = documents[documentId];
+        const uneditedTitle = document.title;
+
+        syncEditDocument({_id: documentId, title: e.target.value});
+
+        const { renameDocument, match } = this.props;
+        const { workspaceId } = match.params;
+
+        // on blur of title input, rename the document
+        if (e.type === "blur") {
+            if (uneditedTitle !== e.target.value) {
+                let changed = await renameDocument({workspaceId, documentId, title: e.target.value});
+                if (!changed) syncEditDocument({_id: documentId, title: uneditedTitle});
             }
         }
     }
 
     // loads all the data needed for the editor
     loadResources = async () => {
-        const { documentModal, match, getDocument } = this.props;
-        let { workspaceId, documentId } = match.params;
+        const { match, getDocument, setDocumentLoaded } = this.props;
+        const { workspaceId } = match.params;
+        const documentId = this.getDocumentId(this.props);
 
-        // if the editor is a modal, the id is in the params
-        if (documentModal){
-            let search = history.location.search;
-            let params = new URLSearchParams(search);
-            documentId = params.get('document');
-        }
-        
         // get the document data using the id
-        const doc = await getDocument({workspaceId, documentId});
+        await getDocument({workspaceId, documentId});
 
-        // placeholder markup if the doc has no markup
-        let { markup, title } = doc;
-        markup = JSON.parse(markup);
-        
-        // add an event listener to make sure content is saved on unload
-        window.addEventListener('beforeunload', () => this.saveMarkup(false, null, true), false);
-        this.setValue = this.setValue.bind(this);
-        this.setState({markup, title, loaded: true});
+        // DOM is ready to be loaded
+        setDocumentLoaded(true);
     }
 
     // returns the markup in string format
     serializeMarkup = markup => {
+        markup = JSON.parse(markup);
         return(
             markup
             // Return the string content of each paragraph in the value's children.
@@ -87,114 +131,100 @@ class EditorWrapper extends React.Component {
         )
     }
 
-   saveMarkup = async (useParam, doc, listener) => {
-       
+    acquireCanvas = async () => {
+        let canvas;
+            
+        try {   
+            canvas = await html2canvas(document.getElementById("#editorContainer"), {scale: 0.5, height: 1000});
+        } catch (err) {
+            console.log("ERROR WITH CANVAS", err);
+        } 
+
+        return canvas;
+    }
+
+    saveMarkup = async (documentId, canvas) => {
         // the document to save markup is either in props or provided 
         // (if we save on navigation to another doc in componentDidUpdate)
-        doc = useParam ? doc : this.props.document;
+        const { documents } = this.props;
+        const doc = documents[documentId];
 
         if (doc) {
             const { editDocument, match } = this.props;
             const { workspaceId } = match.params;
-          
-            // acquire a picture canvas for preview with html2canvas
-            let canvas;
-            
-            
-            try {
-                if (!listener) {
-                    canvas = await html2canvas(document.getElementById("#editorContainer"), {scale: 0.5, height: 1000});
-                }
-            } catch (err) {
-
-            }
             
             // retrieve markup from the state
-            const { markup } = this.state;
-           
+            const { markup } = doc;
+
             // acquire the string content
-            let content = this.serializeMarkup(markup)
+            const content = this.serializeMarkup(markup);
 
             // save the json markup and the string content (for search)
-            editDocument({workspaceId, documentId: doc._id, markup: JSON.stringify(markup), content});
-
+            editDocument({ workspaceId, documentId, markup, content });
+            
             // if the image was successfully produced, save the image
-            if (canvas && canvas.toDataURL()){
-                editDocument({workspaceId, documentId: doc._id, image: canvas.toDataURL()});
-            }
-        }
-   }
-
-    setValue(value) {
-        this.setState({markup: value});
-    }   
-
-    componentWillUnmount() {
-        this.saveMarkup();
-        window.removeEventListener('beforeunload', this.saveMarkup, false);
-    }
-   
-    onTitleChange = async (e) => {
-        const { renameDocument, match, document: {_id, title} } = this.props;
-        const { workspaceId } = match.params;
-
-        // if the title is changed through typing, set the title state
-        this.setState({title: e.target.value});
-        // on blur of title input, rename the document
-        if (e.type === "blur") {
-            if (this.state.title !== title) {
-                let changed = await renameDocument({workspaceId, documentId: _id, title: e.target.value});
-                if (!changed) this.setState({title})
+            if (canvas) {
+                let dataURL = canvas.toDataURL();
+                if (dataURL) editDocument({ workspaceId, documentId, image: dataURL });
             }
         }
     }
 
-    renderTextEditor(){
-        let { document, documentModal } = this.props;
-        let {title, markup} = this.state;
+    renderLoader = () => {
+        return (
+            <LoaderContainer>
+                <Oval stroke={'#E0E4E7'}/>
+            </LoaderContainer>
+        )
+    }
 
-        return(
-            <TextEditor 
-                onTitleChange = {this.onTitleChange}
-                title = {title}
-                markup = {markup} 
-                setValue = {this.setValue}
-                document = {document}
-                documentModal = {documentModal}
-            />
+    renderTextEditor = () => {
+        const { documentModal, documents, loaded } = this.props;
+        const document = documents[this.getDocumentId(this.props)];
+
+        let editorJSX = (
+            <CSSTransition
+                in={true}
+                appear = {true}
+                timeout={300}
+                classNames="texteditor"
+            >   
+                <div>
+                    <TextEditor 
+                        onTitleChange = {this.onTitleChange}
+                        onMarkupChange = {this.onMarkupChange}
+                        document = {document}
+                        documentModal = {documentModal}
+                    />
+                </div>
+            </CSSTransition>
+        )
+
+        return  (loaded && document)  ? editorJSX : this.renderLoader();
+
+    }
+
+    renderWrappedTextEditor = () => {
+        return (
+                <Container id = {"editorContainer"}>
+                    <SubContainer>
+                        {this.renderTextEditor()}
+                    </SubContainer>
+                </Container>
         )
     }
 
     render(){
-        const {loaded} = this.state;
-        const {documentModal} = this.props;
-        
-        if (loaded) {
-            return(
-                documentModal ? this.renderTextEditor()
-                    :   <Cont id = {"editorContainer"}>
-                            <SubContainer>
-                                {this.renderTextEditor()}
-                            </SubContainer>
-                        </Cont>
-            )
-        } 
-        return null
+        const { documentModal } = this.props; 
+        return documentModal ? this.renderTextEditor() : this.renderWrappedTextEditor();
     }
 }
 
-const mapStateToProps = (state, ownProps) => {
-    let documentId;
-    if (ownProps.documentModal) {
-        let search = history.location.search
-        let params = new URLSearchParams(search)
-        documentId = params.get('document')
-    } else {
-        documentId = ownProps.match.params.documentId
-    }
-
+const mapStateToProps = (state) => {
+    const { ui: { documentLoaded }, documents } = state;
     return {
-        document: state.documents[documentId],
+        documents,
+        loaded: documentLoaded
     }
 }
 
@@ -202,20 +232,29 @@ EditorWrapper.propTypes = {
     documentModal: PropTypes.bool
 }
 
-export default withRouter(connect(mapStateToProps, { getDocument, editDocument, renameDocument, testRoute})(EditorWrapper));
+export default withRouter(connect(mapStateToProps, { 
+    getDocument, editDocument, renameDocument, syncEditDocument, setDocumentLoaded })(EditorWrapper));
 
-const Cont = styled.div`
+const Container = styled.div`
     height: 100vh;
     overflow-y: scroll;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     z-index: 2;
     width: 100%;
+    background-color: white;
+`
+
+const LoaderContainer = styled.div`
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 `
 
 const SubContainer = styled.div`
     display: flex;
     flex-direction:column;
     padding-bottom: 2rem;
-    background-color: white;
     justify-content: center;
 `

@@ -207,6 +207,17 @@ body {
   transition: all 300ms;
 }
 
+.texteditor-appear {
+  transform: translateY(-3rem);
+  opacity: 0;
+}
+
+
+.texteditor-appear.texteditor-appear-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 300ms;
+}
 
 .modal-appear {
   transform: translateY(-5rem);

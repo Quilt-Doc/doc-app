@@ -83,6 +83,8 @@ router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware
 router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.documentMiddleware, documentController.moveDocument);
 router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
 router.post('/documents/:workspaceId/search', authorizationMiddleware.documentMiddleware, documentController.searchDocuments);
+router.post('/testRoute', documentController.testRoute);
+
 
 router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, documentController.attachDocumentTag);
 router.put('/documents/:workspaceId/:documentId/remove_tag/:tagId', authorizationMiddleware.documentMiddleware, documentController.removeDocumentTag);
@@ -197,12 +199,10 @@ router.get('/auth/github', function(req, res, next) {
     const { email } = req.query;
     let options = { session: false };
     if (email) {
-        console.log("EMAIL", email);
         const state = Buffer.from(JSON.stringify({ email })).toString('base64');
         options = {...options, scope: [], state};
     }
 
-    console.log("OPTIONS", options);
     passport.authenticate('github', options, function(err, user, info) {
       if (err) { return next(err); }
       // TODO: Change this to appropriate route
