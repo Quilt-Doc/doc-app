@@ -30,12 +30,7 @@ const UserStats = require('./models/reporting/UserStats');
 
 const {serializeError, deserializeError} = require('serialize-error');
 
-/*
-// Remove old non-tree references
-const removeOldNonTreeReferences = async () => {
-}
-*/
-// TODO: Create a Check at the end
+let db = mongoose.connection;
 
 /*
 Directory Update Procedure:
@@ -57,12 +52,8 @@ Directory Update Procedure:
 
     Could we just use the rename parameters on files?
         This will catch any directory renames
-
-
-
 */
 
-// TODO: Update UserStats.documentsBrokenNum
 const breakAttachedDocuments = async (repoId, refUpdateData, worker) => {
     // Find all Documents associated with References that have been broken
     var documentsToBreak;
