@@ -13,7 +13,7 @@ const dispatchScanRepositoriesJob = async (jobData) => {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
         // MessageDeduplicationId: timestamp,
-        // MessageGroupId: jobData.workspaceId,
+        MessageGroupId: jobData.repositoryIdList.toString(),
         QueueUrl: queueUrl
     };
 
@@ -38,7 +38,7 @@ const dispatchUpdateReferencesJob = async (jobData) => {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
         // MessageDeduplicationId: timestamp,
-        // MessageGroupId: jobData.installationId,
+        MessageGroupId: jobData.fullName.toString(),
         QueueUrl: queueUrl
     };
 
@@ -62,7 +62,7 @@ const dispatchUpdateChecksJob = async (jobData) => {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
         // MessageDeduplicationId: timestamp,
-        // MessageGroupId: jobData.installationId,
+        MessageGroupId: jobData.repositoryId.toString(),
         QueueUrl: queueUrl
     };
 

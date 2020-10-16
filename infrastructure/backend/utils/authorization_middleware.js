@@ -303,7 +303,7 @@ const workspaceMiddleware = async (req, res, next) => {
 
             // Only the creator can delete a Workspace
             if (requestedPath.includes('/workspaces/delete')) {
-                if (foundWorkspace.creator.toString() ==  userId.toString()) {
+                if (foundWorkspace.creator.toString() == requesterId.toString()) {
                     return next();
                 }
                 else {

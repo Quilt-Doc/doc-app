@@ -2,11 +2,11 @@ const Token = require('../models/Token');
 const {serializeError, deserializeError} = require('serialize-error');
 
 
-const getInstallToken = async (installationId, worker) => {
+const getInstallToken = async (installationId, worker, session) => {
     var token;
 
     try {
-        token = await Token.findOne({ installationId, type: 'INSTALL' });
+        token = await Token.findOne({ installationId, type: 'INSTALL' }, null, { session }).exec();
 
 
         if (!token) {

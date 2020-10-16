@@ -39,7 +39,7 @@ const fetchAppToken = async () => {
 
     var token = undefined;
     
-    return await Token.findOne({'type': 'APP'})
+    return await Token.findOne({'type': 'APP'}, null)
     .then((foundToken) => {
         token = foundToken;
         return token;
@@ -69,7 +69,7 @@ const requestNewInstallationToken = async (installationId) => {
 
 const requestInstallationToken = async (appToken, installationId) => {
 
-    var tokenFetch = await Token.findOne({ installationId });
+    var tokenFetch = await Token.findOne({ installationId }, null);
 
     if (tokenFetch) {
         return tokenFetch

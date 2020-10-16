@@ -146,7 +146,7 @@ const fileContentValidation = async (fileObj, snippetData, repoDiskPath) => {
 }
 
 
-const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker) => {
+const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker, session) => {
 
   // Needed Parameters:
   // ----------------------
@@ -173,7 +173,7 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
   var fileReferences;
 
   try {
-    fileReferences = await Reference.find({repository: repoId, kind: "file", status: "valid"}).lean().exec();
+    fileReferences = await Reference.find({repository: repoId, kind: "file", status: "valid"}, null, { session }).lean().exec();
   }
   catch (err) {
     await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error fetching 'file' References on repository: ${repoId}`,
@@ -190,7 +190,7 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
   var repoSnippets;
 
   try {
-    repoSnippets = await Snippet.find({reference: {$in: fileReferences}, repository: repoId, status: constants.snippets.SNIPPET_STATUS_VALID});
+    repoSnippets = await Snippet.find({reference: {$in: fileReferences}, repository: repoId, status: constants.snippets.SNIPPET_STATUS_VALID}, null, { session }).exec();
   }
   catch (err) {
     await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error fetching Snippets from 'file' References on repository: ${repoId}`,
@@ -218,7 +218,7 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
 
   // Get all References attached to snippets in snippetData
   try {
-    snippetReferences = await Reference.find({_id: {$in: snippetReferences}});
+    snippetReferences = await Reference.find({_id: {$in: snippetReferences}}, null, { session }).exec();
   }
   catch (err) {
     await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), 
@@ -287,7 +287,7 @@ const runSnippetValidation = async (installationId, repoDiskPath, repoObj, headC
 
   if (bulkSnippetUpdateOps.length > 0) {
     try {
-        const updateResults = await Snippet.collection.bulkWrite(bulkSnippetUpdateOps);
+        const updateResults = await Snippet.collection.bulkWrite(bulkSnippetUpdateOps, { session });
         worker.send({action: 'log', info: {level: 'info',
                                             message: `Update results for bulk update on Snippets on repository: ${repoId}\n${JSON.stringify(updateResults)}`,
                                             source: 'worker-instance', function:'runSnippetValidation'}})

@@ -9,6 +9,8 @@ const Tag = require('../models/Tag');
 const WorkspaceInvite = require('../models/authentication/WorkspaceInvite');
 const UserStats = require('../models/reporting/UserStats');
 const ActivityFeedItem = require('../models/reporting/ActivityFeedItem');
+const User = require('../models/authentication/User');
+
 
 const UserStatsController = require('./reporting/UserStatsController');
 
@@ -149,13 +151,13 @@ getWorkspace = async (req, res) => {
 // Remove Workspace from User.workspaces
 // Delete Workspace Document
 
-// KARAN TODO: Reset the Repository back to the initRepository state, and delete all References
+// KARAN TODO: Add sessions to all of these calls
 
 deleteWorkspace = async (req, res) => {
 
     const workspaceId = req.workspaceObj._id.toString();
 
-    let deletedWorkspace;
+    var deletedWorkspace;
     const session = await db.startSession();
 
     let output;
@@ -169,7 +171,7 @@ deleteWorkspace = async (req, res) => {
         // Delete All Documents
         var deleteDocumentResponse;
         try {
-            deleteDocumentResponse = await Document.deleteMany({workspace:  ObjectId(workspaceId)}).exec();
+            deleteDocumentResponse = await Document.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -184,7 +186,7 @@ deleteWorkspace = async (req, res) => {
         // Delete All Snippets
         var deleteSnippetResponse;
         try {
-            deleteSnippetResponse = await Snippet.deleteMany({workspace:  ObjectId(workspaceId)}).exec();
+            deleteSnippetResponse = await Snippet.deleteMany({workspace:  ObjectId(workspaceId)}, { session } ).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -200,7 +202,7 @@ deleteWorkspace = async (req, res) => {
         // Delete All Tags
         var deleteTagResponse;
         try {
-            deleteTagResponse = await Tag.deleteMany({workspace:  ObjectId(workspaceId)}).exec();
+            deleteTagResponse = await Tag.deleteMany({workspace:  ObjectId(workspaceId)}, { session } ).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -215,7 +217,7 @@ deleteWorkspace = async (req, res) => {
         // Delete All WorkspaceInvites
         var deleteWorkspaceInviteResponse;
         try {
-            deleteWorkspaceInviteResponse = await WorkspaceInvite.deleteMany({workspace:  ObjectId(workspaceId)}).exec();
+            deleteWorkspaceInviteResponse = await WorkspaceInvite.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -230,7 +232,7 @@ deleteWorkspace = async (req, res) => {
         // Delete All UserStats
         var deleteUserStatsResponse;
         try {
-            deleteUserStatsResponse = await UserStats.deleteMany({workspace:  ObjectId(workspaceId)}).exec();
+            deleteUserStatsResponse = await UserStats.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -245,7 +247,7 @@ deleteWorkspace = async (req, res) => {
         // Delete All ActivityFeedItem
         var deleteActivityFeedItemResponse;
         try {
-            deleteActivityFeedItemResponse = await ActivityFeedItem.deleteMany({workspace:  ObjectId(workspaceId)}).exec();
+            deleteActivityFeedItemResponse = await ActivityFeedItem.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -261,7 +263,7 @@ deleteWorkspace = async (req, res) => {
         var removeWorkspaceResponse;
         try {
             removeWorkspaceResponse = await User.updateMany({ workspaces:  { $in: [ObjectId(workspaceId)] } },
-                                                            { $pull: { workspaces:  { $in: [ObjectId(workspaceId)] } } }).exec();
+                                                            { $pull: { workspaces:  { $in: [ObjectId(workspaceId)] } } }, { session }).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -277,9 +279,10 @@ deleteWorkspace = async (req, res) => {
 
         // Delete Workspace
         try {
-            deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId).select('_id').lean().exec();
+            deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId, { session }).select('_id repositories').lean().exec();
         }
         catch (err) {
+            console.log(err);
             await logger.error({source: 'backend-api',
                                 error: err,
                                 errorDescription: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`,
@@ -291,12 +294,16 @@ deleteWorkspace = async (req, res) => {
 
         // Set all Repositories in deletedWorkspace.repositories back to 'initRepository state'
         // scanned: false,
-	    // currentlyScanning: false
+        // currentlyScanning: false
+        
+        console.log('DELETED WORKPSACE: ');
+        console.log(deletedWorkspace);
+
         var initRepositories = deletedWorkspace.repositories.map(repositoryObj => ObjectId(repositoryObj._id.toString()));
         var repositoryInitResponse;
         try {
             repositoryInitResponse = await Repository.updateMany({ _id: { $in: initRepositories } },
-                                                            { $set: { scanned: false, currentlyScanning: false } }).exec();
+                                                            { $set: { scanned: false, currentlyScanning: false } }, { session }).exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
@@ -309,10 +316,10 @@ deleteWorkspace = async (req, res) => {
         }
 
 
-        // Delete all References matched by - { repository: { $in: initRepositories.map(id => ObjectId(id.toString())) } }
+        // Delete all References matched by - { repository: { $in: initRepositories.map(id => ObjectId(id.toString())) }, root: false }
         var deleteReferenceResponse;
         try {
-            deleteReferenceResponse = await Reference.deleteMany({repository: { $in: initRepositories } });
+            deleteReferenceResponse = await Reference.deleteMany({repository: { $in: initRepositories }, root: false }, { session });
         }
         catch (err) {
             await logger.error({source: 'backend-api',

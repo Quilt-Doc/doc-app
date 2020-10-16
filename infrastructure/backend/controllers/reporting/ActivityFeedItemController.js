@@ -14,7 +14,7 @@ const logger = require('../../logging/index').logger;
 
 createActivityFeedItem = async (params) => {
     const { type, date, userId, 
-        workspaceId, userUpdates } = params;
+        workspaceId, userUpdates, session } = params;
 
     var activityfeedItemList = [];
 
@@ -32,7 +32,7 @@ createActivityFeedItem = async (params) => {
 
     var bulkInsertResult;
     try {
-        bulkInsertResult = await ActivityFeedItem.insertMany(activityfeedItemList);
+        bulkInsertResult = await ActivityFeedItem.insertMany(activityfeedItemList, { session });
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,

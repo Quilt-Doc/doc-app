@@ -145,15 +145,15 @@ const scanRepositories = async () => {
 
     // Bulk update repository 'lastProcessedCommit' fields
    const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => {
-    // TODO: Figure out why this list commits endpoint isn't returning an array
-    // console.log('repositoryCommitResponse.data[0]: ');
-    // console.log(repositoryCommitResponse.data[0]);
-    return {updateOne: {
-            filter: { _id: unscannedRepositories[idx]._id },
-            // Where field is the field you want to update
-            update: { $set: { lastProcessedCommit: repositoryCommitResponse.data.sha } },
-            upsert: false
-    }}
+        // TODO: Figure out why this list commits endpoint isn't returning an array
+        // console.log('repositoryCommitResponse.data[0]: ');
+        // console.log(repositoryCommitResponse.data[0]);
+        return {updateOne: {
+                filter: { _id: unscannedRepositories[idx]._id },
+                // Where field is the field you want to update
+                update: { $set: { lastProcessedCommit: repositoryCommitResponse.data.sha } },
+                upsert: false
+        }}
     });
 
     if (bulkLastCommitOps.length > 0) {
@@ -214,12 +214,9 @@ const scanRepositories = async () => {
         }
     }
 
-    // console.log('Paths to test: ');
-    // console.log(JSON.stringify(validPaths));
+    // TODO: Add a log message comparing validPaths.length before & after
     validPaths = filterVendorFiles(validPaths);
 
-    console.log('validPaths: ');
-    console.log(JSON.stringify(validPaths));
 
     // Remove invalid paths (vendor paths) from treeReferences
     treeReferences = treeReferences.filter(treeRefObj => validPaths.includes(treeRefObj.path));

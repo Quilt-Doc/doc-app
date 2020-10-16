@@ -61,7 +61,7 @@ createDocument = async (req, res) => {
         }
         // make sure title doesn't exist already in space
         try {
-            let duplicate = await Document.exists({title, workspace: workspaceId});
+            let duplicate = await Document.exists({title, workspace: workspaceId}, { session });
             if (duplicate) {
                 await logger.info({source: 'backend-api',
                                     message: `Create Document duplicate title - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
@@ -106,7 +106,7 @@ createDocument = async (req, res) => {
 
         if (checkValid(parentPath)) {
             try {   
-                parent = await Document.findOne({path: parentPath, workspace: workspaceId})
+                parent = await Document.findOne({path: parentPath, workspace: workspaceId}, null, { session })
                                         .select('_id path children').exec();
             } catch (err) {
                 await logger.error({source: 'backend-api',
@@ -156,7 +156,7 @@ createDocument = async (req, res) => {
         
         // save document
         try {
-            document = await document.save();
+            document = await document.save({ session });
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 error: err,
@@ -169,7 +169,7 @@ createDocument = async (req, res) => {
         // Reporting Section
         if (document.root != true) {
             try {
-                await ReportingController.handleDocumentCreate(authorId, workspaceId, title, document._id.toString());
+                await ReportingController.handleDocumentCreate(authorId, workspaceId, title, document._id.toString(), session);
             }
             catch (err) {
                 await logger.error({source: 'backend-api',
@@ -186,7 +186,7 @@ createDocument = async (req, res) => {
         if (!root) {
             try {
                 parent.children.push(document._id);
-                parent = await parent.save();
+                parent = await parent.save( { session } );
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -198,6 +198,7 @@ createDocument = async (req, res) => {
         }
 
         // populate everything on the document on creation
+        // TODO: Figure out why we can't put a session on this call
         try {
             document = await Document.populate(document, {path: "author references workspace repository tags snippets"});
         } catch (err) {
@@ -215,7 +216,7 @@ createDocument = async (req, res) => {
     
         output = root ? {success: true, result: [document]} : {success: true, result: [document, parent]};
         return
-    })
+    });
 
     session.endSession();
 

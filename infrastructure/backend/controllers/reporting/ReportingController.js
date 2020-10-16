@@ -46,11 +46,11 @@ retrieveBrokenDocuments = async (req, res) => {
 }
 
 
-handleDocumentCreate = async (userId, workspaceId, title, documentId) => {
+handleDocumentCreate = async (userId, workspaceId, title, documentId, session) => {
 
     // Update UserStats.documentsCreatedNum (increase by 1)
     try {
-        await UserStatsController.updateDocumentsCreatedNum({userUpdates: [{updateNum: 1, userId}], workspaceId});
+        await UserStatsController.updateDocumentsCreatedNum({userUpdates: [{updateNum: 1, userId}], workspaceId, session});
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -61,7 +61,7 @@ handleDocumentCreate = async (userId, workspaceId, title, documentId) => {
 
     // Create ActivityFeedItem
     try {
-        await ActivityFeedItemController.createActivityFeedItem({type: 'create', date: Date.now(), userId, workspaceId, userUpdates: [{ documentId, title }]});
+        await ActivityFeedItemController.createActivityFeedItem({type: 'create', date: Date.now(), userId, workspaceId, userUpdates: [{ documentId, title }], session});
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,

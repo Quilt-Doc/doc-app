@@ -74,7 +74,7 @@ retrieveUserStats = async (req, res) => {
 }
 
 updateDocumentsCreatedNum = async (params) => {
-    const {userUpdates, workspaceId} = params;
+    const {userUpdates, workspaceId, session} = params;
 
     if (userUpdates.length < 1) {
         return true;
@@ -92,7 +92,7 @@ updateDocumentsCreatedNum = async (params) => {
             })
         });
 
-       await UserStats.bulkWrite(bulkIncrementOps);
+       await UserStats.bulkWrite(bulkIncrementOps, { session });
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
