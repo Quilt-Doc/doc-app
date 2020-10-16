@@ -352,16 +352,16 @@ const Title = styled.div`
 const AddButton = styled.div`
     height: 3rem;
     width: 3rem;
-    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4e7"}; 
+    border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.2) : "#E0E4e7"}; 
     border-radius: 50%;
     font-size: 1.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : ""};
     &:hover {
-        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
+        background-color: ${props => props.active ?  chroma('#6762df').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
 `

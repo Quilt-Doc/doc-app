@@ -85,7 +85,7 @@ class Workspaces extends Component {
             })
         } else {
             return (
-                <Space opacity = {0.6} to = {`/home/create_workspace`}>
+                <Space opacity = {0.6} to = {`/create_workspace`}>
                     <WorkspaceDetail>
                         <WorkspaceIcon2><FiPlus/></WorkspaceIcon2>
                         <WorkspaceName>Create a Workspace</WorkspaceName>
@@ -107,7 +107,7 @@ class Workspaces extends Component {
                 <Content>
                     <Header>
                         Workspaces
-                        <AddButton onClick = {() => history.push('/home/create_workspace')}>
+                        <AddButton onClick = {() => history.push('/create_workspace')}>
                             <FiPlus/>
                         </AddButton>
                     </Header>
@@ -237,7 +237,7 @@ const WorkspaceIcon = styled.div`
     justify-content: center;
     height: 2.9rem;
     width: 2.9rem;
-    background-color: #5B75E6;
+    background-color: #6762df;
     border-radius: 0.3rem;
     margin-right: 1.3rem;
     font-size: 1.3rem;

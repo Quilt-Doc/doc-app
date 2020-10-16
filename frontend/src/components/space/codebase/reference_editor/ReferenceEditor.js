@@ -527,8 +527,8 @@ class ReferenceEditor extends Component {
                 <Wrapper 
                     id = {`codeline-${i}`}
                     // renders color and border dependent on whether the line is a snippet and currently activated
-                    color = {this.lines[i] ? chroma("#5B75E6").alpha(isSnippet ? 0.07 : 0.04) : "#ffffff"}   
-                    border = {this.lines[i] ?  `2px solid #5B75E6` : "2px solid #ffffff"}
+                    color = {this.lines[i] ? chroma("#6762df").alpha(isSnippet ? 0.07 : 0.04) : "#ffffff"}   
+                    border = {this.lines[i] ?  `2px solid #6762df` : "2px solid #ffffff"}
                     className = {'codeline'}
                     cursorType = {(!canSelect && this.lines[i])  ? "pointer" : ""}
                 >
@@ -861,9 +861,9 @@ const Button = styled.div`
     z-index: 0;
     border-radius: 0.3rem;
     &:hover {
-        background-color:  ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
+        background-color:  ${props => props.active ? chroma("#6762df").alpha(0.2) : "#dae3ec;"};
     }
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.2)  : ""};
     cursor: pointer;
 `
 

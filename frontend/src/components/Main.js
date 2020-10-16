@@ -4,7 +4,7 @@ import React, {Component}  from 'react';
 import { connect } from 'react-redux';
 
 //router
-import { Router, Route, Switch } from 'react-router-dom';
+import { Router, Route } from 'react-router-dom';
 import history from '../history';
 
 //actions
@@ -29,20 +29,24 @@ class Main extends Component {
         let path = history.location.pathname;
         const splitPath = path.split('/');
 
-        if (this.checkValid(authenticated) && !(authenticated && user)) {
-            if (splitPath.length > 1) {
-                if (splitPath[1] !== 'login') history.push('/login');
+        if (this.checkValid(authenticated)) {
+
+            if (!(authenticated && user)) {
+                // NOT LOGGED IN
+                if (splitPath.length < 2 || splitPath[1] !== 'login') history.push('/login');
+                return
             } else {
-                history.push('/login');
-            }
-        } else if (this.checkValid(authenticated) && (authenticated && user)) {
-            if (splitPath.length > 1) {
-                let section = splitPath[1];
-                if (section !== "workspaces" && section !== "home") {
-                    history.push('/home');
+                // LOGGED IN
+                const { user : { onboarded } } = this.props;
+
+                if (!onboarded) {
+                    // NOT ONBOARDED
+                    if (splitPath.length < 2 || splitPath[1] !== 'onboarding') history.push('/onboarding');
+                    return 
+                } else if (splitPath.length < 2 || splitPath[1] !== 'workspaces') {
+                    history.push('/workspaces');
+                    return
                 }
-            } else {
-                history.push('/home');
             }
         }
     }
@@ -72,5 +76,5 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {checkLogin})(Main);
+export default connect(mapStateToProps, { checkLogin })(Main);
 

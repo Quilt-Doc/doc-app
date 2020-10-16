@@ -201,7 +201,7 @@ const CreateButton = styled.div`
     font-size: 1.5rem;
     font-weight: 500;
     padding: 0.7rem 1.2rem;
-    background-color:   ${chroma("#5B75E6").alpha(0.15)}; 
+    background-color:   ${chroma("#6762df").alpha(0.15)}; 
     border-radius: 0.3rem;
 `
 
@@ -249,12 +249,12 @@ const Repo = styled.div`
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
     
-    background-color: ${chroma("#5B75E6").alpha(0.15)}; 
+    background-color: ${chroma("#6762df").alpha(0.15)}; 
     border-radius: 0.3rem;
     margin-bottom:1rem;
 
     &: hover {
-        background-color: ${chroma("#5B75E6").alpha(0.5)};
+        background-color: ${chroma("#6762df").alpha(0.5)};
        /* box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     }
     display: flex;
@@ -269,7 +269,7 @@ const Repo2 = styled.div`
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
     opacity: 0.4;
-    background-color: ${chroma("#5B75E6").alpha(0.15)}; 
+    background-color: ${chroma("#6762df").alpha(0.15)}; 
     border-radius: 0.3rem;
     margin-bottom:1rem;
     display: flex;

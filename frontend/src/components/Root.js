@@ -6,7 +6,6 @@ import { Router, Route, Switch } from 'react-router-dom';
 //components
 import Main from './Main';
 import Installed from './misc/Installed';
-import Landing from './landing/Landing';
 
 //history
 import history from '../history';
@@ -17,7 +16,6 @@ const Root = () => {
                 <Router history = {history}>
                   <Switch>
                     <Route path = "/installed" component = {Installed} />
-                    <Route exact path = "/" component = {Landing} />
                     <Route path = "" component = {Main} />
                   </Switch>
                 </Router>

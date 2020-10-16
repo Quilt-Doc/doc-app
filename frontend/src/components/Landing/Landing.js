@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 import styled from 'styled-components';
 import chroma from 'chroma-js';
@@ -62,7 +61,7 @@ class Landing extends React.Component {
         if ( focused ) {
             return 1;
         } else {
-            return 0.65;
+            return 0.7;
         }
     }
 
@@ -125,12 +124,13 @@ const mapStateToProps = () => {
 export default connect(mapStateToProps, { addUserToContacts })(Landing);
 
 const IconBorder = styled.div`
+
 `
 
 const StyledIcon = styled.img`
-    max-width: 3.5rem;
-    margin-right: 0.85rem;
-    margin-top: 1.2rem;
+    max-width: 4rem;
+    margin-right: 1.33rem;
+    margin-top: 1.5rem;
 `
 
 const Gradient = styled.div`
@@ -178,7 +178,7 @@ const RightContainer = styled.div`
 `
 
 const SignUpButton = styled.div`
-    border-left: 1px solid #5B75E6;
+    border-left: 1px solid #6762df;
     color: white;
     background-color:#1e2129;
     font-weight: 500;
@@ -201,7 +201,7 @@ const SignUpForm = styled.div`
     margin-top: 5rem;
     height: 5rem;
     width: 40rem;
-    border: 1px solid ${props => chroma('#5B75E6').alpha(props.opacity)};
+    border: 1px solid ${props => chroma('#6762df').alpha(props.opacity)};
     border-radius: 0.3rem;
     display:flex;
 `
@@ -281,7 +281,8 @@ const BrandName = styled.div`
 `
 
 const DemoButton = styled.div`
-    border: 1px solid #5B75E6;
+    border: 1px solid #6762df;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
     color: white;
     background-color:#1e2129;
     font-weight: 500;

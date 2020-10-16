@@ -4,16 +4,19 @@ import React from 'react';
 import styled from 'styled-components';
 
 //actions
-import { editUser } from '../../../actions/User_Actions'
+import { editUser } from '../../actions/User_Actions'
 
 //redux
 import { connect } from 'react-redux';
 
 //router
-import history from '../../../history';
+import history from '../../history';
 
 //email validation
 import * as EmailValidator from 'email-validator';
+
+//logo
+import logoSVG from '../../images/final_logo.svg';
 
 class Onboarding extends React.Component {
     constructor(props){
@@ -35,7 +38,7 @@ class Onboarding extends React.Component {
         }
 
         await editUser({userId: _id, firstName, lastName, onboarded: true, email});
-        history.push('/home/workspaces')
+        history.push('/workspaces')
     }
 
     render(){
@@ -43,9 +46,15 @@ class Onboarding extends React.Component {
         let { search } = history.location;
         let params = new URLSearchParams(search)
         let email = params.get('email');
-        console.log("USER", user);
-        console.log("EMAIL", email);
+
         return(
+            <Container>
+                <Top>
+                    <StyledIcon src = {logoSVG}/>
+                    <BrandName>
+                        quilt
+                    </BrandName>
+                </Top>
                 <Content>
                     <Header>
                         Welcome!
@@ -54,7 +63,7 @@ class Onboarding extends React.Component {
                         Provide us some info so we can tailor your experience.
                     </SubHeader>
                     <SubContent>
-                        <Top>
+                        <Top2>
                             <NameInput 
                                 defaultValue = {user.firstName}
                                 ref = {node => this.firstNameInput = node}
@@ -66,7 +75,7 @@ class Onboarding extends React.Component {
                                 ref = {node => this.lastNameInput = node}
                                 spellCheck = {false} 
                                 placeholder = {"Last Name"}/>
-                        </Top>
+                        </Top2>
                         <EmailInput
                             defaultValue = {email}
                             ref = {node => this.emailInput = node}
@@ -78,6 +87,7 @@ class Onboarding extends React.Component {
                         </NextButton>
                     </SubContent>
                 </Content>
+            </Container>
         )
     }
 }
@@ -91,24 +101,40 @@ const mapStateToProps = (state) => {
 
 export default connect(mapStateToProps, { editUser })(Onboarding);
 
- {/*
-                            <CSSTransition
-                                in = {this.state.page === 0}
-                                unmountOnExit
-                                enter = {true}
-                                exit = {false}     
-                                appear = {true}  
-                                timeout = {300}
-                                classNames = "slidepane"
-                            >   
-                                <div style ={{width: "100%"}}>
-                                    <ChooseProvider
-                                        changePage = {this.changePage}
-                                    />
-                                </div> 
-                            </CSSTransition>*/}
+
+const BrandName = styled.div`
+    font-size: 3.5rem;
+    letter-spacing: 1px;
+    font-weight: 400;
+    margin-top: 0.3rem;
+`
+
+const StyledIcon = styled.img`
+    max-width: 4rem;
+    margin-right: 1.33rem;
+    margin-top: 1.5rem;
+`
+
+const Container = styled.div`
+    background-color:#16181d;
+    display: flex;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    color: white;
+`
+
 
 const Top = styled.div`
+    height: 9rem;
+    padding-left: 8.5rem;
+    padding-right: 8.5rem;
+    color:white;
+    display: flex;
+    align-items: center;
+`
+
+const Top2 = styled.div`
     display: flex;
     margin-bottom: 2rem;
 `
@@ -126,7 +152,7 @@ const NextButton = styled.div`
     padding-left: 2rem;
     padding-right: 2rem;
     font-weight: 500;
-    border: 1px solid #5B75E6;
+    border: 1px solid #6762df;
     cursor: pointer;
     &:hover {
         background-color: #2e323d;
@@ -186,27 +212,11 @@ const EmailInput = styled.input`
     width: 100%;
 `          
 
-const Container = styled.div`
-    background-color:#16181d;
-    min-height: 100vh;
-    width: 100vw;
-    display: flex;
-    flex-direction: column;
-    overflow-y: scroll;
-    padding-bottom: 20rem;
-`
-
 const TopNavbar = styled.div`
     height: 10rem;
     color:#D6E0EE;
     display: flex;
     align-items: center;
-`
-
-const StyledIcon = styled.img`
-    width: 2.7rem;
-    margin-left: 4.5rem;
-    margin-right: 1rem;
 `
 
 const Company = styled.div`

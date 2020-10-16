@@ -79,7 +79,7 @@ const ProfileButton = styled.div`
     border-radius: 0.25rem;
     font-size: 1.4rem;
     color: white;
-    background-color:#5B75E6;
+    background-color:#6762df;
     cursor: pointer;
     
 `*/

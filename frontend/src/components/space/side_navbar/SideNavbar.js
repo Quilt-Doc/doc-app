@@ -108,7 +108,7 @@ class SideNavbar extends React.Component {
         return (
             <SideNavbarContainer id = "sidenavbar">
                 <CreateButton/>
-                <WorkspaceIcon to = {"/home/workspaces"}>{name[0]}</WorkspaceIcon>
+                <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 {this.renderTopSection()}
                 {this.renderBottomSection()}
             </SideNavbarContainer>
@@ -183,18 +183,17 @@ const NavbarIcon = styled(Link)`
     width: 3.2rem;
     font-size: 1.6rem;
     font-weight: 500;
-    background-color:${props => props.active ? '#464c5d' : '#3b404f'};
+    background-color:#3b404f;
     border-radius: 0.3rem;
     cursor: pointer;
     margin-bottom: 1.3rem;
 
     &:hover {
-        border: 1px solid #5B75E6;
-        background-color:#464c5d;
+        border: 1px solid #6762df;
     }
     transition: background-color 0.1s ease-in;
     text-decoration: none;
-    border: ${props => props.active ?  '1px solid #5B75E6': 'none'};
+    border: ${props => props.active ?  '1px solid #6762df': 'none'};
     color: white;
 `
 
@@ -204,7 +203,7 @@ const WorkspaceIcon = styled(Link)`
     justify-content: center;
     height: 3.2rem;
     width: 3.2rem;
-    background-color: #5B75E6;
+    background-color:#6762df;
     border-radius: 0.3rem;
     font-size: 1.3rem;
     margin-bottom: 1.3rem;

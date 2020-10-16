@@ -50,7 +50,7 @@ class DashboardPanel extends Component {
                         </Block>
                         <Block>
                             <Top>
-                                <Number bColor = {'#5B75E6'}>2</Number>
+                                <Number bColor = {'#6762df'}>2</Number>
                                 Update Documentation
                             </Top>
                             <StyledVideo id = {"dashVideo"} {...(this.state.playSecondVideo ? {autoPlay: true} : {})} active = {true} muted >

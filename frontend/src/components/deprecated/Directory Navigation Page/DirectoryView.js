@@ -215,7 +215,7 @@ class DirectoryView extends React.Component {
                     : <>
                             <Loader
                                 type="ThreeDots"
-                                color="#5B75E6"
+                                color="#6762df"
                                 height={50}
                                 width={50}
                                 //3 secs
@@ -318,8 +318,8 @@ const RepositoryPath = styled.div`
 `
 
 const RepositoryButton = styled.div`
-    background-color: ${chroma("#5B75E6").alpha(0.15)}; 
-    color: #5B75E6;
+    background-color: ${chroma("#6762df").alpha(0.15)}; 
+    color: #6762df;
     font-weight: 400;
     padding: 0.75rem;
     display: inline-flex;

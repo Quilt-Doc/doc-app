@@ -53,7 +53,7 @@ class Snippet extends React.Component {
                 <SnippetWrapper 
                     backgroundColor = {this.state.backgroundColor} 
                     boxShadow = {this.state.boxShadow}
-                    border = {this.props.status === "INVALId" ?  "1.5px solid #eb3b5a" :  "1.5px solid #5B75E6"}
+                    border = {this.props.status === "INVALId" ?  "1.5px solid #eb3b5a" :  "1.5px solid #6762df"}
                     onMouseEnter = {this.props.scalePane} 
                     onMouseLeave = {this.props.unhoverBoth}
                 >
@@ -105,7 +105,7 @@ const SnippetWrapper = styled.div`
     cursor: pointer;
    
     /*background-color: ${props => props.backgroundColor};*/
-    background-color:  ${chroma("#5B75E6").alpha(0.04)};
+    background-color:  ${chroma("#6762df").alpha(0.04)};
     box-shadow: ${props => props.boxShadow}; 
     margin-bottom: 1.5rem;
     margin-top: 1.5rem;

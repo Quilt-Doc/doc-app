@@ -371,11 +371,11 @@ const BlockTool = styled.div`
     z-index: 1;
     
     &:hover {
-        background-color: ${chroma("#5B75E6").alpha(0.2)};
+        background-color: ${chroma("#6762df").alpha(0.2)};
     }
     transition: transform 0.2s cubic-bezier(0, 0.475, 0.01, 1.035), background-color 0.1s ease-in-out;
     cursor: pointer;
     border-top-left-radius: 0.2rem;
     border-bottom-left-radius: 0.2rem;
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2) : 'white'};
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.2) : 'white'};
 `

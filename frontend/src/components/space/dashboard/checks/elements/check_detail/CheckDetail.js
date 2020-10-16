@@ -232,7 +232,7 @@ const CommitList = styled.div`
     flex-direction: column;
     margin-top: 4rem;
     border-radius: 0.3rem;
-    background-color: ${chroma('#5B75E6').alpha(0.05)};
+    background-color: ${chroma('#6762df').alpha(0.05)};
 `
 
 const Commit = styled.div`

@@ -131,9 +131,9 @@ const MenuButton = styled.div`
     height: 3.5rem;
     font-weight: 500;
     display: inline-flex;
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : ""};
     &:hover {
-        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
+        background-color: ${props => props.active ?  chroma('#6762df').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
     border: 1px solid #172A4e;

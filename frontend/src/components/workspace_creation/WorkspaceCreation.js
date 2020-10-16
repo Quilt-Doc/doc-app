@@ -11,6 +11,9 @@ import ChooseRepos from './views/ChooseRepos';
 import ChooseName from './views/ChooseName';
 import WaitCreation from './views/WaitCreation';
 
+//icons
+import logoSVG from '../../images/final_logo.svg';
+
 //component that is used to go through the flow of workspace creation 
 //(choosing repos, name workspace, etc)
 class WorkspaceCreation extends Component {
@@ -84,30 +87,70 @@ class WorkspaceCreation extends Component {
         const {page} = this.state;
         return(
             <Container>
-                <CreateBox>
-                    <Content>
-                        <Progress>
-                                <Bar active = {true}/>
-                                <Bar active = {page > 0} />
-                                <Bar active = {page > 1} />
-                        </Progress>
-                        <Header>
-                            Create a new workspace
-                        </Header>
-                        <SubHeader>
-                            Start documenting your code in three easy steps.
-                        </SubHeader>
-                        <SubContent>   
-                            {this.renderSubContent()}
-                        </SubContent>
-                    </Content>
-                </CreateBox>
+                <Top>
+                    <StyledIcon src = {logoSVG}/>
+                    <BrandName>
+                        quilt
+                    </BrandName>
+                </Top>
+                <Container2>
+                    <CreateBox>
+                        <Content>
+                            <Progress>
+                                    <Bar active = {true}/>
+                                    <Bar active = {page > 0} />
+                                    <Bar active = {page > 1} />
+                            </Progress>
+                            <Header>
+                                Create a new workspace
+                            </Header>
+                            <SubHeader>
+                                Start documenting your code in three easy steps.
+                            </SubHeader>
+                            <SubContent>   
+                                {this.renderSubContent()}
+                            </SubContent>
+                        </Content>
+                    </CreateBox>
+                </Container2>
             </Container>
         );   
     }
 }
 
 export default WorkspaceCreation;
+
+const BrandName = styled.div`
+    font-size: 3.5rem;
+    letter-spacing: 1px;
+    font-weight: 400;
+    margin-top: 0.3rem;
+`
+
+const StyledIcon = styled.img`
+    max-width: 4rem;
+    margin-right: 1.33rem;
+    margin-top: 1.5rem;
+`
+
+const Container = styled.div`
+    background-color:#16181d;
+    display: flex;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    color: white;
+`
+
+
+const Top = styled.div`
+    height: 9rem;
+    padding-left: 8.5rem;
+    padding-right: 8.5rem;
+    color:white;
+    display: flex;
+    align-items: center;
+`
 
 
 const Progress = styled.div`
@@ -129,7 +172,7 @@ const Bar = styled.div`
     transition: background-color 0.2s ease-in;
 `
 
-const Container = styled.div`
+const Container2 = styled.div`
     background-color:#16181d;
     display: flex;
     flex: 1;
@@ -137,30 +180,6 @@ const Container = styled.div`
     flex-direction: column;
     overflow-y: scroll;
     padding-bottom: 20rem;
-`
-
-const Top = styled.div`
-    height: 10rem;
-    color:#D6E0EE;
-    display: flex;
-    align-items: center;
-    padding-left: 4rem;
-    padding-right: 4rem;
-`
-
-const StyledIcon = styled.img`
-    width: 2.7rem;
-    margin-left: 4.5rem;
-    margin-right: 1rem;
-`
-
-const Company = styled.div`
-    font-size: 3rem;
-    color:white;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    margin-right: 15rem;
-    margin-top: -0.25rem;
 `
 
 const CreateBox = styled.div`

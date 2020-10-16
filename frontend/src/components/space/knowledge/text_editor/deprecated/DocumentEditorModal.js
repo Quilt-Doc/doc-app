@@ -479,7 +479,7 @@ const AuthorNote = styled.div`
 
 
 const RepositoryButton = styled.div`
-    background-color: ${chroma("#5B75E6").alpha(0.1)}; 
+    background-color: ${chroma("#6762df").alpha(0.1)}; 
     color: #172A4E;
     font-weight: 500;
     padding: 0.75rem;

@@ -31,7 +31,7 @@ class BreakageCard extends Component {
                 {breakCommit.slice(0, 7)}
             </Commit>
         </Status>) :
-        (<Status color = {"#5B75E6"}>
+        (<Status color = {"#6762df"}>
             <AiOutlineExclamation
                 style = 
                 {{

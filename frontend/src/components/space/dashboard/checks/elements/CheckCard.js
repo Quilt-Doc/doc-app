@@ -74,11 +74,11 @@ const Check = styled.div`
     height: 11rem;
     width: 100%;
     border-radius: 0.7rem;
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.1) : 'white'};
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.1) : 'white'};
     margin-bottom: 1.5rem;
     display: flex;
     &:hover {
-        background-color: ${chroma("#5B75E6").alpha(0.1)};
+        background-color: ${chroma("#6762df").alpha(0.1)};
     }
     cursor: pointer;
     transition: background-color 0.1s ease-in;

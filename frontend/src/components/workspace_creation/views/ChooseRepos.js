@@ -8,7 +8,7 @@ import {ImGithub} from 'react-icons/im';
 import { RiCheckboxCircleFill} from 'react-icons/ri';
 
 //actions
-import { checkInstallation } from '../../../../actions/Auth_Actions';
+import { checkInstallation } from '../../../actions/Auth_Actions';
 
 //redux
 import { connect } from 'react-redux';
@@ -120,7 +120,7 @@ const NextButton = styled.div`
     padding-left: 2rem;
     padding-right: 2rem;
     font-weight: 500;
-    border: 1px solid #5B75E6;
+    border: 1px solid #6762df;
     cursor: pointer;
     &:hover {
         background-color: #2e323d;
