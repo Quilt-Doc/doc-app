@@ -150,12 +150,12 @@ const DraggableDocument = (props) => {
 			<div ref = {gapDrop}>
 				<Gap 
 					marginLeft = {`${props.marginLeft}rem`} 
-					backgroundColor = { isOver2 && canDrop2 ? "#5B75E6" : ""}
+					backgroundColor = { isOver2 && canDrop2 ? "#6762df" : ""}
 				/>
 			</div>
 			<div ref = {drop}>
 				<CurrentReference 
-					border = { isDragging ? "#EBECF0" : isOver && canDrop ? "2px solid #5B75E6" : ""}
+					border = { isDragging ? "#EBECF0" : isOver && canDrop ? "2px solid #6762df" : ""}
 					onDrag = {(e) => {  e.target.style.cursor = 'grabbing'; }}
 					onDragEnd = {(e) => {  e.target.style.cursor = ''; }}
 					ref = {drag} 
@@ -185,7 +185,7 @@ const DraggableDocument = (props) => {
 					<div ref = {lastGapDrop}>
 						<Gap 
 							marginLeft = {`${props.marginLeft}rem`} 
-							backgroundColor = { isOver3 && canDrop3 ? "#5B75E6" : ""}
+							backgroundColor = { isOver3 && canDrop3 ? "#6762df" : ""}
 						/>
 					</div>
 			}

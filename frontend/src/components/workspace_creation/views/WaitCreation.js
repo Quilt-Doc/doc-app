@@ -4,11 +4,11 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 //actions
-import { createDocument } from '../../../../actions/Document_Actions';
-import { getWorkspace } from '../../../../actions/Workspace_Actions';
+import { createDocument } from '../../../actions/Document_Actions';
+import { getWorkspace } from '../../../actions/Workspace_Actions';
 
 //router
-import history from '../../../../history';
+import history from '../../../history';
 
 //redux
 import { connect } from 'react-redux';
@@ -28,7 +28,7 @@ class WaitCreation extends Component {
 
         const { workspace: {setupComplete} } = this.props;
 
-        if (setupComplete) history.push(`/workspaces/${workspaceId}`);
+        if (setupComplete) history.push(`/workspaces/${workspaceId}/dashboard`);
 
         this.interval = setInterval(this.pollWorkspace, 2000);
     }

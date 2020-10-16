@@ -149,7 +149,7 @@ const Ball = styled.div`
     border-radius: 50%;
     height: 1.5rem;
     width: 1.5rem;
-    background-color: #5B75E6;
+    background-color: #6762df;
     background-color: ${props => props.color};
 `
 
@@ -269,7 +269,7 @@ const Circle = styled.div`
     border-radius: 50%;
     height: 0.7rem;
     width: 0.7rem;
-    background-color: #5B75E6;
+    background-color: #6762df;
     margin-right: 1.5rem;
     background-color: ${props => props.color};
 `

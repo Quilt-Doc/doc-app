@@ -241,8 +241,8 @@ const Button = styled.div`
     z-index: 0;
     border-radius: 0.3rem;
     &:hover {
-        background-color:  ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
+        background-color:  ${props => props.active ? chroma("#6762df").alpha(0.2) : "#dae3ec;"};
     }
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.2)  : ""};
     cursor: pointer;
 `

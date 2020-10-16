@@ -310,7 +310,7 @@ const NavbarIcon = styled.div`
     &:hover {
         background-color: ${props => props.emph };
     }*/
-    /*border-bottom: ${props => props.active ? "2px solid #5B75E6" : ""};*/
+    /*border-bottom: ${props => props.active ? "2px solid #6762df" : ""};*/
 `
 
 const Circle = styled.div`
@@ -357,7 +357,7 @@ const WorkspaceIcon = styled.div`
     justify-content: center;
     height: 2.9rem;
     width: 2.9rem;
-    background-color: #5B75E6;
+    background-color: #6762df;
     border-radius: 0.3rem;
     margin-right: 1.3rem;
     font-size: 1.3rem;

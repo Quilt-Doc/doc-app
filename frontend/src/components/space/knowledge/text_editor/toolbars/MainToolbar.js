@@ -80,7 +80,7 @@ class MainToolbar extends React.Component {
                             Valid
                         </Status>
             case "resolve":
-                return <Status color = {"#5B75E6"}>
+                return <Status color = {"#6762df"}>
                             <AiOutlineExclamation
                                 style = 
                                 {{
@@ -207,9 +207,9 @@ const Button = styled.div`
     z-index: 0;
     border-radius: 0.3rem;
     &:hover {
-        background-color:  ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#dae3ec;"};
+        background-color:  ${props => props.active ? chroma("#6762df").alpha(0.2) : "#dae3ec;"};
     }
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : ""};
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.2)  : ""};
     cursor: pointer;
 `
 

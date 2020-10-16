@@ -868,8 +868,8 @@ const Container = styled.div`
 
 
 const RepositoryButton = styled.div`
-    background-color: ${chroma("#5B75E6").alpha(0.15)}; /*#313b5e;*/ /*#262E49; *//*#313b5e;*/ /* #262E49; *//*#5B75E6;*/
-    color: #5B75E6;
+    background-color: ${chroma("#6762df").alpha(0.15)}; /*#313b5e;*/ /*#262E49; *//*#313b5e;*/ /* #262E49; *//*#6762df;*/
+    color: #6762df;
     font-weight: 500;
     padding: 0.75rem;
     display: inline-flex;

@@ -257,7 +257,7 @@ const ModalBackground = styled.div`
 
 const SearchbarWrapper = styled.div`
     height: 5.3rem;
-    border-bottom: 2px solid #5B75E6;
+    border-bottom: 2px solid #6762df;
     display: flex;
 `
 

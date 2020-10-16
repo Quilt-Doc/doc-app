@@ -360,7 +360,7 @@ const CheckBoxBorder = styled.div`
     margin-left: 0.5rem;
     margin-right: 0.5rem;
     &:hover {
-        background-color: ${chroma("#5B75E6").alpha(0.1)};
+        background-color: ${chroma("#6762df").alpha(0.1)};
     }
     display: flex;
     align-items: center;

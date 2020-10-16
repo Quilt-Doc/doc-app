@@ -176,14 +176,14 @@ const BlockType = styled.div`
     display: flex;
     align-items: center;
     &:hover {
-        background-color: ${props => props.open ? chroma("#5B75E6").alpha(0.2) : props.active ? '#F4F4F6' : ''};
+        background-color: ${props => props.open ? chroma("#6762df").alpha(0.2) : props.active ? '#F4F4F6' : ''};
     }
     opacity:  ${props => props.active ? 1 : 0.5};
     cursor: pointer;
     padding: 0.7rem;
     border-radius: 0.3rem;
-    border: ${props => !props.open ?  "1px solid #DFDFDF" : `1px solid ${chroma("#5B75E6").alpha(0.2)}`};
-    background-color: ${props => props.open ? chroma("#5B75E6").alpha(0.2) : ""}
+    border: ${props => !props.open ?  "1px solid #DFDFDF" : `1px solid ${chroma("#6762df").alpha(0.2)}`};
+    background-color: ${props => props.open ? chroma("#6762df").alpha(0.2) : ""}
 `
 
 

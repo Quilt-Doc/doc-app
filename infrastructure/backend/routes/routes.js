@@ -230,7 +230,6 @@ router.get('/auth/github/redirect', passport.authenticate("github", {session: fa
     if (req.query.state === "installing") {
         return res.redirect(INSTALLED_URL);
     } else {
-        
         if (!req.user.onboarded) {
             const { state } = req.query;
             if (state) {

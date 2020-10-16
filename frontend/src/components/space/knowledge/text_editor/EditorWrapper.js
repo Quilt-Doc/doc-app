@@ -16,7 +16,7 @@ import styled from "styled-components";
 import html2canvas from 'html2canvas';
 
 //actions
-import { getDocument, editDocument, syncEditDocument, renameDocument } from '../../../../actions/Document_Actions';
+import { getDocument, editDocument, syncEditDocument, renameDocument, testRoute } from '../../../../actions/Document_Actions';
 import { setDocumentLoaded } from '../../../../actions/UI_Actions';
 import { Node } from 'slate';
 
@@ -47,7 +47,11 @@ class EditorWrapper extends React.Component {
         this.saveMarkup(documentId, canvas);
     }
 
-    saveMarkupWrapper = () => {
+    saveMarkupWrapper = (e) => {
+        return "ARE YOU SURE?";
+        alert("ARE YOU SURE");
+        const {testRoute} = this.props;
+        testRoute({message: "BOOGA"});
         const documentId = this.getDocumentId(this.props);
         this.saveMarkup(documentId);
     }
@@ -233,7 +237,7 @@ EditorWrapper.propTypes = {
 }
 
 export default withRouter(connect(mapStateToProps, { 
-    getDocument, editDocument, renameDocument, syncEditDocument, setDocumentLoaded })(EditorWrapper));
+    getDocument, editDocument, renameDocument, syncEditDocument, setDocumentLoaded, testRoute })(EditorWrapper));
 
 const Container = styled.div`
     height: 100vh;

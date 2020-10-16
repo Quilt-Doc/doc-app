@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 //actions
-import { createWorkspace } from '../../../../actions/Workspace_Actions';
+import { createWorkspace } from '../../../actions/Workspace_Actions';
 
 //redux
 import { connect } from 'react-redux';
@@ -95,7 +95,7 @@ const NextButton = styled.div`
     padding-left: 2rem;
     padding-right: 2rem;
     font-weight: 500;
-    border: 1px solid #5B75E6;
+    border: 1px solid #6762df;
     cursor: pointer;
     &:hover {
         background-color: #2e323d;

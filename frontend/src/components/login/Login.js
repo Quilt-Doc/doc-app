@@ -2,9 +2,11 @@ import React from 'react';
 
 //styles
 import styled from 'styled-components';
+import chroma from 'chroma-js';
 
 //icons
 import {ImGithub} from 'react-icons/im';
+import logoSVG from '../../images/final_logo.svg';
 
 //router
 import history from '../../history';
@@ -31,53 +33,66 @@ class Login extends React.Component {
 
     render(){
         return(
-            <Container>
-                <Content>
-                    <Company>
-                        quilt
-                    </Company>
-                    <SubHeader>
-                        The knowledge solution for developer teams.
-                    </SubHeader>
-                    <SubHeader2>
-                        Sign in with Github to get started
-                    </SubHeader2>
-                    <NextButton onClick = {() => {this.goLogin()}}>
-                        <ImGithub style = {{marginRight: "1rem"}}/>
-                            Continue with Github
-                    </NextButton>
-                 </Content>
-            </Container>
+            <Background>
+                <Container>
+                    <Content>
+                        <StyledIcon src = {logoSVG}/>
+                        <Company>
+                            quilt
+                        </Company>
+                        <SubHeader>
+                            The knowledge solution for developer teams.
+                        </SubHeader>
+                        <SubHeader2>
+                            Sign in with Github to get started
+                        </SubHeader2>
+                        <NextButton onClick = {() => {this.goLogin()}}>
+                            <ImGithub style = {{marginRight: "1rem"}}/>
+                                Continue with Github
+                        </NextButton>
+                    </Content>
+                </Container>
+            </Background>
         )
     }
 }
 
 export default Login;
 
+const Background = styled.div`
+    background-color:  #16181d;
+    display: flex;
+    flex-direction:column;
+    height: 100vh;
+    width: 100vw;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+`
+
+const Container = styled.div`
+    height: 100%;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    color: white;
+    justify-content: center;
+    align-items: center;
+`
+
 const StyledIcon = styled.img`
-    width: 6rem;
+    width: 8rem;
     margin-bottom: 0.5rem;
+    margin-left: -4.5rem;
 `
 
 const Company = styled.div`
     letter-spacing: 1px;
     font-weight: 400;
-    font-size: 5rem;
+    font-size: 4.5rem;
     display: flex;
     align-items: center;
-`
-
-const Container = styled.div`
-    background-color:#16181d;
-    min-height: 100vh;
-    width: 100vw;
-    display: flex;
-    flex-direction: column;
-    overflow-y: scroll;
-    padding-bottom: 20rem;
-    color: white;
-    justify-content: center;
-    align-items: center;
+    margin-bottom: 1.5rem;
 `
 
 const NextButton = styled.div`
@@ -93,7 +108,7 @@ const NextButton = styled.div`
     padding-left: 2rem;
     padding-right: 2rem;
     font-weight: 500;
-    border: 1px solid #5B75E6;
+    border: 1px solid #6762df;
     cursor: pointer;
     &:hover {
         background-color: #2e323d;
@@ -101,16 +116,18 @@ const NextButton = styled.div`
 `
 
 const Content = styled.div`
+    margin-top: -10rem;
     width: 43rem;
     padding-top: 8rem;
     padding-bottom: 8rem;
     border-radius: 0.3rem;
     color: white;
-    border: 2px solid #2a2e37;
+    border: 2px solid  ${chroma('#6762df').alpha(0.4)};
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
 `
 
 const SubHeader = styled.div`

@@ -421,6 +421,6 @@ const ListItem = styled.div`
     padding-right: 3rem;
     height: 3.8rem;
     background-color: white;
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.04) : ''};
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.04) : ''};
     font-size: 1.5rem;
 `*/

@@ -432,8 +432,6 @@ deleteDocument = async (req, res) => {
         const workspaceId = req.workspaceObj._id.toString();
         const userId = req.tokenPayload.userId.toString();
     
-        const repositoryId = req.documentObj.repository._id.toString();
-    
         // escape the path of the document so regex characters don't affect the query
         const escapedPath = escapeRegExp(`${documentObj.path}`);
         const regex =  new RegExp(`^${escapedPath}`);
@@ -521,17 +519,20 @@ deleteDocument = async (req, res) => {
             throw new Error("deleteDocument Error: unable to delete document and/or descendants");
         }
     
-        try {
-            await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, repositoryId, userId);
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                message: err,
-                                errorDescription: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`,
-                                function: `handleDocumentDelete`});
-    
-            output = {success: false, error: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`, trace: err};
-            throw new Error(`Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`);
+        if (req.documentObj.repository) {
+            try {
+                const repositoryId = req.documentObj.repository._id.toString();
+                await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, repositoryId, userId);
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    message: err,
+                                    errorDescription: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`,
+                                    function: `handleDocumentDelete`});
+        
+                output = {success: false, error: `Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`, trace: err};
+                throw new Error(`Error handling Document delete Reporting updates workspaceId, userId, documentId: ${workspaceId}, ${userId}, ${documentObj._id.toString()}`);
+            }
         }
     
     
@@ -1127,7 +1128,7 @@ searchDocuments = async (req, res) => {
 
 
 testRoute = async (req, res) => {
-
+    console.log(req.body);
 }
 
 module.exports = { testRoute, searchDocuments,

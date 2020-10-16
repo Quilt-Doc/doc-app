@@ -212,8 +212,8 @@ const AddButton = styled.div`
 `
 
 const Reference = styled.div`
-    background-color: ${chroma("#5B75E6").alpha(0.12)};
-    /*color: ${chroma("#5B75E6").alpha(0.9)};*/
+    background-color: ${chroma("#6762df").alpha(0.12)};
+    /*color: ${chroma("#6762df").alpha(0.9)};*/
     border-radius: 0.2rem;
     font-size: 1.3rem;
     padding: 0.3rem 0.55rem;

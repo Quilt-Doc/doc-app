@@ -11,29 +11,27 @@ import Home from './home/Home';
 
 //styles
 import styled from "styled-components";
+import Onboarding from './onboarding/Onboarding';
+import WorkspaceCreation from './workspace_creation/WorkspaceCreation';
 
 // component that houses the core application
 const Application = () => {
     return ( 
         <Container>
             <Router history = {history}>
+                <Route exact path = "/workspaces" component = {Home} />
+                <Route path = "/create_workspace" component = {WorkspaceCreation}/>
+                <Route path = "/onboarding" component = {Onboarding} />
                 <Route path = "/workspaces/:workspaceId" component = {Space} />
-                <Route path = "/home" component = {Home} />
             </Router>
         </Container>
     )
 }
 
-{/*   <Route path = "/create_workspace" component = {WorkspaceCreation}/>
-                <Route exact path = "/" component = {Home}/>
-                <Route exact path = "/workspaces" component = {Home} />
-                <Route path = "/workspaces/:workspaceId" component = {Space} />
-<Route path = "/settings" component = {UserSettings} />*/}
-
 export default Application;
 
 const Container = styled.div`
-    
+    background-color:  #16181d;
     display: flex;
     flex-direction:column;
     height: 100vh;

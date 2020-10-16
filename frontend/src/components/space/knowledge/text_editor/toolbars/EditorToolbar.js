@@ -176,11 +176,11 @@ const IconBorder = styled.div`
       
     &:hover {
         opacity: 1;
-        background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2) : "#F4F4F6"};
+        background-color: ${props => props.active ? chroma("#6762df").alpha(0.2) : "#F4F4F6"};
     }
     
     cursor: pointer;
     transition: all 0.1s ease-in;
-    background-color: ${props => props.active ? chroma("#5B75E6").alpha(0.2)  : "white"};
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.2)  : "white"};
     color: #172A4E;
 `

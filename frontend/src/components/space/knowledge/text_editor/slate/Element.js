@@ -297,7 +297,7 @@ const CreateBlockButton = styled.div`
 	color: #172A4E;
 	cursor: ${props => props.cursor};
 	&:hover {
-		background-color: ${chroma("#5B75E6").alpha(0.1)};
+		background-color: ${chroma("#6762df").alpha(0.1)};
 		cursor: pointer;
 	}
 		/*border: 1px solid #262626;*/

@@ -316,7 +316,7 @@ const WorkspaceIcon = styled.div`
     justify-content: center;
     height: ${props => props.large ? "1.8rem" : "1.5rem"};
     width: ${props => props.large ? "1.8rem" : "1.5rem"};
-    background-color: #5B75E6;
+    background-color: #6762df;
     border-radius: 0.2rem;
     font-size: ${props => props.large ? "1.2rem" : "0.8rem"};
     border: none;
@@ -360,16 +360,16 @@ const IconBorder = styled.div`
 const MenuButton = styled.div`
     display: flex;
     align-items: center;
-    border: 1px solid ${props => props.active ? chroma('#5B75E6').alpha(0.2) : "#E0E4E7"}; 
+    border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.2) : "#E0E4E7"}; 
     font-size: 1.4rem;
     padding: 0rem 1.5rem;
     border-radius: 0.4rem;
     height: 3.5rem;
     font-weight: 500;
     display: inline-flex;
-    background-color: ${props => props.active ? chroma('#5B75E6').alpha(0.2) : ""};
+    background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : ""};
     &:hover {
-        background-color: ${props => props.active ?  chroma('#5B75E6').alpha(0.2) : "#F4F4F6" };
+        background-color: ${props => props.active ?  chroma('#6762df').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
 `

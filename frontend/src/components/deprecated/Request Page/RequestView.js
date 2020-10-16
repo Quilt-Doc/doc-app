@@ -800,7 +800,7 @@ const StatIconBorder = styled.div`
     border-radius: 50%;
     margin-right: 0.3rem;
     &:hover {
-        background-color:  ${chroma("#5B75E6").alpha(0.1)};
+        background-color:  ${chroma("#6762df").alpha(0.1)};
     }
 `
 
@@ -952,7 +952,7 @@ const ProfileButton = styled.div`
     border-radius: 0.3rem;
     font-size: 1.4rem;
     color: white;
-    background-color:#5B75E6;
+    background-color:#6762df;
     cursor: pointer;
 `
 

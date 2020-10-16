@@ -102,8 +102,8 @@ export default InfoBar;
 
 
 const RepositoryButton = styled.div`
-    background-color: ${chroma("#5B75E6").alpha(0.1)}; 
-    color: #5B75E6;
+    background-color: ${chroma("#6762df").alpha(0.1)}; 
+    color: #6762df;
     font-weight: 500;
     padding: 0.75rem;
     display: inline-flex;
@@ -243,7 +243,7 @@ const Reference2 = styled.div`
     display: inline-flex;
     /*background-color:#262E49;*/
     /*color:#D6E0EE;*/
-    border-left: 3.5px solid #5B75E6;
+    border-left: 3.5px solid #6762df;
     background-color: #F7F9FB;
     border-radius: 0.3rem;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;
@@ -261,7 +261,7 @@ const ProfileButton = styled.div`
     border-radius: 0.25rem;
     font-size: 1.4rem;
     color: white;
-    background-color:#5B75E6;
+    background-color:#6762df;
     cursor: pointer;
     margin-right: 1.25rem;
 `

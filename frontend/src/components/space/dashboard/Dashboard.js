@@ -108,8 +108,8 @@ const Todos = styled.div`
     margin-left: auto;
     padding: 0.5rem 1rem;
     font-size: 1.25rem;
-    background-color: ${chroma('#5B75E6').alpha(0.15)};
-    color: #5B75E6;
+    background-color: ${chroma('#6762df').alpha(0.15)};
+    color: #6762df;
     border-radius: 1.3rem;
     font-weight: 500;
     margin-bottom: 1rem;
