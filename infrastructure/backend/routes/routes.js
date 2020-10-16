@@ -287,6 +287,14 @@ router.post('/verify/add_contact', emailVerifyController.addContact);
 const workspaceInviteController = require('../controllers/authentication/WorkspaceInviteController');
 router.post('/invites/:workspaceId', workspaceInviteController.sendInvite);
 
+const assetController = require('../controllers/AssetController');
+router.get('/assets/invalid_document', assetController.getInvalidDocumentIcon);
+router.get('/assets/invalid_snippet', assetController.getInvalidSnippetIcon);
+router.get('/assets/invalid_check', assetController.getInvalidCheckIcon);
+router.get('/assets/document', assetController.getDocumentIcon);
+router.get('/assets/snippet', assetController.getSnippetIcon);
+
+
 /*
     const pullRequestController = require('../controllers/unused/PullRequestController');
     router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pullRequestController.createPullRequest);
