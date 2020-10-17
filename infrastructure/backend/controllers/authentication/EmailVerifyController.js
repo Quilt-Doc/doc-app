@@ -15,6 +15,12 @@ var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 const logger = require('../../logging/index').logger;
 
+// grab the Mixpanel factory
+const Mixpanel = require('mixpanel');
+
+// create an instance of the mixpanel client
+const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
+
 const apis = require('../../apis/api');
 
 
@@ -99,6 +105,7 @@ verifyEmail = async (req, res) => {
         }
 
         verifiedUser = await User.findByIdAndUpdate(verifiedUserId, {$set: { verified: true } });
+
     }
     catch (err) {
         return res.json({success: false, error: `Error findById query failed \n ${err}`});
@@ -127,11 +134,28 @@ verifyEmail = async (req, res) => {
                         function: 'verifyEmail'});
 
     try {
-        await  Workspace.updateMany({_id: { $in: workspaceIds.map(id => ObjectId(id)) }},  {$push: {memberUsers: ObjectId(verifiedUserId)}})
+        await Workspace.updateMany({_id: { $in: workspaceIds.map(id => ObjectId(id)) }},  {$push: {memberUsers: ObjectId(verifiedUserId)}})
     } catch (err) {
         return res.json({ success: false, 
             error: `verifyEmail Error: workspace update did not work`, trace: err });
     }
+
+    mixpanel.track('User Email Verified', {
+        distinct_id: `${verifiedUserId.toString()}`,
+        verifiedEmail: `${verifiedEmail.email.toString()}`
+    });
+
+
+    workspaceIds.forEach(id => {
+        // track an event with optional properties
+        mixpanel.track('User Added to Workspace', {
+            distinct_id: `${verifiedUserId.toString()}`,
+            workspaceId: `${id.toString()}`
+        });
+    });
+
+
+    
 
     return res.redirect(CLIENT_HOME_PAGE_URL);
 }
@@ -174,7 +198,7 @@ addContact = async (req, res) => {
         return res.json({success: false, error: err});
     }
 
-    return res.redirect(CLIENT_HOME_PAGE_URL);
+    return res.json({success: true});
 }
 
 module.exports = {

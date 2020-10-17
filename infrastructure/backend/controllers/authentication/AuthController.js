@@ -55,6 +55,8 @@ loginSuccess = async (req, res) => {
     try {
         var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
 
+        console.log(`Decoded JWT: ${decoded}`);
+
         var user = await User.findById(decoded.userId).lean().exec();
 
         // Check that User's Github refresh Token has not expired
@@ -83,6 +85,7 @@ loginSuccess = async (req, res) => {
 
 
         await logger.info({source: 'backend-api', message: `User ${decoded.userId} successfully authenticated.`, function: 'loginSuccess'});
+
 
         // res.clearCookie('user-jwt');
         return res.json({

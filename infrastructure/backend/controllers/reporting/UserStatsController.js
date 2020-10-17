@@ -109,7 +109,7 @@ updateDocumentsCreatedNum = async (params) => {
 }
 
 updateDocumentsBrokenNum = async (params) => {
-    const {userUpdates, workspaceId} = params;
+    const {userUpdates, workspaceId, session} = params;
 
     if (userUpdates.length < 1) {
         return true;
@@ -127,7 +127,7 @@ updateDocumentsBrokenNum = async (params) => {
                 }
             })
         });
-       await UserStats.bulkWrite(bulkDecrementOps);
+       await UserStats.bulkWrite(bulkDecrementOps, { session });
     }
     catch (err) {
         logger.error({source: 'backend-api', message: err,

@@ -74,8 +74,7 @@ handleDocumentCreate = async (userId, workspaceId, title, documentId, session) =
 
 
 
-handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, userId) => {
-        // Reporting Section ---------------------------------------------------------------
+handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, userId, session) => {
     // Update documentsCreatedNum by finding the number of Document's deleted per userId 
     var userUpdateNums = {};
     deletedDocumentInfo.forEach(infoObj => {
@@ -90,7 +89,7 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
 
     // Update documentsCreatedNum for all User's whose documents have been deleted
     try {
-        await UserStatsController.updateDocumentsCreatedNum({userUpdates: userUpdateList, workspaceId});
+        await UserStatsController.updateDocumentsCreatedNum({userUpdates: userUpdateList, workspaceId, session});
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -119,7 +118,7 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
 
     try {
         if (userBrokenDocumentUpdateList.length > 0) {
-            await UserStatsController.updateDocumentsBrokenNum({userUpdates: userBrokenDocumentUpdateList, workspaceId});
+            await UserStatsController.updateDocumentsBrokenNum({userUpdates: userBrokenDocumentUpdateList, workspaceId, session});
         }
     }
     catch (err) {
@@ -155,12 +154,24 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
                                 function: `handleDocumentDelete`});
             throw Error(`Error dispatching update Checks job - repositoryId, validatedDocuments.length: ${repositoryId}, ${validatedDocuments.length}`);
         }
+
+        validatedDocuments.forEach(infoObj => {
+            // track an event with optional properties
+            mixpanel.track('Document Validate', {
+                distinct_id: `${userId.toString()}`,
+                documentId: `${infoObj._id.toString()}`,
+                author: `${infoObj.author.toString()}`,
+                title: `${infoObj.title.toString()}`,
+                workspaceId: `${workspaceId.toString()}`,
+            });
+        });
+
     }
 
     // Create ActivityFeedItems for every deleted Document
     try {
         await ActivityFeedItemController.createActivityFeedItem({type: 'delete', date: Date.now(), userId: userId,
-                                                                    workspaceId, userUpdates: activityFeedInfo})
+                                                                    workspaceId, userUpdates: activityFeedInfo, session})
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
@@ -168,7 +179,7 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
                             function: `handleDocumentDelete`});
         throw Error(`Error creating ActivityFeedItems on Document delete workspaceId, userId, activityFeedInfo: ${workspaceId}, ${userId}, ${JSON.stringify(activityFeedInfo)}`);
     }
-    // Reporting Section End ---------------------------------------------------------------
+
     return true;
 }
 
@@ -216,8 +227,9 @@ handleDocumentReferenceRemove = async (referenceStatus, returnDocument, userId, 
 
         // Set the Document status to 'valid'
         if (setStatusValid) {
+            var setDocumentValidResponse;
             try {
-                var setDocumentValidResponse = await Document.findByIdAndUpdate(documentId, {$set: {status: 'valid'}}).lean().exec();
+                setDocumentValidResponse = await Document.findByIdAndUpdate(documentId, {$set: {status: 'valid'}}).lean().exec();
             }
             catch (err) {
                 await logger.error({source: 'backend-api', message: err,
@@ -225,6 +237,14 @@ handleDocumentReferenceRemove = async (referenceStatus, returnDocument, userId, 
                                     function: `handleDocumentReferenceRemove`});
                 throw Error(`Error setting document status 'valid' - documentId, workspaceId: ${documentId}, ${workspaceId}`);
             }
+            // track an event with optional properties
+            mixpanel.track('Document Validate', {
+                distinct_id: `${userId.toString()}`,
+                documentId: `${documentId.toString()}`,
+                author: `${setDocumentValidResponse.author.toString()}`,
+                title: `${setDocumentValidResponse.title.toString()}`,
+                workspaceId: `${workspaceId.toString()}`,
+            });
         }
 
 

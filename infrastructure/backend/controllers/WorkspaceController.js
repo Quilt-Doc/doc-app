@@ -28,6 +28,12 @@ const jobConstants = require('../constants/index').jobs;
 
 const logger = require('../logging/index').logger;
 
+// grab the Mixpanel factory
+const Mixpanel = require('mixpanel');
+
+// create an instance of the mixpanel client
+const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
+
 let db = mongoose.connection;
 
 
@@ -122,6 +128,13 @@ createWorkspace = async (req, res) => {
     }
 
     //await logger.info({source: 'backend-api', });
+
+    // track an event with optional properties
+    mixpanel.track('Workspace Create', {
+        distinct_id: `${creatorId}`,
+        name: `${name}`,
+        repositoryNumber: `${repositoryIds.length}`,
+    });
 
     return res.json({success: true, result: workspace});
 }

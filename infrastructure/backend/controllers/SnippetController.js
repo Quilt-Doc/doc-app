@@ -7,6 +7,12 @@ const logger = require('../logging/index').logger;
 const ReportingController = require('./reporting/ReportingController');
 const snippetConstants = require('../constants/index').snippets;
 
+// grab the Mixpanel factory
+const Mixpanel = require('mixpanel');
+
+// create an instance of the mixpanel client
+const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -100,6 +106,14 @@ createSnippet = async (req, res) => {
                         message: `Successfully created Snippet - creatorId, workspaceId, referenceId, repositoryId: ${creatorId}, ${workspaceId}, ${referenceId}, ${repositoryId}`,
                         function: 'createSnippet'});
 
+    // track an event with optional properties
+    mixpanel.track('Snippet Create', {
+        distinct_id: `${creatorId}`,
+        workspaceId: `${workspaceId.toString()}`,
+        repositoryId: `${repositoryId.toString()}`,
+        size: `${code.length}`,
+    });
+
     return res.json({success: true, result: snippet});
 }
 
@@ -188,6 +202,15 @@ editSnippet = async (req, res) => {
                                 error: `Error handleSnippetEdit - snippetId, repositoryId: ${req.snippetObj._id.toString()}, ${req.snippetObj.repository.toString()}`,
                                 trace: err});
         }
+
+        // track an event with optional properties
+        mixpanel.track('Snippet Validate', {
+            distinct_id: `${req.snippetObj.creator.toString()}`,
+            workspaceId: `${workspaceId.toString()}`,
+            repositoryId: `${req.snippetObj.repository.toString()}`,
+        });
+
+
     }
 
     await logger.info({source: 'backend-api',
@@ -225,6 +248,14 @@ deleteSnippet = async (req, res) => {
 
             return res.json({success: false, error: `Error handleSnippetDelete - snippetId, repositoryId, validatedSnippets: ${snippetId}, ${repositoryId}, ${JSON.stringify(validatedSnippets)}`});
         }
+
+        // track an event with optional properties
+        mixpanel.track('Snippet Validate', {
+            distinct_id: `${req.snippetObj.creator.toString()}`,
+            workspaceId: `${workspaceId.toString()}`,
+            repositoryId: `${req.snippetObj.repository.toString()}`,
+        });
+        
     }
     
     await logger.info({source: 'backend-api', message: `Successfully deleted Snippet - snippetId, workspaceId: ${snippetId}, ${workspaceId}`, function: 'deleteSnippet'});
