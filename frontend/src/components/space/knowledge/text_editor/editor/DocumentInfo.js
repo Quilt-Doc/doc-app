@@ -22,6 +22,7 @@ import {VscRepo} from 'react-icons/vsc';
 //router
 import { withRouter } from 'react-router-dom';
 import history from '../../../../../history';
+import { IoIosHammer } from 'react-icons/io';
 
 class DocumentInfo extends React.Component {
     constructor(props){
@@ -33,8 +34,8 @@ class DocumentInfo extends React.Component {
         return `${split[1]}`
     }
 
-    renderFolders = () => {
-        let {references} = this.props.document
+    renderFolders = (references, invalid) => {
+        //let {references} = this.props.document
         let directories = references.filter(reference => reference.kind === "dir")
         
         if (directories.length > 0) {
@@ -42,7 +43,7 @@ class DocumentInfo extends React.Component {
         }
 
         return directories.map((directory, i) => {
-            return (    <Reference>
+            return (    <Reference invalid = {invalid}>
                             <AiFillFolder style = {{marginRight: "0.5rem"}}/>
                             <Title>{directory.name}</Title>
                         </Reference>
@@ -50,8 +51,8 @@ class DocumentInfo extends React.Component {
         })
     }
 
-    renderFiles = () => {
-        let {references} = this.props.document
+    renderFiles = (references, invalid) => {
+        //let {references} = this.props.document
         let files = references.filter(reference => reference.kind === "file")
 
         if (files) {
@@ -60,7 +61,7 @@ class DocumentInfo extends React.Component {
 
         return files.map((file, i) => {
             return (
-                <Reference>
+                <Reference invalid = {invalid}>
                     <RiFileFill style = {{width: "1rem", fontSize: "1.1rem" ,marginRight: "0.5rem"}}/>
                     <Title>{file.name}</Title>
                 </Reference>
@@ -95,17 +96,34 @@ class DocumentInfo extends React.Component {
         })
     }
 
+    renderFixButton = () => {
+        const { document: { references, _id }, editDocument, match } = this.props;
+        const { workspaceId } = match.params;
+
+        const validReferenceIds = references.filter(ref => ref.status === 'valid').map(ref => ref._id);
+
+        return (
+        <FixButton onClick = {() => 
+            editDocument({documentId: _id, referenceIds: validReferenceIds, workspaceId})}>
+            <IoIosHammer/>
+        </FixButton>
+        )
+    }
+
     renderEditData = () => {
         const { document: {references, repository} } = this.props;
+        const validReferences = references.filter(ref => ref.status === 'valid');
+        const invalidReferences = references.filter(ref => ref.status === 'invalid');
+
         return (
             <>
                 <RepositoryMenu2 darkBorder = {true} document={this.props.document}/>
                 <List>
                     {this.renderReferenceMenu()}
-                    {   (references && references.length > 0) ? 
+                    {   (validReferences && validReferences.length > 0) ? 
                          <InfoList edit = {true}>
-                            {this.renderFolders()}
-                            {this.renderFiles()}
+                            {this.renderFolders(validReferences, false)}
+                            {this.renderFiles(validReferences, false)}
                         </InfoList> :
                          <Message>
                             { repository ? 
@@ -114,14 +132,26 @@ class DocumentInfo extends React.Component {
                             }
                         </Message>
                     }
-                   
                 </List>
+                { (invalidReferences && invalidReferences.length > 0) &&
+                    <List>
+                        {this.renderFixButton()}
+                        <InfoList edit = {true}>
+                            {this.renderFolders(invalidReferences, true)}
+                            {this.renderFiles(invalidReferences, true)}
+                        </InfoList>
+                    </List>
+                }
             </>
         )
     }
 
     renderStaticData = () => {
         const { document: {references, repository} } = this.props;
+        
+        const validReferences = references.filter(ref => ref.status === 'valid');
+        const invalidReferences = references.filter(ref => ref.status === 'invalid');
+
         return (
             <>
             { repository &&
@@ -132,14 +162,21 @@ class DocumentInfo extends React.Component {
                     {this.renderFullName()}
                 </RepositoryButton>
             }
-            { (references && references.length > 0) &&
+            { (validReferences && validReferences.length > 0) &&
                 <List>
                     <InfoList>
-                        {this.renderFolders()}
-                        {this.renderFiles()}
+                        {this.renderFolders(validReferences, false)}
+                        {this.renderFiles(validReferences, false)}
                     </InfoList>
                 </List>
-                
+            }
+            { (invalidReferences && invalidReferences.length > 0) &&
+                <List>
+                    <InfoList>
+                        {this.renderFolders(invalidReferences, true)}
+                        {this.renderFiles(invalidReferences, true)}
+                    </InfoList>
+                </List>
             }
             </>
         )
@@ -177,6 +214,24 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, { 
     getDocument, editDocument })(DocumentInfo));
 
+
+
+const FixButton = styled.div`
+    height: 3rem;
+    width: 3rem;
+    border: 1px solid #19e5be;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    &:hover {
+        background-color: ${chroma('19e5be').alpha(0.2)};
+    }
+    cursor: pointer;
+`
+
 const Message = styled.div`
     opacity: 0.5;
     font-size: 1.4rem;
@@ -212,7 +267,7 @@ const AddButton = styled.div`
 `
 
 const Reference = styled.div`
-    background-color: ${chroma("#6762df").alpha(0.12)};
+    background-color: ${props => props.invalid ? chroma("#ff4757").alpha(0.12) : chroma("#6762df").alpha(0.12)};
     /*color: ${chroma("#6762df").alpha(0.9)};*/
     border-radius: 0.2rem;
     font-size: 1.3rem;

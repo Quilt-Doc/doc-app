@@ -60,14 +60,14 @@ const MarkupMenu = (props) => {
 				props.dispatch({type: 'referenceMenuOn'})
 			} */
 
-			editor.insertBlock({type}, range);
-			/*
+			//editor.insertBlock({type}, range);
+			
 			if (type === 'code-snippet') {
 				props.dispatch({type: "markupMenuOff"});
 				props.dispatch({type: "snippetMenuOn"});
 			} else {
 				editor.insertBlock({type}, range)
-			}*/
+			}
 		}, []
 	)
 

@@ -11,8 +11,8 @@ import {
 import { api } from '../apis/api';
 
 export const syncEditDocument = (formValues) => (dispatch) => {
-    const { _id } = formValues;
-
+    const { _id, markup } = formValues;
+    console.log("SAVING MARKUP", markup);
     if (!_id) {
         throw new Error("syncEditDocument: documentId not provided");
     }

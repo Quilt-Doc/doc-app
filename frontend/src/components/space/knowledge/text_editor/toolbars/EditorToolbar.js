@@ -26,7 +26,12 @@ const EditorToolbar = (props) => {
         type = Node.get(editor, path).type
     }
     return(
-        <ToolbarContainer modal = {props.modal} id = "toolbarcontainer" onMouseDown = {(e) => e.preventDefault()}>
+        <ToolbarContainer 
+            documentModal = {props.documentModal}
+            modal = {props.modal} 
+            id = "toolbarcontainer" 
+            onMouseDown = {(e) => e.preventDefault()}
+        >
             <IconBlock >
                 <BlockTypeMenu toggleBlock = {props.toggleBlock} type = {type}/>
             </IconBlock>
@@ -141,12 +146,12 @@ const ToolbarContainer = styled.div`
     
     align-items: center;
     
-    padding-left: ${props => props.modal ? "4rem" : "12rem"};
+    padding-left: ${props => props.documentModal ? "4rem" : "12rem"};
     padding-right: 4rem;
-    box-shadow: ${props => props.modal ? "none" : '0 2px 2px rgba(0,0,0,0.1)'};
+    box-shadow: ${props => props.documentModal ? "none" : '0 2px 2px rgba(0,0,0,0.1)'};
     border-top-left-radius:  0.3rem;
     border-top-right-radius: 0.3rem;
-    border-bottom: ${props => props.modal ? '1px solid #E0E4E7': ''};
+    border-bottom: ${props => props.documentModal ? '1px solid #EDEFF1': ''};
 `
 
 const IconBlock = styled.div`
