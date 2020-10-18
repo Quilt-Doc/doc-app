@@ -13,7 +13,7 @@ const logger = require('../../logging/index').logger;
 */
 
 createUserStats = async (params) => {
-    const {userId, workspaceId } = params;
+    const {userId, workspaceId, session } = params;
 
     let userStats = new UserStats(
         {
@@ -23,7 +23,7 @@ createUserStats = async (params) => {
     );
 
     try {
-        userStats = await userStats.save();
+        userStats = await userStats.save({ session });
     }
     catch (err) {
         logger.error({source: 'backend-api', message: err,

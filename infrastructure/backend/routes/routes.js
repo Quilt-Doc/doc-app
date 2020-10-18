@@ -342,6 +342,9 @@ router.get('/assets/invalid_check', assetController.getInvalidCheckIcon);
 router.get('/assets/document', assetController.getDocumentIcon);
 router.get('/assets/snippet', assetController.getSnippetIcon);
 
+const notificationController = require('../controllers/reporting/NotificationController');
+router.post('/notifications/:userId/retrieve', authorizationMiddleware.notificationMiddleware, notificationController.retrieveNotifications);
+
 
 /*
     const pullRequestController = require('../controllers/unused/PullRequestController');

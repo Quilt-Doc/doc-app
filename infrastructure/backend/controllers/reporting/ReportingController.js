@@ -16,6 +16,12 @@ const logger = require('../../logging/index').logger;
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+// grab the Mixpanel factory
+const Mixpanel = require('mixpanel');
+
+// create an instance of the mixpanel client
+const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
+
 
 retrieveBrokenDocuments = async (req, res) => {
     const { limit, skip } = req.body;
@@ -154,6 +160,8 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
                                 function: `handleDocumentDelete`});
             throw Error(`Error dispatching update Checks job - repositoryId, validatedDocuments.length: ${repositoryId}, ${validatedDocuments.length}`);
         }
+
+        validatedDocuments = deletedDocumentInfo.filter(infoObj => infoObj.status == 'invalid');
 
         validatedDocuments.forEach(infoObj => {
             // track an event with optional properties

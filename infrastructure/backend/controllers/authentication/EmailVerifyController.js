@@ -5,6 +5,8 @@ const User = require('../../models/authentication/User');
 const WorkspaceInvite = require('../../models/authentication/WorkspaceInvite');
 const Workspace = require('../../models/Workspace');
 
+const NotificationController = require('../reporting/NotificationController');
+
 var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_HOME_PAGE_URL;
 
 if (process.env.IS_PRODUCTION) {
@@ -139,6 +141,31 @@ verifyEmail = async (req, res) => {
         return res.json({ success: false, 
             error: `verifyEmail Error: workspace update did not work`, trace: err });
     }
+
+
+    // Create 'added_workspace' Notification
+    var notificationData = workspaceIds.map(id => {
+        return {
+            type: 'added_workspace',
+            user: verifiedUserId.toString(),
+            workspace: id.toString(),
+        }
+    });
+
+    try {
+        await NotificationController.createAddedNotification(notificationData);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error createAddedNotification failed - verifiedUserId, workspaceId: ${verifiedUserId.toString()}, ${workspaceId}`,
+                            function: 'verifyEmail'});
+
+        return res.json({ success: false, 
+                            error: `Error createAddedNotification failed`,
+                            trace: err });
+    }
+
 
     mixpanel.track('User Email Verified', {
         distinct_id: `${verifiedUserId.toString()}`,

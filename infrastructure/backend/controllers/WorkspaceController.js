@@ -13,6 +13,8 @@ const User = require('../models/authentication/User');
 
 
 const UserStatsController = require('./reporting/UserStatsController');
+const NotificationController = require('./reporting/NotificationController');
+
 
 const createDocument = require('../controllers/DocumentController').createDocument;
 
@@ -56,53 +58,89 @@ createWorkspace = async (req, res) => {
     if (!checkValid(installationId)) return res.json({success: false, error: 'no workspace installationId provided'});
     if (!checkValid(creatorId)) return res.json({success: false, error: 'no workspace creatorId provided'});
 
-    let workspace = new Workspace({
-        name: name,
-        creator: ObjectId(creatorId),
-        memberUsers: [ObjectId(creatorId)],
-        setupComplete: false,
-        repositories: repositoryIds.map(repoId => ObjectId(repoId))
+    const session = await db.startSession();
+    let output;
+
+    var scanRepositoriesData = {};
+
+    await session.withTransaction(async () => {
+    
+        let workspace = new Workspace({
+            name: name,
+            creator: ObjectId(creatorId),
+            memberUsers: [ObjectId(creatorId)],
+            setupComplete: false,
+            repositories: repositoryIds.map(repoId => ObjectId(repoId))
+        });
+
+        // save workspace
+        try {
+            workspace = await workspace.save({ session });
+        } catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
+                                function: 'createWorkspace'});
+
+            output = { success: false, error: "createWorkspace error: save() on new workspace failed", trace: err };
+            throw Error(`error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
+        }
+
+        // Create UserStats object for creator
+        try {
+            await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString(), session});
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
+                                function: 'createWorkspace'});
+            output = {success: false, error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err};
+            throw Error(`error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`);
+        }
+
+        // Set all workspace Repositories 'currentlyScanning' to true
+        var workspaceRepositories;
+        try {
+            workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }}, { session });
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`,
+                                    function: 'createWorkspace'});
+            output = {success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err};
+            throw Error(`error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`);
+        }
+
+        // Kick off Scan Repositories Job
+        scanRepositoriesData['installationId'] = installationId;
+        scanRepositoriesData['repositoryIdList'] = repositoryIds;
+        scanRepositoriesData['workspaceId'] = workspace._id.toString();
+        scanRepositoriesData['jobType'] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
+
+        // Returning workspace
+        // populate workspace
+        try {
+            workspace = await Workspace.populate(workspace, {path: 'creator repositories memberUsers'});
+        } catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
+                                function: 'createWorkspace'});
+            output = {success: false, error: "createWorkspace error: workspace population failed", trace: err};
+            throw Error(`error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
+        }
+
+        //await logger.info({source: 'backend-api', });
+
+        // track an event with optional properties
+        mixpanel.track('Workspace Create', {
+            distinct_id: `${creatorId}`,
+            name: `${name}`,
+            repositoryNumber: `${repositoryIds.length}`,
+        });
+
+        output = { success: true, result: workspace };
     });
 
-    // save workspace
-    try {
-        workspace = await workspace.save();
-    } catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                            errorDescription: `error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
-                            function: 'createWorkspace'});
-        return res.json({success: false, error: "createWorkspace error: save() on new workspace failed", trace: err});
-    }
-
-    // Create UserStats object for creator
-    try {
-        await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString()});
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                            errorDescription: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
-                            function: 'createWorkspace'});
-        return res.json({success: false, error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err});
-    }
-
-    // Set all workspace Repositories 'currentlyScanning' to true
-    var workspaceRepositories;
-    try {
-        workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }});
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`,
-                                function: 'createWorkspace'});
-        return res.json({success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err});
-    }
-
-    // Kick off Scan Repositories Job
-    var scanRepositoriesData = {};
-    scanRepositoriesData['installationId'] = installationId;
-    scanRepositoriesData['repositoryIdList'] = repositoryIds;
-    scanRepositoriesData['workspaceId'] = workspace._id.toString();
-    scanRepositoriesData['jobType'] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
+    session.endSession();
 
     try {
         await jobs.dispatchScanRepositoriesJob(scanRepositoriesData);
@@ -115,28 +153,9 @@ createWorkspace = async (req, res) => {
         return res.json({success: false, error: "createWorkspace error: Could not kick off scan repository job", trace: err});
     }
 
+    return res.json(output);
 
-    // Returning workspace
-    // populate workspace
-    try {
-        workspace = await Workspace.populate(workspace, {path: 'creator repositories memberUsers'});
-    } catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                            errorDescription: `error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
-                            function: 'createWorkspace'});
-        return res.json({success: false, error: "createWorkspace error: workspace population failed", trace: err});
-    }
-
-    //await logger.info({source: 'backend-api', });
-
-    // track an event with optional properties
-    mixpanel.track('Workspace Create', {
-        distinct_id: `${creatorId}`,
-        name: `${name}`,
-        repositoryNumber: `${repositoryIds.length}`,
-    });
-
-    return res.json({success: true, result: workspace});
+    // return res.json({success: true, result: workspace});
 }
 
 getWorkspace = async (req, res) => {
@@ -163,8 +182,6 @@ getWorkspace = async (req, res) => {
 
 // Remove Workspace from User.workspaces
 // Delete Workspace Document
-
-// KARAN TODO: Add sessions to all of these calls
 
 deleteWorkspace = async (req, res) => {
 
@@ -274,7 +291,11 @@ deleteWorkspace = async (req, res) => {
 
         // Remove Workspace from User.workspaces for every user in the workspace
         var removeWorkspaceResponse;
+        var usersInWorkspace;
         try {
+            usersInWorkspace = await User.find({ workspaces: { $in: [ObjectId(workspaceId)] }}).select('_id').lean().exec();
+            usersInWorkspace = usersInWorkspace.map(userObj => userObj._id.toString());
+
             removeWorkspaceResponse = await User.updateMany({ workspaces:  { $in: [ObjectId(workspaceId)] } },
                                                             { $pull: { workspaces:  { $in: [ObjectId(workspaceId)] } } }, { session }).exec();
         }
@@ -288,6 +309,30 @@ deleteWorkspace = async (req, res) => {
             throw new Error(`deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`);
         }
 
+        // Create 'removed_workspace Notifications'
+        var notificationData = usersInWorkspace.map(id => {
+            return {
+                type: 'removed_workspace',
+                user: id.toString(),
+                workspace: workspaceId,
+            }
+        });
+
+        // Create 'removed_workspace' Notifications
+        try {
+            await NotificationController.createRemovedNotifications(notificationData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                error: err,
+                                errorDescription: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`,
+                                function: 'deleteWorkspace'});
+
+            output = {success: false,
+                        error: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`,
+                        trace: err};
+            throw new Error(`deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`);
+        }
 
 
         // Delete Workspace
@@ -403,8 +448,30 @@ removeWorkspaceUser = async (req, res) => {
         returnedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, 
             { $pull: {memberUsers: userId} }, { new: true }).select('_id memberUsers').populate({path: 'user'}).lean.exec();
     } catch (err) {
-        return res.json({success: false, error: "addUser error: workspace findByIdAndUpdate query failed", trace: err});
-    }   
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error Workspace findByIdAndUpdate query failed - userId, workspaceId: ${userId.toString()}, ${workspaceId}`,
+                            function: "removeWorkspaceUser"});
+
+        return res.json({success: false, error: "removeWorkspaceUser error: workspace findByIdAndUpdate query failed", trace: err});
+    }
+
+    // Create 'removed_workspace' Notification
+    var notification = {
+        type: 'removed_workspace',
+        user: userId.toString(),
+        workspace: workspaceId
+    };
+    try {
+        await NotificationController.createRemovedNotifications([notification]);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error createRemovedNotification failed - userId, workspaceId: ${userId.toString()}, ${workspaceId}`,
+                            function: "removeWorkspaceUser"});
+        return res.json({success: false, error: `Error createRemovedNotification failed - userId, workspaceId: ${userId.toString()}, ${workspaceId}`, trace: err});
+    }
 
     return res.json({success: true, result: returnedWorkspace});
 }

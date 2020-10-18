@@ -112,9 +112,9 @@ createDocument = async (req, res) => {
         let parent;
 
         if (checkValid(parentPath)) {
-            try {   
-                parent = await Document.findOne({path: parentPath, workspace: workspaceId}, null, { session })
-                                        .select('_id path children').exec();
+            try {
+                parent = await Document.findOne({path: parentPath, workspace: workspaceId}, '_id path children', { session })
+                                        .exec();
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -238,7 +238,7 @@ createDocument = async (req, res) => {
     session.endSession();
 
     return res.json(output);
-}  
+}
 
 
 // paths of modifiedDocs are changed, children of parents are changed
@@ -269,8 +269,8 @@ moveDocument = async (req, res) => {
         if (checkValid(oldParentId) && checkValid(newParentId)) {
             // trys to retrieve the oldParent, does some validation to make sure oldParent is indeed the current parent
             try {
-                oldParent = await Document.findOne({_id: oldParentId, workspace: workspaceId}, null, { session })
-                    .select('_id path children').exec();
+                oldParent = await Document.findOne({_id: oldParentId, workspace: workspaceId}, '_id path children', { session })
+                    .exec();
                 if (oldParent.path >= documentObj.path || 
                     documentObj.path.slice(0, oldParent.path.length) !== oldParent.path) {
                         await logger.error({source: 'backend-api',
@@ -294,7 +294,7 @@ moveDocument = async (req, res) => {
             oldParent.children = oldParent.children.filter((childId) => childId.toString() !== documentId);
     
             try {
-                oldParent = await oldParent.save();
+                oldParent = await oldParent.save( { session } );
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -311,8 +311,8 @@ moveDocument = async (req, res) => {
             } else {
                 // find newParent if actually new
                 try {
-                    newParent = await Document.findOne({_id: newParentId, workspace: workspaceId}, null, { session })
-                        .select('_id path children').exec();
+                    newParent = await Document.findOne({_id: newParentId, workspace: workspaceId}, '_id path children', { session })
+                        .exec();
     
                     // validation here to check that the newParent is not a child of the movedDocument
                     if (documentObj.path.length  <= newParent.path.length
@@ -368,8 +368,8 @@ moveDocument = async (req, res) => {
                 let regex =  new RegExp(`^${escapedPath}`)
                 
                 // find all descendants using the prefix regex on the path
-                modifiedDocuments = await Document.find({path: regex, workspace: workspaceId}, null, { session }).lean()
-                    .select('path _id').exec();
+                modifiedDocuments = await Document.find({path: regex, workspace: workspaceId}, 'path _id', { session }).lean()
+                    .exec();
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -449,7 +449,7 @@ deleteDocument = async (req, res) => {
         const documentObj = req.documentObj;
         const workspaceId = req.workspaceObj._id.toString();
         const userId = req.tokenPayload.userId.toString();
-    
+
         // escape the path of the document so regex characters don't affect the query
         const escapedPath = escapeRegExp(`${documentObj.path}`);
         const regex =  new RegExp(`^${escapedPath}`);
@@ -459,9 +459,9 @@ deleteDocument = async (req, res) => {
                             function: 'deleteDocument'});
     
         let deletedDocuments;
-    
+
         let finalResult = {};
-    
+
         // if the document is not the root, we can find the doc's parent using the doc's path
         // we will remove the deleted document from the parent's children
         if (!documentObj.root) {
