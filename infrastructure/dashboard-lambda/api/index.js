@@ -1,14 +1,11 @@
 require("dotenv").config();
 const {
   renderError,
-  parseBoolean,
-  parseArray,
   clampValue,
   CONSTANTS,
 } = require("../src/common/utils");
 
 const renderStatsCard = require("../src/cards/stats-card");
-const blacklist = require("../src/common/blacklist");
 
 const mongoose = require('mongoose');
 
@@ -77,7 +74,6 @@ module.exports = async (req, res) => {
     return res.json({success: false, result: "Invalid repositoryId"});
   }
 
-  // `https://github-readme-stats.vercel.app/api?username=anuraghazra&title_color=${titleColor}&icon_color=${iconColor}&text_color=${textColor}&bg_color=${bgColor}&show_icons=true`;
   var totalDocuments;
   var brokenDocuments;
   try {
@@ -118,26 +114,23 @@ module.exports = async (req, res) => {
     return res.json({success: false, result: "Failed to get Unresolved Checks"});
   }
 
-  console.log(`totalDocuments, brokenDocuments, totalSnippets, brokenSnippets, unresolvedChecks: ${totalDocuments}, ${brokenDocuments}, ${totalSnippets}, ${brokenSnippets}, ${unresolvedChecks}`);
-
 
   var username = 'anuraghazra';
   var title_color = '34d8eb';
   var icon_color = '34b4eb';
   var text_color = '065c03';
   var bg_color = '020c52';
-  var show_icons = true;
 
   res.setHeader("Content-Type", "image/svg+xml");
 
   
     var stats = {
       name: "",
-      totalPRs: 0,
-      totalCommits: 0,
-      totalIssues: 0,
-      totalStars: 0,
-      contributedTo: 0,
+      totalDocuments,
+      brokenDocuments,
+      totalSnippets,
+      brokenSnippets,
+      unresolvedChecks,
       rank: { level: "C", score: 0 },
     };
   
@@ -175,31 +168,27 @@ module.exports = async (req, res) => {
       renderStatsCard(stats, {
         
         // hide: parseArray(hide),
-        hide: parseArray('[]'), 
-        
+        hide: [], 
+
         // show_icons: parseBoolean(show_icons),
-        show_icons: parseBoolean(true),
+        show_icons: true,
         
         // hide_title: parseBoolean(hide_title),
-        hide_title: parseBoolean(false),
+        hide_title: false,
         
         // hide_border: parseBoolean(hide_border),
-        hide_border: parseBoolean(false),
-        
-        
+        hide_border: false,
+
         // hide_rank: parseBoolean(hide_rank),
-        hide_rank: parseBoolean(false),
-        
-        // include_all_commits: parseBoolean(include_all_commits),
-        include_all_commits: parseBoolean(true),
-        
+        hide_rank: false,
+
         line_height: 25,
         title_color,
         icon_color,
         text_color,
         bg_color,
-        theme: "default",
-        custom_title: "Hello",
+        theme: "graywhite",
+        custom_title: "Knowledge",
       }),
     );
   } catch (err) {

@@ -12,6 +12,13 @@ const UserStats = require('../models/reporting/UserStats');
 const { ObjectId } = mongoose.Types;
 const logger = require('../logging/index').logger;
 
+// grab the Mixpanel factory
+const Mixpanel = require('mixpanel');
+
+// create an instance of the mixpanel client
+const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
+
+
 let db = mongoose.connection;
 
 
@@ -43,7 +50,7 @@ createDocument = async (req, res) => {
         await logger.info({source: 'backend-api',
                             message: `Creating Document - workspaceId, authorId, referenceIds, snippetIds, repositoryId, title: ${workspaceId}, ${authorId}, ${JSON.stringify(referenceIds)}, ${JSON.stringify(snippetIds)}, ${repositoryId}, ${title}`,
                             function: 'createDocument'});
-        
+
         // validation
         if (!checkValid(authorId)) {
             output = {success: false, error: "createDocument error: no authorId provided.", result: null};
@@ -61,7 +68,7 @@ createDocument = async (req, res) => {
         }
         // make sure title doesn't exist already in space
         try {
-            let duplicate = await Document.exists({title, workspace: workspaceId});
+            let duplicate = await Document.exists({title, workspace: workspaceId}, { session });
             if (duplicate) {
                 await logger.info({source: 'backend-api',
                                     message: `Create Document duplicate title - workspaceId, authorId, title: ${workspaceId}, ${authorId}, ${title}`,
@@ -105,9 +112,9 @@ createDocument = async (req, res) => {
         let parent;
 
         if (checkValid(parentPath)) {
-            try {   
-                parent = await Document.findOne({path: parentPath, workspace: workspaceId})
-                                        .select('_id path children').exec();
+            try {
+                parent = await Document.findOne({path: parentPath, workspace: workspaceId}, '_id path children', { session })
+                                        .exec();
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -156,7 +163,7 @@ createDocument = async (req, res) => {
         
         // save document
         try {
-            document = await document.save();
+            document = await document.save({ session });
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 error: err,
@@ -169,7 +176,7 @@ createDocument = async (req, res) => {
         // Reporting Section
         if (document.root != true) {
             try {
-                await ReportingController.handleDocumentCreate(authorId, workspaceId, title, document._id.toString());
+                await ReportingController.handleDocumentCreate(authorId, workspaceId, title, document._id.toString(), session);
             }
             catch (err) {
                 await logger.error({source: 'backend-api',
@@ -186,7 +193,7 @@ createDocument = async (req, res) => {
         if (!root) {
             try {
                 parent.children.push(document._id);
-                parent = await parent.save();
+                parent = await parent.save( { session } );
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -198,6 +205,7 @@ createDocument = async (req, res) => {
         }
 
         // populate everything on the document on creation
+        // TODO: Figure out why we can't put a session on this call
         try {
             document = await Document.populate(document, {path: "author references workspace repository tags snippets"});
         } catch (err) {
@@ -214,13 +222,23 @@ createDocument = async (req, res) => {
                             function: 'createDocument'});
     
         output = root ? {success: true, result: [document]} : {success: true, result: [document, parent]};
+
+        // track an event with optional properties
+        mixpanel.track('Document Create', {
+            distinct_id: `${authorId.toString()}`,
+            title: `${title}`,
+            workspaceId: `${workspaceId.toString()}`,
+            repositoryId: `${checkValid(repositoryId) ? repositoryId.toString() : ''}`
+        });
+
         return
-    })
+    });
+
 
     session.endSession();
 
     return res.json(output);
-}  
+}
 
 
 // paths of modifiedDocs are changed, children of parents are changed
@@ -251,8 +269,8 @@ moveDocument = async (req, res) => {
         if (checkValid(oldParentId) && checkValid(newParentId)) {
             // trys to retrieve the oldParent, does some validation to make sure oldParent is indeed the current parent
             try {
-                oldParent = await Document.findOne({_id: oldParentId, workspace: workspaceId})
-                    .select('_id path children').exec();
+                oldParent = await Document.findOne({_id: oldParentId, workspace: workspaceId}, '_id path children', { session })
+                    .exec();
                 if (oldParent.path >= documentObj.path || 
                     documentObj.path.slice(0, oldParent.path.length) !== oldParent.path) {
                         await logger.error({source: 'backend-api',
@@ -276,7 +294,7 @@ moveDocument = async (req, res) => {
             oldParent.children = oldParent.children.filter((childId) => childId.toString() !== documentId);
     
             try {
-                oldParent = await oldParent.save();
+                oldParent = await oldParent.save( { session } );
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -293,8 +311,8 @@ moveDocument = async (req, res) => {
             } else {
                 // find newParent if actually new
                 try {
-                    newParent = await Document.findOne({_id: newParentId, workspace: workspaceId})
-                        .select('_id path children').exec();
+                    newParent = await Document.findOne({_id: newParentId, workspace: workspaceId}, '_id path children', { session })
+                        .exec();
     
                     // validation here to check that the newParent is not a child of the movedDocument
                     if (documentObj.path.length  <= newParent.path.length
@@ -321,7 +339,7 @@ moveDocument = async (req, res) => {
             //splice the movedDocument into the right location in the newParents children
             newParent.children.splice(newIndex, 0, documentId);
             try {
-                newParent = await newParent.save();
+                newParent = await newParent.save({ session });
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -350,8 +368,8 @@ moveDocument = async (req, res) => {
                 let regex =  new RegExp(`^${escapedPath}`)
                 
                 // find all descendants using the prefix regex on the path
-                modifiedDocuments = await Document.find({path: regex, workspace: workspaceId}).lean()
-                    .select('path _id').exec();
+                modifiedDocuments = await Document.find({path: regex, workspace: workspaceId}, 'path _id', { session }).lean()
+                    .exec();
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -379,7 +397,7 @@ moveDocument = async (req, res) => {
     
             // mongoose bulkwrite for one many update db call
             try {
-               await Document.bulkWrite(bulkWritePathOps);
+               await Document.bulkWrite(bulkWritePathOps, { session });
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -393,8 +411,8 @@ moveDocument = async (req, res) => {
             // get the modified docs once again through query as update + bulkwrite does not return the docs affected
             try {
                 let modifiedIds = modifiedDocuments.map((doc) => doc._id);
-                modifiedDocuments = await Document.find({_id: { $in: modifiedIds } }).lean()
-                    .select('path _id').exec();
+                modifiedDocuments = await Document.find({_id: { $in: modifiedIds } }, 'path _id', { session }).lean()
+                    .exec();
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -431,7 +449,7 @@ deleteDocument = async (req, res) => {
         const documentObj = req.documentObj;
         const workspaceId = req.workspaceObj._id.toString();
         const userId = req.tokenPayload.userId.toString();
-    
+
         // escape the path of the document so regex characters don't affect the query
         const escapedPath = escapeRegExp(`${documentObj.path}`);
         const regex =  new RegExp(`^${escapedPath}`);
@@ -441,9 +459,9 @@ deleteDocument = async (req, res) => {
                             function: 'deleteDocument'});
     
         let deletedDocuments;
-    
+
         let finalResult = {};
-    
+
         // if the document is not the root, we can find the doc's parent using the doc's path
         // we will remove the deleted document from the parent's children
         if (!documentObj.root) {
@@ -454,7 +472,7 @@ deleteDocument = async (req, res) => {
             // extract the parent using the parentPath
             let parent;
             try {
-                parent = await Document.findOne({ path: parentPath, workspace: workspaceId }).select("_id children").exec();
+                parent = await Document.findOne({ path: parentPath, workspace: workspaceId }, '_id children', { session }).exec();
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -469,7 +487,7 @@ deleteDocument = async (req, res) => {
             parent.children = parent.children.filter(child => !(child._id.equals(documentObj._id)));
     
             try {
-                parent = await parent.save();
+                parent = await parent.save({ session });
             } catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
@@ -486,7 +504,7 @@ deleteDocument = async (req, res) => {
     
         // find all documents that are about to be deleted (toplevel doc included for cleanliness)
         try {
-            deletedDocuments = await Document.find({path: regex, workspace: workspaceId}).select("_id").lean().exec();
+            deletedDocuments = await Document.find({path: regex, workspace: workspaceId}, '_id', { session }).lean().exec();
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 error: err,
@@ -505,10 +523,10 @@ deleteDocument = async (req, res) => {
             // Reporting Section ---------
             // Need list of userId's attached to deleted Documents
             // Get all titles of deleted Documents
-            deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}).select("author title status").lean().exec();
+            deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}, '_id author title status', { session }).lean().exec();
             // Reporting Section End ---------
             
-            await Document.deleteMany({_id: {$in: deletedIds}})
+            await Document.deleteMany({_id: {$in: deletedIds}}, { session });
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 error: err,
@@ -522,7 +540,7 @@ deleteDocument = async (req, res) => {
         if (req.documentObj.repository) {
             try {
                 const repositoryId = req.documentObj.repository._id.toString();
-                await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, repositoryId, userId);
+                await ReportingController.handleDocumentDelete(deletedDocumentInfo, workspaceId, repositoryId, userId, session);
             }
             catch (err) {
                 await logger.error({source: 'backend-api',
@@ -579,7 +597,7 @@ renameDocument = async (req, res) => {
 
         // make sure title doesn't exist already in space
         try {
-            let duplicate = await Document.exists({title, workspace: workspaceId});
+            let duplicate = await Document.exists({title, workspace: workspaceId}, { session });
             if (duplicate) {
                 await logger.info({source: 'backend-api',
                                     message: `duplicate title.`,
@@ -607,7 +625,7 @@ renameDocument = async (req, res) => {
 
         // retrieve all documents that are descendants of renamed doc + the actual renamed doc for convenience
         try {
-            renamedDocuments = await Document.find({path: regex, workspace: workspaceId}).lean().select('_id path').exec();
+            renamedDocuments = await Document.find({path: regex, workspace: workspaceId}, '_id path', { session }).lean().exec();
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 message: err,
@@ -639,7 +657,7 @@ renameDocument = async (req, res) => {
 
         // execute bulkWrite to make one db call for multi-update
         try {
-        await Document.bulkWrite(bulkWritePathOps);
+            await Document.bulkWrite(bulkWritePathOps, { session });
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 message: err,
@@ -653,7 +671,7 @@ renameDocument = async (req, res) => {
         // extract new renamed Docs after bulk update
         try {
             let renamedIds = renamedDocuments.map((doc) => doc._id);
-            renamedDocuments = await Document.find({_id: {$in: renamedIds}}).lean().select('_id title path').exec();
+            renamedDocuments = await Document.find({_id: {$in: renamedIds}}, '_id title path', { session }).lean().exec();
         } catch (err) {
             await logger.error({source: 'backend-api',
                                 message: err,
@@ -943,6 +961,15 @@ attachDocumentTag = async (req, res) => {
     } catch (err) {
         return res.json({ success: false, error: "attachTagDocument Error: attach tag on documents mongodb query failed", trace: err });
     }
+
+    // track an event with optional properties
+    mixpanel.track('Document Attach Tag', {
+        distinct_id: `${req.tokenPayload.userId.toString()}`,
+        documentId: `${documentId.toString()}`,
+        title: `${returnDocument.title.toString()}`,
+        workspaceId: `${workspaceId.toString()}`,
+        tagId: `${tagId.toString()}`,
+    });
  
     return res.json({ success: true, result: returnDocument});
 
@@ -1128,6 +1155,7 @@ searchDocuments = async (req, res) => {
 
 
 testRoute = async (req, res) => {
+    console.log('TEST ROUTE');
     console.log(req.body);
 }
 

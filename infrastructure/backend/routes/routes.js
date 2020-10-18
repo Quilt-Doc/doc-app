@@ -9,12 +9,12 @@ if (process.env.IS_PRODUCTION) {
 }
 
 var INSTALLED_URL = process.env.LOCALHOST_INSTALLED_URL;
-if (process.env.INSTALLED_URL) {
+if (process.env.IS_PRODUCTION) {
     INSTALLED_URL = process.env.PRODUCTION_INSTALLED_URL;
 }
 
 var ONBOARD_URL = process.env.LOCALHOST_ONBOARD_URL;
-if (process.env.ONBOARD_URL) {
+if (process.env.IS_PRODUCTION) {
     ONBOARD_URL = process.env.PRODUCTION_ONBOARD_URL;
 }
 
@@ -83,7 +83,7 @@ router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware
 router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.documentMiddleware, documentController.moveDocument);
 router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
 router.post('/documents/:workspaceId/search', authorizationMiddleware.documentMiddleware, documentController.searchDocuments);
-router.post('/testRoute', documentController.testRoute);
+router.get('/testRoute', documentController.testRoute);
 
 
 router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, documentController.attachDocumentTag);
@@ -198,52 +198,101 @@ router.get('/auth/logout', authController.logout);
 router.get('/auth/github', function(req, res, next) {
     const { email } = req.query;
     let options = { session: false };
-    if (email) {
-        const state = Buffer.from(JSON.stringify({ email })).toString('base64');
-        options = {...options, scope: [], state};
+
+    var state = {};
+
+    if (process.env.IS_PRODUCTION) {
+        state.source = 'production';
+    }
+    else {
+        state.source = 'localhost';
     }
 
+
+    if (email) {
+        state.email = email;
+    }
+
+    console.log(`Final State to Pass: ${JSON.stringify(state)}`);
+
+    state = Buffer.from(JSON.stringify(state)).toString('base64');
+
+    options = {...options, scope: [], state};
+
     passport.authenticate('github', options, function(err, user, info) {
+      console.log('Passport Auth callback');
       if (err) { return next(err); }
+
       // TODO: Change this to appropriate route
       if (!user) { console.log('!user == true'); return res.redirect('/login'); }
 
-      var jwtToken = createUserJWTToken(user._id, user.role);
 
-      res.cookie('user-jwt', jwtToken, { httpOnly: true });
-      
-      return res.redirect('/api/auth/github/redirect');
+      // var jwtToken = createUserJWTToken(user._id, user.role);
+
+      // res.cookie('user-jwt', jwtToken, { httpOnly: true });
+      console.log('About to redirect');
+      // return res.redirect('https://localhost:3001/api/auth/github/redirect');
     })(req, res, next);
 });
+
+/*
+router.get('/auth/github/fork', (req, res) => {
+
+    const { state } = req.query;
+
+    console.log(`STATE: ${JSON.stringify(state)}`);
+    console.log(`BUFFER: ${Buffer.from(state, 'base64').toString()}`);
+
+    const { email, source } = JSON.parse(Buffer.from(state, 'base64').toString());
+    
+    if (source == 'localhost') {
+        return res.redirect('http://localhost:3001/api/auth/github/redirect');
+    }
+    else {
+        return res.redirect('https://api.getquilt.app/api/auth/github/redirect');
+    }
+});
+*/
+
 
 router.get('/auth/github/redirect', passport.authenticate("github", {session: false}), (req, res) => {
     // console.log('Request Host: ', req.get('host'));
     // if (err) { return res.json({success: false, error: err}) }
     // TODO: Change this to appropriate route
-    
+    console.log('Entered');
     if (!req.user) { console.log('req.user != true'); return res.redirect('/login'); }
 
     var jwtToken = createUserJWTToken(req.user._id, req.user.role);
 
     res.cookie('user-jwt', jwtToken, { httpOnly: true });
     
+    const { state } = req.query;
+
+    console.log(`${JSON.stringify(JSON.parse(Buffer.from(state, 'base64').toString()))}`);
+
+    const { email, source } = JSON.parse(Buffer.from(state, 'base64').toString());
+
+    // return res.redirect('http://localhost:3001/api/testRoute');
+
+    /*
+    if (source == 'localhost') {
+        return res.redirect('http://localhost:3001/api/auth/github/redirect');
+    }
+    */
+
     if (req.query.state === "installing") {
         return res.redirect(INSTALLED_URL);
     } else {
         if (!req.user.onboarded) {
-            const { state } = req.query;
-            if (state) {
-                try {
-                    const { email } = JSON.parse(Buffer.from(state, 'base64').toString());
-                    if (typeof email === 'string') {
-                        return res.redirect(`${ONBOARD_URL}?email=${email}`);
-                    }
-                } catch (err) {
-                    console.log(er)
+            try {
+                if (typeof email === 'string') {
+                    return res.redirect(`${ONBOARD_URL}?email=${email}`);
                 }
+            } catch (err) {
+                console.log(err);
             }
 
-            return res.redirect(ONBOARD_URL); 
+            return res.redirect(ONBOARD_URL);
         }
        
         return res.redirect(CLIENT_HOME_PAGE_URL);
@@ -285,6 +334,17 @@ router.post('/verify/add_contact', emailVerifyController.addContact);
 
 const workspaceInviteController = require('../controllers/authentication/WorkspaceInviteController');
 router.post('/invites/:workspaceId', workspaceInviteController.sendInvite);
+
+const assetController = require('../controllers/AssetController');
+router.get('/assets/invalid_document', assetController.getInvalidDocumentIcon);
+router.get('/assets/invalid_snippet', assetController.getInvalidSnippetIcon);
+router.get('/assets/invalid_check', assetController.getInvalidCheckIcon);
+router.get('/assets/document', assetController.getDocumentIcon);
+router.get('/assets/snippet', assetController.getSnippetIcon);
+
+const notificationController = require('../controllers/reporting/NotificationController');
+router.post('/notifications/:userId/retrieve', authorizationMiddleware.notificationMiddleware, notificationController.retrieveNotifications);
+
 
 /*
     const pullRequestController = require('../controllers/unused/PullRequestController');

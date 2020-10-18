@@ -89,7 +89,15 @@ app.use(
         })
 );
 
-const nonAuthPaths = ['/auth/login/success', '/auth/login/failed', '/auth/github', '/api/auth/github', '/auth/github/redirect', '/api/verify/'];
+const nonAuthPaths = ['/auth/login/success',
+                      '/auth/login/failed',
+                      '/auth/github',
+                      '/api/auth/github',
+                      '/auth/github/redirect',
+                      '/api/verify/',
+                      '/auth/github/fork',
+                      '/api/auth/github/fork',
+                      '/api/testRoute'];
 
 app.use(function (req, res, next) {
   req.path = req.path.trim();
@@ -98,12 +106,20 @@ app.use(function (req, res, next) {
 
   var isNonAuthPath = false;
   var i;
+
+  // Check if nonAuth API call
   for (i = 0; i < nonAuthPaths.length; i++) {
     if (req.path.includes(nonAuthPaths[i])) {
       isNonAuthPath = true;
       break;
     }
   }
+  
+  // Check if asset call
+  if (req.path.includes('/assets')) {
+    isNonAuthPath = true;
+  }
+  
 
   if (isNonAuthPath) {
       next();

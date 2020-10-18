@@ -47,7 +47,6 @@ const getAnimations = () => {
 const getStyles = ({
   titleColor,
   textColor,
-  iconColor,
   show_icons,
   progress,
 }) => {
@@ -66,7 +65,6 @@ const getStyles = ({
     
     .bold { font-weight: 700 }
     .icon {
-      fill: ${iconColor};
       display: ${!!show_icons ? "block" : "none"};
     }
     

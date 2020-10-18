@@ -5,40 +5,89 @@ const {
   encodeHTML,
 } = require("../common/utils");
 const { getStyles } = require("../getStyles");
-const icons = require("../common/icons");
-const { RiCloseFill, RiFileFill, RiFileList2Fill, RiScissorsLine } = require('react-icons/ri');
-
 const Card = require("../common/Card");
 
 const createTextNode = ({
   icon,
   label,
   value,
-  id,
   index,
-  showIcons,
-  shiftValuePos,
 }) => {
   const kValue = kFormatter(value);
   const staggerDelay = (index + 3) * 150;
 
-  const labelOffset = showIcons ? `x="25"` : "";
-  const iconSvg = showIcons
-    ? `
-    <svg data-testid="icon" class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16">
-      ${icon}
-    </svg>
-  `
-    : "";
+
+  const labelOffset = `x="25"`;
+  var iconSvg;
+
+  // #ff4757
+  if (icon == 'broken_document') {
+    iconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" data-testid="icon" fill="#ed2d47" stroke="none" class="icon" viewBox="0 0 24 24" width="16" height="16">
+        <path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+        <path d="M20 22H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1zM8 7v2h8V7H8zm0 4v2h8v-2H8zm0 4v2h5v-2H8z"/>
+      </svg>
+    `;
+  }
+
+  // #ff4757
+  else if (icon == 'broken_snippet') {
+    iconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" data-testid="icon" class="icon" stroke="#ff4757" fill="#ff4757" fill-opacity="0.5" viewBox="0 0 24 24" width="16" height="16">
+        <path fill="none" stroke="none" d="M0 0h24v24H0z"/>
+        <path d="M9.446 8.032L12 10.586l6.728-6.728a2 2 0 0 1 2.828 0l-12.11 12.11a4 4 0 1 1-1.414-1.414L10.586 12 8.032 9.446a4 4 0 1 1 1.414-1.414zm5.38 5.38l6.73 6.73a2 2 0 0 1-2.828 0l-5.317-5.316 1.415-1.415zm-7.412 3.174a2 2 0 1 0-2.828 2.828 2 2 0 0 0 2.828-2.828zm0-9.172a2 2 0 1 0-2.828-2.828 2 2 0 0 0 2.828 2.828z"/>
+      </svg>
+    `;
+  }
+
+  // #ff4757
+  else if (icon == 'check') {
+    iconSvg =  `
+      <svg xmlns="http://www.w3.org/2000/svg" data-testid="icon" fill="#ff4757" class="icon" viewBox="0 0 24 24" width="16" height="16">
+        <path fill="none" d="M0 0h24v24H0z"/>
+        <path d="M15.874 13a4.002 4.002 0 0 1-7.748 0H3v-2h5.126a4.002 4.002 0 0 1 7.748 0H21v2h-5.126zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+      </svg>
+    `
+  }
+
+  /*
+  <RiFileList2Fill  style = {{
+                                color: '#2684FF',
+                                width: "2rem",
+                                fontSize: "1.6rem",
+                                marginRight: "0.5rem"
+                            }}/>
+  */
+
+    
+  else if (icon == 'document') {
+    iconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" data-testid="icon" fill="#2684FF" class="icon" viewBox="0 0 24 24" width="16" height="16">
+        <path fill="none" d="M0 0h24v24H0z"/>
+        <path d="M20 22H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1zM8 7v2h8V7H8zm0 4v2h8v-2H8zm0 4v2h5v-2H8z"/>
+      </svg>
+    `;
+  }
+
+  // RiScissorsLine
+  else if (icon == 'snippet') {
+    iconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" data-testid="icon" class="icon" viewBox="0 0 24 24" width="16" height="16" fill="#24292e">
+        <path fill="none" d="M0 0h24v24H0z"/>
+        <path d="M9.446 8.032L12 10.586l6.728-6.728a2 2 0 0 1 2.828 0l-12.11 12.11a4 4 0 1 1-1.414-1.414L10.586 12 8.032 9.446a4 4 0 1 1 1.414-1.414zm5.38 5.38l6.73 6.73a2 2 0 0 1-2.828 0l-5.317-5.316 1.415-1.415zm-7.412 3.174a2 2 0 1 0-2.828 2.828 2 2 0 0 0 2.828-2.828zm0-9.172a2 2 0 1 0-2.828-2.828 2 2 0 0 0 2.828 2.828z"/>
+      </svg>
+    `;
+  }
+
+
   return `
     <g class="stagger" style="animation-delay: ${staggerDelay}ms" transform="translate(25, 0)">
       ${iconSvg}
       <text class="stat bold" ${labelOffset} y="12.5">${label}:</text>
       <text 
         class="stat" 
-        x="${shiftValuePos ? (showIcons ? 200 : 170) : 150}" 
+        x="${220}" 
         y="12.5" 
-        data-testid="${id}"
       >${kValue}</text>
     </g>
   `;
@@ -47,11 +96,11 @@ const createTextNode = ({
 const renderStatsCard = (stats = {}, options = { hide: [] }) => {
   const {
     name,
-    totalStars,
-    totalCommits,
-    totalIssues,
-    totalPRs,
-    contributedTo,
+    totalDocuments,
+    brokenDocuments,
+    totalSnippets,
+    brokenSnippets,
+    unresolvedChecks,
     rank,
   } = stats;
   const {
@@ -60,13 +109,12 @@ const renderStatsCard = (stats = {}, options = { hide: [] }) => {
     hide_title = false,
     hide_border = false,
     hide_rank = false,
-    include_all_commits = false,
     line_height = 25,
     title_color,
     icon_color,
     text_color,
     bg_color,
-    theme = "default",
+    theme = "graywhite",
     custom_title,
   } = options;
 
@@ -74,46 +122,39 @@ const renderStatsCard = (stats = {}, options = { hide: [] }) => {
 
   // returns theme based colors with proper overrides and defaults
   const { titleColor, textColor, iconColor, bgColor } = getCardColors({
-    title_color,
-    icon_color,
-    text_color,
-    bg_color,
+    undefined, // title_color,
+    undefined, // icon_color,
+    undefined, // text_color,
+    undefined, // bg_color,
     theme,
   });
 
   // Meta data for creating text nodes with createTextNode function
   const STATS = {
-    stars: {
-      icon: icons.star, // RiScissorsLine,
+    invalid_documents: {
+      icon: "broken_document",
+      label: "Invalid Documents",
+      value: brokenDocuments,
+    },
+    invalid_snippets: {
+      icon: "broken_snippet",
+      label: "Invalid Snippets",
+      value: brokenSnippets,
+    },
+    invalid_checks: {
+      icon: "check",
+      label: "Invalid Checks",
+      value: unresolvedChecks,
+    },
+    all_documents: {
+      icon: "document",
+      label: `Total Documents`,
+      value: totalDocuments,
+    },
+    all_snippets: {
+      icon: "snippet", // RiScissorsLine,
       label: "Total Snippets",
-      value: totalStars,
-      id: "stars",
-    },
-    commits: {
-      icon: icons.commits,
-      label: `Total Commits${
-        include_all_commits ? "" : ` (${new Date().getFullYear()})`
-      }`,
-      value: totalCommits,
-      id: "commits",
-    },
-    prs: {
-      icon: icons.prs,
-      label: "Total PRs",
-      value: totalPRs,
-      id: "prs",
-    },
-    issues: {
-      icon: icons.issues,
-      label: "Total Issues",
-      value: totalIssues,
-      id: "issues",
-    },
-    contribs: {
-      icon: icons.contribs,
-      label: "Contributed to",
-      value: contributedTo,
-      id: "contribs",
+      value: totalSnippets,
     },
   };
 
@@ -125,8 +166,6 @@ const renderStatsCard = (stats = {}, options = { hide: [] }) => {
       createTextNode({
         ...STATS[key],
         index,
-        showIcons: show_icons,
-        shiftValuePos: !include_all_commits,
       }),
     );
 
@@ -163,7 +202,6 @@ const renderStatsCard = (stats = {}, options = { hide: [] }) => {
   const cssStyles = getStyles({
     titleColor,
     textColor,
-    iconColor,
     show_icons,
     progress,
   });

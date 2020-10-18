@@ -303,7 +303,7 @@ const workspaceMiddleware = async (req, res, next) => {
 
             // Only the creator can delete a Workspace
             if (requestedPath.includes('/workspaces/delete')) {
-                if (foundWorkspace.creator.toString() ==  requesterId) {
+                if (foundWorkspace.creator.toString() == requesterId.toString()) {
                     return next();
                 }
                 else {
@@ -553,9 +553,52 @@ const reportingMiddleware = async (req, res, next) => {
     }
     else {
         return next(new Error("Error: requesting user not a member of target workspace"));
-    }
-    
+    }   
 }
+
+const notificationMiddleware = async (req, res, next) => {
+
+    var requesterId = req.tokenPayload.userId.toString();
+    var requesterRole = req.tokenPayload.role;
+
+    const { userId } = req.params;
+
+    var searchUserId;
+    try {
+        if (userId) {
+            searchUserId = ObjectId(userId);
+        }
+    }
+    catch (err) {
+        return next(new Error("Error: invalid userId format"));
+    }
+
+    var foundUser = undefined;
+    if (searchUserId) {
+        try {
+            foundUser = await User.findById(searchUserId).lean().exec();
+        }
+        catch (err) {
+            return next(new Error("Error: could not find userId"));
+        }
+
+        req.userObj = foundUser;
+        
+        if (requesterRole == 'dev') {
+            return next();
+        }
+        else if ( requesterId == foundUser._id.toString()) {
+            return next();
+        }
+        else {
+            return next(new Error("Error: Cannot request another User's notifications"));
+        }
+    }
+    // Temporarily return next() always if no userId param, since all routes have userId param anyway
+    else {
+        return next();
+    }
+};
 
 module.exports = {
     referenceMiddleware,
@@ -569,4 +612,5 @@ module.exports = {
     tokenMiddleware,
     reportingMiddleware,
     checkMiddleware,
+    notificationMiddleware,
 }

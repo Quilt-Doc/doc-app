@@ -11,7 +11,9 @@ const Document = require('../models/Document');
 const Snippet = require('../models/Snippet');
 const Check = require('../models/Check');
 const Repository = require('../models/Repository');
+const Workspace = require('../models/Workspace');
 
+const NotificationController = require('./reporting/NotificationController');
 
 
 const logger = require('../logging/index').logger;
@@ -61,7 +63,7 @@ generateCheckText = async (brokenDocuments, brokenSnippets) => {
         catch (err) {
             throw new Error(`Error fetching Document: ${brokenDocuments[i]}`);
         }
-        if (documentObj) text += `${documentObj.title}\n`
+        if (documentObj) text += `![Invalid Document Icon](${process.env.PRODUCTION_API_URL}/assets/invalid_document) [${documentObj.title}](${process.env.PRODUCTION_HOME_PAGE_URL})\n`
     }
 
     // Append broken Snippet text
@@ -74,7 +76,7 @@ generateCheckText = async (brokenDocuments, brokenSnippets) => {
         catch (err) {
             throw new Error(`Error fetching Snippet: ${brokenSnippets[i]}`);
         }
-        if (snippetObj) text += `${snippetObj.annotation.slice(0, checkConstants.CHECK_SNIPPET_CHAR_MAX)}\n`
+        if (snippetObj) text += `![Invalid Document Icon](${process.env.PRODUCTION_API_URL}/assets/invalid_snippet) [${snippetObj.annotation.slice(0, checkConstants.CHECK_SNIPPET_CHAR_MAX)}](${process.env.PRODUCTION_HOME_PAGE_URL})\n`
     }
 
     return text;
@@ -83,15 +85,9 @@ generateCheckText = async (brokenDocuments, brokenSnippets) => {
 
 createCheckRunObj = async (commit, brokenDocuments, brokenSnippets, checkId) => {
 
-    var imageObj = {    alt: 'Test alt text',
-                        image_url: "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Red_x.svg/1200px-Red_x.svg.png",
-                        caption: 'Test image',
-                    }
-    
-
     var outputObj;
     try {
-        outputObj = {   title: 'Quilt Docs Documentation Changes',
+        outputObj = {   title: 'Quilt Knowledge Changes',
                     summary: generateCheckSummary(brokenDocuments, brokenSnippets),
                     text: await generateCheckText(brokenDocuments, brokenSnippets),
                     // images: [imageObj]
@@ -106,7 +102,7 @@ createCheckRunObj = async (commit, brokenDocuments, brokenSnippets, checkId) => 
     var checkObj = {
         name: 'document-coverage',
         head_sha: commit,
-        details_url: 'https://www.google.com',
+        details_url: `${process.env.PRODUCTION_HOME_PAGE_URL}`,
         external_id: checkId,
         status: 'completed',
         started_at: currentDateISO,
@@ -196,7 +192,7 @@ const createCheck = async (req, res) => {
     var beginObject = {
         name: 'document-coverage',
         head_sha: commit,
-        details_url: 'https://www.google.com',
+        details_url: `${process.env.PRODUCTION_HOME_PAGE_URL}`,
         external_id: check._id.toString(),
         status: 'in_progress',
     }
@@ -212,6 +208,93 @@ const createCheck = async (req, res) => {
         await logger.error({source: 'backend-api', message: err, errorDescription: `Error creating 'in_progress' Check on commit: ${commit}`, function: "createCheck"});
         return res.json({success: false, error: 'error accessing installationClient'});
     }
+
+    // Create Notifications for all Users who've had Documents broken
+
+    // Get Workspace Repository is in
+    var workspaceResponse;
+    try {
+        workspaceResponse = await Workspace.find({repositories: { $in: [ObjectId(repositoryId)] }}).lean().exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error retrieving Workspace of Repository - repositoryId, commit: ${repositoryId}, ${commit}`,
+                            function: "createCheck"});
+        return res.json({success: false, error: 'Error retrieving Workspace of Repository'});
+    }
+
+    // Get list of userIds of creators of invalidated Snippets/Documents
+    var documentResponse;
+    var snippetResponse;
+    try {
+        documentResponse = await Document.find({_id: { $in: brokenDocuments.map(id => ObjectId(id.toString())) }}).select('_id author').lean().exec();
+        snippetResponse = await Snippet.find({_id: { $in: brokenSnippets.map(id => ObjectId(id.toString())) }}).select('_id creator').lean().exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error getting invalidated Documents/Snippets on commit: ${commit}`,
+                            function: "createCheck"});
+        return res.json({success: false, error: 'error getting invalidated Documents/Snippets'});
+    }
+
+    var userIdList = documentResponse.map(documentObj => documentObj.author.toString()).concat( snippetResponse.map(snippetObj => snippetObj.creator.toString()));
+
+
+    // Get list of Users who've had snippets/documents invalidated
+    userIdList = [...new Set(userIdList)];
+
+    var invalidNotificationData = [];
+
+    invalidNotificationData = userIdList.map(userId => {
+        return {
+            type: 'invalid_knowledge',
+            user: userId.toString(),
+            workspace: workspaceResponse._id.toString(),
+            repository: repositoryId,
+            check: check._id.toString(),
+        };
+    });
+    
+    // Create Invalid Knowledge Notification
+    try {
+        await NotificationController.createInvalidNotifications(invalidNotificationData);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error creating push Notifications - workspaceId, repositoryId, commit: ${workspaceResponse._id.toString()}, ${repositoryId}, ${commit}`,
+                            function: "createCheck"});
+        return res.json({success: false, error: 'Error creating push Notifications'});
+    }
+
+    // If References have been added create a notification for the pusher
+
+    if (addedReferences.length > 0) {
+        var toDocumentNotification = {
+            type: 'to_document',
+            user: userId.toString(),
+            workspace: workspaceResponse._id.toString(),
+            repository: repositoryId,
+            check: check._id.toString(),
+        };
+        try {
+            await NotificationController.createToDocumentNotification(toDocumentNotification);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error creating toDocument Notification - workspaceId, repositoryId, commit: ${workspaceResponse._id.toString()}, ${repositoryId}, ${commit}`,
+                                function: "createCheck"});
+
+            return res.json({success: false, error: 'Error creating toDocument Notification'});
+        }
+    }
+
+
+
+
 
 
     var checkObj;
@@ -261,8 +344,9 @@ const retrieveChecks = async (req, res) => {
 
     if (!checkValid(limit))  limit = 10;
 
+    var retrieveResponse;
     try {
-        var retrieveResponse = await Check.find({repository: repositoryId})
+        retrieveResponse = await Check.find({repository: repositoryId})
         .populate({path: 'addedReferences brokenDocuments repository'})
         .populate({path: 'brokenSnippets', populate: {path: 'reference'}}).limit(limit).skip(skip).sort({created: -1}).exec();
     }

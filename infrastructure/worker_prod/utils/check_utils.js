@@ -26,7 +26,8 @@ generateCheckSummary = (brokenDocuments, brokenSnippets) => {
 
 
 
-const generateCheckText = async (brokenDocuments, brokenSnippets) => {
+// TODO: Make documents link to themselves
+generateCheckText = async (brokenDocuments, brokenSnippets) => {
     var text = '';
 
 
@@ -35,12 +36,12 @@ const generateCheckText = async (brokenDocuments, brokenSnippets) => {
         if (i >= checkConstants.CHECK_DOCUMENT_MAX_NUM) break;
         var documentObj;
         try {
-            documentObj = await Document.findById(brokenDocuments[i].toString(), 'title').exec();
+            documentObj = await Document.findById(brokenDocuments[i].toString(), 'title workspace').exec();
         }
         catch (err) {
             throw new Error(`Error fetching Document: ${brokenDocuments[i]}`);
         }
-        if (documentObj) text += `${documentObj.title}\n`
+        if (documentObj) text += `![Invalid Document Icon](${process.env.PRODUCTION_API_URL}/assets/invalid_document) [${documentObj.title}](${process.env.PRODUCTION_HOME_PAGE_URL})\n`
     }
 
     // Append broken Snippet text
@@ -53,23 +54,19 @@ const generateCheckText = async (brokenDocuments, brokenSnippets) => {
         catch (err) {
             throw new Error(`Error fetching Snippet: ${brokenSnippets[i]}`);
         }
-        if (snippetObj) text += `${snippetObj.annotation.slice(0, checkConstants.CHECK_SNIPPET_CHAR_MAX)}\n`
+        if (snippetObj) text += `![Invalid Document Icon](${process.env.PRODUCTION_API_URL}/assets/invalid_snippet) [${snippetObj.annotation.slice(0, checkConstants.CHECK_SNIPPET_CHAR_MAX)}](${process.env.PRODUCTION_HOME_PAGE_URL})\n`
     }
 
     return text;
+
 }
 
 const createCheckRunObj = async (commit, brokenDocuments, brokenSnippets, checkId, worker) => {
 
-    var imageObj = {    alt: 'Test alt text',
-                        image_url: "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Red_x.svg/1200px-Red_x.svg.png",
-                        caption: 'Test image',
-                    }
-    
 
     var outputObj;
     try {
-        outputObj = {   title: 'Quilt Docs Documentation Changes',
+        outputObj = {   title: 'Quilt Knowledge Changes',
                     summary: generateCheckSummary(brokenDocuments, brokenSnippets),
                     text: await generateCheckText(brokenDocuments, brokenSnippets),
                     // images: [imageObj]
@@ -88,7 +85,7 @@ const createCheckRunObj = async (commit, brokenDocuments, brokenSnippets, checkI
     var checkObj = {
         name: 'document-coverage',
         head_sha: commit,
-        details_url: 'https://www.google.com',
+        details_url: `${process.env.PRODUCTION_HOME_PAGE_URL}`,
         external_id: checkId,
         status: 'completed',
         started_at: currentDateISO,
@@ -96,6 +93,7 @@ const createCheckRunObj = async (commit, brokenDocuments, brokenSnippets, checkI
         completed_at: currentDateISO,
         output: outputObj,
     };
+
     return checkObj;
 }
 
