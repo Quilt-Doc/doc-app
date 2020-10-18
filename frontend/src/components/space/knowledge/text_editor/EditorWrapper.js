@@ -48,10 +48,6 @@ class EditorWrapper extends React.Component {
     }
 
     saveMarkupWrapper = (e) => {
-        return "ARE YOU SURE?";
-        alert("ARE YOU SURE");
-        const {testRoute} = this.props;
-        testRoute({message: "BOOGA"});
         const documentId = this.getDocumentId(this.props);
         this.saveMarkup(documentId);
     }
@@ -85,7 +81,6 @@ class EditorWrapper extends React.Component {
     onMarkupChange = (markup) => {
         const { syncEditDocument } = this.props;
         let documentId = this.getDocumentId(this.props);
-
         syncEditDocument({_id: documentId, markup: JSON.stringify(markup)});
     }   
 

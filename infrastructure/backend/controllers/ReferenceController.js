@@ -385,7 +385,7 @@ removeReferenceTag = async (req, res) => {
 searchReferences = async (req, res) => {
     const { userQuery, repositoryId, tagIds, referenceIds,
       minimalReferences, skip, limit, sort } = req.body;
-    console.log("REFERENCE CONTROLLER REQ.BODY", req.body);
+      
     var { onlyValid } = req.body;
 
 
@@ -417,10 +417,10 @@ searchReferences = async (req, res) => {
         console.log('matching only valid');
         referenceAggregate.match({status: 'valid'});
     }
-
+/*
     // Don't retrieve Root reference
     referenceAggregate.match({root: false});
-
+    */
 
     if (checkValid(tagIds)) referenceAggregate.match({
         tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }
@@ -457,7 +457,7 @@ searchReferences = async (req, res) => {
         return res.json({success: false, error: "searchReferences: Failed to populate references", trace: err});
     }
 
-
+    console.log("REFERENCE RESULT", references.map(ref => ref._id));
     // Need to include time filtering
     return res.json({success: true, result: references});
 }

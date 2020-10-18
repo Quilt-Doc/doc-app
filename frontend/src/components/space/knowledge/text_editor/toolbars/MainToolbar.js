@@ -66,7 +66,6 @@ class MainToolbar extends React.Component {
 
     renderStatus = () => {
         const { status } = this.props.document;
-        console.log("STATUS", status);
         switch (status) {
             case "valid":
                 return  <Status color = {"#19e5be"}>

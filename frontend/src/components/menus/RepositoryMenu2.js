@@ -153,12 +153,8 @@ class RepositoryMenu extends React.Component {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    console.log(ownProps.match.params);
     let {workspaceId} = ownProps.match.params
-    console.log(workspaceId)
-    console.log("WORKSPACES", state.workspaces[workspaceId])
     let repositories =  state.workspaces[workspaceId] ? state.workspaces[workspaceId].repositories : [];
-    console.log(repositories)
     return {
         repositories,
         workspace: state.workspaces[workspaceId]

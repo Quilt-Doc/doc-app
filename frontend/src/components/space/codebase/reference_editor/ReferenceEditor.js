@@ -48,7 +48,6 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
-import { remove } from 'js-cookie';
 
 Prism.languages.python = Prism.languages.extend('python', {})
 Prism.languages.javascript = Prism.languages.extend('javascript', {})
