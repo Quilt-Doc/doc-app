@@ -174,7 +174,7 @@ addContact = async (req, res) => {
         return res.json({success: false, error: err});
     }
 
-    return res.redirect(CLIENT_HOME_PAGE_URL);
+    return res.json({success: true});
 }
 
 module.exports = {

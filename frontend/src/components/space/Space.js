@@ -108,10 +108,8 @@ class Space extends React.Component {
                     classNames="sidenav"
                 >
                     <div>
-                        
                         <Container>
-                            <SideNavbar setSearch = {this.setSearch}/>
-                            
+                            <SideNavbar setSearch = {this.setSearch}/>                           
                             <RightView id = {"rightView"} >
                                 <Router history = {history}>
                                     <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />

@@ -67,9 +67,31 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 const TextEditor = (props) => {
 
 	let {title, markup} = props.document;
-	console.log("MARKUP", markup);
 	markup = JSON.parse(markup);
 
+	const initialValue = [
+	{
+	  children: [
+		{
+		  text:
+			'This example shows how you can make a hovering menu appear above your content, which you can use to make text ',
+		},
+		{ text: 'bold', bold: true },
+		{ text: ', ' },
+		{ text: 'italic', italic: true },
+		{ text: ', or anything else you might want to do!' },
+	  ],
+	},
+	{
+	  children: [
+		{ text: 'Try it out yourself! Just ' },
+		{ text: 'select any piece of text and the menu will appear', bold: true },
+		{ text: '.' },
+	  ],
+	},
+	  ]
+	  
+	const [value, setValue] = useState(initialValue);
 
 	const [write, setWrite] = useState(false)
 	const [setOptions, toggleOptions] = useState(false);
@@ -141,10 +163,9 @@ const TextEditor = (props) => {
 	, [editor.selection])
 	
 	updateMarkupType(state, dispatch, range, blocktypes, editor)
-	
 	return (
 		<DndProvider backend={HTML5Backend}>
-			<Slate editor={editor} value={markup} onChange={props.onMarkupChange}>
+			<Slate editor={editor} value={value} onChange={setValue}>
 				<ToolbarsContainer>
 					<CSSTransition
 						in={setOptions}
@@ -172,6 +193,7 @@ const TextEditor = (props) => {
 							isMarkActive = {isMarkActive} 
 							toggleMark = {toggleMark}
 							removeMarks = {() => removeMarks(editor)}
+							documentModal = {props.documentModal}
 						/>
 					</CSSTransition>
 				</ToolbarsContainer>
@@ -191,14 +213,14 @@ const TextEditor = (props) => {
 					>
 							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
 							<EditorContainer2  >
-									{/*state.snippetMenuActive &&
+									{state.snippetMenuActive &&
 										<SnippetMenuWrapper
 											documentModal = {props.documentModal} 
 											dispatch={dispatch} 
 											range={range} 
 											editorState={state} 
 											document = {props.document}
-										/>*/
+										/>
 									}
 									<MarkupMenu 
 										documentModal = {props.documentModal} 

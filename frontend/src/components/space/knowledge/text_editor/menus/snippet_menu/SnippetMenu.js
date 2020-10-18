@@ -11,6 +11,7 @@ import styled from "styled-components";
 
 //components
 import { CSSTransition } from 'react-transition-group';
+import DocumentReferenceEditor from './DocumentReferenceEditor';
 
 //slate
 import {  ReactEditor } from 'slate-react'
@@ -52,11 +53,10 @@ class SnippetMenu extends React.Component {
             
             let newRect = ReactEditor.toDOMRange(editor, 
                 {anchor: {offset, path}, focus: { offset, path }}).getBoundingClientRect();
-    
             this.setState({rect: newRect, open: true});
             this.searchReferences(text);
     
-            window.addEventListener('keydown', this.handleKeyDown, false);
+            //window.addEventListener('keydown', this.handleKeyDown, false);
             document.addEventListener('mousedown', this.handleClickOutside, false);
     
             this.setState({loaded: true});
@@ -71,7 +71,7 @@ class SnippetMenu extends React.Component {
     }
 
     removeListeners = () => {
-        window.removeEventListener('keydown', this.handleKeyDown, false);
+        //window.removeEventListener('keydown', this.handleKeyDown, false);
         document.removeEventListener('mousedown', this.handleClickOutside, false);
     }
 
@@ -83,11 +83,15 @@ class SnippetMenu extends React.Component {
     /**
      * Alert if clicked on outside of element
      */
-    handleClickOutside = (event) => {
+    turnSnippetMenuOff = () => {
         const { dispatch } = this.props;
+        dispatch({type: "snippetMenuOff"})
+    }
+
+    handleClickOutside = (event) => {
         if (this.node && !this.node.contains(event.target)) {
             this.removeListeners();
-            dispatch({type: "snippetMenuOff"})
+            this.turnSnippetMenuOff();
         }
     }
 
@@ -224,9 +228,9 @@ class SnippetMenu extends React.Component {
         return(
             <>
                 <HeaderContainer>Find Reference to Embed Snippet</HeaderContainer>
-                <ListContainer>
+                <ListItemContainer>
                     {this.state.loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
-                </ListContainer>
+                </ListItemContainer>
             </>
         )
     }
@@ -236,35 +240,48 @@ class SnippetMenu extends React.Component {
 	}
 
     render() {
-        let { open, rect, documentModal } = this.state;
+        let { open, rect, documentModal, openedReference } = this.state;
+        
         if (rect) {
-			if (documentModal) {	
+			if (documentModal) {
 				let background = document.getElementById("documentModalBackground");
 				rect = {left: rect.left, height: rect.height, top: rect.top + background.scrollTop};
-			} 
-			let height = this.convertRemToPixels(45);
-			if (rect.top + height - 100 > window.innerHeight){
-				rect = {top: rect.top - height , left: rect.left, height: rect.height}
-			}
+            } 
+            /*
+            if (this.node) {
+                let { height } = this.node.getBoundingClientRect();
+                if (rect.top + height > window.innerHeight){
+                    rect = {top: rect.top - height , left: rect.left, height: rect.height}
+                }
+            }*/
+			
 		}
-        return(
-            <CSSTransition
-                    in = {open}
-                    unmountOnExit
-                    enter = {true}
-                    exit = {true}       
-                    timeout = {150}
-                    classNames = "dropmenu"
-            >
-                <Container 
-                    ref = {node => this.node = node}
-                    style = {{
-						top: rect ?  rect.top + rect.height/2 : 0, 
-						left: rect ? rect.left : 0}}
+        return (
+            <>
+                <CSSTransition
+                        in = {open}
+                        unmountOnExit
+                        enter = {true}
+                        exit = {true}       
+                        timeout = {150}
+                        classNames = "dropmenu"
                 >
-                    {this.renderListContent()}
-                </Container>
-            </CSSTransition>
+                    <Container 
+                        ref = {node => this.node = node}
+                        style = {{
+                            top: rect ?  rect.top + rect.height/2 : 0, 
+                            left: rect ? rect.left : 0}}
+                    >
+                        {this.renderListContent()}
+                    </Container>
+                </CSSTransition>
+                {openedReference && 
+                    <DocumentReferenceEditor 
+                        openedReference = {openedReference} 
+                        undoModal = {this.turnSnippetMenuOff}
+                    />
+                }
+            </>
         )
     }
 }
@@ -303,6 +320,15 @@ const Container = styled.div`
     margin-top: 2.2rem;
 `
 
+const ListItemContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	padding: 0rem 1rem;
+	max-height: 31.5rem;
+	overflow-y: scroll;
+	padding-bottom: 1rem;
+`
+
 const HeaderContainer = styled.div`
     height: 3.5rem;
     display: flex;
@@ -311,12 +337,6 @@ const HeaderContainer = styled.div`
     padding: 1rem;
     color: #172A4E;
     font-weight: 500;
-`
-
-const ListContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
 `
 
 const ListItem = styled.div`

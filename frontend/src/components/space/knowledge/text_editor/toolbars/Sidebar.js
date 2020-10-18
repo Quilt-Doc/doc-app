@@ -191,7 +191,7 @@ class ToolIcon extends React.Component {
                     </SmallHeaderContainer>
                     { (path && path[0] !== 0) &&
                         <HeaderContainer onClick = {() => {
-                            if (path) Transforms.removeNodes(editor, {at: path}); this.closeMenu()}}>
+                            if (path) Transforms.removeNodes(editor, { at: path }); this.closeMenu();}}>
                             Remove Block
                             <FontAwesomeIcon style = {{marginLeft: "auto"}} icon={faTrash}/>
                         </HeaderContainer>
