@@ -93,7 +93,7 @@ const breakAttachedDocuments = async (repoId, refUpdateData, worker, session) =>
     }));
     if (bulkDocumentInvalidateOps.length > 0) {
         try {
-            const bulkResult = await Document.collection.bulkWrite(bulkDocumentInvalidateOps, { session }).exec();
+            const bulkResult = await Document.collection.bulkWrite(bulkDocumentInvalidateOps, { session });
             worker.send({action: 'log', info: {level: 'info', message: `bulk Document invalidate results: ${JSON.stringify(bulkResult)}`,
                                                 source: 'worker-instance', function: 'breakAttachedDocuments'}});
 
@@ -462,9 +462,12 @@ const runUpdateProcedure = async () => {
         async (error, stdout, stderr) => {
         */
 
+        // Don't put a repoCommit if this repository hasn't had a commit yet
+        var commitRange = (repoCommit == 'EMPTY') ? headCommit : `${repoCommit}..${headCommit}`;
+
         var gitLogResponse;
         try {
-            gitLogResponse = spawnSync('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H', repoCommit + '..' + headCommit], {cwd: './' + repoDiskPath});
+            gitLogResponse = spawnSync('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H', commitRange], {cwd: './' + repoDiskPath});
         }
         catch(err) {
                 await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`,

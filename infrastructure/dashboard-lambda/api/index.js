@@ -1,8 +1,6 @@
 require("dotenv").config();
 const {
   renderError,
-  parseBoolean,
-  parseArray,
   clampValue,
   CONSTANTS,
 } = require("../src/common/utils");
@@ -170,20 +168,19 @@ module.exports = async (req, res) => {
       renderStatsCard(stats, {
         
         // hide: parseArray(hide),
-        hide: parseArray('[]'), 
-        
+        hide: [], 
+
         // show_icons: parseBoolean(show_icons),
-        show_icons: parseBoolean(true),
+        show_icons: true,
         
         // hide_title: parseBoolean(hide_title),
-        hide_title: parseBoolean(false),
+        hide_title: false,
         
         // hide_border: parseBoolean(hide_border),
-        hide_border: parseBoolean(false),
-        
-        
+        hide_border: false,
+
         // hide_rank: parseBoolean(hide_rank),
-        hide_rank: parseBoolean(false),
+        hide_rank: false,
 
         line_height: 25,
         title_color,

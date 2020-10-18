@@ -11,6 +11,14 @@ const logger = require('../../logging/index').logger;
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+const NotificationController = require('../reporting/NotificationController');
+
+// grab the Mixpanel factory
+const Mixpanel = require('mixpanel');
+
+// create an instance of the mixpanel client
+const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
+
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -49,6 +57,37 @@ sendInvite = async (req, res) => {
         catch (err) {
             return res.json({success: false, error: `Error Workspace findOneAndUpdate query failed - workspaceId, userId: ${workspaceId}, ${userWithEmail._id.toString()}`});
         }
+
+
+        // Create 'added_workspace' Notification
+        var notificationData = [{
+                type: 'added_workspace',
+                user: userWithEmail._id.toString(),
+                workspace: workspaceId.toString(),
+        }];
+
+        try {
+            await NotificationController.createAddedNotification(notificationData);
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                error: err,
+                                errorDescription: `Error createAddedNotification failed - userWithEmailId, workspaceId: ${userWithEmail._id.toString()}, ${workspaceId.toString()}`,
+                                function: 'verifyEmail'});
+
+            return res.json({ success: false, 
+                                error: `Error createAddedNotification failed`,
+                                trace: err });
+        }
+
+
+        // track an event with optional properties
+        mixpanel.track('User Added to Workspace', {
+            distinct_id: `${userWithEmail._id.toString()}`,
+            workspaceId: `${updatedWorkspace._id.toString()}`,
+            totalWorkspaceUsers: `${updatedWorkspace.memberUsers.length}`,
+            workspaceName: `${updatedWorkspace.name}`,
+        });
     }
 
     // If a User doesn't exist, create an invitation object
