@@ -66,8 +66,9 @@ export const getWorkspace = workspaceId => async dispatch => {
 }
 
 // /workspaces/delete/:id
-export const deleteWorkspace = (workspaceId) => async dispatch => {
-    
+export const deleteWorkspace = (formValues) => async dispatch => {
+    const { workspaceId } = formValues;
+
     if (!workspaceId) {
         throw new Error("deleteWorkspace: workspaceId not provided");
     }

@@ -12,6 +12,9 @@ import ReferenceInfo from '../reference_info/ReferenceInfo';
 import { CSSTransition } from 'react-transition-group';
 import RepositoryMenu from '../../../menus/RepositoryMenu';
 
+//history
+import history from '../../../../history';
+
 //loader
 import { Oval } from 'svg-loaders-react';
 
@@ -48,6 +51,23 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
+import 'prismjs/components/prism-csharp';
+import 'prismjs/components/prism-haskell';
+import 'prismjs/components/prism-ruby';
+import 'prismjs/components/prism-scala';
+import 'prismjs/components/prism-swift';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-lua';
+import 'prismjs/components/prism-objectivec';
+
+import 'prismjs/components/prism-go';
+import 'prismjs/components/prism-perl';
+import 'prismjs/components/prism-dart';
+import 'prismjs/components/prism-kotlin';
+import 'prismjs/components/prism-rust';
+import 'prismjs/components/prism-matlab';
+import 'prismjs/components/prism-r';
+import 'prismjs/components/prism-bash';
 
 Prism.languages.python = Prism.languages.extend('python', {})
 Prism.languages.javascript = Prism.languages.extend('javascript', {})
@@ -124,10 +144,31 @@ class ReferenceEditor extends Component {
         
         // adds an event listener for when the down key is pressed
         // so that a snippet can be activated
-        window.addEventListener('keydown', this.handleKeyDown, false);
+        //window.addEventListener('keydown', this.handleKeyDown, false);
        
         // saves all relevant data to local state
         this.setState({fileContents, allLinesJSX, loaded: true});
+
+        const lineNum = this.checkParam("line");
+        if (lineNum) {
+            const line = document.getElementById(`codeline-${lineNum}`);
+            scrollIntoView(line, {
+                block: 'center',
+                inline: 'center',
+                behavior: 'smooth'
+            })
+        }
+       
+    }
+
+    checkParam = (param) => {
+        let { search } = history.location;
+        let params = new URLSearchParams(search)
+        let check = params.get(param);
+        if ( check !== null && check !== undefined ){
+            return check
+        }
+        return null;
     }
 
     // translate annotation pane when a different snippet is activated
@@ -576,7 +617,7 @@ class ReferenceEditor extends Component {
                 selectedLine = pushCreation(this.renderCreateAnnotation());
             }
             annotationsJSX.push(
-                this.renderAnnotation(snippet, activatedSnippet.snippetId === snippet._id)
+                this.renderAnnotation(snippet, activatedSnippet.snippetId === snippet._id, activatedSnippet)
             );
         });
         
@@ -596,7 +637,9 @@ class ReferenceEditor extends Component {
     }
 
     // renders a single annotation card
-    renderAnnotation = (snippet, active) => {
+    renderAnnotation = (snippet, active, activatedSnippet) => {
+        const  { isActivated } = activatedSnippet;
+        const { deleteSnippet } = this.props;
         return (
             <div
                 ref = {(node) => {this.annotations[snippet._id] = node}}
@@ -604,12 +647,14 @@ class ReferenceEditor extends Component {
                 <Annotation 
                     key = {snippet._id}
                     active = {active}
+                    isActivated = {isActivated}
                     snippet = {snippet}
                     activateSnippet = {() => {
                         this.activateSnippet(this.lines[snippet.start], snippet._id, false, false, false);
                         window.addEventListener('mousedown', this.deactivateSnippetListener, false);
                     }}
                     deactivateSnippet = {this.deactivateSnippet}
+                    deleteSnippet = {deleteSnippet}
                 />
             </div>
         )

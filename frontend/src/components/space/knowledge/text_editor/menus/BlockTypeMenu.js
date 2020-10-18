@@ -6,7 +6,8 @@ import chroma from 'chroma-js';
 
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faParagraph,faCode, faQuoteLeft, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import {faCode, faQuoteLeft, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import { BiParagraph } from 'react-icons/bi';
 import { CSSTransition } from 'react-transition-group';
 
 
@@ -95,7 +96,7 @@ class BlockTypeMenu extends React.Component {
                     <BlockMenu  ref = {node => this.node = node}>
                         <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "paragraph")}}>
                             <IntoIcon>
-                                <FontAwesomeIcon icon={faParagraph}/>
+                                <BiParagraph/>
                             </IntoIcon>
                             <IntoText>
                                 Paragraph

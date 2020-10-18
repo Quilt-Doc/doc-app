@@ -5,9 +5,20 @@ import PropTypes from 'prop-types';
 import styled from "styled-components"
 import chroma from 'chroma-js';
 
-const Annotation = ({ snippet, activateSnippet, active }) => {
+//router
+import { withRouter } from 'react-router-dom';
+import { FiTrash } from 'react-icons/fi';
+
+const Annotation = (props) => {
     // need to set css depending on if active
+    const { snippet, activateSnippet, active, isActivated, deleteSnippet, match } = props;
+    const { workspaceId } = match.params;
     const { start, annotation, code } = snippet;
+
+    const deleteSnip = async ( ) => {
+        await deleteSnippet({workspaceId, snippetId: snippet._id});
+    }
+
     return (
         <AnnotationCard 
             active = {active}
@@ -19,6 +30,13 @@ const Annotation = ({ snippet, activateSnippet, active }) => {
             <Note>
                 {annotation}
             </Note>
+            {isActivated && 
+                <AnnotationToolbar>
+                    <IconBorder>
+                        <FiTrash onClick = {deleteSnip}/>
+                    </IconBorder>
+                   
+                </AnnotationToolbar>}
         </AnnotationCard>
     );
 }
@@ -31,7 +49,7 @@ Annotation.propTypes = {
 }
 
 
-export default Annotation;
+export default withRouter(Annotation);
 
 //Styled Components
 const IconBorder = styled.div`
@@ -41,6 +59,21 @@ const IconBorder = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0.7;
+    border-radius: 0.3rem;
+
+    &:hover {
+        background-color: #f7f9fb;
+        opacity: 1;
+    }
+`
+
+const AnnotationToolbar = styled.div`
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    height: 4rem;
+    font-size: 1.7rem;
 `
 
 const AnnotationCard = styled.div`

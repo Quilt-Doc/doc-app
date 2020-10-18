@@ -8,7 +8,6 @@ import { connect } from 'react-redux';
 
 //actions
 import { retrieveWorkspaces } from '../../../actions/Workspace_Actions';
-import { logout } from '../../../actions/Auth_Actions';
 
 //router
 import { Link } from 'react-router-dom';
@@ -95,11 +94,6 @@ class Workspaces extends Component {
         }
     }
 
-    userLogout = async () => {
-        await logout();
-        history.push(`/login`);
-    }
-
     render(){
         const {loaded} = this.state;
         return (
@@ -147,7 +141,7 @@ const AddButton = styled.div`
     align-items: center;
     justify-content: center;
     box-shadow:0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.3);
-    background-color: #1d1f26;
+    background-color: #23262e;
     font-size: 2.1rem;
     cursor: pointer;
     &:hover {

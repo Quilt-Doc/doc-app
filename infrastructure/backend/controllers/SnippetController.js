@@ -17,7 +17,7 @@ checkValid = (item) => {
 
 createSnippet = async (req, res) => {
     const { annotation, code, start, 
-        status, name, creatorId } = req.body;
+        status, name, creatorId, documentId } = req.body;
     
     const workspaceId = req.workspaceObj._id.toString();
     const referenceId = req.referenceObj._id.toString();
@@ -52,7 +52,7 @@ createSnippet = async (req, res) => {
     }
 
     // validation on essential values
-    if (!checkValid(annotation)) return res.json({success: false, error: "createSnippet error: snippet annotation not provided"});
+    if (!documentId && !checkValid(annotation)) return res.json({success: false, error: "createSnippet error: snippet annotation not provided"});
     if (!checkValid(code)) return res.json({success: false, error: "createSnippet error: snippet code not provided"});
     if (!checkValid(start)) return res.json({success: false, error: "createSnippet error: snippet start not provided"});
     if (!checkValid(status)) return res.json({success: false, error: "createSnippet error: snippet status not provided"});
@@ -73,7 +73,7 @@ createSnippet = async (req, res) => {
     );
 
     if (name) snippet.name = name;
-
+    if (documentId) snippet.document = ObjectId(documentId);
     // save the snippet to db
     try {
         snippet = await snippet.save();
@@ -82,6 +82,7 @@ createSnippet = async (req, res) => {
                                 message: err,
                                 errorDescription: `Error couldn't save Snippet - creatorId, workspaceId, referenceId, repositoryId: ${creatorId}, ${workspaceId}, ${referenceId}, ${repositoryId}`,
                                 function: 'createSnippet'});
+        console.log("ERROR", err);
         return res.json({success: false, error: "createSnippet error: new snippet could not be saved", trace: err});
     }
     
@@ -111,8 +112,9 @@ getSnippet = async (req, res) => {
     let returnedSnippet;
 
     try {
+        console.log("GET SNIPPET DATA", {_id: snippetId, workspace: workspaceId});
         returnedSnippet = await Snippet.findOne({_id: snippetId, workspace: workspaceId})
-            .populate({path: 'workspace reference'}).lean.exec();
+            .populate({path: 'workspace reference'}).lean().exec();
     } catch (err) {
         await logger.error({source: 'backend-api',
                                 message: err,

@@ -5,17 +5,19 @@ import styled from 'styled-components';
 import chroma from 'chroma-js';
 
 //icons
-import { FiPlus } from 'react-icons/fi';
+import { FiPlus, FiTrash } from 'react-icons/fi';
 
 //react-redux
 import { connect } from 'react-redux';
 
 //react-router
 import { withRouter } from 'react-router-dom';
+import history from '../../history';
 
 //actions
 import { editUser } from '../../actions/User_Actions';
 import { sendInvite } from '../../actions/Auth_Actions';
+import { deleteWorkspace } from '../../actions/Workspace_Actions';
 
 //email validation
 import * as EmailValidator from 'email-validator';
@@ -34,16 +36,10 @@ class UserSettings extends Component {
             alert("Invalid Email");
             return
         }
-        console.log('MEMBER USERS: ');
-        console.log(memberUsers);
+
 
         const emails = memberUsers.map(user => user.email);
 
-        console.log('MEMBER EMAILS: ');
-        console.log(emails);
-
-        console.log('TARGET EMAIL: ');
-        console.log(email);
         if (emails.includes(email)) {
             alert("User email already exists in workspace")
             return
@@ -76,6 +72,13 @@ class UserSettings extends Component {
 
         editUser(formValues);
         alert("User settings were successfully changed.");
+    }
+
+    deleteWorkspace = async () => {
+        const { deleteWorkspace, match } = this.props;
+        const { workspaceId } = match.params;
+        await deleteWorkspace({ workspaceId });
+        history.push('/workspaces');
     }
 
     render() {
@@ -132,6 +135,13 @@ class UserSettings extends Component {
                                                         )
                                                     })
                                                 }
+                                            </Field>
+                                            <Field>
+                                                <FieldName2>Delete Workspace</FieldName2>
+                                                <WorkspaceDeletionButton onClick = {this.deleteWorkspace}>
+                                                    <FiTrash style = {{color: "#ff4757", marginRight: "1rem", fontSize: "2rem"}}/>
+                                                    Delete Workspace Permanently
+                                                </WorkspaceDeletionButton>
                                             </Field>
                                         </Section>
                                     </DualSection>
@@ -214,10 +224,28 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export default withRouter(connect(mapStateToProps, {editUser, sendInvite})(UserSettings));
+export default withRouter(connect(mapStateToProps, {editUser, sendInvite, deleteWorkspace})(UserSettings));
+
+const WorkspaceDeletionButton = styled.div`
+    color: #172a4e;
+    font-size: 1.5rem;
+    height: 4rem;
+    padding: 0rem 1rem;
+    border: 1px solid #ff4757;
+    background-color: ${chroma('#ff4757').alpha(0.2)};
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    &:hover {
+        background-color: ${chroma('#ff4757').alpha(0.4)};
+    }
+
+`
 
 const Description = styled.div`
-    color: 172a4e;
+    color: #172a4e;
     font-size: 1.5rem;
     font-weight: 400;
     margin-bottom: 1.3rem;

@@ -15,6 +15,7 @@ import { faBars } from '@fortawesome/free-solid-svg-icons'
 //reactdnd
 import {ItemTypes} from './types/Drag_Types';
 import { useDrag, useDrop} from 'react-dnd'
+import SnippetEmbeddable from './element_units/SnippetEmbeddable';
 
 
 
@@ -99,12 +100,13 @@ const ElementWrapper = ({children, attributes, element}) => {
 	
 
 	return (
-		<>{getCorrectElement(borderTop, element, attributes, children)}</>
+		<>{getCorrectElement({borderTop, element, attributes, children})}</>
 	)
 }
 
-const getCorrectElement = (borderTop, element, attributes, children) => {
-	let type = element.type
+const getCorrectElement = props => {
+	const { borderTop, element: {type}, attributes, children } = props;
+	
 	switch (type) {
 		case 'heading-one':
 			return <H1 borderTop = {borderTop}  {...attributes}>{children}</H1>
@@ -120,17 +122,8 @@ const getCorrectElement = (borderTop, element, attributes, children) => {
 			return <CodeBlock borderTop = {borderTop} {...attributes}>{children}</CodeBlock>
 		case 'quote':
 			return <Quote {...attributes}>{children}</Quote>
-		case 'code-reference':
-			return (
-						<CodeReference  
-							color = {element.color} 
-							path = {element.path}
-							name = {element.name}
-							kind = {element.kind}
-							{...attributes}>{children}
-						</CodeReference>
-							
-					)
+		case 'reference-snippet':
+			return <SnippetEmbeddable {...props} />
 		default:
 			return <P borderTop = {borderTop}  {...attributes}>{children}</P>
 	}

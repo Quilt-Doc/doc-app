@@ -75,7 +75,8 @@ class SnippetMenu extends React.Component {
         document.removeEventListener('mousedown', this.handleClickOutside, false);
     }
 
-    handleSelect = (reference) => {
+    handleSelect = (e, reference) => {
+        e.preventDefault();
         this.removeListeners();
         this.setState({open: false, openedReference: reference});
     }
@@ -113,7 +114,8 @@ class SnippetMenu extends React.Component {
                 if (text === ""){
                    this.reset();
                 } else {
-                    let references = await searchReferences({workspaceId, userQuery: text,  repositoryId,  sort: "name",  limit: 9}, true);
+                    let references = await searchReferences({workspaceId, userQuery: text,  kinds: ['file'],
+                        repositoryId,  sort: "name",  limit: 9}, true);
                     this.setState({references, position: -1});
                 }
             }, 150)
@@ -126,7 +128,7 @@ class SnippetMenu extends React.Component {
         const { document: { repository: {_id} } } = this.props;
         
         let references = await retrieveReferences({workspaceId, 
-            limit: 9, repositoryId: _id,  sort: "name"}, true);
+            limit: 9, repositoryId: _id,  sort: "name", kinds: ['file'], filterRoot: true}, true);
         
         this.setState({references, position: -1, loaded: true});
     }
@@ -180,7 +182,7 @@ class SnippetMenu extends React.Component {
             let temp = i;
             jsx.push(            
                 <ListItem 
-                    onClick = {() => this.handleSelect(ref)} 
+                    onMouseDown = {(e) => this.handleSelect(e, ref)} 
                     onMouseEnter = {() => {this.setState({position: temp})}}
                     backgroundColor = {position === temp ? '#F4F4F6' : ""}
                  >
@@ -197,7 +199,7 @@ class SnippetMenu extends React.Component {
             let temp = i;
             jsx.push(
                 <ListItem 
-                    onClick = {() => this.handleSelect(ref)} 
+                    onMouseDown = {(e) => this.handleSelect(e, ref)} 
                     onMouseEnter = {() => {this.setState({position: temp})}}
                     backgroundColor = {position === temp ? '#F4F4F6' : ""}
                  >
@@ -240,8 +242,9 @@ class SnippetMenu extends React.Component {
 	}
 
     render() {
-        let { open, rect, documentModal, openedReference } = this.state;
-        
+        const { open, rect, documentModal, openedReference } = this.state;
+        const { editor } = this.props;
+
         if (rect) {
 			if (documentModal) {
 				let background = document.getElementById("documentModalBackground");
@@ -279,6 +282,7 @@ class SnippetMenu extends React.Component {
                     <DocumentReferenceEditor 
                         openedReference = {openedReference} 
                         undoModal = {this.turnSnippetMenuOff}
+                        editor = {editor}
                     />
                 }
             </>
