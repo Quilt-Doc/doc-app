@@ -99,11 +99,6 @@ class Workspaces extends Component {
         }
     }
 
-    userLogout = async () => {
-        await logout();
-        history.push(`/login`);
-    }
-
     uploadDocumentRequest = ({ file, name }) => {
         console.log('UPLOAD DOCUMENT REQUEST');
         let data = new FormData();
