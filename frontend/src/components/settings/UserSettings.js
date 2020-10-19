@@ -27,6 +27,7 @@ class UserSettings extends Component {
         super(props)
     }
 
+
     sendInvite = () => {
         const { memberUsers, sendInvite, match } = this.props;
         const { workspaceId } = match.params;
@@ -77,136 +78,148 @@ class UserSettings extends Component {
     deleteWorkspace = async () => {
         const { deleteWorkspace, match } = this.props;
         const { workspaceId } = match.params;
-        await deleteWorkspace({ workspaceId });
         history.push('/workspaces');
+        await deleteWorkspace({ workspaceId });
     }
 
     render() {
         const { workspace, user, memberUsers } = this.props;
-        let renderWorkspaceSettings = workspace.creator._id === user._id;
-        
-        return <Container>
-                    <Top>
-                        <Header>SETTINGS</Header>
-                    </Top>
-                    <SubContainer>
-                        <Content>
-                            { renderWorkspaceSettings && 
-                                <Block>
-                                    <SettingHeader>
-                                        Workspace Settings
-                                    </SettingHeader>
-                                    <DualSection>
-                                        <Section>
-                                            <Field>
 
-                                                <FieldName>Invite User By Email</FieldName>
-                                                {!user.verified && 
-                                                    <Description>
-                                                        You must verify your email before adding people to this workspace.
-                                                    </Description>
-                                                }
-                                                <InviteContainer active = {user.verified ? true : false}>
+
+        let renderWorkspaceSettings;
+        
+        if (workspace) {
+            renderWorkspaceSettings = workspace.creator._id === user._id;
+        }
+
+        return (
+            <>
+                { workspace && 
+                    <Container>
+                            <Top>
+                                <Header>SETTINGS</Header>
+                            </Top>
+                            <SubContainer>
+                                <Content>
+                                    { renderWorkspaceSettings && 
+                                        <Block>
+                                            <SettingHeader>
+                                                Workspace Settings
+                                            </SettingHeader>
+                                            <DualSection>
+                                                <Section>
+                                                    <Field>
+
+                                                        <FieldName>Invite User By Email</FieldName>
+                                                        {!user.verified && 
+                                                            <Description>
+                                                                You must verify your email before adding people to this workspace.
+                                                            </Description>
+                                                        }
+                                                        <InviteContainer active = {user.verified ? true : false}>
+                                                            <FieldInput 
+                                                                ref = {node => this.invite = node}>
+                                                            </FieldInput>
+                                                            <InviteButton 
+                                                                active = {user.verified ? true : false}
+                                                                onClick = {() => {
+                                                                    if (user.verified) {
+                                                                        this.sendInvite();
+                                                                    } else {
+                                                                        alert("Please verify your email before sending invites.");
+                                                                    }
+                                                                }}>
+                                                                <FiPlus/>
+                                                            </InviteButton>
+                                                        </InviteContainer>
+                                                    </Field>
+                                                    <Field>
+                                                        <FieldName2>Team</FieldName2>
+                                                        {
+                                                            memberUsers.map(memberUser => {
+                                                                return (
+                                                                    <MemberContainer>
+                                                                        <Creator>{memberUser.firstName.charAt(0)}</Creator>
+                                                                        <Name >{`${memberUser.firstName} ${memberUser.lastName}`}</Name>
+                                                                    </MemberContainer>
+                                                                )
+                                                            })
+                                                        }
+                                                    </Field>
+                                                    <Field>
+                                                        <FieldName2>Delete Workspace</FieldName2>
+                                                        <WorkspaceDeletionButton onClick = {this.deleteWorkspace}>
+                                                            <FiTrash style = {{color: "#ff4757", marginRight: "1rem", fontSize: "2rem"}}/>
+                                                            Delete Workspace Permanently
+                                                        </WorkspaceDeletionButton>
+                                                    </Field>
+                                                </Section>
+                                            </DualSection>
+                                        </Block>
+                                    }
+                                    <Block>
+                                        <SettingHeader>
+                                            User Settings
+                                        </SettingHeader>
+                                        <DualSection>
+                                            <Section>
+                                                <Field>
+                                                    <FieldName>First Name</FieldName>
                                                     <FieldInput 
-                                                        ref = {node => this.invite = node}>
-                                                    </FieldInput>
-                                                    <InviteButton 
-                                                        active = {user.verified ? true : false}
-                                                        onClick = {() => {
-                                                            if (user.verified) {
-                                                                this.sendInvite();
-                                                            } else {
-                                                                alert("Please verify your email before sending invites.");
-                                                            }
-                                                        }}>
-                                                        <FiPlus/>
-                                                    </InviteButton>
-                                                </InviteContainer>
-                                            </Field>
-                                            <Field>
-                                                <FieldName2>Team</FieldName2>
-                                                {
-                                                    memberUsers.map(memberUser => {
-                                                        return (
-                                                            <MemberContainer>
-                                                                <Creator>{memberUser.firstName.charAt(0)}</Creator>
-                                                                <Name >{`${memberUser.firstName} ${memberUser.lastName}`}</Name>
-                                                            </MemberContainer>
-                                                        )
-                                                    })
-                                                }
-                                            </Field>
-                                            <Field>
-                                                <FieldName2>Delete Workspace</FieldName2>
-                                                <WorkspaceDeletionButton onClick = {this.deleteWorkspace}>
-                                                    <FiTrash style = {{color: "#ff4757", marginRight: "1rem", fontSize: "2rem"}}/>
-                                                    Delete Workspace Permanently
-                                                </WorkspaceDeletionButton>
-                                            </Field>
-                                        </Section>
-                                    </DualSection>
-                                </Block>
-                            }
-                            <Block>
-                                <SettingHeader>
-                                    User Settings
-                                </SettingHeader>
-                                <DualSection>
-                                    <Section>
-                                        <Field>
-                                            <FieldName>First Name</FieldName>
-                                            <FieldInput 
-                                                defaultValue = {user.firstName}
-                                                ref = {node => this.firstName = node}
-                                            />
-                                        </Field>
-                                        <Field>
-                                            <FieldName>Last Name</FieldName>
-                                            <FieldInput
-                                                defaultValue = {user.lastName}
-                                                ref = {node => this.lastName = node}
-                                            />
-                                        </Field>
-                                        <Field>
-                                            <FieldName>Primary Email</FieldName>
-                                            <FieldInput
-                                                defaultValue = {user.email}
-                                                ref = {node => this.email = node}
-                                            />
-                                        </Field>
-                                        <Field>
-                                            <FieldName>Bio</FieldName>
-                                            <FieldTextArea
-                                                defaultValue = {user.bio}
-                                                ref = {node => this.bio = node}
-                                            />
-                                        </Field>
-                                        <Field>
-                                            <FieldName>Position</FieldName>
-                                            <FieldInput
-                                                defaultValue = {user.position}
-                                                 ref = {node => this.position = node}
-                                            />
-                                        </Field>
-                                        <Field>
-                                            <FieldName>Organization</FieldName>
-                                            <FieldInput
-                                                defaultValue = {user.organization}
-                                                ref = {node => this.org = node}
-                                            />
-                                        </Field>
-                                    </Section>
-                                </DualSection>
-                                <Bottom>
-                                    <SaveButton onClick = {() => this.saveUserSettings()}>
-                                        Save User Settings
-                                    </SaveButton>
-                                </Bottom>
-                            </Block>
-                           
-                        </Content>
-                    </SubContainer>
-                </Container>
+                                                        defaultValue = {user.firstName}
+                                                        ref = {node => this.firstName = node}
+                                                    />
+                                                </Field>
+                                                <Field>
+                                                    <FieldName>Last Name</FieldName>
+                                                    <FieldInput
+                                                        defaultValue = {user.lastName}
+                                                        ref = {node => this.lastName = node}
+                                                    />
+                                                </Field>
+                                                <Field>
+                                                    <FieldName>Primary Email</FieldName>
+                                                    <FieldInput
+                                                        defaultValue = {user.email}
+                                                        ref = {node => this.email = node}
+                                                    />
+                                                </Field>
+                                                <Field>
+                                                    <FieldName>Bio</FieldName>
+                                                    <FieldTextArea
+                                                        defaultValue = {user.bio}
+                                                        ref = {node => this.bio = node}
+                                                    />
+                                                </Field>
+                                                <Field>
+                                                    <FieldName>Position</FieldName>
+                                                    <FieldInput
+                                                        defaultValue = {user.position}
+                                                        ref = {node => this.position = node}
+                                                    />
+                                                </Field>
+                                                <Field>
+                                                    <FieldName>Organization</FieldName>
+                                                    <FieldInput
+                                                        defaultValue = {user.organization}
+                                                        ref = {node => this.org = node}
+                                                    />
+                                                </Field>
+                                            </Section>
+                                        </DualSection>
+                                        <Bottom>
+                                            <SaveButton onClick = {() => this.saveUserSettings()}>
+                                                Save User Settings
+                                            </SaveButton>
+                                        </Bottom>
+                                    </Block>
+                                
+                                </Content>
+                            </SubContainer>
+                        </Container>
+                }
+            </>
+        )
     }
 }
 
@@ -215,7 +228,10 @@ const mapStateToProps = (state, ownProps) => {
     const { workspaces, auth: {user}} = state;
     const { workspaceId } = ownProps.match.params;
     const workspace = workspaces[workspaceId]
-    const memberUsers = Object.values( workspace.memberUsers);
+
+    let memberUsers;
+
+    if (workspace) memberUsers = Object.values(workspace.memberUsers);
 
     return {
         user,
