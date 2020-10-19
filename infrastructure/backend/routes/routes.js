@@ -27,7 +27,6 @@ const authorizationMiddleware = require('../utils/authorization_middleware');
 const { createUserJWTToken } = require('../utils/jwt');
 
 
-
 router.param('workspaceId', paramMiddleware.workspaceIdParam);
 router.param('referenceId', paramMiddleware.referenceIdParam);
 router.param('documentId', paramMiddleware.documentIdParam);
@@ -344,25 +343,27 @@ router.get('/assets/snippet', assetController.getSnippetIcon);
 
 const notificationController = require('../controllers/reporting/NotificationController');
 router.post('/notifications/:userId/retrieve', authorizationMiddleware.notificationMiddleware, notificationController.retrieveNotifications);
+router.post('/notifications/:userId/set_hidden', authorizationMiddleware.notificationMiddleware, notificationController.setNotificationsHidden);
 
 
-/*
-    const pullRequestController = require('../controllers/unused/PullRequestController');
-    router.post('/pull_requests/:repositoryId/create', authorizationMiddleware.pullRequestMiddleware, pullRequestController.createPullRequest);
+const badgeController = require('../controllers/badges/BadgeController');
+router.get('/badges/status/', badgeController.getBadge);
 
 
-    //linkage routes
-    const linkageController = require('../controllers/LinkageController');
-    router.post('/linkages/:workspaceId/create', authorizationMiddleware.linkageMiddleware, linkageController.createLinkage);
-    router.get('/linkages/:workspaceId/get/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.getLinkage);
-    router.put('/linkages/:workspaceId/edit/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.editLinkage);
-    router.delete('/linkages/:workspaceId/delete/:linkageId', authorizationMiddleware.linkageMiddleware, linkageController.deleteLinkage);
-    router.post('/linkages/:workspaceId/retrieve', authorizationMiddleware.linkageMiddleware, linkageController.retrieveLinkages);
-    router.put('/linkages/:workspaceId/:linkageId/attach_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkageController.attachLinkageReference);
-    router.put('/linkages/:workspaceId/:linkageId/remove_reference/:referenceId', authorizationMiddleware.linkageMiddleware, linkageController.removeLinkageReference);
-    router.put('/linkages/:workspaceId/:linkageId/attach_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkageController.attachLinkageTag);
-    router.put('/linkages/:workspaceId/:linkageId/remove_tag/:tagId', authorizationMiddleware.linkageMiddleware, linkageController.removeLinkageTag);
-*/
+var multer = require('multer');
+
+// configuring the DiscStorage engine.
+const storage = multer.diskStorage({
+    destination : 'uploads/',
+    filename: function (req, file, cb) {
+      cb(null, file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
+
+const fileUploadController = require('../controllers/FileUploadController');
+router.post('/uploads/create_attachment', upload.single('attachment'), fileUploadController.postFile);
+router.get('/uploads/:fileName', fileUploadController.getFile);
 
 module.exports = router;
-

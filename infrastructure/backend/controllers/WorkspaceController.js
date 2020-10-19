@@ -62,83 +62,110 @@ createWorkspace = async (req, res) => {
     let output;
 
     var scanRepositoriesData = {};
+    try {
+        await session.withTransaction(async () => {
 
-    await session.withTransaction(async () => {
-    
-        let workspace = new Workspace({
-            name: name,
-            creator: ObjectId(creatorId),
-            memberUsers: [ObjectId(creatorId)],
-            setupComplete: false,
-            repositories: repositoryIds.map(repoId => ObjectId(repoId))
-        });
-
-        // save workspace
-        try {
-            workspace = await workspace.save({ session });
-        } catch (err) {
-            await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
-                                function: 'createWorkspace'});
-
-            output = { success: false, error: "createWorkspace error: save() on new workspace failed", trace: err };
-            throw Error(`error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
-        }
-
-        // Create UserStats object for creator
-        try {
-            await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString(), session});
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
-                                function: 'createWorkspace'});
-            output = {success: false, error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err};
-            throw Error(`error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`);
-        }
-
-        // Set all workspace Repositories 'currentlyScanning' to true
-        var workspaceRepositories;
-        try {
-            workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }}, { session });
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api', message: err,
-                                    errorDescription: `error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`,
+            // Verify that none of the repositories being added exist in any other Workspaces
+            var repositoryOverlapExists = false;
+            try {
+                repositoryOverlapExists = await Workspace.exists({repositories: { $in: repositoryIds.map(repoId => ObjectId(repoId)) }});
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    message: err,
+                                    errorDescription: `Error checking if Repositories existed in other Workspaces - repositoryIds: ${JSON.stringify(repositoryIds)}`,
                                     function: 'createWorkspace'});
-            output = {success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err};
-            throw Error(`error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`);
-        }
 
-        // Kick off Scan Repositories Job
-        scanRepositoriesData['installationId'] = installationId;
-        scanRepositoriesData['repositoryIdList'] = repositoryIds;
-        scanRepositoriesData['workspaceId'] = workspace._id.toString();
-        scanRepositoriesData['jobType'] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
+                output = { success: false, error: `Error checking if Repositories existed in other Workspaces`, trace: err };
+                throw Error(`Error checking if Repositories existed in other Workspaces`);
+            }
 
-        // Returning workspace
-        // populate workspace
-        try {
-            workspace = await Workspace.populate(workspace, {path: 'creator repositories memberUsers'});
-        } catch (err) {
-            await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
-                                function: 'createWorkspace'});
-            output = {success: false, error: "createWorkspace error: workspace population failed", trace: err};
-            throw Error(`error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
-        }
+            if (repositoryOverlapExists) {
 
-        //await logger.info({source: 'backend-api', });
+                output = {success: false,
+                            alert: "Repository in selection already is part of another Workspace",
+                            error: `Cannot attach Repositories to multiple Workspaces`};
+                throw Error(`Cannot attach Repositories to multiple Workspaces - repositoryIds: ${JSON.stringify(repositoryIds)}`);
+            }
+        
+            let workspace = new Workspace({
+                name: name,
+                creator: ObjectId(creatorId),
+                memberUsers: [ObjectId(creatorId)],
+                setupComplete: false,
+                repositories: repositoryIds.map(repoId => ObjectId(repoId))
+            });
 
-        // track an event with optional properties
-        mixpanel.track('Workspace Create', {
-            distinct_id: `${creatorId}`,
-            name: `${name}`,
-            repositoryNumber: `${repositoryIds.length}`,
+            // save workspace
+            try {
+                workspace = await workspace.save({ session });
+            } catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
+                                    function: 'createWorkspace'});
+
+                output = { success: false, error: "createWorkspace error: save() on new workspace failed", trace: err };
+                throw Error(`error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
+            }
+
+            // Create UserStats object for creator
+            try {
+                await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString(), session});
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
+                                    function: 'createWorkspace'});
+                output = {success: false, error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err};
+                throw Error(`error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`);
+            }
+
+            // Set all workspace Repositories 'currentlyScanning' to true
+            var workspaceRepositories;
+            try {
+                workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }}, { session });
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                        errorDescription: `error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`,
+                                        function: 'createWorkspace'});
+                output = {success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err};
+                throw Error(`error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`);
+            }
+
+            // Kick off Scan Repositories Job
+            scanRepositoriesData['installationId'] = installationId;
+            scanRepositoriesData['repositoryIdList'] = repositoryIds;
+            scanRepositoriesData['workspaceId'] = workspace._id.toString();
+            scanRepositoriesData['jobType'] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
+
+            // Returning workspace
+            // populate workspace
+            try {
+                workspace = await Workspace.populate(workspace, {path: 'creator repositories memberUsers'});
+            } catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`,
+                                    function: 'createWorkspace'});
+                output = {success: false, error: "createWorkspace error: workspace population failed", trace: err};
+                throw Error(`error populating workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
+            }
+
+            //await logger.info({source: 'backend-api', });
+
+            // track an event with optional properties
+            mixpanel.track('Workspace Create', {
+                distinct_id: `${creatorId}`,
+                name: `${name}`,
+                repositoryNumber: `${repositoryIds.length}`,
+            });
+
+            output = { success: true, result: workspace };
         });
-
-        output = { success: true, result: workspace };
-    });
+    }
+    catch (err) {
+        return res.json(output);
+    }
 
     session.endSession();
 
