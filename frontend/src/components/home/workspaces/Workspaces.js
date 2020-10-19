@@ -139,13 +139,6 @@ class Workspaces extends Component {
             file: file,
             name: 'attachment'
         });
-        
-    }
-
-    handleChange = (event) => {
-        console.log('NEW STATE: ');
-        console.log(event.target.files);
-        this.setState({files: event.target.files});
     }
 
     render(){
@@ -170,12 +163,6 @@ class Workspaces extends Component {
         )
     }
 }
-
-
-//<form onSubmit={this.handleFileUpload}  enctype="multipart/form-data">
-//                            <input type="file" id="file" name="file" multiple onChange={this.handleChange} /*onChange={this.handleFileUpload}*/ />
-//                            <input type="submit" value="Submit" />
-//                            </form>
 
 
 const mapStateToProps = (state) => {
