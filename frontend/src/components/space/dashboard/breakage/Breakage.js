@@ -43,11 +43,9 @@ class Breakage extends Component {
             let color = 0;
             memberUsers.map((user, i) => {
                 if (user._id === author._id) {
-                    console.log("MATCH");
                     color = i;
                 }
             })
-            console.log("COLOR", color);
             return <BreakageCard color = {color} doc = {doc}/>
         }
         );

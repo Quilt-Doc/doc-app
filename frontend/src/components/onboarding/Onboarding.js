@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 //actions
 import { editUser } from '../../actions/User_Actions'
+import { checkLogin, logOut } from '../../actions/Auth_Actions';
 
 //redux
 import { connect } from 'react-redux';
@@ -17,6 +18,7 @@ import * as EmailValidator from 'email-validator';
 
 //logo
 import logoSVG from '../../images/final_logo.svg';
+import { RiLogoutCircleLine } from 'react-icons/ri';
 
 class Onboarding extends React.Component {
     constructor(props){
@@ -41,6 +43,13 @@ class Onboarding extends React.Component {
         history.push('/workspaces')
     }
 
+    userLogout = async () => {
+        const { logOut, checkLogin } = this.props;
+        await logOut();
+        await checkLogin();
+        history.push('/login');
+    }
+
     render(){
         const { user } = this.props;
         let { search } = history.location;
@@ -54,6 +63,9 @@ class Onboarding extends React.Component {
                     <BrandName>
                         quilt
                     </BrandName>
+                    <LogoutButton onClick = {this.userLogout}>
+                        <RiLogoutCircleLine/>
+                    </LogoutButton>
                 </Top>
                 <Content>
                     <Header>
@@ -101,6 +113,23 @@ const mapStateToProps = (state) => {
 
 export default connect(mapStateToProps, { editUser })(Onboarding);
 
+
+const LogoutButton = styled.div`
+    background-color: #23262e;
+    height: 3.5rem;
+    width: 3.5rem;
+    border-radius: 0.3rem;
+    margin-left: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    &:hover {
+        box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    }
+`
 
 const BrandName = styled.div`
     font-size: 3.5rem;

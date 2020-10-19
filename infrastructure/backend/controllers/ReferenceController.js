@@ -75,7 +75,7 @@ getReference = async (req, res) => {
 /// new mapping of references in state
 retrieveReferences = async (req, res) => {
 
-    let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip, sort, onlyValid } = req.body;
+    let { kinds, path, referenceId, referenceIds, repositoryId, minimal, limit, skip, sort, onlyValid, filterRoot } = req.body;
     var validRepositoryIds = req.workspaceObj.repositories;
 
     let query = Reference.find();
@@ -85,6 +85,8 @@ retrieveReferences = async (req, res) => {
     if (checkValid(kinds)) query.where('kind').in(kinds);
     if (checkValid(path)) query.where('path').equals(path);
     if (checkValid(referenceIds)) query.where('_id').in(referenceIds);
+    if (checkValid(filterRoot) && filterRoot) query.where('root').equals(false); 
+
     if (onlyValid) {
         query.where('status').equals('valid');
     }
@@ -181,6 +183,7 @@ retrieveReferences = async (req, res) => {
             query2.where('status').equals('valid');
         }
 
+        if (checkValid(filterRoot) && filterRoot) query2.where('root').equals(false);
         query2.where('_id').nin(referenceIds);
         query2.limit(limit - returnedReferences.length);
         minimal === true ? query2.select(minSelectionString) : query2.populate({path: populationString});
@@ -383,7 +386,7 @@ removeReferenceTag = async (req, res) => {
 
 
 searchReferences = async (req, res) => {
-    const { userQuery, repositoryId, tagIds, referenceIds,
+    const { userQuery, repositoryId, tagIds, referenceIds, kinds,
       minimalReferences, skip, limit, sort } = req.body;
       
     var { onlyValid } = req.body;
@@ -417,10 +420,11 @@ searchReferences = async (req, res) => {
         console.log('matching only valid');
         referenceAggregate.match({status: 'valid'});
     }
-/*
+
     // Don't retrieve Root reference
     referenceAggregate.match({root: false});
-    */
+    
+    if (checkValid(kinds)) referenceAggregate.match({ kind: { $in: kinds } });
 
     if (checkValid(tagIds)) referenceAggregate.match({
         tags: { $in: tagIds.map((tagId) => ObjectId(tagId)) }

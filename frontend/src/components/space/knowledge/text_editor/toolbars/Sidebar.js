@@ -9,7 +9,8 @@ import { CSSTransition } from 'react-transition-group';
 
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faParagraph,faCode,faTrash, faQuoteLeft, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import { faCode,faTrash, faQuoteLeft, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import { BiParagraph } from 'react-icons/bi';
 
 const Sidebar = (props) => {
     let editor = useSlate()
@@ -107,7 +108,7 @@ class ToolIcon extends React.Component {
                     return <FontAwesomeIcon icon={faCode}/>
                 
                 default:
-                    return  <FontAwesomeIcon icon={faParagraph}/>
+                    return  <BiParagraph/>
             }
         }
         return null
@@ -200,7 +201,7 @@ class ToolIcon extends React.Component {
                     
                     <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "paragraph")}}>
                         <IntoIcon>
-                            <FontAwesomeIcon icon={faParagraph}/>
+                            <BiParagraph/>
                         </IntoIcon>
                         <IntoText>
                             Paragraph
@@ -365,8 +366,8 @@ const BlockTool = styled.div`
 	display: flex;
     align-items: center;
     
-	border-right: 2px solid ${chroma('#19e5be').alpha(0.4)};
-	padding: 0.4rem 1rem;
+	border-right: 1px solid #6762df;
+	padding: 0.4rem 0.8rem;
     transform: translateY(${props => props.top}px);
     z-index: 1;
     

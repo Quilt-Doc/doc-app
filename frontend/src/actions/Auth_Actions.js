@@ -6,7 +6,7 @@ import {
 
 import { api, apiEndpoint } from '../apis/api';
 import Cookies from 'js-cookie';
- 
+
 
 export const checkLogin = () => async (dispatch) => {
     console.log('User-JWT Cookie: ');
@@ -63,9 +63,9 @@ export const sendInvite = (formValues) => async (dispatch) => {
     }
 }
 
-export const logout = async () => {
-
-    const logoutResponse = await api.get(`/auth/logout`);
+export const logOut = () => async () => {
+    console.log("ENTERED HERE");
+    await api.get(`/auth/logout`);
+    console.log("LOGGING OUT");
     return true;
-
 }

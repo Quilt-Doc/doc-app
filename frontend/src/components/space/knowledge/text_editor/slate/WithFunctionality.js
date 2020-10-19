@@ -12,12 +12,13 @@ const withFunctionality = (editor, dispatch) => {
 	
 
 	editor.isVoid = element => {
-		return element.type === 'code-reference' ? true : isVoid(element)
+		const voidCheck = ( element.type === 'code-reference' || element.type === 'reference-snippet' );
+		return voidCheck ? true : isVoid(element)
 	}
 
 	editor.insertBlock = (attributes, range) => {
 		let text = Array.from(Node.texts(editor, {from: range.anchor.path, to: range.anchor.path}))[0][0].text
-		
+
 		const isList = LIST_TYPES.includes(attributes.type)
 		const isCode = CODE_TYPES.includes(attributes.type)
 

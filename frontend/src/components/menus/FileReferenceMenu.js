@@ -88,7 +88,7 @@ class FileReferenceMenu extends React.Component {
         let setIds = setReferences.map(ref => ref._id);
         
         let references = await retrieveReferences({workspaceId, 
-            limit: 9, referenceIds: setIds, repositoryId: _id,  sort: "-name"}, true);
+            limit: 9, referenceIds: setIds, repositoryId: _id,  sort: "-name", filterRoot: true}, true);
         
         this.setState({references, position: -1, loaded: true, search: ""});
     }

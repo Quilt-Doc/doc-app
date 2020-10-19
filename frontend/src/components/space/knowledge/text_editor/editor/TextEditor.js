@@ -83,6 +83,11 @@ const TextEditor = (props) => {
 	  ],
 	},
 	{
+		type: 'reference-snippet',
+		snippetId: "5f8bc833ce3d02953a22a7ca",
+		children: [{ text: '' }],
+	},
+	{
 	  children: [
 		{ text: 'Try it out yourself! Just ' },
 		{ text: 'select any piece of text and the menu will appear', bold: true },
@@ -128,7 +133,7 @@ const TextEditor = (props) => {
 	/*<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>*/
 
 	let range = { anchor: state.anchor, focus: state.focus }
-
+	
 	useEffect(() => {
         if (editor.selection) {
             //let path = [selection.anchor.path[0]]
@@ -163,6 +168,9 @@ const TextEditor = (props) => {
 	, [editor.selection])
 	
 	updateMarkupType(state, dispatch, range, blocktypes, editor)
+
+	console.log("VALUE", value);
+
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Slate editor={editor} value={value} onChange={setValue}>
@@ -243,7 +251,7 @@ const TextEditor = (props) => {
 											}
 										}}
 										id = {"editorSlate"}
-										paddingLeft = {write ? "3rem" : "10rem"}
+										paddingLeft = {write ? 3 : 10}
 										cursortype = {write}
 										onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
 										renderElement={renderElement}
@@ -285,6 +293,7 @@ const EditorContainer2 = styled.div`
 const EditorContainer = styled.div`
 	display: flex;
 	width: 94rem;
+
 	margin-top: ${props => props.documentModal ? "" : "1.5rem"};
 	background-color: white;
 	/*box-shadow: ${props => props.documentModal ? "": "0 1px 2px rgba(0, 0, 0, 0.2)"};*/
@@ -326,15 +335,14 @@ const Header = styled(TextareaAutosize)`
 `
 
 const StyledEditable = styled(Editable)`
-  line-height: 1.5 !important;
-  caret-color: #172A4E;
-  color: #172A4E;
-  font-size: 16px;
-  resize: none !important;
-  padding-bottom: 7rem;
-  min-height: 75rem;
-  cursor: ${props => props.cursortype ? "text" : "default"};
-  padding-left: ${props => props.paddingLeft};
-  padding-right: 10rem;
-  
+	line-height: 1.5 !important;
+	caret-color: #172A4E;
+	color: #172A4E;
+	font-size: 16px;
+	resize: none !important;
+	padding-bottom: 7rem;
+	min-height: 75rem;
+	cursor: ${props => props.cursortype ? "text" : "default"};
+	padding-left: ${props => `${props.paddingLeft}rem`};
+	padding-right: 10rem;
 `	

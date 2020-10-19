@@ -84,15 +84,31 @@ class DocumentOptionsMenu extends React.Component {
     }
 
     deleteDoc = () => {
-        const {  deleteDocument, document: {_id}, match } = this.props;
+        const {  deleteDocument, document: { _id }, match } = this.props;
         let { workspaceId } = match.params;
         history.push(`/workspaces/${workspaceId}/document`);
         deleteDocument({documentId: _id, workspaceId});
     }
 
 
+
+    selectColor = () => {
+        const { workspace: {memberUsers}, document: { author } } = this.props;
+
+        let index = 0;
+        memberUsers.map((user, i) => { if (user._id === author._id) index = i; })
+
+        let colors = ['#5352ed',  '#e84393', '#20bf6b', '#1e3799', '#b71540', '#079992', '#ff4757', '#1e90ff', '#ff6348'];
+
+        return index < colors.length ? colors[index] : 
+            colors[index - Math.floor(index/colors.length) * colors.length];
+    }
+
+
+
     render() {
-        let {open, left, top} = this.state;
+        let { open, left, top } = this.state;
+        const { document: { author: { firstName, lastName } } } = this.props;
         return (
             <Container>
 
@@ -122,13 +138,15 @@ class DocumentOptionsMenu extends React.Component {
                             Delete Document
                         </SmallHeaderContainer>
                         <AuthorNote>
-                            <AuthorIcon>F</AuthorIcon>
+                            <Creator color = {this.selectColor()} > 
+                                {firstName.charAt(0)}
+                            </Creator>
                             <Description>
                                 <DateComp>
                                     {this.getDateItem()}
                                 </DateComp>
                                 <Author>
-                                    by Faraz Sanal
+                                    {`by ${firstName} ${lastName}`}
                                 </Author>
                             </Description>
                             {/*
@@ -147,13 +165,35 @@ class DocumentOptionsMenu extends React.Component {
     }
 }
 
-const mapStateToProps = () => {
+const mapStateToProps = (state, ownProps) => {
+    const { workspaces } = state;
+    const { workspaceId } = ownProps.match.params;
+
     return (
-        {}
+        {
+            workspace: workspaces[workspaceId]
+        }
     )
 }
 
 export default withRouter(connect(mapStateToProps, {deleteDocument})(DocumentOptionsMenu))
+
+
+const Creator = styled.div`
+    height: 2.5rem;
+    width: 2.5rem;
+    /*
+    background-color: ${chroma('#1e90ff').alpha(0.2)};
+    color:#1e90ff;*/
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.3rem;
+    font-size: 1.4rem;
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    color: ${props => props.color};
+    margin-right: 1rem;
+`
 
 const Container = styled.div`
 
@@ -162,16 +202,16 @@ const Container = styled.div`
 const Description = styled.div`
     display: flex;
     flex-direction: column;
-    opacity: 0.5;
+    opacity: 0.7;
 `
 
 const DateComp = styled.div`
-    font-size: 1.05rem;
-    margin-bottom: 0.2rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
 `
 
 const Author = styled.div`
-    font-size: 1.05rem;
+    font-size: 1.1rem;
 `
 
 const AuthorIcon = styled.div`

@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
 
+//slate
+import { Node } from 'slate'
+
 //actions
 import { getRepositoryFile } from '../../../../../../actions/Repository_Actions';
+import { createSnippet } from '../../../../../../actions/Snippet_Actions';
 
 //styles
 import styled from 'styled-components';
@@ -18,6 +22,9 @@ import { Oval } from 'svg-loaders-react';
 //react-redux
 import { connect } from 'react-redux';
 
+//utility
+import Selection from '@simonwep/selection-js';
+
 //prism
 import Prism from 'prismjs';
 
@@ -28,7 +35,7 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
-import { RiAddLine } from 'react-icons/ri';
+import { RiAddLine, RiScissorsLine } from 'react-icons/ri';
 
 Prism.languages.python = Prism.languages.extend('python', {})
 Prism.languages.javascript = Prism.languages.extend('javascript', {})
@@ -43,6 +50,8 @@ class DocumentReferenceEditor extends Component {
             allLinesJSX: null,
             loaded: false
         }
+
+        this.selectionIdentifier = 'selected-code';
     }
 
     componentDidMount = async () => {
@@ -62,12 +71,57 @@ class DocumentReferenceEditor extends Component {
         const allLinesJSX = this.renderLines(fileContents);
 
         // create selection object for selecting lines and creating snippets
-        //this.selection = this.createSelection();
+        this.selection = this.createSelection();
        
         // saves all relevant data to local state
         this.setState({fileContents, allLinesJSX, loaded: true});
     }
 
+     // creates the selection object that allows for selecting/creating snippets
+     createSelection = () => {
+        const selection = new Selection({
+            // Class for the selection-area
+            class: 'selection',
+            // All elements in this container can be selected
+            selectables: ['.codeline'],
+            // The container is also the boundary in this case
+            boundaries: ['.codetext'],
+
+        });
+
+        const selectionIdentifier = this.selectionIdentifier;
+
+        selection.on('start', ({inst, selected, oe, changed}) => {
+            // clear the selection before starting a new selection
+            
+            selected.map(item => item.classList.remove(selectionIdentifier));
+            inst.clearSelection();
+            //if (!this.state.selectionStart) this.setState({selectionStart: true});
+        }).on('move', ({inst, changed: {removed, added}}) => {
+           
+           
+            // on selection change, modify the added/removed appropriately
+            /*
+            this.selectedItems.map(item => {
+                if (removed.includes(item)){
+                    console.log("BRUBUA");
+                }
+            })*/
+            //this.selectedItems = [...this.selectedItems, ...added];
+            //this.selectedItems = this.selectedItems.filter(item => removed.includes(item));
+            removed.map(item => item.classList.remove(selectionIdentifier));
+            added.map(item => item.classList.add(selectionIdentifier));
+
+            //inst.keepSelection(); 
+        }).on('stop', ({inst}) => {
+            inst.keepSelection();
+            // The last event can be used to call functions like keepSelection() in case the user wants
+            // to select multiple elements.
+        });
+
+        return selection;
+    }
+   
 
     renderLines = (fileContents) => {
 
@@ -166,13 +220,62 @@ class DocumentReferenceEditor extends Component {
             </WrapContainer>
         )
     }
+
+    /*
+    deselectLines = () => {
+        let selectedLines = this.selection.getSelection()
+        selectedLines.map(line => line.classList.remove(this.selectionIdentifier));
+        this.selection.clearSelection();
+        //this.selection.clearSelection();
+    }*/
+
+    createSnippet = async (e) => {
+        e.preventDefault();
+
+        const { fileContents } = this.state;
+        const { createSnippet, undoModal, match, openedReference, user, editor } = this.props;
+        const { documentId, workspaceId } = match.params;
+
+        let selectedLines = this.selection.getSelection();
+        let start = null;
+        selectedLines.map(line => {
+                let num = parseInt(line.id.split('-')[1]);
+                if (start == null || num < start) start = num;
+            }
+        );
+
+        let length = selectedLines.length;
+
+        // extract the code associated with the selection 
+        let code = fileContents.split("\n").slice(start, start + length);
+
+        // create the snippet
+        const snippet = await createSnippet({
+            start, 
+            code,  
+            repositoryId: openedReference.repository._id,
+            workspaceId, 
+            referenceId: openedReference._id, 
+            documentId,
+            status: "VALID", 
+            creatorId: user._id 
+        }, true);
+
+        console.log(snippet);
+        //editor.insertBlock()
+        editor.insertBlock({type: "reference-snippet", snippetId: snippet._id}, editor.selection);
+
+        undoModal();
+
+    }
     
     renderToolbar = () => {
         const { openedReference: { name }} = this.props;
         return (
             <Toolbar>
                 <ReferenceName>{name}</ReferenceName>
-                <EmbedButton>
+                <EmbedButton onMouseDown = {this.createSnippet}>
+                    <RiScissorsLine style = {{marginRight: "1rem"}} />
                     <EmbedText>Embed Snippet</EmbedText>
                 </EmbedButton>
             </Toolbar>
@@ -196,6 +299,7 @@ class DocumentReferenceEditor extends Component {
                 <CodeText 
                     id = {'codeholder'} 
                     className = {'codetext marker-mode'}
+                    onMouseDown = {(e) => e.preventDefault()}
                 > 
                     {codeJSX} 
                 </CodeText>
@@ -215,14 +319,18 @@ class DocumentReferenceEditor extends Component {
         const { loaded } = this.state;
         const { undoModal } = this.props;
         return (
-            <ModalBackground onClick = {() => {undoModal()}}>
-                <CSSTransition
+            <ModalBackground 
+                onMouseDown = {(e) => e.preventDefault()}
+                onClick = {(e) => {e.preventDefault(); undoModal()}}>
+                < CSSTransition
                     in={true}
                     appear = {true}
                     timeout={300}
                     classNames="modal"
                 >   
-                    <ModalContent onClick = {(e) => {e.stopPropagation()}}>
+                    <ModalContent 
+                        onMouseDown = {(e) => e.preventDefault()}
+                        onClick = {(e) => { e.stopPropagation(); }}>
                         { loaded ? this.renderCode() : this.renderLoader() }
                     </ModalContent>
                 </CSSTransition>
@@ -232,26 +340,27 @@ class DocumentReferenceEditor extends Component {
 }
 
 const mapStateToProps = (state) => {
-    const { documents } = state;
+    const { documents, auth: {user} } = state;
 
     return {
-        documents
+        documents,
+        user
     }
 }
-export default withRouter(connect(mapStateToProps, { getRepositoryFile })(DocumentReferenceEditor));
+export default withRouter(connect(mapStateToProps, { getRepositoryFile, createSnippet })(DocumentReferenceEditor));
 
 
 //Styled Components
 const Toolbar = styled.div`
     align-items: center;
-    background-color: white;
-    border-radius: 0.4rem 0.4rem 0rem 0rem !important;
+    background-color:#2e313e;
+    color: white;
+    border-radius: 0.3rem 0.3rem 0rem 0rem !important;
     font-size: 1.5rem;
     height: 5rem;
     display: flex;
     font-weight: 500;
     align-items: center;
-    border-bottom: 1px solid #EDEFF1;
     padding: 0rem 2rem;
     position: sticky; 
     top: 0;
@@ -260,7 +369,6 @@ const Toolbar = styled.div`
 
 const ReferenceName = styled.div`
     font-size: 1.6rem;
-    color: #172A4E;
     font-weight: 500;
 `
 
@@ -270,15 +378,19 @@ const EmbedButton = styled.div`
     padding: 0rem 1.5rem;
     font-size: 1.8rem;
     border-radius: 0.5rem;
-    border: 1px solid #E0E4E7;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     display: flex;
     align-items: center;
+    background-color: #383d4c;
+    color: white;
+    &:hover {
+        border: 1px solid #6762df;
+    }
 `
 
 const EmbedText = styled.div`
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 500;
 `
 
@@ -326,7 +438,7 @@ const CodeLine = styled.div`
 	font-size: 1.3rem;
     margin: 0;
     padding: 0.1rem !important;
-    background-color: inherit !important;
+    /*background-color: inherit !important;*/
     padding-left: 1.6rem !important;
     white-space: pre-wrap !important;
 `
@@ -336,6 +448,7 @@ const CodeText = styled.div`
     width: 100%;
     flex-direction: column;
     padding: 1.5rem;
+    padding-right: 3rem;
     font-family: 'Roboto Mono', monospace !important;
 `
 
@@ -345,6 +458,7 @@ const Wrapper = styled.div`
     position: relative;
     z-index: 0;
     width: 100%;
+    margin-left: 1rem;
 `
 
 const ColoredSpan = styled.span`

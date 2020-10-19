@@ -6,10 +6,27 @@ import Workspaces from './workspaces/Workspaces';
 //styles
 import styled from 'styled-components';
 
+//router
+import history from '../../history';
+
+//actions
+import { logOut, checkLogin } from '../../actions/Auth_Actions';
+
+//react-redux
+import { connect } from 'react-redux';
 //icons
 import logoSVG from '../../images/final_logo.svg';
+import { RiLogoutCircleLine } from 'react-icons/ri';
 
-const Home = () => {
+
+const Home = ({logOut, checkLogin}) => {
+
+    const userLogout = async () => {
+        await logOut();
+        await checkLogin();
+        history.push('/login');
+    }
+
     return (
         <Container>
             <Top>
@@ -17,13 +34,38 @@ const Home = () => {
                 <BrandName>
                     quilt
                 </BrandName>
+                <LogoutButton onClick = {() => {userLogout()}}>
+                    <RiLogoutCircleLine/>
+                </LogoutButton>
             </Top>
             <Workspaces/>
         </Container>
-        )
+    )
 }
 
-export default Home;
+const mapStateToProps = () => {
+    return {}
+}
+
+export default connect(mapStateToProps, {logOut, checkLogin})(Home);
+
+const LogoutButton = styled.div`
+    background-color: #23262e;
+    height: 3.5rem;
+    width: 3.5rem;
+    border-radius: 0.3rem;
+    margin-left: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    &:hover {
+        box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    }
+`
+
 
 const BrandName = styled.div`
     font-size: 3.5rem;

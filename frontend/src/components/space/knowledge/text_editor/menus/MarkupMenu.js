@@ -12,7 +12,8 @@ import { CSSTransition } from 'react-transition-group';
 
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faParagraph,faCode, faCheckSquare, faCube, faCut, faPlus ,faTrash, faQuoteLeft, faBold, faTable, faImage,  faRemoveFormat, faLink,  faItalic, faUnderline, faStrikethrough, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import { faCode, faCheckSquare, faCube, faCut, faPlus ,faTrash, faQuoteLeft, faBold, faTable, faImage,  faRemoveFormat, faLink,  faItalic, faUnderline, faStrikethrough, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
+import { BiParagraph } from 'react-icons/bi';
 
 //lodash
 import _ from 'lodash'
@@ -151,7 +152,7 @@ const MarkupMenu = (props) => {
 			case "image":
 				return <FontAwesomeIcon icon={faImage}/>
 			default:
-				return  <FontAwesomeIcon icon={faParagraph}/>
+				return  <BiParagraph/>
 		}	
 	}
 	

@@ -9,7 +9,7 @@ import {
 import { api } from '../apis/api';
 
 // DONE
-export const createSnippet = (formValues) => async (dispatch) => {
+export const createSnippet = (formValues, passback) => async (dispatch) => {
     console.log('Creating snippet with values: ');
     console.log(formValues);
 
@@ -26,11 +26,11 @@ export const createSnippet = (formValues) => async (dispatch) => {
     const response = await api.post(`/snippets/${workspaceId}/${referenceId}/create`, formValues );
 
     if (response.data.success == false) {
-        console.log(response.data.error.toString());
         throw new Error(response.data.error.toString());
     }
     else {
         dispatch({ type: CREATE_SNIPPET, payload: response.data.result });
+        if (passback) return response.data.result;
     }
 }
 
