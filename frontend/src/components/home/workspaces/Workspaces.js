@@ -149,8 +149,6 @@ class Workspaces extends Component {
                     <SpaceContainer>
                         {loaded && this.renderSpaces()}
                     </SpaceContainer>
-
-
                             <input type="file" id="file" name="file" multiple /*onChange={this.handleChange}*/ onChange={this.handleFileUpload} />
                 </Content>
             </ContentContainer>

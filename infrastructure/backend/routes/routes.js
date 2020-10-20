@@ -267,22 +267,16 @@ router.get('/auth/github/redirect', passport.authenticate("github", {session: fa
     
     const { state } = req.query;
 
-    console.log(`${JSON.stringify(JSON.parse(Buffer.from(state, 'base64').toString()))}`);
-
-    const { email, source } = JSON.parse(Buffer.from(state, 'base64').toString());
-
-    // return res.redirect('http://localhost:3001/api/testRoute');
-
-    /*
-    if (source == 'localhost') {
-        return res.redirect('http://localhost:3001/api/auth/github/redirect');
-    }
-    */
-
-    if (req.query.state === "installing") {
+    if (state === "installing") {
         return res.redirect(INSTALLED_URL);
-    } else {
+    }
+
+    if (req.query.state != 'installing') {
         if (!req.user.onboarded) {
+            console.log(`${JSON.stringify(JSON.parse(Buffer.from(state, 'base64').toString()))}`);
+
+            const { email, source } = JSON.parse(Buffer.from(state, 'base64').toString());
+        
             try {
                 if (typeof email === 'string') {
                     return res.redirect(`${ONBOARD_URL}?email=${email}`);
