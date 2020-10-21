@@ -23,7 +23,12 @@ createUserStats = async (params) => {
     );
 
     try {
-        userStats = await userStats.save({ session });
+        if (session) {
+            userStats = await userStats.save({ session });
+        }
+        else {
+            userStats = await userStats.save();
+        }
     }
     catch (err) {
         logger.error({source: 'backend-api', message: err,

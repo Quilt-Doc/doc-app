@@ -142,6 +142,21 @@ verifyEmail = async (req, res) => {
             error: `verifyEmail Error: workspace update did not work`, trace: err });
     }
 
+    // Update User's workspaces arrays
+    try {
+        userWithEmail = await User.findByIdAndUpdate(verifiedUserId, { $push: { workspaces: workspaceIds.map(id => ObjectId(id))} }).lean();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error updating User workspaces array - userId, workspaceIds: ${verifiedUserId.toString()} ${JSON.stringify(workspaceIds)}`,
+                            function: 'verifyEmail'});
+
+        return res.json({success: false,
+                        error: `Error updating User workspaces array - userId, workspaceIds: ${verifiedUserId.toString()} ${JSON.stringify(workspaceIds)}`,
+                        trace: err});
+    }
+
 
     // Create 'added_workspace' Notification
     var notificationData = workspaceIds.map(id => {
@@ -153,16 +168,16 @@ verifyEmail = async (req, res) => {
     });
 
     try {
-        await NotificationController.createAddedNotification(notificationData);
+        await NotificationController.createAddedNotifications(notificationData);
     }
     catch (err) {
         await logger.error({source: 'backend-api',
                             error: err,
-                            errorDescription: `Error createAddedNotification failed - verifiedUserId, workspaceId: ${verifiedUserId.toString()}, ${workspaceId}`,
+                            errorDescription: `Error createAddedNotifications failed - verifiedUserId, workspaceId: ${verifiedUserId.toString()}, ${workspaceId}`,
                             function: 'verifyEmail'});
 
         return res.json({ success: false, 
-                            error: `Error createAddedNotification failed`,
+                            error: `Error createAddedNotifications failed`,
                             trace: err });
     }
 

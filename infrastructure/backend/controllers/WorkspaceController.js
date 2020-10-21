@@ -108,6 +108,20 @@ createWorkspace = async (req, res) => {
                 throw Error(`error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
             }
 
+            // Update User.workspaces array
+            var user;
+            try {
+                user = await User.findByIdAndUpdate(creatorId, { $push: { workspaces: ObjectId(workspace._id.toString())} }).lean();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api', message: err,
+                                    errorDescription: `Error updating User workspaces array - creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
+                                    function: 'createWorkspace'});
+
+                output = {success: false, error: `Error updating User workspaces array - creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err};
+                throw Error(`Error updating User workspaces array - creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`);
+            }
+
             // Create UserStats object for creator
             try {
                 await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString(), session});
@@ -431,7 +445,7 @@ deleteWorkspace = async (req, res) => {
     // return res.json({success: true, result: deletedWorkspace});
 }
 
-
+/*
 // Put request
 // Population only on returns
 addWorkspaceUser = async (req, res) => {
@@ -462,6 +476,7 @@ addWorkspaceUser = async (req, res) => {
 
     return res.json({success: true, result: returnedWorkspace});
 }
+*/
 
 removeWorkspaceUser = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
@@ -481,6 +496,22 @@ removeWorkspaceUser = async (req, res) => {
                             function: "removeWorkspaceUser"});
 
         return res.json({success: false, error: "removeWorkspaceUser error: workspace findByIdAndUpdate query failed", trace: err});
+    }
+
+    // Remove from workspaces array on User
+    var user;
+    try {
+        user = await User.findByIdAndUpdate(userId.toString(), { $pull: { workspaces: ObjectId(workspaceId.toString())} }).lean();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error updating User workspaces array - userId, workspaceId: ${userId.toString()} ${workspaceId.toString()}`,
+                            function: 'removeWorkspaceUser'});
+
+        return res.json({success: false,
+                        error: `Error updating User workspaces array - userId, workspaceId: ${userId.toString()} ${workspaceId.toString()}`,
+                        trace: err});
     }
 
     // Create 'removed_workspace' Notification
@@ -806,4 +837,4 @@ searchWorkspace = async (req, res) => {
 }
 
 module.exports = {createWorkspace, searchWorkspace, getWorkspace, 
-    deleteWorkspace, addWorkspaceUser, removeWorkspaceUser, retrieveWorkspaces}
+    deleteWorkspace, removeWorkspaceUser, retrieveWorkspaces}

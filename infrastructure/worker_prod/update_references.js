@@ -377,6 +377,8 @@ const runUpdateProcedure = async () => {
 
     var backendClient = apis.requestBackendClient();
 
+    var checkCreateData = {};
+
 
     await worker.send({action: 'log', info: {level: 'debug', message: `cloneUrl: ${process.env.cloneUrl}`,
                                         source: 'worker-instance', function: 'runUpdateProcedure'}});
@@ -386,435 +388,445 @@ const runUpdateProcedure = async () => {
 
     var transactionAborted = false;
     var transactionError = {message: ''};
+    try {
+        await session.withTransaction(async () => {
 
-    await session.withTransaction(async () => {
-
-        var repoObj;
-
-        try {
-            repoObj = await getRepositoryObject(process.env.installationId, process.env.fullName, worker);
-        }
-        catch(err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                        errorDescription: `Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`,
-                                                        source: 'worker-instance', function: 'runUpdateProcedure'}})
-            transactionAborted = true;
-            transactionError.message = `Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`;
-
-            throw new Error(`Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`);
-        }
-
-        var repoId = repoObj._id;
-        var repoCommit = repoObj.lastProcessedCommit;
-    
-        var headCommit = process.env.headCommit;
-
-
-        await worker.send({action: 'log', info: {level: 'info', message: `Using repoCommit..headCommit: ${repoCommit}..${headCommit}`,
-                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-
-        // Clone the Repository
-        var timestamp = Date.now().toString();
-        var repoDiskPath = 'git_repos/' + timestamp +'/';
-
-        var installToken;
-        try {
-            installToken = await tokenUtils.getInstallToken(process.env.installationId, worker, session);
-        }
-        catch (err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                        errorDescription: `Error fetching Install Token for installationId: ${process.env.installationId}`,
-                                                        source: 'worker-instance', function: 'runUpdateProcedure'}});
-            
-            transactionAborted = true;
-            transactionError.message = `Error fetching Install Token for installationId: ${process.env.installationId}`
-            
-            throw new Error(`Error fetching Install Token for installationId: ${process.env.installationId}`);
-        }
-
-        var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
-
-        try {
-            const gitClone = spawnSync('git', ['clone', cloneUrl, repoDiskPath]);
-        }
-        catch(err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`,
-                                                        source: 'worker-instance', function: 'runUpdateProcedure'}});
-
-            transactionAborted = true;
-            transactionError.message = `Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`;
-
-            throw new Error(`Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`);
-        }
-        
-
-        
-
-        worker.send({action: 'log', info: {level: 'info', message: `repoDiskPath: ${repoDiskPath}`,
-                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-
-
-        // git log -M --numstat --name-status --pretty=%H
-        /*
-        const child = execFile('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H',
-        repoCommit + '..' + headCommit],
-        { cwd: './' + repoDiskPath },
-        async (error, stdout, stderr) => {
-        */
-
-        // Don't put a repoCommit if this repository hasn't had a commit yet
-        var commitRange = (repoCommit == 'EMPTY') ? headCommit : `${repoCommit}..${headCommit}`;
-
-        var gitLogResponse;
-        try {
-            gitLogResponse = spawnSync('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H', commitRange], {cwd: './' + repoDiskPath});
-        }
-        catch(err) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`,
-                    source: 'worker-instance', function: 'runUpdateProcedure'}});
-
-                transactionAborted = true;
-                transactionError.message = `Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`;
-
-                throw new Error(`Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`);
-        }
-        /*
-            if (error) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(error), errorDescription: `Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`,
-                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-                throw new Error(`Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`);
-            }
-        */
-        // What we want to parse out:
-        // A list of commit objects in chronological (earliest -> latest) order
-        // Each of these commit objects containing a fileChange object Array
-        // Each file_change object Array contains file modified as well as the type of modification
-
-        var lines = gitLogResponse.stdout.toString().trim().split("\n"); // stdout.split("\n");
-        var commitObjects = parseCommitObjects(lines);
-        // trackedFile[0].operationList is chronological commit operations, earliest --> latest
-        var trackedFiles = getFileChangeList(commitObjects);
-        
-        await worker.send({action: 'log', info: {level: 'info', message: ` - repoId, trackedFiles: ${repoId}\n${JSON.stringify(trackedFiles)}`,
-                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-
-        try {
-            brokenSnippets = await runSnippetValidation(process.env.installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker, session);
-            // (installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker)
-        }
-        catch (err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error calling runSnippetValidation on repository: ${repoId}`,
-                                                        source: 'worker-instance', function:'runSnippetValidation', }});
-            transactionAborted = true;
-            transactionError.message = `Error calling runSnippetValidation on repository: ${repoId}`;
-
-            throw new Error(`Error calling runSnippetValidation on repository: ${repoId}`);
-        }
-
-        // Validate and update directory references here
-        try {
-            var validateResult = await validateDirectories(repoId, repoDiskPath, headCommit, worker, session);
-            addedReferences = addedReferences.concat(validateResult.newDirIds);
-            brokenDocuments = brokenDocuments.concat( validateResult.brokenDocuments );
-        }
-        catch (err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`,
-                                                        source: 'worker-instance', function: 'run'}});
-            transactionAborted = true;
-            transactionError.message = `Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`;
-
-            throw new Error(`Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`);
-        }
-
-        var fileReferencesToCreate = trackedFiles.filter(file => file.isNewRef && !file.deleted);
-
-        // When to Update:
-        // If !file.isNewRef && !file.deleted && file.ref != file.oldRef
-        // AND file.ref != file.oldRef
-        var fileReferencesToUpdate = trackedFiles.filter(file => !file.isNewRef && !file.deleted && file.oldRef != file.ref);
-
-        var fileReferencesToDelete = trackedFiles.filter(file => !file.isNewRef && file.deleted);
-
-        /*
-        name: {type: String, index: true, required: true},
-        repository: {type: ObjectId, ref: 'Repository', required: true},
-        kind: {type: String, index: true, required: true},
-        path: {type: String, index: true },
-        parseProvider: {type: String, enum: ['create', 'update', 'semantic', 'doxygen'], required: true},
-        */
-
-        // Handling Newly Created File References
-        if (fileReferencesToCreate.length > 0) {
-
-            await worker.send({action: 'log', info: {level: 'info', 
-                                                        message: `Updating 'file' References for creation on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate.map(file => file.oldRef))}`,
-                                                        source: 'worker-instance', function:'runUpdateProcedure', }})
-            
-            worker.send({action: 'log', info: {level: 'info', 
-                                                    message: `Updating 'file' References for creation on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate)}`,
-                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
-            
-            var refCreateData = [];
-            for (i = 0; i < fileReferencesToCreate.length; i++) {
-                var pathSplit = fileReferencesToCreate[i].ref.split('/');
-                var fileName = pathSplit.slice(pathSplit.length - 1)[0];
-                refCreateData.push({name: fileName, repository: repoId, kind: "file", path: fileReferencesToCreate[i].ref, parseProvider: 'update'});
-            }
+            var repoObj;
 
             try {
-                const insertResults = await Reference.insertMany(refCreateData, {rawResult: true, session });
-                addedReferences = addedReferences.concat(Object.values(insertResults.insertedIds).map(id => id.toString()));
-                worker.send({action: 'log', info: {level: 'info', message: `Insert results for 'file' References on repository: ${repoId}\n${JSON.stringify(Object.values(insertResults.insertedIds))}`,
-                                                    source: 'worker-instance', function:'runUpdateProcedure'}})
+                repoObj = await getRepositoryObject(process.env.installationId, process.env.fullName, worker);
             }
-            catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error creating new 'file' References on repository: ${repoId}`,
-                                                            source: 'worker-instance', function:'runUpdateProcedure', }});
-
+            catch(err) {
+                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                            errorDescription: `Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`,
+                                                            source: 'worker-instance', function: 'runUpdateProcedure'}})
                 transactionAborted = true;
-                transactionError.message = `Error creating new 'file' References on repository: ${repoId}`;
+                transactionError.message = `Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`;
 
-                throw new Error(`Error creating new 'file' References on repository: ${repoId}`);
-            }
-        }
-
-        // Handling Deleted File References
-        if (fileReferencesToDelete.length > 0) {
-            worker.send({action: 'log', info: {level: 'info', 
-                                                message: `Updating 'file' References for deletion on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToDelete.map(file => file.oldRef))}`,
-                                                source: 'worker-instance', function:'runUpdateProcedure', }})
-            
-            worker.send({action: 'log', info: {level: 'info', 
-                                                message: `Updating 'file' References for deletion on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToDelete)}`,
-                                                source: 'worker-instance', function:'runUpdateProcedure', }})
-
-            var brokenReferences;
-            try {
-                brokenReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
-                                                        path: {$in: fileReferencesToDelete.map(file => file.oldRef)}}, null, { session }).exec();
-            }
-            catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error fetching 'file' References to invalidate on repository: ${repoId}`,
-                                                            source: 'worker-instance', function:'runUpdateProcedure', }});
-                transactionAborted = true;
-                transactionError.message = `Error fetching 'file' References to invalidate on repository: ${repoId}`;
-
-                throw new Error(`Error fetching 'file' References to invalidate on repository: ${repoId}`);
+                throw new Error(`Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`);
             }
 
-            await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `Fetched ${brokenReferences.length} ids for the following 'file' References to delete on repository: ${repoId}\n${JSON.stringify(fileReferencesToDelete.map(file => file.oldRef))}`,
-                                                source: 'worker-instance', function:'runUpdateProcedure', }})
-
-            var refUpdateData = [];
-
-            // Match the local file that has been broken to the Reference object that matches it
-            for (i = 0; i < brokenReferences.length; i++) {
-                var currentSearchReference = brokenReferences[i];
-                var matchingLocalReference = fileReferencesToDelete.find(refObj => refObj.oldRef == currentSearchReference.path);
-                // Update Reference with new status and breakCommit sha
-                refUpdateData.push({_id: currentSearchReference._id, status: 'invalid',
-                                    breakCommit: matchingLocalReference.operationList[matchingLocalReference.operationList.length - 1].sha});
-            }
-
-            worker.send({action: 'log', info: {level: 'info', 
-                                                message: `refUpdateData on repository: ${repoId}\n${JSON.stringify(refUpdateData)}`,
-                                                source: 'worker-instance', function:'runUpdateProcedure'}});
-
-
-            // Invalidate all the References that have been broken
-            const bulkReferenceInvalidateOps = refUpdateData.map(refObj => ({
+            var repoId = repoObj._id;
+            var repoCommit = repoObj.lastProcessedCommit;
         
-                updateOne: {
-                        filter: { _id: ObjectId(refObj._id.toString()) },
-                        // Where field is the field you want to update
-                        update: { $set: { status: refObj.status, breakCommit: refObj.breakCommit } },
-                        upsert: false
-                }
-            }));
-            if (bulkReferenceInvalidateOps.length > 0) {
-                try {
-                    const invalidateResults = await Reference.collection.bulkWrite(bulkReferenceInvalidateOps, { session });
-                    worker.send({action: 'log', info: {level: 'info',
-                                                        message: `Invalidate results for bulk invalidate on 'file' References on repository: ${repoId}\n${JSON.stringify(invalidateResults)}`,
-                                                        source: 'worker-instance', function:'runUpdateProcedure'}})
-                }
-                catch (err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                            errorDescription: `Error invalidating 'file' References on repository: ${repoId}`,
-                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-                    transactionAborted = true;
-                    transactionError.message = `Error invalidating 'file' References on repository: ${repoId}`;
+            var headCommit = process.env.headCommit;
 
-                    throw new Error(`Error invalidating 'file' References on repository: ${repoId}`);
-                }
 
-                try {
-                    brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, refUpdateData, worker) );
-                }
-                catch (err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                                errorDescription: `Error invalidating Documents attached to invalidated 'file' References on repository: ${repoId}`,
-                                                                source: 'worker-instance', function: 'breakAttachedDocuments'}});
-                    transactionAborted = true;
-                    transactionError.message = `Error invalidating Documents attached to invalidated 'file' References on repository: ${repoId}`;
+            await worker.send({action: 'log', info: {level: 'info', message: `Using repoCommit..headCommit: ${repoCommit}..${headCommit}`,
+                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
 
-                    throw new Error(`Error invalidating Documents attached to invalidated 'file' References on repository: ${repoId}`);
-                }
-            }
-        }
+            // Clone the Repository
+            var timestamp = Date.now().toString();
+            var repoDiskPath = 'git_repos/' + timestamp +'/';
 
-        // Handling Updated File References, only updating on rename
-        if (fileReferencesToUpdate.length > 0) {
-            worker.send({action: 'log', info: {level: 'info', 
-                                                    message: `Updating 'file' References for update on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToUpdate.map(file => file.oldRef))}`,
-                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
-
-            worker.send({action: 'log', info: {level: 'info', 
-                                                    message: `Updating 'file' References for update on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToUpdate)}`,
-                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
-
-            var renamedReferences;
+            var installToken;
             try {
-                renamedReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
-                                                            path: {$in: fileReferencesToUpdate.map(file => file.oldRef)}}, null, { session });
+                installToken = await tokenUtils.getInstallToken(process.env.installationId, worker, session);
             }
             catch (err) {
                 await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                            errorDescription: `Error fetching 'file' References to update (rename) on repository: ${repoId}`,
-                                                            source: 'worker-instance', function:'runUpdateProcedure', }});
+                                                            errorDescription: `Error fetching Install Token for installationId: ${process.env.installationId}`,
+                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
+                
                 transactionAborted = true;
-                transactionError.message = `Error fetching 'file' References to update (rename) on repository: ${repoId}`;
+                transactionError.message = `Error fetching Install Token for installationId: ${process.env.installationId}`
+                
+                throw new Error(`Error fetching Install Token for installationId: ${process.env.installationId}`);
+            }
 
-                throw new Error(`Error fetching 'file' References to update (rename) on repository: ${repoId}`);
+            var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
+
+            try {
+                const gitClone = spawnSync('git', ['clone', cloneUrl, repoDiskPath]);
+            }
+            catch(err) {
+                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`,
+                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
+
+                transactionAborted = true;
+                transactionError.message = `Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`;
+
+                throw new Error(`Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`);
             }
             
 
-            var refUpdateData = [];
+            
 
-            // Match the local file that has been broken to the Reference object that matches it
-            for (i = 0; i < renamedReferences.length; i++) {
-                var currentSearchReference = renamedReferences[i];
-                var matchingLocalReference = fileReferencesToUpdate.find(refObj => refObj.oldRef == currentSearchReference.path);
-                
-                var pathSplit = fileReferencesToUpdate[i].ref.split('/');
-                var fileName = pathSplit.slice(pathSplit.length - 1)[0];
-                
-                // Update Reference with new status and breakCommit sha
-                refUpdateData.push({_id: currentSearchReference._id, status: 'valid',
-                                    name: fileName,
-                                    path: fileReferencesToUpdate[i].ref,
-                                    parseProvider: 'update'});
+            worker.send({action: 'log', info: {level: 'info', message: `repoDiskPath: ${repoDiskPath}`,
+                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
+
+
+            // git log -M --numstat --name-status --pretty=%H
+            /*
+            const child = execFile('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H',
+            repoCommit + '..' + headCommit],
+            { cwd: './' + repoDiskPath },
+            async (error, stdout, stderr) => {
+            */
+
+            // Don't put a repoCommit if this repository hasn't had a commit yet
+            var commitRange = (repoCommit == 'EMPTY') ? headCommit : `${repoCommit}..${headCommit}`;
+
+            var gitLogResponse;
+            try {
+                gitLogResponse = spawnSync('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H', commitRange], {cwd: './' + repoDiskPath});
+            }
+            catch(err) {
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`,
+                        source: 'worker-instance', function: 'runUpdateProcedure'}});
+
+                    transactionAborted = true;
+                    transactionError.message = `Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`;
+
+                    throw new Error(`Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`);
+            }
+            /*
+                if (error) {
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(error), errorDescription: `Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`,
+                                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
+                    throw new Error(`Error running 'git log' for cloneUrl: ${process.env.cloneUrl}`);
+                }
+            */
+            // What we want to parse out:
+            // A list of commit objects in chronological (earliest -> latest) order
+            // Each of these commit objects containing a fileChange object Array
+            // Each file_change object Array contains file modified as well as the type of modification
+
+            var lines = gitLogResponse.stdout.toString().trim().split("\n"); // stdout.split("\n");
+            var commitObjects = parseCommitObjects(lines);
+            // trackedFile[0].operationList is chronological commit operations, earliest --> latest
+            var trackedFiles = getFileChangeList(commitObjects);
+            
+            await worker.send({action: 'log', info: {level: 'info', message: ` - repoId, trackedFiles: ${repoId}\n${JSON.stringify(trackedFiles)}`,
+                                source: 'worker-instance', function: 'runUpdateProcedure'}});
+
+            try {
+                brokenSnippets = await runSnippetValidation(process.env.installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker, session);
+                // (installationId, repoDiskPath, repoObj, headCommit, trackedFiles, worker)
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error calling runSnippetValidation on repository: ${repoId}`,
+                                                            source: 'worker-instance', function:'runSnippetValidation', }});
+                transactionAborted = true;
+                transactionError.message = `Error calling runSnippetValidation on repository: ${repoId}`;
+
+                throw new Error(`Error calling runSnippetValidation on repository: ${repoId}`);
             }
 
-            worker.send({action: 'log', info: {level: 'info', 
-                                                message: `refUpdateData for Reference update on repository: ${repoId}\n${JSON.stringify(refUpdateData)}`,
-                                                source: 'worker-instance', function:'runUpdateProcedure'}});
+            // Validate and update directory references here
+            try {
+                var validateResult = await validateDirectories(repoId, repoDiskPath, headCommit, worker, session);
+                addedReferences = addedReferences.concat(validateResult.newDirIds);
+                brokenDocuments = brokenDocuments.concat( validateResult.brokenDocuments );
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`,
+                                                            source: 'worker-instance', function: 'run'}});
+                transactionAborted = true;
+                transactionError.message = `Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`;
 
+                throw new Error(`Error running validateDirectories for cloneUrl: ${process.env.cloneUrl}`);
+            }
 
-            // Invalidate all the References that have been broken
-            const bulkReferenceRenameOps = refUpdateData.map(refObj => ({
-        
-                updateOne: {
-                        filter: { _id: ObjectId(refObj._id.toString()) },
-                        // Where field is the field you want to update
-                        update: { $set: { status: refObj.status, name: refObj.name, path: refObj.path, parseProvider: refObj.parseProvider } },
-                        upsert: false
+            var fileReferencesToCreate = trackedFiles.filter(file => file.isNewRef && !file.deleted);
+
+            // When to Update:
+            // If !file.isNewRef && !file.deleted && file.ref != file.oldRef
+            // AND file.ref != file.oldRef
+            var fileReferencesToUpdate = trackedFiles.filter(file => !file.isNewRef && !file.deleted && file.oldRef != file.ref);
+
+            var fileReferencesToDelete = trackedFiles.filter(file => !file.isNewRef && file.deleted);
+
+            /*
+            name: {type: String, index: true, required: true},
+            repository: {type: ObjectId, ref: 'Repository', required: true},
+            kind: {type: String, index: true, required: true},
+            path: {type: String, index: true },
+            parseProvider: {type: String, enum: ['create', 'update', 'semantic', 'doxygen'], required: true},
+            */
+
+            // Handling Newly Created File References
+            if (fileReferencesToCreate.length > 0) {
+
+                await worker.send({action: 'log', info: {level: 'info', 
+                                                            message: `Updating 'file' References for creation on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate.map(file => file.oldRef))}`,
+                                                            source: 'worker-instance', function:'runUpdateProcedure', }})
+                
+                worker.send({action: 'log', info: {level: 'info', 
+                                                        message: `Updating 'file' References for creation on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate)}`,
+                                                        source: 'worker-instance', function:'runUpdateProcedure', }})
+                
+                var refCreateData = [];
+                for (i = 0; i < fileReferencesToCreate.length; i++) {
+                    var pathSplit = fileReferencesToCreate[i].ref.split('/');
+                    var fileName = pathSplit.slice(pathSplit.length - 1)[0];
+                    refCreateData.push({name: fileName, repository: repoId, kind: "file", path: fileReferencesToCreate[i].ref, parseProvider: 'update'});
                 }
-            }));
-            if (bulkReferenceRenameOps.length > 0) {
+
                 try {
-                    const renameResults = await Reference.collection.bulkWrite(bulkReferenceRenameOps, { session });
-                    worker.send({action: 'log', info: {level: 'info',
-                                                        message: `Rename results for bulk rename on 'file' References on repository: ${repoId}\n${JSON.stringify(renameResults)}`,
+                    const insertResults = await Reference.insertMany(refCreateData, {rawResult: true, session });
+                    addedReferences = addedReferences.concat(Object.values(insertResults.insertedIds).map(id => id.toString()));
+                    worker.send({action: 'log', info: {level: 'info', message: `Insert results for 'file' References on repository: ${repoId}\n${JSON.stringify(Object.values(insertResults.insertedIds))}`,
                                                         source: 'worker-instance', function:'runUpdateProcedure'}})
                 }
                 catch (err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error renaming 'file' References on repository: ${repoId}`,
-                                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
-                    transactionAborted = true;
-                    transactionError.message = `Error renaming 'file' References on repository: ${repoId}`;
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error creating new 'file' References on repository: ${repoId}`,
+                                                                source: 'worker-instance', function:'runUpdateProcedure', }});
 
-                    throw new Error(`Error renaming 'file' References on repository: ${repoId}`);
+                    transactionAborted = true;
+                    transactionError.message = `Error creating new 'file' References on repository: ${repoId}`;
+
+                    throw new Error(`Error creating new 'file' References on repository: ${repoId}`);
                 }
             }
+
+            // Handling Deleted File References
+            if (fileReferencesToDelete.length > 0) {
+                worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Updating 'file' References for deletion on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToDelete.map(file => file.oldRef))}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+                
+                worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Updating 'file' References for deletion on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToDelete)}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+
+                var brokenReferences;
+                try {
+                    brokenReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
+                                                            path: {$in: fileReferencesToDelete.map(file => file.oldRef)}}, null, { session }).exec();
+                }
+                catch (err) {
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error fetching 'file' References to invalidate on repository: ${repoId}`,
+                                                                source: 'worker-instance', function:'runUpdateProcedure', }});
+                    transactionAborted = true;
+                    transactionError.message = `Error fetching 'file' References to invalidate on repository: ${repoId}`;
+
+                    throw new Error(`Error fetching 'file' References to invalidate on repository: ${repoId}`);
+                }
+
+                await worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Fetched ${brokenReferences.length} ids for the following 'file' References to delete on repository: ${repoId}\n${JSON.stringify(fileReferencesToDelete.map(file => file.oldRef))}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+
+                var refUpdateData = [];
+
+                // Match the local file that has been broken to the Reference object that matches it
+                for (i = 0; i < brokenReferences.length; i++) {
+                    var currentSearchReference = brokenReferences[i];
+                    var matchingLocalReference = fileReferencesToDelete.find(refObj => refObj.oldRef == currentSearchReference.path);
+                    // Update Reference with new status and breakCommit sha
+                    refUpdateData.push({_id: currentSearchReference._id, status: 'invalid',
+                                        breakCommit: matchingLocalReference.operationList[matchingLocalReference.operationList.length - 1].sha});
+                }
+
+                worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `refUpdateData on repository: ${repoId}\n${JSON.stringify(refUpdateData)}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure'}});
+
+
+                // Invalidate all the References that have been broken
+                const bulkReferenceInvalidateOps = refUpdateData.map(refObj => ({
             
-        }
+                    updateOne: {
+                            filter: { _id: ObjectId(refObj._id.toString()) },
+                            // Where field is the field you want to update
+                            update: { $set: { status: refObj.status, breakCommit: refObj.breakCommit } },
+                            upsert: false
+                    }
+                }));
+                if (bulkReferenceInvalidateOps.length > 0) {
+                    try {
+                        const invalidateResults = await Reference.collection.bulkWrite(bulkReferenceInvalidateOps, { session });
+                        worker.send({action: 'log', info: {level: 'info',
+                                                            message: `Invalidate results for bulk invalidate on 'file' References on repository: ${repoId}\n${JSON.stringify(invalidateResults)}`,
+                                                            source: 'worker-instance', function:'runUpdateProcedure'}})
+                    }
+                    catch (err) {
+                        await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                                errorDescription: `Error invalidating 'file' References on repository: ${repoId}`,
+                                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
+                        transactionAborted = true;
+                        transactionError.message = `Error invalidating 'file' References on repository: ${repoId}`;
 
-        // TODO: Need to Delete invalidated References that are not attached to any Document/anything else, otherwise they will keep taking up space.
+                        throw new Error(`Error invalidating 'file' References on repository: ${repoId}`);
+                    }
 
-        // Update Repository 'lastProcessedCommit'
-        try {
-            await Repository.findByIdAndUpdate(repoObj._id, { $set: { lastProcessedCommit: headCommit } }, { session });
-        }
-        catch (err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                        errorDescription: `Error setting 'lastProcessedCommit' on repository, headCommit: ${repoId}, ${headCommit}`,
+                    try {
+                        brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, refUpdateData, worker) );
+                    }
+                    catch (err) {
+                        await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                                    errorDescription: `Error invalidating Documents attached to invalidated 'file' References on repository: ${repoId}`,
+                                                                    source: 'worker-instance', function: 'breakAttachedDocuments'}});
+                        transactionAborted = true;
+                        transactionError.message = `Error invalidating Documents attached to invalidated 'file' References on repository: ${repoId}`;
+
+                        throw new Error(`Error invalidating Documents attached to invalidated 'file' References on repository: ${repoId}`);
+                    }
+                }
+            }
+
+            // Handling Updated File References, only updating on rename
+            if (fileReferencesToUpdate.length > 0) {
+                worker.send({action: 'log', info: {level: 'info', 
+                                                        message: `Updating 'file' References for update on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToUpdate.map(file => file.oldRef))}`,
+                                                        source: 'worker-instance', function:'runUpdateProcedure', }})
+
+                worker.send({action: 'log', info: {level: 'info', 
+                                                        message: `Updating 'file' References for update on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToUpdate)}`,
+                                                        source: 'worker-instance', function:'runUpdateProcedure', }})
+
+                var renamedReferences;
+                try {
+                    renamedReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
+                                                                path: {$in: fileReferencesToUpdate.map(file => file.oldRef)}}, null, { session });
+                }
+                catch (err) {
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                                errorDescription: `Error fetching 'file' References to update (rename) on repository: ${repoId}`,
+                                                                source: 'worker-instance', function:'runUpdateProcedure', }});
+                    transactionAborted = true;
+                    transactionError.message = `Error fetching 'file' References to update (rename) on repository: ${repoId}`;
+
+                    throw new Error(`Error fetching 'file' References to update (rename) on repository: ${repoId}`);
+                }
+                
+
+                var refUpdateData = [];
+
+                // Match the local file that has been broken to the Reference object that matches it
+                for (i = 0; i < renamedReferences.length; i++) {
+                    var currentSearchReference = renamedReferences[i];
+                    var matchingLocalReference = fileReferencesToUpdate.find(refObj => refObj.oldRef == currentSearchReference.path);
+                    
+                    var pathSplit = fileReferencesToUpdate[i].ref.split('/');
+                    var fileName = pathSplit.slice(pathSplit.length - 1)[0];
+                    
+                    // Update Reference with new status and breakCommit sha
+                    refUpdateData.push({_id: currentSearchReference._id, status: 'valid',
+                                        name: fileName,
+                                        path: fileReferencesToUpdate[i].ref,
+                                        parseProvider: 'update'});
+                }
+
+                worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `refUpdateData for Reference update on repository: ${repoId}\n${JSON.stringify(refUpdateData)}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure'}});
+
+
+                // Invalidate all the References that have been broken
+                const bulkReferenceRenameOps = refUpdateData.map(refObj => ({
+            
+                    updateOne: {
+                            filter: { _id: ObjectId(refObj._id.toString()) },
+                            // Where field is the field you want to update
+                            update: { $set: { status: refObj.status, name: refObj.name, path: refObj.path, parseProvider: refObj.parseProvider } },
+                            upsert: false
+                    }
+                }));
+                if (bulkReferenceRenameOps.length > 0) {
+                    try {
+                        const renameResults = await Reference.collection.bulkWrite(bulkReferenceRenameOps, { session });
+                        worker.send({action: 'log', info: {level: 'info',
+                                                            message: `Rename results for bulk rename on 'file' References on repository: ${repoId}\n${JSON.stringify(renameResults)}`,
+                                                            source: 'worker-instance', function:'runUpdateProcedure'}})
+                    }
+                    catch (err) {
+                        await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error renaming 'file' References on repository: ${repoId}`,
+                                                                    source: 'worker-instance', function: 'runUpdateProcedure'}});
+                        transactionAborted = true;
+                        transactionError.message = `Error renaming 'file' References on repository: ${repoId}`;
+
+                        throw new Error(`Error renaming 'file' References on repository: ${repoId}`);
+                    }
+                }
+                
+            }
+
+            // TODO: Need to Delete invalidated References that are not attached to any Document/anything else, otherwise they will keep taking up space.
+
+            // Update Repository 'lastProcessedCommit'
+            try {
+                await Repository.findByIdAndUpdate(repoObj._id, { $set: { lastProcessedCommit: headCommit } }, { session });
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                            errorDescription: `Error setting 'lastProcessedCommit' on repository, headCommit: ${repoId}, ${headCommit}`,
+                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
+                transactionAborted = true;
+                transactionError.message = `Error setting 'lastProcessedCommit' on repository, headCommit: ${repoId}, ${headCommit}`;
+
+                throw new Error(`Error setting 'lastProcessedCommit' on repository, headCommit: ${repoId}, ${headCommit}`);
+            }
+
+            // Delete Downloaded Repository
+            try {
+                const deleteRepository = spawnSync('rm', ['-rf', `${repoDiskPath}`], {cwd: repoDiskPath});
+            }
+            catch(err) {
+                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error deleting repository ${repoId} at:  ${repoDiskPath}`,
+                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
+                transactionAborted = true;
+                transactionError.message = `Error deleting repository ${repoId} at:  ${repoDiskPath}`;
+
+                throw new Error(`Error deleting repository ${repoId} at:  ${repoDiskPath}`);
+            }
+
+            // For routing
+            checkCreateData.repoId = repoId;
+
+            // Actual body data
+            checkCreateData.installationId = process.env.installationId;
+            checkCreateData.commit = headCommit
+            checkCreateData.brokenDocuments = brokenDocuments;
+            checkCreateData.brokenSnippets = brokenSnippets;
+            checkCreateData.message = process.env.message;
+            checkCreateData.pusher = process.env.pusher;
+            checkCreateData.addedReferences = addedReferences.map(refId => refId.toString());
+
+            // console.log(`Successfully Updated Worker magic - fullName, headCommit: ${repoObj.fullName}, ${headCommit}`);
+            // throw new Error(`I want you to fail RAT.`);
+
+
+            await worker.send({action: 'log', info: {level: 'info', message: `Update Reference Job Success - fullName, headCommit: ${repoObj.fullName}, ${headCommit}`,
                                                         source: 'worker-instance', function: 'runUpdateProcedure'}});
-            transactionAborted = true;
-            transactionError.message = `Error setting 'lastProcessedCommit' on repository, headCommit: ${repoId}, ${headCommit}`;
+        });
+    }
 
-            throw new Error(`Error setting 'lastProcessedCommit' on repository, headCommit: ${repoId}, ${headCommit}`);
+    catch (err) {
+        session.endSession();
+        if (transactionAborted) {
+            throw new Error(transactionError.message);
         }
-
-        // Delete Downloaded Repository
-        try {
-            const deleteRepository = spawnSync('rm', ['-rf', `${repoDiskPath}`], {cwd: repoDiskPath});
+        else {
+            throw err;
         }
-        catch(err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error deleting repository ${repoId} at:  ${repoDiskPath}`,
-                                                        source: 'worker-instance', function: 'runUpdateProcedure'}});
-            transactionAborted = true;
-            transactionError.message = `Error deleting repository ${repoId} at:  ${repoDiskPath}`;
-
-            throw new Error(`Error deleting repository ${repoId} at:  ${repoDiskPath}`);
-        }
-
-
-
-        // TODO: Create a Check at the end
-
-        var checkCreateData = {};
-
-        checkCreateData.installationId = process.env.installationId;
-        checkCreateData.commit = headCommit
-        checkCreateData.brokenDocuments = brokenDocuments;
-        checkCreateData.brokenSnippets = brokenSnippets;
-        checkCreateData.message = process.env.message;
-        checkCreateData.pusher = process.env.pusher;
-        checkCreateData.addedReferences = addedReferences.map(refId => refId.toString());
-
-        // Create Check
-        try {
-            var createCheckResponse = await backendClient.post(`/checks/${repoId}/create`, checkCreateData);
-        }
-        catch (err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                        errorDescription: `Error creating Check - repoId, installationId, headCommit:  ${repoId}, ${process.env.installationId}, ${headCommit}`,
-                                                        source: 'worker-instance', function: 'runUpdateProcedure'}});
-            transactionAborted = true;
-            transactionError.message = `Error creating Check - repoId, installationId, headCommit:  ${repoId}, ${process.env.installationId}, ${headCommit}`;
-
-            throw new Error(`Error creating Check - repoId, installationId, headCommit:  ${repoId}, ${process.env.installationId}, ${headCommit}`);
-        }
-
-        // throw new Error(`I want you to fail RAT.`);
-
-
-        await worker.send({action: 'log', info: {level: 'info', 
-                                                    message: `Successfully created Check for ${brokenDocuments.length} Documents and ${brokenSnippets.length} Snippets - repoId, installationId, headCommit:  ${repoId}, ${process.env.installationId}, ${headCommit}`,
-                                                    source: 'worker-instance', function: 'runUpdateProcedure'}});
-
-
-        await worker.send({action: 'log', info: {level: 'info', message: `Update Reference Job Success - fullName, headCommit: ${repoObj.fullName}, ${headCommit}`,
-                                                    source: 'worker-instance', function: 'runUpdateProcedure'}});
-    });
+    }
 
     session.endSession();
-
     if (transactionAborted) {
         throw new Error(transactionError.message);
     }
+
+    // Create a Check at the end
+
+    // Create Check
+    try {
+        var createCheckResponse = await backendClient.post(`/checks/${checkCreateData.repoId}/create`, checkCreateData);
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                    errorDescription: `Error creating Check - repoId, installationId, commit:  ${checkCreateData.repoId}, ${process.env.installationId}, ${checkCreateData.commit}`,
+                                                    source: 'worker-instance',
+                                                    function: 'runUpdateProcedure'}});
+
+        throw new Error(`Error creating Check - repoId, installationId, commit:  ${checkCreateData.repoId}, ${process.env.installationId}, ${checkCreateData.commit}`);
+    }
+
+
+    await worker.send({action: 'log', info: {level: 'info', 
+                                                message: `Successfully created Check for ${checkCreateData.brokenDocuments.length} Documents and ${checkCreateData.brokenSnippets.length} Snippets - repoId, installationId, headCommit:  ${checkCreateData.repoId}, ${process.env.installationId}, ${checkCreateData.commit}`,
+                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
 
 }
 

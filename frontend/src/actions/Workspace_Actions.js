@@ -82,6 +82,8 @@ export const deleteWorkspace = (formValues) => async dispatch => {
     }
 }
 
+// DEPRECATED
+/*
 // /workspaces/add_user/:id
 export const workspaceAddUser = (workspaceId, userId) => async (dispatch) => {
     
@@ -101,6 +103,7 @@ export const workspaceAddUser = (workspaceId, userId) => async (dispatch) => {
         dispatch({ type: WORKSPACE_ADD_USER, payload: response.data.result });
     }
 }
+*/
 
 // /workspaces/remove_user/:id
 export const workspaceRemoveUser = (workspaceId, userId) => async (dispatch) => {

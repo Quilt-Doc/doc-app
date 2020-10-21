@@ -3,6 +3,7 @@
 const WorkspaceInvite = require('../../models/authentication/WorkspaceInvite');
 const Workspace = require('../../models/Workspace');
 const User = require('../../models/authentication/User');
+const UserStatsController = require('../reporting/UserStatsController');
 
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
@@ -27,8 +28,9 @@ checkValid = (item) => {
     return false
 }
 
+// TODO: Create UserStats object on addition
 sendInvite = async (req, res) => {
-    
+
     const workspaceId = req.workspaceObj._id.toString();
 
     const { email } = req.body;
@@ -58,6 +60,36 @@ sendInvite = async (req, res) => {
             return res.json({success: false, error: `Error Workspace findOneAndUpdate query failed - workspaceId, userId: ${workspaceId}, ${userWithEmail._id.toString()}`});
         }
 
+        // Update User's workspaces array
+        try {
+            userWithEmail = await User.findByIdAndUpdate(userWithEmail._id.toString(), { $push: { workspaces: ObjectId(updatedWorkspace._id.toString())} }).lean();
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error updating User workspaces array - userId, workspaceId: ${userWithEmail._id.toString()} ${updatedWorkspace._id.toString()}`,
+                                function: 'sendInvite'});
+
+            return res.json({success: false,
+                            error: `Error updating User workspaces array - userId, workspaceId: ${userWithEmail._id.toString()} ${updatedWorkspace._id.toString()}`,
+                            trace: err});
+        }
+
+        // Create a UserStats Object for the User & Workspace pair
+        try {
+            // No session to pass as third param
+            await UserStatsController.createUserStats({userId: userWithEmail._id.toString(), workspaceId: updatedWorkspace._id.toString(), undefined});
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `error creating UserStats object  - userId, workspaceId: ${userWithEmail._id.toString()} ${updatedWorkspace._id.toString()}`,
+                                function: 'sendInvite'});
+    
+            return res.json({success: false,
+                        error: `error creating UserStats object - userId, workspaceId: ${userWithEmail._id.toString()} ${updatedWorkspace._id.toString()}`,
+                        trace: err});
+        }
+
 
         // Create 'added_workspace' Notification
         var notificationData = [{
@@ -67,16 +99,18 @@ sendInvite = async (req, res) => {
         }];
 
         try {
-            await NotificationController.createAddedNotification(notificationData);
+            await NotificationController.createAddedNotifications(notificationData);
         }
         catch (err) {
+            console.log('ADDED NOTIFICATION ERROR: ');
+            console.log(err);
             await logger.error({source: 'backend-api',
                                 error: err,
-                                errorDescription: `Error createAddedNotification failed - userWithEmailId, workspaceId: ${userWithEmail._id.toString()}, ${workspaceId.toString()}`,
+                                errorDescription: `Error createAddedNotifications failed - userWithEmailId, workspaceId: ${userWithEmail._id.toString()}, ${workspaceId.toString()}`,
                                 function: 'verifyEmail'});
 
             return res.json({ success: false, 
-                                error: `Error createAddedNotification failed`,
+                                error: `Error createAddedNotifications failed`,
                                 trace: err });
         }
 

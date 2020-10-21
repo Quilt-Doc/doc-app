@@ -82,13 +82,13 @@ createAddedNotifications = async (notificationData) => {
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error inserting 'removed_workspace' Notification(s)`,
-                        function: 'createAddedNotification'});
+                        function: 'createAddedNotifications'});
         throw new Error(`Error inserting 'added_workspace' Notification(s)`);
     }
 
     await logger.info({source: 'backend-api',
                         message: `Successfully created ${notificationData.length} 'added_workspace' Notification(s)`,
-                        function: 'createAddedNotification'});
+                        function: 'createAddedNotifications'});
 
     return bulkInsertResult;
 }

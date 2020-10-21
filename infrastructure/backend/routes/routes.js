@@ -164,10 +164,12 @@ router.post('/workspaces/create', authorizationMiddleware.workspaceMiddleware, w
 router.post('/workspaces/search/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspaceController.searchWorkspace);
 router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspaceController.getWorkspace);
 router.delete('/workspaces/delete/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspaceController.deleteWorkspace);
-router.put('/workspaces/:workspaceId/add_user/:userId', authorizationMiddleware.workspaceMiddleware, workspaceController.addWorkspaceUser);
 router.put('/workspaces/:workspaceId/remove_user/:userId', authorizationMiddleware.workspaceMiddleware, workspaceController.removeWorkspaceUser);
 
 router.post('/workspaces/retrieve', authorizationMiddleware.workspaceMiddleware, workspaceController.retrieveWorkspaces);
+
+// DEPRECATED
+// router.put('/workspaces/:workspaceId/add_user/:userId', authorizationMiddleware.workspaceMiddleware, workspaceController.addWorkspaceUser);
 
 
 // All of these tag routes are handled by the same case (Yay!)

@@ -7,6 +7,7 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 
+const User = require('../models/authentication/User');
 const Document = require('../models/Document');
 const Snippet = require('../models/Snippet');
 const Check = require('../models/Check');
@@ -214,7 +215,7 @@ const createCheck = async (req, res) => {
     // Get Workspace Repository is in
     var workspaceResponse;
     try {
-        workspaceResponse = await Workspace.find({repositories: { $in: [ObjectId(repositoryId)] }}).lean().exec();
+        workspaceResponse = await Workspace.findOne({repositories: { $in: [ObjectId(repositoryId)] }}).lean().exec();
     }
     catch (err) {
         await logger.error({source: 'backend-api',
@@ -272,23 +273,40 @@ const createCheck = async (req, res) => {
     // If References have been added create a notification for the pusher
 
     if (addedReferences.length > 0) {
-        var toDocumentNotification = {
-            type: 'to_document',
-            user: userId.toString(),
-            workspace: workspaceResponse._id.toString(),
-            repository: repositoryId,
-            check: check._id.toString(),
-        };
+
+        // Try to find matching Github username linked to UserId
+        var pusherId;
         try {
-            await NotificationController.createToDocumentNotification(toDocumentNotification);
+            pusherId = await User.findOne({username: pusher, workspaces: { $in: [ workspaceResponse._id.toString() ] }}, '_id').lean().exec();
         }
         catch (err) {
             await logger.error({source: 'backend-api',
                                 message: err,
-                                errorDescription: `Error creating toDocument Notification - workspaceId, repositoryId, commit: ${workspaceResponse._id.toString()}, ${repositoryId}, ${commit}`,
+                                errorDescription: `Error creating 'to_document' Notification - pusherId, workspaceId, repositoryId, commit: ${pusherId}, ${workspaceResponse._id.toString()}, ${repositoryId}, ${commit}`,
                                 function: "createCheck"});
+            return res.json({success: false, error: `Error creating 'to_document' Notification`});
+        }
 
-            return res.json({success: false, error: 'Error creating toDocument Notification'});
+        if (pusherId) {
+            pusherId = pusherId._id.toString();
+            var toDocumentNotification = {
+                type: 'to_document',
+                user: pusherId,
+                workspace: workspaceResponse._id.toString(),
+                repository: repositoryId,
+                check: check._id.toString(),
+            };
+            try {
+                await NotificationController.createToDocumentNotification(toDocumentNotification);
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    message: err,
+                                    errorDescription: `Error creating toDocument Notification - pusherId, workspaceId, repositoryId, commit: ${pusherId}, ${workspaceResponse._id.toString()}, ${repositoryId}, ${commit}`,
+                                    function: "createCheck"});
+
+                return res.json({success: false, error: 'Error creating toDocument Notification'});
+            }
         }
     }
 
