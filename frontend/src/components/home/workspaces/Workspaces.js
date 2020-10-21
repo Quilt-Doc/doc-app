@@ -17,11 +17,16 @@ import history from '../../../history';
 import { RiFileList2Line, RiFlagLine } from 'react-icons/ri';
 import { FiPlus } from 'react-icons/fi';
 
+import { api } from '../../../apis/api';
+
+import axios from 'axios';
+
 class Workspaces extends Component {
     constructor(props){
         super(props);
         this.state = {
-            loaded: false
+            loaded: false,
+            files: [],
         }
     }
 
@@ -94,6 +99,42 @@ class Workspaces extends Component {
         }
     }
 
+    uploadDocumentRequest = ({ file, name }) => {
+        console.log('UPLOAD DOCUMENT REQUEST');
+        let data = new FormData();
+        // document?
+        data.append('attachment', file);
+        data.append('documentId', '5f7801662224c343b40f0703');
+        data.append('workspaceId', '5f7801662224c343b40f0703');
+        data.append('name', name);
+        console.log('POSTING');
+
+        const config = {
+            headers: {
+                'content-type': 'multipart/form-data'
+            },
+            withCredentials: true
+        }
+
+        axios.post('http://localhost:3001/api/uploads/create_attachment', data, config).then(response => {
+            console.log('RESPONSE: ');
+            console.log(response.data);
+        });
+    }
+
+
+    // Component method
+    handleFileUpload = (event /*{ target: files }*/) => {
+        
+        const file = event.target.files[0];
+        console.log('FILE SENDING: ');
+        console.log(file);
+        this.uploadDocumentRequest({
+            file: file,
+            name: 'attachment'
+        });
+    }
+
     render(){
         const {loaded} = this.state;
         return (
@@ -108,11 +149,13 @@ class Workspaces extends Component {
                     <SpaceContainer>
                         {loaded && this.renderSpaces()}
                     </SpaceContainer>
+                            <input type="file" id="file" name="file" multiple /*onChange={this.handleChange}*/ onChange={this.handleFileUpload} />
                 </Content>
             </ContentContainer>
         )
     }
 }
+
 
 const mapStateToProps = (state) => {
     const { workspaces, auth: {user} } = state;

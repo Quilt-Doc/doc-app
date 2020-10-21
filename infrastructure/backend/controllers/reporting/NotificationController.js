@@ -94,6 +94,30 @@ createAddedNotifications = async (notificationData) => {
 }
 
 
+setNotificationsHidden = async (req, res) => {
+
+    const { notificationIds } = req.body;
+
+    if (!checkValid(notificationIds)) return res.json({success: false, error: 'no notification notificationIds provided'});
+
+    var updatedNotifications;
+    try {
+        await Notification.updateMany({ _id: { $in: notificationIds.map(id => ObjectId(id.toString())) }}, { $set: { status: 'hidden' } });
+        updatedNotifications = await Notification.find({_id: { $in: notificationIds.map(id => ObjectId(id.toString())) }}).lean().exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error setting Notifications to 'hidden' - notificationIds: ${JSON.stringify(notificationIds)}`,
+                            function: "setNotificationsHidden"});
+
+        return res.json({success: false, error: `Error setting Notifications to 'hidden' - notificationIds: ${JSON.stringify(notificationIds)}`});
+    }
+
+    return res.json({success: true, updatedNotifications});
+}
+
+
 retrieveNotifications = async (req, res) => {
 
     const userId = req.userObj._id.toString();
@@ -114,7 +138,7 @@ retrieveNotifications = async (req, res) => {
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
                             errorDescription: `Error retrieving Notifications - workspaceId, userId, limit, skip: ${workspaceId}, ${userId}, ${limit}, ${skip}`,
-                            function: "retrieveChecks"});
+                            function: "retrieveNotifications"});
         return res.json({success: false, error: `Error retrieving Notifications - workspaceId, userId, limit, skip: ${workspaceId}, ${userId}, ${limit}, ${skip}`});
     }
 
@@ -124,4 +148,4 @@ retrieveNotifications = async (req, res) => {
 
 
 module.exports = { createInvalidNotifications, createToDocumentNotification, createRemovedNotifications,
-                    createAddedNotifications, retrieveNotifications };
+                    createAddedNotifications, setNotificationsHidden, retrieveNotifications };

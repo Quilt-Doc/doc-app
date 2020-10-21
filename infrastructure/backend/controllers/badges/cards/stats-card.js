@@ -110,10 +110,6 @@ const renderStatsCard = (stats = {}, options = { hide: [] }) => {
     hide_border = false,
     hide_rank = true,
     line_height = 25,
-    title_color,
-    icon_color,
-    text_color,
-    bg_color,
     theme = "graywhite",
     custom_title,
   } = options;

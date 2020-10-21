@@ -16,7 +16,7 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
     // try to get the workspace object and attach it to the request object
     try {
         var foundWorkspace = await Workspace.findById(workspaceId).lean().exec();
-        if (!foundWorkspace) {
+        if (!foundWorkspace || foundWorkspace == null) {
             next(new Error("workspaceIdParam: workspaceId doesn't exist"));
         }
         req.workspaceObj = foundWorkspace;

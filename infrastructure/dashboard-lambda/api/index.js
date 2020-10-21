@@ -16,6 +16,7 @@ const Snippet = require('../models/Snippet');
 const Check = require('../models/Check');
 
 
+/*
 // This should be an environment variable
 const password = process.env.EXTERNAL_DB_PASS
 const user = process.env.EXTERNAL_DB_USER;
@@ -35,6 +36,7 @@ let db = mongoose.connection;
 
 db.once('open', () => console.log('connected to the database'));
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+*/
 
 checkValid = (item) => {
   if (item !== undefined && item !== null) {
@@ -180,7 +182,7 @@ module.exports = async (req, res) => {
         hide_border: false,
 
         // hide_rank: parseBoolean(hide_rank),
-        hide_rank: false,
+        hide_rank: true,
 
         line_height: 25,
         title_color,

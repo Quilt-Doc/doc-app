@@ -8,6 +8,9 @@ let notificationSchema = new Schema({
     workspace: {type: ObjectId, ref: 'Workspace'},
     repository: {type: ObjectId, ref: 'Repository'},
     check: {type: ObjectId, ref: 'Check'},
+    
+    status: {type: String, enum: ['visible', 'hidden'], default: 'visible'},
+
     created: {type: Date, default: Date.now },
 });
 

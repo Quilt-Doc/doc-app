@@ -1,6 +1,8 @@
 // TODO: Need to validate email (both syntax, and for uniqueness)
 
 const User = require('../../models/authentication/User');
+const Workspace = require('../../models/Workspace');
+
 var mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 const logger = require('../../logging/index').logger;
@@ -114,11 +116,29 @@ deleteUser = async (req, res) => {
     let returnedUser;
 
     try {
-        returnedUser = await  User.findByIdAndRemove(userId).select('_id').lean().exec()
+        returnedUser = await User.findByIdAndRemove(userId).select('_id').lean().exec()
     } catch (err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to findByIdAndRemove User - userId: ${userId}`, function: 'deleteUser'});
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error Failed to findByIdAndRemove User - userId: ${userId}`,
+                            function: 'deleteUser'});
         return res.json({success: false, error: "deleteUser Error: findbyIdAndRemove query failed", trace: err});
     }
+
+    // Remove user from all Workspaces they were in
+
+    try {
+        await Workspace.updateMany({ memberUsers: { $in: [ObjectId(userId)] }}, { memberUsers: { $pull: ObjectId(userId) } });
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error Failed to remove User from Workspaces - userId: ${userId}`,
+                            function: 'deleteUser'});
+        return res.json({success: false, error: "Error Failed to remove User from Workspaces", trace: err});
+    }
+
+    // Should we delete User's Documents / Snippets as well? Probably Not.
    
     return res.json({success: true, result: returnedUser});
 }
