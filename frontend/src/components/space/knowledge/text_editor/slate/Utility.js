@@ -27,69 +27,13 @@ const HOTKEYS = {
 const LIST_TYPES = ['numbered-list', 'bulleted-list']
 
 
-export const updateMarkupType = (state, dispatch, range, blocktypes, editor) => {
-	
-	let mapping = {
-		"paragraph": "Paragraph",
-		"heading-one": "Heading 1",
-		"heading-two": "Heading 2",
-		"heading-three": "Heading 3",
-		"quote": "Quote",
-		"bulleted-list": "Bulleted list",
-		"numbered-list": "Numbered list",
-		"code-block": "Code block",
-		"code-reference": "Code reference",
-		"code-snippet": "Code snippet",
-		"check-list": "Checklist",
-		"link": "Link", 
-		"table": "Table", 
-		"image": "Image"
-	}
-	if (state.markupMenuActive) {
-		blocktypes = blocktypes.filter(type => {
-			return mapping[type].toLowerCase().includes(state.text.toLowerCase())
-		})
-	}
-
-	if (blocktypes.length !== state.blocktypes.length) {
-		dispatch({ type: "setBlockTypes", payload: blocktypes })
-	}
-
-	if (blocktypes.length === 0) {
-		dispatch({ type: 'markupMenuOff' })
-	}
-}
-
-export const onKeyDownHelper = (event, state, dispatch, editor, range) => {
+export const onKeyDownHelper = (event, state, editor) => {
+	const { isMarkupMenuActive } = state;
 	if (event.key === "Tab") {
 		event.preventDefault()
 		editor.insertText("\t")
-	} else if (event.key === "Enter") {
-		if (state.markupMenuActive) {
-			event.preventDefault()
-			
-			if (range.focus.offset !== range.anchor.offset) {
-				range = _.cloneDeep(range)
-				range.focus.offset += 1
-			}
-
-			Transforms.select(editor, range)
-			Transforms.delete(editor)
-
-			editor.insertBlock({ type: state.blocktypes[state.hovered.position] }, range)
-		} else {
-			editor.insertDefaultEnter(event)
-		}
-	} else if (state.markupMenuActive && event.keyCode === 40) {
-		event.preventDefault()
-		if (state.hovered.position + 1 < state.blocktypes.length) {
-			dispatch({ type: 'setHovered', payload: { position: state.hovered.position + 1, ui: 'key' } })
-		}
-	} else if (state.markupMenuActive && event.keyCode === 38) {
-		event.preventDefault()
-		if (state.hovered.position !== 0) {
-			dispatch({ type: 'setHovered', payload: { position: state.hovered.position - 1, ui: 'key' } })
-		}
+	} else if ( event.key === "Enter" && !isMarkupMenuActive ) {
+		editor.insertDefaultEnter(event)
 	}
 }
 

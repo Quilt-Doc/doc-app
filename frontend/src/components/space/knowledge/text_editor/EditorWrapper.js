@@ -134,7 +134,7 @@ class EditorWrapper extends React.Component {
         let canvas;
             
         try {   
-            canvas = await html2canvas(document.getElementById("#editorContainer"), {scale: 0.5, height: 1000});
+            canvas = await html2canvas(document.getElementById("editorSubContainer"), {scale: 0.5, height: 1000});
         } catch (err) {
             console.log("ERROR WITH CANVAS", err);
         } 

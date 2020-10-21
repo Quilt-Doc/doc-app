@@ -3,6 +3,8 @@
 import { Node, Editor, Transforms, Range, Point } from 'slate'
 import { ReactEditor } from 'slate-react';
 	
+import { SET_MARKUP_MENU_ACTIVE } from '../editor/reducer/Editor_Types';
+
 const LIST_TYPES = ['numbered-list', 'bulleted-list']
 const CODE_TYPES = ['code-block']
 
@@ -16,21 +18,30 @@ const withFunctionality = (editor, dispatch) => {
 		return voidCheck ? true : isVoid(element)
 	}
 
-	editor.insertBlock = (attributes, range) => {
-		let text = Array.from(Node.texts(editor, {from: range.anchor.path, to: range.anchor.path}))[0][0].text
+	editor.insertBlock = (attributes) => {
+
+		const range = editor.selection;
+		const slateNode = Node.get(editor, [range.anchor.path[0]]);
+		
+		const text = Node.string(slateNode);
 
 		const isList = LIST_TYPES.includes(attributes.type)
 		const isCode = CODE_TYPES.includes(attributes.type)
 
 		if (text !== '') {
+
 			let node = { ...attributes, children: [] }
+
 			node.type = isList ? "list-item" : isCode ? "code-line" : node.type
+
 			Transforms.insertNodes(
 				editor,
 				node,
 				{ match: n => Editor.isBlock(editor, n), at: Editor.end(editor, range.focus.path) }
 			)
+
 			Transforms.select(editor, { offset: 0, path: [range.focus.path[0] + 1, 0] })
+
 		} else {
 			Transforms.setNodes(
 				editor,
@@ -50,8 +61,8 @@ const withFunctionality = (editor, dispatch) => {
 			Transforms.wrapNodes(editor, block)
 		}
 
-		dispatch({type: 'markupMenuOff'})
-		dispatch({type: "clearMenuFilter"})
+		//dispatch({type: 'markupMenuOff'})
+		//dispatch({type: "clearMenuFilter"})
 	}
 
 	editor.insertDefaultEnter = (event) => { 
@@ -63,7 +74,7 @@ const withFunctionality = (editor, dispatch) => {
 
 		const [block, path] = match
 
-		if (block.type !== 'code-line' && block.type !== 'list-item' && Range.isCollapsed(selection)) {
+		if (block.type !== 'check-list' && block.type !== 'code-line' && block.type !== 'list-item' && Range.isCollapsed(selection)) {
 			
 			event.preventDefault()
 
@@ -84,6 +95,25 @@ const withFunctionality = (editor, dispatch) => {
 					{ match: n => Editor.isBlock(editor, n)}
 				)
 			}
+		} else if (block.type === 'list-item') {
+			if (Node.string(block) === ""){
+				event.preventDefault()
+				Transforms.unwrapNodes(editor, {
+					match: n => n.type === 'bulleted-list',
+					split: true,
+				})
+				Transforms.setNodes(editor, { type: 'paragraph' })
+			}
+		} else if (block.type === 'check-list') {
+			event.preventDefault();
+			if (Node.string(block) === ""){
+				Transforms.setNodes(editor, { type: 'paragraph' })
+			} else {
+				const end = Editor.end(editor, path)
+				Transforms.insertNodes(editor, { type: 'check-list', isSelected: false, children: [] }, {at: end});
+
+				Transforms.select(editor, { offset: 0, path: [editor.selection.focus.path[0] + 1, 0] })
+			}
 		}
 	}
 
@@ -97,22 +127,12 @@ const withFunctionality = (editor, dispatch) => {
 
 		let [block, path] = match
 
-		// you are updating focus before insertion of text, which is the issue
-		dispatch({ type: 'update_focus', payload: selection.focus })
-
-		dispatch({ type: 'addText', payload: text })
-
-		if (text === "*" && block.type !== 'code-line') {
-			const domSelection = window.getSelection()
-			const domRange = domSelection.getRangeAt(0)
-			const rect = domRange.getBoundingClientRect()
-			dispatch({type: 'referenceMenuOn', payload: { rect, anchor: selection.focus, focus: selection.focus, text: ''}})
+		if (text === "/" && block.type !== 'code-line') {
+			dispatch({ type: SET_MARKUP_MENU_ACTIVE, payload: true })
 		}
 
-		if (text === "/" && block.type !== 'code-line') {
-			let range = ReactEditor.toDOMRange(editor, {anchor: selection.focus, focus: selection.focus})
-			let rect = range.getBoundingClientRect()
-			dispatch({ type: 'markupMenuOn', payload: { rect, anchor: selection.focus, focus: selection.focus, text:''} })
+		if (text === "&") {
+			dispatch({type: "snippetMenuOn"});
 		}
 
 		if (text === ' ' && selection && Range.isCollapsed(selection)) {
@@ -145,6 +165,7 @@ const withFunctionality = (editor, dispatch) => {
 				return
 			}
 		}
+
 		insertText(text)
 	}
 
@@ -159,18 +180,6 @@ const withFunctionality = (editor, dispatch) => {
 				match: n => Editor.isBlock(editor, n),
 			})
 
-			dispatch({type: 'deleteText'})
-			let texts = Node.texts(editor, {from: selection.anchor.path, to: selection.focus.path})
-			for (let t of texts){
-				let lastSeen = t[0].text.slice(selection.focus.offset - 1, selection.focus.offset)
-				if (lastSeen === "/") {
-					dispatch({type: 'markupMenuOff'})
-				}  else if  (lastSeen === "*") {
-					dispatch({type: 'referenceMenuOff'})
-				}
-			}
-
-
 			if (match) {
 				const [block, path] = match
 				const start = Editor.start(editor, path)
@@ -180,7 +189,7 @@ const withFunctionality = (editor, dispatch) => {
 					block.type !== 'code-line'
 				) {
 					Transforms.setNodes(editor, { type: 'paragraph' })
-
+					
 					if (block.type === 'list-item') {
 						Transforms.unwrapNodes(editor, {
 							match: n => n.type === 'bulleted-list',

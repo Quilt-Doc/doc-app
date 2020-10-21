@@ -12,10 +12,16 @@ import chroma from 'chroma-js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 
+//components
+import SnippetEmbeddable from './element_units/SnippetEmbeddable';
+import CheckListItemElement from './element_units/CheckListItemElement';
+
 //reactdnd
 import {ItemTypes} from './types/Drag_Types';
 import { useDrag, useDrop} from 'react-dnd'
-import SnippetEmbeddable from './element_units/SnippetEmbeddable';
+
+//
+import { RiInformationLine } from 'react-icons/ri';
 
 
 
@@ -32,7 +38,13 @@ class Element extends React.Component {
 	
 	renderElement(element, attributes, children) {
 		if (element.type ==='list-item') {
-			return <li {...attributes}>{children}</li>
+			return (
+				<ListItem {...attributes}>
+					<PlainText>
+						{children}
+					</PlainText>
+				</ListItem>
+			)
 		} else if (element.type === 'code-line') {
 			return <CodeLine {...attributes}>{children}</CodeLine>
 		} else {
@@ -118,10 +130,20 @@ const getCorrectElement = props => {
 			return <UL borderTop = {borderTop} {...attributes}>{children}</UL>
 		case 'numbered-list':
 			return <OL borderTop = {borderTop} {...attributes}>{children}</OL>
+		case 'check-list':
+			return <CheckListItemElement {...props} />
 		case 'code-block':
 			return <CodeBlock borderTop = {borderTop} {...attributes}>{children}</CodeBlock>
+		case 'note':
+			return <Note {...attributes}>
+						<div>
+							{children}
+						</div>
+					</Note>
 		case 'quote':
-			return <Quote {...attributes}>{children}</Quote>
+			return <Quote {...attributes}>
+						{children}
+					</Quote>
 		case 'reference-snippet':
 			return <SnippetEmbeddable {...props} />
 		default:
@@ -192,12 +214,38 @@ const BlockTool = (props) => {
 		
 	)
 }*/
+
+const ListItem = styled.li`
+	margin-bottom: 0.8rem;
+`
+
+const PlainText = styled.span`
+	font-size: 1.64rem;
+	display: inline-table;
+	vertical-align: middle;
+	padding-bottom: 4px;
+`
+
+const Note = styled.div`
+	background-color: ${chroma('#6762df').alpha(0.15)};
+	font-size: 1.64rem;
+	padding: 1rem 1.7rem;
+	display: flex;
+	align-items: center;
+	color: #172A4e;
+	margin-top: 2rem !important;
+	border-radius: 0.3rem;
+	border: 1px solid #6762df;
+	font-weight: 500;
+`
+
 const Quote = styled.div`
-	font-size: 1.7rem;
+	font-size: 1.64rem;
 	padding: 1rem;
 	border-left: 2px solid #DFDFDF;
 	margin-top: 2rem !important;
 	color: ${chroma('#172A4E').alpha(0.6)}
+	display: flex;
 `
 
 const OptionHeader = styled.div`
@@ -326,22 +374,26 @@ const StyledIcon = styled.img`
 const H1 = styled.div`
   font-size: 2.8rem;
   /*letter-spacing: 1.78px;*/
-  line-height: 1;
-  margin-top: 3rem;
+  line-height: 1.3;
+  margin-top: 4rem;
   color: #172A4E;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
+  overflow-wrap: break-word;
+  font-weight: 500;
 `
 
 const H2 = styled.div`
   font-size: 2.4rem;
+  font-weight: 500;
   /*letter-spacing: 1.33px;*/
-  line-height: 1;
+  line-height: 1.2;
   text-transform: none;
   color: #172A4E;
-  margin-top: 2.7rem;
+  margin-top: 3.5rem;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
+  overflow-wrap: break-word;
 `
 
 const H3 = styled.div`
@@ -349,34 +401,40 @@ const H3 = styled.div`
   /*letter-spacing: -0.25px;*/
   line-height: 1.6;
   text-transform: none;
-  margin-top: 2rem;
+  margin-top: 2.8rem;
   color: #172A4E;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
+  overflow-wrap: break-word;
 `
 
 const P = styled.div`
-  margin-top: 2rem !important;
-  font-size: 1.6rem;
-  line-height: 1.6;
+  margin-top: 1.5rem !important;
+  font-size: 1.55rem;
+  line-height: 1.75;
   color: rgb(9, 30, 66);
   box-shadow: none;
   border-top: 2px solid transparent;
   border-top: ${props => props.borderTop};
+  overflow-wrap: break-word;
 `
 
 const UL = styled.ul`
+	font-size: 120%;
+	line-height: 2rem;
 	margin-top: 2rem !important;
-	margin-left: 2rem;
+	margin-left: 2.3rem;
 	border-top: 2px solid transparent;
-  	border-top: ${props => props.borderTop};
+	border-top: ${props => props.borderTop};
+	overflow-wrap: break-word;
 `
 
 const OL = styled.ol`
 	margin-top: 2rem !important;
 	margin-left: 2rem;
 	border-top: 2px solid transparent;
-  	border-top: ${props => props.borderTop};
+	border-top: ${props => props.borderTop};
+	overflow-wrap: break-word;
 `
 
 const CodeBlock = styled.div`
@@ -395,6 +453,7 @@ const CodeLine = styled.div`
     /*boxShadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;*/
 	white-space: pre-wrap !important;
 	color: #172A4E;
+	overflow-wrap: break-word;
 `
 
 

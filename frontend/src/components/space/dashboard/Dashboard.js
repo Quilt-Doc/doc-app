@@ -16,18 +16,18 @@ const Dashboard = () => {
     return(
         <>
         <Container>
-            <LeftContainer>
-                <Top>
-                    <Header>DASHBOARD</Header>
-                </Top>
-                <Feed/>
-            </LeftContainer>
-            <RightContainer>
-                <Content>
+            <Top>
+                <Header>DASHBOARD</Header>
+            </Top>
+            <ContainerFlex>
+                <LeftContainer>
+                    <Feed/>
                     <Breakage/>
+                </LeftContainer>
+                <RightContainer>
                     <Checks/>
-                </Content>
-            </RightContainer>
+                </RightContainer>
+            </ContainerFlex>
         </Container>
         </>
     )
@@ -41,6 +41,10 @@ export default Dashboard;
                     <PullRequest/>
                 </ContentContainer>*/
 // Styled Components
+
+const ContainerFlex = styled.div`
+    display: flex;
+`
 
 const Top = styled.div`
     display: flex;
@@ -67,20 +71,29 @@ const ContentContainer = styled.div`
 `
 
 const LeftContainer = styled.div`
-    padding: 2.1rem;
-    min-width: 32rem;
-    max-width: 32rem;
-    background-color: white;
-    box-shadow: 5px 0 3px -3px rgba(0,0,0,0.1);
+    min-width: 40rem;
+    max-width: 40rem;
     flex-direction: column;
+    margin-right: 3rem;
+    margin-left: 6rem;
 `
+
+/* box-shadow: 5px 0 3px -3px rgba(0,0,0,0.1);*/
 
 const RightContainer = styled.div`
     display: flex;
     flex-direction: column;
     width: 100%;
-    align-items: center;
     overflow-y: scroll;
+    z-index: 2;
+    background-color: white;
+    margin-top: 2.7rem;
+    padding: 2rem;
+    border-radius: 0.7rem;
+    height: 85vh;
+    margin-right: 6rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    min-width: 70rem;
 `
 
 const Content = styled.div`
@@ -113,7 +126,7 @@ const Todos = styled.div`
     border-radius: 1.3rem;
     font-weight: 500;
     margin-bottom: 1rem;
-    margin-right: 3rem;
+    margin-right: 4rem;
 `
 
 const Leftbar = styled.div`
@@ -131,7 +144,8 @@ const Leftbar = styled.div`
 const Container = styled.div`
     background-color: #f6f7f9;
     height: 100vh;
-    display: flex;
+    padding: 2.1rem 2.5rem;
+    padding-right: 3rem;
 `
 
 const FlexContainer = styled.div`

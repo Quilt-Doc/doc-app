@@ -64,18 +64,60 @@ class Checks extends Component {
         })
     }
 
+    acquireUserIndex = (check) => {
+        const { workspace } = this.props;
+        let {pusher} = check;
+        let color = 0;
+
+        workspace.memberUsers.map((user, i) => {
+            if (user.username === pusher) {
+                pusher = `${user.firstName} ${user.lastName}`;
+                color = i;
+            }
+        });
+
+        return { pusher, color }
+    }
     render(){
         const { currentCheck } = this.state;
+
+        let user;
+        let color;
+
+        if (currentCheck) { 
+            let infoObj = this.acquireUserIndex(currentCheck);
+            user = infoObj.pusher;
+            color = infoObj.color;
+        } 
+
         return(
-            <Container>
-                <Header>
-                    Git Checks
-                </Header>
+            <>
+                <Header>Git Checks</Header>
                 <BodyContainer>
                     {currentCheck ? 
                         <>
-                            <LeftBar>
-                                <RepositorySection>
+                            <CheckBar>
+                                { this.renderChecks() }
+                            </CheckBar>
+                            <CheckRightContent 
+                            color = {color}
+                            user = {user}
+                            check = {currentCheck}/>
+                           
+                           
+                        </>
+                        :
+                        <Centered>
+                            <Message>Push code to your repository to see checks</Message>
+                        </Centered>
+                    }
+                </BodyContainer>
+            </>
+        )
+    }    
+}
+
+{/*  <RepositorySection>
                                     <MenuButton >
                                         <IconBorder>    
                                             <VscRepo/>
@@ -89,24 +131,7 @@ class Checks extends Component {
                                                 }}
                                             />
                                     </MenuButton>
-                                </RepositorySection>
-                                <CheckBar>
-                                    { this.renderChecks() }
-                                </CheckBar>
-                            </LeftBar> 
-                            <CheckRightContent check = {currentCheck}/>
-                        </>
-                        :
-                        <Centered>
-                            <Message>Push code to your repository to see checks</Message>
-                        </Centered>
-                    }
-                </BodyContainer>
-            </Container>
-        )
-    }    
-}
-
+                                            </RepositorySection>*/}
 
 const mapStateToProps = (state, ownProps) => {
     const { workspaces, checks } = state;
@@ -121,6 +146,15 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, { retrieveChecks })(Checks));
+
+const Top = styled.div`
+    padding-top: 5rem;
+    height: 10rem;
+    width: 100%;
+    display: flex;
+    align-items: center;
+`
+
 
 const MenuButton = styled.div`
     display: flex;
@@ -137,6 +171,7 @@ const MenuButton = styled.div`
     }
     cursor: pointer;
     border: 1px solid #172A4e;
+    margin-left: auto;
 `
 
 const IconBorder = styled.div`
@@ -155,16 +190,6 @@ const LimitedTitle = styled.div`
     overflow: hidden;
     max-width: 22rem;
 `
-
-
-
-
-
-
-
-
-
-
 
 const RepositorySection = styled.div`
     height: 6rem;
@@ -192,44 +217,35 @@ const Centered = styled.div`
 const CheckBar = styled.div`
     overflow-y: scroll;
     padding: 2rem;
-    min-height: 39rem;
-    height: calc(60vh - 6rem);
+    padding-top: 3rem;
+    background-color: #f6f7f9;
+    border: 1px solid #E0E4E7;
+    border-radius: 0.6rem;
+    width: 50rem;
+    height: calc(85vh - 5.5rem - 4rem)
 `
 
 const LeftBar = styled.div`
     width: 50rem;
     min-height: 100%;
-    background-color: white;
-    border-right: 1px solid #E0E4E7;
     border-top-left-radius: 0.5rem;
     border-bottom-left-radius: 0.5rem;
 `
 
 const Header = styled.div`
-    height: 4.5rem;
+    min-height: 4.5rem;
+    max-height: 4.5rem;
     display: flex;
     align-items: center;
     font-size: 1.7rem;
     font-weight: 600;
     margin-bottom: 1rem;
-`
-
-const Container = styled.div`
-    display: flex;
-    flex-direction: column;
-    z-index: 1;
     /*
     padding-left: 4rem;
     padding-right: 4rem;
     */
-    margin-top: 1.5rem;
 `
 
 const BodyContainer = styled.div`
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    background-color: #f7f9fb;
-    border-radius: 0.5rem;
-    min-height: 45rem;
     display: flex;
-    height: 60vh;
 `

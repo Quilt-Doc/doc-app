@@ -1,7 +1,14 @@
 import _ from 'lodash';
 
+import { 
+	SET_MARKUP_MENU_ACTIVE
+} from './Editor_Types';
+
 const editorReducer = (state, action) => {
 	switch (action.type) {
+		case SET_MARKUP_MENU_ACTIVE:
+			console.log("ENTERED IN HERE");
+			return { ...state, isMarkupMenuActive: action.payload };
 		case 'markupMenuOn':
 			if (!state.markupMenuActive) {
 				return { ...state, markupMenuActive: true, ...action.payload }

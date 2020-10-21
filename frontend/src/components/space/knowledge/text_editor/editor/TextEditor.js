@@ -23,11 +23,13 @@ import AttachmentToolbar from '../toolbars/AttachmentToolbar';
 import EditorToolbar from '../toolbars/EditorToolbar';
 import DocumentInfo from './DocumentInfo';
 import MarkupMenu from '../menus/MarkupMenu';
+import MarkupMenu2 from '../menus/MarkupMenu2';
+import HoveringToolbar from '../toolbars/HoveringToolbar';
 import SnippetMenuWrapper from '../menus/snippet_menu/SnippetMenuWrapper';
 import { CSSTransition } from 'react-transition-group';
 
 //reducer
-import editorReducer from './EditorReducer';
+import editorReducer from './reducer/EditorReducer';
 
 //lodash
 import _ from 'lodash'
@@ -83,11 +85,6 @@ const TextEditor = (props) => {
 	  ],
 	},
 	{
-		type: 'reference-snippet',
-		snippetId: "5f8bc833ce3d02953a22a7ca",
-		children: [{ text: '' }],
-	},
-	{
 	  children: [
 		{ text: 'Try it out yourself! Just ' },
 		{ text: 'select any piece of text and the menu will appear', bold: true },
@@ -100,19 +97,11 @@ const TextEditor = (props) => {
 
 	const [write, setWrite] = useState(false)
 	const [setOptions, toggleOptions] = useState(false);
-	const blocktypes = ["paragraph", "heading-one", "heading-two", 
-		"heading-three", "quote", "bulleted-list", "numbered-list",
-		 "code-block", "code-reference", "code-snippet", "check-list",
-		"link", "table", "image"
-		]
+
 
 	const initialState = {
+		isMarkupMenuActive: false, 
 		snippetMenuActive: false,
-		markupMenuActive: false,
-		text: '',
-		rect: null,
-		hovered: { position: 0, ui: 'mouse' },
-		blocktypes,
 	}
 
 	const [state, dispatch] = useReducer(
@@ -120,19 +109,11 @@ const TextEditor = (props) => {
 		initialState
 	);
 
-	/*
-	if (props.scrollTop !== state.scrollTop) {
-		dispatch({type: 'set_Scroll', payload: props.scrollTop})
-	}*/
-
-
 	const renderElement = useCallback(props => <Element {...props} />, [])
 	const renderLeaf = useCallback(props => <Leaf {...props} />, [])
 
 	const editor = useMemo(() => withFunctionality(withHistory(withReact(createEditor())), dispatch), [])
-	/*<ReferenceMenu dispatch={dispatch} editor = {editor} editorState = {state}/>*/
 
-	let range = { anchor: state.anchor, focus: state.focus }
 	
 	useEffect(() => {
         if (editor.selection) {
@@ -167,44 +148,14 @@ const TextEditor = (props) => {
     }
 	, [editor.selection])
 	
-	updateMarkupType(state, dispatch, range, blocktypes, editor)
+	//updateMarkupType(state, dispatch, range, blocktypes, editor)
 
-	console.log("VALUE", value);
-
+	const { isMarkupMenuActive } = state;
+	
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Slate editor={editor} value={value} onChange={setValue}>
-				<ToolbarsContainer>
-					<CSSTransition
-						in={setOptions}
-						unmountOnExit
-						enter = {true}
-						exit = {true}
-						timeout={150}
-						classNames="editortoolbar"
-					>
-						<AttachmentToolbar
-							document = {props.document}
-						/>
-					</CSSTransition>
-					<CSSTransition
-						in={write}
-						unmountOnExit
-						enter = {true}
-						exit = {true}
-						timeout={150}
-						classNames="editortoolbar"
-					>
-						<EditorToolbar 
-							toggleBlock = {(format) => toggleBlock2(editor, format)}
-							toggleBlockActive = {(format) => toggleBlock(editor, format)}
-							isMarkActive = {isMarkActive} 
-							toggleMark = {toggleMark}
-							removeMarks = {() => removeMarks(editor)}
-							documentModal = {props.documentModal}
-						/>
-					</CSSTransition>
-				</ToolbarsContainer>
+
 				<MainToolbar 
 					document = {props.document}
 					write = {write} 
@@ -213,29 +164,30 @@ const TextEditor = (props) => {
 					toggleOptions = {() => {toggleOptions(!setOptions)}}
 					documentModal = {props.documentModal}
 				/>
-				<Container>
+				<Container id = {"fullEditorContainer"}>
 				
 					<EditorContainer 
 						documentModal = {props.documentModal}
-						id = {"#editorContainer"}
-					>
+						id = {"editorSubContainer"}
+					>		
 							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
+							{write && <HoveringToolbar/>}
 							<EditorContainer2  >
-									{state.snippetMenuActive &&
+									{/*state.snippetMenuActive &&
 										<SnippetMenuWrapper
 											documentModal = {props.documentModal} 
 											dispatch={dispatch} 
 											range={range} 
 											editorState={state} 
 											document = {props.document}
+										/>*/
+									}
+									{isMarkupMenuActive &&
+										<MarkupMenu2 
+											documentModal = {props.documentModal} 
+											dispatch={dispatch} 
 										/>
 									}
-									<MarkupMenu 
-										documentModal = {props.documentModal} 
-										dispatch={dispatch} 
-										range={range} 
-										state={state} 
-									/>
 									<DocumentInfo write  = {write} />
 									{ write ? 
 										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={title} />
@@ -253,7 +205,7 @@ const TextEditor = (props) => {
 										id = {"editorSlate"}
 										paddingLeft = {write ? 3 : 10}
 										cursortype = {write}
-										onKeyDown={(event) => onKeyDownHelper(event, state, dispatch, editor, range)}
+										onKeyDown={(event) => onKeyDownHelper(event, state, editor)}
 										renderElement={renderElement}
 										renderLeaf={renderLeaf}
 										spellCheck="false"
@@ -287,7 +239,7 @@ const EditorContainer2 = styled.div`
 	flex-direction: column;
 	display: flex;
 	width: 100%;
-	padding-top:1.5rem;
+	padding-top: 1.5rem;
 `
 
 const EditorContainer = styled.div`
@@ -295,10 +247,9 @@ const EditorContainer = styled.div`
 	width: 94rem;
 
 	margin-top: ${props => props.documentModal ? "" : "1.5rem"};
-	background-color: white;
 	/*box-shadow: ${props => props.documentModal ? "": "0 1px 2px rgba(0, 0, 0, 0.2)"};*/
 	border-radius: 0.2rem;
-
+	position: relative;
 `
 
 const HeaderDiv = styled.div`

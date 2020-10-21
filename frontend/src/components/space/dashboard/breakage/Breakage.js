@@ -4,7 +4,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 
 //components
-import BreakageCard from './BreakageCard';
+import BreakageCard from './BreakageCard2';
 import BreakagePlaceholder from './BreakagePlaceholder';
 
 //react-redux
@@ -49,7 +49,7 @@ class Breakage extends Component {
             return <BreakageCard color = {color} doc = {doc}/>
         }
         );
-        return <BreakagePlaceholder/>
+        return null
     }
 
     render(){
@@ -57,11 +57,9 @@ class Breakage extends Component {
         return(
             <BreakageContainer>
                 <Header>  
-                    Breakage
+                    Deprecation
                 </Header>
-                <ListView>
-                    {this.renderBrokenCards()}
-                </ListView>
+                {this.renderBrokenCards()}
             </BreakageContainer>
         )
     }
@@ -112,7 +110,12 @@ const ListView = styled.div`
 
 const BreakageContainer = styled.div`
     width: 100%;
+    height: calc(85vh - 37vh - 3rem);
     display: flex;
     flex-direction: column;
-    margin-top: 1.5rem;
+    margin-top: 3rem;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.7rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
 `

@@ -17,6 +17,7 @@ import { Oval } from 'svg-loaders-react';
 import { retrieveReferences } from '../../../../actions/Reference_Actions';
 import { retrieveDocuments } from '../../../../actions/Document_Actions';
 import { getRepository } from '../../../../actions/Repository_Actions';
+import { getBadge } from '../../../../actions/Badge_Actions';
 
 //selectors
 import { makeFilterCurrentReference, makeGetCurrentReference, makeGetReferenceDocuments } from '../../../../selectors';
@@ -27,7 +28,8 @@ import { connect } from 'react-redux';
 //icons
 import {RiEdit2Line} from 'react-icons/ri'
 import { FiChevronDown } from 'react-icons/fi';
-
+import { GoGitBranch } from 'react-icons/go';
+import { FiGitCommit } from 'react-icons/fi';
 
 // component that is used to navigate through directories in codebase 
 // can view (edit) tags, child files/folders, associated documents, path, etc
@@ -43,8 +45,10 @@ class DirectoryNavigator extends React.Component {
     // loads the directory viewer with documents and references (child and current) of the 
     // current directory --- also gets the repository just in case
     async loadResources(){
-        const { match, retrieveDocuments, retrieveReferences, getRepository } = this.props;
+        const { match, retrieveDocuments, retrieveReferences, getRepository, getBadge } = this.props;
         const { repositoryId, referenceId, workspaceId } = match.params;
+
+        //await getBadge({workspaceId, repositoryId});
 
         await Promise.all([
             getRepository({workspaceId, repositoryId}),
@@ -136,11 +140,49 @@ class DirectoryNavigator extends React.Component {
         return name;
     }
 
+    renderLeftBlock = () => {
+        const { currentRepository } = this.props;
+        const { defaultBranch, lastProcessedCommit } = currentRepository;
+
+        return(
+            <LeftBlock>
+                <Header>Repository Information</Header>
+                <InfoItem color = {"#f7f9fb"} border = {"#E0E4E7"}>
+                    <InfoItemTop>
+                        <InfoItemIcon top = {0.1}>
+                            <GoGitBranch/>
+                        </InfoItemIcon>
+                        Documentation Branch
+                    </InfoItemTop>
+                    <Branch>{defaultBranch}</Branch>
+                </InfoItem>
+                <InfoItem color = {chroma('#2684FF').alpha(0.1)} border = {"#2684FF"}>
+                    <InfoItemTop>
+                        <InfoItemIcon top = {0.3}>
+                            <FiGitCommit/>
+                        </InfoItemIcon>
+                        Last Processed Commit
+                    </InfoItemTop>
+                    <InfoItemContent>
+                        {lastProcessedCommit.slice(0, 7)}
+                    </InfoItemContent>
+                </InfoItem>
+                {/*
+                <InfoItem>
+                    <InfoItemTop>Last Processed Commit</InfoItemTop>
+                    <InfoItemContent></InfoItemContent>
+                </InfoItem>
+                */}
+            </LeftBlock>
+        )
+    }
+
     //2 FARAZ TODO: Check whether loaded is all that is needed
     render() {
         const { currentRepository, currentReference, documents, match} = this.props;
         const { referenceId } = match.params;
         const { loaded, edit } = this.state;
+
         if (!referenceId){
             referenceId = ""
         }
@@ -160,20 +202,26 @@ class DirectoryNavigator extends React.Component {
                             </Top>
                             <Container>
                                 <Content>
-                                    <ReferenceInfo
-                                        edit = {edit}
-                                        currentRepository = {currentRepository}
-                                        currentReference = {currentReference}
-                                        documents = {documents}
-                                        directoryNavigator = {true}
-                                    />
-                                    <DirectoryContainer>
-                                        <ListToolBar>
-                                            {this.renderRefName()}
-                                        </ListToolBar>
-                                        {this.renderFolders()}
-                                        {this.renderFiles()}
-                                    </DirectoryContainer>
+                                    {this.renderLeftBlock()}
+                                    <RightBlock>
+                                        <ReferenceInfo
+                                            edit = {edit}
+                                            currentRepository = {currentRepository}
+                                            currentReference = {currentReference}
+                                            documents = {documents}
+                                            directoryNavigator = {true}
+                                        />
+                                        <DirectoryContainer>
+                                            <ListToolBar>
+                                                {this.renderRefName()}
+                                            </ListToolBar>
+                                            <ListItems>
+                                                {this.renderFolders()}
+                                                {this.renderFiles()}
+                                            </ListItems>
+                                        </DirectoryContainer>
+                                    </RightBlock>
+                                
                                 </Content>
                             </Container>
                         </Background>
@@ -212,7 +260,67 @@ const makeMapStateToProps = () => {
 }
 
 export default connect(makeMapStateToProps, { retrieveReferences, 
-    retrieveDocuments, getRepository })(DirectoryNavigator);
+    retrieveDocuments, getRepository, getBadge })(DirectoryNavigator);
+
+const InfoItem = styled.div`
+    padding: 1rem 1.7rem;
+    border: 1px solid ${props => props.border};
+    background-color: ${props => props.color};
+    border-radius: 0.4rem;
+    margin-bottom: 2rem;
+`
+
+const InfoItemTop = styled.div`
+    text-transform: uppercase;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+`
+
+const InfoItemIcon = styled.div`
+    font-size: 1.4rem;
+    margin-top: ${props => props.top}rem;
+    width: 2rem;
+`
+
+const Branch = styled.div`
+    font-weight: 500;
+    font-size: 1.6rem;
+`
+
+const InfoItemContent = styled.div`
+    font-weight: 500;
+    font-size: 1.4rem;
+`
+
+
+const Header = styled.div`
+    height: 4.5rem;
+    display: flex;
+    align-items: center;
+    font-size: 1.7rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    /*
+    padding-left: 4rem;
+    padding-right: 4rem;
+    */
+`
+
+const ListItems = styled.div`
+    display: flex;
+    flex-direction: column;
+    /*
+    border-left: 1px solid #E0E4E7;
+    border-right:1px solid #E0E4E7;
+    */
+    /*border: 1px solid transparent;*/
+    /*
+    border-bottom-left-radius: 0.4rem;
+    border-bottom-right-radius: 0.4rem;
+    */
+`
 
 const Toolbar = styled.div`
     margin-left: auto;
@@ -241,17 +349,35 @@ const Button = styled.div`
 `
 
 const Content = styled.div`
-    width: 80%;
-    max-width: 110rem;
+    width: 100%;
+   /* max-width: 110rem;*/
+    max-width: 135rem;
     min-width: 80rem;
+    display: flex;
+`
+
+const LeftBlock = styled.div`
+    width: 35rem;
+    background-color: white;
+    margin-right: 5rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    border-radius: 0.5rem;
+    height: 40rem;
+    padding: 2rem;
+`
+
+const RightBlock = styled.div`
+    width: 80%;
 `
 
 const Container = styled.div`
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-top: 2rem;
+    margin-top: 3rem;
     align-items: center;
+    padding-left: 2rem;
+    padding-right: 2rem;
 `
 
 const LoaderContainer = styled.div`
@@ -279,24 +405,32 @@ const DirectoryContainer = styled.div`
     display: flex;
     flex-direction: column;
     background-color: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    /*
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     min-height: 5rem;
     /*border: 1px solid #DFDFDF;*/
-    border-radius: 0.4rem;
+    border-radius: 0.5rem;
     padding-bottom: 0.1rem;
     align-self: stretch;
+    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;*/
+    border-bottom: 1px solid #E0E4E7;
 `
 
 const ListToolBar = styled.div`
     font-size: 1.5rem;
-    height: 4.5rem;
+    height: 5rem;
     display: flex;
     font-weight: 500;
     align-items: center;
-    border-bottom: 1px solid #EDEFF1;
     padding: 0rem 2rem;
+    background-color: ${chroma('#6762df').alpha(0.1)};
+    
+    border: 1px solid ${chroma('#6762df').alpha(0.3)};
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
 `
 
 const Statistics = styled.div`

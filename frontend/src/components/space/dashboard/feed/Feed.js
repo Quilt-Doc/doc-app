@@ -37,9 +37,10 @@ class Feed extends Component {
             <>
                 {loaded &&
                      <FeedContainer>
+                        <Header>Activity</Header>
                         <ListView>
-                            {feeds.map(item => {
-                                return <FeedLog feed = {item}/>
+                            {feeds.map((item, i) => {
+                                return <FeedLog last = {i === feeds.length - 1} feed = {item}/>
                             })}
                         </ListView>
                     </FeedContainer>
@@ -81,5 +82,9 @@ const ListView = styled.div`
 const FeedContainer = styled.div`
     margin-top: 2.7rem;
     overflow-y: scroll;
-    height: calc(100vh - 7.5rem);
+    height: 37vh;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.7rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
 `

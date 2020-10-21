@@ -277,10 +277,21 @@ export default withRouter(connect(mapStateToProps, { attachReferenceTag, removeR
 
 
 
+const DocList = styled.div`
+    display: flex;
+    align-items: center;
+    background-color: #f7f9fb;
+    padding: 2rem;
+    border-radius: 0.7rem;
+    border: 1px solid #E0E4E7;
+`
+
 const List = styled.div`
     display: flex;
     align-items: center;
 `
+
+
 
 const InfoList = styled.div`
     display: flex;

@@ -17,6 +17,8 @@ import { CgBell, CgSearch } from 'react-icons/cg';
 
 //components
 import CreateButton from './CreateButton';
+import { IoMdBook } from 'react-icons/io';
+import { AiOutlineCodeSandbox } from 'react-icons/ai';
 
 class SideNavbar extends React.Component {
 
@@ -46,7 +48,7 @@ class SideNavbar extends React.Component {
         const { workspaceId } = match.params;
 
         const childId = children.length > 0 ? children[0] : "";
-        return `/workspaces/${workspaceId}/document/${childId}`;
+        return `/workspaces/${workspaceId}/document`;
     }
 
     renderSettingsLink = () => {
@@ -68,19 +70,19 @@ class SideNavbar extends React.Component {
                     active = {history.location.pathname.split("/")[3] === "document"}
                     to = {this.renderKnowledgeLink()}
                 >
-                    <RiFileTextLine/>
+                    <IoMdBook/>
                 </NavbarIcon>  
                 <NavbarIcon
                     active = {history.location.pathname.split("/")[3] === "repository"}
                     to = {this.renderCodebaseLink()}
                 >
-                    <RiCodeSLine/>
+                    <AiOutlineCodeSandbox style = {{fontSize: "1.8rem"}}/>
                 </NavbarIcon>  
                 <NavbarIcon
                      active = {history.location.pathname.split("/")[3] === "infobank"}
                      to = {this.renderInfobankLink()}
                 >
-                    <RiStackLine/>
+                    <RiStackLine  style = {{fontSize: "1.5rem"}}/>
                 </NavbarIcon>
                 <NavbarIcon
                     active = {history.location.pathname.split("/")[3] === "settings"}

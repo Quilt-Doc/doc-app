@@ -10,12 +10,17 @@ import { CSSTransition } from 'react-transition-group';
 //icons
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCode,faTrash, faQuoteLeft, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
-import { BiParagraph } from 'react-icons/bi';
+import { BiLink, BiParagraph, BiTable } from 'react-icons/bi';
+import { GrBlockQuote } from 'react-icons/gr';
+import { AiOutlineOrderedList, AiOutlineUnorderedList } from 'react-icons/ai';
+import { HiCode } from 'react-icons/hi';
+import { RiInformationLine, RiScissorsLine } from 'react-icons/ri';
+import { BsImageFill, BsListCheck } from 'react-icons/bs';
 
 const Sidebar = (props) => {
-    let editor = useSlate()
-    let [top, changeTop] = useState(null)
-    let selection = editor.selection
+    let editor = useSlate();
+    let [top, changeTop] = useState(null);
+    let selection = editor.selection;
     let type;
     let path;
     if (editor.selection && editor.selection.anchor) {
@@ -25,14 +30,22 @@ const Sidebar = (props) => {
 
     useEffect(() => {
         if (selection) {
-            let path = [selection.anchor.path[0]];
-            let rect = ReactEditor.toDOMRange(editor, 
-                              {anchor: {offset: 0, path}, 
-                focus: {offset: 0, path }}).getBoundingClientRect();
-            if (props.documentModal) {
-                changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 183 + rect.height/2);
-            } else {
-                changeTop(document.getElementById("editorContainer").scrollTop + rect.top - 155 + rect.height/2);
+            try {
+                let path = [selection.anchor.path[0]];
+                let rect = ReactEditor.toDOMRange(editor, 
+                                {anchor: {offset: 0, path}, 
+                    focus: {offset: 0, path }}).getBoundingClientRect();
+                if (props.documentModal) {
+                    changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 183 + rect.height/2);
+                } else {
+                    type = Node.get(editor, path).type;
+                    let parentOffsetTop = document.getElementById("editorSubContainer").offsetTop;
+                    let newTop = document.getElementById("editorContainer").scrollTop + rect.top + rect.height/2 - parentOffsetTop - 13;
+                    if (type === "code-block") newTop -= 23
+                    changeTop(newTop);
+                }
+            } catch (err) {
+                console.log(err);
             }
         }
     }
@@ -91,28 +104,40 @@ class ToolIcon extends React.Component {
 
     renderBlockIcon = (type) => {
         if (type) {
-            switch(type){
+            switch (type) {
                 case "heading-one":
-                    return <BlockIcon>H1</BlockIcon>
+                    return <HeadingText>{"H1"}</HeadingText>
                 case "heading-two":
-                    return <BlockIcon>H2</BlockIcon>
+                    return <HeadingText>{"H2"}</HeadingText>
                 case "heading-three":
-                    return <BlockIcon>H3</BlockIcon>
+                    return <HeadingText>{"H3"}</HeadingText>
                 case "quote":
-                    return <FontAwesomeIcon icon = {faQuoteLeft}/>
+                    return <GrBlockQuote/>
                 case "bulleted-list":
-                    return <FontAwesomeIcon icon={faListUl}/>
+                    return <AiOutlineUnorderedList/>
                 case "numbered-list":
-                    return <FontAwesomeIcon icon={faListOl}/>
+                    return <AiOutlineOrderedList/>
                 case "code-block":
-                    return <FontAwesomeIcon icon={faCode}/>
-                
+                    return <HiCode/>
+                case "reference-snippet":
+                    return <RiScissorsLine/>
+                case "check-list":
+                    return <BsListCheck/>
+                case "link":
+                    return <BiLink/>
+                case "note":
+                    return < RiInformationLine/>
+                case "table":
+                    return <BiTable/>
+                case "image":
+                    return <BsImageFill/>
                 default:
                     return  <BiParagraph/>
-            }
+            }	
         }
         return null
     }
+    
 
     insertNode = (path) => {
         let {editor} = this.props
@@ -272,6 +297,10 @@ class ToolIcon extends React.Component {
 }
 
 
+const HeadingText = styled.div`
+    font-family: 'Slabo 27px', serif;
+`
+
 const IntoOption = styled.div`
     display: flex;
     font-size: 1.2rem;
@@ -362,21 +391,21 @@ const BlockMenu = styled.div`
 `
 
 const BlockTool = styled.div`
-	font-size: 1.4rem;
+	font-size: 1.6rem;
 	display: flex;
     align-items: center;
     
-	border-right: 1px solid #6762df;
+	border-right: 2px solid ${props => !props.active ? chroma("#6762df").alpha(0.3) : chroma("#6762df").alpha(1)};
 	padding: 0.4rem 0.8rem;
     transform: translateY(${props => props.top}px);
     z-index: 1;
     
     &:hover {
-        background-color: ${chroma("#6762df").alpha(0.2)};
+        background-color: ${chroma("#6762df").alpha(0.35)};
     }
     transition: transform 0.2s cubic-bezier(0, 0.475, 0.01, 1.035), background-color 0.1s ease-in-out;
     cursor: pointer;
     border-top-left-radius: 0.2rem;
     border-bottom-left-radius: 0.2rem;
-    background-color: ${props => props.active ? chroma("#6762df").alpha(0.2) : 'white'};
+    background-color: ${props => !props.active ? chroma("#6762df").alpha(0.2) : chroma("#6762df").alpha(0.35)};
 `

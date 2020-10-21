@@ -15,27 +15,30 @@ const CheckCard = ({check, setCheck, active, pusher, color}) => {
     let selectedColor = selectColor(color);
     return (
         <Check active = {active}  onClick = {() => setCheck()}>
-            <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
-                {renderStatus(brokenDocuments, brokenSnippets)}
-            </Status>
+           
             <CheckContent active = {active}>
-                <Commit>
-                        <FiGitCommit
-                            style = {{
-                                fontSize: "1.2rem",
-                                marginTop: "0.1rem",
-                                marginRight: "0.2rem",
-                            }}
-                        />
-                        {sha.slice(0, 7)}
-                </Commit>
+                <AboveDetail>
+                    <Commit>
+                            <FiGitCommit
+                                style = {{
+                                    fontSize: "1.2rem",
+                                    marginTop: "0.1rem",
+                                    marginRight: "0.2rem",
+                                }}
+                            />
+                            {sha.slice(0, 7)}
+                    </Commit>
+                    <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
+                        {renderStatus(brokenDocuments, brokenSnippets)}
+                    </Status>
+                </AboveDetail>
                 <Title>{commitMessage}</Title>
                 <Detail>
                     <Bottom>
                         <Creator color = {selectedColor}>{pusher.charAt(0)}</Creator>
                         <CreationDate> 
                             <AiOutlineClockCircle
-                                style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
+                                style = {{marginTop: "0.09rem", marginRight: "0.5rem"}}
                             />
                             {getDateItem(created)}
                         </CreationDate>
@@ -73,8 +76,9 @@ const Check = styled.div`
 
     height: 11rem;
     width: 100%;
-    border-radius: 0.7rem;
+    border-radius: 0.5rem;
     background-color: ${props => props.active ? chroma("#6762df").alpha(0.1) : 'white'};
+    border: 1px solid ${props => props.active ? chroma("#6762df").alpha(0.4) : 'transparent'};
     margin-bottom: 1.5rem;
     display: flex;
     &:hover {
@@ -82,16 +86,20 @@ const Check = styled.div`
     }
     cursor: pointer;
     transition: background-color 0.1s ease-in;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
 `
 
 const CheckContent = styled.div`
     width: 100%;
+    /*
     border-top: 1px solid  ${props => props.active ? "#373a49": "#E0E4E7"};
     border-right: 1px solid ${props => props.active ? "#373a49" : "#E0E4E7"};
     border-bottom: 1px solid ${props => props.active ? "#373a49" : "#E0E4E7"};
+    */
     border-top-right-radius: 0.8rem;
     border-bottom-right-radius: 0.8rem;
     padding: 1rem 1.8rem;
+    padding-top: 0.5rem;
     display: flex;
     flex-direction: column;
 `
@@ -105,14 +113,16 @@ const Title = styled.div`
     width: 20rem;
 `
 
+const AboveDetail = styled.div`
+    display: flex;
+    align-items: center;
+`
+
 const Status = styled.div`
     color: ${props => props.active ? '#19e5be' : '#ff4757'};
-    font-size: 2.7rem;
-    padding: 1rem;
-    background-color:#373a49;
-    border-top-left-radius: 0.8rem;
-    border-bottom-left-radius: 0.8rem;
-
+    font-size: 2rem;
+    margin-left: auto;
+    margin-top: 0.45rem;
 `
 
 const Commit = styled.div`
@@ -121,7 +131,6 @@ const Commit = styled.div`
     align-items: center;
     opacity: 0.7;
     font-weight: 500;
-    margin-bottom: 0.7rem;
 `
 
 //3 Faraz TODO: add a border on this guy
@@ -143,6 +152,7 @@ const Creator = styled.div`
 
 const Bottom = styled.div`
     display: flex;
+    align-items: flex-end;
     width: 100%;
 `   
 
@@ -156,8 +166,7 @@ const Detail = styled.div`
 const CreationDate = styled.div`
     display: inline-flex;
     align-items: center;
-    height: 2.3rem;
-    
+    height: 1.5rem;
     font-weight:500;
     border-radius: 0.3rem;
     color: #8996A8;

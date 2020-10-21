@@ -4,9 +4,10 @@ import styled from 'styled-components';
 import chroma from 'chroma-js';
 
 //components
-import { AiFillFolder } from 'react-icons/ai';
+import { AiFillFolder, AiOutlineCloseCircle } from 'react-icons/ai';
 import { RiCloseFill, RiFileFill, RiFileList2Fill, RiScissorsLine } from 'react-icons/ri';
-import { FiPlus } from 'react-icons/fi';
+import { FiGitCommit, FiPlus } from 'react-icons/fi';
+import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
 
 class CheckRightContent extends Component {
 
@@ -117,9 +118,61 @@ class CheckRightContent extends Component {
         }
     }
 
+    renderStatus = (brokenDocuments, brokenSnippets) => {
+        return (brokenDocuments.length === 0 && brokenSnippets.length === 0) ?
+            <IoMdCheckmarkCircleOutline/> :
+            <AiOutlineCloseCircle/>
+    }
+    
+    selectColor = (index) => {
+        let colors = ['#5352ed', '#ff4757', '#20bf6b','#1e90ff', '#ff6348', 
+            '#e84393', '#1e3799', '#b71540', '#079992'];
+    
+        return index < colors.length ? colors[index] : 
+            colors[index - Math.floor(index/colors.length) * colors.length];
+    }
+    
+    getDateItem = (created) => {
+        let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let item =  new Date(created)
+        let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
+        return dateString
+    }
+
     render(){
+        const { check, user, color } = this.props;
+        const { brokenDocuments, brokenSnippets, sha, checkUrl, commitMessage, created, githubId, pusher } = check;
+
+        let selectedColor = this.selectColor(color);
+
         return (
             <RightContent>
+                <Top>
+                    <SubHeader>
+                        <Commit>
+                                <FiGitCommit
+                                    style = {{
+                                        fontSize: "1.4rem",
+                                        marginTop: "0.1rem",
+                                        marginRight: "0.3rem",
+                                    }}
+                                />
+                                {sha.slice(0, 7)}
+                        </Commit>
+                        <Status active = {(brokenDocuments.length === 0 && brokenSnippets.length === 0)}>
+                            {this.renderStatus(brokenDocuments, brokenSnippets)}
+                        </Status>
+                    </SubHeader>
+                    <Header>
+                        {commitMessage}
+                    </Header>
+                    <Detail>
+                        <Creator color = {selectedColor}>{user.charAt(0)}</Creator>
+                        <DetailContent>
+                           {`${user} committed on ${this.getDateItem(created)}.`}
+                        </DetailContent>
+                    </Detail>
+                </Top>
                 {this.renderNewReferences()}
                 {this.renderBrokenDocs()}
                 {this.renderDepSnippets()}
@@ -129,6 +182,84 @@ class CheckRightContent extends Component {
 }
 
 export default CheckRightContent;
+
+const Status = styled.div`
+    color: ${props => props.active ? '#19e5be' : '#ff4757'};
+    font-size: 3rem;
+    margin-left: auto;
+    margin-top: 0.45rem;
+`
+
+const Commit = styled.div`
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    font-weight: 500;
+`
+
+const SubHeader = styled.div`
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+`
+
+const Top = styled.div`
+    border: 1px solid #e0e4e7;
+    padding: 3rem 2rem;
+    padding-top: 1.5rem;
+    border-radius: 0.6rem;
+    margin-bottom: 2.5rem;
+`
+
+const Header = styled.div`
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    font-size: 2.6rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 30rem;
+`
+
+const Detail = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 1.35rem;
+    font-weight: 400;
+    width: 100%;
+`
+
+const DetailContent = styled.div`
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    line-height: 1.5;
+`
+
+const Creator = styled.div`
+    min-height: 3rem;
+    min-width: 3rem;
+    max-height: 3rem;
+    max-width: 3rem;
+   /* background-color: ${chroma('#1e90ff').alpha(0.2)};
+    color:#1e90ff;*/
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    color: ${props => props.color};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin-top: -0.1rem;
+    border-radius: 0.3rem;
+    font-weight: 500;
+    margin-right: 1.5rem;
+`
+
+const Heavy = styled.em`
+    font-weight: 500;
+    margin-right: 0.5rem;
+`
 
 const Content = styled.div`
     display: flex;
@@ -207,13 +338,14 @@ const Action = styled.div`
 
 const Block = styled.div`
     background-color: white;
-  /*  border: 1px solid #E0E4E7;*/
+    border: 1px solid #E0E4E7;
     padding: 1.7rem 2rem;
     padding-bottom: 3.5rem;
-    border-radius: 0.4rem;
-    width: 90%;
+    border-radius: 0.6rem;
     margin-bottom: 2rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    /*
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    width: 100%;
 `
 
 const BrokenDocument = styled.div`
@@ -259,9 +391,9 @@ const SnippetInfo = styled.div`
 
 const RightContent = styled.div`
     width: 100%;
-    padding: 2rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
+
     overflow-y: scroll;
+    margin-left: 3rem;
 `

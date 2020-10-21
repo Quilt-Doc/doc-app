@@ -120,7 +120,7 @@ class MainToolbar extends React.Component {
 
         return(
             <>
-                <Container documentModal = {this.props.documentModal}>
+                <Container id = {"documentMainToolbar"} documentModal = {this.props.documentModal}>
                         <Path>
                             {this.renderPath()}
                         </Path>

@@ -6,6 +6,7 @@ import styled from 'styled-components';
 //components
 import DocumentNavbar from '../side_navbar/DocumentNavbar';
 import EditorWrapper from './text_editor/EditorWrapper';
+import UserStats from './UserStats';
 
 //react-router
 import { withRouter } from 'react-router-dom';
@@ -15,7 +16,7 @@ const Knowledge = (props) => {
     return (
         <Container>
             <DocumentNavbar/>
-            {documentId && <EditorWrapper/>}
+            {documentId ? <EditorWrapper/> : <UserStats/>}
         </Container>
     )
 }

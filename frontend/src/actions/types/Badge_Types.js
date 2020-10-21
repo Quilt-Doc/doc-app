@@ -1,0 +1,1 @@
+export const GET_BADGE = "GET_BADGE";
