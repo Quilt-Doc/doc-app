@@ -9,6 +9,9 @@ import { createWorkspace } from '../../../actions/Workspace_Actions';
 //redux
 import { connect } from 'react-redux';
 
+//history
+import history from '../../../history';
+
 // part of the workspace creation where name of workspace is inputted and workspace is created
 class ChooseName extends Component {
 
@@ -24,8 +27,15 @@ class ChooseName extends Component {
             alert("Please enter a workspace name");
         } else {
             const workspace = await createWorkspace({installationId, creatorId: user._id, repositoryIds: active, name}, true);
-            setCreatedWorkspaceId(workspace._id);
-            changePage(3);
+            // Redirect to '/workspaces' on failure
+            if (!workspace) {
+                history.push('/workspaces');
+            }
+            // Success
+            else {
+                setCreatedWorkspaceId(workspace._id);
+                changePage(3);
+            }
         }
     }
 

@@ -29,6 +29,7 @@ const apis = require('../../apis/api');
 const crypto = require('crypto');
 
 const sgMail = require('@sendgrid/mail');
+
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
         return true
@@ -37,7 +38,7 @@ checkValid = (item) => {
 }
 
 beginEmailVerification = async (userId, userEmail) => {
-    console.log('Beginning Verification');
+    const TWO_HOURS = 60*60*2000;
 
     var hash = crypto.randomBytes(64).toString('hex');
 
@@ -49,6 +50,26 @@ beginEmailVerification = async (userId, userEmail) => {
         html: `<a href="https://api.getquilt.app/api/verify/${hash}">Verify</a>`,
     }
 
+    // Check if more than two Email Verification Links have been sent within the last 2 hours
+    var two_hours_ago = new Date((new Date()).getTime() - TWO_HOURS).getTime();
+
+    var count;
+    try {
+        count = await EmailVerify.countDocuments({created: { $lt: two_hours_ago }, email: userEmail, user: ObjectId(userId.toString())}).exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error EmailVerify countDocuments failed - userEmail, userId: ${userEmail}, ${userId}`,
+                            function: 'beginEmailVerification'});
+        throw new Error(`Error EmailVerify countDocuments failed`);
+    }
+
+    // If more than one email in last 2 hours, don't send another email
+    if (count > 1) {
+        return;
+    }
+
 
     try {
         const emailVerify = await new EmailVerify({
@@ -58,7 +79,11 @@ beginEmailVerification = async (userId, userEmail) => {
         }).save();
     }
     catch (err) {
-        return res.json({success: false, error: `Error EmailVerify.save() query failed \n ${err}`});
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error EmailVerify save() failed - userId, userEmail, hash: ${userId}, ${userEmail}, ${hash}`,
+                            function: 'beginEmailVerification'});
+        throw new Error(`Error EmailVerify.save() query failed`);
     }
 
     try {
@@ -67,9 +92,21 @@ beginEmailVerification = async (userId, userEmail) => {
     catch (error) {
         console.error(error);
         if (error.response) {
-            console.error(error.response.body)
-            throw new Error(`Error Response when sending email - userId, userEmail, error.response.body: ${userId}, ${userEmail} \n ${error.response.body}`);
+            console.error(error.response.body);
+
+            await logger.error({source: 'backend-api',
+                                error: err,
+                                errorDescription: `Error EmailVerify send() failed - userId, userEmail, error.response.body: ${userId}, ${userEmail} ${error.response.body}`,
+                                function: 'beginEmailVerification'});
+
+            throw new Error(`Error Response when sending email - userId, userEmail, error.response.body: ${userId}, ${userEmail} ${error.response.body}`);
         }
+
+        await logger.error({source: 'backend-api',
+                            error: err,
+                            errorDescription: `Error EmailVerify send() failed - userId, userEmail: ${userId}, ${userEmail}`,
+                            function: 'beginEmailVerification'});
+        
         throw new Error(`Error sending email - userId, userEmail: ${userId}, ${userEmail}`);
     }
 }
