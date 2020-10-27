@@ -177,6 +177,7 @@ createWorkspace = async (req, res) => {
             output = { success: true, result: workspace };
         });
     }
+
     catch (err) {
         return res.json(output);
     }
@@ -195,8 +196,6 @@ createWorkspace = async (req, res) => {
     }
 
     return res.json(output);
-
-    // return res.json({success: true, result: workspace});
 }
 
 getWorkspace = async (req, res) => {

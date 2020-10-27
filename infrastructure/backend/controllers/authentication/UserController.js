@@ -32,7 +32,7 @@ getUser = async (req, res) => {
 }
 
 editUser = async (req, res) => {
-    console.log('EDIT USER CALLED');
+
     const userId = req.userObj._id.toString();
     const { username, email, firstName, lastName, onboarded, verified, 
         domain, bio, organization, position
@@ -40,14 +40,7 @@ editUser = async (req, res) => {
 
     let update = {}
     if (checkValid(username)) update.username = username; 
-    if (checkValid(email)) {
-        update.email = email;
-        try {
-            await beginEmailVerification(userId, email);
-        } catch (err) {
-            return res.json({ success: false, error:"editUser: beginEmailVerification of email for edit failed", trace: err })
-        }
-    }
+    if (checkValid(email)) update.email = email;
     if (checkValid(firstName)) update.firstName = firstName;
     if (checkValid(lastName)) update.lastName = lastName;
     if (checkValid(onboarded)) update.onboarded = onboarded;
@@ -58,10 +51,45 @@ editUser = async (req, res) => {
         returnedUser = await  User.findByIdAndUpdate(userId, { $set: update }, { new: true })
             .populate('workspaces').lean().exec();
     } catch (err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `Error Failed to findByIdAndUpdate User - userId: ${userId}`, function: 'editUser'});
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error Failed to findByIdAndUpdate User - userId, update: ${userId}, ${JSON.stringify(update)}`,
+                            function: 'editUser'});
+
         return res.json({success: false, error: "editUser Error: findbyIdAndUpdate query failed", trace: err});
     }
-    console.log("RETURNED USER",  returnedUser);
+
+    // Send Verification Email, if User email changed
+    if (checkValid(email)) {
+
+        // Set User.verified to false
+        
+        try {
+            await User.findByIdAndUpdate(userId, { $set: { verified: false }}, { new: true });
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error Failed to set User verified=false - userId: ${userId}`,
+                                function: 'editUser'});
+
+            return res.json({success: false, error: "Error Failed to set User verified=false"});
+        }
+
+        try {
+            await beginEmailVerification(userId, email);
+        } catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error Failed to beginEmailVerification - userId, email: ${userId}, ${email}`,
+                                function: 'editUser'});
+
+            return res.json({ success: false, error:"editUser: beginEmailVerification of email for edit failed", trace: err });
+        }
+    }
+
+
+
     return res.json({success: true, result: returnedUser});
 }
 

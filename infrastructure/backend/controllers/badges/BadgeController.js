@@ -14,8 +14,6 @@ const {
 
 const renderStatsCard = require("./cards/stats-card");
 
-
-
 const CONSTANTS = {
     THIRTY_MINUTES: 1800,
     TWO_HOURS: 7200,

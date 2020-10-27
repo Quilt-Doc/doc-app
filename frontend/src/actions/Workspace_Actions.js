@@ -11,9 +11,14 @@ import { api } from '../apis/api';
 
 export const createWorkspace = (formValues, passback) => async (dispatch) => {
     const response = await api.post('/workspaces/create', formValues);
-    
+
     if (response.data.success == false) {
-        throw new Error(response.data.error.toString());
+        if (response.data.alert) {
+            alert(response.data.alert)
+            return false
+        } else {
+            throw new Error(response.data.error.toString());
+        }
     }
     else {
         dispatch({ type: CREATE_WORKSPACE, payload: response.data.result });
