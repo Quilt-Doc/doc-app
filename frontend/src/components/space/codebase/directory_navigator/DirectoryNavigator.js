@@ -48,17 +48,19 @@ class DirectoryNavigator extends React.Component {
         const { match, retrieveDocuments, retrieveReferences, getRepository, getBadge } = this.props;
         const { repositoryId, referenceId, workspaceId } = match.params;
 
-        //await getBadge({workspaceId, repositoryId});
+       
 
-        await Promise.all([
+        let results = await Promise.all([
+            getBadge({workspaceId, repositoryId}),
             getRepository({workspaceId, repositoryId}),
             retrieveReferences({ workspaceId, repositoryId, referenceId, kinds : ['file', 'dir'] }),
             retrieveDocuments({ workspaceId, referenceId, minimal: true }) //FARAZ TODO: support for root referenceId
         ]);
 
+        const badgeSVG = results[0];
         const { currentReference } = this.props;
         const { loaded } = this.state;
-        if ( currentReference && !loaded ) this.setState({ loaded: true });
+        if ( currentReference && !loaded ) this.setState({ loaded: true, badgeSVG });
     }
 
     componentDidMount() {
@@ -141,9 +143,11 @@ class DirectoryNavigator extends React.Component {
     }
 
     renderLeftBlock = () => {
+        const { badgeSVG } = this.state;
         const { currentRepository } = this.props;
         const { defaultBranch, lastProcessedCommit } = currentRepository;
-
+        console.log("BADGE SVG IN LEFT BLOCK", badgeSVG);
+        
         return(
             <LeftBlock>
                 <Header>Repository Information</Header>
@@ -161,12 +165,13 @@ class DirectoryNavigator extends React.Component {
                         <InfoItemIcon top = {0.3}>
                             <FiGitCommit/>
                         </InfoItemIcon>
-                        Last Processed Commit
+                        Last Processed Commit 
                     </InfoItemTop>
                     <InfoItemContent>
                         {lastProcessedCommit.slice(0, 7)}
                     </InfoItemContent>
                 </InfoItem>
+                <StyledImage src={`data:image/svg+xml;utf8,${encodeURIComponent(badgeSVG)}`} />
                 {/*
                 <InfoItem>
                     <InfoItemTop>Last Processed Commit</InfoItemTop>
@@ -261,6 +266,10 @@ const makeMapStateToProps = () => {
 
 export default connect(makeMapStateToProps, { retrieveReferences, 
     retrieveDocuments, getRepository, getBadge })(DirectoryNavigator);
+
+const StyledImage = styled.img`
+
+`
 
 const InfoItem = styled.div`
     padding: 1rem 1.7rem;
@@ -362,8 +371,8 @@ const LeftBlock = styled.div`
     margin-right: 5rem;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
     border-radius: 0.5rem;
-    height: 40rem;
     padding: 2rem;
+    height: 47rem;
 `
 
 const RightBlock = styled.div`

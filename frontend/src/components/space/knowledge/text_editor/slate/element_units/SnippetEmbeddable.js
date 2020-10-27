@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 //slate
-import { useEditor, ReactEditor } from 'slate-react';
+import { Transforms } from 'slate';
+import { useSlate, ReactEditor } from 'slate-react';
 
 //redux
 import { connect } from 'react-redux';
@@ -50,6 +51,7 @@ import 'prismjs/components/prism-matlab';
 import 'prismjs/components/prism-r';
 import 'prismjs/components/prism-bash';
 import { BiLink } from 'react-icons/bi';
+import { editReference } from '../../../../../../actions/Reference_Actions';
 
 Prism.languages.python = Prism.languages.extend('python', {});
 Prism.languages.php = Prism.languages.extend('php', {});
@@ -76,16 +78,53 @@ Prism.languages.r = Prism.languages.extend('r', {});
 Prism.languages.bash = Prism.languages.extend('bash', {});
 
 const SnippetEmbeddable = props => {
-
-    const { attributes, children, element: { snippetId }, getSnippet, snippet, match } = props;
     
-    const editor = useEditor();
+    const { attributes, children, element, getSnippet, snippet, match } = props;
+    const { snippetId } = element;
+
+    const [ embeddableJSX, setEmbeddableJSX ] = useState(null);
+    const [ isSelected, setIsSelected ] = useState(false);
+
+    const editor = useSlate();
 
     useEffect(() => {
         const { workspaceId, documentId } = match.params;
 
-        getSnippet({workspaceId, snippetId});
+        const asyncGetSnippet = async () => {
+            await getSnippet({workspaceId, snippetId});
+        }
+        
+        asyncGetSnippet();
+        if (snippet && snippet.reference) renderSnippet();
+
     }, []);
+
+    /*
+    useEffect(() => {
+        return () => { 
+            if (isSelected) {
+                window.removeEventListener("keydown", handleKeyDown) 
+            }
+        }
+    }, [isSelected])
+    */
+
+    useEffect(() => {
+        if (editor.selection) {
+            const elementPath =  ReactEditor.findPath(editor, element);
+            const elementLocation = elementPath[0];
+
+            if (ReactEditor.isFocused(editor) && elementLocation === editor.selection.anchor.path[0]) {
+                if (!isSelected) {
+                    setIsSelected(true);
+                }
+            } else if (isSelected) {
+                setIsSelected(false);
+            }
+        } else {
+            if (isSelected) setIsSelected(false);
+        }
+    }, [editor.selection])
 
     const renderStatus = (status) => {
         status = status.toLowerCase();
@@ -261,7 +300,8 @@ const SnippetEmbeddable = props => {
         const url = `/workspaces/${workspaceId}/repository/${reference.repository}/code/${_id}?line=${start}`;
         const linkJSX = <ReferenceLink to = {url}><BiLink/></ReferenceLink>
 
-        return (
+
+        setEmbeddableJSX(
             <>
                 <ReferenceHeader>
                     {name}
@@ -283,9 +323,23 @@ const SnippetEmbeddable = props => {
         );
     }
     
+    
+    const handleClick = (e) => {
+        e.preventDefault();
+        /*
+        if (!isSelected) {
+            const path = ReactEditor.findPath(editor, element);
+            Transforms.setNodes(
+                editor,
+                { isSelected: true },
+                { at: path }
+            );
+        }*/
+    }
+
     return (
-        <Container contentEditable={false} {...attributes}>
-            { (snippet && snippet.reference) ? renderSnippet() : renderLoader()}
+        <Container isSelected = {isSelected} onClick = {handleClick} contentEditable={false} {...attributes}>
+            { (embeddableJSX) ? embeddableJSX : renderLoader()}
             { children }
         </Container>
     );
@@ -316,11 +370,12 @@ const ReferenceLink = styled(Link)`
 `
 
 const Container = styled.div`
-    border: 1px solid #d9d9e2;
+    border: 1px solid ${props => props.isSelected ? chroma('#6762df').alpha(0.5) : '#d9d9e2'};
     border-radius: 0.4rem;
     margin-top: 2.5rem;
     background-color: #F7F9FB;
     tab-size: 4;
+    cursor: pointer;
 `
 
 const LoaderContainer = styled.div`
@@ -362,8 +417,7 @@ const SnippetBody = styled.div`
     font-family: 'Roboto Mono', monospace !important;
     font-size: 1.35rem;
     color: #242A2E;
-    padding: 1rem 2.5rem;
-    padding-bottom: 1.5rem;
+    padding: 1.5rem 2.5rem;
     padding-left: 0.5rem;
    /* width: ${props => props.width}px;*/
    /* overflow-x: scroll;*/

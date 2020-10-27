@@ -16,6 +16,7 @@ import { AiOutlineOrderedList, AiOutlineUnorderedList } from 'react-icons/ai';
 import { HiCode } from 'react-icons/hi';
 import { RiInformationLine, RiScissorsLine } from 'react-icons/ri';
 import { BsImageFill, BsListCheck } from 'react-icons/bs';
+import { IoMdAttach } from 'react-icons/io';
 
 const Sidebar = (props) => {
     let editor = useSlate();
@@ -23,12 +24,14 @@ const Sidebar = (props) => {
     let selection = editor.selection;
     let type;
     let path;
+
     if (editor.selection && editor.selection.anchor) {
         path =  [editor.selection.anchor.path[0]]
         type = Node.get(editor, path).type
     }
 
     useEffect(() => {
+        
         if (selection) {
             try {
                 let path = [selection.anchor.path[0]];
@@ -38,9 +41,15 @@ const Sidebar = (props) => {
                 if (props.documentModal) {
                     changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 183 + rect.height/2);
                 } else {
-                    type = Node.get(editor, path).type;
+                    const slateNode = Node.get(editor, path);
+                    type = slateNode.type;
+
                     let parentOffsetTop = document.getElementById("editorSubContainer").offsetTop;
                     let newTop = document.getElementById("editorContainer").scrollTop + rect.top + rect.height/2 - parentOffsetTop - 13;
+
+                    if (type === "reference-snippet") {
+                        newTop -= ReactEditor.toDOMNode(editor, slateNode).getBoundingClientRect().height;
+                    }
                     if (type === "code-block") newTop -= 23
                     changeTop(newTop);
                 }
@@ -60,6 +69,7 @@ const Sidebar = (props) => {
                     toggleBlock = {props.toggleBlock}
                     editor = {editor}
                     documentModal = {props.documentModal}
+                    currentType = {type}
                 />
             }
        </SidebarContainer>
@@ -96,10 +106,14 @@ class ToolIcon extends React.Component {
     }
     
     toggleBlock = (e, type) => {
+        const { currentType } = this.props;
         e.preventDefault()
         e.stopPropagation()
-        this.props.toggleBlock(type);
-        this.closeMenu()
+
+        if (currentType !== 'reference-snippet' && currentType !== 'code-block' && currentType !== 'attachment') {
+            this.props.toggleBlock(type);
+            this.closeMenu()
+        }
     }
 
     renderBlockIcon = (type) => {
@@ -131,6 +145,8 @@ class ToolIcon extends React.Component {
                     return <BiTable/>
                 case "image":
                     return <BsImageFill/>
+                case "attachment":
+                    return <IoMdAttach/>
                 default:
                     return  <BiParagraph/>
             }	
@@ -154,7 +170,8 @@ class ToolIcon extends React.Component {
     
     renderMarginTop = () => {
         if (this.tool) {
-            if (this.tool.getBoundingClientRect().top + this.convertRemToPixels(14) 
+            let rect = this.tool.getBoundingClientRect();
+            if (rect.top + this.convertRemToPixels(14) 
                 > window.innerHeight
             ) {
                 return -20
@@ -176,7 +193,7 @@ class ToolIcon extends React.Component {
     }
 
     render(){
-        let {top, editor} = this.props
+        let {top, editor, currentType} = this.props
         let {open} = this.state
         let type;
         let path;
@@ -184,6 +201,10 @@ class ToolIcon extends React.Component {
             path =  [editor.selection.anchor.path[0]]
             type = Node.get(editor, path).type
         }
+
+        let active = currentType !== 'reference-snippet' 
+            && currentType !== 'code-block'
+            && currentType !== 'attachment';
 
         return(
             <BlockTool 
@@ -222,72 +243,73 @@ class ToolIcon extends React.Component {
                             <FontAwesomeIcon style = {{marginLeft: "auto"}} icon={faTrash}/>
                         </HeaderContainer>
                     }
-                    <SmallHeaderContainer>Turn Into</SmallHeaderContainer>
-                    
-                    <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "paragraph")}}>
-                        <IntoIcon>
-                            <BiParagraph/>
-                        </IntoIcon>
-                        <IntoText>
-                            Paragraph
-                        </IntoText>
-                    </IntoOption>
-                    <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "heading-one")}}>
-                        <IntoIcon>
-                            H1
-                        </IntoIcon>
-                        <IntoText>
-                            Heading 1
-                        </IntoText>
-                    </IntoOption>
-                    <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "heading-two")}}>
-                    <IntoIcon>
-                        H2
-                    </IntoIcon>
-                    <IntoText>
-                        Heading 2
-                    </IntoText>
-                </IntoOption>
-                <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "heading-three")}}>
-                    <IntoIcon>
-                        H3
-                    </IntoIcon>
-                    <IntoText>
-                        Heading 3
-                    </IntoText>
-                </IntoOption>
-                <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "quote")}}>
-                    <IntoIcon>
-                        <FontAwesomeIcon icon={faQuoteLeft}/>
-                    </IntoIcon>
-                    <IntoText>
-                        Quote
-                    </IntoText>
-                </IntoOption>
-                <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "bulleted-list")}}>
-                    <IntoIcon>
-                        <FontAwesomeIcon icon={faListUl}/>
-                    </IntoIcon>
-                    <IntoText>
-                        Bullet List
-                    </IntoText>
-                </IntoOption>
-                <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "numbered-list")}}>
-                    <IntoIcon>
-                        <FontAwesomeIcon icon={faListOl}/>
-                    </IntoIcon>
-                    <IntoText>
-                        Numbered List
-                    </IntoText>
-                </IntoOption>
-                <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "code-block")}}>
-                    <IntoIcon>
-                        <FontAwesomeIcon icon={faCode}/>
-                    </IntoIcon>
-                    <IntoText>
-                        Code Block
-                    </IntoText>
-                </IntoOption>
+                        <TurnIntoContainer active = {active}>
+                            <SmallHeaderContainer>Turn Into</SmallHeaderContainer>
+                            <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "paragraph")}}>
+                                <IntoIcon>
+                                    <BiParagraph/>
+                                </IntoIcon>
+                                <IntoText>
+                                    Paragraph
+                                </IntoText>
+                            </IntoOption>
+                            <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "heading-one")}}>
+                                <IntoIcon>
+                                    H1
+                                </IntoIcon>
+                                <IntoText>
+                                    Heading 1
+                                </IntoText>
+                            </IntoOption>
+                            <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "heading-two")}}>
+                            <IntoIcon>
+                                H2
+                            </IntoIcon>
+                            <IntoText>
+                                Heading 2
+                            </IntoText>
+                        </IntoOption>
+                        <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "heading-three")}}>
+                            <IntoIcon>
+                                H3
+                            </IntoIcon>
+                            <IntoText>
+                                Heading 3
+                            </IntoText>
+                        </IntoOption>
+                        <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "quote")}}>
+                            <IntoIcon>
+                                <FontAwesomeIcon icon={faQuoteLeft}/>
+                            </IntoIcon>
+                            <IntoText>
+                                Quote
+                            </IntoText>
+                        </IntoOption>
+                        <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "bulleted-list")}}>
+                            <IntoIcon>
+                                <FontAwesomeIcon icon={faListUl}/>
+                            </IntoIcon>
+                            <IntoText>
+                                Bullet List
+                            </IntoText>
+                        </IntoOption>
+                        <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "numbered-list")}}>
+                            <IntoIcon>
+                                <FontAwesomeIcon icon={faListOl}/>
+                            </IntoIcon>
+                            <IntoText>
+                                Numbered List
+                            </IntoText>
+                        </IntoOption>
+                        <IntoOption onMouseDown = {(e) => {this.toggleBlock(e, "code-block")}}>
+                            <IntoIcon>
+                                <FontAwesomeIcon icon={faCode}/>
+                            </IntoIcon>
+                            <IntoText>
+                                Code Block
+                            </IntoText>
+                        </IntoOption>
+                    </TurnIntoContainer>
                 </BlockMenu>
                 </CSSTransition>
             </BlockTool>
@@ -296,6 +318,9 @@ class ToolIcon extends React.Component {
 
 }
 
+const TurnIntoContainer = styled.div`
+    opacity: ${props => props.active ? 1 : 0.5};
+`
 
 const HeadingText = styled.div`
     font-family: 'Slabo 27px', serif;
@@ -372,7 +397,7 @@ const SmallHeaderContainer = styled.div`
 
 const BlockMenu = styled.div`
     width: 18rem;
-    height: 26rem;
+    max-height: 26rem;
     display: flex;
     flex-direction: column;
     position: absolute;

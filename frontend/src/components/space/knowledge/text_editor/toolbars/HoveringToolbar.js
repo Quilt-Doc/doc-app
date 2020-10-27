@@ -7,42 +7,57 @@ import { Editor, Range } from 'slate'
 //styles
 import styled from 'styled-components';
 
+//lodash
+import _ from 'lodash';
+
 const HoveringToolbar = () => {
     const menu = useRef();
     const editor = useSlate();
   
     const [open, setOpen] = useState(false);
     const [rect, setRect] = useState({ top: 0, left: 0 });
+    const [initialAnchor, setAnchor] = useState(null);
 
     const { selection } = editor;
 
+    /*
     useEffect(() => {
-      
+        console.log("RENDERED");
         if (
             !selection ||
             !ReactEditor.isFocused(editor) ||
             Range.isCollapsed(selection) ||
             Editor.string(editor, selection) === ''
         ) {
-            setOpen(false);
-        } else {
+            
+            if (!open) {
+                console.log("ENTERED IN HERE");
+                setOpen(false);
+                setAnchor(null);
+            }
+        } else if (!_.isEqual(selection.anchor, initialAnchor)) {
+            console.log("ENTERED IN HERE 2");
             const domSelection = window.getSelection()
             const domRange = domSelection.getRangeAt(0)
             const rect = domRange.getBoundingClientRect();
+
             const parentRect = 
-                document.getElementById('editorContainer').getBoundingClientRect();
+                document.getElementById('editorSubContainer').getBoundingClientRect();
 
             let newRect = {
-                top: rect.top - parentRect.top, 
-                left: rect.left - parentRect.left,
+                top: rect.top - parentRect.top - 30, 
+                left: rect.left - parentRect.left - 30,
             }
-
+            
+            setAnchor(selection.anchor);
             setRect(newRect);
             setOpen(true);
+            
         }
 
-    }, [selection])
-
+    }, [ selection, initialAnchor, open ])
+    
+    
     /*
     const calculateRect = (clientRect) => {
         const { top, left, height } = clientRect;
@@ -66,7 +81,7 @@ const HoveringToolbar = () => {
         open && 
             <Container  
                 ref = { menu }
-                rect = {rect}
+                rect = { rect }
                 style = {{
                     left: rect.left
                 }}

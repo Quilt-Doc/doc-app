@@ -88,7 +88,7 @@ const postFile = async (req, res) => {
     // Add file key to 'attachments' field of Document model
     var document;
     try {
-        document = await Document.findByIdAndUpdate(documentId, { $push: { attachments: targetName } }).lean().exec();
+        document = await Document.findByIdAndUpdate(documentId, { $push: { attachments: targetName } }, { new: true }).select('_id attachments').lean().exec();
     }
     catch (err) {
         await logger.error({source: 'backend-api',

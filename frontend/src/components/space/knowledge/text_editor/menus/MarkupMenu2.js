@@ -20,10 +20,11 @@ import { BsImageFill, BsListCheck } from 'react-icons/bs';
 import { HiCode } from 'react-icons/hi';
 import { RiScissorsLine, RiInformationLine } from 'react-icons/ri';
 import { GrBlockQuote } from 'react-icons/gr';
+import { IoMdAttach } from 'react-icons/io';
 
 //types
 import { 
-	SET_MARKUP_MENU_ACTIVE
+	SET_MARKUP_MENU_ACTIVE, SET_SNIPPET_MENU_ACTIVE, SET_ATTACHMENT_MENU_ACTIVE
 } from '../editor/reducer/Editor_Types';
 
 //lodash
@@ -72,7 +73,11 @@ const MarkupMenu = (props) => {
     
 
     useEffect(() => {
-        const option = filteredOptions[currentPosition];
+        let checkPosition = currentPosition;
+
+        if (checkPosition === -1) checkPosition = 0;
+
+        const option = filteredOptions[checkPosition];
 
         if (!option) return;
 
@@ -177,7 +182,6 @@ const MarkupMenu = (props) => {
         const { top, left, height } = clientRect;
         let rect = { top, left, height };
         
-        console.log("DOCUMENT MODAL", documentModal);
         if (documentModal) {	
             const { scrollTop } = document.getElementById("documentModalBackground");
             rect.top = rect.top + scrollTop;
@@ -198,7 +202,6 @@ const MarkupMenu = (props) => {
 
         const parentRect = document.getElementById('editorSubContainer').getBoundingClientRect();
 
-        console.log("PARENT RECT TOP", parentRect.top);
         rect.top = rect.top - parentRect.top;
         rect.left = rect.left - parentRect.left;
 
@@ -207,7 +210,7 @@ const MarkupMenu = (props) => {
     }
 
 
-    const insertBlock = useCallback((option) => {
+    const insertBlock = useCallback(async (option) => {
         const { type } = option;
 
         Transforms.delete(editor, {
@@ -215,15 +218,23 @@ const MarkupMenu = (props) => {
             distance: filterText.length,
             unit: 'character',
             reverse: true
-        })
+        });
 
         let attributes = { type };
+
         if (type === "check-list") attributes.isSelected = false;
 
-        if (type !== "reference-snippet") {
-            editor.insertBlock(attributes)
+
+        if (type === "reference-snippet") {
+            await setOpen(false);
+            dispatch({type: SET_SNIPPET_MENU_ACTIVE, payload: true});
+        } else if (type === "attachment") {
+            //editor.insertBlock({name: "rumbo.png", type: "attachment"});
+            await setOpen(false);
+            dispatch({type: SET_ATTACHMENT_MENU_ACTIVE, payload: true});
         } else {
-            editor.insertText("&") // needs change
+            editor.insertBlock(attributes);
+            //editor.insertText("&") // needs change
         }
 
         closeMenu();
@@ -295,9 +306,10 @@ const defaultOptions = {
     "note": { type: "note", name: "Note", description: "Informational note to guide readers"},
     "bulleted-list": { type: "bulleted-list", name: "Bulleted List", description: "Bulleted list to order phrases"},
     "numbered-list": { type: "numbered-list", name: "Numbered List", description: "Numbered list to display series"},
+    "check-list": { type: "check-list", name: "Check List", description: "Check list to keep track"},
     "code-block": { type: "code-block", name: "Code Block", description: "Block of inline, editable code"},
     "reference-snippet": { type: "reference-snippet", name: "Reference Snippet", description: "Segments of repository files"},
-    "check-list": { type: "check-list", name: "Check List", description: "Check list to keep track"},
+    "attachment": { type: "attachment", name: "Attachment", description: "Upload a local file" },
     "link": { type: "link", name: "Link", description: "Link to any url"},
     "table": { type: "table", name: "Table", description: "Table for complex formatting"},
     "image": { type: "image", name: "Image", description: "Image embedded into block"},
@@ -323,6 +335,8 @@ const getMenuIcon = (type) => {
             return <RiScissorsLine/>
         case "check-list":
             return <BsListCheck/>
+        case "attachment":
+            return <IoMdAttach/>
         case "link":
             return <BiLink/>
         case "note":

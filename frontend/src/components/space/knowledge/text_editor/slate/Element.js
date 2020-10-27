@@ -15,6 +15,7 @@ import { faBars } from '@fortawesome/free-solid-svg-icons'
 //components
 import SnippetEmbeddable from './element_units/SnippetEmbeddable';
 import CheckListItemElement from './element_units/CheckListItemElement';
+import Attachment from './element_units/Attachment';
 
 //reactdnd
 import {ItemTypes} from './types/Drag_Types';
@@ -144,6 +145,8 @@ const getCorrectElement = props => {
 			return <Quote {...attributes}>
 						{children}
 					</Quote>
+		case 'attachment':
+			return <Attachment {...props}/>
 		case 'reference-snippet':
 			return <SnippetEmbeddable {...props} />
 		default:
@@ -410,8 +413,8 @@ const H3 = styled.div`
 
 const P = styled.div`
   margin-top: 1.5rem !important;
-  font-size: 1.55rem;
-  line-height: 1.75;
+  font-size: 1.57rem;
+  line-height: 1.76;
   color: rgb(9, 30, 66);
   box-shadow: none;
   border-top: 2px solid transparent;

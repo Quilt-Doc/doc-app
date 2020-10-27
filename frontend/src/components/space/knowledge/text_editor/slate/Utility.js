@@ -28,12 +28,26 @@ const LIST_TYPES = ['numbered-list', 'bulleted-list']
 
 
 export const onKeyDownHelper = (event, state, editor) => {
+	
 	const { isMarkupMenuActive } = state;
 	if (event.key === "Tab") {
-		event.preventDefault()
-		editor.insertText("\t")
+		event.preventDefault();
+		editor.insertText("\t");
 	} else if ( event.key === "Enter" && !isMarkupMenuActive ) {
-		editor.insertDefaultEnter(event)
+		editor.insertDefaultEnter(event);
+	} else if (event.keyCode === 8) {
+		const match = Editor.above(editor, {
+			match: n => Editor.isBlock(editor, n),
+		});
+
+		if (match) {
+			const [block, path] = match;
+
+			if (block.type === 'reference-snippet') {
+				event.preventDefault();
+				Transforms.removeNodes(editor, {at: path});
+			}
+		}
 	}
 }
 

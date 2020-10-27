@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 //slate
-import { Node } from 'slate'
+import { Node, Transforms } from 'slate'
 
 //actions
 import { getRepositoryFile } from '../../../../../../actions/Repository_Actions';
@@ -233,10 +233,12 @@ class DocumentReferenceEditor extends Component {
         e.preventDefault();
 
         const { fileContents } = this.state;
-        const { createSnippet, undoModal, match, openedReference, user, editor } = this.props;
+        const { createSnippet, undoModal, match, openedReference, user, editor, range } = this.props;
         const { documentId, workspaceId } = match.params;
 
         let selectedLines = this.selection.getSelection();
+        if (selectedLines.length === 0) return alert("No lines were selected..");
+        
         let start = null;
         selectedLines.map(line => {
                 let num = parseInt(line.id.split('-')[1]);
@@ -260,10 +262,11 @@ class DocumentReferenceEditor extends Component {
             status: "VALID", 
             creatorId: user._id 
         }, true);
+        console.log("SELECTION", editor.selection);
 
-        console.log(snippet);
         //editor.insertBlock()
-        editor.insertBlock({type: "reference-snippet", snippetId: snippet._id}, editor.selection);
+        Transforms.select(editor, range);
+        editor.insertBlock({type: "reference-snippet", snippetId: snippet._id});
 
         undoModal();
 

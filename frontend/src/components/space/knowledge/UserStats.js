@@ -60,8 +60,8 @@ class UserStats extends Component {
             return (
                 <Stat>
                     <Creator color = {color}>F</Creator>
-                    <IndStat>Has created <Colored color = {"#6762df"}>{documentsCreatedNum}</Colored> Docs</IndStat>
-                    <IndStat>Needs to fix <Colored color = {"#ff4757"}>{documentsBrokenNum}</Colored> Docs</IndStat>
+                    <IndStat>Has created {documentsCreatedNum} Docs</IndStat>
+                    <IndStat>Needs to fix {documentsBrokenNum} Docs</IndStat>
                 </Stat>
             )
         })
@@ -116,7 +116,7 @@ const Stat = styled.div`
 `
 
 const IndStat = styled.div`
-    margin-right: 3rem;
+    margin-right: 1.5rem;
     font-size: 1.4rem;
     font-weight: 500;
     width: 25rem;

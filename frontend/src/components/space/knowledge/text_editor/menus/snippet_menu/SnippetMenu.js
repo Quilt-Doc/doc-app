@@ -6,22 +6,30 @@ import { connect } from 'react-redux';
 //router
 import {withRouter} from 'react-router-dom';
 
+//utility
+import scrollIntoView from 'scroll-into-view-if-needed'
+
 //styles
 import styled from "styled-components";
+import chroma from 'chroma-js';
 
 //components
 import { CSSTransition } from 'react-transition-group';
 import DocumentReferenceEditor from './DocumentReferenceEditor';
 
 //slate
-import {  ReactEditor } from 'slate-react'
+import { ReactEditor } from 'slate-react'
 
 //icons
 import { RiFileLine } from 'react-icons/ri'
+import { RiScissorsLine } from 'react-icons/ri';
 import {AiFillFolder} from 'react-icons/ai';
 
 //actions
 import { retrieveReferences, searchReferences} from '../../../../../../actions/Reference_Actions';
+
+//types
+import { SET_SNIPPET_MENU_ACTIVE } from '../../editor/reducer/Editor_Types'
 
 //spinner
 import MoonLoader from "react-spinners/MoonLoader";
@@ -42,33 +50,95 @@ class SnippetMenu extends React.Component {
         }
 
         this.menuRef = React.createRef();
+        this.listItems = {};
     }
 
     componentDidMount = () => {
-        const { editor, editorState: {text} } = this.props;
+        const { editor, dispatch } = this.props;
+        const { selection } = editor;
+        if (selection) {
+            this.reset();
 
-        if (editor.selection) {
-            let path = [editor.selection.anchor.path[0]];
-            let offset = editor.selection.anchor.offset - 1;
+            const path = [selection.anchor.path[0]];
+            const offset = selection.anchor.offset;
+
+            const range = {anchor: {offset, path}, focus: {offset, path}};
+            const rect = this.calculateRect(ReactEditor.toDOMRange(editor, range).getBoundingClientRect());
+
+            this.setState({range: selection, rect, open: true});
             
-            let newRect = ReactEditor.toDOMRange(editor, 
-                {anchor: {offset, path}, focus: { offset, path }}).getBoundingClientRect();
-            this.setState({rect: newRect, open: true});
-            this.searchReferences(text);
-    
             window.addEventListener('keydown', this.handleKeyDown, false);
             document.addEventListener('mousedown', this.handleClickOutside, false);
-    
+
             this.setState({loaded: true});
+        } else {
+            dispatch({type: SET_SNIPPET_MENU_ACTIVE, payload: false});
+        }   
+    }
+
+    componentDidUpdate = (prevProps, prevState) => {
+        const { position } = this.state
+        if (prevState.position !== position) {
+            this.checkScroll();
+        }
+    }   
+
+    checkScroll = () => {
+        let { position, references } = this.state;
+
+        if (position === -1) position = 0;
+
+        const reference = references[position];
+
+        let menuButton;
+        if (reference) {
+            menuButton = this.listItems[reference._id];
+        }
+
+        if (menuButton) {
+            scrollIntoView(menuButton, {
+                scrollMode: 'if-needed',
+                block: 'nearest',
+                inline: 'nearest',
+                behavior: 'smooth'
+            });
         }
     }
 
-    componentDidUpdate =  (prevProps) => {
-        const {editorState: {text} } = this.props;
-        if (prevProps.editorState.text !== text) {
-            this.searchReferences(text);
+    calculateRect = (clientRect) => {
+        const { documentModal } = this.props;
+
+        const { top, left, height } = clientRect;
+        let rect = { top, left, height };
+        
+        if (documentModal) {	
+            const { scrollTop } = document.getElementById("documentModalBackground");
+            rect.top = rect.top + scrollTop;
+        } else {
+            /*
+            console.log("ENTERD HERE");
+            const { scrollTop } = document.getElementById("rightView");
+            console.log("SCROLL TOP", scrollTop)
+            rect.top = rect.top - scrollTop;
+            */
         }
+       
+        /*
+        if (this.menu.current) {
+            if (rect.top + 385 - 100 > window.innerHeight){
+                rect.top = rect.top - 385;
+            }
+        }*/
+
+        const parentRect = document.getElementById('editorSubContainer').getBoundingClientRect();
+
+        rect.top = rect.top - parentRect.top;
+        rect.left = rect.left - parentRect.left;
+
+        rect.top = rect.top + rect.height/2;
+        return rect;
     }
+
 
     removeListeners = () => {
         window.removeEventListener('keydown', this.handleKeyDown, false);
@@ -86,7 +156,7 @@ class SnippetMenu extends React.Component {
      */
     turnSnippetMenuOff = () => {
         const { dispatch } = this.props;
-        dispatch({type: "snippetMenuOff"})
+        dispatch({type: SET_SNIPPET_MENU_ACTIVE, payload: false})
     }
 
     handleClickOutside = (event) => {
@@ -96,7 +166,11 @@ class SnippetMenu extends React.Component {
         }
     }
 
-    searchReferences = (text) => {
+    searchReferences = async () => {
+
+        if (!this.input) return;
+
+        const text = this.input.value;
 
         const { typingTimeout } = this.state; 
         const { document: {repository}, searchReferences } = this.props;
@@ -114,8 +188,8 @@ class SnippetMenu extends React.Component {
                 if (text === ""){
                    this.reset();
                 } else {
-                    let references = await searchReferences({workspaceId, userQuery: text,  kinds: ['file'],
-                        repositoryId,  sort: "name",  limit: 9}, true);
+                    let references = await searchReferences({ workspaceId, userQuery: text,  kinds: ['file'],
+                        repositoryId,  sort: "name",  limit: 7 }, true);
                     this.setState({references, position: -1});
                 }
             }, 150)
@@ -128,18 +202,18 @@ class SnippetMenu extends React.Component {
         const { document: { repository: {_id} } } = this.props;
         
         let references = await retrieveReferences({workspaceId, 
-            limit: 9, repositoryId: _id,  sort: "name", kinds: ['file'], filterRoot: true}, true);
+            limit: 7, repositoryId: _id,  sort: "name", kinds: ['file'], filterRoot: true}, true);
         
         this.setState({references, position: -1, loaded: true});
     }
 
     handleKeyDown = (e) => {
         const { references, position } = this.state;
-        console.log("EVENT", e);
+        
         if (e.key === "Enter" && position >= 0) {
             e.preventDefault();
             let ref = references[position];
-            this.handleSelect(ref)
+            this.handleSelect(e, ref)
         } else {
             if (e.keyCode === 38) {
                 e.preventDefault();
@@ -159,79 +233,99 @@ class SnippetMenu extends React.Component {
         } 
     }
 
+    renderPath = (path) => {
+        let splitPath = path.split('/');
+
+        let pathLength = splitPath.length;
+
+        if (pathLength > 3) {
+            splitPath = [splitPath[0], '...', splitPath[pathLength - 2], splitPath[pathLength - 1]]
+        }
+
+
+        return(
+            <Path>
+                {splitPath.map((part, i) => {
+                    let last = i === splitPath.length - 1;
+                    return (
+                        <>
+                        <PathSection>
+                            {part}
+                        </PathSection>
+                        {(!last) && 
+                            <PathSlash>
+                                /
+                            </PathSlash>
+                        }
+                        </>
+                    )
+                })}
+            </Path>
+        )
+    }   
+
     renderListItems = () => {
-        let { references, position} = this.state;
+        let { references, position } = this.state;
 
         references = [...references];
-        references.sort((a, b) => {
-            if (a.name > b.name){
-                return 1
-            } else {
-                return -1
-            }
-        })
-
-        let dirs = references.filter((ref) => {
-            return ref.kind === "dir"
-        })
-        let files = references.filter((ref) => {
-            return ref.kind === "file"
-        })
 
         let jsx = []
         let i = 0;
-        dirs.map((ref) => {
-            let temp = i;
-            jsx.push(            
-                <ListItem 
-                    onMouseDown = {(e) => this.handleSelect(e, ref)} 
-                    onMouseEnter = {() => {this.setState({position: temp})}}
-                    backgroundColor = {position === temp ? '#F4F4F6' : ""}
-                 >
-                    <AiFillFolder
-                        style = {{fontSize: "1.5rem", marginRight: "1rem"}} 
-                    />
-                    <Title>{ref.name ? ref.name : "Untitled"}</Title>
-                </ListItem>
-            )
-            i += 1;
-        })
 
-        files.map((ref) => {
+        let listItems = {};
+
+        references.map((ref) => {
             let temp = i;
             jsx.push(
                 <ListItem 
-                    onMouseDown = {(e) => this.handleSelect(e, ref)} 
-                    onMouseEnter = {() => {this.setState({position: temp})}}
-                    backgroundColor = {position === temp ? '#F4F4F6' : ""}
+                    ref = { node => listItems[ref._id] = node }
+                    key = { ref._id }
+                    onMouseDown = { (e) => this.handleSelect(e, ref) } 
+                    onMouseEnter = { () => {this.setState({position: temp})} }
+                    backgroundColor = {position === temp ? chroma('#6762df').alpha(0.15) : ""}
                  >
                     <RiFileLine
-                        style = {{fontSize: "1.5rem", marginRight: "1rem"}}
+                        style = {{fontSize: "1.7rem", marginRight: "1rem"}}
                     />
-                    <Title>{ref.name ? ref.name : "Untitled"}</Title>
+                    <ListItemDetail>
+                        <Title>{ref.name ? ref.name : "Untitled"}</Title>
+                        {this.renderPath(ref.path)}
+                    </ListItemDetail>
+                    
                 </ListItem>
             )
             i += 1;
         })
+
+        this.listItems = listItems;
+
         return jsx;
     }
 
-    closeMenu(){
-        document.removeEventListener('mousedown', this.handleClickOutside, false);
-        this.setState({ 
-            open: false,
-            loaded: false,
-            search: '',
-            documents: [],
-            typing: false,
-            typingTimeout: 0,
-            position: -1})
+    renderSearchbar = () => {
+        return(
+            <SearchbarWrapper>
+                <RiScissorsLine 
+                    style = {{
+                        fontSize: "2rem",
+                        minWidth: "3rem",
+                        opacity: 0.4,
+                    }}
+                />
+                <SearchInput 
+                    autoFocus = {true}
+                    ref = {node => this.input = node} 
+                    onChange = {this.searchReferences} 
+                    placeholder = {"Search for references to embed a snippet"}
+                />
+            </SearchbarWrapper>
+        )
     }
 
     renderListContent = () => {
         return(
             <>
-                <HeaderContainer>Find Reference to Embed Snippet</HeaderContainer>
+                {this.renderSearchbar()}
                 <ListItemContainer>
                     {this.state.loaded ?  this.renderListItems() : <MoonLoader size = {12}/>}
                 </ListItemContainer>
@@ -241,26 +335,12 @@ class SnippetMenu extends React.Component {
 
     convertRemToPixels = (rem) => {    
 		return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
-	}
-
+    }
+    
     render() {
-        const { open, rect, documentModal, openedReference } = this.state;
+        const { open, rect, openedReference, range } = this.state;
         const { editor } = this.props;
 
-        if (rect) {
-			if (documentModal) {
-				let background = document.getElementById("documentModalBackground");
-				rect = {left: rect.left, height: rect.height, top: rect.top + background.scrollTop};
-            } 
-            /*
-            if (this.node) {
-                let { height } = this.node.getBoundingClientRect();
-                if (rect.top + height > window.innerHeight){
-                    rect = {top: rect.top - height , left: rect.left, height: rect.height}
-                }
-            }*/
-			
-		}
         return (
             <>
                 <CSSTransition
@@ -282,6 +362,7 @@ class SnippetMenu extends React.Component {
                 </CSSTransition>
                 {openedReference && 
                     <DocumentReferenceEditor 
+                        range = {range}
                         openedReference = {openedReference} 
                         undoModal = {this.turnSnippetMenuOff}
                         editor = {editor}
@@ -302,6 +383,28 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { retrieveReferences, searchReferences })(SnippetMenu));
 
+const SearchbarWrapper = styled.div`
+    height: 4.5rem;
+    padding: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #E0E4E7;
+`
+
+const SearchInput = styled.input`
+    height: 2rem;
+    outline: none;
+    border: none;
+    background-color:transparent;
+    &::placeholder {
+        color: #172A4E;
+        opacity: 0.4;
+    }
+    width: 100%;
+    padding-right: 2rem;
+    padding-left: 0.5rem;
+    font-size: 1.3rem;
+`
 
 const Title = styled.div`
     opacity: 1;
@@ -309,18 +412,41 @@ const Title = styled.div`
     white-space: nowrap;
     overflow: hidden;
     font-weight: 500;
-    width: 20rem;
+    width: 30rem;
     font-size: 1.3rem;
+    margin-bottom: 0.9rem;
+`
+
+const Path = styled.div`
+    opacity: 0.5;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 30rem;
+    font-size: 1.1rem;
+    display: flex;
+`
+
+const PathSection = styled.div`
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 10rem;
+`
+
+const PathSlash = styled.div`
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 `
 
 const Container = styled.div`
-    width: 30rem;
+    width: 40rem;
     display: flex;
     position: absolute;
     flex-direction: column;
     z-index: 1;
     background-color: white;
-    border-radius: 0.2rem;
+    border-radius: 0.3rem;
     box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     color: #172A4E;
     margin-top: 2.2rem;
@@ -329,10 +455,8 @@ const Container = styled.div`
 const ListItemContainer = styled.div`
 	display: flex;
 	flex-direction: column;
-	padding: 0rem 1rem;
 	max-height: 31.5rem;
 	overflow-y: scroll;
-	padding-bottom: 1rem;
 `
 
 const HeaderContainer = styled.div`
@@ -346,17 +470,20 @@ const HeaderContainer = styled.div`
 `
 
 const ListItem = styled.div`
-    height: 3.5rem;
     border-radius: 0.3rem;
     margin-bottom: 0rem
     color: #172A4E;
-    padding: 1rem;
+    padding: 1.2rem 1rem;
     display: flex;
-    align-items: center;
     background-color: white;
     cursor: pointer;
     color: ${props => props.color};
     background-color: ${props => props.backgroundColor};
     border-bottom: ${props => props.border};
     box-shadow: ${props => props.shadow};
+`
+
+const ListItemDetail = styled.div`
+    display: flex;
+    flex-direction: column;
 `

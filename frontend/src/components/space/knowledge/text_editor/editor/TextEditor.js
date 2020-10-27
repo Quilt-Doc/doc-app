@@ -40,6 +40,7 @@ import styled from "styled-components";
 //react dnd
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import AttachmentMenu from '../menus/AttachmentMenu'
 
 
 //PREVENT SCROLL IF ACTIVE
@@ -98,10 +99,10 @@ const TextEditor = (props) => {
 	const [write, setWrite] = useState(false)
 	const [setOptions, toggleOptions] = useState(false);
 
-
 	const initialState = {
 		isMarkupMenuActive: false, 
-		snippetMenuActive: false,
+		isSnippetMenuActive: false,
+		isAttachmentMenuActive: false
 	}
 
 	const [state, dispatch] = useReducer(
@@ -150,8 +151,10 @@ const TextEditor = (props) => {
 	
 	//updateMarkupType(state, dispatch, range, blocktypes, editor)
 
-	const { isMarkupMenuActive } = state;
+	const { isMarkupMenuActive, isSnippetMenuActive, isAttachmentMenuActive } = state;
 	
+
+
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Slate editor={editor} value={value} onChange={setValue}>
@@ -173,17 +176,21 @@ const TextEditor = (props) => {
 							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
 							{write && <HoveringToolbar/>}
 							<EditorContainer2  >
-									{/*state.snippetMenuActive &&
+									{isSnippetMenuActive &&
 										<SnippetMenuWrapper
 											documentModal = {props.documentModal} 
-											dispatch={dispatch} 
-											range={range} 
-											editorState={state} 
+											dispatch = {dispatch} 
 											document = {props.document}
-										/>*/
+										/>
 									}
 									{isMarkupMenuActive &&
 										<MarkupMenu2 
+											documentModal = {props.documentModal} 
+											dispatch={dispatch} 
+										/>
+									}
+									{isAttachmentMenuActive &&
+										<AttachmentMenu
 											documentModal = {props.documentModal} 
 											dispatch={dispatch} 
 										/>
@@ -197,11 +204,6 @@ const TextEditor = (props) => {
 									
 									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}
 									<StyledEditable
-										onClick={() => {
-											if (state.markupMenuActive) {
-												dispatch({ 'type': 'markupMenuOff' })
-											}
-										}}
 										id = {"editorSlate"}
 										paddingLeft = {write ? 3 : 10}
 										cursortype = {write}

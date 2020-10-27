@@ -19,9 +19,18 @@ import { CgBell, CgSearch } from 'react-icons/cg';
 import CreateButton from './CreateButton';
 import { IoMdBook } from 'react-icons/io';
 import { AiOutlineCodeSandbox } from 'react-icons/ai';
+import { TiBell } from 'react-icons/ti';
+import { VscBell } from 'react-icons/vsc';
+import NotificationBubble from './NotificationBubble';
 
 class SideNavbar extends React.Component {
+    constructor(props){
+        super(props);
 
+        this.state = {
+            notificationsOpen: false
+        }
+    }
     renderDashboardLink = () => {
         let { workspaceId } = this.props.match.params;
         return `/workspaces/${workspaceId}/dashboard`;
@@ -95,9 +104,19 @@ class SideNavbar extends React.Component {
     }
 
     renderBottomSection = () => {
-        const { setSearch } = this.props;
+        const { setSearch, setNotifications } = this.props;
+        const { notificationsOpen } = this.state;
         return (
             <Section marginTop = {'auto'} marginBottom = {'5rem'}>
+                <IconBorder 
+                    onClick = {() => {this.setState({notificationsOpen: !notificationsOpen})}} 
+                    id = {"notificationsBorder"} 
+                >
+                    <VscBell/>
+                    <NotificationBubble 
+                        closeBubble = {() => this.setState({notificationsOpen: false})}
+                        notificationsOpen = {notificationsOpen}/>
+                </IconBorder>
                 <IconBorder onClick = {() => setSearch(true)}>
                     <CgSearch/>
                 </IconBorder>

@@ -7,6 +7,7 @@ import { SET_MARKUP_MENU_ACTIVE } from '../editor/reducer/Editor_Types';
 
 const LIST_TYPES = ['numbered-list', 'bulleted-list']
 const CODE_TYPES = ['code-block']
+const SNIPPET_TYPES = ['reference-snippet'];
 
 const withFunctionality = (editor, dispatch) => {
 	
@@ -25,8 +26,10 @@ const withFunctionality = (editor, dispatch) => {
 		
 		const text = Node.string(slateNode);
 
-		const isList = LIST_TYPES.includes(attributes.type)
-		const isCode = CODE_TYPES.includes(attributes.type)
+		const isList = LIST_TYPES.includes(attributes.type);
+		const isCode = CODE_TYPES.includes(attributes.type);
+		const isSnippet = SNIPPET_TYPES.includes(attributes.type);
+		const isAttachment = attributes.type === 'attachment';
 
 		if (text !== '') {
 
@@ -50,19 +53,51 @@ const withFunctionality = (editor, dispatch) => {
 			)
 		}
 
-
 		if (isList) {
 			const block = { type: attributes.type, children: [] }
 			Transforms.wrapNodes(editor, block)
 		}
 
 		if (isCode) {
-			const block = { type: attributes.type, children: [] }
-			Transforms.wrapNodes(editor, block)
+			const block = { type: attributes.type, children: [] };
+			Transforms.wrapNodes(editor, block);
+
+			let prelimAnchor = range.anchor;
+			if (range.anchor.offset > 0) {
+				prelimAnchor = {offset: 0, path: [range.anchor.path[0] + 1]};
+			}
+
+			if (Point.compare(prelimAnchor, Editor.end(editor, [])) === 0) {
+				try {
+					const paraNode = { type: 'paragraph', children: [] };
+	
+					let paraAnchor = { offset: 0, path: [prelimAnchor.path[0], 1] };
+					let paraRange = { anchor: paraAnchor, focus: paraAnchor};
+
+					Transforms.insertNodes(editor, paraNode, {at: Editor.end(editor, [])});
+					Transforms.unwrapNodes(editor, {
+						match: n => n.type === 'code-block',
+						at: paraRange,
+						split: true,
+					});
+				} catch (err) {
+					console.log("ERROR", err);
+				}
+			}
 		}
 
-		//dispatch({type: 'markupMenuOff'})
-		//dispatch({type: "clearMenuFilter"})
+		if (isSnippet || isAttachment) {
+			let prelimAnchor = range.anchor;
+			if (range.anchor.offset > 0) {
+				prelimAnchor = {offset: 0, path: [range.anchor.path[0] + 1]};
+			}
+
+			if (Point.compare(prelimAnchor, Editor.end(editor, [])) === 0) {
+				const paraNode = { type: 'paragraph', children: [] };
+				Transforms.insertNodes(editor, paraNode, {at: Editor.end(editor, [])});
+			}
+		}
+
 	}
 
 	editor.insertDefaultEnter = (event) => { 
@@ -131,15 +166,12 @@ const withFunctionality = (editor, dispatch) => {
 			dispatch({ type: SET_MARKUP_MENU_ACTIVE, payload: true })
 		}
 
-		if (text === "&") {
-			dispatch({type: "snippetMenuOn"});
-		}
-
 		if (text === ' ' && selection && Range.isCollapsed(selection)) {
 			const { anchor } = selection
 			const block = Editor.above(editor, {
 				match: n => Editor.isBlock(editor, n),
 			})
+
 			const path = block ? block[1] : []
 			const start = Editor.start(editor, path)
 			const range = { anchor, focus: start }
@@ -173,7 +205,6 @@ const withFunctionality = (editor, dispatch) => {
 
 	editor.deleteBackward = (...args) => {
 		const { selection } = editor
-
 		if (selection && Range.isCollapsed(selection)) {
 			//acquire node entry at selection
 			const match = Editor.above(editor, {
@@ -183,6 +214,7 @@ const withFunctionality = (editor, dispatch) => {
 			if (match) {
 				const [block, path] = match
 				const start = Editor.start(editor, path)
+
 				if (
 					block.type !== 'paragraph' &&
 					Point.equals(selection.anchor, start) &&
@@ -196,8 +228,22 @@ const withFunctionality = (editor, dispatch) => {
 							split: true,
 						})
 					}
-
 					return
+				} else if ( block.type == 'paragraph' 
+					&& Point.equals(selection.anchor, start)
+					&& Point.compare(selection.anchor, Editor.end(editor, [])) === 0
+				) {
+					let path = selection.anchor.path;
+					if (path && path[0] !== 0) {
+						let prevNode = Node.get(editor, [path[0] - 1]);
+						if (prevNode.type === "reference-snippet" 
+							|| prevNode.type === "code-block"
+							|| prevNode.type === "attachment"
+						) {
+							Transforms.select(editor, Editor.end(editor, [path[0] - 1]));
+							return
+						}
+					}
 				}
 			}
 

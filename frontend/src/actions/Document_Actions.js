@@ -5,10 +5,66 @@ import {
     DELETE_DOCUMENT,
     EDIT_DOCUMENT,
     MOVE_DOCUMENT,
-    RENAME_DOCUMENT
+    RENAME_DOCUMENT,
+    UPLOAD_ATTACHMENT
 } from './types/Document_Types';
 
 import { api } from '../apis/api';
+
+export const getUpload = (formValues) => async () => {
+    console.log("ENTERED IN HERE getUPLoad");
+    const { fileName } = formValues;
+
+    if (!fileName) {
+        throw new Error("getUpload: fileName not provided");
+    }
+
+    console.log("ABOUT TO GET UPLOAD", fileName);
+    await api.get(`/uploads/${fileName}`);
+}
+
+export const uploadAttachment = (formValues) => async (dispatch) => {
+    const { attachment, documentId, workspaceId, name } = formValues;
+
+    if (!attachment) {
+        throw new Error("uploadAttachment: attachment not provided");
+    }
+
+    if (!documentId) {
+        throw new Error("uploadAttachment: documentId not provided");
+    }
+
+    if (!workspaceId) {
+        throw new Error("uploadAttachment: workspaceId not provided");
+    }
+   
+    if (!name) {
+        throw new Error("uploadAttachment: name not provided");
+    }
+
+    let formData = new FormData();
+    formData.append('attachment', attachment);
+    formData.append('documentId', documentId);
+    formData.append('workspaceId', workspaceId);
+    formData.append('name', name);
+
+    const config = {
+        headers: {
+            'content-type': 'multipart/form-data'
+        }
+    }
+
+    const response = await api.post(`/uploads/create_attachment`, formData, config);
+
+    const { success, error, result } = response.data;
+
+    if (!success) {
+        throw new Error(error);
+    } else {
+        console.log("RESULT", result);
+        dispatch({ type: EDIT_DOCUMENT, payload: result});
+    }
+}
 
 export const syncEditDocument = (formValues) => (dispatch) => {
     const { _id, markup } = formValues;

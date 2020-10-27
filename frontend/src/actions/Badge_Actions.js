@@ -17,10 +17,9 @@ export const getBadge = (formValues) => async dispatch => {
         throw new Error("getBadge: repositoryId not provided");
     }
 
-    const response = await api.get(
-        `/badges/status/?workspaceId=${workspaceId}&repositoryId=${repositoryId}`, formValues );
+    const response = await api.get(`/badges/status/?workspaceId=${workspaceId}&repositoryId=${repositoryId}`);
 
-    console.log("BADGE RESPONSE", response);
+    return response.data;
     /*
     const { success, error, result } = response.data;
 

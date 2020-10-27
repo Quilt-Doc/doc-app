@@ -121,6 +121,31 @@ body {
 
 
 
+.dropMenuOpposite-enter {
+  transform: translateY(1rem);
+  opacity: 0;
+}
+
+
+.dropMenuOpposite-enter.dropMenuOpposite-enter-active {
+  /*transform: translateX(0);*/
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 150ms;
+}
+
+.dropMenuOpposite-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.dropMenuOpposite-exit.dropMenuOpposite-exit-active {
+  transform: translateY(-1rem);
+  opacity: 0;
+  transition: all 150ms;
+}
+
+
 
 .dropmenu-enter {
   transform: translateY(-1rem);
