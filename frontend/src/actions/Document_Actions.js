@@ -19,8 +19,29 @@ export const getUpload = (formValues) => async () => {
         throw new Error("getUpload: fileName not provided");
     }
 
-    console.log("ABOUT TO GET UPLOAD", fileName);
-    await api.get(`/uploads/${fileName}`);
+    var response;
+    try {
+        response = await api.get(`/uploads/${encodeURIComponent(fileName)}`, { responseType: 'blob', timeout: 30000 });
+    }
+    catch (err) {
+        console.log(err);
+        return;
+    }
+
+    // 1. Convert the data into 'blob'
+    // response = response.blob();
+
+    // 2. Create blob link to download
+    const url = window.URL.createObjectURL(new Blob([response.body]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName.split('/').slice(-1));
+    // 3. Append to html page
+    document.body.appendChild(link);
+    // 4. Force download
+    link.click();
+    // 5. Clean up and remove the link
+    link.parentNode.removeChild(link);
 }
 
 export const uploadAttachment = (formValues) => async (dispatch) => {
@@ -37,10 +58,11 @@ export const uploadAttachment = (formValues) => async (dispatch) => {
     if (!workspaceId) {
         throw new Error("uploadAttachment: workspaceId not provided");
     }
-   
+
     if (!name) {
         throw new Error("uploadAttachment: name not provided");
     }
+
 
     let formData = new FormData();
     formData.append('attachment', attachment);
@@ -58,10 +80,15 @@ export const uploadAttachment = (formValues) => async (dispatch) => {
 
     const { success, error, result } = response.data;
 
+
     if (!success) {
-        throw new Error(error);
+        if (response.data.alert) {
+            alert(response.data.alert)
+            return false
+        } else {
+            throw new Error(response.data.error);
+        }
     } else {
-        console.log("RESULT", result);
         dispatch({ type: EDIT_DOCUMENT, payload: result});
     }
 }

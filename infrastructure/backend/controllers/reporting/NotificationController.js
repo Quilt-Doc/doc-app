@@ -121,8 +121,9 @@ setNotificationsHidden = async (req, res) => {
 retrieveNotifications = async (req, res) => {
 
     const userId = req.userObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
 
-    const { workspaceId, skip, limit } = req.body;
+    var { skip, limit } = req.body;
 
     if (!checkValid(userId)) return res.json({success: false, error: "no notification userId provided"});
     if (!checkValid(workspaceId)) return res.json({success: false, error: "no notification workspaceId provided"});
@@ -132,7 +133,7 @@ retrieveNotifications = async (req, res) => {
 
     var retrieveResponse;
     try {
-        retrieveResponse = await Notification.find({workspace: workspaceId, user: userId})
+        retrieveResponse = await Notification.find({workspace: workspaceId, user: userId, status: 'visible'})
             .limit(limit).skip(skip).sort({created: -1}).exec();
     }
     catch (err) {
@@ -145,7 +146,29 @@ retrieveNotifications = async (req, res) => {
     return res.json({success: true, result: retrieveResponse});
 }
 
+getPendingCount = async (req, res) => {
+    const userId = req.userObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+
+    if (!checkValid(userId)) return res.json({success: false, error: "no notification userId provided"});
+    if (!checkValid(workspaceId)) return res.json({success: false, error: "no notification workspaceId provided"});
+
+    var unseenNum;
+    try {
+        unseenNum = await Notification.countDocuments({user: ObjectId(userId), workspace: ObjectId(workspaceId), status: 'visible'}).exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error counting unseen Notifications - workspaceId, userId: ${workspaceId}, ${userId}`,
+                            function: "getUnseenNotificationCount"});
+
+        return res.json({success: false, error: `Error counting unseen Notifications - workspaceId, userId: ${workspaceId}, ${userId}`});
+    }
+    return res.json({success: true, result: unseenNum});
+}
+
 
 
 module.exports = { createInvalidNotifications, createToDocumentNotification, createRemovedNotifications,
-                    createAddedNotifications, setNotificationsHidden, retrieveNotifications };
+                    createAddedNotifications, setNotificationsHidden, retrieveNotifications, getPendingCount };

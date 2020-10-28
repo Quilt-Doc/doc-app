@@ -9,7 +9,6 @@ const initializeRepositories = async () => {
 
     var backendClient = await api.requestTestingDevBackendClient();
 
-
     var defaultIcon = 1;
     var repositoryCreateData = [
         {

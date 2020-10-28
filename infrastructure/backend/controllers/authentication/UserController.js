@@ -40,7 +40,30 @@ editUser = async (req, res) => {
 
     let update = {}
     if (checkValid(username)) update.username = username; 
-    if (checkValid(email)) update.email = email;
+    if (checkValid(email)) {
+        
+        // Check that another User with email doesn't exist
+        var emailUsed = false;
+        try {
+            emailUsed = await User.exists({ _id: { $ne: ObjectId(userId) }, email: email});
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error User exists query failed - userId, email: ${userId}, ${email}`,
+                                function: 'editUser'});
+
+            return res.json({success: false, error: `Error User exists query failed`, trace: err});
+        }
+
+        if (emailUsed) {
+            return res.json({success: false, error: `User with email ${email} already exists.`, alert: `User with email ${email} already exists.`});
+        }
+
+        update.email = email;
+        update.verified = false;
+
+    }
     if (checkValid(firstName)) update.firstName = firstName;
     if (checkValid(lastName)) update.lastName = lastName;
     if (checkValid(onboarded)) update.onboarded = onboarded;
@@ -48,7 +71,7 @@ editUser = async (req, res) => {
     let returnedUser;
 
     try {
-        returnedUser = await  User.findByIdAndUpdate(userId, { $set: update }, { new: true })
+        returnedUser = await User.findByIdAndUpdate(userId, { $set: update }, { new: true })
             .populate('workspaces').lean().exec();
     } catch (err) {
         await logger.error({source: 'backend-api',
@@ -61,20 +84,6 @@ editUser = async (req, res) => {
 
     // Send Verification Email, if User email changed
     if (checkValid(email)) {
-
-        // Set User.verified to false
-        
-        try {
-            await User.findByIdAndUpdate(userId, { $set: { verified: false }}, { new: true });
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                message: err,
-                                errorDescription: `Error Failed to set User verified=false - userId: ${userId}`,
-                                function: 'editUser'});
-
-            return res.json({success: false, error: "Error Failed to set User verified=false"});
-        }
 
         try {
             await beginEmailVerification(userId, email);

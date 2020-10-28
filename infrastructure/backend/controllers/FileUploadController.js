@@ -108,6 +108,9 @@ const getFile = async (req, res) => {
 
     if (!checkValid(fileName)) return res.json({success: false, error: 'file upload no fileName provided'});
 
+
+    console.log(`fileName: ${fileName}`);
+
     const getParams = {
         Bucket: process.env.AWS_S3_ATTACHMENTS_BUCKET,
         Key: fileName
@@ -118,6 +121,8 @@ const getFile = async (req, res) => {
         data = await s3.getObject(getParams).promise();
     }
     catch (err) {
+        console.log('S3 Error: ');
+        console.log(err);
         await logger.error({source: 'backend-api',
                             message: `Error getting file from S3 - Bucket, Key: ${process.env.AWS_S3_ATTACHMENTS_BUCKET}, ${fileName}`,
                             function: 'postFile'});
@@ -131,8 +136,12 @@ const getFile = async (req, res) => {
         'Content-Disposition',
         `attachment; filename=${downloadName}`
     );
+    
 
     // request(url_to_file).pipe(res);
+
+    console.log('Returning: ');
+    console.log(data.Body);
 
     return res.send(data.Body);
 };

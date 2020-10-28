@@ -28,7 +28,7 @@ export const createWorkspace = (formValues, passback) => async (dispatch) => {
 
 export const retrieveWorkspaces = (formValues) => async dispatch => {
     const response = await api.post(`/workspaces/retrieve`, formValues);
-    
+
     if (response.data.success == false) {
         throw new Error(response.data.error.toString());
     }

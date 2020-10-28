@@ -72,6 +72,136 @@ initRepository = async (req, res) => {
 }
 
 
+// When the Repository is scanned it's lastProcessedCommit is correctly set to the latest commit on the default branch
+
+// New Procedure:
+// 1. Get the tree SHA of the current Repository.lastProcessedCommit
+// 2. Get the tree and find the SHA of the relevant file
+// 3. 
+
+getRepositoryFileSafe = async (req, res) => {
+
+    var {pathInRepo, referenceId } = req.body;
+
+    const fullName = req.repositoryObj.fullName;
+    const lastProcessedCommit = req.repositoryObj.lastProcessedCommit;
+    const installationId = req.repositoryObj.installationId;
+
+    // if (typeof fullName == 'undefined' || fullName == null) return res.json({success: false, error: 'no repo fullName provided'});
+    // if (typeof installationId == 'undefined' || installationId == null) return res.json({success: false, error: 'no repo installationId provided'});
+    if (!checkValid(pathInRepo) && !checkValid(referenceId)) {
+        return res.json({success: false, error: 'no repo pathInRepo and referenceId provided'});
+    }
+
+    if (referenceId) {
+        var reference;
+        try {
+            reference = await Reference.findOne({_id: referenceId}).lean().select('path').exec();
+        }
+        catch (err) {
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error querying findOne on Reference - referenceId: ${referenceId}`,
+                                function: 'getRepositoryFile'});
+            return res.json({success: false, error: err});
+        }
+        pathInRepo = reference.path;
+    }
+
+
+    var installationClient;
+    try {
+        installationClient = await apis.requestInstallationClient(installationId);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error fetching installationClient - installationId: ${installationId}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: err, alert: "Failed to authenticate with Github API"});
+    }
+
+    var commitResponse;
+    try {
+        // /repos/{owner}/{repo}/commits/{ref}
+        commitResponse = await installationClient.get(`/repos/${fullName}/commits/${lastProcessedCommit}`);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error fetching Commit Object from Github API - fullName, lastProcessedCommit: ${fullName}, ${lastProcessedCommit}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: err, alert: "Failed to get Commit Object from Github"});
+    }
+
+    var treeSha = commitResponse.data.commit.tree.sha;
+
+    var treeResponse;
+    try {
+        // /repos/{owner}/{repo}/git/trees/{tree_sha}
+        treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${treeSha}`);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error fetching Tree Object from Github API - fullName, lastProcessedCommit, treeSha: ${fullName}, ${lastProcessedCommit}, ${treeSha}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: err, alert: "Failed to get Tree Object from Github"});
+    }
+
+    var fileSha;
+    var currentFileObj;
+    
+    // Find our file
+    for (i = 0; i < treeResponse.data.tree.length; i++) {
+        currentFileObj = treeResponse.data.tree[i];
+        if (currentFileObj.path == pathInRepo) {
+            fileSha = currentFileObj.sha;
+            break;
+        }
+    }
+
+    // If we couldn't find file Sha in Tree Object
+    if (!fileSha) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error couldn't find file path in Tree Object - fullName, lastProcessedCommit, pathInRepo, treeSha: ${fullName}, ${lastProcessedCommit}, ${pathInRepo}, ${treeSha}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: err, alert: "Failed to find file path in Tree Object"});
+    }
+
+    // repos/:username/:reponame/git/blobs/:sha
+    var blobResponse;
+    try {
+        blobResponse = await installationClient.get(`/repos/${fullName}/git/blobs/${fileSha}`);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error Getting blob - fullName, fileSha: ${fullName}, ${fileSha}`,
+                            function: 'getRepositoryFile'});
+        return res.json({success: false, error: 'getRepositoryFile error getting file blob'});
+    }
+    if(!blobResponse.data.hasOwnProperty('content')) {
+        await logger.error({source: 'backend-api', message: `Error blob has no 'content' property - fullName, fileSha: ${fullName}, ${fileSha}`,
+                                function: 'getRepositoryFile'});
+        return res.json({success: false, error: 'getRepositoryFile error: provided fileSha did not return a blob'});
+    }
+
+    
+    var blobContent = blobResponse.data.content;
+    var fileContent = Buffer.from(blobContent, 'base64').toString('binary');
+
+    return res.json({success: true, result: fileContent});
+
+}
+
+
+
+
+
+
+
+
 getRepositoryFile = async (req, res) => {
     var {pathInRepo, referenceId } = req.body;
     const fullName = req.repositoryObj.fullName;
@@ -89,7 +219,9 @@ getRepositoryFile = async (req, res) => {
             reference = await Reference.findOne({_id: referenceId}).lean().select('path').exec();
         }
         catch (err) {
-            await logger.error({source: 'backend-api', message: err, errorDescription: `Error querying findOne on Reference - referenceId: `,
+            await logger.error({source: 'backend-api',
+                                message: err,
+                                errorDescription: `Error querying findOne on Reference - referenceId: ${referenceId}`,
                                 function: 'getRepositoryFile'});
             return res.json({success: false, error: err});
         }
@@ -215,7 +347,7 @@ retrieveRepositories = async (req, res) => {
 
     if (fullName) query.where('fullName').equals(fullName);
     if (installationId) query.where('installationId').equals(installationId);
-    if (fullNames) query.where('fullName').in(fullNames)
+    if (fullNames) query.where('fullName').in(fullNames);
 
     let returnedRepositories;
 
@@ -310,13 +442,35 @@ updateRepository = async (req, res) => {
     var repository;
 
     try {
-        repository = await Repository.findOne({fullName, installationId}).exec();
+        repository = await Repository.findOne({fullName, installationId}).lean().exec();
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error finding repository fullName, installationId: ${fullName}, ${installationId}`,
                         function: 'updateRepository'});
         return res.json({success: false, error: `Error finding repository fullName, installationId: ${fullName}, ${installationId}`});
+    }
+
+    // if !ref.includes('refs/heads/'), then it does not point to a branch, abort
+    if (!ref.includes('refs/heads/')) {
+
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error invalid ref, does not point to a branch - ref: ${ref}`,
+                            function: 'updateRepository'});
+
+        return res.json({success: false, error: `Error invalid ref, does not point to a branch - ref: ${ref}`});
+    }
+
+    // Don't update the Repository if the push is not to the default branch
+    var pushedBranch = ref.split('/').slice(-1);
+    if (repository.defaultBranch != pushedBranch) {
+        await logger.info({source: 'backend-api',
+                            message: `Ignoring update on non-default branch - defaultBranch, pushedBranch, fullName, installationId: ${repository.defaultBranch}, ${pushedBranch}, ${fullName}, ${installationId}`,
+                            function: 'updateRepository'});
+
+        return res.json({success: true,
+                        result: `Ignoring update on non-default branch - defaultBranch, pushedBranch, fullName, installationId: ${repository.defaultBranch}, ${pushedBranch}, ${fullName}, ${installationId}`});
     }
 
     // If repository is unscanned, we don't update
@@ -328,7 +482,6 @@ updateRepository = async (req, res) => {
         return res.json({success: true, result: `Ignoring update on unscanned repository fullName, installationId: ${fullName}, ${installationId}`});
     }
 
-    // KARAN TODO: Remove Hard-coded Commit SHA here
     var runReferencesData = {};
     runReferencesData['fullName'] = fullName;
     runReferencesData['installationId'] = installationId;
@@ -419,8 +572,9 @@ removeInstallation = async (req, res) => {
 
 
 module.exports = {
-    initRepository, getRepositoryFile, getRepository,
+    initRepository, getRepositoryFile,
+    getRepositoryFileSafe, getRepository,
     deleteRepository, retrieveRepositories,
-    updateRepository, jobRetrieveRepositories, retrieveCreationRepositories,
-    removeInstallation
+    updateRepository, jobRetrieveRepositories,
+    retrieveCreationRepositories, removeInstallation
 }

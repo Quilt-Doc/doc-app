@@ -143,7 +143,7 @@ router.post('/repositories/remove_installation', authorizationMiddleware.reposit
 // get - verify user is in a workspace with this repository added
 // delete - verify user is in a workspace with this repository added
 router.post('/repositories/retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.retrieveCreationRepositories );
-router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepositoryFile);
+router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepositoryFileSafe);
 router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.retrieveRepositories);
 router.get('/repositories/:workspaceId/get/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepository);
 router.delete('/repositories/:workspaceId/delete/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.deleteRepository);
@@ -338,8 +338,9 @@ router.get('/assets/document', assetController.getDocumentIcon);
 router.get('/assets/snippet', assetController.getSnippetIcon);
 
 const notificationController = require('../controllers/reporting/NotificationController');
-router.post('/notifications/:userId/retrieve', authorizationMiddleware.notificationMiddleware, notificationController.retrieveNotifications);
-router.post('/notifications/:userId/set_hidden', authorizationMiddleware.notificationMiddleware, notificationController.setNotificationsHidden);
+router.post('/notifications/:userId/retrieve/:workspaceId', authorizationMiddleware.notificationMiddleware, notificationController.retrieveNotifications);
+router.post('/notifications/:userId/set_hidden/:workspaceId', authorizationMiddleware.notificationMiddleware, notificationController.setNotificationsHidden);
+router.get('/notifications/:userId/pending/:workspaceId', authorizationMiddleware.notificationMiddleware, notificationController.getPendingCount);
 
 
 const badgeController = require('../controllers/badges/BadgeController');
@@ -356,10 +357,68 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage,
+                        limits: { fileSize: 5 * 1024 * 1024  }, //1 * 1024 * 1024 = 1MB
+
+                        /*
+                        // other settings here then:
+                        onFileSizeLimit: function (file) {
+                            // but res (response) object is not existing here
+                            console.log('File Size Limit');
+                            file.error = {
+                                message: "Upload failed, file size limit is 5 MB",
+                                status:  -6// MARankings.Enums.Status.FILE_TOO_LARGE
+                                // status: -6
+                            };
+                        },
+
+                        onFileUploadComplete: function (file, req, res) {
+                            if (file.error){
+                                console.log('FILE ERROR Detected');
+                                res.send(file.error);
+                                res.end();
+                            }
+                        }
+                        */
+                    });
+
+var upload_method = upload.single('attachment')
 
 const fileUploadController = require('../controllers/FileUploadController');
-router.post('/uploads/create_attachment', upload.single('attachment'), fileUploadController.postFile);
+
+// router.post('/uploads/create_attachment', upload.single('attachment'), fileUploadController.postFile);
+
+router.post('/uploads/create_attachment', function (req, res) {
+    upload_method(req, res, function (err) {
+      if (err instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+        return res.json({success: false, error: err.message, alert: err.message});
+      } else if (err) {
+        // An unknown error occurred when uploading.
+        return res.json({success: false, error: err.message, alert: err.message});
+
+      }
+  
+      // Everything went fine.
+      fileUploadController.postFile(req, res);
+    })
+});
+
+
 router.get('/uploads/:fileName', fileUploadController.getFile);
+
+/*
+app.post('/profile', function (req, res) {
+    upload(req, res, function (err) {
+      if (err instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+      } else if (err) {
+        // An unknown error occurred when uploading.
+      }
+  
+      // Everything went fine.
+    })
+  })
+*/
 
 module.exports = router;
