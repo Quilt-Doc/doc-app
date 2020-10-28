@@ -56,7 +56,7 @@ getBadge = async (req, res) => {
     var totalDocuments;
     var brokenDocuments;
     try {
-        totalDocuments = await Document.count({workspace: ObjectId(workspaceId)});
+        totalDocuments = await Document.count({workspace: ObjectId(workspaceId), root: false});
         brokenDocuments = await Document.count({workspace: ObjectId(workspaceId), status: 'invalid'});
     }
     catch (err) {

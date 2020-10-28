@@ -59,7 +59,7 @@ createWorkspace = async (req, res) => {
     if (!checkValid(creatorId)) return res.json({success: false, error: 'no workspace creatorId provided'});
 
     const session = await db.startSession();
-    let output;
+    let output = {};
 
     var scanRepositoriesData = {};
     try {
@@ -230,212 +230,217 @@ deleteWorkspace = async (req, res) => {
     var deletedWorkspace;
     const session = await db.startSession();
 
-    let output;
+    let output = {};
 
     await logger.info({source: 'backend-api',
                         message: `Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`,
                         function: 'deleteWorkspace'});
-    
-    await session.withTransaction(async () => {
+    try {
+        await session.withTransaction(async () => {
 
-        // Delete All Documents
-        var deleteDocumentResponse;
-        try {
-            deleteDocumentResponse = await Document.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`);
-        }
-
-        // Delete All Snippets
-        var deleteSnippetResponse;
-        try {
-            deleteSnippetResponse = await Snippet.deleteMany({workspace:  ObjectId(workspaceId)}, { session } ).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`);
-        }
-
-
-        // Delete All Tags
-        var deleteTagResponse;
-        try {
-            deleteTagResponse = await Tag.deleteMany({workspace:  ObjectId(workspaceId)}, { session } ).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`);
-        }
-
-        // Delete All WorkspaceInvites
-        var deleteWorkspaceInviteResponse;
-        try {
-            deleteWorkspaceInviteResponse = await WorkspaceInvite.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`);
-        }
-
-        // Delete All UserStats
-        var deleteUserStatsResponse;
-        try {
-            deleteUserStatsResponse = await UserStats.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`);
-        }
-
-        // Delete All ActivityFeedItem
-        var deleteActivityFeedItemResponse;
-        try {
-            deleteActivityFeedItemResponse = await ActivityFeedItem.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`);
-        }
-
-        // Remove Workspace from User.workspaces for every user in the workspace
-        var removeWorkspaceResponse;
-        var usersInWorkspace;
-        try {
-            usersInWorkspace = await User.find({ workspaces: { $in: [ObjectId(workspaceId)] }}).select('_id').lean().exec();
-            usersInWorkspace = usersInWorkspace.map(userObj => userObj._id.toString());
-
-            removeWorkspaceResponse = await User.updateMany({ workspaces:  { $in: [ObjectId(workspaceId)] } },
-                                                            { $pull: { workspaces:  { $in: [ObjectId(workspaceId)] } } }, { session }).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`);
-        }
-
-        // Create 'removed_workspace Notifications'
-        var notificationData = usersInWorkspace.map(id => {
-            return {
-                type: 'removed_workspace',
-                user: id.toString(),
-                workspace: workspaceId,
+            // Delete All Documents
+            var deleteDocumentResponse;
+            try {
+                deleteDocumentResponse = await Document.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
             }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+            // Delete All Snippets
+            var deleteSnippetResponse;
+            try {
+                deleteSnippetResponse = await Snippet.deleteMany({workspace:  ObjectId(workspaceId)}, { session } ).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+            // Delete All Tags
+            var deleteTagResponse;
+            try {
+                deleteTagResponse = await Tag.deleteMany({workspace:  ObjectId(workspaceId)}, { session } ).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+            // Delete All WorkspaceInvites
+            var deleteWorkspaceInviteResponse;
+            try {
+                deleteWorkspaceInviteResponse = await WorkspaceInvite.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+            // Delete All UserStats
+            var deleteUserStatsResponse;
+            try {
+                deleteUserStatsResponse = await UserStats.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+            // Delete All ActivityFeedItem
+            var deleteActivityFeedItemResponse;
+            try {
+                deleteActivityFeedItemResponse = await ActivityFeedItem.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+            // Remove Workspace from User.workspaces for every user in the workspace
+            var removeWorkspaceResponse;
+            var usersInWorkspace;
+            try {
+                usersInWorkspace = await User.find({ workspaces: { $in: [ObjectId(workspaceId)] }}).select('_id').lean().exec();
+                usersInWorkspace = usersInWorkspace.map(userObj => userObj._id.toString());
+
+                removeWorkspaceResponse = await User.updateMany({ workspaces:  { $in: [ObjectId(workspaceId)] } },
+                                                                { $pull: { workspaces:  { $in: [ObjectId(workspaceId)] } } }, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+            // Create 'removed_workspace Notifications'
+            var notificationData = usersInWorkspace.map(id => {
+                return {
+                    type: 'removed_workspace',
+                    user: id.toString(),
+                    workspace: workspaceId,
+                }
+            });
+
+            // Create 'removed_workspace' Notifications
+            try {
+                await NotificationController.createRemovedNotifications(notificationData);
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false,
+                            error: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`,
+                            trace: err};
+                throw new Error(`deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`);
+            }
+
+
+            // Delete Workspace
+            try {
+                deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId, { session }).select('_id repositories').lean().exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`);
+            }
+
+            // Set all Repositories in deletedWorkspace.repositories back to 'initRepository state'
+            // scanned: false,
+            // currentlyScanning: false
+            
+            console.log('DELETED WORKPSACE: ');
+            console.log(deletedWorkspace);
+
+            var initRepositories = deletedWorkspace.repositories.map(repositoryObj => ObjectId(repositoryObj._id.toString()));
+            var repositoryInitResponse;
+            try {
+                repositoryInitResponse = await Repository.updateMany({ _id: { $in: initRepositories } },
+                                                                { $set: { scanned: false, currentlyScanning: false } }, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`, trace: err};
+                throw new Error(`deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`);
+            }
+
+
+            // Delete all References matched by - { repository: { $in: initRepositories.map(id => ObjectId(id.toString())) }, root: false }
+            var deleteReferenceResponse;
+            try {
+                deleteReferenceResponse = await Reference.deleteMany({repository: { $in: initRepositories }, root: false }, { session });
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`, trace: err};
+                throw new Error(`deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`);
+            }
+
+            await logger.info({source: 'backend-api',
+                                message: `Successfully deleted Workspace ${workspaceId} - userId, repositoryIds: ${req.tokenPayload.userId}, ${JSON.stringify(initRepositories)}`,
+                                function: 'deleteWorkspace'});
+
+            output = {success: true, result: deletedWorkspace};
+            return 
         });
-
-        // Create 'removed_workspace' Notifications
-        try {
-            await NotificationController.createRemovedNotifications(notificationData);
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false,
-                        error: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`,
-                        trace: err};
-            throw new Error(`deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(usersInWorkspace)}`);
-        }
-
-
-        // Delete Workspace
-        try {
-            deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId, { session }).select('_id repositories').lean().exec();
-        }
-        catch (err) {
-            console.log(err);
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`, trace: err};
-            throw new Error(`deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`);
-        }
-
-        // Set all Repositories in deletedWorkspace.repositories back to 'initRepository state'
-        // scanned: false,
-        // currentlyScanning: false
-        
-        console.log('DELETED WORKPSACE: ');
-        console.log(deletedWorkspace);
-
-        var initRepositories = deletedWorkspace.repositories.map(repositoryObj => ObjectId(repositoryObj._id.toString()));
-        var repositoryInitResponse;
-        try {
-            repositoryInitResponse = await Repository.updateMany({ _id: { $in: initRepositories } },
-                                                            { $set: { scanned: false, currentlyScanning: false } }, { session }).exec();
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`, trace: err};
-            throw new Error(`deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`);
-        }
-
-
-        // Delete all References matched by - { repository: { $in: initRepositories.map(id => ObjectId(id.toString())) }, root: false }
-        var deleteReferenceResponse;
-        try {
-            deleteReferenceResponse = await Reference.deleteMany({repository: { $in: initRepositories }, root: false }, { session });
-        }
-        catch (err) {
-            await logger.error({source: 'backend-api',
-                                error: err,
-                                errorDescription: `deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`,
-                                function: 'deleteWorkspace'});
-
-            output = {success: false, error: `deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`, trace: err};
-            throw new Error(`deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(initRepositories)}`);
-        }
-
-        await logger.info({source: 'backend-api',
-                            message: `Successfully deleted Workspace ${workspaceId} - userId, repositoryIds: ${req.tokenPayload.userId}, ${JSON.stringify(initRepositories)}`,
-                            function: 'deleteWorkspace'});
-
-        output = {success: true, result: deletedWorkspace};
-        return 
-    });
+    }
+    catch (err) {
+        session.endSession();
+        return res.json(output);
+    }
 
     session.endSession();
 

@@ -6,11 +6,20 @@ var AWS = require('aws-sdk');
 // Set the region 
 AWS.config.update({region: 'us-east-1'});
 
+var testingApiEndpoint;
+
+if (process.env.IS_PRODUCTION) {
+    testingApiEndpoint = process.env.PRODUCTION_API_URL;
+}
+else {
+    testingApiEndpoint = process.env.LOCALHOST_API_URL
+}
+
 
 const requestTestingUserBackendClient = () => {
-	const axios = require('axios');
+    const axios = require('axios');
 	return axios.create({
-        baseURL: process.env.TESTING_API_URL,
+        baseURL: testingApiEndpoint,
         headers: {
             "Authorization": `Bearer ${process.env.TESTING_USER_JWT}`
         }
@@ -20,7 +29,7 @@ const requestTestingUserBackendClient = () => {
 const requestTestingDevBackendClient = () => {
     const axios = require('axios');
     return axios.create({
-        baseURL: process.env.TESTING_API_URL,
+        baseURL: testingApiEndpoint,
         headers: {
             "Authorization": `Bearer ${process.env.DEV_TOKEN}`
         }

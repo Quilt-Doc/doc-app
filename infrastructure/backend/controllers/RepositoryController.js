@@ -72,6 +72,7 @@ initRepository = async (req, res) => {
 }
 
 
+// When the Repository is scanned it's lastProcessedCommit is correctly set to the latest commit on the default branch
 getRepositoryFile = async (req, res) => {
     var {pathInRepo, referenceId } = req.body;
     const fullName = req.repositoryObj.fullName;
@@ -310,13 +311,35 @@ updateRepository = async (req, res) => {
     var repository;
 
     try {
-        repository = await Repository.findOne({fullName, installationId}).exec();
+        repository = await Repository.findOne({fullName, installationId}).lean().exec();
     }
     catch (err) {
         await logger.error({source: 'backend-api', message: err,
                         errorDescription: `Error finding repository fullName, installationId: ${fullName}, ${installationId}`,
                         function: 'updateRepository'});
         return res.json({success: false, error: `Error finding repository fullName, installationId: ${fullName}, ${installationId}`});
+    }
+
+    // if !ref.includes('refs/heads/'), then it does not point to a branch, abort
+    if (!ref.includes('refs/heads/')) {
+
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error invalid ref, does not point to a branch - ref: ${ref}`,
+                            function: 'updateRepository'});
+
+        return res.json({success: false, error: `Error invalid ref, does not point to a branch - ref: ${ref}`});
+    }
+
+    // Don't update the Repository if the push is not to the default branch
+    var pushedBranch = ref.split('/').slice(-1);
+    if (repository.defaultBranch != pushedBranch) {
+        await logger.info({source: 'backend-api',
+                            message: `Ignoring update on non-default branch - defaultBranch, pushedBranch, fullName, installationId: ${repository.defaultBranch}, ${pushedBranch}, ${fullName}, ${installationId}`,
+                            function: 'updateRepository'});
+
+        return res.json({success: true,
+                        result: `Ignoring update on non-default branch - defaultBranch, pushedBranch, fullName, installationId: ${repository.defaultBranch}, ${pushedBranch}, ${fullName}, ${installationId}`});
     }
 
     // If repository is unscanned, we don't update
@@ -328,7 +351,6 @@ updateRepository = async (req, res) => {
         return res.json({success: true, result: `Ignoring update on unscanned repository fullName, installationId: ${fullName}, ${installationId}`});
     }
 
-    // KARAN TODO: Remove Hard-coded Commit SHA here
     var runReferencesData = {};
     runReferencesData['fullName'] = fullName;
     runReferencesData['installationId'] = installationId;

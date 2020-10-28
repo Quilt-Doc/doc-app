@@ -132,7 +132,7 @@ retrieveNotifications = async (req, res) => {
 
     var retrieveResponse;
     try {
-        retrieveResponse = await Notification.find({workspace: workspaceId, user: userId})
+        retrieveResponse = await Notification.find({workspace: workspaceId, user: userId, status: 'visible'})
             .limit(limit).skip(skip).sort({created: -1}).exec();
     }
     catch (err) {
