@@ -7,7 +7,10 @@ import chroma from 'chroma-js';
 import { Editor } from 'slate';
 //icons
 import { faTintSlash, faHighlighter  } from '@fortawesome/free-solid-svg-icons'
+import { ImTextColor } from 'react-icons/im';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { RiCheckFill } from 'react-icons/ri';
+import { AiOutlineFormatPainter } from 'react-icons/ai';
 
 class ColorMenu extends React.Component {
     constructor(props) {
@@ -89,13 +92,13 @@ class ColorMenu extends React.Component {
         return arr.map((color, i) => {
             return (
                 <IconColorChoice color = {!this.props.back ? color : chroma(color).alpha(0.4).hex()} onClick = {() => this.toggleColor(color)}>
-                        {this.isColorActive(color) &&  <ion-icon 
+                        {this.isColorActive(color) &&  <RiCheckFill
                                 name="checkmark"
                                 style = {{
                                     fontSize: "1.6rem",
                                     color: "white"
                                 }}
-                            ></ion-icon>}
+                            />}
                 </IconColorChoice>
             )
         })
@@ -108,9 +111,9 @@ class ColorMenu extends React.Component {
             <IconBorder active = {this.state.open} onMouseDown = {(e) => {this.openMenu(e)}} > 
                 {this.props.back ? 
                     <IconColor color = {this.findActiveColor()}>
-                        <FontAwesomeIcon  style = {{fontSize: "1.3rem", marginTop: "0.2rem", marginBottom: "0.27rem"}} icon={faHighlighter} />
+                        <AiOutlineFormatPainter/>
                     </IconColor> : 
-                    <IconColor color = {this.findActiveColor()}>A</IconColor>}
+                    <IconColor color = {this.findActiveColor()}><ImTextColor/></IconColor>}
                 {this.state.open && 
                     <IconColorMenu ref = {node => this.node = node}>
                          {this.props.back && 
@@ -156,18 +159,21 @@ const IconBorder = styled.div`
 `
 
 const IconColor = styled.div`
-    font-size: 1.4rem;
+    font-size: 1.7rem;
     width: 1.8rem;
     display: flex;
     justify-content: center;
-    border-bottom: 3px solid ${props => props.color};
+    color: ${props => props.color !== '#ffffff' ? props.color : ""};
+    /*border-bottom: 3px solid ${props => props.color};*/
 `
 
 const IconColorMenu = styled.div`
     position: absolute;
     margin-top: 9rem;
     border-radius: 0.3rem;
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
+    /*
+    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);*/
+    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
     color: #172A4e;
     display: flex;
     padding: 1.5rem;

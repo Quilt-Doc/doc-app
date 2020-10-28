@@ -6,6 +6,7 @@ import { api } from '../apis/api';
 
 export const retrieveNotifications = (formValues) => async dispatch => {
 
+    console.log("ENTERED HERE NOTIFICATIONS");
     const { workspaceId, userId } = formValues;
 
     if (!workspaceId) {
@@ -18,6 +19,7 @@ export const retrieveNotifications = (formValues) => async dispatch => {
 
     const response = await api.get(`/notifications/${userId}/retrieve`, formValues);
 
+    console.log("RESPONSE", response.data);
     return response.data;
     /*
     const { success, error, result } = response.data;

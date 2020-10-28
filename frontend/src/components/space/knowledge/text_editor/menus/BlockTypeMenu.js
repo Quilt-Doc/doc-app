@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {faCode, faQuoteLeft, faListUl, faListOl  } from '@fortawesome/free-solid-svg-icons'
 import { BiParagraph } from 'react-icons/bi';
 import { CSSTransition } from 'react-transition-group';
+import { FiChevronDown } from 'react-icons/fi';
 
 
 class BlockTypeMenu extends React.Component {
@@ -81,10 +82,13 @@ class BlockTypeMenu extends React.Component {
         return(
             <BlockType open = {open} onMouseDown = {(e) => this.openMenu(e)} active = {type ? true : false}>
                 {this.renderType()}
-                <ion-icon 
-                    style = {{fontSize: "1.2rem", marginTop: "0.2rem", marginLeft: "0.8rem"}} 
-                    name="caret-down">
-                </ion-icon>
+                <FiChevronDown 
+                        style = {{
+                            marginLeft: "0.5rem",
+                            marginTop: "0.3rem",
+                            fontSize: "1.45rem"
+                        }}
+                    />
                 <CSSTransition
                     in = {open}
                     unmountOnExit
@@ -182,8 +186,14 @@ const BlockType = styled.div`
     opacity:  ${props => props.active ? 1 : 0.5};
     cursor: pointer;
     padding: 0.7rem;
+    padding-left: 1rem;
+    height: 4rem;
+    border-top-left-radius: 0.3rem;
+    border-bottom-left-radius: 0.3rem;
+    /*
     border-radius: 0.3rem;
     border: ${props => !props.open ?  "1px solid #DFDFDF" : `1px solid ${chroma("#6762df").alpha(0.2)}`};
+    */
     background-color: ${props => props.open ? chroma("#6762df").alpha(0.2) : ""}
 `
 

@@ -91,8 +91,8 @@ const SubContainer = styled.div`
 
 const Code = styled.span`
 	font-family: 'Roboto Mono', monospace !important;
-	background-color: #F7F9FB;
-	padding: 0.2rem 0.4rem;
+	background-color: #F3F4F7;
+	padding: 0.2rem 0.5rem;
 	border-radius: 0.3rem;
 	font-size: 1.4rem;
 `

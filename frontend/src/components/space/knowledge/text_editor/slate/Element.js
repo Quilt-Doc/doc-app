@@ -220,6 +220,10 @@ const BlockTool = (props) => {
 
 const ListItem = styled.li`
 	margin-bottom: 0.8rem;
+	:before{
+		vertical-align: top;
+		margin-right: 10px;
+	}
 `
 
 const PlainText = styled.span`

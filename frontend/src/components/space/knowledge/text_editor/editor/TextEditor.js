@@ -7,8 +7,7 @@ import { withHistory } from 'slate-history'
 import withFunctionality from '../slate/WithFunctionality'
 
 //slate utility
-import { updateMarkupType, onKeyDownHelper, decorate, 
-	toggleBlock, toggleBlock2, toggleMark, removeMarks, isMarkActive } from '../slate/Utility';
+import { onKeyDownHelper, decorate, toggleBlock } from '../slate/Utility';
 
 //utility
 import scrollIntoView from 'scroll-into-view-if-needed'
@@ -173,7 +172,7 @@ const TextEditor = (props) => {
 						documentModal = {props.documentModal}
 						id = {"editorSubContainer"}
 					>		
-							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock2(editor, format)}/>}
+							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock(editor, format)}/>}
 							{write && <HoveringToolbar/>}
 							<EditorContainer2  >
 									{isSnippetMenuActive &&

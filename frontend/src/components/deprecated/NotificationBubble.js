@@ -2,10 +2,10 @@ import React from 'react';
 
 //styles
 import styled from 'styled-components';
-import chroma from 'chroma-js';
 
 //icons
-import { AiOutlineTool, AiOutlineUserAdd, AiOutlineUserDelete } from 'react-icons/ai';
+import { AiOutlineRight, AiOutlineLeft, AiFillCloseCircle, AiOutlineClockCircle } from 'react-icons/ai';
+import { BsFillPersonPlusFill, BsFillPersonDashFill } from 'react-icons/bs';
 import { RiPencilLine } from 'react-icons/ri';
 
 //animation
@@ -18,8 +18,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
 //actions
-import { retrieveNotifications } from '../../../actions/Notification_Actions';
-
+import { retrieveNotifications } from '../../actions/Notification_Actions';
 
 class NotificationBubble extends React.Component {
 
@@ -33,31 +32,15 @@ class NotificationBubble extends React.Component {
     }
 */
 
-    componentDidMount = async () => {
+    componentDidMount = () => {
         const { retrieveNotifications, user: { _id }, match } = this.props;
         const { workspaceId } = match.params;
 
-        
-        let notifications = await retrieveNotifications({userId: _id, workspaceId});
-        console.log("NOTIFICATIONS", notifications);
+        console.log("NOTIFICATIONS ABOUT TO CALL");
+        retrieveNotifications({userId: _id, workspaceId});
+       
 
         document.addEventListener('mousedown', this.handleClickOutside, false);
-    }
-
-    componentDidUpdate = async (prevProps) => {
-        const { notificationsOpen } = this.props;
-
-        if (prevProps.notificationsOpen && prevProps.notificationsOpen !== notificationsOpen) {
-            console.log("ENTERED HERE");
-            const { retrieveNotifications, user: { _id }, match } = this.props;
-            const { workspaceId } = match.params;
-
-            
-            let notifications = await retrieveNotifications({userId: _id, workspaceId});
-            console.log("NOTIFICATIONS", notifications);
-
-            document.addEventListener('mousedown', this.handleClickOutside, false);
-        }
     }
 
     componentWillUnmount = () => {
@@ -103,114 +86,79 @@ class NotificationBubble extends React.Component {
                 <Container ref = { node => this.node = node } bottom = {bottom}>
                     <Header>
                         Notifications
-                        <Count>8 Unread</Count>
+                        <Buttons>
+                            <Button>
+                                <AiOutlineLeft/>
+                            </Button>
+                            <Button>
+                                <AiOutlineRight/>
+                            </Button>
+                        </Buttons>
                     </Header>
                     <Notification>
                         <Icon color = {'#ff4757'}>
-                            <AiOutlineTool/>
+                            <AiFillCloseCircle/>
                         </Icon>
                         <Body>
-                            <Title>Deprecation</Title>
                             <Content>A push has invalidated some of your documents and snippets.</Content>
                             <CreationDate> 
-                                
+                                <AiOutlineClockCircle
+                                    style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
+                                />
                                 {"October 10, 2020"}
                             </CreationDate>
                         </Body>
-                        <Circle><Dot/></Circle>
                     </Notification>
                     <Notification>
-                        <Icon >
+                        <Icon color = {'#6762df'}>
                             <RiPencilLine/>
                         </Icon>
                         <Body>
-                            <Title>Creation</Title>
                             <Content>5 references from your recent push are ready to be documented.</Content>
-                            <CreationDate> 
-                                {"October 10, 2020"}
-                            </CreationDate>
                         </Body>
-                        <Circle><Dot/></Circle>
-                    </Notification>
-                      <Notification>
-                        <Icon >
-                            <RiPencilLine/>
-                        </Icon>
-                        <Body>
-                            <Title>Creation</Title>
-                            <Content>5 references from your recent push are ready to be documented.</Content>
-                            <CreationDate> 
-                                {"October 10, 2020"}
-                            </CreationDate>
-                        </Body>
-                        <Circle><Dot/></Circle>
                     </Notification>
                     <Notification>
                         <Icon color = {'#19e5be'}>
-                            <AiOutlineUserAdd/>
+                            <BsFillPersonPlusFill/>
                         </Icon>
                         <Body>
-                            <Title>Team</Title>
                             <Content>John joined your Pegasus workspace.</Content>
-                            <CreationDate> 
-                                {"October 10, 2020"}
-                            </CreationDate>
                         </Body>
-                        <Circle><Dot/></Circle>
                     </Notification>
                     <Notification>
                         <Icon color = {'#ff4757'}>
-                            <AiOutlineUserDelete/>
+                            <BsFillPersonDashFill/>
                         </Icon>
                         <Body>
-                            <Title>Team</Title>
-                            <Content>John was removed from Pegasus workspace.</Content>
-                            <CreationDate> 
-                                {"October 10, 2020"}
-                            </CreationDate>
+                            <Content>John joined your Pegasus workspace.</Content>
                         </Body>
-                        <Circle><Dot/></Circle>
                     </Notification>
+                    {/*
+                    <Notification>
+                        <Color color = {'#ff4757'}>
+
+                        </Color>
+                        <Body>
+                            A push has invalidated some of your documents and snippets.
+                        </Body>
+                    </Notification>*/}
                 </Container>
             </CSSTransition>
         )
     }
 }
 
-const mapStateToProps = (state) => {
-    const { auth: { user }} = state;
-
-    return {
-        user
-    }
-}
-
 export default withRouter(connect(mapStateToProps, { retrieveNotifications })(NotificationBubble));
-
-const Title = styled.div`
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-    font-weight: 500;
-    opacity: 0.4;
-`
-const Count = styled.div`
-    padding: 0.6rem 1.2rem;
-    background-color: ${chroma('#6762df').alpha(0.2)};
-    margin-left: auto;
-    border-radius: 1rem;
-    font-size: 1.3rem;
-`
 
 const CreationDate = styled.div`
     display: inline-flex;
     align-items: center;
     height: 2.3rem;
-    font-weight:400;
+    font-weight:500;
     border-radius: 0.3rem;
     color: #172A4e;
     opacity: 0.7;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     margin-top: 0.5rem;
 `
 
@@ -218,69 +166,42 @@ const Icon = styled.div`
     color: ${props => props.color};
     font-size: 3rem;
     margin-right: 2rem;
-    opacity: 0.7;
 `   
 
 const Container = styled.div`
-    min-height: 73vh;
-    max-height: 73vh;
+    min-height: 40rem;
     background-color: white;
     box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
-    border-radius: 0.4rem;
+    border-radius: 0.7rem;
     position: absolute;
     z-index: 3;
     width: 40rem;
+    padding: 2rem;
     color: #172A4E;
     bottom: ${props => props.bottom};
     left: 5rem;
-    overflow-y: scroll;
 `
 
 const Notification = styled.div`
     width: 100%;
-    padding: 2rem 1.5rem;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
     display: flex;
-    align-items: center;
     line-height: 1.5;
-    &:last-of-type {
-        border-bottom: 1px solid #E0E4E7;
-    }
-    &:hover {
-        background-color: ${chroma('#6762df').alpha(0.15)}
-    }
-    transition: background-color 0.15s;
-    border-top: 1px solid #E0E4E7;
-
+    background-color: #f7f9fb;
+    border: 1px solid #E0E4E7;
 `
 
 const Body = styled.div`
     display: flex;
     flex-direction: column;
-    padding-left: 1rem;
-    padding-right: 2rem;
 `
 
-const Circle = styled.div`
-    min-width: 3rem;
-    min-height: 5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-`
-
-const Dot = styled.div`
-    border-radius: 50%;
-    height: 1rem;
-    width: 1rem;
-    background-color: ${chroma('#6762df').alpha(0.7)};
-`
 
 const Content = styled.div`
-    font-size: 1.5rem;
-    font-weight: 400;
-    line-height: 1.5;
-    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 500;
 `
 
 const Buttons = styled.div`
@@ -314,6 +235,5 @@ const Header = styled.div`
     padding-left: 4rem;
     padding-right: 4rem;
     */
-    margin-top: 2rem;
-    padding: 2rem;
+    
 `

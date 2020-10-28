@@ -1,6 +1,9 @@
 // slate
 import { Editor, Transforms, Node } from 'slate'
 
+//hotkeys
+import isHotkey from 'is-hotkey'
+
 // lodash
 import _ from 'lodash'
 
@@ -20,8 +23,9 @@ Prism.languages.javascript = Prism.languages.extend('javascript', {});
 const HOTKEYS = {
 	'mod+b': 'bold',
 	'mod+i': 'italic',
-	'mod+u': 'underline',
-	'mod+`': 'code',
+	'mod+u': 'underlined',
+	'mod+e': 'code',
+	'mod+shift+s': 'strike'
 }
 
 const LIST_TYPES = ['numbered-list', 'bulleted-list']
@@ -30,6 +34,15 @@ const LIST_TYPES = ['numbered-list', 'bulleted-list']
 export const onKeyDownHelper = (event, state, editor) => {
 	
 	const { isMarkupMenuActive } = state;
+
+	for (const hotkey in HOTKEYS) {
+		if (isHotkey(hotkey, event)) {
+		  event.preventDefault()
+		  const mark = HOTKEYS[hotkey]
+		  toggleMark(editor, mark)
+		}
+	}
+
 	if (event.key === "Tab") {
 		event.preventDefault();
 		editor.insertText("\t");
@@ -122,7 +135,7 @@ export const decorate = ([node, path]) => {
 	return ranges
 }
 
-export const toggleBlock = (editor, format) => {
+export const toggleBlockActive = (editor, format) => {
 	const isActive = isBlockActive(editor, format)
 	const isList = LIST_TYPES.includes(format)
 
@@ -141,7 +154,7 @@ export const toggleBlock = (editor, format) => {
 	}
 }
 
-export const toggleBlock2 = (editor, format) => {
+export const toggleBlock = (editor, format) => {
 	const isList = LIST_TYPES.includes(format)
 
 	Transforms.unwrapNodes(editor, {
@@ -172,7 +185,9 @@ export const toggleMark = (editor, format) => {
 export const removeMarks = (editor) => {
 	let formats = ["bold", "italic", 
 		"underlined", "strike", "code", "backColor", "color"]
-	formats.map(format => Editor.removeMark(editor, format))
+	formats.map(format => {
+		Editor.removeMark(editor, format);
+	})
 }
 
 export const isBlockActive = (editor, format) => {
