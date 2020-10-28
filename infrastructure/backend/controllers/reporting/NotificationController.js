@@ -94,6 +94,27 @@ createAddedNotifications = async (notificationData) => {
 }
 
 
+hideAllNotifications = async (req, res) => {
+    const { workspaceId, userId } = req.params;
+
+    if (!checkValid(workspaceId)) return res.json({success: false, error: 'hideAllNotifications: no workspaceId provided'});
+    if (!checkValid(userId)) return res.json({success: false, error: 'hideAllNotifications: no userId provided'});
+
+    try {
+        await Notification.updateMany({ workspace: workspaceId, user: userId, status: "visible"}, { $set: { status: 'hidden' } });
+    } catch (err) {
+        await logger.error({source: 'backend-api',
+        message: err,
+        errorDescription: `Error setting notifications to 'hidden' - workspaceId: ${workspaceId}, userId: ${userId}`,
+        function: "hideAllNotifications"});
+
+        return res.json({success: false, error: `hideAllNotifications: Error setting notifications to 'hidden' - workspaceId: ${workspaceId}, userId: ${userId}`});
+    }
+
+    return res.json({success: true, result: 0});
+}
+
+
 setNotificationsHidden = async (req, res) => {
 
     const { notificationIds } = req.body;
@@ -133,7 +154,8 @@ retrieveNotifications = async (req, res) => {
 
     var retrieveResponse;
     try {
-        retrieveResponse = await Notification.find({workspace: workspaceId, user: userId, status: 'visible'})
+        retrieveResponse = await Notification.find({ workspace: workspaceId, user: userId })
+            .populate({path: 'check repository user workspace'})
             .limit(limit).skip(skip).sort({created: -1}).exec();
     }
     catch (err) {
@@ -171,4 +193,4 @@ getPendingCount = async (req, res) => {
 
 
 module.exports = { createInvalidNotifications, createToDocumentNotification, createRemovedNotifications,
-                    createAddedNotifications, setNotificationsHidden, retrieveNotifications, getPendingCount };
+                    createAddedNotifications, setNotificationsHidden, retrieveNotifications, getPendingCount, hideAllNotifications };

@@ -15,6 +15,7 @@ import authReducer from './Auth_Reducer';
 import selectedReducer from './Selected_Reducer';
 import linkageReducer from './Linkage_Reducer';
 import feedReducer from './Feed_Reducer';
+import notificationReducer from './Notifications_Reducer';
 
 export default combineReducers({
     workspaces: workspaceReducer, // DONE (with notes)
@@ -29,6 +30,7 @@ export default combineReducers({
     feeds: feedReducer,
     auth: authReducer,
     ui: uiReducer,
+    notifications: notificationReducer,
     search: searchReducer, // Standardize
     linkages: linkageReducer, // Standardize
     //fileContents: fileContentsReducer

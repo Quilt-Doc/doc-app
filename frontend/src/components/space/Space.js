@@ -31,6 +31,7 @@ import { getWorkspace } from '../../actions/Workspace_Actions';
 import { retrieveDocuments } from '../../actions/Document_Actions';
 import { retrieveReferences } from '../../actions/Reference_Actions';
 import { retrieveTags } from '../../actions/Tag_Actions';
+import { getPendingCount } from '../../actions/Notification_Actions'
 
 // component that holds the features of an individual workspace
 class Space extends React.Component {
@@ -46,7 +47,7 @@ class Space extends React.Component {
 
     // loads the resources needed for the workspace
     async componentDidMount(){
-        const { retrieveDocuments, retrieveTags, getWorkspace, match } = this.props;
+        const { retrieveDocuments, retrieveTags, getWorkspace, getPendingCount, match, user } = this.props;
         const { workspaceId } = match.params;
 
         await Promise.all([
@@ -55,7 +56,9 @@ class Space extends React.Component {
             // get the tags of the workspace
             retrieveTags({workspaceId}),
             // retrieve the root document of the workspace and clear on root retrieval
-            retrieveDocuments({workspaceId, root: true, minimal: true}, true)
+            retrieveDocuments({workspaceId, root: true, minimal: true}, true),
+            // retrieve number of visible notifications
+            getPendingCount({workspaceId, userId: user._id})
         ])
 
         const { retrieveReferences, workspace } = this.props;
@@ -66,6 +69,15 @@ class Space extends React.Component {
         await retrieveReferences({ workspaceId, repositoryId, path: ""})
         
         this.setState({loaded: true})
+    }
+
+    componentDidUpdate = (prevProps) => {
+        const { getPendingCount, match, user } = this.props;
+        const { workspaceId } = match.params;
+
+        if (prevProps.location.pathname !== this.props.location.pathname) {
+            getPendingCount({workspaceId, userId: user._id})
+        }
     }
 
     // checks whether a modal should be open by checking the url params 
@@ -87,7 +99,6 @@ class Space extends React.Component {
     
     renderSearch = () => {
         const { search } = this.state;
-        console.log("SEARCH", search);
         return search ? <Search setSearch = {this.setSearch}/> : null;
     }
 
@@ -151,7 +162,8 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 
-export default connect(mapStateToProps, { getWorkspace, retrieveDocuments, retrieveReferences, retrieveTags })(Space);
+export default connect(mapStateToProps, { getWorkspace, retrieveDocuments, 
+    retrieveReferences, retrieveTags, getPendingCount })(Space);
 
 
 // Styled Components
