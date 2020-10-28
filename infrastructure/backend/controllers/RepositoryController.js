@@ -347,7 +347,7 @@ retrieveRepositories = async (req, res) => {
 
     if (fullName) query.where('fullName').equals(fullName);
     if (installationId) query.where('installationId').equals(installationId);
-    if (fullNames) query.where('fullName').in(fullNames)
+    if (fullNames) query.where('fullName').in(fullNames);
 
     let returnedRepositories;
 
@@ -572,9 +572,9 @@ removeInstallation = async (req, res) => {
 
 
 module.exports = {
-    initRepository, getRepositoryFile, getRepositoryFileSafe,
-    getRepository,
+    initRepository, getRepositoryFile,
+    getRepositoryFileSafe, getRepository,
     deleteRepository, retrieveRepositories,
-    updateRepository, jobRetrieveRepositories, retrieveCreationRepositories,
-    removeInstallation
+    updateRepository, jobRetrieveRepositories,
+    retrieveCreationRepositories, removeInstallation
 }
