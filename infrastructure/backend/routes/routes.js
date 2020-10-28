@@ -143,7 +143,7 @@ router.post('/repositories/remove_installation', authorizationMiddleware.reposit
 // get - verify user is in a workspace with this repository added
 // delete - verify user is in a workspace with this repository added
 router.post('/repositories/retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.retrieveCreationRepositories );
-router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepositoryFile);
+router.post('/repositories/:workspaceId/get_file/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepositoryFileSafe);
 router.post('/repositories/:workspaceId/retrieve', authorizationMiddleware.repositoryMiddleware, repositoryController.retrieveRepositories);
 router.get('/repositories/:workspaceId/get/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.getRepository);
 router.delete('/repositories/:workspaceId/delete/:repositoryId', authorizationMiddleware.repositoryMiddleware, repositoryController.deleteRepository);
