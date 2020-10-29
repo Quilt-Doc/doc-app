@@ -338,10 +338,10 @@ router.get('/assets/document', assetController.getDocumentIcon);
 router.get('/assets/snippet', assetController.getSnippetIcon);
 
 const notificationController = require('../controllers/reporting/NotificationController');
-router.post('/notifications/:userId/retrieve/:workspaceId', authorizationMiddleware.notificationMiddleware, notificationController.retrieveNotifications);
-router.post('/notifications/:userId/set_hidden/:workspaceId', authorizationMiddleware.notificationMiddleware, notificationController.setNotificationsHidden);
-router.get('/notifications/:userId/pending/:workspaceId', authorizationMiddleware.notificationMiddleware, notificationController.getPendingCount);
-
+router.post('/notifications/:workspaceId/:userId/retrieve', authorizationMiddleware.notificationMiddleware, notificationController.retrieveNotifications);
+router.post('/notifications/:workspaceId/:userId/set_hidden', authorizationMiddleware.notificationMiddleware, notificationController.setNotificationsHidden);
+router.get('/notifications/:workspaceId/:userId/pending', authorizationMiddleware.notificationMiddleware, notificationController.getPendingCount);
+router.post('/notifications/:workspaceId/:userId/hide_all', authorizationMiddleware.notificationMiddleware, notificationController.hideAllNotifications);
 
 const badgeController = require('../controllers/badges/BadgeController');
 router.get('/badges/status/', badgeController.getBadge);

@@ -5,11 +5,16 @@ import {
     SET_DOCUMENT_LOADED
 } from '../actions/types/UI_Types'
 
+import { 
+    GET_PENDING_COUNT
+} from '../actions/types/Notification_Types'
+
 const initialState = {
     scrollRightView: 0,
     creating: false,
     creatingRequest: false,
-    documentLoaded: false
+    documentLoaded: false,
+    pendingNotifications: 0
 }
 
 export default (state = initialState, action) => {
@@ -22,6 +27,8 @@ export default (state = initialState, action) => {
             return { ...state, scrollRightView: action.payload };
         case SET_REQUEST_CREATION:
             return { ...state, creatingRequest: action.payload };
+        case GET_PENDING_COUNT:
+            return { ...state, pendingNotifications: action.payload };
         default:
             return state
     }

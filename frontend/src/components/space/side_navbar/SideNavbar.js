@@ -21,7 +21,7 @@ import { IoMdBook } from 'react-icons/io';
 import { AiOutlineCodeSandbox } from 'react-icons/ai';
 import { TiBell } from 'react-icons/ti';
 import { VscBell } from 'react-icons/vsc';
-import NotificationBubble from './NotificationBubble';
+import NotificationWrapper from './notifications/NotificationsWrapper';
 
 class SideNavbar extends React.Component {
     constructor(props){
@@ -31,6 +31,7 @@ class SideNavbar extends React.Component {
             notificationsOpen: false
         }
     }
+
     renderDashboardLink = () => {
         let { workspaceId } = this.props.match.params;
         return `/workspaces/${workspaceId}/dashboard`;
@@ -104,18 +105,23 @@ class SideNavbar extends React.Component {
     }
 
     renderBottomSection = () => {
-        const { setSearch, setNotifications } = this.props;
+        const { setSearch, setNotifications, pendingNotifications } = this.props;
         const { notificationsOpen } = this.state;
+
+        console.log("PENDING NOTIS", pendingNotifications.length);
         return (
             <Section marginTop = {'auto'} marginBottom = {'5rem'}>
                 <IconBorder 
                     onClick = {() => {this.setState({notificationsOpen: !notificationsOpen})}} 
                     id = {"notificationsBorder"} 
-                >
+                    active = {notificationsOpen}
+                >   
+                    {(pendingNotifications !== 0) && <PendingAlert>{pendingNotifications}</PendingAlert>}
                     <VscBell/>
-                    <NotificationBubble 
+                    <NotificationWrapper
                         closeBubble = {() => this.setState({notificationsOpen: false})}
-                        notificationsOpen = {notificationsOpen}/>
+                        notificationsOpen = {notificationsOpen}
+                    />
                 </IconBorder>
                 <IconBorder onClick = {() => setSearch(true)}>
                     <CgSearch/>
@@ -140,8 +146,9 @@ class SideNavbar extends React.Component {
 
 const mapStateToProps = (state, ownProps) => {
     let {workspaceId} = ownProps.match.params;
-    let {documents, workspaces, references} = state;
-    
+    let {documents, workspaces, references, ui } = state;
+    let { pendingNotifications } = ui;
+
     const rootDocument = Object.values(documents).filter(document => document.root)[0];
     const rootReference = Object.values(references).filter(reference => reference.path === "")[0];
 
@@ -149,6 +156,7 @@ const mapStateToProps = (state, ownProps) => {
         rootReference,
         rootDocument,
         workspace: workspaces[workspaceId],
+        pendingNotifications
     }
 }
 
@@ -170,6 +178,7 @@ const IconBorder = styled.div`
     &:hover {
         background-color: #3b404f;
     }
+    background-color: ${props => props.active ? '#3b404f' : ''};
     cursor: pointer;
 `
 
@@ -236,4 +245,20 @@ const WorkspaceIcon = styled(Link)`
     }
     transition: background-color 0.1s ease-in;
     cursor: pointer;
+`
+
+const PendingAlert = styled.div`
+    position: absolute;
+    margin-left: 1.5rem;
+    margin-top: -2.2rem;
+    background-color: #ff4757;
+    color: white;
+    min-width: 1.8rem;
+    min-height: 1.8rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 `
