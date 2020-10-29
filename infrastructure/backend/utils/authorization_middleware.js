@@ -199,7 +199,7 @@ const repositoryMiddleware = async (req, res, next) => {
     // User routes
 
     // poll and validate are temporarily enabled for everything
-    if (requestedPath.includes('/repositories/retrieve')) {
+    if (requestedPath.includes('/repositories/retrieve') || requestedPath.includes('retrieve_creation')) {
         if (requesterRole == 'dev') {
             return next();
         }

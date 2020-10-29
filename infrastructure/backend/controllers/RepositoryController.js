@@ -2,6 +2,8 @@ const url = require('url');
 
 var request = require("request");
 
+const client = require("../apis/api").requestGithubClient();
+
 const apis = require('../apis/api');
 
 const jobs = require('../apis/jobs');
@@ -337,6 +339,67 @@ deleteRepository = async (req, res) => {
     return res.json({success: true, result: returnedRepository});
 }
 
+retrieveCreationRepositories = async (req, res) => {
+    const userId = req.userObj._id.toString();
+
+    const { installationIds } = req.body;
+
+    console.log('USER ID: ');
+    console.log(userId);
+
+    console.log('\n\n INSTALLATION IDS: ');
+    console.log(installationIds);
+
+    if (!checkValid(installationIds)) return res.json({success: false, error: "Retrieve Creation Repositories no installationIds provided"});
+
+    if (!checkValid(userId)) return res.json({success: false, error: "Retrieve Creation Repositories no userId provided"});
+
+    /*
+    var userAccessToken;
+    try {
+       userAccessToken = await GithubAuthProfile.findOne({user: userId, status: 'valid'}).select("accessToken").lean().exec();
+       userAccessToken = userAccessToken.accessToken;
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error fetching GithubAuthProfile - userId: ${userId}`,
+                            function: 'retrieveCreationRepositories'});
+
+        return res.json({success: false, error: err});
+    }
+
+    var installationResponse;
+    try {
+        installationResponse = await client.get("/user/installations",
+            { headers: {
+                    Authorization: `token ${userAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json'
+                }
+            });
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                            errorDescription: `Error fetching installation - userId: ${req.tokenPayload.userId}`, function: 'checkInstallation'});
+        return res.json({success: false, error: err});
+    }
+    */
+    var availableRepositories;
+    try {
+        availableRepositories = await Repository.find({installationId: { $in: installationIds }}).lean().exec();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error finding repositories - installationIds: ${JSON.stringify(installationIds)}`,
+                                function: 'retrieveCreationRepositories'});
+        return res.json({success: false,
+                            error: `Error finding repositories - installationIds: ${JSON.stringify(installationIds)}`,
+                            trace: err});
+    }
+
+    return res.json({success: true, result: availableRepositories});
+}
+
 
 retrieveRepositories = async (req, res) => {
     const {fullName, installationId, fullNames} = req.body;
@@ -368,7 +431,7 @@ retrieveRepositories = async (req, res) => {
 
     return res.json({success: true, result: returnedRepositories});
 }
-
+/*
 retrieveCreationRepositories = async (req, res) => {
     const { fullName, installationId, fullNames } = req.body;
     let query = Repository.find();
@@ -395,6 +458,7 @@ retrieveCreationRepositories = async (req, res) => {
 
     return res.json({success: true, result: returnedRepositories});
 }
+*/
 
 jobRetrieveRepositories = async (req, res) => {
    const {fullName, installationId, fullNames} = req.body;

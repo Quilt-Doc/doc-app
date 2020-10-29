@@ -458,8 +458,9 @@ const runUpdateProcedure = async () => {
             }
 
             // Verify that we have successfully set the Repository to the correct commit
+            var getCurrentCommitResponse;
             try {
-                const getCurrentCommitResponse = spawnSync('git', ['log', '-1', '--pretty=%H'], {cwd: './' + repoDiskPath});
+                getCurrentCommitResponse = spawnSync('git', ['log', '-1', '--pretty=%H'], {cwd: './' + repoDiskPath});
             }
             catch (err) {
                 await worker.send({action: 'log', info: {level: 'error',

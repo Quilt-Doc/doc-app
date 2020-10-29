@@ -116,8 +116,11 @@ export const retrieveRepositories = (formValues) => async dispatch => {
 
 
 export const retrieveCreationRepositories = (formValues) => async dispatch => {
-    const response = await api.post(`/repositories/retrieve`, formValues);
-    
+
+    const userId = formValues.userId;
+
+    const response = await api.post(`/repositories/${userId}/retrieve_creation`, formValues);
+
     if (response.data.success == false) {
         throw new Error(response.data.error.toString());
     }

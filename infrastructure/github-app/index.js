@@ -90,7 +90,6 @@ exports.handler = async (event) => {
                             function: 'handler'});
 
         
-        // TODO: Fix controller method, so doesn't update non-scanned repositories
         try {
             var updateResponse = await backendClient.post("/repositories/update", { ref, headCommit, fullName: repositoryFullName, cloneUrl, installationId, message, pusher });
             if (updateResponse.data.success == false) {
