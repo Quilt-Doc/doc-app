@@ -55,12 +55,12 @@ class RepositorySelection extends React.Component {
 
     renderCheck(id){
         let display = id in this.state.selected ? "" : "none"
-        return {'fontSize': "2rem", 'color': '#19E5BE', display}
+        return {'fontSize': "2rem", 'color': '#19e5be', display}
     }
 
     renderCheckAll(){
         let display = Object.keys(this.state.selected).length === this.props.domainRepositories.length ? "" : "none"
-        return {'fontSize': "2rem", 'color': '#19E5BE', display}
+        return {'fontSize': "2rem", 'color': '#19e5be', display}
     }
 
     turnCheckOnAll(){
@@ -74,11 +74,11 @@ class RepositorySelection extends React.Component {
     }
 
     renderCheckBoxBorder(id){
-        return id in this.state.selected ? '#19E5BE' : '#D7D7D7';
+        return id in this.state.selected ? '#19e5be' : '#D7D7D7';
     }
 
     renderCheckBoxBorderColorAll(){
-        return Object.keys(this.state.selected).length === this.props.domainRepositories.length ? '#19E5BE' : '#D7D7D7';
+        return Object.keys(this.state.selected).length === this.props.domainRepositories.length ? '#19e5be' : '#D7D7D7';
     }
 
 
@@ -266,7 +266,7 @@ const SubmitButton = styled.div`
     border: 1px solid #172A4E;
     &:hover {
         color: white;
-        background-color: #19E5BE;
+        background-color: #19e5be;
     }
     cursor: pointer;
     width: ${props => props.width};
@@ -305,6 +305,6 @@ const FieldInput = styled.input`
 
     &:focus {
         background-color: white;
-        border: 1px solid #19E5BE;
+        border: 1px solid #19e5be;
     }
 `

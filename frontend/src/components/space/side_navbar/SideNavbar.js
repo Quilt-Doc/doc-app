@@ -5,14 +5,15 @@ import styled from "styled-components";
 
 //redux
 import { connect } from 'react-redux';
+import { PRIMARY_COLOR, SECONDARY_COLOR, TERTIARY_COLOR, TEXT_COLOR } from '../../../styles/colors';
 
 //react-router
 import { Link, withRouter } from 'react-router-dom';
 import history from '../../../history';
 
 //icons
-import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine, RiNotification2Line} from 'react-icons/ri'
-import { BiBell, BiGridAlt } from 'react-icons/bi';
+import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine, RiNotification2Line, RiNotification3Line} from 'react-icons/ri'
+import { BiBell, BiGridAlt, BiLayer } from 'react-icons/bi';
 import { CgBell, CgSearch } from 'react-icons/cg';
 
 //components
@@ -69,38 +70,44 @@ class SideNavbar extends React.Component {
 
     renderTopSection = () => {
         return (
-            <Section>
-                <NavbarIcon
-                    active = {history.location.pathname.split("/")[3] === "dashboard"}
-                    to = {this.renderDashboardLink()}
-                >
-                    <BiGridAlt/>
-                </NavbarIcon>
-                <NavbarIcon
-                    active = {history.location.pathname.split("/")[3] === "document"}
-                    to = {this.renderKnowledgeLink()}
-                >
-                    <IoMdBook/>
-                </NavbarIcon>  
-                <NavbarIcon
-                    active = {history.location.pathname.split("/")[3] === "repository"}
-                    to = {this.renderCodebaseLink()}
-                >
-                    <AiOutlineCodeSandbox style = {{fontSize: "1.8rem"}}/>
-                </NavbarIcon>  
-                <NavbarIcon
-                     active = {history.location.pathname.split("/")[3] === "infobank"}
-                     to = {this.renderInfobankLink()}
-                >
-                    <RiStackLine  style = {{fontSize: "1.5rem"}}/>
-                </NavbarIcon>
-                <NavbarIcon
-                    active = {history.location.pathname.split("/")[3] === "settings"}
-                    to = {this.renderSettingsLink()}
-                >
-                    <RiSettings5Line/>
-                </NavbarIcon>  
-            </Section>  
+            <>
+                <CreateButton/>
+                <Section>
+                    <NavbarIcon
+                        active = {history.location.pathname.split("/")[3] === "dashboard"}
+                        to = {this.renderDashboardLink()}
+                    >
+                        <BiGridAlt/>
+                    </NavbarIcon>
+                    <NavbarIcon
+                        fontSize = {"2.1rem"}
+                        active = {history.location.pathname.split("/")[3] === "document"}
+                        to = {this.renderKnowledgeLink()}
+                    >
+                        <IoMdBook/>
+                    </NavbarIcon>  
+                    <NavbarIcon
+                        fontSize = {"2.4rem"}
+                        active = {history.location.pathname.split("/")[3] === "repository"}
+                        to = {this.renderCodebaseLink()}
+                    >
+                        <AiOutlineCodeSandbox/>
+                    </NavbarIcon>  
+                    <NavbarIcon
+                        fontSize = {"2.1rem"}
+                        active = {history.location.pathname.split("/")[3] === "infobank"}
+                        to = {this.renderInfobankLink()}
+                    >
+                        <BiLayer/>
+                    </NavbarIcon>
+                    <NavbarIcon
+                        active = {history.location.pathname.split("/")[3] === "settings"}
+                        to = {this.renderSettingsLink()}
+                    >
+                        <RiSettings5Line/>
+                    </NavbarIcon>  
+                </Section>  
+            </>
         );
     }
 
@@ -108,10 +115,13 @@ class SideNavbar extends React.Component {
         const { setSearch, setNotifications, pendingNotifications } = this.props;
         const { notificationsOpen } = this.state;
 
-        console.log("PENDING NOTIS", pendingNotifications.length);
         return (
             <Section marginTop = {'auto'} marginBottom = {'5rem'}>
-                <IconBorder 
+                <IconBorder  onClick = {() => setSearch(true)}>
+                    <CgSearch/>
+                </IconBorder>
+                <IconBorder
+
                     onClick = {() => {this.setState({notificationsOpen: !notificationsOpen})}} 
                     id = {"notificationsBorder"} 
                     active = {notificationsOpen}
@@ -123,9 +133,6 @@ class SideNavbar extends React.Component {
                         notificationsOpen = {notificationsOpen}
                     />
                 </IconBorder>
-                <IconBorder onClick = {() => setSearch(true)}>
-                    <CgSearch/>
-                </IconBorder>
             </Section>
         )
     }
@@ -134,9 +141,14 @@ class SideNavbar extends React.Component {
         const {workspace: {name}} = this.props;
         return (
             <SideNavbarContainer id = "sidenavbar">
+                {/*
                 <CreateButton/>
                 <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
-                {this.renderTopSection()}
+                */}
+                <IconsContainer>
+                    {this.renderTopSection()}
+                </IconsContainer>
+                
                 {this.renderBottomSection()}
             </SideNavbarContainer>
         )
@@ -162,15 +174,25 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { })(SideNavbar));
 
+const Divider = styled.div`
+    height: 1px;
+    width: 5rem;
+    margin-left: 2rem;
+    background-color: white;
+`
+
+const IconsContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    margin-top: 4rem;
+`
+
 //Styled Components
 const IconBorder = styled.div`
     height: 4.5rem;
     width: 4.5rem;
-    &:first-of-type {
-        margin-bottom: 0.5rem;
-    }
-   
-    font-size: 2.2rem;
+    margin-bottom: ${props => props.marginBottom ? props.marginBottom : "2.3rem"};
+    font-size: 2.15rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -184,20 +206,23 @@ const IconBorder = styled.div`
 
 const SideNavbarContainer = styled.div`
     /*border-top: 2px solid #252832;*/
-    background-color:#272a35;
+    background-color: ${PRIMARY_COLOR}; /*#272a35;*/
     display: flex;
     flex-direction: column;
+
     color: white;
-    min-width: 6rem;
-    max-width: 6rem;
+    min-width: 9rem;
+    max-width: 9rem;
     overflow-y: scroll;
     height: 100vh;
     align-items: center;
+    justify-content: center;
     /*
     border-radius: 1.7rem;
     border-top-left-radius: 0rem;
     border-bottom-left-radius: 0rem;
     */
+
 `
 
 const Section = styled.div`
@@ -209,22 +234,60 @@ const NavbarIcon = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 3.2rem;
-    width: 3.2rem;
-    font-size: 1.6rem;
+    height: 5rem;
+    width: 9rem;
+    font-size: ${props => props.fontSize ? props.fontSize : "2rem"};
     font-weight: 500;
+    /*
     background-color:#3b404f;
-    border-radius: 0.3rem;
+    */
     cursor: pointer;
-    margin-bottom: 1.3rem;
+    margin-bottom: 2.3rem;
 
+    
+    &:hover {
+        border-left: ${props => props.active ? `3px solid ${SECONDARY_COLOR}` : '3px solid white'};
+    }
+    
+
+    transition: all 0.2s ease-in;
+    text-decoration: none;
+    
+    /*border: ${props => props.active ?  '1px solid #f27448': 'none'};*/
+
+    border-left: ${props => props.active ? `3px solid ${SECONDARY_COLOR}` : `3px solid transparent`};
+    border-right: 3px solid transparent;
+    color: ${props => props.active ? SECONDARY_COLOR : TERTIARY_COLOR};
+`
+
+
+const NavbarIcon2 = styled(Link)`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 5rem;
+    width: 9rem;
+    font-size: 2.3rem;
+    font-weight: 500;
+    /*
+    background-color:#3b404f;
+    */
+    cursor: pointer;
+    margin-bottom: 2.3rem;
+    /*
     &:hover {
         border: 1px solid #6762df;
     }
+    */
+
     transition: background-color 0.1s ease-in;
     text-decoration: none;
-    border: ${props => props.active ?  '1px solid #6762df': 'none'};
-    color: white;
+    
+    /*border: ${props => props.active ?  '1px solid #f27448': 'none'};*/
+
+    border-left: ${props => props.active ? `3px solid ${SECONDARY_COLOR}` : `3px solid transparent`};
+    border-right: 3px solid transparent;
+    color: ${props => props.active ? SECONDARY_COLOR : TERTIARY_COLOR};
 `
 
 const WorkspaceIcon = styled(Link)`
@@ -261,4 +324,18 @@ const PendingAlert = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+`
+
+
+const UserButton = styled.div`
+    border: 1px solid #6762df;
+    height: 4rem;
+    width: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    font-size: 1.6rem;
+    color: ${TEXT_COLOR};
 `

@@ -407,7 +407,6 @@ const Background = styled.div`
     min-height: 100%;
     padding: 2.1rem;
     padding-bottom: 5rem;
-    background-color: #f6f7f9;
 `
 
 const DirectoryContainer = styled.div`

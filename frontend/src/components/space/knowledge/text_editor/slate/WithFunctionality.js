@@ -156,14 +156,16 @@ const withFunctionality = (editor, dispatch) => {
 
 		const { selection } = editor
 
-		const match = Editor.above(editor, {
-			match: n => Editor.isBlock(editor, n),
-		})
 
-		let [block, path] = match
+		if (selection && text === "/") {
 
-		if (text === "/" && block.type !== 'code-line') {
-			dispatch({ type: SET_MARKUP_MENU_ACTIVE, payload: true })
+			const match = Editor.above(editor, {
+				match: n => Editor.isBlock(editor, n),
+			})
+
+			let [block, path] = match;
+
+			if (block.type !== 'code-line') dispatch({ type: SET_MARKUP_MENU_ACTIVE, payload: true });
 		}
 
 		if (text === ' ' && selection && Range.isCollapsed(selection)) {

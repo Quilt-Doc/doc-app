@@ -12,7 +12,6 @@ import {
 import { api } from '../apis/api';
 
 export const getUpload = (formValues) => async () => {
-    console.log("ENTERED IN HERE getUPLoad");
     const { fileName } = formValues;
 
     if (!fileName) {
@@ -94,12 +93,12 @@ export const uploadAttachment = (formValues) => async (dispatch) => {
 }
 
 export const syncEditDocument = (formValues) => (dispatch) => {
-    const { _id, markup } = formValues;
-    console.log("SAVING MARKUP", markup);
+    const { _id } = formValues;
+
     if (!_id) {
         throw new Error("syncEditDocument: documentId not provided");
     }
-
+    
     dispatch({ type: EDIT_DOCUMENT, payload: formValues});
 }
 
@@ -250,7 +249,7 @@ export const renameDocument = (formValues) => async (dispatch) => {
     }
 
     const response = await api.put(`/documents/${workspaceId}/rename/${documentId}`, formValues);
-
+    console.log("RESULT OF RENAME", response.data.result);
     if (response.data.success == false) {
         if (response.data.alert) {
             alert(response.data.alert)

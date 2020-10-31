@@ -167,7 +167,6 @@ const PathSection = styled.div`
         opacity: 1;
     }
     cursor: pointer;
-    opacity: 0.85;
     max-width: 15rem;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -215,7 +214,6 @@ const Button = styled.div`
 const Slash = styled.div`
     margin-left: 1rem;
     margin-right: 1rem;
-    opacity: 0.85;
 `
 
 const Path = styled.div`
@@ -225,6 +223,7 @@ const Path = styled.div`
     align-items: center;
     position: relative;
     z-index: 0;
+    opacity: 0.8;
 `
 
 const Container = styled.div`

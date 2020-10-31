@@ -531,7 +531,7 @@ const FieldButton = styled.div`
     height: 4rem;
     width: 17rem;
     border-radius: 0.5rem;
-    border: 1px solid #19E5BE;
+    border: 1px solid #19e5be;
     padding: 1rem;
     color: #172A4E;
     font-size: 1.5rem;
@@ -580,6 +580,6 @@ const ProfileButton = styled.div`
     border-radius: 0.3rem;
     font-size: 5rem;
     color: white;
-    background-color: #19E5BE;
+    background-color: #19e5be;
     cursor: pointer;  
 `

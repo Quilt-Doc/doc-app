@@ -268,7 +268,7 @@ const CommentInput = styled.input`
         opacity: 0.7;
     }
     &:focus {
-        border: 1px solid #19E5BE;
+        border: 1px solid #19e5be;
         background-color: white;
     }
 `
@@ -340,7 +340,7 @@ const RequestDescriptionText = styled(TextareaAutosize)`
 
 const Reference = styled.div`
     font-size: 1.25rem;
-    color: #19E5BE;
+    color: #19e5be;
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     padding: 0.5rem 0.9rem;
     align-items: center;
@@ -381,7 +381,7 @@ const RequestStatusButton = styled.div`
    
     color: white;
     padding: 0.8rem 2rem;
-    background-color: #19E5BE;
+    background-color: #19e5be;
     border-radius: 0.4rem;
     margin-left: 1rem;
     letter-spacing: 1;
@@ -493,7 +493,7 @@ const ProfileButton2 = styled.div`
     border-radius: 0.3rem;
     font-size: 1.6rem;
     color: white;
-    background-color: #19E5BE;
+    background-color: #19e5be;
     cursor: pointer;
 `
 

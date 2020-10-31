@@ -18,7 +18,7 @@ class ActivityFeed extends React.Component {
           }
         ],
         options: {
-          colors: ['#19E5BE', '#172A4E'],
+          colors: ['#19e5be', '#172A4E'],
           chart: {
             height: 350,
             type: 'line',

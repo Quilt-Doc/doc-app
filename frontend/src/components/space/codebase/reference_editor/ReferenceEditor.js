@@ -943,7 +943,6 @@ const Background = styled.div`
     min-height: 100%;
     padding: 2.1rem;
     padding-bottom: 5rem;
-    background-color: #f6f7f9;
 `
 
 const Top = styled.div`
@@ -1053,8 +1052,8 @@ const AddButton = styled.div`
     z-index: 1;
     font-size: 2rem;
     text-align: center;
-    color: #19E5BE;
-    border: 1.5px solid #19E5BE;
+    color: #19e5be;
+    border: 1.5px solid #19e5be;
     display: flex;
     justify-content: center;
     align-items: center;

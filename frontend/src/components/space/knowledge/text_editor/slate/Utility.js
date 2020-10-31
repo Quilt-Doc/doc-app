@@ -84,7 +84,7 @@ export const decorate = ([node, path]) => {
 		}
 		if (childTexts !== []) {
 			const string = childTexts.join('\n')
-			const grammar = Prism.languages["javascript"]
+			const grammar = Prism.languages["python"]
 			const tokens = Prism.tokenize(string, grammar).reverse()
 			const identifiers = {
 				'keyword': '#D73A49',

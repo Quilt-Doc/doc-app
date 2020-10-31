@@ -175,18 +175,16 @@ const Header = styled.div`
 `
 
 const Background = styled.div`
-    background-color: #f6f7f9;
     min-height: 100%;
     padding-left: 2.1rem;
     padding-top: 2.1rem;
     padding-right: 2.1rem;
-    background-color: #f6f7f9;
 `
 
 const CardContainer = styled.div`
     display: grid;
     align-items: center;
-    grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(25.5rem, 1fr));
     grid-gap: 3rem;
     padding-bottom: 3rem;
 `

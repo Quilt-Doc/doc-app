@@ -227,7 +227,7 @@ const ListItem = styled.li`
 `
 
 const PlainText = styled.span`
-	font-size: 1.64rem;
+	font-size: 1.63rem;
 	display: inline-table;
 	vertical-align: middle;
 	padding-bottom: 4px;
@@ -235,7 +235,7 @@ const PlainText = styled.span`
 
 const Note = styled.div`
 	background-color: ${chroma('#6762df').alpha(0.15)};
-	font-size: 1.64rem;
+	font-size: 1.63rem;
 	padding: 1rem 1.7rem;
 	display: flex;
 	align-items: center;
@@ -247,7 +247,7 @@ const Note = styled.div`
 `
 
 const Quote = styled.div`
-	font-size: 1.64rem;
+	font-size: 1.63rem;
 	padding: 1rem;
 	border-left: 2px solid #DFDFDF;
 	margin-top: 2rem !important;
@@ -417,7 +417,7 @@ const H3 = styled.div`
 
 const P = styled.div`
   margin-top: 1.5rem !important;
-  font-size: 1.57rem;
+  font-size: 1.63rem;
   line-height: 1.76;
   color: rgb(9, 30, 66);
   box-shadow: none;
@@ -493,7 +493,7 @@ const Source = styled.div`
 	opacity: 0.5;
 	transition: opacity 0.13s ease-in;
 	&:hover {
-		color: #19E5BE;
+		color: #19e5be;
 		opacity: 1;
 	}
 	align-self: flex-end;

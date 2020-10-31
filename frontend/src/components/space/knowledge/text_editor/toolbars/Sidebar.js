@@ -22,6 +22,7 @@ const Sidebar = (props) => {
     let editor = useSlate();
     let [top, changeTop] = useState(null);
     let selection = editor.selection;
+    
     let type;
     let path;
 

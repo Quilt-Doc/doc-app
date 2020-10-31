@@ -164,7 +164,7 @@ getRepositoryFileSafe = async (req, res) => {
     // If we couldn't find file Sha in Tree Object
     if (!fileSha) {
         await logger.error({source: 'backend-api',
-                            message: err,
+                            message: `Error couldn't find file path in Tree Object`,
                             errorDescription: `Error couldn't find file path in Tree Object - fullName, lastProcessedCommit, pathInRepo, treeSha: ${fullName}, ${lastProcessedCommit}, ${pathInRepo}, ${treeSha}`,
                             function: 'getRepositoryFile'});
         return res.json({success: false, error: err, alert: "Failed to find file path in Tree Object"});

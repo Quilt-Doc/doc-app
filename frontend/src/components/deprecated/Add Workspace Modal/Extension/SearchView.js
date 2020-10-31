@@ -80,7 +80,7 @@ const SearchView = () => {
                             </Card>
                         </ListContainer>
                         <Flag>
-                            <Circle color = "#19e5BE" />
+                            <Circle color = "#19e5be" />
                             Project Management
                         </Flag>
                         <ListContainer>

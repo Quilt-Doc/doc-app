@@ -25,10 +25,10 @@ class InfobankToolbar extends React.Component {
         return (
             <Container>
                 <SearchbarWrapper>
-                    <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
-                    <SearchButton>
+                    <IconBorder>
                         <IoIosSearch/>
-                    </SearchButton>
+                    </IconBorder>
+                    <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
                 </SearchbarWrapper>
             </Container>
         )
@@ -48,9 +48,17 @@ export default InfobankToolbar;
 const Container = styled.div`
     background-color: white;
     padding: 3.5rem 2.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    border-radius: 0.7rem;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
     margin-bottom: 4rem;
+    width: 65rem;
+`
+
+const IconBorder = styled.div`
+    width: 3.5rem;
+    font-size: 2.6rem;
+    display: flex;
+    align-items: center;
 `
 
 const Type = styled.div`
@@ -71,6 +79,8 @@ const Type = styled.div`
     }
     cursor: pointer;
 `
+
+
 
 const Leftbar = styled.div`
     display: flex;
@@ -123,15 +133,28 @@ const FilterButton = styled.div`
 const SearchbarWrapper = styled.div`
     width: 4 0rem;
     height: 4.5rem;
-    background-color: #eff3f5;
-    border-radius: 0.4rem;
-    padding: 0rem 1.5rem;
+    /*background-color: #eff3f5;*/
+    border-radius: 0.7rem;
+    padding: 0rem 0.7rem;
     padding-right: 0rem;
     cursor: text;
     display: flex;
     align-items: center;
     &:hover {
     }
+    background-color: #f7f9fb;
+    padding-left: 1.5rem;
+    /*
+    border-top: 1px solid #6762df;
+    border-left: 1px solid #6762df;
+    border-bottom: 1px solid #6762df;
+    */
+    /*
+    border-top: 1px solid #E0E4E7;
+    border-left: 1px solid #E0E4E7;
+    border-bottom: 1px solid #E0E4E7;
+    */
+    border: 1px solid #E0E4E7;
 `
 
 const SearchButton = styled.div`
@@ -144,8 +167,8 @@ const SearchButton = styled.div`
     background-color: #2B2F3A;
     color: white;
     font-size: 2.5rem;
-    border-top-right-radius: 0.4rem;
-    border-bottom-right-radius: 0.4rem;
+    border-top-right-radius: 0.7rem;
+    border-bottom-right-radius: 0.7rem;
 `
 
 const Searchbar = styled.input`
