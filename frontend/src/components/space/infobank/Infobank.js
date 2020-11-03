@@ -5,6 +5,7 @@ import chroma from 'chroma-js';
 
 import InfobankToolbar from './InfobankToolbar';
 import InfobankCard from './InfobankCard';
+import Filter from './Filter';
 
 import {withRouter, Link} from 'react-router-dom';
 import {connect} from 'react-redux';
@@ -14,6 +15,7 @@ import {retrieveInfobankResults} from '../../../actions/Search_Actions';
 import InfiniteScroll from 'react-infinite-scroller';
 
 import MoonLoader from "react-spinners/MoonLoader";
+
 
 class Infobank extends React.Component {
     constructor(props){
@@ -88,6 +90,7 @@ class Infobank extends React.Component {
                     <Header>INFOBANK</Header>
                 </Top>
                 <Content>
+                    <Filter/>
                     <BodyContainer>
                         <InfobankToolbar/>
                         <Container>
@@ -156,6 +159,8 @@ const Content = styled.div`
     width: 100%;
     margin-top: 3rem;
     justify-content: center;
+    padding-left: 3rem;
+    padding-right: 3rem;
 `
 
 const Top = styled.div`

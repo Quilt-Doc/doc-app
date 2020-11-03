@@ -111,7 +111,8 @@ class InfobankCard extends React.Component {
 export default withRouter(InfobankCard);
 
 const Bottom = styled.div`
-    height: 5.5rem;
+    height: 5rem;
+
     width: 100%;
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;

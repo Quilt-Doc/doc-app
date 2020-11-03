@@ -218,7 +218,7 @@ const CheckBar = styled.div`
     overflow-y: scroll;
     padding: 2rem;
     padding-top: 3rem;
-    background-color: #f6f7f9;
+    background-color: #f7f9fb;
     border: 1px solid #E0E4E7;
     border-radius: 0.6rem;
     width: 50rem;
