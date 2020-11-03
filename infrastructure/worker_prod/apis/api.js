@@ -1,4 +1,4 @@
-var jwtUtils = require('../utils/jwt');
+
 const Token = require('../models/Token');
 const fs = require('fs');
 

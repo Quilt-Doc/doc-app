@@ -122,8 +122,9 @@ checkInstallation = async (req, res) => {
 
     if (!checkValid(userId)) return res.json({success: false, error: `No userId provided to checkInstallation method.`});
 
+    var userAccessToken;
     try {
-       var userAccessToken = await GithubAuthProfile.findOne({user: userId, status: 'valid'}).select("accessToken").lean().exec();
+       userAccessToken = await GithubAuthProfile.findOne({user: userId, status: 'valid'}).select("accessToken").lean().exec();
        userAccessToken = userAccessToken.accessToken;
     }
     catch (err) {

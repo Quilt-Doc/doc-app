@@ -84,10 +84,11 @@ class ChooseProvider extends React.Component {
     retrieveCreationRepos = async () => {
         const { installations, user, retrieveCreationRepositories } = this.props;
 
+        // KARAN TODO: Change This
         const installationId = installations.filter(inst => inst.account.type === 'User' 
             && inst.account.id == user.profileId)[0].id;
             
-        await retrieveCreationRepositories({installationId});
+        await retrieveCreationRepositories({installationIds: installations.map(installObj => installObj.id), userId: user._id.toString()});
     }
     
     render(){

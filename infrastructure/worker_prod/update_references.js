@@ -2,7 +2,7 @@ const fs = require('fs');
 
 const fs_promises = require('fs').promises;
 
-const { getRepositoryObject, filterVendorFiles, parseCommitObjects,
+const { filterVendorFiles, parseCommitObjects,
         parseGithubFileChangeList, getFileChangeList } = require('./utils/validate_utils');
 
 const { runSnippetValidation } = require('./update_snippets');
@@ -26,159 +26,14 @@ const Reference = require('./models/Reference');
 const Document = require('./models/Document');
 const Repository = require('./models/Repository');
 const UserStats = require('./models/reporting/UserStats');
+const Workspace = require('./models/Workspace');
+
+const breakAttachedDocuments = require('./utils/document_utils').breakAttachedDocuments;
 
 
 const {serializeError, deserializeError} = require('serialize-error');
 
 let db = mongoose.connection;
-
-/*
-Directory Update Procedure:
-    Get List of Directory References as well as a String array of their previous Contents (files and directories)
-    Step through commit by commit and get the file tree per commit
-    For each Directory in list of Directory References, check if it still exists at same path
-        If not found, check the other directories at the same level, and check if the list of their contents includes the contents of Directory currently being validated
-            Also check that there does not exist a Reference for the same-level adjacent directory
-    If the Directory Reference could not be found, set it to broken,
-    If the Directory Reference was found, make no changes
-    If the Directory Reference was renamed, update with the new name/path
-
-    
-    We don't need to worry right now about adding new Directories, but how will we add new Directory References?
-        We can check at the end state of the commit, pull in a list of all the directories found in the file tree
-            create new References for those that don't have a Reference already created or going to be created
-    
-    How do we address updating downstream directory paths on parent rename?
-
-    Could we just use the rename parameters on files?
-        This will catch any directory renames
-*/
-
-const breakAttachedDocuments = async (repoId, refUpdateData, worker, session) => {
-    // Find all Documents associated with References that have been broken
-    var documentsToBreak;
-    try {
-        documentsToBreak = await Document.find({repository: repoId, references: { $in: refUpdateData.map(refObj => ObjectId(refObj._id)) }}, null, { session }).exec();
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                    errorDescription: `Error finding invalidated References on repository: ${repoId}`,
-                                                    source: 'worker-instance', function: 'breakAttachedDocuments'}});
-        throw new Error(`Error finding invalidated References on repository: ${repoId}`);
-    }
-    // No need to update any info on documents that are already broken so filter them out
-    documentsToBreak = documentsToBreak.filter(documentObj => documentObj.status != 'invalid');
-
-    var docUpdateData = [];
-
-    // Need to match the retrieved Documents to the References that broke them
-    for (i = 0; i < documentsToBreak.length; i++) {
-        var currentDocument = documentsToBreak[i];
-        // References that have been broken that are attached to the currentDocument
-        var attachedReferences = refUpdateData.filter(refUpdate => currentDocument.references.includes(refUpdate._id ));
-        // We will use the commit of the first broken Reference
-        // TODO: Make sure this is the earliest commit sha
-        if (attachedReferences.length > 0) docUpdateData.push({_id: currentDocument._id, status: 'invalid', breakCommit: attachedReferences[0].breakCommit});
-    }
-
-    const bulkDocumentInvalidateOps = docUpdateData.map(docObj => ({
-
-        updateOne: {
-                filter: { _id: ObjectId(docObj._id.toString()) },
-                // Where field is the field you want to update
-                // TODO: Instead of using `new Date()` use the actual date on the git push
-                update: { $set: { status: docObj.status, breakCommit: docObj.breakCommit, breakDate: new Date() } },
-                upsert: false
-        }
-    }));
-    if (bulkDocumentInvalidateOps.length > 0) {
-        try {
-            const bulkResult = await Document.collection.bulkWrite(bulkDocumentInvalidateOps, { session });
-            worker.send({action: 'log', info: {level: 'info', message: `bulk Document invalidate results: ${JSON.stringify(bulkResult)}`,
-                                                source: 'worker-instance', function: 'breakAttachedDocuments'}});
-
-        }
-        catch(err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                        errorDescription: `Error bulk invalidating Documents on repository: ${repoId}`,
-                                                        source: 'worker-instance', function: 'breakAttachedDocuments'}});
-            throw new Error(`Error bulk invalidating Documents on repository: ${repoId}`);
-        }
-
-        // Update UserStats here
-
-        // We need to get the Document's authors
-
-        var deletedIds = docUpdateData.map(docData => docData._id.toString());
-
-        var deletedDocumentInfo;
-
-        try {
-            deletedDocumentInfo = await Document.find({_id: {$in: deletedIds}}, null, { session }).select("author status").lean().exec();
-        }
-        catch (err) {
-            worker.send({ action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                    errorDescription: `Error Document find query failed repositoryId, deletedIds: ${repoId}, ${JSON.stringify(deletedIds)}`,
-                                                    function: 'breakAttachedDocuments'}});
-
-            throw new Error(`Error Document find query failed repositoryId, deletedIds: ${repoId}, ${JSON.stringify(deletedIds)}`);
-        }
-
-        var userBrokenDocumentNums = {};
-        var userBrokenDocumentUpdateList = [];
-    
-        deletedDocumentInfo.filter(infoObj => infoObj.status == 'invalid')
-                            .forEach(infoObj => {
-                                userBrokenDocumentNums[infoObj.author.toString()] = (userBrokenDocumentNums[infoObj.author.toString()] || 0) + 1;
-                            });
-        Object.keys(userBrokenDocumentNums).forEach(key => {
-            userBrokenDocumentUpdateList.push({ userId: key, updateNum: userBrokenDocumentNums[key] });
-        });
-    
-        if (userBrokenDocumentUpdateList.length > 0) {
-            var userUpdates = userBrokenDocumentUpdateList;
-
-            // mongoose bulkwrite for one many update db call
-            try {
-                const bulkDecrementOps = userUpdates.map((update) => {
-                    return ({
-                        updateOne: {
-                            filter: { user: ObjectId(update.userId.toString()) },
-                            // Where field is the field you want to update
-                            update: { $inc: { documentsBrokenNum: update.updateNum } },
-                            upsert: false
-                        }
-                    })
-                });
-               await UserStats.bulkWrite(bulkDecrementOps, { session });
-            }
-            catch (err) {
-                worker.send({ action: 'log', info: {    level: 'error',
-                                                        source: 'worker-instance',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error bulk updating User Stats for repositoryId, userUpdates: ${repoId}, ${JSON.stringify(userUpdates)}`,
-                                                        function: 'breakAttachedDocuments'}});
-
-                throw new Error(`Error bulk updating User Stats for repositoryId, userUpdates: ${repoId}, ${JSON.stringify(userUpdates)}`);
-            }
-
-            await worker.send({action: 'log', info: { level: 'info',
-                                                        source: 'worker-instance',
-                                                        message: `Successfully updated 'UserStats.documentsBrokenNum' for ${userUpdates.length} Users - repositoryId: ${repoId}`,
-                                                        function: 'breakAttachedDocuments'}});
-        }
-
-
-
-    }
-    await worker.send({ action: 'log', info: {level: 'info',
-                                                source: 'worker-instance',
-                                                message: `Invalidated ${docUpdateData.length} Documents.`,
-                                                function: 'breakAttachedDocuments'
-                                                }});
-    return docUpdateData.map(docData => docData._id.toString());
-}
-
 
 
 // tree -i -f -F --dirsfirst -o test.txt
@@ -198,7 +53,7 @@ function intersect(a, b) {
 }
 
 
-const validateDirectories = async (repoId, repoDiskPath, headCommit, worker, session) => {
+const validateDirectories = async (repoId, workspaceId, repoDiskPath, headCommit, worker, session) => {
 
     var brokenDocuments = [];
 
@@ -211,7 +66,6 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker, ses
                                                     source: 'worker-instance', function: 'validateDirectories'}});
         throw new Error(`Error running 'tree' command on repository ${repoId}`);
     }
-
 
     const fileTree = getFileTree.stdout.toString().split('\n');
 
@@ -270,8 +124,6 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker, ses
     // This can have just dir paths, since creating new References
     var createdDirectories = newDirectories.filter(dirPath => !oldDirectoryPaths.includes(dirPath));
 
-
-
     // Handle invalidating directories
     // Invalidate all the References that have been broken
     const bulkDirectoryInvalidateOps = unmatchedDirectories.map(dirObj => ({
@@ -298,7 +150,7 @@ const validateDirectories = async (repoId, repoDiskPath, headCommit, worker, ses
     }
 
     try {
-        brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, unmatchedDirectories, worker, session) );
+        brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, workspaceId, unmatchedDirectories, worker, session) );
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
@@ -381,20 +233,73 @@ const runUpdateProcedure = async () => {
     try {
         await session.withTransaction(async () => {
 
+
+            // Get Repository Object
             var repoObj;
 
             try {
-                repoObj = await getRepositoryObject(process.env.installationId, process.env.fullName, worker);
+                repoObj = await Repository.findOne({installationId: process.env.installationId, fullName: process.env.fullName, scanned: true}, null, { session }).lean().exec();
+                // repoObj = await getRepositoryObject(process.env.installationId, process.env.fullName, worker);
             }
             catch(err) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                await worker.send({action: 'log', info: {level: 'error',
+                                                            message: serializeError(err),
                                                             errorDescription: `Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`,
-                                                            source: 'worker-instance', function: 'runUpdateProcedure'}})
+                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
                 transactionAborted = true;
                 transactionError.message = `Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`;
 
                 throw new Error(`Error fetching Repository from MongoDB - installationId, fullName: ${process.env.installationId}, ${process.env.fullName}`);
             }
+
+            // We couldn't find a scanned Repository object matching the update params, abort the job
+            if (!repoObj) {
+                await worker.send({action: 'log', info: {level: 'error',
+                                                            message: serializeError(Error(`Error no Repository found matching - installationId, fullName, scanned=true: ${process.env.installationId}, ${process.env.fullName}`)),
+                                                            errorDescription: `Error no Repository found matching - installationId, fullName, scanned=true: ${process.env.installationId}, ${process.env.fullName}`,
+                                                            source: 'worker-instance',
+                                                            function: 'updateReferences'}});
+
+                transactionAborted = true;
+                transactionError.message = `Error no Repository found matching - installationId, fullName, scanned=true: ${process.env.installationId}, ${process.env.fullName}`;
+
+                throw new Error(`Error no Repository found matching - installationId, fullName, scanned=true: ${process.env.installationId}, ${process.env.fullName}`);
+            }
+
+            // Get Workspace Object
+            var workspaceObj;
+            try {
+                workspaceObj = await Workspace.findOne({repositories: { $in: [ ObjectId(repoObj._id.toString()) ] } }, null, { session }).lean().exec();
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error',
+                                                            message: serializeError(err),
+                                                            errorDescription: `Error finding Workspace by Id - workspaceId, installationId, fullName: ${repoObj.workspace.toString()}, ${process.env.installationId}, ${process.env.fullName}`,
+                                                            source: 'worker-instance',
+                                                            function: 'updateReferences'}});
+
+                transactionAborted = true;
+                transactionError.message = `Error finding Workspace by Id - workspaceId, installationId, fullName: ${repoObj.workspace.toString()}, ${process.env.installationId}, ${process.env.fullName}`;
+
+                throw new Error(`Error finding Workspace by Id - workspaceId, installationId, fullName: ${repoObj.workspace.toString()}, ${process.env.installationId}, ${process.env.fullName}`);
+            }
+
+            if (!workspaceObj) {
+                await worker.send({action: 'log', info: {level: 'error',
+                                                            message: serializeError(Error(`Error no Workspace found matching - workspaceId, installationId, fullName: ${repoObj.workspace.toString()}, ${process.env.installationId}, ${process.env.fullName}`)),
+                                                            errorDescription: `Error no Workspace found matching - workspaceId, installationId, fullName: ${repoObj.workspace.toString()}, ${process.env.installationId}, ${process.env.fullName}`,
+                                                            source: 'worker-instance',
+                                                            function: 'updateReferences'}});
+
+                transactionAborted = true;
+                transactionError.message = `Error no Workspace found matching - workspaceId, installationId, fullName: ${repoObj.workspace.toString()}, ${process.env.installationId}, ${process.env.fullName}`;
+
+                throw new Error(`Error no Workspace found matching - workspaceId, installationId, fullName: ${repoObj.workspace.toString()}, ${process.env.installationId}, ${process.env.fullName}`);
+            }
+
+
+
+            // Begin procedure
 
             var repoId = repoObj._id;
             var repoCommit = repoObj.lastProcessedCommit;
@@ -458,8 +363,9 @@ const runUpdateProcedure = async () => {
             }
 
             // Verify that we have successfully set the Repository to the correct commit
+            var getCurrentCommitResponse;
             try {
-                const getCurrentCommitResponse = spawnSync('git', ['log', '-1', '--pretty=%H'], {cwd: './' + repoDiskPath});
+                getCurrentCommitResponse = spawnSync('git', ['log', '-1', '--pretty=%H'], {cwd: './' + repoDiskPath});
             }
             catch (err) {
                 await worker.send({action: 'log', info: {level: 'error',
@@ -556,7 +462,7 @@ const runUpdateProcedure = async () => {
 
             // Validate and update directory references here
             try {
-                var validateResult = await validateDirectories(repoId, repoDiskPath, headCommit, worker, session);
+                var validateResult = await validateDirectories(repoId, workspaceObj._id.toString(), repoDiskPath, headCommit, worker, session);
                 addedReferences = addedReferences.concat(validateResult.newDirIds);
                 brokenDocuments = brokenDocuments.concat( validateResult.brokenDocuments );
             }
@@ -693,7 +599,7 @@ const runUpdateProcedure = async () => {
                     }
 
                     try {
-                        brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, refUpdateData, worker) );
+                        brokenDocuments = brokenDocuments.concat( await breakAttachedDocuments(repoId, workspaceObj._id.toString(), refUpdateData, worker, session) );
                     }
                     catch (err) {
                         await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
