@@ -88,7 +88,7 @@ class ReferenceMenu extends React.Component {
             color = '#C679DD'
             str = 'file'
         } else if (kind === 'class') {
-            color = '#19E5BE'
+            color = '#19e5be'
             str = 'class'
         } else if (kind === 'function') {
             color = '#5534FF'
@@ -214,8 +214,8 @@ class ReferenceMenu extends React.Component {
                                 FILE
                             </FilterButton>
                             <FilterButton 
-                                hoverColor = {'#19E5BE'}
-                                color = {this.state.filters.has('class') ? '#19E5BE' : ''}
+                                hoverColor = {'#19e5be'}
+                                color = {this.state.filters.has('class') ? '#19e5be' : ''}
                                 opacity = {this.state.filters.has('class') ? '1' : '0.6'}
                                 onClick = {() => {this.toggleFilter('class')}}
                             >
@@ -360,7 +360,7 @@ const IconBorder = styled.div`
 
 const ReferenceClassName = styled.div`
 	text-transform: uppercase;
-	color: #19E5BE;
+	color: #19e5be;
 	font-size: 1.5rem;
     width: 6rem;
     color: ${props => props.color};

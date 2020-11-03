@@ -13,7 +13,10 @@ import history from '../../../../history';
 
 //styles 
 import styled from "styled-components";
+
+//image generation
 import html2canvas from 'html2canvas';
+import domtoimage from 'dom-to-image';
 
 //actions
 import { getDocument, editDocument, syncEditDocument, renameDocument, testRoute } from '../../../../actions/Document_Actions';
@@ -25,6 +28,7 @@ import { connect } from 'react-redux';
 
 //router
 import { withRouter } from 'react-router-dom';
+import { parse } from '@fortawesome/fontawesome-svg-core';
 
 //Change type of markup using toolbar and/or delete markup
 //listen for onscroll events to update dropdown
@@ -52,10 +56,16 @@ class EditorWrapper extends React.Component {
         this.saveMarkup(documentId);
     }
 
-    componentDidUpdate = async (prevProps) => {
+    getSnapshotBeforeUpdate = (prevProps) => {
+        if (prevProps.location.pathname !== this.props.location.pathname) {
+            return this.acquireCanvas();
+        }
+    }
+
+    componentDidUpdate = async (prevProps, prevState, canvasPromise) => {
         if (prevProps.location.pathname !== this.props.location.pathname) {
 
-            const canvas = await this.acquireCanvas();
+            const canvas = await canvasPromise;
 
             this.loadResources();
 
@@ -78,10 +88,10 @@ class EditorWrapper extends React.Component {
         return documentId;
     }
 
-    onMarkupChange = (markup) => {
+    onMarkupChange = (parsedMarkup) => {
         const { syncEditDocument } = this.props;
         let documentId = this.getDocumentId(this.props);
-        syncEditDocument({_id: documentId, markup: JSON.stringify(markup)});
+        syncEditDocument({_id: documentId, parsedMarkup });
     }   
 
     onTitleChange = async (e) => {
@@ -90,7 +100,7 @@ class EditorWrapper extends React.Component {
 
         const document = documents[documentId];
         const uneditedTitle = document.title;
-
+        console.log("UNEDITEDTITLE BEFO", uneditedTitle);
         syncEditDocument({_id: documentId, title: e.target.value});
 
         const { renameDocument, match } = this.props;
@@ -98,6 +108,9 @@ class EditorWrapper extends React.Component {
 
         // on blur of title input, rename the document
         if (e.type === "blur") {
+            console.log("ENTERED IN HERE TITLE CHANGE");
+            console.log("UNEDITEDTITLE", uneditedTitle);
+            console.log("TARGET", e.target.value);
             if (uneditedTitle !== e.target.value) {
                 let changed = await renameDocument({workspaceId, documentId, title: e.target.value});
                 if (!changed) syncEditDocument({_id: documentId, title: uneditedTitle});
@@ -107,22 +120,27 @@ class EditorWrapper extends React.Component {
 
     // loads all the data needed for the editor
     loadResources = async () => {
-        const { match, getDocument, setDocumentLoaded } = this.props;
+        const { match, getDocument, setDocumentLoaded, syncEditDocument } = this.props;
         const { workspaceId } = match.params;
         const documentId = this.getDocumentId(this.props);
 
         // get the document data using the id
         await getDocument({workspaceId, documentId});
 
+        // add the parsed content as a field in the document
+        const { documents } = this.props;
+        const { markup } = documents[documentId];
+
+        syncEditDocument({_id: documentId, parsedMarkup: JSON.parse(markup)});
+
         // DOM is ready to be loaded
         setDocumentLoaded(true);
     }
 
     // returns the markup in string format
-    serializeMarkup = markup => {
-        markup = JSON.parse(markup);
+    serializeMarkup = parsedMarkup => {
         return(
-            markup
+            parsedMarkup
             // Return the string content of each paragraph in the value's children.
             .map(n => Node.string(n))
             // Join them all with line breaks denoting paragraphs.
@@ -134,7 +152,7 @@ class EditorWrapper extends React.Component {
         let canvas;
             
         try {   
-            canvas = await html2canvas(document.getElementById("editorSubContainer"), {scale: 0.5, height: 1000});
+            canvas = await html2canvas(document.getElementById("editorSubContainer"), {scale: 0.5, height: 1500});
         } catch (err) {
             console.log("ERROR WITH CANVAS", err);
         } 
@@ -147,19 +165,28 @@ class EditorWrapper extends React.Component {
         // (if we save on navigation to another doc in componentDidUpdate)
         const { documents } = this.props;
         const doc = documents[documentId];
-
+     
         if (doc) {
             const { editDocument, match } = this.props;
             const { workspaceId } = match.params;
             
-            // retrieve markup from the state
-            const { markup } = doc;
+            // retrieve parsed markup from the doc
+            const { parsedMarkup } = doc;
 
             // acquire the string content
-            const content = this.serializeMarkup(markup);
+            let content;
+            if (parsedMarkup) {
+                content = this.serializeMarkup(parsedMarkup);
+            }
+
+            // stringify the markup
+            const markup = JSON.stringify(parsedMarkup);
 
             // save the json markup and the string content (for search)
-            editDocument({ workspaceId, documentId, markup, content });
+            let formValues = { workspaceId, documentId, markup };
+            if (content) formValues = {...formValues, content};
+
+            editDocument(formValues);
             
             // if the image was successfully produced, save the image
             if (canvas) {

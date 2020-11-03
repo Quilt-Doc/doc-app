@@ -81,7 +81,7 @@ class ColorMenu extends React.Component {
 
     renderIconColors(){
         
-        let arr = ["#ff4757", "#ff7f50", "#ffa502", "#2ed573", "#1e90ff", "#5352ed"]
+        let arr = ["#ff4757", "#ff7f50", "#ffa502", "#19e5be", "#1e90ff", "#5352ed"]
         if (!this.props.back) {
             arr.push("#172A4E")
         }

@@ -180,5 +180,5 @@ const HostingService = styled.div`
         background-color: ${props => props.git ? "#2e323d" : ''};
     }
     
-${props => props.active ? "#19E5BE" : "#2e323d"};*/
+${props => props.active ? "#19e5be" : "#2e323d"};*/
 `

@@ -89,6 +89,7 @@ const RightContainer = styled.div`
     background-color: white;
     margin-top: 2.7rem;
     padding: 2rem;
+    padding-right: 3rem;
     border-radius: 0.7rem;
     height: 85vh;
     margin-right: 6rem;
@@ -142,7 +143,7 @@ const Leftbar = styled.div`
 `
 
 const Container = styled.div`
-    background-color: #f6f7f9;
+    /*background-color: #F7F8FA;#f6f7f9;*/
     height: 100vh;
     padding: 2.1rem 2.5rem;
     padding-right: 3rem;

@@ -47,7 +47,7 @@ class RepositoryCoverageView extends React.Component {
                                     <ProgressContainer>
                                         <ProgressBar>
                                             {/*<ProgressPart backgroundColor = { }/>*/}
-                                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'25%'}/>
+                                            <ProgressPart backgroundColor = {'#19e5be' } width = {'25%'}/>
                                             <ProgressPart backgroundColor = {'#ff4757'} width = {'75%'}/>
                                         </ProgressBar>
                                         <ProgressDescription>
@@ -73,7 +73,7 @@ class RepositoryCoverageView extends React.Component {
                                     <ProgressContainer>
                                         <ProgressBar>
                                             {/*<ProgressPart backgroundColor = { }/>*/}
-                                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'10%'}/>
+                                            <ProgressPart backgroundColor = {'#19e5be' } width = {'10%'}/>
                                             <ProgressPart backgroundColor = {'#feca57' } width = {'40%'}/>
                                             <ProgressPart backgroundColor = {'#ff4757'} width = {'50%'}/>
                                         </ProgressBar>
@@ -100,7 +100,7 @@ class RepositoryCoverageView extends React.Component {
                                     <ProgressContainer>
                                         <ProgressBar>
                                             {/*<ProgressPart backgroundColor = { }/>*/}
-                                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'60%'}/>
+                                            <ProgressPart backgroundColor = {'#19e5be' } width = {'60%'}/>
                                             <ProgressPart backgroundColor = {'#ff4757'} width = {'40%'}/>
                                         </ProgressBar>
                                         <ProgressDescription>
@@ -126,7 +126,7 @@ class RepositoryCoverageView extends React.Component {
                                     <ProgressContainer>
                                         <ProgressBar>
                                             {/*<ProgressPart backgroundColor = { }/>*/}
-                                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'70%'}/>
+                                            <ProgressPart backgroundColor = {'#19e5be' } width = {'70%'}/>
                                             <ProgressPart backgroundColor = {'#feca57' } width = {'20%'}/>
                                             <ProgressPart backgroundColor = {'#ff4757'} width = {'10%'}/>
                                         </ProgressBar>
@@ -153,7 +153,7 @@ class RepositoryCoverageView extends React.Component {
                                     <ProgressContainer>
                                         <ProgressBar>
                                             {/*<ProgressPart backgroundColor = { }/>*/}
-                                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'70%'}/>
+                                            <ProgressPart backgroundColor = {'#19e5be' } width = {'70%'}/>
                                             <ProgressPart backgroundColor = {'#feca57' } width = {'20%'}/>
                                             <ProgressPart backgroundColor = {'#ff4757'} width = {'10%'}/>
                                         </ProgressBar>
@@ -180,7 +180,7 @@ class RepositoryCoverageView extends React.Component {
                                     <ProgressContainer>
                                         <ProgressBar>
                                             {/*<ProgressPart backgroundColor = { }/>*/}
-                                            <ProgressPart backgroundColor = {'#19E5BE' } width = {'70%'}/>
+                                            <ProgressPart backgroundColor = {'#19e5be' } width = {'70%'}/>
                                             <ProgressPart backgroundColor = {'#feca57' } width = {'20%'}/>
                                             <ProgressPart backgroundColor = {'#ff4757'} width = {'10%'}/>
                                         </ProgressBar>
@@ -240,7 +240,7 @@ class RepositoryCoverageView extends React.Component {
                                         
                                     </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                <ListItem2 borderLeftColor = {'#19e5be'}>
                                     <ion-icon style={{'opacity': '1', 
                                                       'color': '#172A4E', 
                                                       'fontSize': '3.5rem', 
@@ -255,7 +255,7 @@ class RepositoryCoverageView extends React.Component {
                                         
                                     </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                <ListItem2 borderLeftColor = {'#19e5be'}>
                                     <ion-icon style={{'opacity': '1', 
                                                       'color': '#172A4E', 
                                                       'fontSize': '3.5rem', 
@@ -302,7 +302,7 @@ class RepositoryCoverageView extends React.Component {
                                             
                                         </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                <ListItem2 borderLeftColor = {'#19e5be'}>
                                     <ion-icon style={{'opacity': '1', 
                                                         'color': '#172A4E', 
                                                         'fontSize': '3.5rem', 
@@ -318,7 +318,7 @@ class RepositoryCoverageView extends React.Component {
                                             
                                         </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                <ListItem2 borderLeftColor = {'#19e5be'}>
                                     <ion-icon style={{'opacity': '1', 
                                                         'color': '#172A4E', 
                                                         'fontSize': '3.5rem', 
@@ -334,7 +334,7 @@ class RepositoryCoverageView extends React.Component {
                                             
                                         </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                <ListItem2 borderLeftColor = {'#19e5be'}>
                                     <ion-icon style={{'opacity': '1', 
                                                         'color': '#172A4E', 
                                                         'fontSize': '3.5rem', 
@@ -350,7 +350,7 @@ class RepositoryCoverageView extends React.Component {
                                             
                                         </DescriptionContainer>
                                 </ListItem2>
-                                <ListItem2 borderLeftColor = {'#19E5BE'}>
+                                <ListItem2 borderLeftColor = {'#19e5be'}>
                                     <ion-icon style={{'opacity': '1', 
                                                         'color': '#172A4E', 
                                                         'fontSize': '3.5rem', 

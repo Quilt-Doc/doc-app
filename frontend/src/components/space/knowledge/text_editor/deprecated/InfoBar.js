@@ -225,7 +225,7 @@ const Reference = styled.div`
     display: inline-flex;
     /*background-color:#262E49;*/
     /*color:#D6E0EE;*/
-    border-left: 3.5px solid #19E5BE;
+    border-left: 3.5px solid #19e5be;
     background-color: #F7F9FB;
     border-radius: 0.3rem;
     box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;

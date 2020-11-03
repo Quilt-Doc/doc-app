@@ -2,6 +2,8 @@ import React from 'react';
 
 //styles 
 import styled from "styled-components";
+import { PRIMARY_COLOR, SECONDARY_COLOR, PRIMARY_LIGHT_COLOR, APP_LIGHT_PRIMARY_COLOR, TEXT_COLOR } from '../../styles/colors';
+import { DARK_SHADOW_1, DARK_SHADOW_2 } from '../../styles/shadows';
 
 //components
 import EditorWrapper from './knowledge/text_editor/EditorWrapper';
@@ -16,6 +18,7 @@ import DirectoryNavigator from './codebase/directory_navigator/DirectoryNavigato
 import DocumentModal from './modals/DocumentModal';
 import DocumentCreationModal from './modals/DocumentCreationModal';
 import Search from './search/Search';
+import TopNavbar from './top_navbar/TopNavbar';
 import Settings from './settings/Settings';
 import { CSSTransition } from 'react-transition-group';
 
@@ -120,17 +123,17 @@ class Space extends React.Component {
                 >
                     <div>
                         <Container>
-                            <SideNavbar setSearch = {this.setSearch}/>                           
-                            <RightView id = {"rightView"} >
-                                <Router history = {history}>
-                                    <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
-                                    <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId" component = { DirectoryNavigator } />
-                                    <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
-                                    <Route path = "/workspaces/:workspaceId/document/:documentId?" component = { Knowledge } />
-                                    <Route path = "/workspaces/:workspaceId/infobank" component = { Infobank } />
-                                    <Route path = "/workspaces/:workspaceId/settings" component = { Settings } />
-                                </Router>
-                            </RightView>
+                            <SideNavbar setSearch = {this.setSearch}/>                         
+                                <RightView id = {"rightView"} >
+                                    <Router history = {history}>
+                                        <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
+                                        <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId" component = { DirectoryNavigator } />
+                                        <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
+                                        <Route path = "/workspaces/:workspaceId/document/:documentId?" component = { Knowledge } />
+                                        <Route path = "/workspaces/:workspaceId/infobank" component = { Infobank } />
+                                        <Route path = "/workspaces/:workspaceId/settings" component = { Settings } />
+                                    </Router>
+                                </RightView>
                         </Container>
                     </div>
                     </CSSTransition>
@@ -167,20 +170,38 @@ export default connect(mapStateToProps, { getWorkspace, retrieveDocuments,
 
 
 // Styled Components
+const AppContainer = styled.div`
+    border-top-left-radius: 1rem;
+    background-color: ${APP_LIGHT_PRIMARY_COLOR};
+    height: 100%;
+    width: 100%;
+    box-shadow: ${DARK_SHADOW_1};
+    color: ${TEXT_COLOR};
+    color: #172A4E;
+`
+
+const RightContainer = styled.div`
+    width: 100%;
+    color: white;
+
+`
 
 const Container = styled.div`
     display: flex;
     flex: 1;
-    background-color:#272a35;
+    background-color: ${PRIMARY_COLOR};
+    /*#171c25;*/
+    
+    /*#272a35;*/
 `
 
 const RightView = styled.div`
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: ${DARK_SHADOW_1};
     width: 100%;
     overflow-y: scroll;
     /*height: calc(100vh - 5.5rem);*/
     z-index: 1;
     border-top-left-radius: 1.2rem;
     height: 100vh;
-    background-color: #f6f7f9;
+    background-color: ${APP_LIGHT_PRIMARY_COLOR};
 `

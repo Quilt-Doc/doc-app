@@ -20,7 +20,7 @@ class RepositoryHealth extends React.Component {
                   size: 10
                 }
             },
-            colors: ['#19E5BE', '#172A4E', 'blue'],
+            colors: ['#19e5be', '#172A4E', 'blue'],
         },
         
         

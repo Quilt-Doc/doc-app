@@ -427,7 +427,7 @@ const Source = styled.div`
 	opacity: 0.5;
 	transition: opacity 0.13s ease-in;
 	&:hover {
-		color: #19E5BE;
+		color: #19e5be;
 		opacity: 1;
 	}
 	align-self: flex-end;

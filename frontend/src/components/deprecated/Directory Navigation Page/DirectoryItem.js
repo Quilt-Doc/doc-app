@@ -50,7 +50,7 @@ class DirectoryItem extends React.Component {
     componentDidMount() {
         if (this.props.item._id in this.props.selected){
             this.setState({
-                'check_box_border_color': '#19E5BE',
+                'check_box_border_color': '#19e5be',
                 'check_box_check_display': ''
              })
         } else {
@@ -86,7 +86,7 @@ class DirectoryItem extends React.Component {
         } else {
             this.props.addSelected(item)
             this.setState({
-                'check_box_border_color': '#19E5BE',
+                'check_box_border_color': '#19e5be',
                 'check_box_check_display': ''
              })
         }
@@ -144,8 +144,8 @@ class DirectoryItem extends React.Component {
                 <StyledLink to = {() => this.renderDirectoryLink(this.props.item)}>
                     <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
                         <Check_Box 
-                            border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}
-                            backgroundColor =  {this.props.item._id in this.props.selected ? '#19E5BE'  : 'white'}
+                            border_color = {this.props.item._id in this.props.selected ? '#19e5be'  : '#D7D7D7'}
+                            backgroundColor =  {this.props.item._id in this.props.selected ? '#19e5be'  : 'white'}
                         >
                             <RiCheckFill style={this.renderCheck()} />
                        
@@ -221,7 +221,7 @@ class DirectoryItem extends React.Component {
                     </ViewDocumentContainer>*/
 /*  <ListItem>
                         <Check_Box_Border onClick = {(e) => {this.turnCheckOn(e, this.props.item)}}>
-                            <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19E5BE'  : '#D7D7D7'}>
+                            <Check_Box border_color = {this.props.item._id in this.props.selected ? '#19e5be'  : '#D7D7D7'}>
                                 <ion-icon style={this.renderCheck()} name="checkmark-outline"></ion-icon>
                             </Check_Box>
                         </Check_Box_Border>
@@ -418,7 +418,7 @@ const ViewDocumentButton = styled.div`
     height: 2.7rem;
     border-radius: 50%;
     color: #172A4E;
-    border: 1px solid #19E5BE;
+    border: 1px solid #19e5be;
     margin-left: auto;
     display: flex;
     align-items: center;

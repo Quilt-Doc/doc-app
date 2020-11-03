@@ -72,7 +72,7 @@ const FieldName = styled.div`
 `
 
 const ConnectButton = styled.div`
-    border: 1px solid #19E5BE;
+    border: 1px solid #19e5be;
     color: #172A4E;
     display: flex;
     align-items: center;

@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 
 //styles
 import styled from 'styled-components';
+import { APP_LIGHT_PRIMARY_COLOR } from '../../../../styles/colors';
 
 //components
 import BreakageCard from './BreakageCard2';
@@ -38,6 +39,7 @@ class Breakage extends Component {
     renderBrokenCards = () => {
         const { broken } = this.state;
         const { workspace: {memberUsers} } = this.props;
+        console.log("BROKEN", broken);
         if (broken.length > 0) return broken.map(doc => {
             const { author } = doc;
             let color = 0;
@@ -59,7 +61,9 @@ class Breakage extends Component {
                 <Header>  
                     Deprecation
                 </Header>
-                {this.renderBrokenCards()}
+                <SubContainer>
+                    {this.renderBrokenCards()}
+                </SubContainer>
             </BreakageContainer>
         )
     }
@@ -75,6 +79,16 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 export default withRouter(connect(mapStateToProps, {retrieveBrokenDocuments})(Breakage));
+
+const SubContainer = styled.div`
+    border-radius: 0.6rem;
+    width: 100%;
+    background-color: #f7f9fb;
+    border: 1px solid #E0E4E7;
+    height: calc(85vh - 37vh - 7rem);
+    overflow-y: scroll;
+    padding: 0.5rem;
+`
 
 const Message = styled.div`
     height: 7rem;

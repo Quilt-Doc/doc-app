@@ -75,12 +75,12 @@ const NavbarButton = styled.div`
 const StyledIcon2 = styled.img`
     width: 1.2rem;
     cursor: pointer;
-    color: #19E5BE;
+    color: #19e5be;
 `
 
 const Count = styled.div`
     font-size: 1.2rem;
     font-weight: 300;
-    color: #19E5BE;
+    color: #19e5be;
     
 `

@@ -10,7 +10,7 @@ const Leaf = ({ attributes, children, leaf }) => {
 	let editor = useSlate()
 	let {selection} = editor
 
-	{/*
+	
 	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){
 		children = <Container>
 						{children}
@@ -31,7 +31,7 @@ const Leaf = ({ attributes, children, leaf }) => {
 					
 
 					</Container>
-	}*/}
+	}
 
 	if (leaf.bold) {
 		children = <strong>{children}</strong>

@@ -158,7 +158,7 @@ const Progress = styled.div`
 `
 
 const Bar = styled.div`
-    background-color: ${props => props.active ? "#19E5BE" : "#2e323d"};
+    background-color: ${props => props.active ? "#19e5be" : "#2e323d"};
     width: 4rem;
     height: 0.33rem;
     border-radius: 0.2rem;

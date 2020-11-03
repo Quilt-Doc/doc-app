@@ -8,6 +8,9 @@ import { Editor, Range, Node } from 'slate'
 import styled from 'styled-components';
 import chroma from 'chroma-js';
 
+//hotkeys
+import isHotkey from 'is-hotkey'
+
 //animation
 import { CSSTransition } from 'react-transition-group';
 
@@ -32,6 +35,16 @@ import { BsCode } from 'react-icons/bs';
 import { MdFormatClear } from 'react-icons/md'
 import {  BiLink } from 'react-icons/bi';
 
+const HOTKEYS = {
+	'mod+b': 'bold',
+	'mod+i': 'italic',
+	'mod+u': 'underlined',
+	'mod+e': 'code',
+    'mod+shift+s': 'strike',
+    'mod': '',
+    'shift': '',
+    'shift+mod': ''
+}
 
 const HoveringToolbar = () => {
     const menu = useRef();
@@ -95,6 +108,24 @@ const HoveringToolbar = () => {
             document.removeEventListener('mouseup', handleMouseUp)
         };
     }, [handleMouseUp])
+
+    const handleKeyDown = useCallback((event) => {
+        for (const hotkey in HOTKEYS) {
+            if (isHotkey(hotkey, event)) {
+                return;
+            }
+        }
+        setOpen(false);
+    }, [])
+
+    useEffect(() => {
+        if (open) {
+            console.log("LISTENER ADDED");
+            window.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [open, handleKeyDown])
     
     /*
     const calculateRect = (clientRect) => {

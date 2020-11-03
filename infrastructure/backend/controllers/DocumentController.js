@@ -596,7 +596,7 @@ renameDocument = async (req, res) => {
 
     // extract new title that will be used to rename
     const session = await db.startSession();
-    
+    console.log("RENAME ENTERED", output);
     let output = {};
     try {
         await session.withTransaction(async () => {
@@ -714,7 +714,7 @@ renameDocument = async (req, res) => {
     }
 
     session.endSession();
-
+    console.log("RENAME OUTPUT", output);
     return res.json(output);
 
 } 

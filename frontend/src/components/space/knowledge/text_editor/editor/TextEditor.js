@@ -7,7 +7,8 @@ import { withHistory } from 'slate-history'
 import withFunctionality from '../slate/WithFunctionality'
 
 //slate utility
-import { onKeyDownHelper, decorate, toggleBlock } from '../slate/Utility';
+import {onKeyDownHelper, decorate, 
+	toggleBlock } from '../slate/Utility';
 
 //utility
 import scrollIntoView from 'scroll-into-view-if-needed'
@@ -67,34 +68,9 @@ import AttachmentMenu from '../menus/AttachmentMenu'
 
 
 const TextEditor = (props) => {
+	const { onMarkupChange, document: { title, parsedMarkup } } = props;
 
-	let {title, markup} = props.document;
-	markup = JSON.parse(markup);
-
-	const initialValue = [
-	{
-	  children: [
-		{
-		  text:
-			'This example shows how you can make a hovering menu appear above your content, which you can use to make text ',
-		},
-		{ text: 'bold', bold: true },
-		{ text: ', ' },
-		{ text: 'italic', italic: true },
-		{ text: ', or anything else you might want to do!' },
-	  ],
-	},
-	{
-	  children: [
-		{ text: 'Try it out yourself! Just ' },
-		{ text: 'select any piece of text and the menu will appear', bold: true },
-		{ text: '.' },
-	  ],
-	},
-	  ]
-	  
-	const [value, setValue] = useState(initialValue);
-
+	const [value, setValue] = useState(parsedMarkup);
 	const [write, setWrite] = useState(false)
 	const [setOptions, toggleOptions] = useState(false);
 
@@ -115,49 +91,22 @@ const TextEditor = (props) => {
 	const editor = useMemo(() => withFunctionality(withHistory(withReact(createEditor())), dispatch), [])
 
 	
-	useEffect(() => {
-        if (editor.selection) {
-            //let path = [selection.anchor.path[0]]
-            /*let rect = ReactEditor.toDOMRange(editor, 
-                              {anchor: {offset: 0, path}, 
-				focus: {offset: 0, path }}).getBoundingClientRect()
-			*/
-			//changeTop(document.getElementById("rightView").scrollTop + rect.top - 125 + rect.height/2)
-			
-			try {
-				let domNode = ReactEditor.toDOMNode(editor, 
-					Node.get(editor, [editor.selection.anchor.path[0]]))
-				let buttonTop = domNode.offsetTop
-				let buttonH = domNode.clientHeight
-				let {clientHeight, scrollTop} = document.getElementById("rightView")
-				let toolbarClientH = document.getElementById("toolbarcontainer").clientHeight
-				//console.log("TRUTH", scrollTop + toolbarClientH > buttonTop)
-				//console.log("SCROLL TOP", scrollTop)
-				//console.log("TOOLBARCLIENTH", toolbarClientH)
-				//console.log("BUTTONTOP", buttonTop)
-				scrollIntoView(domNode, {
-					scrollMode: 'if-needed',
-					block: 'nearest',
-					inline: 'nearest',
-				  })
-			} catch {
-
-			}
-			//document.getElementById("editorSlate").scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
-        }
-    }
-	, [editor.selection])
 	
 	//updateMarkupType(state, dispatch, range, blocktypes, editor)
 
 	const { isMarkupMenuActive, isSnippetMenuActive, isAttachmentMenuActive } = state;
 	
+	const makeMarkupChanges = (markupChanges) => {
+		setValue(markupChanges);
+		onMarkupChange(markupChanges);
+	}
 
-
+	//value={parsedMarkup} onChange={onMarkupChange}>
+	// value={value} onChange={makeMarkupChanges}>
 	return (
 		<DndProvider backend={HTML5Backend}>
-			<Slate editor={editor} value={value} onChange={setValue}>
-
+			
+			<Slate editor={editor} value={value} onChange={makeMarkupChanges}>
 				<MainToolbar 
 					document = {props.document}
 					write = {write} 
@@ -167,7 +116,6 @@ const TextEditor = (props) => {
 					documentModal = {props.documentModal}
 				/>
 				<Container id = {"fullEditorContainer"}>
-				
 					<EditorContainer 
 						documentModal = {props.documentModal}
 						id = {"editorSubContainer"}
@@ -298,3 +246,37 @@ const StyledEditable = styled(Editable)`
 	padding-left: ${props => `${props.paddingLeft}rem`};
 	padding-right: 10rem;
 `	
+
+/*
+useEffect(() => {
+	if (editor.selection) {
+		//let path = [selection.anchor.path[0]]
+		let rect = ReactEditor.toDOMRange(editor, 
+						  {anchor: {offset: 0, path}, 
+			focus: {offset: 0, path }}).getBoundingClientRect()
+		
+		//changeTop(document.getElementById("rightView").scrollTop + rect.top - 125 + rect.height/2)
+		
+		try {
+			let domNode = ReactEditor.toDOMNode(editor, 
+				Node.get(editor, [editor.selection.anchor.path[0]]))
+			let buttonTop = domNode.offsetTop
+			let buttonH = domNode.clientHeight
+			let {clientHeight, scrollTop} = document.getElementById("rightView")
+			let toolbarClientH = document.getElementById("toolbarcontainer").clientHeight
+			//console.log("TRUTH", scrollTop + toolbarClientH > buttonTop)
+			//console.log("SCROLL TOP", scrollTop)
+			//console.log("TOOLBARCLIENTH", toolbarClientH)
+			//console.log("BUTTONTOP", buttonTop)
+			scrollIntoView(domNode, {
+				scrollMode: 'if-needed',
+				block: 'nearest',
+				inline: 'nearest',
+			  })
+		} catch {
+
+		}
+		//document.getElementById("editorSlate").scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+	}
+}
+, [editor.selection])*/

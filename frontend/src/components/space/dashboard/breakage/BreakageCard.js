@@ -68,9 +68,10 @@ class BreakageCard extends Component {
     }
     
     render(){
-        const { color, doc: { author, title, breakDate, breakCommit } } = this.props;
+        const { color, doc: { author, title, breakDate, breakCommit, image } } = this.props;
         return(
             <Card> {/*REPEATED COMPONENT MINIMAL DOCUMENT*/}
+                {/*
                 <Title>
                     <Name>{title}</Name>
                     {this.renderStatus()}
@@ -84,19 +85,34 @@ class BreakageCard extends Component {
                     <Creator color = {this.selectColor(color)} > 
                         {author.firstName.charAt(0)}
                     </Creator>
-                    <CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
+                    <CreationDate>
                         <AiOutlineClockCircle
                             style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
                         />
                         {this.getDateItem(breakDate)}
                     </CreationDate>
                 </Detail>
+                */}
             </Card>
         )
     }
 }
 
 export default BreakageCard;
+
+
+const ImageContainer = styled.img`
+    width: 24rem;
+    object-fit: cover;
+    overflow-y: hidden;
+    /*
+    display: flex;
+    justify-content: center;
+    */
+    margin-left: 1rem;
+    margin-right: 1rem; 
+    margin-top: 0rem;
+`
 
 const CreationDate = styled.div`
     display: inline-flex;

@@ -391,7 +391,7 @@ const CommentInput = styled.input`
         opacity: 0.7;
     }
     &:focus {
-        border: 2px solid #19E5BE;
+        border: 2px solid #19e5be;
     }
 `
 
@@ -690,7 +690,7 @@ const Repository = styled.div`
 
 const Reference = styled.div`
     font-size: 1.25rem;
-    color: #19E5BE;
+    color: #19e5be;
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     padding: 0.5rem 0.9rem;
     align-items: center;
@@ -756,7 +756,7 @@ const ProfileButton = styled.div`
     border-radius: 0.3rem;
     font-size: 1.4rem;
     color: white;
-    background-color: #19E5BE;
+    background-color: #19e5be;
     cursor: pointer;
     margin-right: 1rem
 `
