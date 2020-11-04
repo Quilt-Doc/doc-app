@@ -92,7 +92,7 @@ class ChooseProvider extends React.Component {
 
         await retrieveCreationRepositories({installationIds: installationId });
     }
-    
+
     render(){
         return(
             <ContentContainer>
