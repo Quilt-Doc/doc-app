@@ -76,7 +76,8 @@ const ListView = styled.div`
     padding-bottom: 1rem;
     padding: 2rem;
     */
-
+    height: calc(37vh - 5.5rem - 4rem);
+    overflow-y: scroll;
 `
 
 const FeedContainer = styled.div`

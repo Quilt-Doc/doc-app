@@ -90,7 +90,6 @@ class Infobank extends React.Component {
                     <Header>INFOBANK</Header>
                 </Top>
                 <Content>
-                    <Filter/>
                     <BodyContainer>
                         <InfobankToolbar/>
                         <Container>
@@ -189,8 +188,8 @@ const Background = styled.div`
 const CardContainer = styled.div`
     display: grid;
     align-items: center;
-    grid-template-columns: repeat(auto-fill, minmax(25.5rem, 1fr));
-    grid-gap: 3rem;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    grid-gap: 2rem;
     padding-bottom: 3rem;
 `
 

@@ -53,18 +53,11 @@ class InfobankCard extends React.Component {
                             />
                         </Status>
                         <ImageContainer2>
+                            
                             <ImageContainer src = {result.image}>
 
-                                {/*result.image ? 
-                                    <StyledImg src = {result.image} />
-                                    :   <StyledIcon>
-                                            <RiFileList2Fill style = {{
-                                                color: '#2684FF',
-                                            }}/>
-                                        </StyledIcon>
-                                    */  
-                                }
-                            </ImageContainer> 
+                             
+                            </ImageContainer>
                         </ImageContainer2>
                         <Bottom>
                             <Title>
@@ -84,6 +77,16 @@ class InfobankCard extends React.Component {
     }
 }
 
+
+   /*result.image ? 
+                                    <StyledImg src = {result.image} />
+                                    :   <StyledIcon>
+                                            <RiFileList2Fill style = {{
+                                                color: '#2684FF',
+                                            }}/>
+                                        </StyledIcon>
+                                    */  
+                                
 /*
 <Detail>
                             <CreationDate>
@@ -121,21 +124,30 @@ const Bottom = styled.div`
 `
 
 const ImageContainer2 = styled.div`
-    height: 23rem;
     overflow-y: hidden;
+    position: relative;
+    padding-bottom: 70%;
+    width: 100%;
 `
 
 const ImageContainer = styled.img`
-    width: 24rem;
     object-fit: cover;
+    position: absolute;
+    top: 0; 
+    left: 0;
+    object-position: center top;
+    width: 100%; 
+    height: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    /*
     overflow-y: hidden;
+    */
     /*
     display: flex;
     justify-content: center;
     */
-    margin-left: 1rem;
-    margin-right: 1rem; 
-    margin-top: 0rem;
+    
 `
 
 const StyledImg = styled.img`

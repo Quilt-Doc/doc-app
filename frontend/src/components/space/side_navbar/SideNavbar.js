@@ -211,8 +211,8 @@ const SideNavbarContainer = styled.div`
     flex-direction: column;
 
     color: white;
-    min-width: 9rem;
-    max-width: 9rem;
+    min-width: 8rem;
+    max-width: 8rem;
     overflow-y: scroll;
     height: 100vh;
     align-items: center;
@@ -235,7 +235,7 @@ const NavbarIcon = styled(Link)`
     align-items: center;
     justify-content: center;
     height: 5rem;
-    width: 9rem;
+    width: 8rem;
     font-size: ${props => props.fontSize ? props.fontSize : "2rem"};
     font-weight: 500;
     /*
@@ -266,7 +266,7 @@ const NavbarIcon2 = styled(Link)`
     align-items: center;
     justify-content: center;
     height: 5rem;
-    width: 9rem;
+    width: 8rem;
     font-size: 2.3rem;
     font-weight: 500;
     /*

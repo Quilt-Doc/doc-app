@@ -220,7 +220,7 @@ const CheckBar = styled.div`
     padding-top: 3rem;
     background-color: #f7f9fb;
     border: 1px solid #E0E4E7;
-    border-radius: 0.6rem;
+    border-radius: 0.4rem;
     width: 50rem;
     height: calc(85vh - 5.5rem - 4rem)
 `

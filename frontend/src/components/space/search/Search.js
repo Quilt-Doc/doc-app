@@ -276,7 +276,7 @@ const ModalContent = styled.div`
 
 const IconBorder = styled.div`
     width: 5rem;
-    padding-left: 2rem;
+    padding-left: 1rem;
     font-size: 2.5rem;
     height: 5.3rem;
     display: flex;
