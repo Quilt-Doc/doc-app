@@ -15,7 +15,7 @@ import { logOut, checkLogin } from '../../actions/Auth_Actions';
 //react-redux
 import { connect } from 'react-redux';
 //icons
-import logoSVG from '../../images/final_logo.svg';
+import logoSVG from '../../images/final_logo_2.svg';
 import { RiLogoutCircleLine } from 'react-icons/ri';
 
 
@@ -75,8 +75,8 @@ const BrandName = styled.div`
 `
 
 const StyledIcon = styled.img`
-    max-width: 4rem;
-    margin-right: 1.33rem;
+    max-width: 4.3rem;
+    margin-right: 1rem;
     margin-top: 1.5rem;
 `
 

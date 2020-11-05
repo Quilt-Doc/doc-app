@@ -5,16 +5,22 @@ import styled from 'styled-components';
 import chroma from 'chroma-js';
 
 //icons
-import { RiCheckFill, RiFileFill } from 'react-icons/ri';
+import { RiAddLine, RiCheckFill, RiCloseFill, RiFileFill, RiFilter3Line } from 'react-icons/ri';
 
 //components
 import RepositoryMenu3 from '../../menus/RepositoryMenu3';
-import { AiFillFolder } from 'react-icons/ai';
 import LabelMenu from '../../menus/LabelMenu';
 import FilterDocumentMenu from '../../menus/FilterDocumentMenu';
-import { remove } from 'js-cookie';
 
-/*
+//animation
+import { CSSTransition } from 'react-transition-group';
+
+//icons
+import { AiFillFolder } from 'react-icons/ai';import FileReferenceMenu from '../../menus/FileReferenceMenu';
+;
+
+
+
 class Filter extends Component {
     constructor(props){
         super(props);
@@ -29,6 +35,30 @@ class Filter extends Component {
             documents: []
         }
     }
+
+
+    componentDidUpdate = (prevProps) => {
+        const { open } = this.props;
+
+        if (open && !prevProps.open) {
+            window.addEventListener('mousedown', this.handleMouseDown);
+        }
+    }
+    
+    handleMouseDown = (e) => {
+        if (this.node && !this.node.contains(e.target)) {
+            this.closeMenu()
+        }
+    }
+
+    closeMenu = () => {
+        const { setFilterOpen } = this.props;
+
+        window.removeEventListener('mousedown', this.handleMouseDown);
+
+        setFilterOpen(false);
+    }
+
 
     renderReferenceMenu = () => {
 
@@ -48,7 +78,7 @@ class Filter extends Component {
 
         return (
             repository ? 
-                < FileReferenceMenu 
+                < FileReferenceMenu
                     form = {true}
                     setReferences = {references}
                     document = {{repository}}
@@ -77,6 +107,33 @@ class Filter extends Component {
         })
     }
 
+    renderDocumentMenu = () => {
+
+        const attachDocument = (document) => {
+            let documents = [...this.state.documents];
+            documents.push(document);
+            this.setState({documents});
+        }
+
+        const removeDocument = (document) => {
+            let documents = [...this.state.documents];
+            documents = documents.filter((doc) => {return doc._id !== document._id})
+            this.setState({documents})
+        }
+
+        const { documents } = this.state;
+
+        return (
+            <FilterDocumentMenu
+                attachDocument = {attachDocument}
+                removeDocument = {removeDocument}
+                setDocuments = {documents}
+            />
+        )
+
+    }
+
+    
     renderLabelMenu = () => {
 
         const attachTag = (tag) => {
@@ -120,97 +177,141 @@ class Filter extends Component {
         })
     }
 
-    renderDocumentMenu = () => {
-
-        const attachDocument = (document) => {
-            let documents = [...this.state.documents];
-            documents.push(document);
-            this.setState({documents});
-        }
-
-        const removeDocument = (document) => {
-            let documents = [...this.state.documents];
-            documents = documents.filter((doc) => {return doc._id !== document._id})
-            this.setState({documents})
-        }
-
-        const { documents } = this.state;
-
-        return (
-            <FilterDocumentMenu
-                attachDocument = {attachDocument}
-                removeDocument = {removeDocument}
-                setDocuments = {documents}
-            />
-        )
-
-    }
-
 
     render(){
         const { documentIsSelected, referenceIsSelected, 
             repository, references, tags, documents } = this.state;
-        return(
-            <FilterContainer>
-                <FilterHeader>Filter By</FilterHeader>
-                <FilterBlock>
-                    <SectionHeader>Type</SectionHeader>
-                    <TypeButton color = {'#f27448'}>
-                        Documents
-                    </TypeButton>
-                    <TypeButton color = {'#6762df'}>
-                        References
-                    </TypeButton>
-                </FilterBlock>
-                <FilterBlock>
-                    <SectionHeader>Repository</SectionHeader>
-                    <RepositoryMenu3/>
-                </FilterBlock>
-                <FilterBlock>
-                    <SectionHeader>References</SectionHeader>
-                    {this.renderReferenceMenu()}
-                    {references.length > 0 ? <InfoList>{this.renderRefs()}</InfoList> : 
-                        <Message>
-                            {repository ? 
-                                "No References" : 
-                                "Select a repository to filter documents by reference"
-                            }
-                        </Message>
-                    }
-                </FilterBlock>
-                <FilterBlock>
-                    <SectionHeader>Documents</SectionHeader>
-                    {this.renderDocumentMenu()}
-                    {documents.length > 0 ? <InfoList>{this.renderDocs()}</InfoList> : 
-                        <Message>
-                            No Documents
-                        </Message>
-                    }
-                </FilterBlock>
-                <FilterBlock>
-                    <SectionHeader>Labels</SectionHeader>
-                    <List style = {{marginBottom: "3rem"}}>
-                        {tags.length > 0 ? <InfoList>{this.renderTags()}</InfoList> : 
-                            <Message>
-                                No Labels
-                            </Message>
-                        }
-                    </List>
-                </FilterBlock>
-                <FilterBlock>
-                    <SectionHeader>Creator</SectionHeader>
-                    
-                </FilterBlock>
-                <FilterBlock>
-                    <SectionHeader>Status</SectionHeader>
-                    
-                </FilterBlock>
-            </FilterContainer>
+
+        const { open } = this.props;
+
+        return (
+            <CSSTransition
+                in = {open}
+                unmountOnExit
+                enter = {true}
+                exit = {true}       
+                timeout = {400}
+                classNames = "filterbar"
+            >
+                <ContentContainer ref = {node => this.node = node} >
+                    <FilterHeader>
+                        <IconBorder2>
+                            <RiFilter3Line/>
+                        </IconBorder2>
+                        Filters
+                        <FilterButton>
+                            Apply
+                        </FilterButton>
+                    </FilterHeader>
+                    <AllFilters>
+                        <FilterBlock>
+                            <SectionHeaderType>Type</SectionHeaderType>
+                            <Buttons>
+                                <TypeButton color = {'#f27448'}>
+                                    Documents
+                                </TypeButton>
+                                <TypeButton color = {'#6762df'}>
+                                    References
+                                </TypeButton>
+                            </Buttons>
+                        </FilterBlock>
+                        <FilterBlock>
+                            <SectionHeader>Repository</SectionHeader>
+                            <Buttons>
+                                <RepositoryMenu3/>
+                            </Buttons>
+                        </FilterBlock>
+                        <FilterBlock>
+                            <SectionHeader>References</SectionHeader>
+                            <List>
+                                {this.renderReferenceMenu()}
+                                {references.length > 0 ? <InfoList>{this.renderRefs()}</InfoList> : 
+                                    <Message>
+                                        {repository ? 
+                                            "Filter documents by references" : 
+                                            "Select repository to filter"
+                                        }
+                                    </Message>
+                                }
+                            </List>
+                        </FilterBlock>
+                        <FilterBlock>
+                            <SectionHeader>Documents</SectionHeader>
+                            <List>
+                                {this.renderDocumentMenu()}
+                                {documents.length > 0 ? <InfoList>{this.renderDocs()}</InfoList> : 
+                                    <Message>
+                                    {"Filter references by documents"}
+                                    </Message>
+                                }
+                            </List>
+                        </FilterBlock>
+                        <FilterBlock>
+                            <SectionHeader>Labels</SectionHeader>
+                            <List>
+                                {this.renderLabelMenu()}
+                                {tags.length > 0 ? <InfoList>{this.renderTags()}</InfoList> : 
+                                    <Message>
+                                    Filter by label
+                                    </Message>
+                                }
+                            </List>
+                        </FilterBlock>
+                        <FilterBlock>
+                            <SectionHeader>Status</SectionHeader>
+                            <Buttons>
+                                <TypeButton2 color = {'#19e5be'}>
+                                    Valid
+                                </TypeButton2>
+                                <TypeButton2 color = {'#ff4757'}>
+                                    Invalid
+                                </TypeButton2>
+                            </Buttons>
+                        </FilterBlock>
+                    </AllFilters>
+                </ContentContainer>
+            </CSSTransition>
         )
     }
 }
 
-export default Filter;*/
+export default Filter;
+
+const FilterButton =  styled.div`
+    background-color: white;
+    margin-left: auto;
+    border: 1px solid  #E0E4e7;
+    display: inline-flex;
+    font-size: 1.5rem;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 2rem;
+
+    border-radius: 0.4rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+    cursor: pointer;
+    &:hover {
+        background-color: #f4f4f6;
+    }
+`
+
+const ContentContainer = styled.div`
+    height: 100vh;
+    width: 35rem;
+    /*margin: 7vh auto;*/
+    background-color: white;
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    overflow-y: scroll;
+    position: absolute;
+    right: 0rem;
+    top: 0rem;
+`
+
+const Buttons = styled.div`
+    display: flex;
+    align-items: center;
+`
 
 const TypeButton = styled.div`
     background-color: ${props => chroma(props.color).alpha(0.2)};
@@ -221,20 +322,57 @@ const TypeButton = styled.div`
     color:  ${props => props.color};
     text-transform: uppercase;
     font-weight: 400;
-    &:last-of-type {
-        margin-top: 1rem;
-    }
     justify-content: center;
     align-items: center;
     width: 9rem;
+    &:first-of-type {
+        margin-right: 1rem;
+    }
 `
 
+
+const TypeButton2 = styled.div`
+    background-color: ${props => chroma(props.color).alpha(0.2)};
+    border-radius: 0.3rem;
+    font-size: 1.1rem;
+    padding: 0.7rem 1rem;
+    display: inline-flex;
+    color:  ${props => props.color};
+    text-transform: uppercase;
+    font-weight: 400;
+    justify-content: center;
+    align-items: center;
+    width: 9rem;
+    &:first-of-type {
+        margin-right: 1rem;
+    }
+    border: 1px solid ${props => props.color};
+`
+
+const StatusIcon = styled.div`
+    margin-right: 0.5rem;
+    font-size: 1.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`
 
 const FilterHeader = styled.div`
     color: #172A4e;
     font-weight: 500;
     font-size: 1.8rem;
-    height: 3rem;
+    min-height: 7rem;
+    height: 7rem;
+    padding: 0rem 3rem;
+    display: flex;
+    align-items: center;
+    background-color: #f3f4f7;
+`
+
+const AllFilters = styled.div`
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
 `
 
 const FilterBlock = styled.div`
@@ -242,27 +380,26 @@ const FilterBlock = styled.div`
     flex-direction: column;
 `
 
+
+const SectionHeaderType = styled.div`
+    height: 2rem;
+    font-weight: 500;
+    font-size: 1.3rem;
+    text-transform: uppercase;
+    opacity: 1;
+    margin-top: 0rem;
+    margin-bottom: 1rem;
+`   
+
 const SectionHeader = styled.div`
     height: 2rem;
     font-weight: 500;
     font-size: 1.3rem;
     text-transform: uppercase;
-    opacity: 0.7;
-    margin-top: 2.5rem;
+    opacity: 1;
+    margin-top: 4rem;
     margin-bottom: 1rem;
 `   
-
-const FilterContainer = styled.div`
-    height: 70rem;
-    width: 40rem;
-    margin-right: 3rem;
-    background-color: white;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
-    border-radius: 0.7rem;
-    padding: 3rem;
-    display: flex;
-    flex-direction: column;
-`
 
 const Form = styled.div`
     margin-top: 1rem;
@@ -308,36 +445,7 @@ const CheckContainer = styled.div`
 `
 
 
-const ModalBackground = styled.div`
-    position: fixed; /* Stay in place */
-    z-index: 10000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: hidden; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-    display: ${props => props.display};
-    overflow: scroll;
-`
 
-
-const ModalContent = styled.div`
-    background-color: #fefefe;
-    margin: 7vh auto; /* 15% from the top and centered */
-
-    width: 85vw; /* Could be more or less, depending on screen size */
-    border-radius: 0.2rem;
-    box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
-    display: flex;
-    flex-direction: column;
-    max-width: 75rem;
-    border-radius: 0.3rem;
-    background-color: white;
-    color: #172A4e;
-    background-color: white;
-`
 
 const Bottom = styled.div`
     background-color:#f7f9fb;
@@ -363,6 +471,7 @@ const Message = styled.div`
     font-size: 1.4rem;
     font-weight: 500;
     margin-left: 1.5rem;
+    line-height: 1.7;
 `
 
 const List = styled.div`
@@ -373,6 +482,8 @@ const List = styled.div`
 const AddButton = styled.div`
     height: 3rem;
     width: 3rem;
+    min-width: 3rem;
+    min-height: 3rem;
     border: 1px solid #E0E4e7;
     border-radius: 50%;
     font-size: 1.8rem;
@@ -380,7 +491,15 @@ const AddButton = styled.div`
     align-items: center;
     justify-content: center;
     opacity: 0.5;
-   /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+`
+
+const IconBorder2 = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.7rem;
+    font-size: 2rem;
 `
 
 const IconBorder = styled.div`

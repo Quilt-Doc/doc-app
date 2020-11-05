@@ -327,3 +327,30 @@ body {
   transition: all 300ms;
 }
 
+
+
+
+.filterbar-enter {
+  transform: translateX(37rem);
+  opacity: 0.5
+  /*transform: translateY(-2rem);*/
+}
+
+.filterbar-enter.filterbar-enter-active {
+  /*transform: translateX(0);*/
+  transform: translateX(0);
+  opacity: 1; 
+  transition: all 400ms;
+}
+
+.filterbar-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.filterbar-exit.filterbar-exit-active {
+  transform: translateX(37rem);
+  opacity: 0.5;
+  transition: all 400ms;
+}
+

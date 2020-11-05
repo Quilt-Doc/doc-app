@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { LIGHT_SHADOW_1 } from '../../../styles/shadows';
 
 import chroma from 'chroma-js';
 
@@ -240,7 +241,7 @@ const Card = styled(Link)`
     position: relative;
     color: #172A4E;
     border-radius: 0.5rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     background-color: white;
     /*padding: 1.5rem 2rem;
     padding-top: 2rem;*/

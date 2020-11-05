@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 //styles
 import styled from 'styled-components';
 import chroma from 'chroma-js';
+import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
 //icons
 import { AiOutlineClockCircle, AiOutlineExclamation } from 'react-icons/ai';
@@ -133,7 +134,7 @@ class BreakageCard extends Component {
 export default BreakageCard;
 
 const Detail = styled.div`
-    width: 19rem;
+    width: 17rem;
     margin-left: auto;
     padding: 0.5rem;
     display: flex;
@@ -153,7 +154,7 @@ const ImageContainer = styled.div`
     width: 12rem;
     overflow-y: hidden;
     border-radius: 0.5rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     padding-top: 1rem;
     background-color: white;
 `

@@ -15,6 +15,7 @@ import history from '../../../history';
 import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine, RiNotification2Line, RiNotification3Line} from 'react-icons/ri'
 import { BiBell, BiGridAlt, BiLayer } from 'react-icons/bi';
 import { CgBell, CgSearch } from 'react-icons/cg';
+import final_logo from '../../../images/final_logo_2.svg';
 
 //components
 import CreateButton from './CreateButton';
@@ -145,7 +146,9 @@ class SideNavbar extends React.Component {
                 <CreateButton/>
                 <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 */}
+                
                 <IconsContainer>
+                    <LogoIcon src = {final_logo}/>
                     {this.renderTopSection()}
                 </IconsContainer>
                 
@@ -174,6 +177,12 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { })(SideNavbar));
 
+const LogoIcon = styled.img`
+    width: 4.5rem;
+    margin-left: 0.9rem;
+    margin-bottom: 1.5rem;
+`
+
 const Divider = styled.div`
     height: 1px;
     width: 5rem;
@@ -184,7 +193,7 @@ const Divider = styled.div`
 const IconsContainer = styled.div`
     display: flex;
     flex-direction: column;
-    margin-top: 4rem;
+    margin-top: 1.5rem;
 `
 
 //Styled Components

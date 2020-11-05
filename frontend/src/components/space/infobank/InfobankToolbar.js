@@ -3,8 +3,12 @@ import React from 'react';
 import styled from 'styled-components';
 import chroma from 'chroma-js';
 import { PRIMARY_COLOR } from '../../../styles/colors';
+import { LIGHT_SHADOW_1 } from '../../../styles/shadows';
 
+//components
+import Filter from './Filter';
 
+//icons
 import { HiOutlineFilter} from 'react-icons/hi';
 import {FiChevronDown, FiFilter} from 'react-icons/fi'
 import {TiFilter} from 'react-icons/ti';
@@ -17,49 +21,61 @@ import { RiFilter3Line, RiSearch2Line, RiSearchLine } from 'react-icons/ri';
 class InfobankToolbar extends React.Component {
     constructor(props){
         super(props)
+
+        this.state = {
+            filterOpen: false
+        }
     }
     /*onBlur = {(e) => {e.target.blur(); setSearch(false)}}*/
     /* hoverColor = {search ? '#313b5e' : '#39466f'} onClick = {() => setSearch(true)}*/
 
     onPressHandler = (e) => {
         if (e.key === "Enter") {
-            this.props.updateQuery(this.input.value);
+            //this.props.updateQuery(this.input.value);
         }
     }
 
     render(){
+        const { filterOpen } = this.state;
+
         return (
-            <Container>
-                <IconBorder>
-                    <CgSearch/>
-                </IconBorder>
-                <Searchbar 
-                    ref = {node => this.input = node} 
-                    onKeyPress = {(e) => {this.onPressHandler(e)}} 
-                    placeholder = {"Search for anything.."} 
-                    autoFocus = {true}
-                />
-                <Leftbar>
-                    <Button>
-                        <RiFilter3Line/>
-                    </Button>
-                    <Button>
+            <>
+                <Container>
+                    <IconBorder>
                         <CgSearch/>
-                    </Button>
-                </Leftbar>
-               
-                {/*
-                <SearchbarWrapper>
-                    <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
-                    <SearchButton>
-                        <IoIosSearch/>
-                    </SearchButton>
-                </SearchbarWrapper>
-                <FilterButton>
-                    Filter
-                </FilterButton>
-                */}
-            </Container>
+                    </IconBorder>
+                    <Searchbar 
+                        ref = {node => this.input = node} 
+                        onKeyPress = {(e) => {this.onPressHandler(e)}} 
+                        placeholder = {"Search for anything.."} 
+                        autoFocus = {true}
+                    />
+                    <Leftbar>
+                        <Button onClick = {() => this.setState({filterOpen: true})}>
+                            <RiFilter3Line/>
+                        </Button>
+                        <Button>
+                            <CgSearch/>
+                        </Button>
+                    </Leftbar>
+                
+                    {/*
+                    <SearchbarWrapper>
+                        <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
+                        <SearchButton>
+                            <IoIosSearch/>
+                        </SearchButton>
+                    </SearchbarWrapper>
+                    <FilterButton>
+                        Filter
+                    </FilterButton>
+                    */}
+                </Container>
+                <Filter 
+                    setFilterOpen = {() => this.setState({filterOpen: false})}
+                    open = {filterOpen} 
+                />
+            </>
         )
     }
     
@@ -78,7 +94,7 @@ const Container = styled.div`
     background-color: white;
     padding: 0rem 2.5rem;
     border-radius: 0.4rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     margin-bottom: 4rem;
     width: 100%;
     display: flex;
@@ -150,7 +166,7 @@ const Button = styled.div`
     justify-content: center;
     font-size: 2.1rem;
     border-radius: 0.7rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     cursor: pointer;
     border: 1px solid #DFDFDF;
     &:last-of-type {
@@ -176,7 +192,7 @@ const SearchbarWrapper = styled.div`
     background-color: #F3F4F7;
     padding-left: 1.5rem;
     &:hover {
-        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+        box-shadow: ${LIGHT_SHADOW_1};
     }
     width: 60%;
     max-width: 70rem;
@@ -194,7 +210,7 @@ const SearchButton = styled.div`
     background-color: #f7f9fb;
     font-size: 1.7rem;
     margin-left: auto;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
 `
 
 const Searchbar = styled.input`

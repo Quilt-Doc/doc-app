@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
 //components
 import FeedLog from './FeedLog';
@@ -85,7 +86,7 @@ const FeedContainer = styled.div`
     overflow-y: scroll;
     height: 37vh;
     background-color: white;
-    padding: 2rem;
-    border-radius: 0.7rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    padding: 2rem 3rem;
+    border-radius: 0.3rem;
+    box-shadow: ${LIGHT_SHADOW_1};
 `

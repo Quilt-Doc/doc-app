@@ -3,6 +3,7 @@ import React from 'react';
 //styles 
 import styled from "styled-components"
 import chroma from 'chroma-js';
+import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
 //components
 import DirectoryItem from './DirectoryItem';
@@ -360,7 +361,7 @@ const Button = styled.div`
 const Content = styled.div`
     width: 100%;
    /* max-width: 110rem;*/
-    max-width: 135rem;
+    max-width: 170rem;
     min-width: 80rem;
     display: flex;
 `
@@ -369,7 +370,7 @@ const LeftBlock = styled.div`
     width: 35rem;
     background-color: white;
     margin-right: 5rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     border-radius: 0.5rem;
     padding: 2rem;
     height: 47rem;
@@ -413,7 +414,7 @@ const DirectoryContainer = styled.div`
     display: flex;
     flex-direction: column;
     background-color: white;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     /*
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
@@ -423,7 +424,7 @@ const DirectoryContainer = styled.div`
     border-radius: 0.5rem;
     padding-bottom: 0.1rem;
     align-self: stretch;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;*/
+    /*box-shadow: ${LIGHT_SHADOW_1};*/
     border-bottom: 1px solid #E0E4E7;
 `
 
