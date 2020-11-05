@@ -141,7 +141,7 @@ getRepositoryFileSafe = async (req, res) => {
     var treeResponse;
     try {
         // /repos/{owner}/{repo}/git/trees/{tree_sha}
-        treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${treeSha}`);
+        treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${treeSha}?recursive=true`);
     }
     catch (err) {
         await logger.error({source: 'backend-api',

@@ -14,12 +14,6 @@ const {
 
 const renderStatsCard = require("./cards/stats-card");
 
-const CONSTANTS = {
-    THIRTY_MINUTES: 1800,
-    TWO_HOURS: 7200,
-    FOUR_HOURS: 14400,
-    ONE_DAY: 86400,
-};
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
@@ -113,14 +107,30 @@ getBadge = async (req, res) => {
         rank: { level: "C", score: 0 },
     };
 
+    await logger.info({source: "backend-api",
+                        message: `Creating Badge - workspaceId, repositoryId, stats: ${workspaceId}, ${repositoryId}, ${JSON.stringify(stats)}`,
+                        function: "getBadge"});
+
+
+    const CONSTANTS = {
+        TWO_MINUTES: 120,
+        THIRTY_MINUTES: 1800,
+        TWO_HOURS: 7200,
+        FOUR_HOURS: 14400,
+        ONE_DAY: 86400,
+    };
 
     try {
 
-        const cacheSeconds = clampValue(
-            parseInt(CONSTANTS.TWO_HOURS, 10),
-            CONSTANTS.TWO_HOURS,
-            CONSTANTS.ONE_DAY,
-        );
+        const cacheSeconds = CONSTANTS.TWO_MINUTES;
+
+        // HelmetJS Caching Headers
+        /*
+        Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate
+        Pragma: no-cache
+        Expires: 0
+        Surrogate-Control: no-store
+        */
 
         res.setHeader("Cache-Control", `public, max-age=${cacheSeconds}`);
 
