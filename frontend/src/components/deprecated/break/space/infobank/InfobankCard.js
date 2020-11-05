@@ -8,6 +8,7 @@ import {FaConfluence} from 'react-icons/fa';
 import {FaTrello, FaJira} from 'react-icons/fa';
 import {SiAsana, SiNotion} from 'react-icons/si';
 import {IoIosSearch} from 'react-icons/io'
+import { CgSearch } from 'react-icons/cg';
 import {RiFilter2Line} from 'react-icons/ri';
 import {AiOutlineClockCircle} from 'react-icons/ai';
 

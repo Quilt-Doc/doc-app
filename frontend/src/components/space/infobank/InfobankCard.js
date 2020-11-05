@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { LIGHT_SHADOW_1 } from '../../../styles/shadows';
 
 import chroma from 'chroma-js';
 
@@ -53,18 +54,11 @@ class InfobankCard extends React.Component {
                             />
                         </Status>
                         <ImageContainer2>
+                            
                             <ImageContainer src = {result.image}>
 
-                                {/*result.image ? 
-                                    <StyledImg src = {result.image} />
-                                    :   <StyledIcon>
-                                            <RiFileList2Fill style = {{
-                                                color: '#2684FF',
-                                            }}/>
-                                        </StyledIcon>
-                                    */  
-                                }
-                            </ImageContainer> 
+                             
+                            </ImageContainer>
                         </ImageContainer2>
                         <Bottom>
                             <Title>
@@ -84,6 +78,16 @@ class InfobankCard extends React.Component {
     }
 }
 
+
+   /*result.image ? 
+                                    <StyledImg src = {result.image} />
+                                    :   <StyledIcon>
+                                            <RiFileList2Fill style = {{
+                                                color: '#2684FF',
+                                            }}/>
+                                        </StyledIcon>
+                                    */  
+                                
 /*
 <Detail>
                             <CreationDate>
@@ -121,21 +125,30 @@ const Bottom = styled.div`
 `
 
 const ImageContainer2 = styled.div`
-    height: 23rem;
     overflow-y: hidden;
+    position: relative;
+    padding-bottom: 70%;
+    width: 100%;
 `
 
 const ImageContainer = styled.img`
-    width: 24rem;
     object-fit: cover;
+    position: absolute;
+    top: 0; 
+    left: 0;
+    object-position: center top;
+    width: 100%; 
+    height: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    /*
     overflow-y: hidden;
+    */
     /*
     display: flex;
     justify-content: center;
     */
-    margin-left: 1rem;
-    margin-right: 1rem; 
-    margin-top: 0rem;
+    
 `
 
 const StyledImg = styled.img`
@@ -228,7 +241,7 @@ const Card = styled(Link)`
     position: relative;
     color: #172A4E;
     border-radius: 0.5rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     background-color: white;
     /*padding: 1.5rem 2rem;
     padding-top: 2rem;*/

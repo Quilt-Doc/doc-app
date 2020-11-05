@@ -3,6 +3,7 @@ import React from 'react';
 //styles
 import styled from 'styled-components';
 import chroma from 'chroma-js';
+import { LIGHT_SHADOW_1 } from '../../../../../styles/shadows';
 
 //components
 import { IoMdCheckmarkCircle, IoMdCheckmarkCircleOutline, IoMdCloseCircle, IoMdCloseCircleOutline } from 'react-icons/io';
@@ -86,7 +87,7 @@ const Check = styled.div`
     }
     cursor: pointer;
     transition: background-color 0.1s ease-in;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
 `
 
 const CheckContent = styled.div`
