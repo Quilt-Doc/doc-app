@@ -8,7 +8,7 @@ import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
 //icons
 import { AiOutlineClockCircle, AiOutlineExclamation } from 'react-icons/ai';
-import { RiCloseFill, RiFileList2Fill } from 'react-icons/ri'
+import { RiCloseFill, RiFileList2Fill, RiFileList2Line, RiFileTextLine } from 'react-icons/ri'
 import { FiClock, FiGitCommit } from 'react-icons/fi';
 
 // Card representing document that is broken
@@ -19,42 +19,19 @@ class BreakageCard extends Component {
     renderStatus(){
         let { status, breakCommit } = this.props.doc;
         return status === "invalid" ?
-        (<Status color = {chroma("#ff4757")}>
-          
-            <Commit>
-                <FiGitCommit
-                    style = {{
-                        fontSize: "1.2rem",
-                        marginRight: "0.3rem",
-                        marginTop: "0.1rem"
-                    }}
-                />
+        ( <CommitSha color = {"#ca3e8c"} >
                 {breakCommit.slice(0, 7)}
-            </Commit>
-        </Status>) :
-        (<Status color = {"#6762df"}>
-            <AiOutlineExclamation
-                style = 
-                {{
-                    fontSize: "1.5rem"
-                }}
-            />
-            <Commit>
-                    <FiGitCommit
-                        style = {{
-                            fontSize: "1.2rem",
-                            marginRight: "0.3rem",
-                            marginTop: "0.1rem"
-                        }}
-                    />
-                    {breakCommit.slice(0, 7)}
-            </Commit>
-        </Status>)
+            </CommitSha>
+        ) :
+        ( <CommitSha color = {"#6762df"}>
+            {breakCommit.slice(0, 7)}
+            </CommitSha>
+        )
     }
 
     getDateItem = () => {
         const { created } = this.props.doc;
-        let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         let item =  new Date(created)
         let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
         return dateString
@@ -78,24 +55,14 @@ class BreakageCard extends Component {
                 <Detail>
                     <Title>
                         <StyledIcon>
-                            <RiFileList2Fill style = {{
-                                            color: chroma('#ff4757').alpha(0.9),
-                            }}/>
+                            <RiFileTextLine/>
                         </StyledIcon>
-                        {title}
+                        <TitleText>{title}</TitleText>
                     </Title>
                     {this.renderStatus()}
-                    <Bottom>
-                        <Creator color = {this.selectColor(color)} > 
-                            {author.firstName.charAt(0)}
-                        </Creator>
-                        <CreationDate> 
-                            <FiClock style = {{marginRight: "0.5rem"}}/>
-                            {this.getDateItem(breakDate)}
-                        </CreationDate>
-                      
-                    </Bottom>
-                   
+                    <CreationDate>
+                        {this.getDateItem(breakDate)}
+                    </CreationDate>
                 </Detail>
                 
                 {/*
@@ -134,8 +101,7 @@ class BreakageCard extends Component {
 export default BreakageCard;
 
 const Detail = styled.div`
-    width: 17rem;
-    margin-left: auto;
+    margin-left: 2rem;
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
@@ -145,8 +111,8 @@ const StyledIcon = styled.div`
     justify-content: center;
     align-items: center;
     display:flex;
-    font-size: 2.2rem;
-    margin-right: 0.8rem;
+    font-size: 1.65rem; 
+    margin-right: 0.7rem;
 `
 
 const ImageContainer = styled.div`
@@ -154,7 +120,8 @@ const ImageContainer = styled.div`
     width: 12rem;
     overflow-y: hidden;
     border-radius: 0.5rem;
-    box-shadow: ${LIGHT_SHADOW_1};
+    border: 1px solid #df8bb9;
+
     padding-top: 1rem;
     background-color: white;
 `
@@ -172,15 +139,13 @@ const StyledImage = styled.img`
     margin-top: 0rem;
 `
 
+
 const CreationDate = styled.div`
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    font-weight:400;
-    border-radius: 0.3rem;
-    color: #172A4e;
-    margin-left: auto;
-    margin-top: auto;
-    padding: 0.2rem;
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin-top: 1.2rem;
 `
 
 const Commit = styled.div`
@@ -211,6 +176,16 @@ const Title = styled.div`
     font-weight: 500;
     font-size: 1.3rem;
     align-items: center;
+`
+
+const TitleText = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 500;
+    width: 12rem;
+    font-size: 1.3rem;
 `
 
 const Name = styled.div`
@@ -267,8 +242,8 @@ const Card = styled.div`
     width: 100%;
     /*margin-bottom: 1.5rem;*/
     display: flex;
-    padding: 1rem 1rem;
     /*border: 1px solid #E0E4E7;*/
+    margin-bottom: 2rem;
 `
 
 const IconBorder = styled.div`
@@ -279,4 +254,18 @@ const IconBorder = styled.div`
     justify-content: center;
     align-items: center;
     margin-right: 0.7rem;
+`
+
+
+const CommitSha = styled.div`
+    display: inline-flex;
+    align-items: center;
+    font-size: 1.3rem;
+    background-color: ${props => chroma(props.color).alpha(0.1)};
+    border: 1px solid ${props => props.color};
+    padding: 0.2rem 1.2rem; 
+    border-radius: 0.4rem;
+    font-weight: 500;
+    width: 8rem;
+    margin-top: 1.2rem;
 `

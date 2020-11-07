@@ -371,7 +371,7 @@ const LeftBlock = styled.div`
     background-color: white;
     margin-right: 5rem;
     box-shadow: ${LIGHT_SHADOW_1};
-    border-radius: 0.5rem;
+    border-radius: 0.3rem;
     padding: 2rem;
     height: 47rem;
 `
@@ -421,7 +421,7 @@ const DirectoryContainer = styled.div`
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     min-height: 5rem;
     /*border: 1px solid #DFDFDF;*/
-    border-radius: 0.5rem;
+    border-radius: 0.3rem;
     padding-bottom: 0.1rem;
     align-self: stretch;
     /*box-shadow: ${LIGHT_SHADOW_1};*/
@@ -438,8 +438,8 @@ const ListToolBar = styled.div`
     background-color: ${chroma('#6762df').alpha(0.1)};
     
     border: 1px solid ${chroma('#6762df').alpha(0.3)};
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
+    border-top-left-radius: 0.3rem;
+    border-top-right-radius: 0.3rem;
 `
 
 const Statistics = styled.div`

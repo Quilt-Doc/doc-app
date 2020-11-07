@@ -6,17 +6,30 @@ import chroma from 'chroma-js';
 import { LIGHT_SHADOW_1 } from '../../../../../styles/shadows';
 
 //components
-import { IoMdCheckmarkCircle, IoMdCheckmarkCircleOutline, IoMdCloseCircle, IoMdCloseCircleOutline } from 'react-icons/io';
+import { IoIosCheckmarkCircleOutline, IoMdCheckmarkCircle, IoMdCheckmarkCircleOutline, IoMdCloseCircle, IoMdCloseCircleOutline } from 'react-icons/io';
 import { AiOutlineClockCircle, AiOutlineCloseCircle } from 'react-icons/ai';
 import { FiGitCommit } from 'react-icons/fi';
-
+import { GiCheckboxTree } from 'react-icons/gi';
+import { GrTree } from 'react-icons/gr';
+import { CgListTree } from 'react-icons/cg';
+import { BsCardChecklist } from 'react-icons/bs';
 
 const CheckCard = ({check, setCheck, active, pusher, color}) => {
     const {sha, brokenDocuments, brokenSnippets, commitMessage, created} = check;
     let selectedColor = selectColor(color);
     return (
         <Check active = {active}  onClick = {() => setCheck()}>
-           
+            <Type>
+                <BsCardChecklist/>
+            </Type>
+            <Title>
+                {commitMessage}
+            </Title>
+            <Stat>
+                <IoIosCheckmarkCircleOutline/>
+            </Stat>
+
+            {/*
             <CheckContent active = {active}>
                 <AboveDetail>
                     <Commit>
@@ -46,6 +59,7 @@ const CheckCard = ({check, setCheck, active, pusher, color}) => {
                     </Bottom>
                 </Detail>
             </CheckContent>
+            */}
         </Check>
     )   
 }
@@ -75,19 +89,47 @@ export default CheckCard;
 
 const Check = styled.div`
 
-    height: 11rem;
+    height: 4.5rem;
     width: 100%;
-    border-radius: 0.5rem;
-    background-color: ${props => props.active ? chroma("#6762df").alpha(0.1) : 'white'};
-    border: 1px solid ${props => props.active ? chroma("#6762df").alpha(0.4) : 'transparent'};
+    /*border-radius: 0.5rem;*/
+    background-color: ${props => props.active ? chroma("#6762df").alpha(0.05) : 'white'};
+    border-bottom: 1px solid ${props => props.active ? chroma("#6762df").alpha(0.05) : '#e8ecee'};*/
     margin-bottom: 1.5rem;
     display: flex;
     &:hover {
-        background-color: ${chroma("#6762df").alpha(0.1)};
+        background-color:  ${props => props.active ? chroma("#6762df").alpha(0.1) : "#f7f9fb"};
+    }
+    &:last-of-type {
+        border: none;
     }
     cursor: pointer;
-    transition: background-color 0.1s ease-in;
-    box-shadow: ${LIGHT_SHADOW_1};
+    transition: background-color 0.05s ease-in;
+    /*box-shadow: ${LIGHT_SHADOW_1};*/
+    
+    align-items: center;
+`
+
+const Type = styled.div`
+    width: 5rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #172A4e;
+    opacity: 0.8;
+`
+
+const Stat = styled.div`
+    height: 4rem;
+    width: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #172A4e;
+    opacity: 0.5;
+    margin-left: auto;
 `
 
 const CheckContent = styled.div`
@@ -111,7 +153,7 @@ const Title = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    width: 20rem;
+    width: 10rem;
 `
 
 const AboveDetail = styled.div`
