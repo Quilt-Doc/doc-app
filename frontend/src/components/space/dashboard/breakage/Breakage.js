@@ -2,6 +2,8 @@ import React, {Component} from 'react';
 
 //styles
 import styled from 'styled-components';
+import chroma from 'chroma-js';
+
 import { APP_LIGHT_PRIMARY_COLOR } from '../../../../styles/colors';
 import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
@@ -82,13 +84,10 @@ const mapStateToProps = (state, ownProps) => {
 export default withRouter(connect(mapStateToProps, {retrieveBrokenDocuments})(Breakage));
 
 const SubContainer = styled.div`
-    border-radius: 0.6rem;
+    border-radius: 0.3rem;
     width: 100%;
-    background-color: #f7f9fb;
-    border: 1px solid #E0E4E7;
-    height: calc(85vh - 37vh - 7rem);
+    height: calc(85.7vh - 37vh - 5.5rem); 
     overflow-y: scroll;
-    padding: 0.5rem;
 `
 
 const Message = styled.div`
@@ -125,11 +124,11 @@ const ListView = styled.div`
 
 const BreakageContainer = styled.div`
     width: 100%;
-    height: calc(85vh - 37vh - 3rem);
+    height: calc(85.72vh - 37vh - 3rem);
     display: flex;
     flex-direction: column;
-    margin-top: 3rem;
-    background-color: white;
+    margin-top: 2.5rem;
+    background-color:white;
     padding: 2rem 3rem;
     border-radius: 0.3rem;
     box-shadow: ${LIGHT_SHADOW_1};

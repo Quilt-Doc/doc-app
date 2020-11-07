@@ -306,6 +306,7 @@ const ContentContainer = styled.div`
     position: absolute;
     right: 0rem;
     top: 0rem;
+    z-index: 5;
 `
 
 const Buttons = styled.div`
@@ -366,7 +367,7 @@ const FilterHeader = styled.div`
     padding: 0rem 3rem;
     display: flex;
     align-items: center;
-    background-color: #f3f4f7;
+    border-bottom: 1px solid #e8ecee;
 `
 
 const AllFilters = styled.div`

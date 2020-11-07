@@ -51,7 +51,7 @@ class FeedLog extends Component {
 
     getDateItem = () => {
         const { date } = this.props.feed;
-        let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         let item =  new Date(date)
         let dateString = `${months[item.getMonth()]} ${item.getDate()}, ${item.getFullYear()}`;
         return dateString
@@ -68,9 +68,6 @@ class FeedLog extends Component {
                             {this.renderText()}
                         </Content>
                         <CreationDate>
-                            <AiOutlineClockCircle
-                                style = {{marginRight: "0.5rem"}}
-                            />
                             {this.getDateItem()}
                         </CreationDate>
                     </Detail>
@@ -90,10 +87,27 @@ class FeedLog extends Component {
 export default FeedLog;
 
 
+const Creator = styled.div`
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+    max-height: 2.5rem;
+    max-width: 2.5rem;
+    background-color: ${props => chroma(props.color).alpha(1)};
+    color: white; /*${props => props.color};*/
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+    border-radius: 0.4rem;
+    font-weight: 400;
+    margin-left: 0.9rem;
+`
+
+
 const Divider = styled.div`
     height: 100%;
-    width: 0.15rem;
-    background-color: #E0E4E7;
+    width: 0.1rem;
+    background-color: #e8ecee;
 `
 
 const Document = styled.b`
@@ -103,11 +117,11 @@ const Document = styled.b`
 const CreationDate = styled.div`
     display: inline-flex;
     align-items: center;
-    font-weight:500;
+    font-weight:400;
     border-radius: 0.3rem;
-    opacity: 0.7;
-    font-size: 1.1rem;
-    margin-top: 0.7rem;
+    opacity: 0.8;
+    font-size: 1.15rem;
+    margin-top: 1.2rem;
     padding-bottom: 2.7rem;
 `
 
@@ -128,27 +142,26 @@ const Icon = styled.div`
 
 const Detail = styled.div`
     width: 100%;
-    margin-left: 2rem;
+    margin-left: 1.5rem;
 `
 
 const Content = styled.div`
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     line-height:1.6;
-    margin-top: 0.2rem;
 `
 
 const IconBorder = styled.div`
-    min-width: 3.3rem;
-    max-width: 3.3rem;
-    min-height: 3.3rem;
-    max-height: 3.3rem;
+    min-width: 2.5rem;
+    max-width: 2.5rem;
+    min-height: 2.5rem;
+    max-height: 2.5rem;
     background-color: ${props => props.red ? chroma('#ff4757').alpha(0.2) : chroma('#19e5be').alpha(0.2)};
     color: ${props => props.red ? "#ff4757" : '#19e5be'};
     align-items: center;
     justify-content: center;
     display: flex;
-    border-radius: 50%;
-    font-size: 1.45rem;
+    border-radius: 0.4rem;
+    font-size: 1.3rem;
 `
 
 const IconContainer = styled.div`

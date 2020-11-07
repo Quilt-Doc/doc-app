@@ -4,7 +4,7 @@ import { LIGHT_SHADOW_1 } from '../../../styles/shadows';
 
 import chroma from 'chroma-js';
 
-import {RiSlackLine, RiCheckFill, RiFileList2Fill} from 'react-icons/ri';
+import {RiSlackLine, RiCheckFill, RiFileList2Fill, RiFileTextFill} from 'react-icons/ri';
 import {FaConfluence} from 'react-icons/fa';
 import {FaTrello, FaJira} from 'react-icons/fa';
 import {SiAsana, SiNotion} from 'react-icons/si';
@@ -54,16 +54,18 @@ class InfobankCard extends React.Component {
                             />
                         </Status>
                         <ImageContainer2>
-                            
-                            <ImageContainer src = {result.image}>
-
-                             
-                            </ImageContainer>
+                            {result.image ? <ImageContainer src = {result.image}/>
+                                : <Placeholder>
+                                    <RiFileTextFill style = {{
+                                                    color: '#2684FF',
+                                                    marginTop: "1.3rem"
+                                    }}/>
+                                </Placeholder>}
                         </ImageContainer2>
                         <Bottom>
                             <Title>
                                 <StyledIcon>
-                                    <RiFileList2Fill style = {{
+                                    <RiFileTextFill style = {{
                                                     color: '#2684FF',
                                     }}/>
                                 </StyledIcon>
@@ -129,6 +131,19 @@ const ImageContainer2 = styled.div`
     position: relative;
     padding-bottom: 70%;
     width: 100%;
+`
+
+const Placeholder = styled.div`
+    position: absolute;
+    top: 0; 
+    left: 0;      
+    width: 100%; 
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;   
+    font-size: 7rem;           
+
 `
 
 const ImageContainer = styled.img`
