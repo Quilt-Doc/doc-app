@@ -26,6 +26,7 @@ import MarkupMenu from '../menus/MarkupMenu';
 import MarkupMenu2 from '../menus/MarkupMenu2';
 import HoveringToolbar from '../toolbars/HoveringToolbar';
 import SnippetMenuWrapper from '../menus/snippet_menu/SnippetMenuWrapper';
+import PullRequestRecs from './PullRequestRecs';
 import { CSSTransition } from 'react-transition-group';
 
 //reducer
@@ -115,6 +116,7 @@ const TextEditor = (props) => {
 					toggleOptions = {() => {toggleOptions(!setOptions)}}
 					documentModal = {props.documentModal}
 				/>
+				<PullRequestRecs/>
 				<Container id = {"fullEditorContainer"}>
 					<EditorContainer 
 						documentModal = {props.documentModal}
@@ -142,6 +144,7 @@ const TextEditor = (props) => {
 											dispatch={dispatch} 
 										/>
 									}
+									
 									<DocumentInfo write  = {write} />
 									{ write ? 
 										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={title} />

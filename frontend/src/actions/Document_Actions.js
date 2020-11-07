@@ -25,7 +25,7 @@ export const getDocumentImage = (formValues) => async () => {
     const response = await api.post(`/documents/${workspaceId}/get_image/${documentId}`);
 
     const { error, success, result} = response.data;
-    console.log("RESPONSE", response);
+
     if (!success) {
         throw new Error(error);
     } else {

@@ -16,13 +16,15 @@ import { connect } from 'react-redux';
 
 //icons
 import {RiGitRepositoryLine, RiFileFill, RiAddLine} from 'react-icons/ri'
-import {AiFillFolder} from 'react-icons/ai';
+import {AiFillFolder, AiOutlinePullRequest} from 'react-icons/ai';
 import {VscRepo} from 'react-icons/vsc';
 
 //router
 import { withRouter } from 'react-router-dom';
 import history from '../../../../../history';
 import { IoIosHammer } from 'react-icons/io';
+import { LIGHT_SHADOW_1 } from '../../../../../styles/shadows';
+import { APP_LIGHT_PRIMARY_COLOR } from '../../../../../styles/colors';
 
 class DocumentInfo extends React.Component {
     constructor(props){
@@ -215,6 +217,45 @@ export default withRouter(connect(mapStateToProps, {
     getDocument, editDocument })(DocumentInfo));
 
 
+const PullRequestIcon = styled.div`
+    display: flex;
+    align-items: center;
+    margin-right: 0.35rem;
+    font-size: 1.8rem;
+    margin-top: -0.1rem;
+`
+
+const PullRequest = styled.div`
+    display: inline-flex;
+    align-items: center;
+    background-color: ${APP_LIGHT_PRIMARY_COLOR};
+    font-weight: 500;
+    font-size: 1.4rem;
+    padding: 0.7rem 1rem;
+    border-radius: 0.3rem;
+    margin-bottom: 1rem;
+`
+
+const Recommendation = styled.div`
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+`
+
+const RecDetail = styled.div`
+    font-weight: 500;
+    font-size: 1.3rem;
+    width: 10rem;
+`
+
+const PullRequestRecs = styled.div`
+    margin-bottom: 2rem;
+    width: 100%;
+    box-shadow: ${LIGHT_SHADOW_1};
+    border-radius: 0.6rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+`
 
 const FixButton = styled.div`
     height: 3rem;
