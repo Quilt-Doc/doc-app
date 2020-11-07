@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 //styles
 import styled from "styled-components";
 import chroma from 'chroma-js';
+import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
 //components
 import Annotation from './Annotation';
@@ -39,7 +40,7 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import _ from 'lodash';
 
 //icons
-import { RiCheckFill, RiCloseFill, RiEdit2Line, RiScissorsLine } from 'react-icons/ri';
+import { RiCheckFill, RiCloseFill, RiEdit2Line, RiScissorsLine, RiToolsLine } from 'react-icons/ri';
 
 //prism
 import Prism from 'prismjs';
@@ -799,6 +800,9 @@ class ReferenceEditor extends Component {
                             >
                                 <RiScissorsLine/>
                             </Button>
+                            <Button>
+                                <RiToolsLine/>
+                            </Button>
                         </Toolbar>
                     </Top>
                     <Container>
@@ -812,13 +816,6 @@ class ReferenceEditor extends Component {
                             <EditorContainer>
                                 <ListToolbar> 
                                     {this.renderRefName()}
-                                    <Button 
-                                        style = {{marginLeft: "auto"}}
-                                        active = {canSelect}
-                                        onClick = {() => {this.toggleSelection()}}
-                                    >
-                                        <RiScissorsLine/>
-                                    </Button>
                                 </ListToolbar>
                                 <CodeContainer>
                                     {this.renderContent()}
@@ -954,7 +951,7 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-top: 2rem;
+    margin-top: 3rem;
     align-items: center;
 `
 
@@ -962,9 +959,9 @@ const EditorContainer = styled.div`
     display: flex;
     flex-direction: column;
     /*border: 1px solid #DFDFDF;*/
-    border-radius:0.4rem;
+    border-radius:0.3rem;
     min-width: 80rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: ${LIGHT_SHADOW_1};
 `
 
 const CodeContainer = styled.div`
@@ -974,6 +971,7 @@ const CodeContainer = styled.div`
 `
 
 const ListToolbar = styled.div`
+    /*
     align-items: center;
     background-color: white;
     border-radius: 0.4rem 0.4rem 0rem 0rem !important;
@@ -984,6 +982,19 @@ const ListToolbar = styled.div`
     align-items: center;
     border-bottom: 1px solid #EDEFF1;
     padding: 0rem 2rem;
+    */
+
+    font-size: 1.6rem;
+    height: 5rem;
+    display: flex;
+    font-weight: 500;
+    align-items: center;
+    padding: 0rem 2rem;
+    background-color: ${chroma('#6762df').alpha(0.06)};
+    
+    border: 1px solid ${chroma('#6762df').alpha(0.3)};
+    border-top-left-radius: 0.3rem;
+    border-top-right-radius: 0.3rem;
 `
 
 const Toolbar = styled.div`
@@ -997,6 +1008,7 @@ const Overflow_Wrapper = styled.div`
     padding-bottom: 10rem;
     flex: 0 0 33rem;
     background-color: #F7F9FB;
+    border-bottom-right-radius: 0.3rem;
 `
 
 const CodeText = styled.div`

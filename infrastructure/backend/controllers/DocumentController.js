@@ -1177,13 +1177,31 @@ searchDocuments = async (req, res) => {
     return res.json({success: true, result: documents});
 }
 
+getDocumentImage = async (req, res) => {
+    const documentId = req.documentObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+
+    let returnDocument;
+
+    try {
+        returnDocument =  await Document.findOne({_id: documentId, workspace: workspaceId}).select('image')
+        .lean().exec();
+    } catch (err) {
+        return res.json({ success: false, error: "getDocumentImage Error: unable to get document", trace: err });
+    }
+
+    const { image } = returnDocument;
+
+    return res.json({ success: true, result: image });
+}
+
 
 testRoute = async (req, res) => {
     console.log('TEST ROUTE');
     console.log(req.body);
 }
 
-module.exports = { testRoute, searchDocuments,
+module.exports = { getDocumentImage, testRoute, searchDocuments,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }

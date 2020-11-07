@@ -11,6 +11,28 @@ import {
 
 import { api } from '../apis/api';
 
+export const getDocumentImage = (formValues) => async () => {
+    const { workspaceId, documentId } = formValues;
+
+    if (!workspaceId) {
+        throw new Error("getDocumentImage: workspaceId not provided");
+    }
+
+    if (!documentId) {
+        throw new Error("getDocumentImage: documentId not provided");
+    }
+
+    const response = await api.post(`/documents/${workspaceId}/get_image/${documentId}`);
+
+    const { error, success, result} = response.data;
+    console.log("RESPONSE", response);
+    if (!success) {
+        throw new Error(error);
+    } else {
+        return result;
+    }
+}
+
 export const getUpload = (formValues) => async () => {
     const { fileName } = formValues;
 

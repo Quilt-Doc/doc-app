@@ -46,9 +46,9 @@ const NavbarIcon = styled.div`
     margin-left: 2rem;
     margin-bottom: 3rem;
     &:hover {
-        background-color:#293142;
+        background-color:#2b3345;
     }
-    transition: background-color 0.1s ease-in;
+    transition: background-color 0.05s ease-in;
 `
 
 /*

@@ -5,6 +5,7 @@ import { LIGHT_SHADOW_1 } from '../../../styles/shadows';
 import chroma from 'chroma-js';
 
 import {RiSlackLine, RiCheckFill, RiFileList2Fill, RiFileTextFill} from 'react-icons/ri';
+
 import {FaConfluence} from 'react-icons/fa';
 import {FaTrello, FaJira} from 'react-icons/fa';
 import {SiAsana, SiNotion} from 'react-icons/si';
@@ -29,7 +30,6 @@ class InfobankCard extends React.Component {
     }
 
     renderLink = (doc) => {
-        let rat = "john";
         let { workspaceId } = this.props.match.params;
         return `/workspaces/${workspaceId}/document/${doc._id}`;
     }
@@ -143,7 +143,6 @@ const Placeholder = styled.div`
     align-items: center;
     justify-content: center;   
     font-size: 7rem;           
-
 `
 
 const ImageContainer = styled.img`

@@ -82,6 +82,7 @@ router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware
 router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.documentMiddleware, documentController.moveDocument);
 router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
 router.post('/documents/:workspaceId/search', authorizationMiddleware.documentMiddleware, documentController.searchDocuments);
+router.post('/documents/:workspaceId/get_image/:documentId',  authorizationMiddleware.documentMiddleware, documentController.getDocumentImage);
 router.get('/testRoute', documentController.testRoute);
 
 

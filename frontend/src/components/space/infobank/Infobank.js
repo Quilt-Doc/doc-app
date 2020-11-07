@@ -7,6 +7,9 @@ import InfobankToolbar from './InfobankToolbar';
 import InfobankCard from './InfobankCard';
 import Filter from './Filter';
 
+//loader
+import { Oval } from 'svg-loaders-react';
+
 import {withRouter, Link} from 'react-router-dom';
 import {connect} from 'react-redux';
 
@@ -77,7 +80,7 @@ class Infobank extends React.Component {
     renderLoader = () => {
         return (
             <LoaderContainer>
-                <MoonLoader size = {30}/>
+                <Oval stroke={"#d9d9e2"}/>
             </LoaderContainer>
         )
     }

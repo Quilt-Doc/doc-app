@@ -343,9 +343,9 @@ const Icon = styled.div`
 
 const SubContainer = styled.div`
     overflow-y: scroll;
-    min-height: 66vh;
-    max-height: 66vh;
-    height: 66vh;
+    min-height: 55vh;
+    max-height: 55vh;
+    height: 55vh;
 `
 
 const Container = styled.div`
