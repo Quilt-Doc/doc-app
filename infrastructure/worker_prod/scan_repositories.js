@@ -30,41 +30,49 @@ const scanRepositories = async () => {
 
     const session = await db.startSession();
 
+    var workspaceId = process.env.workspaceId;
+
     var transactionAborted = false;
     var transactionError = {message: ''};
     try {
         await session.withTransaction(async () => {
 
-            var installationId = process.env.installationId;
-
-            var workspaceId = process.env.workspaceId;
+            // KARAN TODO: Replace this with updated var name
+            var installationIdLookup = JSON.parse(process.env.installationIdLookup);
+            var repositoryInstallationIds = JSON.parse(process.env.repositoryInstallationIds);
 
             var repositoryIdList = JSON.parse(process.env.repositoryIdList);
+
+            // DEPRECATED
+            var installationId = process.env.installationId;
+
             var urlList;
 
 
             var repositoryObjList;
 
             try {
-                repositoryObjList = await Repository.find({_id: {$in: repositoryIdList}, installationId}, null, { session });
+                // KARAN TODO: Remove installationId here or use array
+                repositoryObjList = await Repository.find({_id: { $in: repositoryIdList}, installationId: { $in: repositoryInstallationIds }}, null, { session });
             }
             catch (err) {
+                // KARAN TODO: Remove installationId here or use array
                 await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                            errorDescription: `Error finding repositories, installationId repositoryIdList: ${installationId}, ${JSON.stringify(repositoryIdList)}`,
+                                                            errorDescription: `Error finding repositories - repositoryInstallationIds repositoryIdList: ${JSON.stringify(repositoryInstallationIds)}, ${JSON.stringify(repositoryIdList)}`,
                                                             source: 'worker-instance', function: 'scanRepositories'}});
 
                 transactionAborted = true;
-                transactionError.message = `Error finding repositories, installationId repositoryIdList: ${installationId}, ${JSON.stringify(repositoryIdList)}`;
+                // KARAN TODO: Remove installationId here or use array
+                transactionError.message = `Error finding repositories - repositoryInstallationIds repositoryIdList: ${JSON.stringify(repositoryInstallationIds)}, ${JSON.stringify(repositoryIdList)}`;
 
                 throw err;
             }
 
 
-            // Assumption: Repositories with 'scanned' == false have 'currentlyScanning' set to true
             // Filter out repositories with 'scanned' == true
             var unscannedRepositories = repositoryObjList.filter(repositoryObj => repositoryObj.scanned == false);
             var unscannedRepositoryIdList = unscannedRepositories.map(repositoryObj => repositoryObj._id);
-            
+
             // If all repositories within this workspace have already been scanned, nothing to do
             if (unscannedRepositories.length == 0) {
                 // Set workspace 'setupComplete' to true
@@ -87,39 +95,90 @@ const scanRepositories = async () => {
                 // throw new Error(`No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`);
             }
 
+            // Set unsannedRepositories currentlyScanning = true
+            var workspaceRepositories;
+            try {
+                workspaceRepositories = await Repository.updateMany({_id: { $in: unscannedRepositoryIdList.map(id => ObjectId(id.toString()))}, scanned: false}, {$set: { currentlyScanning: true }}, { session });
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error',
+                                                        source: 'worker-instance',
+                                                        message: serializeError(err),
+                                                        errorDescription: `Error updating unscannedRepositories 'currentlyScanning: true' - unscannedRepositoryIdList: ${JSON.stringify(unscannedRepositoryIdList)}`,
+                                                        function: 'scanRepositories'}});
 
+                transactionAborted = true;
+                transactionError.message = `Error updating unscannedRepositories 'currentlyScanning: true' - unscannedRepositoryIdList: ${JSON.stringify(unscannedRepositoryIdList)}`;
+                
+                throw Error(`Error updating unscannedRepositories 'currentlyScanning: true' - unscannedRepositoryIdList: ${JSON.stringify(unscannedRepositoryIdList)}`);
+            }
+
+
+            // DEPRECATED SECTION START
             var installationClient;
+
             try {
                 installationClient = await apis.requestInstallationClient(installationId);
+
             }
             catch (err) {
                 await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error fetching installationClient installationId: ${installationId}`,
+                                                            errorDescription: `Error fetching installationClient - installationId: ${installationId}`,
                                                             function: 'scanRepositories'}});
 
                 transactionAborted = true;
-                transactionError.message = `Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`;
+                transactionError.message = `Error fetching installationClient - installationId: ${installationId}`;
                 
                 throw new Error(`Error fetching installationClient installationId: ${installationId}`);
             }
+            // DEPRECATED SECTION END
+
+            var installationClientList;
+
+            try {
+                installationClientList = await Promise.all(repositoryInstallationIds.map(async (id) => {
+                    return { [id]: await apis.requestInstallationClient(id)};
+                }));
+
+                installationClientList = Object.assign({}, ...installationClientList);
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                            errorDescription: `Error fetching installationClientList - repositoryInstallationIds: ${JSON.stringify(repositoryInstallationIds)}`,
+                                                            function: 'scanRepositories'}});
+
+                transactionAborted = true;
+                transactionError.message = `Error fetching installationClientList - repositoryInstallationIds: ${JSON.stringify(repositoryInstallationIds)}`;
+
+                throw new Error(`Error fetching installationClientList - repositoryInstallationIds: ${JSON.stringify(repositoryInstallationIds)}`);
+            }
+
+
+
 
             // Get Repository objects from github for all unscanned Repositories
             var repositoryListObjects;
             try {
-                urlList = unscannedRepositories.map(repositoryObj => `/repos/${repositoryObj.fullName}`);
-                var requestPromiseList = urlList.map(url => installationClient.get(url));
+                urlList = unscannedRepositories.map(repositoryObj => {
+                    return {url: `/repos/${repositoryObj.fullName}`, repositoryId: repositoryObj._id.toString()};
+                });
+                // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
+                var requestPromiseList = urlList.map( async (urlObj) => {
+                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
+                    return await installationClientList[currentInstallationId].get(urlObj.url);
+                });
 
                 repositoryListObjects = await Promise.all(requestPromiseList);
             }
             catch (err) {
                 await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error getting repository objects urlList: ${urlList}`,
+                                                            errorDescription: `Error getting repository objects urlList: ${JSON.stringify(urlList)}`,
                                                             function: 'scanRepositories'}});
 
                 transactionAborted = true;
-                transactionError.message = `Error getting repository objects urlList: ${urlList}`;
+                transactionError.message = `Error getting repository objects urlList: ${JSON.stringify(urlList)}`;
 
-                throw new Error(`Error getting repository objects urlList: ${urlList}`);
+                throw new Error(`Error getting repository objects urlList: ${JSON.stringify(urlList)}`);
             }
 
             // Bulk update 'cloneUrl', 'htmlUrl', and 'defaultBranch' fields
@@ -161,11 +220,16 @@ const scanRepositories = async () => {
             // Handle 409 Responses
             var repositoryListCommits;
             try {
-                urlList = unscannedRepositories.map(repositoryObj => `/repos/${repositoryObj.fullName}/commits/${repositoryObj.defaultBranch}`);
-                var requestPromiseList = urlList.map( async (url) => {
+                urlList = unscannedRepositories.map(repositoryObj => {
+                    return { url: `/repos/${repositoryObj.fullName}/commits/${repositoryObj.defaultBranch}`, repositoryId: repositoryObj._id.toString()};
+                });
+
+                var requestPromiseList = urlList.map( async (urlObj) => {
                     var response;
+                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
                     try {
-                        response = await installationClient.get(url);
+                        // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
+                        response = await installationClientList[currentInstallationId].get(urlObj.url);
                     }
                     catch (err) {
                         /*
@@ -303,27 +367,31 @@ const scanRepositories = async () => {
                     if (!repositoryObj.treeSha) {
                         return undefined;
                     }
-                    return `/repos/${repositoryObj.fullName}/git/trees/${repositoryObj.treeSha}?recursive=true`;
+                    return { url: `/repos/${repositoryObj.fullName}/git/trees/${repositoryObj.treeSha}?recursive=true`, repositoryId: repositoryObj._id.toString()};
                 });
 
                 // Set return value to undefined for invalid Repositories
-                var requestPromiseList = urlList.map( async (url) => {
-                    if (!url) {
+                var requestPromiseList = urlList.map( async (urlObj) => {
+                    if (!urlObj) {
                         return undefined;
                     }
-                    return await installationClient.get(url);
+
+                    // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
+
+                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
+                    return await installationClientList[currentInstallationId].get(urlObj.url);
                 });
                 repositoryTreeResponseList = await Promise.all(requestPromiseList);
             }
             catch (err) {
                 await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error getting repository tree urlList: ${urlList}`,
+                                                            errorDescription: `Error getting repository tree urlList: ${JSON.stringify(urlList)}`,
                                                             function: 'scanRepositories'}});
 
                 transactionAborted = true;
-                transactionError.message = `Error getting repository tree urlList: ${urlList}`;                                                                                  
+                transactionError.message = `Error getting repository tree urlList: ${JSON.stringify(urlList)}`;                                                                                  
 
-                throw new Error(`Error getting repository tree urlList: ${urlList}`);
+                throw new Error(`Error getting repository tree urlList: ${JSON.stringify(urlList)}`);
             }
 
             var treeReferences = [];
@@ -471,11 +539,36 @@ const scanRepositories = async () => {
 
             await worker.send({action: 'log', info: {level: 'info', message: `Completed scanning repositories: ${unscannedRepositoryIdList}`,
                                                         source: 'worker-instance', function: 'scanRepositories'}});
+            
+
+            // throw new Error(`FAIL DOG RAT`);
 
         });
     }
     catch (err) {
+        // Try aborting Transaction again, just to be sure, it should have already aborted, but that doesn't seem to happen
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+
+        // End Session to remove locking
         session.endSession();
+
+        // Delete the Workspace to free & reset Repositories
+        var backendClient = apis.requestBackendClient();
+
+        try {
+            await backendClient.delete(`/workspaces/delete/${workspaceId}`);
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                        errorDescription: `Error Deleting Workspace - workspaceId: ${workspaceId}`,
+                                                        source: 'worker-instance', function: 'scanRepositories'}});
+
+            throw new Error(`Error Deleting Workspace - workspaceId: ${workspaceId}`);
+        }
+
+        // Throw Error to parent with relevant message
         if (transactionAborted) {
             throw new Error(transactionError.message);
         }
@@ -486,9 +579,6 @@ const scanRepositories = async () => {
 
     session.endSession();
 
-    if (transactionAborted) {
-        throw new Error(transactionError.message);
-    }
 }
 
 module.exports = {
