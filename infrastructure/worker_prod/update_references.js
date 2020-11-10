@@ -213,9 +213,13 @@ const runUpdateProcedure = async () => {
 
     var worker = require('cluster').worker;
 
-    var brokenDocuments = [];
-    var brokenSnippets = [];
     var addedReferences = [];
+
+    var modifiedDocuments = [];
+    var brokenDocuments = [];
+
+    var brokenSnippets = [];
+
 
     var backendClient = apis.requestBackendClient();
 

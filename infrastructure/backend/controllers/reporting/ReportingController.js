@@ -90,7 +90,7 @@ handleDocumentDelete = async (deletedDocumentInfo, workspaceId, repositoryId, us
     var userUpdateList = [];
 
     Object.keys(userUpdateNums).forEach(key => {
-        userUpdateList.push({ userId: key, updateNum: userUpdateNums[key] });
+        userUpdateList.push({ userId: key, updateNum: -userUpdateNums[key] });
     });
 
     // Update documentsCreatedNum for all User's whose documents have been deleted
