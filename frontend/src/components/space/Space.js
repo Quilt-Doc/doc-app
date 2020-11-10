@@ -122,7 +122,7 @@ class Space extends React.Component {
                     classNames="sidenav"
                 >
                     <div>
-                        <Container createPdf={this.createPdf} onKeyDown={ () => this.createPdf(React.createRef().current) }>
+                        <Container>
                             <SideNavbar setSearch = {this.setSearch}/>                         
                                 <RightView id = {"rightView"} >
                                     <Router history = {history}>
