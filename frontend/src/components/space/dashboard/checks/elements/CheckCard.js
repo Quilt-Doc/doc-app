@@ -6,7 +6,7 @@ import chroma from 'chroma-js';
 import { LIGHT_SHADOW_1 } from '../../../../../styles/shadows';
 
 //components
-import { IoIosCheckmarkCircleOutline, IoMdCheckmarkCircle, IoMdCheckmarkCircleOutline, IoMdCloseCircle, IoMdCloseCircleOutline } from 'react-icons/io';
+import { IoIosCheckmarkCircle, IoIosCheckmarkCircleOutline, IoMdCheckmarkCircle, IoMdCheckmarkCircleOutline, IoMdCloseCircle, IoMdCloseCircleOutline } from 'react-icons/io';
 import { AiOutlineClockCircle, AiOutlineCloseCircle } from 'react-icons/ai';
 import { FiGitCommit } from 'react-icons/fi';
 import { GiCheckboxTree } from 'react-icons/gi';
@@ -17,6 +17,7 @@ import { BsCardChecklist } from 'react-icons/bs';
 const CheckCard = ({check, setCheck, active, pusher, color}) => {
     const {sha, brokenDocuments, brokenSnippets, commitMessage, created} = check;
     let selectedColor = selectColor(color);
+    let finished = brokenDocuments.length === 0 && brokenSnippets.length === 0;
     return (
         <Check active = {active}  onClick = {() => setCheck()}>
             <Type>
@@ -25,8 +26,8 @@ const CheckCard = ({check, setCheck, active, pusher, color}) => {
             <Title>
                 {commitMessage}
             </Title>
-            <Stat>
-                <IoIosCheckmarkCircleOutline/>
+            <Stat active = {finished}>
+                {finished ? <IoIosCheckmarkCircle/> : <IoIosCheckmarkCircleOutline/>}
             </Stat>
 
             {/*
@@ -127,9 +128,11 @@ const Stat = styled.div`
     align-items: center;
     justify-content: center;
     font-size: 2rem;
-    color: #172A4e;
-    opacity: 0.5;
+    color: ${props => props.active ? "#19e5be" : "#172A4e"};
+    opacity: ${props => props.active ? 1 : 0.5 };
     margin-left: auto;
+
+    
 `
 
 const CheckContent = styled.div`

@@ -36,7 +36,7 @@ class DocumentInfo extends React.Component {
         return `${split[1]}`
     }
 
-    renderFolders = (references, invalid) => {
+    renderFolders = (references) => {
         //let {references} = this.props.document
         let directories = references.filter(reference => reference.kind === "dir")
         
@@ -45,6 +45,8 @@ class DocumentInfo extends React.Component {
         }
 
         return directories.map((directory, i) => {
+            const { status } = directory;
+            let invalid = status === "invalid"
             return (    <Reference invalid = {invalid}>
                             <AiFillFolder style = {{marginRight: "0.5rem"}}/>
                             <Title>{directory.name}</Title>
@@ -53,7 +55,7 @@ class DocumentInfo extends React.Component {
         })
     }
 
-    renderFiles = (references, invalid) => {
+    renderFiles = (references) => {
         //let {references} = this.props.document
         let files = references.filter(reference => reference.kind === "file")
 
@@ -62,6 +64,8 @@ class DocumentInfo extends React.Component {
         }
 
         return files.map((file, i) => {
+            const { status } = file;
+            let invalid = status === "invalid"
             return (
                 <Reference invalid = {invalid}>
                     <RiFileFill style = {{width: "1rem", fontSize: "1.1rem" ,marginRight: "0.5rem"}}/>
@@ -151,8 +155,8 @@ class DocumentInfo extends React.Component {
     renderStaticData = () => {
         const { document: {references, repository} } = this.props;
         
-        const validReferences = references.filter(ref => ref.status === 'valid');
-        const invalidReferences = references.filter(ref => ref.status === 'invalid');
+        //const validReferences = references.filter(ref => ref.status === 'valid');
+        //const invalidReferences = references.filter(ref => ref.status === 'invalid');
 
         return (
             <>
@@ -164,19 +168,11 @@ class DocumentInfo extends React.Component {
                     {this.renderFullName()}
                 </RepositoryButton>
             }
-            { (validReferences && validReferences.length > 0) &&
+            { (references && references.length > 0) &&
                 <List>
                     <InfoList>
-                        {this.renderFolders(validReferences, false)}
-                        {this.renderFiles(validReferences, false)}
-                    </InfoList>
-                </List>
-            }
-            { (invalidReferences && invalidReferences.length > 0) &&
-                <List>
-                    <InfoList>
-                        {this.renderFolders(invalidReferences, true)}
-                        {this.renderFiles(invalidReferences, true)}
+                        {this.renderFolders(references)}
+                        {this.renderFiles(references)}
                     </InfoList>
                 </List>
             }
@@ -308,7 +304,7 @@ const AddButton = styled.div`
 `
 
 const Reference = styled.div`
-    background-color: ${props => props.invalid ? chroma("#ff4757").alpha(0.12) : chroma("#6762df").alpha(0.12)};
+    background-color: ${props => props.invalid ? chroma("#ca3e8c").alpha(0.2)  : chroma("#6762df").alpha(0.12)};
     /*color: ${chroma("#6762df").alpha(0.9)};*/
     border-radius: 0.2rem;
     font-size: 1.3rem;

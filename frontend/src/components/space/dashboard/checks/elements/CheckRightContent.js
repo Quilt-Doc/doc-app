@@ -4,12 +4,15 @@ import styled from 'styled-components';
 import chroma from 'chroma-js';
 import { LIGHT_SHADOW_1 } from '../../../../../styles/shadows';
 
-//components
+//icons
 import { AiFillFolder, AiOutlineCloseCircle, AiOutlineCodeSandbox, AiOutlineTool } from 'react-icons/ai';
 import { RiCloseFill, RiEditBoxLine, RiFileEditLine, RiFileFill, RiFileList2Fill, RiFileList2Line, RiFileTextLine, RiPencilLine, RiScissorsLine, RiToolsLine } from 'react-icons/ri';
 import { FiGitCommit, FiPlus } from 'react-icons/fi';
 import { IoMdCheckmarkCircleOutline, IoIosCheckmark, IoIosCalendar } from 'react-icons/io';
 import { BiGitCommit, BiLink } from 'react-icons/bi';
+
+//components
+import CheckDeprecatedDocument from './CheckDeprecatedDocument';
 
 class CheckRightContent extends Component {
 
@@ -18,20 +21,23 @@ class CheckRightContent extends Component {
 
         if (addedReferences && addedReferences.length > 0) {
             return (
-                <InfoList>
-                    {
-                        addedReferences.map((ref) => {
-                            return(
-                                <Reference>
-                                    { ref.kind === "dir" ? <AiFillFolder style = {{marginRight: "0.5rem"}}/> :
-                                        <RiFileFill style = {{width: "1rem", fontSize: "1.1rem" ,marginRight: "0.5rem"}}/>
-                                    }
-                                    <ReferenceTitle>{ref.name}</ReferenceTitle>
-                                </Reference>
-                            )
-                        })
-                    }
-                </InfoList>
+                <IssueContainer>
+                    <Guide2>Undocumented Code</Guide2>
+                    <InfoList>
+                        {
+                            addedReferences.map((ref) => {
+                                return(
+                                    <Reference>
+                                        { ref.kind === "dir" ? <AiFillFolder style = {{marginRight: "0.5rem"}}/> :
+                                            <RiFileFill style = {{width: "1rem", fontSize: "1.1rem" ,marginRight: "0.5rem"}}/>
+                                        }
+                                        <ReferenceTitle>{ref.name}</ReferenceTitle>
+                                    </Reference>
+                                )
+                            })
+                        }
+                    </InfoList>
+                </IssueContainer>
             )
             /*
             return (
@@ -67,6 +73,7 @@ class CheckRightContent extends Component {
         }
     }
 
+    /*
     renderBrokenDocs = () => {
         const { check: { brokenDocuments }} = this.props;
         if (brokenDocuments.length > 0) {
@@ -103,23 +110,16 @@ class CheckRightContent extends Component {
         } else {
             return null
         }
-    }
+    }*/
 
     renderDepSnippets = () => {
         const { check: { brokenSnippets }} = this.props;
-        if (brokenSnippets.length > 0) {
+        
+        if (brokenSnippets && brokenSnippets.length > 0) {
             return (
-                <Block>
-                    <BlockHeader>
-                        <Content>
-                            <BlockTitle>Deprecated Snippets</BlockTitle>
-                            <BlockSubtitle>Reselect or delete invalidated snippets.</BlockSubtitle>
-                        </Content>
-                        <Action color = {"#ff4757"}>
-                            <RiCloseFill/> {brokenSnippets.length}
-                        </Action>
-                    </BlockHeader>
-                    {brokenSnippets.map(snippet => {
+                <IssueContainer>
+                <Guide2>Deprecated Snippets</Guide2>
+                    {/*brokenSnippets.map(snippet => {
                         const {start, code, reference: {name}} = snippet;
                         return(
                             <BrokenSnippet>
@@ -132,8 +132,8 @@ class CheckRightContent extends Component {
                                 <SnippetInfo>{`Lines ${start + 1}-${start + code.length}`}</SnippetInfo>
                             </BrokenSnippet>
                         )
-                    })}
-                </Block>
+                    })*/}
+                </IssueContainer>
             )
         }
     }
@@ -159,24 +159,48 @@ class CheckRightContent extends Component {
         return dateString
     }
 
+    renderBrokenDocs = () => {
+        const { check : {brokenDocuments}} = this.props;
+        if (brokenDocuments && brokenDocuments.length > 0) {
+            return (
+                <IssueContainer>
+                    <Guide2>Deprecated Documents</Guide2>
+                    <BrokenContainer>
+                        {brokenDocuments.map(doc => {
+                            return <CheckDeprecatedDocument doc = {doc}/>
+                        })}
+                    </BrokenContainer>
+                </IssueContainer>
+            )
+        }
+        
+    }
+
+     /*
+    return (
+        <ImageContainer>
+            <StyledImage src = {doc.image}/>
+        </ImageContainer>
+    )*/
+
     render(){
         const { check, user, color } = this.props;
-        const { brokenDocuments, brokenSnippets, sha, checkUrl, commitMessage, created, githubId, pusher } = check;
+        const { addedReferences, brokenDocuments, brokenSnippets, sha, checkUrl, commitMessage, created, githubId, pusher } = check;
 
         let selectedColor = this.selectColor(color);
 
+        let finished = brokenDocuments.length === 0 && brokenSnippets.length === 0;
         return (
             <RightContent>
                 <Container>
                     <Navbar>
-                        <CompleteButton>
+                        <CompleteButton complete = {finished}>
                             <CheckIcon>
                                 <IoIosCheckmark/>
                             </CheckIcon>
-                            Mark Complete
+                            {finished ? "Completed" : "Mark Complete"}
                         </CompleteButton>
                         <LeftPart>
-                            
                             <ActionsContainer>
                                 <ActionIcon fontSize = {"2.2rem"}>
                                     <RiFileEditLine/>
@@ -193,44 +217,52 @@ class CheckRightContent extends Component {
                     <ContentContainer>
                         <Header>{commitMessage}</Header>
                         <StatsContainer>
-                            <Stat color = {"#19e5be"}>
-                                <StatIcon>
-                                    <AiOutlineCodeSandbox/>
-                                </StatIcon>
-                                <Count>
-                                    3
-                                </Count>
-                            </Stat>
-                            <Stat color = {"#ca3e8c"}>
-                                <StatIcon fontSize = {"1.55rem"}> 
-                                    <RiFileTextLine/>
-                                </StatIcon>
-                                <Count>
-                                    2
-                                </Count>
-                            </Stat>
-                            <Stat color = {"#f27448"}>
-                                <StatIcon fontSize = {"1.53rem"}> 
-                                    <RiScissorsLine/>
-                                </StatIcon>
-                                <Count>
-                                    2
-                                </Count>
-                            </Stat>
-                            <Stat color = {"#6762df"}>
-                                <StatIcon fontSize = {"1.55rem"}> 
-                                    <RiFileTextLine/>
-                                </StatIcon>
-                                <Count>
-                                    4
-                                </Count>
-                            </Stat>
+                            {addedReferences.length > 0 &&
+                                 <Stat color = {"#19e5be"}>
+                                    <StatIcon>
+                                        <AiOutlineCodeSandbox/>
+                                    </StatIcon>
+                                    <Count>
+                                        {addedReferences.length}
+                                    </Count>
+                                </Stat>
+                            }
+                            {brokenDocuments.length > 0 && 
+                                <Stat color = {"#ca3e8c"}>
+                                    <StatIcon fontSize = {"1.55rem"}> 
+                                        <RiFileTextLine/>
+                                    </StatIcon>
+                                    <Count>
+                                        {brokenDocuments.length}
+                                    </Count>
+                                </Stat>
+                            }
+                            {brokenSnippets.length > 0 &&
+                                <Stat color = {"#f27448"}>
+                                    <StatIcon fontSize = {"1.53rem"}> 
+                                        <RiScissorsLine/>
+                                    </StatIcon>
+                                    <Count>
+                                        {brokenSnippets.length}
+                                    </Count>
+                                </Stat>
+                            }
+                            {false && 
+                                <Stat color = {"#6762df"}>
+                                    <StatIcon fontSize = {"1.55rem"}> 
+                                        <RiFileTextLine/>
+                                    </StatIcon>
+                                    <Count>
+                                        4
+                                    </Count>
+                                </Stat>
+                            }  
                         </StatsContainer>
                         <InfoContainer>
                             <InfoStat>
                                 <Guide>Developer</Guide>
-                                <Creator color = {'#079992'}>K</Creator>
-                                <Name>Karan Godara</Name>
+                                <Creator color = {selectedColor}>{user.charAt(0)}</Creator>
+                                <Name>{user}</Name>
                             </InfoStat>
                             <InfoStat>
                                 <Guide>Commit Date</Guide>
@@ -247,22 +279,9 @@ class CheckRightContent extends Component {
                             </InfoStat>
                         </InfoContainer>
                         <DataContainer>
-                                <IssueContainer>
-                                    <Guide2>Undocumented Code</Guide2>
-                                    {this.renderNewReferences()}
-                                </IssueContainer>
-                                <IssueContainer>
-                                    <Guide2>Deprecated Documents</Guide2>
-                                    {this.renderNewReferences()}
-                                </IssueContainer>
-                                <IssueContainer>
-                                    <Guide2>Modified Documents</Guide2>
-                                    {this.renderNewReferences()}
-                                </IssueContainer>
-                                <IssueContainer>
-                                    <Guide2>Deprecated Snippets</Guide2>
-                                    {this.renderNewReferences()}
-                                </IssueContainer>
+                                {this.renderNewReferences()}
+                                {this.renderBrokenDocs()}
+                                {this.renderDepSnippets()}
                         </DataContainer>
                     </ContentContainer>
                 </Container>
@@ -339,6 +358,61 @@ class CheckRightContent extends Component {
 </StatsContainer>*/}
 
 export default CheckRightContent;
+
+
+const Title = styled.div`
+    display: flex;
+    font-weight: 500;
+    font-size: 1.3rem;
+    align-items: center;
+`
+
+
+const StyledIcon = styled.div`
+    justify-content: center;
+    align-items: center;
+    display:flex;
+    font-size: 1.65rem; 
+    margin-right: 0.7rem;
+`
+
+const TitleText = styled.div`
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 500;
+    width: 12rem;
+    font-size: 1.3rem;
+`
+
+const ImageContainer = styled.div`
+    height: 14rem;
+    width: 14rem;
+    overflow-y: hidden;
+    border-radius: 0.5rem;
+    padding-top: 1rem;
+    background-color: white;
+    box-shadow:  ${LIGHT_SHADOW_1};
+    margin-right: 2rem;
+    border: 1px solid #df8bb9; 
+`
+
+const StyledImage = styled.img`
+    width: 12rem;
+    object-fit: cover;
+    object-position: center top;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    /*
+    display: flex;
+    justify-content: center;
+    */
+    margin-left: 1rem;
+    margin-right: 1rem; 
+    margin-top: 0rem;
+`
+
 
 const DataContainer = styled.div`
     margin-top: 4.5rem;
@@ -445,7 +519,11 @@ const Stat = styled.div`
     height: 2.5rem;
     padding: 0rem 1rem;
     padding-left: 1rem;
-    background-color: ${props => chroma(props.color).alpha(0.3)};
+    background-color: ${props => 
+        props.color === "#19e5be" ? chroma(props.color).alpha(0.6) :
+        chroma(props.color).alpha(0.4)
+    };
+
     border-radius: 0.5rem;
     color: #172A4e;
     display: flex;
@@ -481,13 +559,15 @@ const LeftPart = styled.div`
 
 const CompleteButton = styled.div`
     border-radius: 0.5rem;
-    height: 3.2rem;
+    height: 2.9rem;
     padding: 0 1rem;
-    border: 1px solid #e0e4e7;
+    border: 1px solid ${props => props.complete ? "#19e5be" : "#e0e4e7"};
+    background-color: ${props => props.complete ? "#19e5be" : "white"};
     display: flex;
     align-items: center;
     font-size: 1.25rem;
     font-weight: 500;
+    color: ${props => props.complete ? "white" : "#172A4e"};
 `
 
 const CheckIcon = styled.div`
@@ -496,7 +576,6 @@ const CheckIcon = styled.div`
     width: 2.5rem;
     display: flex;
     align-items: center;
-    justify-content: center;
 `
 
 const Status = styled.div`
@@ -558,8 +637,8 @@ const Creator = styled.div`
     min-width: 2.5rem;
     max-height: 2.5rem;
     max-width: 2.5rem;
-    background-color: ${props => chroma(props.color).alpha(1)};
-    color: white; /*${props => props.color};*/
+    background-color: ${props => chroma(props.color).alpha(0.15)};
+    color: ${props => props.color};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -617,6 +696,17 @@ const InfoList = styled.div`
     flex-wrap: wrap;
     align-items: center;
     margin-bottom: -1rem;
+`
+
+const BrokenContainer = styled.div`
+    border-radius: 0.5rem;
+    background-color: #f7f9fb;
+    border: 1px solid #E0E4E7;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    overflow-x: scroll;
+    width: calc(0vw + 100%);
 `
 
 const Reference = styled.div`

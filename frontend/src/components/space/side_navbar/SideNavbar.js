@@ -148,7 +148,7 @@ class SideNavbar extends React.Component {
                 */}
                 
                 <IconsContainer>
-                    <LogoContainer onClick = {() => history.push('/workspaces')}>
+                    <LogoContainer to = {"/workspaces"}>
                         <LogoIcon src = {final_logo}/>
                     </LogoContainer>
                     
@@ -190,7 +190,7 @@ const Divider2 = styled.div`
     margin-bottom: 2rem;
 `
 
-const LogoContainer = styled.div`
+const LogoContainer = styled(Link)`
     width: 6rem;
     margin-left: 1rem;
     border-radius: 50%;
@@ -202,7 +202,8 @@ const LogoContainer = styled.div`
     margin-top: 0.8rem;
     margin-bottom: 1.8rem;
     cursor: pointer;
-
+    text-decoration: none;
+    
     &:hover {
         background-color: #2b3345;
     }

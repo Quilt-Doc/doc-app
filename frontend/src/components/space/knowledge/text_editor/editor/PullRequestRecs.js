@@ -14,7 +14,7 @@ class PullRequestRecs extends React.Component {
         let directories = ['back-server', 'space'];
 
         if (dep) {
-            directories = ['reducers', 'selectors'];
+            directories = [];
         }
 
         if (directories.length > 0) {
@@ -37,7 +37,7 @@ class PullRequestRecs extends React.Component {
         let files = ['routes.js'];
 
         if (dep) {
-            files = ['main.js', 'root.js'];
+            files = ['QuickAccess.js', 'TagWrapper.js'];
         }
 
         if (files) {
@@ -64,7 +64,7 @@ class PullRequestRecs extends React.Component {
                         <PullRequestIcon>
                             <AiOutlinePullRequest/>
                         </PullRequestIcon>
-                        Advanced Search Support
+                        Advanced Label Support
                     </PullRequest>
                     <CloseButton>
                         <FiChevronsRight/>
@@ -119,7 +119,7 @@ const PullRequest = styled.div`
     font-weight: 500;
     font-size: 1.4rem;
     padding: 0.7rem 1rem;
-    border-radius: 0.3rem;
+    border-radius: 0.4rem;
     margin-bottom: 1rem;
 `
 

@@ -129,7 +129,9 @@ const ImageContainer = styled.div`
 const StyledImage = styled.img`
     width: 10rem;
     object-fit: cover;
+    object-position: center top;
     overflow-y: hidden;
+    overflow-x: hidden;
     /*
     display: flex;
     justify-content: center;

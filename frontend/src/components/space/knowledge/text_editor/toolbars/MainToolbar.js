@@ -19,6 +19,7 @@ import { connect } from 'react-redux';
 //react-router
 import { withRouter } from 'react-router-dom';
 import { APP_LIGHT_PRIMARY_COLOR } from '../../../../../styles/colors';
+import { FiChevronDown } from 'react-icons/fi';
 
 
 class MainToolbar extends React.Component {
@@ -108,7 +109,15 @@ class MainToolbar extends React.Component {
                 <PullRequestIcon>
                     <AiOutlinePullRequest/>
                 </PullRequestIcon>
-                Advanced Search Support
+                Advanced Label Support
+                <FiChevronDown
+                    style = {{
+                        marginLeft: "0.5rem",
+                        marginRight: "0.3rem",
+                        marginTop: "0.1rem",
+                        fontSize: "1.2rem"
+                    }}
+                />
             </PullRequest>
         )
     }
@@ -174,10 +183,11 @@ const PullRequest = styled.div`
     align-items: center;
     margin-left: 2rem;
     background-color: ${APP_LIGHT_PRIMARY_COLOR};
+   /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
     border-radius: 0.4rem;
     font-weight: 500;
     padding: 0.7rem 1rem;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
 `
 
 const PathSection = styled.div`

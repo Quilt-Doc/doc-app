@@ -107,7 +107,6 @@ class Checks extends Component {
                 <Header>
                     Git Tasks
                     <LeftSide>
-                        
                         <Switch>
                             <PullSwitch>    
                                 <AiOutlinePullRequest/>
@@ -116,7 +115,6 @@ class Checks extends Component {
                                 <BsCardChecklist/>
                             </CheckSwitch>
                         </Switch>
-                      
                         <SearchbarWrapper>
                             <SearchIcon>
                                 <CgSearch/>
