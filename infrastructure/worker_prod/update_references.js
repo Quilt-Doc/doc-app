@@ -488,8 +488,8 @@ const runUpdateProcedure = async () => {
             var fileReferencesToUpdate = trackedFiles.filter(file => !file.isNewRef && !file.deleted && file.oldRef != file.ref);
 
             // When Reference has been modified, (On Rename, or just modification):
-            // If !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modified' && file.operationList.slice(-1)[0] == 'Renamed')
-            var fileReferencesModified = trackedFiles.filter(file => !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modified' && file.operationList.slice(-1)[0] == 'Renamed'));
+            // If !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modified' || file.operationList.slice(-1)[0] == 'Renamed')
+            var fileReferencesModified = trackedFiles.filter(file => !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modified' || file.operationList.slice(-1)[0] == 'Renamed'));
 
             var fileReferencesToDelete = trackedFiles.filter(file => !file.isNewRef && file.deleted);
 
@@ -629,7 +629,7 @@ const runUpdateProcedure = async () => {
                 worker.send({action: 'log', info: {level: 'info', 
                                                     message: `Fetching 'file' References that have been modified on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesModified.map(file => file.oldRef))}`,
                                                     source: 'worker-instance', function:'runUpdateProcedure', }})
-                
+
                 try {
                     modifiedReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
                                                                 path: {$in: fileReferencesModified.map(file => file.oldRef)}}, '_id', { session }).lean().exec();
