@@ -648,6 +648,11 @@ const runUpdateProcedure = async () => {
 
                     throw new Error(`Error fetching 'file' References that've been modified - repositoryId: ${repoId}`);
                 }
+
+                worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Found 'file' References for fileReferencesModified - repoId, modifiedReferences: ${repoId}\n${JSON.stringify(modifiedReferences)}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+
             }
 
             // Handling Updated File References, only updating on rename
