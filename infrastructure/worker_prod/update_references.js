@@ -401,7 +401,7 @@ const runUpdateProcedure = async () => {
 
 
 
-            worker.send({action: 'log', info: {level: 'info', message: `repoDiskPath: ${repoDiskPath}`,
+            worker.send({action: 'log', info: {level: 'info', message: `repoId, repoDiskPath: ${repoId}, ${repoDiskPath}`,
                                                 source: 'worker-instance', function: 'runUpdateProcedure'}});
 
 
@@ -490,6 +490,11 @@ const runUpdateProcedure = async () => {
             // When Reference has been modified, (On Rename, or just modification):
             // If !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modify' || file.operationList.slice(-1)[0] == 'Rename')
             var fileReferencesModified = trackedFiles.filter(file => !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modify' || file.operationList.slice(-1)[0] == 'Rename'));
+
+            worker.send({action: 'log', info: {level: 'info', message: `repoId, fileReferencesModified: ${repoId}, ${JSON.stringify(fileReferencesModified)}`,
+                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
+
+
 
             var fileReferencesToDelete = trackedFiles.filter(file => !file.isNewRef && file.deleted);
 
