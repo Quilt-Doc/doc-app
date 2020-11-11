@@ -122,10 +122,11 @@ const createCheck = async (req, res) => {
 
     const repositoryId = req.repositoryObj._id.toString();
 
-    const {installationId, commit, brokenDocuments, brokenSnippets, message, pusher, addedReferences} = req.body;
+    const {installationId, commit, modifiedDocuments, brokenDocuments, brokenSnippets, message, pusher, addedReferences} = req.body;
 
     if (!checkValid(installationId)) return res.json({success: false, error: 'no check installationId provided'});
     if (!checkValid(commit)) return res.json({success: false, error: 'no check commit provided'});
+    if (!checkValid(modifiedDocuments)) return res.json({success: false, error: 'no check modifiedDocuments provided'});
     if (!checkValid(brokenDocuments)) return res.json({success: false, error: 'no check brokenDocuments provided'});
     if (!checkValid(brokenSnippets)) return res.json({success: false, error: 'no check brokenSnippets provided'});
     if (!checkValid(message)) return res.json({success: false, error: 'no check message provided'});
@@ -167,6 +168,7 @@ const createCheck = async (req, res) => {
 
     let check = new Check({
         sha: commit,
+        modifiedDocuments,
         brokenDocuments,
         brokenSnippets,
         repository: repositoryId,
