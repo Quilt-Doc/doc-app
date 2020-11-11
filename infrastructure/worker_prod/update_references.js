@@ -784,6 +784,10 @@ const runUpdateProcedure = async () => {
             modifiedDocuments = _.difference(modifiedDocuments.map(docObj => docObj._id.toString()), brokenDocuments);
 
 
+            worker.send({action: 'log', info: {level: 'info', 
+                                                message: `Creating Check with modifiedDocuments: repoId, modifiedDocuments: ${repoId}\n${JSON.stringify(modifiedDocuments)}`,
+                                                source: 'worker-instance', function:'runUpdateProcedure', }})
+
 
             // For routing
             checkCreateData.repoId = repoId;
