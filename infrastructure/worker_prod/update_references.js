@@ -488,8 +488,8 @@ const runUpdateProcedure = async () => {
             var fileReferencesToUpdate = trackedFiles.filter(file => !file.isNewRef && !file.deleted && file.oldRef != file.ref);
 
             // When Reference has been modified, (On Rename, or just modification):
-            // If !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modify' || file.operationList.slice(-1)[0] == 'Rename')
-            var fileReferencesModified = trackedFiles.filter(file => !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0] == 'Modify' || file.operationList.slice(-1)[0] == 'Rename'));
+            // If !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0].operation == 'Modify' || file.operationList.slice(-1)[0].operation == 'Rename')
+            var fileReferencesModified = trackedFiles.filter(file => !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0].operation == 'Modify' || file.operationList.slice(-1)[0].operation == 'Rename'));
 
             worker.send({action: 'log', info: {level: 'info', message: `repoId, fileReferencesModified: ${repoId}, ${JSON.stringify(fileReferencesModified)}`,
                                                 source: 'worker-instance', function: 'runUpdateProcedure'}});
