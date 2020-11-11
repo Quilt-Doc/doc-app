@@ -761,7 +761,7 @@ const runUpdateProcedure = async () => {
 
             if (modifiedReferences.length > 0) {
                 try {
-                    modifiedDocuments = await Document.find( { _id: { $in: modifiedReferencess.map(refObj => ObjectId(refObj._id.toString())) } }, "_id", { session })
+                    modifiedDocuments = await Document.find( { _id: { $in: modifiedReferences.map(refObj => ObjectId(refObj._id.toString())) } }, "_id", { session })
                                                         .lean().exec();
                 }
                 catch (err) {
