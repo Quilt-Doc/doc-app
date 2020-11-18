@@ -863,6 +863,7 @@ retrieveHelper = async (body, req) => {
 retrieveDocuments = async (req, res) => {
 
     let { root, documentIds, referenceIds, limit, skip, minimal, fill } = req.body;
+
     // use helper above to retrieve queried documents
     let response = await retrieveHelper({ root, documentIds, referenceIds, limit, skip, minimal }, req);
     
@@ -877,6 +878,8 @@ retrieveDocuments = async (req, res) => {
         let moreDocuments = secondResponse.result;
         returnedDocuments = [...returnedDocuments, ...moreDocuments];
     }
+
+    console.log(`Retrieve Documents Returning: ${JSON.stringify(returnedDocuments)}`);
 
     return res.json({ success: true, result: returnedDocuments});
 }

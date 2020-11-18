@@ -108,6 +108,36 @@ createWorkspace = async (req, res) => {
                 throw Error(`error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
             }
 
+            // Create Root Document
+            var document = new Document(
+                {
+                    author: ObjectId(creatorId),
+                    workspace: ObjectId(workspace._id.toString()),
+                    title: "",
+                    path: "",
+                    status: 'valid'
+                },
+            );
+
+            document.root = true;
+
+            // save document
+            try {
+                document = await document.save({ session });
+            } 
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(repositories)}`,
+                                    function: 'createWorkspace'});
+
+                output = {success: false,
+                            error: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(repositories)}`,
+                            trace: err};
+
+                throw new Error(`Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(repositories)}`);
+            }
+
             // Update User.workspaces array
             var user;
             try {
@@ -124,6 +154,7 @@ createWorkspace = async (req, res) => {
 
             // Create UserStats object for creator
             try {
+                // console.log(`CREATING USERSTATS - USER ID: ${creatorId}`);
                 await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString(), session});
             }
             catch (err) {
@@ -133,22 +164,6 @@ createWorkspace = async (req, res) => {
                 output = {success: false, error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`, trace: err};
                 throw Error(`error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`);
             }
-
-            // DO THIS IN SCAN_REPOSITORIES
-            /*
-            // Set all workspace Repositories 'currentlyScanning' to true
-            var workspaceRepositories;
-            try {
-                workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }}, { session });
-            }
-            catch (err) {
-                await logger.error({source: 'backend-api', message: err,
-                                        errorDescription: `error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`,
-                                        function: 'createWorkspace'});
-                output = {success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err};
-                throw Error(`error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`);
-            }
-            */
 
             // Get the list of installationIds for all Repositories
             var repositoryInstallationIds;
