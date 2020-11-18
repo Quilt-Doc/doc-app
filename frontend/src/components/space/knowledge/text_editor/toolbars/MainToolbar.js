@@ -6,6 +6,7 @@ import {RiEdit2Line, RiCheckFill, RiCloseFill} from 'react-icons/ri';
 import {CgOptions} from 'react-icons/cg';
 import DocumentOptionsMenu from '../../../../menus/DocumentOptionsMenu';
 import { AiOutlineExclamation, AiOutlinePullRequest } from 'react-icons/ai';
+import { GoGitBranch } from 'react-icons/go';
 
 //components
 import LabelMenu from '../../../../menus/LabelMenu';
@@ -104,12 +105,15 @@ class MainToolbar extends React.Component {
     }
 
     renderBranch = () => {
+        return null;
         return (
             <PullRequest>
                 <PullRequestIcon>
-                    <AiOutlinePullRequest/>
+                    {/*
+                    <AiOutlinePullRequest/>*/}
+                    <GoGitBranch/>
                 </PullRequestIcon>
-                Advanced Label Support
+                master
                 <FiChevronDown
                     style = {{
                         marginLeft: "0.5rem",

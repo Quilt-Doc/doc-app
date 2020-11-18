@@ -5,6 +5,9 @@ import PropTypes from 'prop-types';
 import TextEditor from './editor/TextEditor';
 import { CSSTransition } from 'react-transition-group';
 
+//pusher
+import Pusher from 'pusher-js';
+
 //loader
 import { Oval } from 'svg-loaders-react';
 
@@ -37,13 +40,65 @@ import { parse } from '@fortawesome/fontawesome-svg-core';
 // wrapper of the document editor that deals with providing data and sending data to database
 // on document save
 class EditorWrapper extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            pusher: null,
+            channel: null
+        }
+    }
 
     componentDidMount = async () => {
         await this.loadResources();
+
+        const { workspaceId } = this.props.match.params;
+
+        /*
+        Pusher.Runtime.createXHR = () => {
+            const xhr = new XMLHttpRequest()
+            xhr.withCredentials = true
+            return xhr
+        }
+
+        const pusher = new Pusher("8a6c058f2c0eb1d4d237", {
+            cluster: "mt1",
+            authEndpoint: `http://localhost:3001/api/documents/${workspaceId}/pusher/auth`
+        });
+
+        const { documents } = this.props;
+
+        const doc = documents[this.getDocumentId(this.props)];
+
+        
+        const channelName = `private-${doc._id}`;
+
+        const channel = pusher.subscribe(channelName);
+
+        channel.bind('client-text-edit', (markup) => {
+			console.log("MARKUP", markup);
+			//setValue(markup);
+        })
+
+        channel.bind('pusher:subscription_succeeded', () => {
+            console.log("SUBSCRIPTION SUCCESSFUL");
+        });
+        
+        this.setState({pusher, channel});
+        */
         window.addEventListener('beforeunload', this.saveMarkupWrapper);
     }
 
     componentWillUnmount = async () =>  {
+        const { pusher } = this.state;
+        const { documents } = this.props;
+        const doc = documents[this.getDocumentId(this.props)];
+
+        /*
+        if (pusher) {
+            console.log("UNSUBSCRIBING PUSHER");
+            pusher.unsubscribe(doc._id);
+        }*/
+     
         window.removeEventListener('beforeunload', this.saveMarkupWrapper);
         
         const documentId = this.getDocumentId(this.props);
@@ -59,13 +114,18 @@ class EditorWrapper extends React.Component {
     getSnapshotBeforeUpdate = (prevProps) => {
         if (prevProps.location.pathname !== this.props.location.pathname) {
             return this.acquireCanvas();
+        } else {
+            return null
         }
     }
 
     componentDidUpdate = async (prevProps, prevState, canvasPromise) => {
         if (prevProps.location.pathname !== this.props.location.pathname) {
+            let canvas;
 
-            const canvas = await canvasPromise;
+            if (canvasPromise) {
+                canvas = await canvasPromise;
+            }
 
             this.loadResources();
 
@@ -89,6 +149,14 @@ class EditorWrapper extends React.Component {
     }
 
     onMarkupChange = (parsedMarkup) => {
+        /*
+        const { channel } = this.state;
+
+        if (channel) {
+            //console.log("CHANNEL", channel);
+            channel.trigger('client-text-edit', parsedMarkup);
+        }*/
+
         const { syncEditDocument } = this.props;
         let documentId = this.getDocumentId(this.props);
         syncEditDocument({_id: documentId, parsedMarkup });

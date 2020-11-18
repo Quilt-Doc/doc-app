@@ -133,6 +133,11 @@ const Title = styled.div`
 
 const TitleText = styled.div`
     margin-top: 0.2rem;
+    width: 9rem;
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 `
 
 const Card = styled.div`

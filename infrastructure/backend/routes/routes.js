@@ -83,7 +83,9 @@ router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.d
 router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
 router.post('/documents/:workspaceId/search', authorizationMiddleware.documentMiddleware, documentController.searchDocuments);
 router.post('/documents/:workspaceId/get_image/:documentId',  authorizationMiddleware.documentMiddleware, documentController.getDocumentImage);
-router.get('/testRoute', documentController.testRoute);
+router.post('/documents/:workspaceId/pusher/auth', documentController.authorizeDocumentPusher);
+
+router.post('/testRoute', documentController.testRoute);
 
 
 router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, documentController.attachDocumentTag);

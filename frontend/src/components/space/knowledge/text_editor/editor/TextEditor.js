@@ -10,6 +10,9 @@ import withFunctionality from '../slate/WithFunctionality'
 import {onKeyDownHelper, decorate, 
 	toggleBlock } from '../slate/Utility';
 
+//pusher
+import Pusher from 'pusher-js';
+
 //utility
 import scrollIntoView from 'scroll-into-view-if-needed'
 import TextareaAutosize from 'react-textarea-autosize'
@@ -69,10 +72,12 @@ import AttachmentMenu from '../menus/AttachmentMenu'
 
 
 const TextEditor = (props) => {
-	const { onMarkupChange, document: { title, parsedMarkup } } = props;
+	const { onMarkupChange, document: { workspace, title, parsedMarkup, _id } } = props;
 
 	const [value, setValue] = useState(parsedMarkup);
 	const [write, setWrite] = useState(false)
+	const [channel, setChannel] = useState(null);
+	const [subSuccess, setSubSuccess] = useState(false);
 	const [setOptions, toggleOptions] = useState(false);
 
 	const initialState = {
@@ -97,7 +102,51 @@ const TextEditor = (props) => {
 
 	const { isMarkupMenuActive, isSnippetMenuActive, isAttachmentMenuActive } = state;
 	
+	
+	useEffect(() => {
+		Pusher.Runtime.createXHR = () => {
+            const xhr = new XMLHttpRequest()
+            xhr.withCredentials = true
+            return xhr
+        }
+
+        const pusher = new Pusher("8a6c058f2c0eb1d4d237", {
+            cluster: "mt1",
+            authEndpoint: `http://localhost:3001/api/documents/${workspace._id}/pusher/auth`
+        });
+
+		const channelName = `private-${_id}`;
+
+		const channel = pusher.subscribe(channelName);
+		
+
+		channel.bind('client-text-edit', (markup) => {
+			//setValue(markup);
+			setValue(markup);
+			onMarkupChange(markup);
+		})
+
+		channel.bind('pusher:subscription_succeeded', () => {
+            setSubSuccess(true);
+        });
+
+		setChannel(channel);
+
+		return () => {
+			console.log("PUSHER", pusher);
+			console.log("CHANNEL NAME", channelName);
+			pusher.unsubscribe(channelName);
+		}
+	 }, [])
+	 
 	const makeMarkupChanges = (markupChanges) => {
+
+		
+		if (channel) {
+			console.log("CHANNEL EXISTS");
+			channel.trigger('client-text-edit', markupChanges);
+		}
+		
 		setValue(markupChanges);
 		onMarkupChange(markupChanges);
 	}
@@ -116,7 +165,7 @@ const TextEditor = (props) => {
 					toggleOptions = {() => {toggleOptions(!setOptions)}}
 					documentModal = {props.documentModal}
 				/>
-				<PullRequestRecs/>
+				{/*<PullRequestRecs/>*/}
 				<Container id = {"fullEditorContainer"}>
 					<EditorContainer 
 						documentModal = {props.documentModal}

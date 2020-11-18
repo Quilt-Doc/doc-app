@@ -118,18 +118,18 @@ class DocumentInfo extends React.Component {
 
     renderEditData = () => {
         const { document: {references, repository} } = this.props;
-        const validReferences = references.filter(ref => ref.status === 'valid');
-        const invalidReferences = references.filter(ref => ref.status === 'invalid');
+        //const validReferences = references.filter(ref => ref.status === 'valid');
+        //const invalidReferences = references.filter(ref => ref.status === 'invalid');
 
         return (
             <>
                 <RepositoryMenu2 darkBorder = {true} document={this.props.document}/>
                 <List>
                     {this.renderReferenceMenu()}
-                    {   (validReferences && validReferences.length > 0) ? 
+                    {   (references && references.length > 0) ? 
                          <InfoList edit = {true}>
-                            {this.renderFolders(validReferences, false)}
-                            {this.renderFiles(validReferences, false)}
+                            {this.renderFolders(references)}
+                            {this.renderFiles(references)}
                         </InfoList> :
                          <Message>
                             { repository ? 
@@ -139,15 +139,6 @@ class DocumentInfo extends React.Component {
                         </Message>
                     }
                 </List>
-                { (invalidReferences && invalidReferences.length > 0) &&
-                    <List>
-                        {this.renderFixButton()}
-                        <InfoList edit = {true}>
-                            {this.renderFolders(invalidReferences, true)}
-                            {this.renderFiles(invalidReferences, true)}
-                        </InfoList>
-                    </List>
-                }
             </>
         )
     }

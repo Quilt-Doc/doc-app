@@ -18,6 +18,18 @@ const Mixpanel = require('mixpanel');
 // create an instance of the mixpanel client
 const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
 
+// pusher
+const Pusher = require("pusher");
+
+// create pusher instance
+const { PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER } = process.env;
+const pusher = new Pusher({
+    appId: PUSHER_APP_ID,
+    key: PUSHER_KEY,
+    secret: PUSHER_SECRET,
+    cluster: PUSHER_CLUSTER,
+    useTLS: true
+});
 
 let db = mongoose.connection;
 
@@ -1195,13 +1207,33 @@ getDocumentImage = async (req, res) => {
     return res.json({ success: true, result: image });
 }
 
+authorizeDocumentPusher = async (req, res) => {
+    //console.log("ENTERED IN HERE");
+    const { socket_id, channel_name } = req.body;
+
+    //console.log("REQUEST", requester);
+    //console.log("SOCKET ID", socket_id);
+    //console.log("CHANNEL NAME", channel_name);
+    
+    const socketId = socket_id;
+    const channel = channel_name;
+
+    const auth = pusher.authenticate(socketId, channel);
+    //console.log("AUTH", auth);
+    res.send(auth);
+}
+
 
 testRoute = async (req, res) => {
     console.log('TEST ROUTE');
     console.log(req.body);
+    console.log("ORIGIN", req.get('origin'));
+    console.log("COOKIES", req.cookies);
+    console.log(req.headers.authorization);
+    console.log(req.cookies['user-jwt']);
 }
 
-module.exports = { getDocumentImage, testRoute, searchDocuments,
+module.exports = { authorizeDocumentPusher, getDocumentImage, testRoute, searchDocuments,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }
