@@ -12,6 +12,13 @@ html {
     height: 100%;
 }
 
+@media screen {
+  @page {
+      margin: 0;
+      size: 1900px 1200px;
+  }
+}
+
 .dragging {
   cursor: grab;
 }

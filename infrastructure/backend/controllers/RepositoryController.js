@@ -425,7 +425,7 @@ retrieveRepositories = async (req, res) => {
                             error: `Error find repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
                             trace: err});
     }
-    
+
     // make sure that repository is in accessible workspace
     returnedRepositories = returnedRepositories.filter((repo) => repositoriesInWorkspace.includes(repo));
 
