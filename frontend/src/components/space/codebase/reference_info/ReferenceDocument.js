@@ -127,7 +127,7 @@ class ReferenceDocument extends Component {
                                 <StyledIcon>
                                     <RiFileTextFill style = {{ color: '#2684FF' }}/>
                                 </StyledIcon>
-                                {title}
+                                <TitleText>{title}</TitleText>
                             </Title> 
                         </Bottom>
                     </Card>
@@ -224,6 +224,14 @@ const Title = styled.div`
     align-items: center;
     padding-left: 2rem;
     padding-right: 2rem;
+`
+
+const TitleText = styled.div`
+    width: 14rem;
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 `
 
 const Card = styled.div`

@@ -115,12 +115,30 @@ class CheckRightContent extends Component {
     renderDepSnippets = () => {
         const { check: { brokenSnippets }} = this.props;
         
+        const placeholders = [{
+            name: "snippet_validator.js",
+            start: "3",
+            end: "5"
+        }, {
+            name: "scan_repos.js",
+            start: "24",
+            end: "38"
+        }, {
+            name: "semantic_plugin.py",
+            start: "112",
+            end: "168"
+        }];
+
         if (brokenSnippets && brokenSnippets.length > 0) {
             return (
                 <IssueContainer>
                 <Guide2>Deprecated Snippets</Guide2>
-                    {/*brokenSnippets.map(snippet => {
-                        const {start, code, reference: {name}} = snippet;
+                    {brokenSnippets.map((snippet, i) => {
+                        //const {start, code, reference: {name}} = snippet;
+                        //let end = start + code.length;
+                        
+                        const { name, start, end } = placeholders[i];
+
                         return(
                             <BrokenSnippet>
                                 <RiScissorsLine style = {{
@@ -129,10 +147,10 @@ class CheckRightContent extends Component {
                                     marginRight: "0.5rem"
                                 }}/>
                                 <Name>{name}</Name>
-                                <SnippetInfo>{`Lines ${start + 1}-${start + code.length}`}</SnippetInfo>
+                                <SnippetInfo>{`Lines ${start + 1}-${end}`}</SnippetInfo>
                             </BrokenSnippet>
                         )
-                    })*/}
+                    })}
                 </IssueContainer>
             )
         }
@@ -610,11 +628,10 @@ const Top = styled.div`
 const Header = styled.div`
     font-weight: 500;
     margin-bottom: 1.5rem;
-    font-size: 2.8rem;
+    font-size: 2.9rem;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    width: 30rem;
 `
 
 const Detail = styled.div`
@@ -772,15 +789,16 @@ const BrokenDocument = styled.div`
 
 const BrokenSnippet = styled.div`
     height: 3.2rem;
-    border-radius: 0.6rem;
+    border-radius: 0.4rem;
     display: flex;
     font-weight: 500;
     align-items: center;
     font-size: 1.25rem;
     padding: 0rem 1.5rem;
-    border: 1px solid #172A4E;
+    /*border: 1px solid #172A4E;*/
     margin-bottom: 1rem;
     padding-left: 1rem;
+    background-color: ${chroma("#f27448").alpha(0.2)};
 `
 
 /*

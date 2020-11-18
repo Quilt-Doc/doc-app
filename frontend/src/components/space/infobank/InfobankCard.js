@@ -142,7 +142,7 @@ const Placeholder = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;   
-    font-size: 7rem;           
+    font-size: 4rem;           
 `
 
 const ImageContainer = styled.img`
