@@ -2,9 +2,10 @@ import React, { useReducer, useMemo, useCallback, useState, useEffect } from 're
 
 //slate
 import { Slate, Editable, withReact, ReactEditor, useSlate } from 'slate-react'
-import { Node, createEditor } from 'slate'
+import { Node, Transforms, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import withFunctionality from '../slate/WithFunctionality'
+import withLayout from '../slate/WithLayout';
 
 //slate utility
 import {onKeyDownHelper, decorate, 
@@ -70,15 +71,29 @@ import AttachmentMenu from '../menus/AttachmentMenu'
 // FIX TOOLBAR
 // REFERENCES
 
+Pusher.Runtime.createXHR = () => {
+	const xhr = new XMLHttpRequest()
+	xhr.withCredentials = true
+	return xhr
+}
+
+
 
 const TextEditor = (props) => {
-	const { onMarkupChange, document: { workspace, title, parsedMarkup, _id } } = props;
+	const { workspaceId, initialMarkup, initialTitle, syncRenameDocument, renameDocument, document: { _id } } = props;
 
-	const [value, setValue] = useState(parsedMarkup);
-	const [write, setWrite] = useState(false)
-	const [channel, setChannel] = useState(null);
+	const [value, setValue] = useState(initialMarkup);
+	const [title, setTitle] = useState(initialTitle);
+
+	const [writerId, setWriterId] = useState(null);
+
+	//const [pusher, setPusher] = useState(null);
+	//const [viewingChannel, setViewingChannel] = useState(null);
+	const [presenceChannel, setPresenceChannel] = useState(null);
+
 	const [subSuccess, setSubSuccess] = useState(false);
 	const [setOptions, toggleOptions] = useState(false);
+	const [saveTimeout, setSaveTimeout] = useState(null);
 
 	const initialState = {
 		isMarkupMenuActive: false, 
@@ -91,12 +106,18 @@ const TextEditor = (props) => {
 		initialState
 	);
 
+	//PUSHER
+	const presenceChannelName =  useMemo(() => `presence-${_id}`, []);
+
+	const pusher = useMemo(() => new Pusher("8a6c058f2c0eb1d4d237", {
+		cluster: "mt1",
+		authEndpoint: `http://localhost:3001/api/documents/${workspaceId}/pusher/auth`
+	}), []);
+
 	const renderElement = useCallback(props => <Element {...props} />, [])
 	const renderLeaf = useCallback(props => <Leaf {...props} />, [])
 
-	const editor = useMemo(() => withFunctionality(withHistory(withReact(createEditor())), dispatch), [])
-
-	
+	const editor = useMemo(() => withLayout(withFunctionality(withHistory(withReact(createEditor())), dispatch)), [])
 	
 	//updateMarkupType(state, dispatch, range, blocktypes, editor)
 
@@ -104,63 +125,246 @@ const TextEditor = (props) => {
 	
 	
 	useEffect(() => {
-		Pusher.Runtime.createXHR = () => {
-            const xhr = new XMLHttpRequest()
-            xhr.withCredentials = true
-            return xhr
-        }
+		const presenceChannel = pusher.subscribe(presenceChannelName);
 
-        const pusher = new Pusher("8a6c058f2c0eb1d4d237", {
-            cluster: "mt1",
-            authEndpoint: `http://localhost:3001/api/documents/${workspace._id}/pusher/auth`
-        });
+		presenceChannel.bind('pusher:subscription_succeeded', () => {
+			setSubSuccess(true);
+		});
 
-		const channelName = `private-${_id}`;
+		presenceChannel.bind('pusher:subscription_error', () => {
+			alert("Please reload page, not subscribed to editor properly.");
+		});
 
-		const channel = pusher.subscribe(channelName);
-		
-
-		channel.bind('client-text-edit', (markup) => {
-			//setValue(markup);
-			setValue(markup);
-			onMarkupChange(markup);
-		})
-
-		channel.bind('pusher:subscription_succeeded', () => {
-            setSubSuccess(true);
-        });
-
-		setChannel(channel);
+		setPresenceChannel(presenceChannel);
 
 		return () => {
-			console.log("PUSHER", pusher);
-			console.log("CHANNEL NAME", channelName);
-			pusher.unsubscribe(channelName);
+			pusher.unsubscribe(presenceChannelName);
 		}
-	 }, [])
-	 
-	const makeMarkupChanges = (markupChanges) => {
+	}, []);
 
-		
-		if (channel) {
-			console.log("CHANNEL EXISTS");
-			channel.trigger('client-text-edit', markupChanges);
+	useEffect(() => {
+		if (presenceChannel) {
+			presenceChannel.bind('client-text-edit', (markup) => {
+				//setValue(markup);
+				const decodedMarkup = JSON.parse(decodeURIComponent(markup));
+
+				setValue(decodedMarkup);
+				//onMarkupChange(markup);
+			});
+		}
+
+		return () => {
+			if (presenceChannel) {
+				presenceChannel.unbind('client-text-edit');
+			}
+		}
+	}, [presenceChannel]);
+
+	useEffect(() => {
+		if (presenceChannel) {
+			presenceChannel.bind('client-transform-editor', (ops) => {
+				//setValue(markup);
+
+				//console.log("OPS", ops);
+
+				//console.log("BEFORE MARKUP", value)
+				ops.map(op => {
+					if (op.type !== "set_selection") {
+						console.log("APPLYIING: ", op);
+						editor.apply(op);
+					}
+				});
+				
+				//console.log("AFTER MARKUP", value);
+				//const decodedMarkup = JSON.parse(decodeURIComponent(markup));
+
+				//setValue(decodedMarkup);
+				//onMarkupChange(markup);
+				
+			});
+		}
+
+		return () => {
+			if (presenceChannel) {
+				presenceChannel.unbind('client-transform-editor');
+			}
+		}
+	}, [presenceChannel]);
+
+	useEffect(() => {
+		if (presenceChannel) {
+			presenceChannel.bind('client-set-writer', (presenceWriterId) => {
+				//setValue(markup);
+				if (presenceWriterId === 'clear writer') {
+					setWriterId(null)
+				} else if (writerId !== presenceWriterId) {
+					setWriterId(presenceWriterId);
+				}
+				//onMarkupChange(markup);
+			});
 		}
 		
+
+		return () => {
+			if (presenceChannel) {
+				presenceChannel.unbind('client-set-writer');
+			}
+		}
+
+	}, [presenceChannel, writerId]);
+
+	useEffect(() => {
+
+		if (presenceChannel && subSuccess) {
+			presenceChannel.bind('pusher:member_added', () => {
+				const presenceId = presenceChannel.members.me.id;
+				if (writerId && writerId === presenceId) {
+					presenceChannel.trigger('client-set-writer', presenceId);
+				}
+			})
+		}
+	
+		return () => {
+			if (presenceChannel) {
+				presenceChannel.unbind('pusher:member_added');
+			}
+		}
+
+	}, [writerId, presenceChannel, subSuccess]);
+
+	useEffect(() => {
+		if (presenceChannel) {
+			presenceChannel.bind('pusher:member_removed', (member) => {
+				if (member.id === writerId) {
+					setWriterId(null);
+				}
+			});
+		}
+		
+		return () => {
+			if (presenceChannel) {
+				presenceChannel.unbind('pusher:member_removed');
+			}
+		}
+
+	}, [presenceChannel, writerId]);
+
+	useEffect(() => {
+		if (presenceChannel) {
+			presenceChannel.bind('client-rename-document', (results) => {
+				syncRenameDocument(results)
+			});
+		}
+		
+		return () => {
+			if (presenceChannel) {
+				presenceChannel.unbind('client-rename-document');
+			}
+		}
+
+	}, [presenceChannel, writerId]);
+	 
+	const makeMarkupChanges = useMemo(() => (markupChanges) => {
+		//console.log("MARKUP CHANGES", markupChanges);
+
+		//SHOW SAVING
 		setValue(markupChanges);
-		onMarkupChange(markupChanges);
-	}
+
+		if (saveTimeout) {
+			clearTimeout(saveTimeout);
+		}
+
+
+		const ops = editor.operations;
+		let groundTruth = true;
+
+		for (let i = 0; i < ops.length; i++){
+			if (ops[i].id) {
+				groundTruth = false;
+				break;
+			}
+		}
+
+		const taggedOps = ops.map(op => {
+			return {id: presenceChannel.members.me.id, ...op} 
+		});
+
+		if (groundTruth) {
+			presenceChannel.trigger('client-transform-editor',	taggedOps);
+			//console.log("TAGGED OPS", taggedOps);
+		}
+		
+
+		const timeout = setTimeout(() => { 
+			if (presenceChannel && subSuccess && writerId === presenceChannel.members.me.id) {
+				//const encodedMarkup = encodeURIComponent(JSON.stringify(markupChanges));
+				//presenceChannel.trigger('client-text-edit', encodedMarkup);
+				//presenceChannel.trigger('client-transform-editor', ops);
+				//console.log("NEW TITLE", Node.string(markupChanges[0]));
+				//console.log("INITIAL TITLE", initialTitle);
+
+				
+				//if (initialTitle !== Node.string(markupChanges[0])) {
+				//	console.log("CHa")
+					/*
+					Transforms.delete(editor, {at: [0]});
+					Transforms.insertText(editor, initialTitle, {at: [0]});
+					*/
+					/*
+					const results = renameDocument({workspaceId, documentId: _id, title: Node.string(markupChanges[0])});
+					if (results) {
+						presenceChannel.trigger('client-rename-document', results);
+					} else {
+						//set the title in markup back to initialTitle
+						Transforms
+					}*/
+				//}
+				//presenceChannel.trigger('client-text-edit', troll);
+			}
+		}, 500);
+
+		setSaveTimeout(timeout);
+		//onMarkupChange(markupChanges);
+	}, [saveTimeout, presenceChannel, writerId, subSuccess]);
+	
+	const setWriteHelper = useMemo(() => () => {
+		
+		if (!presenceChannel || !subSuccess) return;
+
+		const presenceId = presenceChannel.members.me.id;
+		setWriterId(presenceId);
+		/*
+		if (writerId) {
+			if (writerId === presenceId) {
+				presenceChannel.trigger('client-set-writer', 'clear writer');
+				setWriterId(null);
+			} else {
+				alert("A user is currently editing this document.");
+			}
+		} else {
+			presenceChannel.trigger('client-set-writer', presenceId);
+			setWriterId(presenceId);
+		}*/
+	}, [writerId, presenceChannel, subSuccess]);
+
+	const write = useMemo(() => {
+		if (!presenceChannel || !subSuccess) return false;
+
+		const presenceId = presenceChannel.members.me.id;
+		return presenceId === writerId;
+
+	}, [presenceChannel, writerId, subSuccess])
+
 
 	//value={parsedMarkup} onChange={onMarkupChange}>
 	// value={value} onChange={makeMarkupChanges}>
 	return (
 		<DndProvider backend={HTML5Backend}>
-			
 			<Slate editor={editor} value={value} onChange={makeMarkupChanges}>
 				<MainToolbar 
 					document = {props.document}
 					write = {write} 
-					setWrite = {() => {setWrite(!write)}}
+					setWrite = {setWriteHelper}
 					setOptions = {setOptions}
 					toggleOptions = {() => {toggleOptions(!setOptions)}}
 					documentModal = {props.documentModal}
@@ -173,7 +377,7 @@ const TextEditor = (props) => {
 					>		
 							{write && <Sidebar documentModal = {props.documentModal} toggleBlock = {(format) => toggleBlock(editor, format)}/>}
 							{write && <HoveringToolbar/>}
-							<EditorContainer2  >
+							<EditorContainer2>
 									{isSnippetMenuActive &&
 										<SnippetMenuWrapper
 											documentModal = {props.documentModal} 
@@ -193,14 +397,21 @@ const TextEditor = (props) => {
 											dispatch={dispatch} 
 										/>
 									}
-									
 									<DocumentInfo write  = {write} />
+									{/*
 									{ write ? 
-										<Header autoFocus = {false} paddingLeft = {write ? "3rem" : "10rem"} onBlur={(e) => props.onTitleChange(e)} onChange={(e) => props.onTitleChange(e)} placeholder={"Untitled"} value={title} />
+										<Header 
+											autoFocus = {true} 
+											paddingLeft = {write ? "3rem" : "10rem"} 
+											onChange = {makeTitleChanges} 
+											onKeyDown = {checkTitleEnter}
+											onBlur = {tryTitleSave} 
+											placeholder={"Untitled"} 
+											value={title} 
+										/>
 										:
 										<HeaderDiv active = {title} paddingLeft = {"10rem"}>{title ? title : "Untitled"}</HeaderDiv>
-									}
-									
+									}*/}
 									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}
 									<StyledEditable
 										id = {"editorSlate"}
@@ -210,10 +421,10 @@ const TextEditor = (props) => {
 										renderElement={renderElement}
 										renderLeaf={renderLeaf}
 										spellCheck="false"
-										decorate={decorate}
+										decorate= {decorate}
 										readOnly = {!write}
+										autoFocus = {true}
 									/>
-									
 							</EditorContainer2>
 					</EditorContainer>
 				</Container>
@@ -224,6 +435,37 @@ const TextEditor = (props) => {
 
 export default TextEditor
 
+/*
+
+	const makeTitleChanges = useMemo(() => (e) => {	
+		console.log("E", e.key);
+		if (e.key === "Enter") {
+			console.log("TARGET", e.target.value);
+		} else {
+			setTitle(e.target.value);
+		}
+	}, []);
+
+	const checkTitleEnter =  useMemo(() => (e) => {	
+		if (e.key === "Enter") {
+			e.preventDefault();
+			console.log("SELECTION START", e.target.selectionStart);
+			console.log("TARGET", e.target.value.split('\n'));
+		}
+	}, []);
+
+	const tryTitleSave = useMemo(() => async (e) => {	
+		console.log("TARGET", e.target.value);
+		console.log("INITAL", initialTitle);
+		if (e.target.value !== initialTitle) {
+			const tempTitle = initialTitle;
+			console.log("ENTERED IN HERE");
+			let changed = await renameDocument({workspaceId, documentId: _id, title: e.target.value});
+			console.log("WEVE CHANGED", changed);
+			if (!changed) setTitle(tempTitle);
+		}	
+	}, [initialTitle]);
+*/
 
 const ToolbarsContainer = styled.div`
 	position: sticky; 
@@ -254,7 +496,7 @@ const EditorContainer = styled.div`
 `
 
 const HeaderDiv = styled.div`
-	font-size: 3.3rem;
+	font-size: 3.7rem;
 	color: #172A4E;
 	margin-bottom: 1rem;
 	margin-top: 3.5rem;
@@ -268,7 +510,7 @@ const HeaderDiv = styled.div`
 `
 
 const Header = styled(TextareaAutosize)`
-	font-size: 3.3rem;
+	font-size: 3.7rem;
     color: #172A4E;
     margin-bottom: 1rem;
     &::placeholder {

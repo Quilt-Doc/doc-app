@@ -121,6 +121,8 @@ const getCorrectElement = props => {
 	const { borderTop, element: {type}, attributes, children } = props;
 	
 	switch (type) {
+		case 'title':
+			return <Title {...attributes}>{children}</Title>
 		case 'heading-one':
 			return <H1 borderTop = {borderTop}  {...attributes}>{children}</H1>
 		case 'heading-two':
@@ -218,6 +220,22 @@ const BlockTool = (props) => {
 	)
 }*/
 
+const Title = styled.div`
+	font-size: 3.7rem;
+	line-height: 4rem;
+	overflow-wrap: break-word;
+	hyphens: auto;
+	color: #172A4E;
+	margin-bottom: 2rem;
+	&::placeholder {
+		color: #172A4E;
+		opacity: 0.4;
+	}
+	margin-top: 3.5rem;
+	font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+	font-weight: 500;
+`
+
 const ListItem = styled.li`
 	margin-bottom: 0.8rem;
 	:before{
@@ -227,7 +245,7 @@ const ListItem = styled.li`
 `
 
 const PlainText = styled.span`
-	font-size: 1.56rem;
+	font-size: 1.6rem;
 	display: inline-table;
 	vertical-align: middle;
 	padding-bottom: 4px;
@@ -235,7 +253,7 @@ const PlainText = styled.span`
 
 const Note = styled.div`
 	background-color: ${chroma('#6762df').alpha(0.15)};
-	font-size: 1.56rem;
+	font-size: 1.6rem;
 	padding: 1rem 1.7rem;
 	display: flex;
 	align-items: center;
@@ -247,7 +265,7 @@ const Note = styled.div`
 `
 
 const Quote = styled.div`
-	font-size: 1.56rem;
+	font-size: 1.6rem;
 	padding: 1rem;
 	border-left: 2px solid #DFDFDF;
 	margin-top: 2rem !important;
@@ -417,7 +435,7 @@ const H3 = styled.div`
 
 const P = styled.div`
   margin-top: 1.5rem !important;
-  font-size: 1.56rem;
+  font-size: 1.6rem;
   line-height: 1.76;
   color: rgb(9, 30, 66);
   box-shadow: none;

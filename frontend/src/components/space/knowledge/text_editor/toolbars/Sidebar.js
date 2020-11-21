@@ -17,6 +17,8 @@ import { HiCode } from 'react-icons/hi';
 import { RiInformationLine, RiScissorsLine } from 'react-icons/ri';
 import { BsImageFill, BsListCheck } from 'react-icons/bs';
 import { IoMdAttach } from 'react-icons/io';
+import { MdTitle } from 'react-icons/md';
+import { GoTextSize } from 'react-icons/go';
 
 const Sidebar = (props) => {
     let editor = useSlate();
@@ -148,8 +150,10 @@ class ToolIcon extends React.Component {
                     return <BsImageFill/>
                 case "attachment":
                     return <IoMdAttach/>
+                case "title":
+                    return <TitleText><MdTitle/></TitleText>
                 default:
-                    return  <BiParagraph/>
+                    return  <GoTextSize/>
             }	
         }
         return null
@@ -323,8 +327,19 @@ const TurnIntoContainer = styled.div`
     opacity: ${props => props.active ? 1 : 0.5};
 `
 
+const TitleText = styled.div`
+    letter-spacing: 1.5;
+    font-weight: 500;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`
+
 const HeadingText = styled.div`
-    font-family: 'Slabo 27px', serif;
+    /*font-family: 'Slabo 27px', serif;*/
+    letter-spacing: 1.5;
+    font-weight: 500;
 `
 
 const IntoOption = styled.div`

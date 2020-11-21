@@ -98,6 +98,12 @@ router.put('/documents/:workspaceId/:documentId/remove_reference/:referenceId', 
 router.put('/documents/:workspaceId/:documentId/attach_snippet/:snippetId', authorizationMiddleware.documentMiddleware, documentController.attachDocumentSnippet);
 router.put('/documents/:workspaceId/:documentId/remove_snippet/:snippetId', authorizationMiddleware.documentMiddleware, documentController.removeDocumentSnippet);
 
+
+//PUSHER
+const pusherController = require('../controllers/pusher/PusherController');
+router.post('/pusher/webhook', pusherController.handlePusherWebhook);
+
+
 // These routes are not usable yet.
 /*
 router.put('/documents/:workspaceId/attach_uploadfile/:id', authorizationMiddleware.documentMiddleware, documentController.attachUploadFile);

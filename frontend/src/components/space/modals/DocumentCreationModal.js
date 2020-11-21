@@ -79,12 +79,18 @@ class DocumentCreationModal extends React.Component {
 
         const markup = JSON.stringify(
             [{
+                type: 'title',
+                children: [
+                { text: '' },
+                ],
+            },
+            {
                 type: 'paragraph',
                 children: [
                 { text: '' },
                 ],
             }]
-        )
+        );
 
         let affectedDocuments =  await createDocument({
             authorId: user._id,

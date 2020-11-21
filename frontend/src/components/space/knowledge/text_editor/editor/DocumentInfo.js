@@ -24,7 +24,7 @@ import { withRouter } from 'react-router-dom';
 import history from '../../../../../history';
 import { IoIosHammer } from 'react-icons/io';
 import { LIGHT_SHADOW_1 } from '../../../../../styles/shadows';
-import { APP_LIGHT_PRIMARY_COLOR } from '../../../../../styles/colors';
+import { APP_LIGHT_PRIMARY_COLOR, PRIMARY_COLOR } from '../../../../../styles/colors';
 
 class DocumentInfo extends React.Component {
     constructor(props){
