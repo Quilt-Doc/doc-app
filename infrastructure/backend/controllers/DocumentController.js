@@ -891,7 +891,7 @@ retrieveDocuments = async (req, res) => {
         returnedDocuments = [...returnedDocuments, ...moreDocuments];
     }
 
-    console.log(`Retrieve Documents Returning: ${JSON.stringify(returnedDocuments)}`);
+    // console.log(`Retrieve Documents Returning: ${JSON.stringify(returnedDocuments)}`);
 
     return res.json({ success: true, result: returnedDocuments});
 }

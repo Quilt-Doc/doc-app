@@ -37,6 +37,7 @@ beforeAll(async () => {
 });
 */
 
+/*
 afterAll(async () => {
 
     try {
@@ -56,6 +57,7 @@ afterAll(async () => {
         throw err;
     }
 });
+*/
 
 describe("Create Workspace", () => {
 
@@ -127,7 +129,6 @@ describe("Create Workspace", () => {
         // UserStat returned should be for ${createdWorkspaceId}
         expect(retrievedUserStats[0].workspace).toEqual(global.createdWorkspaceId);
 
-
     });
 
     // router.get('/users/get/:userId', authorizationMiddleware.userMiddleware, userController.getUser);
@@ -152,7 +153,7 @@ describe("Create Workspace", () => {
         expect(userGetResult.result._id).toEqual(process.env.TESTING_USER_ID);
 
         // User.workspaces contains createdWorkspaceId
-        expect(userGetResult.result.workspaces.map(workspaceObj => workspaceObj._id.toString())).toContain(createdWorkspaceId);
+        expect(userGetResult.result.workspaces.map(workspaceObj => workspaceObj._id.toString())).toContain(global.createdWorkspaceId);
     });
 
     // router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspaceController.getWorkspace);
@@ -166,14 +167,14 @@ describe("Create Workspace", () => {
 
         for (i = 0; i < MAX_WORKSPACE_POLL_RETRIES; i++) {
             try {
-                workspaceGetResponse = await backendUserClient.get(`/workspaces/get/${createdWorkspaceId}`);
+                workspaceGetResponse = await backendUserClient.get(`/workspaces/get/${global.createdWorkspaceId}`);
             }
             catch (err) {
-                console.log(`Error retrieving Workspace - workspaceId: ${createdWorkspaceId}`);
+                console.log(`Error retrieving Workspace - workspaceId: ${global.createdWorkspaceId}`);
                 throw err;
             }
             if (workspaceGetResponse.data.success != true) {
-                throw Error(`Failed to get Workspace - workspaceId: ${createdWorkspaceId}`);
+                throw Error(`Failed to get Workspace - workspaceId: ${global.createdWorkspaceId}`);
             }
 
             if (workspaceGetResponse.data.result.setupComplete == true) {
