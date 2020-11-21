@@ -5,9 +5,6 @@ import PropTypes from 'prop-types';
 import TextEditor from './editor/TextEditor';
 import { CSSTransition } from 'react-transition-group';
 
-//pusher
-import Pusher from 'pusher-js';
-
 //loader
 import { Oval } from 'svg-loaders-react';
 
@@ -19,10 +16,9 @@ import styled from "styled-components";
 
 //image generation
 import html2canvas from 'html2canvas';
-import domtoimage from 'dom-to-image';
 
 //actions
-import { getDocument, editDocument, syncEditDocument, renameDocument, testRoute } from '../../../../actions/Document_Actions';
+import { getDocument, editDocument, syncEditDocument, renameDocument, testRoute, syncRenameDocument } from '../../../../actions/Document_Actions';
 import { setDocumentLoaded } from '../../../../actions/UI_Actions';
 import { Node } from 'slate';
 
@@ -31,7 +27,6 @@ import { connect } from 'react-redux';
 
 //router
 import { withRouter } from 'react-router-dom';
-import { parse } from '@fortawesome/fontawesome-svg-core';
 
 //Change type of markup using toolbar and/or delete markup
 //listen for onscroll events to update dropdown
@@ -40,75 +35,24 @@ import { parse } from '@fortawesome/fontawesome-svg-core';
 // wrapper of the document editor that deals with providing data and sending data to database
 // on document save
 class EditorWrapper extends React.Component {
-    constructor(props) {
+    constructor(props){
         super(props);
         this.state = {
-            pusher: null,
-            channel: null
+            initialMarkup: null
         }
     }
 
     componentDidMount = async () => {
         await this.loadResources();
-
-        const { workspaceId } = this.props.match.params;
-
-        /*
-        Pusher.Runtime.createXHR = () => {
-            const xhr = new XMLHttpRequest()
-            xhr.withCredentials = true
-            return xhr
-        }
-
-        const pusher = new Pusher("8a6c058f2c0eb1d4d237", {
-            cluster: "mt1",
-            authEndpoint: `http://localhost:3001/api/documents/${workspaceId}/pusher/auth`
-        });
-
-        const { documents } = this.props;
-
-        const doc = documents[this.getDocumentId(this.props)];
-
-        
-        const channelName = `private-${doc._id}`;
-
-        const channel = pusher.subscribe(channelName);
-
-        channel.bind('client-text-edit', (markup) => {
-			console.log("MARKUP", markup);
-			//setValue(markup);
-        })
-
-        channel.bind('pusher:subscription_succeeded', () => {
-            console.log("SUBSCRIPTION SUCCESSFUL");
-        });
-        
-        this.setState({pusher, channel});
-        */
-        window.addEventListener('beforeunload', this.saveMarkupWrapper);
+        //this.saveCanvas(documentId, this.acquireCanvas());
     }
 
     componentWillUnmount = async () =>  {
-        const { pusher } = this.state;
-        const { documents } = this.props;
-        const doc = documents[this.getDocumentId(this.props)];
-
-        /*
-        if (pusher) {
-            console.log("UNSUBSCRIBING PUSHER");
-            pusher.unsubscribe(doc._id);
-        }*/
-     
-        window.removeEventListener('beforeunload', this.saveMarkupWrapper);
+        const documentId = this.getDocumentId(this.props);
+        this.saveCanvas(documentId, this.acquireCanvas());
         
-        const documentId = this.getDocumentId(this.props);
-        const canvas = await this.acquireCanvas();
-        this.saveMarkup(documentId, canvas);
-    }
-
-    saveMarkupWrapper = (e) => {
-        const documentId = this.getDocumentId(this.props);
-        this.saveMarkup(documentId);
+        const { setDocumentLoaded } = this.props;
+        setDocumentLoaded(false);
     }
 
     getSnapshotBeforeUpdate = (prevProps) => {
@@ -121,16 +65,9 @@ class EditorWrapper extends React.Component {
 
     componentDidUpdate = async (prevProps, prevState, canvasPromise) => {
         if (prevProps.location.pathname !== this.props.location.pathname) {
-            let canvas;
-
-            if (canvasPromise) {
-                canvas = await canvasPromise;
-            }
-
             this.loadResources();
-
             const documentId = this.getDocumentId(prevProps);
-            if (documentId) this.saveMarkup(documentId, canvas);
+            if (documentId) this.saveCanvas(documentId, canvasPromise);
         }
     }
 
@@ -148,21 +85,9 @@ class EditorWrapper extends React.Component {
         return documentId;
     }
 
-    onMarkupChange = (parsedMarkup) => {
-        /*
-        const { channel } = this.state;
-
-        if (channel) {
-            //console.log("CHANNEL", channel);
-            channel.trigger('client-text-edit', parsedMarkup);
-        }*/
-
-        const { syncEditDocument } = this.props;
-        let documentId = this.getDocumentId(this.props);
-        syncEditDocument({_id: documentId, parsedMarkup });
-    }   
-
     onTitleChange = async (e) => {
+        console.log("E TARGET VALUE", e.target.value);
+        /*
         const { syncEditDocument, documents } = this.props;
         const documentId = this.getDocumentId(this.props);
 
@@ -183,13 +108,17 @@ class EditorWrapper extends React.Component {
                 let changed = await renameDocument({workspaceId, documentId, title: e.target.value});
                 if (!changed) syncEditDocument({_id: documentId, title: uneditedTitle});
             }
-        }
+        }*/
     }
 
     // loads all the data needed for the editor
     loadResources = async () => {
-        const { match, getDocument, setDocumentLoaded, syncEditDocument } = this.props;
+        const { match, getDocument, setDocumentLoaded, syncEditDocument, loaded } = this.props;
         const { workspaceId } = match.params;
+
+        //if (loaded) setDocumentLoaded(false);
+        if (loaded)  setDocumentLoaded(false);
+
         const documentId = this.getDocumentId(this.props);
 
         // get the document data using the id
@@ -199,21 +128,11 @@ class EditorWrapper extends React.Component {
         const { documents } = this.props;
         const { markup } = documents[documentId];
 
-        syncEditDocument({_id: documentId, parsedMarkup: JSON.parse(markup)});
+        this.setState({ initialMarkup: JSON.parse(markup) });
+        //syncEditDocument({_id: documentId, parsedMarkup: JSON.parse(markup)});
 
         // DOM is ready to be loaded
         setDocumentLoaded(true);
-    }
-
-    // returns the markup in string format
-    serializeMarkup = parsedMarkup => {
-        return(
-            parsedMarkup
-            // Return the string content of each paragraph in the value's children.
-            .map(n => Node.string(n))
-            // Join them all with line breaks denoting paragraphs.
-            .join('\n')
-        )
     }
 
     acquireCanvas = async () => {
@@ -228,7 +147,7 @@ class EditorWrapper extends React.Component {
         return canvas;
     }
 
-    saveMarkup = async (documentId, canvas) => {
+    saveCanvas = async (documentId, canvasPromise) => {
         // the document to save markup is either in props or provided 
         // (if we save on navigation to another doc in componentDidUpdate)
         const { documents } = this.props;
@@ -237,29 +156,14 @@ class EditorWrapper extends React.Component {
         if (doc) {
             const { editDocument, match } = this.props;
             const { workspaceId } = match.params;
-            
-            // retrieve parsed markup from the doc
-            const { parsedMarkup } = doc;
 
-            // acquire the string content
-            let content;
-            if (parsedMarkup) {
-                content = this.serializeMarkup(parsedMarkup);
-            }
-
-            // stringify the markup
-            const markup = JSON.stringify(parsedMarkup);
-
-            // save the json markup and the string content (for search)
-            let formValues = { workspaceId, documentId, markup };
-            if (content) formValues = {...formValues, content};
-
-            editDocument(formValues);
-            
             // if the image was successfully produced, save the image
-            if (canvas) {
-                let dataURL = canvas.toDataURL();
-                if (dataURL) editDocument({ workspaceId, documentId, image: dataURL });
+            if (canvasPromise) {
+                const canvas = await canvasPromise;
+                if (canvas) {
+                    let dataURL = canvas.toDataURL();
+                    if (dataURL) editDocument({ workspaceId, documentId, image: dataURL });
+                }
             }
         }
     }
@@ -273,29 +177,36 @@ class EditorWrapper extends React.Component {
     }
 
     renderTextEditor = () => {
-        const { documentModal, documents, loaded } = this.props;
+        const { documentModal, documents, loaded, match, renameDocument } = this.props;
+        const { initialMarkup } = this.state;
+        const { workspaceId } = match.params;
+
         const document = documents[this.getDocumentId(this.props)];
 
-        let editorJSX = (
-            <CSSTransition
-                in={true}
-                appear = {true}
-                timeout={300}
-                classNames="texteditor"
-            >   
-                <div>
-                    <TextEditor 
-                        onTitleChange = {this.onTitleChange}
-                        onMarkupChange = {this.onMarkupChange}
-                        document = {document}
-                        documentModal = {documentModal}
-                    />
-                </div>
-            </CSSTransition>
-        )
-
-        return  (loaded && document)  ? editorJSX : this.renderLoader();
-
+        if (loaded && document) {
+            return (
+                <CSSTransition
+                    in={true}
+                    appear = {true}
+                    timeout={300}
+                    classNames="texteditor"
+                >   
+                    <div>
+                        <TextEditor 
+                            syncRenameDocument = {syncRenameDocument}
+                            renameDocument = {renameDocument}
+                            initialMarkup = {initialMarkup}
+                            initialTitle = {document.title}
+                            document = {document}
+                            documentModal = {documentModal}
+                            workspaceId = {workspaceId}
+                        />
+                    </div>
+                </CSSTransition>
+            )
+        } else {
+            this.renderLoader();
+        }
     }
 
     renderWrappedTextEditor = () => {
@@ -326,7 +237,7 @@ EditorWrapper.propTypes = {
     documentModal: PropTypes.bool
 }
 
-export default withRouter(connect(mapStateToProps, { 
+export default withRouter(connect(mapStateToProps, { syncRenameDocument,
     getDocument, editDocument, renameDocument, syncEditDocument, setDocumentLoaded, testRoute })(EditorWrapper));
 
 const Container = styled.div`
@@ -352,3 +263,69 @@ const SubContainer = styled.div`
     padding-bottom: 2rem;
     justify-content: center;
 `
+
+/*
+    // returns the markup in string format
+    serializeMarkup = parsedMarkup => {
+        return(
+            parsedMarkup
+            // Return the string content of each paragraph in the value's children.
+            .map(n => Node.string(n))
+            // Join them all with line breaks denoting paragraphs.
+            .join('\n')
+        )
+    }
+
+
+saveMarkup = async (documentId, canvas) => {
+        // the document to save markup is either in props or provided 
+        // (if we save on navigation to another doc in componentDidUpdate)
+        const { documents } = this.props;
+        const doc = documents[documentId];
+     
+        if (doc) {
+            const { editDocument, match } = this.props;
+            const { workspaceId } = match.params;
+            
+            // retrieve parsed markup from the doc
+            
+            const { parsedMarkup } = doc;
+
+            // acquire the string content
+            let content;
+            if (parsedMarkup) {
+                content = this.serializeMarkup(parsedMarkup);
+            }
+
+            // stringify the markup
+            const markup = JSON.stringify(parsedMarkup);
+
+            // save the json markup and the string content (for search)
+            let formValues = { workspaceId, documentId, markup };
+            if (content) formValues = {...formValues, content};
+
+            //editDocument(formValues);
+            
+            // if the image was successfully produced, save the image
+            if (canvas) {
+                let dataURL = canvas.toDataURL();
+                if (dataURL) editDocument({ workspaceId, documentId, image: dataURL });
+            }
+        }
+    }
+
+
+    onMarkupChange = (parsedMarkup) => {
+        /*
+        const { channel } = this.state;
+
+        if (channel) {
+            //console.log("CHANNEL", channel);
+            channel.trigger('client-text-edit', parsedMarkup);
+        }
+
+        const { syncEditDocument } = this.props;
+        let documentId = this.getDocumentId(this.props);
+        syncEditDocument({_id: documentId, parsedMarkup });
+    }   
+*/

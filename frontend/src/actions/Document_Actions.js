@@ -256,6 +256,10 @@ export const testRoute = (formValues) => async () => {
     await api.post(`/testRoute`, formValues);
 }
 
+export const syncRenameDocument = (results) => (dispatch) => {
+    dispatch({ type: RENAME_DOCUMENT, payload: results });
+}
+
 // DONE
 export const renameDocument = (formValues) => async (dispatch) => {
 
@@ -271,7 +275,7 @@ export const renameDocument = (formValues) => async (dispatch) => {
     }
 
     const response = await api.put(`/documents/${workspaceId}/rename/${documentId}`, formValues);
-    console.log("RESULT OF RENAME", response.data.result);
+
     if (response.data.success == false) {
         if (response.data.alert) {
             alert(response.data.alert)
@@ -282,7 +286,7 @@ export const renameDocument = (formValues) => async (dispatch) => {
     }
     else {
         dispatch({ type: RENAME_DOCUMENT, payload: response.data.result });
-        return true
+        return response.data.result;
     }
 }
 

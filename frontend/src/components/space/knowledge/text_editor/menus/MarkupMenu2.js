@@ -422,7 +422,7 @@ const IconBorder = styled.div`
     justify-content: center;
     align-items: center;
 	font-size: 2.5rem;
-	border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.4) : "#E0E4E7"};
+	background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : "#f7f9fb"};
 	font-weight: 400;
 `
 
