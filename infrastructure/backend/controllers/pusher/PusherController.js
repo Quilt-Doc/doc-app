@@ -32,15 +32,6 @@ const handlePusherWebhook = async (req, res) => {
 
             const decodedData = decodeURIComponent(data);
 
-            /*
-            const { markupChanges, initialTitle } = JSON.parse(decodedData);
-
-            const newTitle =  Node.string(markupChanges[0]);
-
-            if (initialTitle !== newTitle) {
-
-            }*/
-
             return ({
                 updateOne: {
                     filter: { _id: documentId },
@@ -51,7 +42,6 @@ const handlePusherWebhook = async (req, res) => {
             })
         })
 
-        return res.json(200);
         //console.log("BULKWRITE PATH OPS", bulkWritePathOps);
 
         if (bulkWritePathOps.length > 0) {

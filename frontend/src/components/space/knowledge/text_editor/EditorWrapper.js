@@ -126,9 +126,18 @@ class EditorWrapper extends React.Component {
 
         // add the parsed content as a field in the document
         const { documents } = this.props;
-        const { markup } = documents[documentId];
+        const { markup, title } = documents[documentId];
 
-        this.setState({ initialMarkup: JSON.parse(markup) });
+        let initialMarkup = JSON.parse(markup);
+        if (Node.string(initialMarkup[0]) !== title) {
+            initialMarkup[0] = { 
+                type: 'title',
+                children: [
+                { text: title },
+                ],
+            }
+        }
+        this.setState({ initialMarkup });
         //syncEditDocument({_id: documentId, parsedMarkup: JSON.parse(markup)});
 
         // DOM is ready to be loaded
@@ -177,7 +186,7 @@ class EditorWrapper extends React.Component {
     }
 
     renderTextEditor = () => {
-        const { documentModal, documents, loaded, match, renameDocument } = this.props;
+        const { documentModal, documents, loaded, match, renameDocument, syncRenameDocument } = this.props;
         const { initialMarkup } = this.state;
         const { workspaceId } = match.params;
 

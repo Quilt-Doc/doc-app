@@ -7,11 +7,27 @@ import {useSelected, useSlate} from 'slate-react'
 
 const Leaf = ({ attributes, children, leaf }) => {
 
-	let editor = useSlate()
-	let {selection} = editor
+	let editor = useSlate();
+	let {selection} = editor;
+	const isSelected = useSelected(leaf);
+	const isEmpty = leaf.text === '';
 
-	
-	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){
+	if (isEmpty && children.props.parent.type === "title") {
+		children = <Container>
+						{children}
+						<span 
+							style = {{
+								position: "absolute",  
+								pointerEvents: "none", 
+								whiteSpace: "nowrap", 
+								opacity: 0.5,
+							}}
+							contentEditable = {false}
+						>
+							Untitled
+						</span>
+					</Container>
+	} else if (isSelected && isEmpty && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){
 		children = <Container>
 						{children}
 						<span 
@@ -28,8 +44,6 @@ const Leaf = ({ attributes, children, leaf }) => {
 											backgroundColor: "#E7EAFC" }}>/</span>
 							for quick commands
 						</span>
-					
-
 					</Container>
 	}
 

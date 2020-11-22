@@ -3,9 +3,9 @@ const Document = require('../models/Document');
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 
-const ReportingController = require('../controllers/reporting/ReportingController');
-const UserStatsController = require('../controllers/reporting/UserStatsController');
-const ActivityFeedItemController = require('../controllers/reporting/ActivityFeedItemController');
+const ReportingController = require('./reporting/ReportingController');
+const UserStatsController = require('./reporting/UserStatsController');
+const ActivityFeedItemController = require('./reporting/ActivityFeedItemController');
 
 var mongoose = require('mongoose');
 const UserStats = require('../models/reporting/UserStats');
@@ -67,8 +67,8 @@ createDocument = async (req, res) => {
                 throw new Error("createDocument error: no authorId provided.");
             }
 
-            if (!checkValid(title) || (title === "" && !root)) {
-                output = {success: false, error: "createDocument error: no title provided.", result: null, alert: "Please provide a title"};
+            if (!checkValid(title)) {
+                output = {success: false, error: "createDocument error: title param not provided.", result: null, alert: "Please provide a title"};
                 throw new Error("createDocument error: no title provided.");
             }
 
@@ -76,6 +76,7 @@ createDocument = async (req, res) => {
                 output = {success: false, error: "createDocument error: no markup provided."};
                 throw new Error("createDocument error: no markup provided.");
             }
+            /*
             // make sure title doesn't exist already in space
             try {
                 let duplicate = await Document.exists({title, workspace: workspaceId}, { session });
@@ -93,7 +94,7 @@ createDocument = async (req, res) => {
                                     function: 'createDocument'});
                 output = {success: false, error: "createDocument Error: validation on duplicate title failed.", trace: err};
                 throw new Error("createDocument Error: validation on duplicate title failed.");
-            }
+            }*/
 
             // Check that repositoryId is in accessible workspace
             const validRepositoryIds = req.workspaceObj.repositories;
@@ -143,25 +144,28 @@ createDocument = async (req, res) => {
                 throw newError("createDocument Error: no parentPath provided.");
             }
 
-            let documentPath = "";
-
-            // Remove dash from title for new path creation, path is only dependent on title and parentPath if root doesn't exist
-            // TODO: will need to add validation with regard to backslash (possibly)
-            if (!root) {    
-                let dashRemovedTitle = title.replace('/', "<replacedDash>");
-                documentPath = `${parent.path}/${dashRemovedTitle}`
-            }
 
             let document = new Document(
                 {
                     author: ObjectId(authorId),
                     workspace: ObjectId(workspaceId),
                     title,
-                    path: documentPath,
                     markup,
                     status: 'valid'
                 },
             );
+
+
+            //set path
+            let documentPath = "";
+
+            // Remove dash from title for new path creation, path is only dependent on title and parentPath if root doesn't exist
+            if (!root) {    
+                let dashRemovedTitle = title.replace('/', "<replacedDash>");
+                documentPath = `${parent.path}/${dashRemovedTitle}-${document._id}`
+            }
+
+            document.path = documentPath;
 
             // set optional fields of document
             if (checkValid(root)) document.root = root;
@@ -413,7 +417,7 @@ moveDocument = async (req, res) => {
         
                 // mongoose bulkwrite for one many update db call
                 try {
-                await Document.bulkWrite(bulkWritePathOps, { session });
+                    await Document.bulkWrite(bulkWritePathOps, { session });
                 } catch (err) {
                     await logger.error({source: 'backend-api',
                                         error: err,
@@ -603,14 +607,14 @@ deleteDocument = async (req, res) => {
 
 // title + path of main doc changed, path of descendants changed
 renameDocument = async (req, res) => {
-    console.log("RENAMING NOW");
     // extract new title that will be used to rename
     const session = await db.startSession();
-    console.log("RENAME ENTERED");
+
     let output = {};
     try {
         await session.withTransaction(async () => {
             const { title } = req.body;
+
             if (!checkValid(title)) {
                 output = {success: false, error: 'renameDocument: error no title provided', alert: "Please provide a title"};
                 throw new Error('renameDocument: error no title provided');
@@ -623,6 +627,7 @@ renameDocument = async (req, res) => {
                                 message: `Rename Document attempting to rename ${documentObj._id} - workspaceId, userId, oldTitle, newTitle: ${workspaceId}, ${req.tokenPayload.userId}, ${documentObj.title}, ${title}`,
                                 function: 'renameDocument'});
 
+            /*
             // make sure title doesn't exist already in space
             try {
                 let duplicate = await Document.exists({title, workspace: workspaceId}, { session });
@@ -643,7 +648,7 @@ renameDocument = async (req, res) => {
 
                 output = {success: false, error: "renameDocument Error: validation on duplicate title failed.", alert: "Duplicate title in space.. Please select a unique title", trace: err};
                 throw new Error("renameDocument Error: validation on duplicate title failed.");
-            }
+            }*/
             
 
             // extract prefix path for all documents that will need to be updated (path) by name change 
@@ -666,23 +671,19 @@ renameDocument = async (req, res) => {
             }
 
             // the new path of the renamed doc
-            let documentPath = documentObj.path;
-            documentPath = documentPath.slice(0, documentPath.length - documentObj.title.length) + title;
-
             let splitDocumentPath = documentObj.path.split('/');
             splitDocumentPath = splitDocumentPath.slice(0, splitDocumentPath.length - 1)
-            
-            let subDocPath = `${splitDocumentPath.join('/')}/${title}-${documentObj._id}`;
-            console.log("SPLIT DOC PATH", subDocPath);
+
+            const modTitle = title.replace('/', "<replacedDash>");
+
+            let documentPath = `${splitDocumentPath.join('/')}/${modTitle}-${documentObj._id}`;
+
+            //documentPath.slice(0, documentPath.length - documentObj.title.length) + title;
 
             // create update ops for each descendant of renamed doc + the actual renamed doc
             let bulkWritePathOps = renamedDocuments.map((doc) => {
                 // new path is the new parent path + (old path without old parent path prefix)
-                console.log("DOCUMENT PATH", documentPath);
-                console.log("SLICED PATH", doc.path.slice(documentObj.path.length, doc.path.length));
-                
                 let newPath = documentPath + doc.path.slice(documentObj.path.length, doc.path.length);
-
                 let update = doc._id.equals(documentObj._id) ? { $set: { path: newPath, title } } : { $set: { path: newPath } };
                 return ({
                     updateOne: {
@@ -762,7 +763,7 @@ getDocument = async (req, res) => {
 
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
-    const { markup, referenceIds, repositoryId, image, content, title } = req.body;
+    const { markup, referenceIds, repositoryId, image, content } = req.body;
 
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();

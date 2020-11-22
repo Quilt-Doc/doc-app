@@ -257,6 +257,7 @@ export const testRoute = (formValues) => async () => {
 }
 
 export const syncRenameDocument = (results) => (dispatch) => {
+    console.log("RESULTS IN ACTION", results);
     dispatch({ type: RENAME_DOCUMENT, payload: results });
 }
 
