@@ -46,6 +46,7 @@ import styled from "styled-components";
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import AttachmentMenu from '../menus/AttachmentMenu'
+import { editDocument } from '../../../../../actions/Document_Actions'
 
 
 //PREVENT SCROLL IF ACTIVE
@@ -78,7 +79,7 @@ Pusher.Runtime.createXHR = () => {
 }
 
 const TextEditor = (props) => {
-	const { workspaceId, initialMarkup, initialTitle, syncRenameDocument, renameDocument, document: { _id } } = props;
+	const { workspaceId, initialMarkup, initialTitle, syncRenameDocument, editDocument, renameDocument, document: { _id } } = props;
 
 	const [value, setValue] = useState(initialMarkup);
 
@@ -107,6 +108,7 @@ const TextEditor = (props) => {
 	//PUSHER
 	const presenceChannelName =  useMemo(() => `presence-${_id}`, []);
 
+	
 	const pusher = useMemo(() => new Pusher("8a6c058f2c0eb1d4d237", {
 		cluster: "mt1",
 		authEndpoint: `http://localhost:3001/api/documents/${workspaceId}/pusher/auth`
@@ -228,7 +230,7 @@ const TextEditor = (props) => {
 			}
 		}
 	}, [presenceChannel, writerId]);
-	 
+
 	const makeMarkupChanges = useMemo(() => (markupChanges) => {
 
 		//SHOW SAVING
@@ -240,7 +242,11 @@ const TextEditor = (props) => {
 		
 		const timeout = setTimeout(async () => { 
 			if (presenceChannel && subSuccess && writerId === presenceChannel.members.me.id) {
-				const encodedMarkup = encodeURIComponent(JSON.stringify(markupChanges));
+				const stringifiedMarkup = JSON.stringify(markupChanges);
+
+				editDocument({ workspaceId, documentId: _id, markup: stringifiedMarkup});
+
+				const encodedMarkup = encodeURIComponent(stringifiedMarkup);
 				presenceChannel.trigger('client-text-edit', encodedMarkup);
 				
 				const newTitle = Node.string(markupChanges[0]);
@@ -262,7 +268,7 @@ const TextEditor = (props) => {
 					setTitleTimeout(newTitleTimeout);
 				}
 			}
-		}, 500);
+		}, 600);
 
 		setSaveTimeout(timeout);
 		//onMarkupChange(markupChanges);
@@ -330,6 +336,7 @@ const TextEditor = (props) => {
 										<MarkupMenu2 
 											documentModal = {props.documentModal} 
 											dispatch={dispatch} 
+											doc = {props.document}
 										/>
 									}
 									{isAttachmentMenuActive &&
@@ -356,6 +363,7 @@ const TextEditor = (props) => {
 									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}
 									<StyledEditable
 										id = {"editorSlate"}
+										placeholder={"Today we will see progress"}
 										paddingLeft = {write ? 3 : 10}
 										cursortype = {write}
 										onKeyDown={(event) => onKeyDownHelper(event, state, editor)}
@@ -365,6 +373,7 @@ const TextEditor = (props) => {
 										decorate= {decorate}
 										readOnly = {!write}
 										autoFocus = {true}
+										
 									/>
 							</EditorContainer2>
 					</EditorContainer>
@@ -470,6 +479,7 @@ const ToolbarsContainer = styled.div`
 const Container = styled.div`
 	display: flex;	
 	justify-content: center;
+	min-width: 65rem;
 `
 
 const EditorContainer2 = styled.div`
@@ -528,11 +538,17 @@ const StyledEditable = styled(Editable)`
 	color: #172A4E;
 	font-size: 16px;
 	resize: none !important;
-	padding-bottom: 7rem;
+	padding-bottom: 15rem;
 	min-height: 75rem;
 	cursor: ${props => props.cursortype ? "text" : "default"};
 	padding-left: ${props => `${props.paddingLeft}rem`};
 	padding-right: 10rem;
+
+	&::placeholder {
+		font-size: 16px;
+		color: #172A4E;
+		opacity: 0.5;
+	}
 `	
 
 /*

@@ -1,16 +1,16 @@
 //models
-const Document = require('../models/Document');
-const Repository = require('../models/Repository');
-const Reference = require('../models/Reference');
+const Document = require('../../models/Document');
+const Repository = require('../../models/Repository');
+const Reference = require('../../models/Reference');
 
-const ReportingController = require('./reporting/ReportingController');
-const UserStatsController = require('./reporting/UserStatsController');
-const ActivityFeedItemController = require('./reporting/ActivityFeedItemController');
+const ReportingController = require('../reporting/ReportingController');
+const UserStatsController = require('../reporting/UserStatsController');
+const ActivityFeedItemController = require('../reporting/ActivityFeedItemController');
 
 var mongoose = require('mongoose');
-const UserStats = require('../models/reporting/UserStats');
+const UserStats = require('../../models/reporting/UserStats');
 const { ObjectId } = mongoose.Types;
-const logger = require('../logging/index').logger;
+const logger = require('../../logging/index').logger;
 
 // grab the Mixpanel factory
 const Mixpanel = require('mixpanel');

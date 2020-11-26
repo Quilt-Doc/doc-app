@@ -404,7 +404,7 @@ const BlockMenu = styled.div`
     background-color: white;
 
     z-index: 0;
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     margin-top: 30rem;
     margin-left: -15.5rem;
     margin-left: ${props => {return props.marginLeft}}rem;

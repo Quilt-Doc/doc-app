@@ -243,6 +243,7 @@ export const getDocument = (formValues) => async dispatch => {
 
     const response = await api.get(`/documents/${workspaceId}/get/${documentId}`);
 
+    console.log("RESPONSE OF GET", response.data.result);
     if (response.data.success == false) {
         throw new Error(response.data.error);
     }
@@ -257,7 +258,6 @@ export const testRoute = (formValues) => async () => {
 }
 
 export const syncRenameDocument = (results) => (dispatch) => {
-    console.log("RESULTS IN ACTION", results);
     dispatch({ type: RENAME_DOCUMENT, payload: results });
 }
 

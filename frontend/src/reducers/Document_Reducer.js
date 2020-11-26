@@ -35,6 +35,7 @@ export default (state = {}, action) => {
             if (state[action.payload._id]) {
                 action.payload.open = state[action.payload._id].open;
             } 
+            console.log("GET RESPONSE REDUCER", { ...state, [action.payload._id]: action.payload });
             return { ...state, [action.payload._id]: action.payload };
         case RETRIEVE_DOCUMENTS:
             // merge incoming payload with new state

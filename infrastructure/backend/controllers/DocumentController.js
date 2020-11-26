@@ -765,6 +765,7 @@ getDocument = async (req, res) => {
 editDocument = async (req, res) => {
     const { markup, referenceIds, repositoryId, image, content } = req.body;
 
+    console.log("ENTERED EDIT DOCUMENT");
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
 

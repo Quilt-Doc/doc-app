@@ -15,21 +15,37 @@ import { connect } from 'react-redux';
 
 //router
 import { withRouter } from 'react-router-dom';
+import history from '../../../../../../history';
 
 //loader
 import { Oval } from 'svg-loaders-react';
 
 const Attachment = (props) => {
-    const { attributes, children, element, doc, getUpload } = props;
+    const { attributes, children, element, documents, getUpload } = props;
     const { name, path } = element;
-    console.log("DOC", doc);
+
+    const getDocumentId = (props) => {
+        const { match } = props;
+        let { documentId } = match.params;
+
+        // if the editor is a modal, the id is in the params
+        if (!documentId) {
+            let search = history.location.search;
+            let params = new URLSearchParams(search);
+            documentId = params.get('document');
+        }
+
+        return documentId;
+    }
+
+    const doc = documents[getDocumentId(props)];
 
     const handleMouseDown = (e) => {
         e.preventDefault();
         if (doc.attachments.includes(path)) {
             getUpload({fileName: path});
         } else {
-            alert("BAAH");
+            alert("Error: Attachment cannot be downloaded")
         }
     }
 
@@ -52,11 +68,8 @@ const Attachment = (props) => {
 
 const mapStateToProps = (state, ownProps) => {
     const { documents } = state;
-    const { documentId } = ownProps.match.params;
-    const doc = documents[documentId];
-
     return { 
-        doc
+        documents
     }
 }
 

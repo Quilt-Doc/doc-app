@@ -136,10 +136,20 @@ const withFunctionality = (editor, dispatch) => {
 		} else if (block.type === 'list-item') {
 			if (Node.string(block) === "") {
 				event.preventDefault()
-				Transforms.unwrapNodes(editor, {
-					match: n => n.type === 'bulleted-list',
-					split: true,
-				})
+
+				let listMatch = true;
+
+				while (listMatch) {
+					Transforms.unwrapNodes(editor, {
+						match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list'),
+						split: true,
+					})
+
+					listMatch =  Editor.above(editor, {
+						match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list')
+					})
+				}
+
 				Transforms.setNodes(editor, { type: 'paragraph' })
 			}
 		} else if (block.type === 'check-list') {
@@ -226,10 +236,19 @@ const withFunctionality = (editor, dispatch) => {
 					Transforms.setNodes(editor, { type: 'paragraph' })
 					
 					if (block.type === 'list-item') {
-						Transforms.unwrapNodes(editor, {
-							match: n => n.type === 'bulleted-list',
-							split: true,
-						})
+						
+						let listMatch = true;
+
+						while (listMatch) {
+							Transforms.unwrapNodes(editor, {
+								match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list'),
+								split: true,
+							})
+		
+							listMatch =  Editor.above(editor, {
+								match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list')
+							})
+						}
 					}
 					return
 				} else if ( block.type == 'paragraph' 
