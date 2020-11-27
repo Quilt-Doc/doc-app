@@ -243,6 +243,7 @@ export const getDocument = (formValues) => async dispatch => {
 
     const response = await api.get(`/documents/${workspaceId}/get/${documentId}`);
 
+    console.log("RESPONSE OF GET", response.data.result);
     if (response.data.success == false) {
         throw new Error(response.data.error);
     }

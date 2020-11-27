@@ -85,32 +85,6 @@ class EditorWrapper extends React.Component {
         return documentId;
     }
 
-    onTitleChange = async (e) => {
-        console.log("E TARGET VALUE", e.target.value);
-        /*
-        const { syncEditDocument, documents } = this.props;
-        const documentId = this.getDocumentId(this.props);
-
-        const document = documents[documentId];
-        const uneditedTitle = document.title;
-        console.log("UNEDITEDTITLE BEFO", uneditedTitle);
-        syncEditDocument({_id: documentId, title: e.target.value});
-
-        const { renameDocument, match } = this.props;
-        const { workspaceId } = match.params;
-
-        // on blur of title input, rename the document
-        if (e.type === "blur") {
-            console.log("ENTERED IN HERE TITLE CHANGE");
-            console.log("UNEDITEDTITLE", uneditedTitle);
-            console.log("TARGET", e.target.value);
-            if (uneditedTitle !== e.target.value) {
-                let changed = await renameDocument({workspaceId, documentId, title: e.target.value});
-                if (!changed) syncEditDocument({_id: documentId, title: uneditedTitle});
-            }
-        }*/
-    }
-
     // loads all the data needed for the editor
     loadResources = async () => {
         const { match, getDocument, setDocumentLoaded, syncEditDocument, loaded } = this.props;
@@ -126,9 +100,18 @@ class EditorWrapper extends React.Component {
 
         // add the parsed content as a field in the document
         const { documents } = this.props;
-        const { markup } = documents[documentId];
+        const { markup, title } = documents[documentId];
 
-        this.setState({ initialMarkup: JSON.parse(markup) });
+        let initialMarkup = JSON.parse(markup);
+        if (Node.string(initialMarkup[0]) !== title) {
+            initialMarkup[0] = { 
+                type: 'title',
+                children: [
+                { text: title },
+                ],
+            }
+        }
+        this.setState({ initialMarkup });
         //syncEditDocument({_id: documentId, parsedMarkup: JSON.parse(markup)});
 
         // DOM is ready to be loaded
@@ -177,7 +160,7 @@ class EditorWrapper extends React.Component {
     }
 
     renderTextEditor = () => {
-        const { documentModal, documents, loaded, match, renameDocument } = this.props;
+        const { documentModal, documents, loaded, match, renameDocument, syncRenameDocument, editDocument } = this.props;
         const { initialMarkup } = this.state;
         const { workspaceId } = match.params;
 
@@ -195,6 +178,7 @@ class EditorWrapper extends React.Component {
                         <TextEditor 
                             syncRenameDocument = {syncRenameDocument}
                             renameDocument = {renameDocument}
+                            editDocument = {editDocument}
                             initialMarkup = {initialMarkup}
                             initialTitle = {document.title}
                             document = {document}
@@ -205,7 +189,7 @@ class EditorWrapper extends React.Component {
                 </CSSTransition>
             )
         } else {
-            this.renderLoader();
+            return this.renderLoader();
         }
     }
 
@@ -328,4 +312,31 @@ saveMarkup = async (documentId, canvas) => {
         let documentId = this.getDocumentId(this.props);
         syncEditDocument({_id: documentId, parsedMarkup });
     }   
+
+
+    onTitleChange = async (e) => {
+        console.log("E TARGET VALUE", e.target.value);
+        /*
+        const { syncEditDocument, documents } = this.props;
+        const documentId = this.getDocumentId(this.props);
+
+        const document = documents[documentId];
+        const uneditedTitle = document.title;
+        console.log("UNEDITEDTITLE BEFO", uneditedTitle);
+        syncEditDocument({_id: documentId, title: e.target.value});
+
+        const { renameDocument, match } = this.props;
+        const { workspaceId } = match.params;
+
+        // on blur of title input, rename the document
+        if (e.type === "blur") {
+            console.log("ENTERED IN HERE TITLE CHANGE");
+            console.log("UNEDITEDTITLE", uneditedTitle);
+            console.log("TARGET", e.target.value);
+            if (uneditedTitle !== e.target.value) {
+                let changed = await renameDocument({workspaceId, documentId, title: e.target.value});
+                if (!changed) syncEditDocument({_id: documentId, title: uneditedTitle});
+            }
+        }
+    }
 */

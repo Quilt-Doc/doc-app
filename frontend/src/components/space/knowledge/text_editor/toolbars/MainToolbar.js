@@ -52,6 +52,11 @@ class MainToolbar extends React.Component {
         const { document } = this.props;
         if (document) {
             let paths = this.props.document.path.split('/').slice(1);
+            paths = paths.map(path => {
+                let dashSplit = path.split('-');
+                const joinedSplit = dashSplit.slice(0, dashSplit.length - 1).join('-');
+                return joinedSplit ? joinedSplit : "Untitled";
+            });
 
             if (paths.length > 3) {
                 paths = [paths[0], '...', paths[paths.length - 2], paths[paths.length - 1]];

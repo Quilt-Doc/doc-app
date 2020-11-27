@@ -7,12 +7,54 @@ import {useSelected, useSlate} from 'slate-react'
 
 const Leaf = ({ attributes, children, leaf }) => {
 
-	let editor = useSlate()
-	let {selection} = editor
+	let editor = useSlate();
+	let {selection} = editor;
+	const isSelected = useSelected(leaf);
+	const isEmpty = leaf.text === '';
+	const type = children.props.parent.type;
 
-	
-	if (useSelected(leaf) && leaf.text === '' && children.props.parent.type === "paragraph" && Range.isCollapsed(selection)){
-		children = <Container>
+	if (isEmpty) {
+		if (type === "title") {
+			children = <Container>
+						{children}
+						<span 
+							style = {{
+								position: "absolute",  
+								pointerEvents: "none", 
+								whiteSpace: "nowrap", 
+								opacity: 0.5,
+							}}
+							contentEditable = {false}
+						>
+							Untitled
+						</span>
+					</Container>
+		} else if (type === "paragraph") {
+			if (editor.children.length === 2) {
+				children = <Container>
+						{children}
+						<ContainedSpan
+							style = {{
+								position: "absolute",  
+								pointerEvents: "none", 
+								opacity: 0.5,
+								fontWeight: 400 
+							}}
+							contentEditable = {false}
+						>
+							Get started by typing here! If you'd like to use quick commands, start by inserting	
+							<span style = {{ fontWeight: 500,
+								padding: "0.25rem 0.9rem",
+								borderRadius: "0.3rem",
+								cursor: "text",
+								marginLeft: "0.5rem",
+								marginRight: "0.5rem",
+								backgroundColor: "#E7EAFC" }}>/</span>. If you'd like to switch between block types, you can
+								use the sidebar on the left.
+						</ContainedSpan>
+					</Container>
+			} else if (isSelected && Range.isCollapsed(selection)) {
+				children = <Container>
 						{children}
 						<span 
 							style = {{position: "absolute",  pointerEvents: "none", whiteSpace: "nowrap", opacity: 0.5,
@@ -28,11 +70,11 @@ const Leaf = ({ attributes, children, leaf }) => {
 											backgroundColor: "#E7EAFC" }}>/</span>
 							for quick commands
 						</span>
-					
-
 					</Container>
+			}
+		}
 	}
-
+	
 	if (leaf.bold) {
 		children = <strong>{children}</strong>
 	}
@@ -68,6 +110,12 @@ const Leaf = ({ attributes, children, leaf }) => {
 }
 
 export default Leaf;
+
+const ContainedSpan = styled.span`
+	word-wrap: break-word;
+	width: 80%;
+	
+`
 
 const BackColoredSpan = styled.span`
 	background-color: ${props => props.backColor};

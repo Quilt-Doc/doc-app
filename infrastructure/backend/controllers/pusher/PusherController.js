@@ -19,27 +19,18 @@ const logger = require('../../logging/index').logger;
 const handlePusherWebhook = async (req, res) => {
     const bodyString = JSON.stringify(req.body);
     const hmac = CryptoJS.HmacSHA256(bodyString, PUSHER_SECRET).toString(CryptoJS.enc.Hex);
-
+    /*
     if (hmac === req.headers['x-pusher-signature']) {
         const { events } = req.body;
 
         let editEvents = events.filter(ev => ev.event === "client-text-edit");
         //console.log("EDIT EVENTS", editEvents);
-
+        
         let bulkWritePathOps = editEvents.map(ev => {
             const { data, channel } = ev;
             const documentId = channel.split('-')[1];
 
             const decodedData = decodeURIComponent(data);
-
-            /*
-            const { markupChanges, initialTitle } = JSON.parse(decodedData);
-
-            const newTitle =  Node.string(markupChanges[0]);
-
-            if (initialTitle !== newTitle) {
-
-            }*/
 
             return ({
                 updateOne: {
@@ -51,7 +42,6 @@ const handlePusherWebhook = async (req, res) => {
             })
         })
 
-        return res.json(200);
         //console.log("BULKWRITE PATH OPS", bulkWritePathOps);
 
         if (bulkWritePathOps.length > 0) {
@@ -72,6 +62,8 @@ const handlePusherWebhook = async (req, res) => {
     } else {
         return res.status(404);
     }
+    */
+   return res.status(200);
 }
 
 module.exports = {

@@ -90,14 +90,17 @@ const SnippetEmbeddable = props => {
     useEffect(() => {
         const { workspaceId, documentId } = match.params;
 
-        const asyncGetSnippet = async () => {
-            await getSnippet({workspaceId, snippetId});
+        if (!snippet) {
+            const asyncGetSnippet = async () => {
+                await getSnippet({workspaceId, snippetId});
+            }
+            
+            asyncGetSnippet();
         }
-        
-        asyncGetSnippet();
+
         if (snippet && snippet.reference) renderSnippet();
 
-    }, []);
+    }, [snippet]);
 
     /*
     useEffect(() => {
@@ -109,6 +112,7 @@ const SnippetEmbeddable = props => {
     }, [isSelected])
     */
 
+    //this shits prob slowing it
     useEffect(() => {
         if (editor.selection) {
             const elementPath =  ReactEditor.findPath(editor, element);
@@ -349,8 +353,12 @@ const SnippetEmbeddable = props => {
 const mapStateToProps = (state, ownProps) => {
     const { element: { snippetId } } = ownProps;
     const { snippets } = state;
+    const foundSnippet = snippets[snippetId];
+    console.log("SNIPPETID", snippetId);
+    console.log("SNIPPETS", snippets);
+    console.log("ACTUAL SNIPPET",  foundSnippet);
     return {
-        snippet: snippets[snippetId]
+        snippet: foundSnippet
     }
 }
 

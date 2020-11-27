@@ -22,10 +22,14 @@ import { connect } from 'react-redux';
 //router
 import { withRouter } from 'react-router-dom';
 import { Transforms } from 'slate';
+import history from '../../../../../history';
+
+//icons
 import { IoMdAttach } from 'react-icons/io';
 
+
 const AttachmentMenu = (props) => {
-    const { uploadAttachment, match, doc, dispatch, documentModal } = props;
+    const { uploadAttachment, match, dispatch, documentModal } = props;
 
     const [open, setOpen] = useState(false);
     const [rect, setRect] = useState(null);
@@ -68,18 +72,6 @@ const AttachmentMenu = (props) => {
     const calculateRect = (clientRect) => {
         const { top, left, height } = clientRect;
         let rect = { top, left, height };
-        
-        if (documentModal) {	
-            const { scrollTop } = document.getElementById("documentModalBackground");
-            rect.top = rect.top + scrollTop;
-        } else {
-            /*
-            console.log("ENTERD HERE");
-            const { scrollTop } = document.getElementById("rightView");
-            console.log("SCROLL TOP", scrollTop)
-            rect.top = rect.top - scrollTop;
-            */
-        }
        
         /*
         if (this.menu.current) {
@@ -97,8 +89,24 @@ const AttachmentMenu = (props) => {
         return rect;
     }
 
+    const getDocumentId = (props) => {
+        const { match } = props;
+        let { documentId } = match.params;
+
+        // if the editor is a modal, the id is in the params
+        if (!documentId) {
+            let search = history.location.search;
+            let params = new URLSearchParams(search);
+            documentId = params.get('document');
+        }
+
+        return documentId;
+    }
+
     const handleFileUpload = (event) => {
-        const { documentId, workspaceId } = match.params;
+        const { workspaceId } = match.params;
+
+        const documentId = getDocumentId(props);
 
         if (!initialSelection) return;
             
@@ -152,13 +160,7 @@ const AttachmentMenu = (props) => {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const { documents } = state;
-    const { documentId } = ownProps.match.params;
-    const doc = documents[documentId];
-
-    return { 
-        doc
-    }
+    return { }
 }
 
 export default withRouter(connect(mapStateToProps, { uploadAttachment })(AttachmentMenu));
@@ -200,7 +202,7 @@ const Container = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     color:  #172A4e;
     margin-top: 2.2rem;
 `

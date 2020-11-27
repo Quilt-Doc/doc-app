@@ -111,17 +111,6 @@ class SnippetMenu extends React.Component {
         const { top, left, height } = clientRect;
         let rect = { top, left, height };
         
-        if (documentModal) {	
-            const { scrollTop } = document.getElementById("documentModalBackground");
-            rect.top = rect.top + scrollTop;
-        } else {
-            /*
-            console.log("ENTERD HERE");
-            const { scrollTop } = document.getElementById("rightView");
-            console.log("SCROLL TOP", scrollTop)
-            rect.top = rect.top - scrollTop;
-            */
-        }
        
         /*
         if (this.menu.current) {
@@ -447,7 +436,7 @@ const Container = styled.div`
     z-index: 1;
     background-color: white;
     border-radius: 0.3rem;
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     color: #172A4E;
     margin-top: 2.2rem;
 `

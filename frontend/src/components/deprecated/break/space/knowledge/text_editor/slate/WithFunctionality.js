@@ -134,7 +134,7 @@ const withFunctionality = (editor, dispatch) => {
 			if (Node.string(block) === ""){
 				event.preventDefault()
 				Transforms.unwrapNodes(editor, {
-					match: n => n.type === 'bulleted-list',
+					match: n => (n.type === 'bulleted-list' || n.type === "numbered-list"),
 					split: true,
 				})
 				Transforms.setNodes(editor, { type: 'paragraph' })

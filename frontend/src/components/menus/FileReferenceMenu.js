@@ -352,17 +352,22 @@ const Title = styled.div`
 const AddButton = styled.div`
     height: 3rem;
     width: 3rem;
-    border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.2) : "#E0E4e7"}; 
+    /*border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.2) : "#E0E4e7"}; */
     border-radius: 50%;
+    
     font-size: 1.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    
+    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    /*
     background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : ""};
+    */
     &:hover {
-        background-color: ${props => props.active ?  chroma('#6762df').alpha(0.2) : "#F4F4F6" };
+        background-color: ${chroma('#6762df').alpha(0.2)};
     }
+    background-color: ${chroma('#6762df').alpha(0.1)};
     cursor: pointer;
 `
 
@@ -374,7 +379,7 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     position: absolute;
     border-radius: 0.2rem;
     font-size: 1.4rem;

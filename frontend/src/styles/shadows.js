@@ -10,3 +10,6 @@ export const DARK_SHADOW_4 = "0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px
 //LIGHT
 export const LIGHT_SHADOW_1 = "rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px";
 export const LIGHT_SHADOW_2 = "0 1px 4px 0 rgba(21,27,38,.08)";
+
+//COMPONENT SHADOWS
+export const MENU_SHADOW = "rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px";

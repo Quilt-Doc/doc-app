@@ -46,6 +46,7 @@ import styled from "styled-components";
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import AttachmentMenu from '../menus/AttachmentMenu'
+import { editDocument } from '../../../../../actions/Document_Actions'
 
 
 //PREVENT SCROLL IF ACTIVE
@@ -77,13 +78,10 @@ Pusher.Runtime.createXHR = () => {
 	return xhr
 }
 
-
-
 const TextEditor = (props) => {
-	const { workspaceId, initialMarkup, initialTitle, syncRenameDocument, renameDocument, document: { _id } } = props;
+	const { workspaceId, initialMarkup, initialTitle, syncRenameDocument, editDocument, renameDocument, document: { _id } } = props;
 
 	const [value, setValue] = useState(initialMarkup);
-	const [title, setTitle] = useState(initialTitle);
 
 	const [writerId, setWriterId] = useState(null);
 
@@ -94,6 +92,7 @@ const TextEditor = (props) => {
 	const [subSuccess, setSubSuccess] = useState(false);
 	const [setOptions, toggleOptions] = useState(false);
 	const [saveTimeout, setSaveTimeout] = useState(null);
+	const [titleTimeout, setTitleTimeout] = useState(null);
 
 	const initialState = {
 		isMarkupMenuActive: false, 
@@ -109,6 +108,7 @@ const TextEditor = (props) => {
 	//PUSHER
 	const presenceChannelName =  useMemo(() => `presence-${_id}`, []);
 
+	
 	const pusher = useMemo(() => new Pusher("8a6c058f2c0eb1d4d237", {
 		cluster: "mt1",
 		authEndpoint: `http://localhost:3001/api/documents/${workspaceId}/pusher/auth`
@@ -156,37 +156,6 @@ const TextEditor = (props) => {
 		return () => {
 			if (presenceChannel) {
 				presenceChannel.unbind('client-text-edit');
-			}
-		}
-	}, [presenceChannel]);
-
-	useEffect(() => {
-		if (presenceChannel) {
-			presenceChannel.bind('client-transform-editor', (ops) => {
-				//setValue(markup);
-
-				//console.log("OPS", ops);
-
-				//console.log("BEFORE MARKUP", value)
-				ops.map(op => {
-					if (op.type !== "set_selection") {
-						console.log("APPLYIING: ", op);
-						editor.apply(op);
-					}
-				});
-				
-				//console.log("AFTER MARKUP", value);
-				//const decodedMarkup = JSON.parse(decodeURIComponent(markup));
-
-				//setValue(decodedMarkup);
-				//onMarkupChange(markup);
-
-			});
-		}
-
-		return () => {
-			if (presenceChannel) {
-				presenceChannel.unbind('client-transform-editor');
 			}
 		}
 	}, [presenceChannel]);
@@ -246,7 +215,6 @@ const TextEditor = (props) => {
 				presenceChannel.unbind('pusher:member_removed');
 			}
 		}
-
 	}, [presenceChannel, writerId]);
 
 	useEffect(() => {
@@ -261,11 +229,9 @@ const TextEditor = (props) => {
 				presenceChannel.unbind('client-rename-document');
 			}
 		}
-
 	}, [presenceChannel, writerId]);
-	 
+
 	const makeMarkupChanges = useMemo(() => (markupChanges) => {
-		//console.log("MARKUP CHANGES", markupChanges);
 
 		//SHOW SAVING
 		setValue(markupChanges);
@@ -273,67 +239,47 @@ const TextEditor = (props) => {
 		if (saveTimeout) {
 			clearTimeout(saveTimeout);
 		}
-
-
-		const ops = editor.operations;
-		let groundTruth = true;
-
-		for (let i = 0; i < ops.length; i++){
-			if (ops[i].id) {
-				groundTruth = false;
-				break;
-			}
-		}
-
-		const taggedOps = ops.map(op => {
-			return {id: presenceChannel.members.me.id, ...op} 
-		});
-
-		if (groundTruth) {
-			presenceChannel.trigger('client-transform-editor',	taggedOps);
-			//console.log("TAGGED OPS", taggedOps);
-		}
 		
-
-		const timeout = setTimeout(() => { 
+		const timeout = setTimeout(async () => { 
 			if (presenceChannel && subSuccess && writerId === presenceChannel.members.me.id) {
-				//const encodedMarkup = encodeURIComponent(JSON.stringify(markupChanges));
-				//presenceChannel.trigger('client-text-edit', encodedMarkup);
-				//presenceChannel.trigger('client-transform-editor', ops);
-				//console.log("NEW TITLE", Node.string(markupChanges[0]));
-				//console.log("INITIAL TITLE", initialTitle);
+				const stringifiedMarkup = JSON.stringify(markupChanges);
 
+				editDocument({ workspaceId, documentId: _id, markup: stringifiedMarkup});
+
+				const encodedMarkup = encodeURIComponent(stringifiedMarkup);
+				presenceChannel.trigger('client-text-edit', encodedMarkup);
 				
-				//if (initialTitle !== Node.string(markupChanges[0])) {
-				//	console.log("CHa")
-					/*
-					Transforms.delete(editor, {at: [0]});
-					Transforms.insertText(editor, initialTitle, {at: [0]});
-					*/
-					/*
-					const results = renameDocument({workspaceId, documentId: _id, title: Node.string(markupChanges[0])});
-					if (results) {
-						presenceChannel.trigger('client-rename-document', results);
-					} else {
-						//set the title in markup back to initialTitle
-						Transforms
-					}*/
-				//}
-				//presenceChannel.trigger('client-text-edit', troll);
+				const newTitle = Node.string(markupChanges[0]);
+				if (initialTitle !== newTitle) {
+
+					if (titleTimeout) {
+						clearTimeout(titleTimeout);
+					}
+
+					const newTitleTimeout = setTimeout(async () => {
+						const results = await renameDocument({workspaceId, documentId: _id, title: newTitle});
+						if (results) {
+							presenceChannel.trigger('client-rename-document', results);
+						} else {
+							Transforms.insertText(editor, initialTitle, {at: [0]});
+						}
+					}, 1000);
+					
+					setTitleTimeout(newTitleTimeout);
+				}
 			}
-		}, 500);
+		}, 600);
 
 		setSaveTimeout(timeout);
 		//onMarkupChange(markupChanges);
-	}, [saveTimeout, presenceChannel, writerId, subSuccess]);
+	}, [titleTimeout, saveTimeout, presenceChannel, writerId, subSuccess]);
 	
 	const setWriteHelper = useMemo(() => () => {
 		
 		if (!presenceChannel || !subSuccess) return;
 
 		const presenceId = presenceChannel.members.me.id;
-		setWriterId(presenceId);
-		/*
+		
 		if (writerId) {
 			if (writerId === presenceId) {
 				presenceChannel.trigger('client-set-writer', 'clear writer');
@@ -344,7 +290,8 @@ const TextEditor = (props) => {
 		} else {
 			presenceChannel.trigger('client-set-writer', presenceId);
 			setWriterId(presenceId);
-		}*/
+		}
+
 	}, [writerId, presenceChannel, subSuccess]);
 
 	const write = useMemo(() => {
@@ -353,7 +300,7 @@ const TextEditor = (props) => {
 		const presenceId = presenceChannel.members.me.id;
 		return presenceId === writerId;
 
-	}, [presenceChannel, writerId, subSuccess])
+	}, [presenceChannel, writerId, subSuccess]);
 
 
 	//value={parsedMarkup} onChange={onMarkupChange}>
@@ -389,6 +336,7 @@ const TextEditor = (props) => {
 										<MarkupMenu2 
 											documentModal = {props.documentModal} 
 											dispatch={dispatch} 
+											doc = {props.document}
 										/>
 									}
 									{isAttachmentMenuActive &&
@@ -415,6 +363,7 @@ const TextEditor = (props) => {
 									{/*<AuthorNote paddingLeft = {write ? "3rem" : "10rem"}>Faraz Sanal, Apr 25, 2016</AuthorNote>*/}
 									<StyledEditable
 										id = {"editorSlate"}
+										placeholder={"Today we will see progress"}
 										paddingLeft = {write ? 3 : 10}
 										cursortype = {write}
 										onKeyDown={(event) => onKeyDownHelper(event, state, editor)}
@@ -424,6 +373,7 @@ const TextEditor = (props) => {
 										decorate= {decorate}
 										readOnly = {!write}
 										autoFocus = {true}
+										
 									/>
 							</EditorContainer2>
 					</EditorContainer>
@@ -465,7 +415,60 @@ export default TextEditor
 			if (!changed) setTitle(tempTitle);
 		}	
 	}, [initialTitle]);
+
+	/*
+		const ops = editor.operations;
+		
+		let groundTruth = true;
+
+		for (let i = 0; i < ops.length; i++){
+			if (ops[i].id) {
+				groundTruth = false;
+				break;
+			}
+		}
+
+		const taggedOps = ops.map(op => {
+			return {id: presenceChannel.members.me.id, ...op} 
+		});
+
+		if (groundTruth) {
+			presenceChannel.trigger('client-transform-editor',	taggedOps);
+			//console.log("TAGGED OPS", taggedOps);
+		}
+		useEffect(() => {
+		if (presenceChannel) {
+			presenceChannel.bind('client-transform-editor', (ops) => {
+				//setValue(markup);
+
+				//console.log("OPS", ops);
+
+				//console.log("BEFORE MARKUP", value)
+				ops.map(op => {
+					if (op.type !== "set_selection") {
+						console.log("APPLYIING: ", op);
+						editor.apply(op);
+					}
+				});
+				
+				//console.log("AFTER MARKUP", value);
+				//const decodedMarkup = JSON.parse(decodeURIComponent(markup));
+
+				//setValue(decodedMarkup);
+				//onMarkupChange(markup);
+				
+			});
+		}
+
+		return () => {
+			if (presenceChannel) {
+				presenceChannel.unbind('client-transform-editor');
+			}
+		}
+	}, [presenceChannel]);
 */
+
+
 
 const ToolbarsContainer = styled.div`
 	position: sticky; 
@@ -476,6 +479,7 @@ const ToolbarsContainer = styled.div`
 const Container = styled.div`
 	display: flex;	
 	justify-content: center;
+	min-width: 65rem;
 `
 
 const EditorContainer2 = styled.div`
@@ -534,11 +538,17 @@ const StyledEditable = styled(Editable)`
 	color: #172A4E;
 	font-size: 16px;
 	resize: none !important;
-	padding-bottom: 7rem;
+	padding-bottom: 15rem;
 	min-height: 75rem;
 	cursor: ${props => props.cursortype ? "text" : "default"};
 	padding-left: ${props => `${props.paddingLeft}rem`};
 	padding-right: 10rem;
+
+	&::placeholder {
+		font-size: 16px;
+		color: #172A4E;
+		opacity: 0.5;
+	}
 `	
 
 /*
