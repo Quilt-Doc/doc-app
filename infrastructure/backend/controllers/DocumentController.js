@@ -51,6 +51,10 @@ escapeRegExp = (string) => {
 createDocument = async (req, res) => {
     const session = await db.startSession();
 
+    await session.withTransaction(async () => {
+        throw Error("Can we gracefully handle");
+    });
+
     let output = {};
     try {
         await session.withTransaction(async () => {
@@ -140,7 +144,7 @@ createDocument = async (req, res) => {
                                     errorDescription: `Create Document Error no parentPath provided  - workspaceId, authorId: ${workspaceId}, ${authorId}`,
                                     function: 'createDocument'});
                 output = {success: false, error: "createDocument Error: no parentPath provided."};
-                throw newError("createDocument Error: no parentPath provided.");
+                throw new Error("createDocument Error: no parentPath provided.");
             }
 
             let documentPath = "";
@@ -1226,7 +1230,7 @@ authorizeDocumentPusher = async (req, res) => {
     //console.log("SOCKET ID", socket_id);
     //console.log("CHANNEL NAME", channel_name);
     
-    console.log("REQ PAYLOAD", req.tokenPayload);
+    // console.log("REQ PAYLOAD", req.tokenPayload);
 
     const { userId } = req.tokenPayload;
     /*

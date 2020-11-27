@@ -1224,7 +1224,7 @@ authorizeDocumentPusher = async (req, res) => {
     //console.log("SOCKET ID", socket_id);
     //console.log("CHANNEL NAME", channel_name);
     
-    console.log("REQ PAYLOAD", req.tokenPayload);
+    // console.log("REQ PAYLOAD", req.tokenPayload);
 
     const { userId } = req.tokenPayload;
     /*

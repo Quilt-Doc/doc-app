@@ -50,7 +50,7 @@ const documentIdParam = async (req, res, next, documentId) => {
         next();
     }
 
-    console.log(`Searching for documentId: ${documentId}`);
+    // console.log(`Searching for documentId: ${documentId}`);
 
     // try to get the reference object and attach it to the request object
     try {
