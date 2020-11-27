@@ -9,9 +9,10 @@ const LIST_TYPES = ['numbered-list', 'bulleted-list']
 const CODE_TYPES = ['code-block']
 const SNIPPET_TYPES = ['reference-snippet'];
 
+
 const withFunctionality = (editor, dispatch) => {
 	
-	const { deleteBackward, insertText, isVoid } = editor
+	const { deleteBackward, insertText, insertNode, isVoid } = editor
 	
 
 	editor.isVoid = element => {
@@ -62,6 +63,7 @@ const withFunctionality = (editor, dispatch) => {
 			const block = { type: attributes.type, children: [] };
 			Transforms.wrapNodes(editor, block);
 
+			/*
 			let prelimAnchor = range.anchor;
 			if (range.anchor.offset > 0) {
 				prelimAnchor = {offset: 0, path: [range.anchor.path[0] + 1]};
@@ -83,9 +85,10 @@ const withFunctionality = (editor, dispatch) => {
 				} catch (err) {
 					console.log("ERROR", err);
 				}
-			}
+			}*/
 		}
 
+		/*
 		if (isSnippet || isAttachment) {
 			let prelimAnchor = range.anchor;
 			if (range.anchor.offset > 0) {
@@ -96,7 +99,7 @@ const withFunctionality = (editor, dispatch) => {
 				const paraNode = { type: 'paragraph', children: [] };
 				Transforms.insertNodes(editor, paraNode, {at: Editor.end(editor, [])});
 			}
-		}
+		}*/
 
 	}
 
@@ -131,12 +134,22 @@ const withFunctionality = (editor, dispatch) => {
 				)
 			}
 		} else if (block.type === 'list-item') {
-			if (Node.string(block) === ""){
+			if (Node.string(block) === "") {
 				event.preventDefault()
-				Transforms.unwrapNodes(editor, {
-					match: n => n.type === 'bulleted-list',
-					split: true,
-				})
+
+				let listMatch = true;
+
+				while (listMatch) {
+					Transforms.unwrapNodes(editor, {
+						match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list'),
+						split: true,
+					})
+
+					listMatch =  Editor.above(editor, {
+						match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list')
+					})
+				}
+
 				Transforms.setNodes(editor, { type: 'paragraph' })
 			}
 		} else if (block.type === 'check-list') {
@@ -156,7 +169,7 @@ const withFunctionality = (editor, dispatch) => {
 
 		const { selection } = editor
 
-
+		
 		if (selection && text === "/") {
 
 			const match = Editor.above(editor, {
@@ -203,8 +216,6 @@ const withFunctionality = (editor, dispatch) => {
 		insertText(text)
 	}
 
-
-
 	editor.deleteBackward = (...args) => {
 		const { selection } = editor
 		if (selection && Range.isCollapsed(selection)) {
@@ -225,10 +236,19 @@ const withFunctionality = (editor, dispatch) => {
 					Transforms.setNodes(editor, { type: 'paragraph' })
 					
 					if (block.type === 'list-item') {
-						Transforms.unwrapNodes(editor, {
-							match: n => n.type === 'bulleted-list',
-							split: true,
-						})
+						
+						let listMatch = true;
+
+						while (listMatch) {
+							Transforms.unwrapNodes(editor, {
+								match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list'),
+								split: true,
+							})
+		
+							listMatch =  Editor.above(editor, {
+								match: n => (n.type === 'bulleted-list' || n.type === 'numbered-list')
+							})
+						}
 					}
 					return
 				} else if ( block.type == 'paragraph' 

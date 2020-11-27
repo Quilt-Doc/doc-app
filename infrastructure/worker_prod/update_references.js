@@ -7,6 +7,9 @@ const { filterVendorFiles, parseCommitObjects,
 
 const { runSnippetValidation } = require('./update_snippets');
 
+const _ = require('lodash');
+
+
 
 
 require('dotenv').config();
@@ -206,16 +209,19 @@ Procedure:
     Create a Check Run Object on the headCommit
     Update jobStatus on the Repository
     Kick off the Snippet Job
-    TODO: Update `lastProcessedCommit` on Repository at end
 */
 
 const runUpdateProcedure = async () => {
 
     var worker = require('cluster').worker;
 
-    var brokenDocuments = [];
-    var brokenSnippets = [];
     var addedReferences = [];
+
+    var modifiedDocuments = [];
+    var brokenDocuments = [];
+
+    var brokenSnippets = [];
+
 
     var backendClient = apis.requestBackendClient();
 
@@ -395,7 +401,7 @@ const runUpdateProcedure = async () => {
 
 
 
-            worker.send({action: 'log', info: {level: 'info', message: `repoDiskPath: ${repoDiskPath}`,
+            worker.send({action: 'log', info: {level: 'info', message: `repoId, repoDiskPath: ${repoId}, ${repoDiskPath}`,
                                                 source: 'worker-instance', function: 'runUpdateProcedure'}});
 
 
@@ -477,12 +483,22 @@ const runUpdateProcedure = async () => {
 
             var fileReferencesToCreate = trackedFiles.filter(file => file.isNewRef && !file.deleted);
 
-            // When to Update:
+            // When to Update (Only on Rename):
             // If !file.isNewRef && !file.deleted && file.ref != file.oldRef
-            // AND file.ref != file.oldRef
             var fileReferencesToUpdate = trackedFiles.filter(file => !file.isNewRef && !file.deleted && file.oldRef != file.ref);
 
+            // When Reference has been modified, (On Rename, or just modification):
+            // If !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0].operation == 'Modify' || file.operationList.slice(-1)[0].operation == 'Rename')
+            var fileReferencesModified = trackedFiles.filter(file => !file.isNewRef && !file.deleted && (file.operationList.slice(-1)[0].operation == 'Modify' || file.operationList.slice(-1)[0].operation == 'Rename'));
+
+            worker.send({action: 'log', info: {level: 'info', message: `repoId, fileReferencesModified: ${repoId}, ${JSON.stringify(fileReferencesModified)}`,
+                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
+
+
+
             var fileReferencesToDelete = trackedFiles.filter(file => !file.isNewRef && file.deleted);
+
+            var modifiedReferences = [];
 
             /*
             name: {type: String, index: true, required: true},
@@ -498,7 +514,7 @@ const runUpdateProcedure = async () => {
                 await worker.send({action: 'log', info: {level: 'info', 
                                                             message: `Updating 'file' References for creation on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate.map(file => file.oldRef))}`,
                                                             source: 'worker-instance', function:'runUpdateProcedure', }})
-                
+
                 worker.send({action: 'log', info: {level: 'info', 
                                                         message: `Updating 'file' References for creation on repository #2: ${repoObj.fullName}\n${JSON.stringify(fileReferencesToCreate)}`,
                                                         source: 'worker-instance', function:'runUpdateProcedure', }})
@@ -613,6 +629,32 @@ const runUpdateProcedure = async () => {
                 }
             }
 
+            // Handle getting File References that have been modified, so that we can find the Documents attached to them
+            if (fileReferencesModified.length > 0) {
+                worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Fetching 'file' References that have been modified on repository: ${repoObj.fullName}\n${JSON.stringify(fileReferencesModified.map(file => file.oldRef))}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+
+                try {
+                    modifiedReferences = await Reference.find({repository: repoId, status: 'valid', kind: 'file',
+                                                                path: {$in: fileReferencesModified.map(file => file.oldRef)}}, '_id', { session }).lean().exec();
+                }
+                catch (err) {
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                                errorDescription: `Error fetching 'file' References that've been modified - repositoryId: ${repoId}`,
+                                                                source: 'worker-instance', function:'runUpdateProcedure', }});
+                    transactionAborted = true;
+                    transactionError.message = `Error fetching 'file' References that've been modified - repositoryId: ${repoId}`;
+
+                    throw new Error(`Error fetching 'file' References that've been modified - repositoryId: ${repoId}`);
+                }
+
+                worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `Found 'file' References for fileReferencesModified - repoId, modifiedReferences: ${repoId}\n${JSON.stringify(modifiedReferences)}`,
+                                                    source: 'worker-instance', function:'runUpdateProcedure', }})
+
+            }
+
             // Handling Updated File References, only updating on rename
             if (fileReferencesToUpdate.length > 0) {
                 worker.send({action: 'log', info: {level: 'info', 
@@ -719,16 +761,53 @@ const runUpdateProcedure = async () => {
                 throw new Error(`Error deleting repository ${repoId} at:  ${repoDiskPath}`);
             }
 
+
+            // Get all Modified Documents
+
+            if (modifiedReferences.length > 0) {
+                try {
+                    modifiedDocuments = await Document.find( { _id: { $in: modifiedReferences.map(refObj => ObjectId(refObj._id.toString())) } }, "_id", { session })
+                                                        .lean().exec();
+                }
+                catch (err) {
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                                errorDescription: `Error finding Documents attached to Modified References -  repositoryId, repoDiskPath, modifiedReferences: ${repoId}, ${repoDiskPath}, ${JSON.stringify(modifiedReferences)}`,
+                                                                source: 'worker-instance', function: 'runUpdateProcedure'}});
+                    transactionAborted = true;
+                    transactionError.message = `Error finding Documents attached to Modified References -  repositoryId, repoDiskPath, modifiedReferences: ${repoId}, ${repoDiskPath}, ${JSON.stringify(modifiedReferences)}`;
+
+                    throw new Error(`Error finding Documents attached to Modified References -  repositoryId, repoDiskPath, modifiedReferences: ${repoId}, ${repoDiskPath}, ${JSON.stringify(modifiedReferences)}`);
+                }
+            }
+
+            worker.send({action: 'log', info: {level: 'info', 
+                                                message: `Creating Check with modifiedDocuments: repoId, modifiedDocuments: ${repoId}\n${JSON.stringify(modifiedDocuments)}`,
+                                                source: 'worker-instance', function:'runUpdateProcedure', }})
+
+            // Remove any documentIds in 'modifiedDocuments' that match documentIds in 'brokenDocuments'
+            modifiedDocuments = _.difference(modifiedDocuments.map(docObj => docObj._id.toString()), brokenDocuments);
+
+
+            worker.send({action: 'log', info: {level: 'info', 
+                                                message: `Creating Check with modifiedDocuments: repoId, modifiedDocuments: ${repoId}\n${JSON.stringify(modifiedDocuments)}`,
+                                                source: 'worker-instance', function:'runUpdateProcedure', }})
+
+
             // For routing
             checkCreateData.repoId = repoId;
 
             // Actual body data
             checkCreateData.installationId = process.env.installationId;
             checkCreateData.commit = headCommit
+
+            checkCreateData.modifiedDocuments = modifiedDocuments;
             checkCreateData.brokenDocuments = brokenDocuments;
+            
             checkCreateData.brokenSnippets = brokenSnippets;
+            
             checkCreateData.message = process.env.message;
             checkCreateData.pusher = process.env.pusher;
+            
             checkCreateData.addedReferences = addedReferences.map(refId => refId.toString());
 
             // console.log(`Successfully Updated Worker magic - fullName, headCommit: ${repoObj.fullName}, ${headCommit}`);

@@ -11,6 +11,28 @@ import {
 
 import { api } from '../apis/api';
 
+export const getDocumentImage = (formValues) => async () => {
+    const { workspaceId, documentId } = formValues;
+
+    if (!workspaceId) {
+        throw new Error("getDocumentImage: workspaceId not provided");
+    }
+
+    if (!documentId) {
+        throw new Error("getDocumentImage: documentId not provided");
+    }
+
+    const response = await api.post(`/documents/${workspaceId}/get_image/${documentId}`);
+
+    const { error, success, result} = response.data;
+
+    if (!success) {
+        throw new Error(error);
+    } else {
+        return result;
+    }
+}
+
 export const getUpload = (formValues) => async () => {
     const { fileName } = formValues;
 
@@ -221,6 +243,7 @@ export const getDocument = (formValues) => async dispatch => {
 
     const response = await api.get(`/documents/${workspaceId}/get/${documentId}`);
 
+    console.log("RESPONSE OF GET", response.data.result);
     if (response.data.success == false) {
         throw new Error(response.data.error);
     }
@@ -232,6 +255,10 @@ export const getDocument = (formValues) => async dispatch => {
 
 export const testRoute = (formValues) => async () => {
     await api.post(`/testRoute`, formValues);
+}
+
+export const syncRenameDocument = (results) => (dispatch) => {
+    dispatch({ type: RENAME_DOCUMENT, payload: results });
 }
 
 // DONE
@@ -249,7 +276,7 @@ export const renameDocument = (formValues) => async (dispatch) => {
     }
 
     const response = await api.put(`/documents/${workspaceId}/rename/${documentId}`, formValues);
-    console.log("RESULT OF RENAME", response.data.result);
+
     if (response.data.success == false) {
         if (response.data.alert) {
             alert(response.data.alert)
@@ -260,7 +287,7 @@ export const renameDocument = (formValues) => async (dispatch) => {
     }
     else {
         dispatch({ type: RENAME_DOCUMENT, payload: response.data.result });
-        return true
+        return response.data.result;
     }
 }
 

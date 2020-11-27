@@ -97,7 +97,9 @@ const nonAuthPaths = ['/auth/login/success',
                       '/api/verify/',
                       '/auth/github/fork',
                       '/api/auth/github/fork',
-                      '/api/testRoute'];
+                      '/api/testRoute',
+                      '/api/pusher/webhook'
+                    ];
 
 app.use(function (req, res, next) {
   req.path = req.path.trim();

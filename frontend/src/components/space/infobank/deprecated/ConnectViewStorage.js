@@ -8,6 +8,7 @@ import {FaConfluence} from 'react-icons/fa';
 import {FaTrello, FaJira} from 'react-icons/fa';
 import {SiAsana, SiNotion} from 'react-icons/si';
 import {IoIosSearch} from 'react-icons/io'
+
 import {RiFilter2Line} from 'react-icons/ri';
 
 class Infobank extends React.Component {

@@ -88,9 +88,7 @@ class ChooseProvider extends React.Component {
         const installationId = installations.filter(inst => inst.account.type === 'User' 
             && inst.account.id == user.profileId)[0].id;
 
-        /*installations.map(installObj => installObj.id), userId: user._id.toString()*/
-
-        await retrieveCreationRepositories({installationIds: installationId });
+        await retrieveCreationRepositories({installationIds: installations.map(installObj => installObj.id), userId: user._id.toString()});
     }
 
     render(){

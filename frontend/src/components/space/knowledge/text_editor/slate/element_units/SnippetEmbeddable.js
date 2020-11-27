@@ -17,7 +17,7 @@ import chroma from 'chroma-js';
 //loader
 import { Oval } from 'svg-loaders-react';
 import { AiOutlineExclamation } from 'react-icons/ai';
-import { RiCloseFill, RiCheckFill } from 'react-icons/ri';
+import { RiCloseFill, RiCheckFill, RiFileFill } from 'react-icons/ri';
 
 //router
 import { withRouter, Link } from 'react-router-dom';
@@ -90,14 +90,17 @@ const SnippetEmbeddable = props => {
     useEffect(() => {
         const { workspaceId, documentId } = match.params;
 
-        const asyncGetSnippet = async () => {
-            await getSnippet({workspaceId, snippetId});
+        if (!snippet) {
+            const asyncGetSnippet = async () => {
+                await getSnippet({workspaceId, snippetId});
+            }
+            
+            asyncGetSnippet();
         }
-        
-        asyncGetSnippet();
+
         if (snippet && snippet.reference) renderSnippet();
 
-    }, []);
+    }, [snippet]);
 
     /*
     useEffect(() => {
@@ -109,6 +112,7 @@ const SnippetEmbeddable = props => {
     }, [isSelected])
     */
 
+    //this shits prob slowing it
     useEffect(() => {
         if (editor.selection) {
             const elementPath =  ReactEditor.findPath(editor, element);
@@ -140,7 +144,6 @@ const SnippetEmbeddable = props => {
             const { color, icon, text } = statusAttributes;
             return (
                 <Status color = {color}>
-                    {icon}
                     {text}
                 </Status>
             );
@@ -298,12 +301,13 @@ const SnippetEmbeddable = props => {
         });
 
         const url = `/workspaces/${workspaceId}/repository/${reference.repository}/code/${_id}?line=${start}`;
-        const linkJSX = <ReferenceLink to = {url}><BiLink/></ReferenceLink>
+        const linkJSX = <ReferenceLink to = {url}>Source</ReferenceLink>
 
 
         setEmbeddableJSX(
             <>
                 <ReferenceHeader>
+                    <RiFileFill style = {{width: "2.5rem", fontSize: "1.3rem"}}/>
                     {name}
                     {renderStatus(status)}
                     {linkJSX}
@@ -349,8 +353,12 @@ const SnippetEmbeddable = props => {
 const mapStateToProps = (state, ownProps) => {
     const { element: { snippetId } } = ownProps;
     const { snippets } = state;
+    const foundSnippet = snippets[snippetId];
+    console.log("SNIPPETID", snippetId);
+    console.log("SNIPPETS", snippets);
+    console.log("ACTUAL SNIPPET",  foundSnippet);
     return {
-        snippet: snippets[snippetId]
+        snippet: foundSnippet
     }
 }
 
@@ -358,24 +366,26 @@ export default withRouter(connect(mapStateToProps, { getSnippet })(SnippetEmbedd
 
 const ReferenceLink = styled(Link)`
     &:hover {
-        color: #6762df;
         opacity: 1
     }
-    margin-left: 1rem;
-    font-size: 2.3rem;
+    margin-left: 2rem;
+    font-size: 1.2rem;
     display: flex;
     align-items: center;
     color: #172A4E;
     opacity: 0.4;
+    text-transform: uppercase;
+    text-decoration: none;
+    margin-top: 0.1rem;
 `
 
 const Container = styled.div`
-    border: 1px solid ${props => props.isSelected ? chroma('#6762df').alpha(0.5) : '#d9d9e2'};
-    border-radius: 0.4rem;
+    border: 1px solid ${props => props.isSelected ? chroma('#6762df').alpha(0.5) : 'none'};
     margin-top: 2.5rem;
     background-color: #F7F9FB;
     tab-size: 4;
     cursor: pointer;
+    padding-top: 0.6rem;
 `
 
 const LoaderContainer = styled.div`
@@ -390,27 +400,31 @@ const ReferenceHeader = styled.div`
     display: flex;
     align-items: center;
     font-weight: 500;
-    font-size: 1.5rem;
+    font-size: 1.55rem;
     font-family: -apple-system,BlinkMacSystemFont, sans-serif;
-    background-color: white;
     height: 4rem;
     padding: 0rem 2.5rem;
+    padding-left: 1.5rem;
     border-top-left-radius: 0.4rem;
     border-top-right-radius: 0.4rem;
-    border-bottom: 1px solid #d9d9e2;
 `
 
 const Status = styled.div`
     display: inline-flex;
-    background-color: ${props => props.color};
-    color: white;
+    background-color: ${props => chroma(props.color).alpha(0.13)};
+    color: ${props => props.color};
+    border: 1px solid ${props => props.color};
     font-weight: 500;
     border-radius: 0.3rem;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     padding: 0rem 1rem;
+    padding-top: 0.1rem;
+    justify-content: center;
     align-items: center;
     margin-left: auto;
-    height: 2rem;
+    width: 7rem;
+    height: 2.5rem;
+    text-transform: uppercase;
 `
 
 const SnippetBody = styled.div`
@@ -419,6 +433,7 @@ const SnippetBody = styled.div`
     color: #242A2E;
     padding: 1.5rem 2.5rem;
     padding-left: 0.5rem;
+    padding-top: 0.5rem;
    /* width: ${props => props.width}px;*/
    /* overflow-x: scroll;*/
     overflow-x: auto;

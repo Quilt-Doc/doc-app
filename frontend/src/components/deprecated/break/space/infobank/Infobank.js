@@ -186,7 +186,7 @@ const Background = styled.div`
 const CardContainer = styled.div`
     display: grid;
     align-items: center;
-    grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
     grid-gap: 3rem;
     padding-bottom: 3rem;
 `

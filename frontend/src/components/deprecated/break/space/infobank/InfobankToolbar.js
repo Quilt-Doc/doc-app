@@ -6,7 +6,7 @@ import { HiOutlineFilter} from 'react-icons/hi';
 import {FiChevronDown, FiFilter} from 'react-icons/fi'
 import {TiFilter} from 'react-icons/ti';
 import { IoIosSearch } from 'react-icons/io';
-
+import { CgSearch } from 'react-icons/cg';
 
 class InfobankToolbar extends React.Component {
     constructor(props){
@@ -27,7 +27,7 @@ class InfobankToolbar extends React.Component {
                 <SearchbarWrapper>
                     <Searchbar ref = {node => this.input = node} onKeyPress = {(e) => {this.onPressHandler(e)}} placeholder = {"Search for anything.."} />
                     <SearchButton>
-                        <IoIosSearch/>
+                        <CgSearch/>
                     </SearchButton>
                 </SearchbarWrapper>
             </Container>

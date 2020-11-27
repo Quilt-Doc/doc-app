@@ -3,6 +3,7 @@ import React from 'react';
 //styles 
 import styled from "styled-components"
 import chroma from 'chroma-js';
+import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
 //components
 import DirectoryItem from './DirectoryItem';
@@ -144,42 +145,44 @@ class DirectoryNavigator extends React.Component {
 
     renderLeftBlock = () => {
         const { badgeSVG } = this.state;
-        const { currentRepository } = this.props;
+        const { currentRepository, currentReference } = this.props;
         const { defaultBranch, lastProcessedCommit } = currentRepository;
-        console.log("BADGE SVG IN LEFT BLOCK", badgeSVG);
         
-        return(
-            <LeftBlock>
-                <Header>Repository Information</Header>
-                <InfoItem color = {"#f7f9fb"} border = {"#E0E4E7"}>
-                    <InfoItemTop>
-                        <InfoItemIcon top = {0.1}>
-                            <GoGitBranch/>
-                        </InfoItemIcon>
-                        Documentation Branch
-                    </InfoItemTop>
-                    <Branch>{defaultBranch}</Branch>
-                </InfoItem>
-                <InfoItem color = {chroma('#2684FF').alpha(0.1)} border = {"#2684FF"}>
-                    <InfoItemTop>
-                        <InfoItemIcon top = {0.3}>
-                            <FiGitCommit/>
-                        </InfoItemIcon>
-                        Last Processed Commit 
-                    </InfoItemTop>
-                    <InfoItemContent>
-                        {lastProcessedCommit.slice(0, 7)}
-                    </InfoItemContent>
-                </InfoItem>
-                <StyledImage src={`data:image/svg+xml;utf8,${encodeURIComponent(badgeSVG)}`} />
-                {/*
-                <InfoItem>
-                    <InfoItemTop>Last Processed Commit</InfoItemTop>
-                    <InfoItemContent></InfoItemContent>
-                </InfoItem>
-                */}
-            </LeftBlock>
-        )
+        if (currentReference.name === currentRepository.fullName) {
+            return(
+                <LeftBlock>
+                    <Header>Repository Information</Header>
+                    <InfoItem color = {"#f7f9fb"} border = {"#E0E4E7"}>
+                        <InfoItemTop>
+                            <InfoItemIcon top = {0.1}>
+                                <GoGitBranch/>
+                            </InfoItemIcon>
+                            Documentation Branch
+                        </InfoItemTop>
+                        <Branch>{defaultBranch}</Branch>
+                    </InfoItem>
+                    <InfoItem color = {chroma('#2684FF').alpha(0.1)} border = {"#2684FF"}>
+                        <InfoItemTop>
+                            <InfoItemIcon top = {0.3}>
+                                <FiGitCommit/>
+                            </InfoItemIcon>
+                            Last Processed Commit 
+                        </InfoItemTop>
+                        <InfoItemContent>
+                            {lastProcessedCommit.slice(0, 7)}
+                        </InfoItemContent>
+                    </InfoItem>
+                    <StyledImage src={`data:image/svg+xml;utf8,${encodeURIComponent(badgeSVG)}`} />
+                    {/*
+                    <InfoItem>
+                        <InfoItemTop>Last Processed Commit</InfoItemTop>
+                        <InfoItemContent></InfoItemContent>
+                    </InfoItem>
+                    */}
+                </LeftBlock>
+            )
+        }
+        
     }
 
     //2 FARAZ TODO: Check whether loaded is all that is needed
@@ -205,7 +208,7 @@ class DirectoryNavigator extends React.Component {
                                 </Button>
                                 </Toolbar>
                             </Top>
-                            <Container>
+                            <Container root = {currentRepository.fullName === currentReference.name}>
                                 <Content>
                                     {this.renderLeftBlock()}
                                     <RightBlock>
@@ -360,7 +363,7 @@ const Button = styled.div`
 const Content = styled.div`
     width: 100%;
    /* max-width: 110rem;*/
-    max-width: 135rem;
+    max-width: 110rem;
     min-width: 80rem;
     display: flex;
 `
@@ -369,14 +372,14 @@ const LeftBlock = styled.div`
     width: 35rem;
     background-color: white;
     margin-right: 5rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
-    border-radius: 0.5rem;
+    box-shadow: ${LIGHT_SHADOW_1};
+    border-radius: 0.3rem;
     padding: 2rem;
     height: 47rem;
 `
 
 const RightBlock = styled.div`
-    width: 80%;
+    width: 100%;
 `
 
 const Container = styled.div`
@@ -385,8 +388,8 @@ const Container = styled.div`
     width: 100%;
     margin-top: 3rem;
     align-items: center;
-    padding-left: 2rem;
-    padding-right: 2rem;
+    padding-left: ${props => props.root ? "2rem" : "5rem"};
+    padding-right: ${props => props.root ? "2rem" : "5rem"};
 `
 
 const LoaderContainer = styled.div`
@@ -413,32 +416,32 @@ const DirectoryContainer = styled.div`
     display: flex;
     flex-direction: column;
     background-color: white;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     /*
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;*/
     /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 1px 1px 0px;*/
     min-height: 5rem;
     /*border: 1px solid #DFDFDF;*/
-    border-radius: 0.5rem;
+    border-radius: 0.3rem;
     padding-bottom: 0.1rem;
     align-self: stretch;
-    /*box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;*/
+    /*box-shadow: ${LIGHT_SHADOW_1};*/
     border-bottom: 1px solid #E0E4E7;
 `
 
 const ListToolBar = styled.div`
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     height: 5rem;
     display: flex;
     font-weight: 500;
     align-items: center;
     padding: 0rem 2rem;
-    background-color: ${chroma('#6762df').alpha(0.1)};
+    background-color: ${chroma('#6762df').alpha(0.15)};
     
-    border: 1px solid ${chroma('#6762df').alpha(0.3)};
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
+    border: 1px solid ${chroma('#6762df').alpha(0.4)};
+    border-top-left-radius: 0.3rem;
+    border-top-right-radius: 0.3rem;
 `
 
 const Statistics = styled.div`

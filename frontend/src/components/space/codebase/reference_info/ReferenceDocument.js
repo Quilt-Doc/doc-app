@@ -3,16 +3,47 @@ import React, { Component } from 'react';
 //styles
 import styled from 'styled-components';
 import chroma from 'chroma-js';
+import { LIGHT_SHADOW_1 } from '../../../../styles/shadows';
 
 //icons
 import { AiOutlineClockCircle, AiOutlineExclamation } from 'react-icons/ai';
-import { RiCheckFill, RiCloseFill, RiFileList2Fill } from 'react-icons/ri'
+import { RiCheckFill, RiCloseFill, RiFileList2Fill, RiFileTextFill } from 'react-icons/ri'
 
 //history
 import history from '../../../../history';
+import { withRouter } from 'react-router-dom';
+
+//actions
+import { getDocumentImage } from '../../../../actions/Document_Actions'
+
+//loader
+import { Oval } from 'svg-loaders-react';
+
+//animation
+import { CSSTransition } from 'react-transition-group';
+
+//redux
+import { connect } from 'react-redux';
 
 // Card representing document that is broken
 class ReferenceDocument extends Component {
+
+    constructor(props){
+        super(props);
+
+        this.state = {
+            image: null, 
+            loaded: false
+        }
+    }
+
+    componentDidMount = async () => {
+        const { getDocumentImage, doc, match } = this.props;
+        const { workspaceId } = match.params;
+
+        const image = await getDocumentImage({ documentId: doc._id,  workspaceId });
+        this.setState({image, loaded: true});
+    }
 
     // depending on whether this is a warning card (from props) or not
     // display correct status
@@ -44,47 +75,189 @@ class ReferenceDocument extends Component {
             colors[index - Math.floor(index/colors.length) * colors.length];
     }
 
-    renderCard = () => {
-        const { doc, color } = this.props;
-        const { _id, title, author } = doc;
-        return(
-            <Card  onClick = { () => history.push(`?document=${_id}`) }> 
-                <Title>
-                    <TitleText>{title}</TitleText>
-                    {this.renderStatus()}
-                </Title>
-                <Content>
-                    <RiFileList2Fill style = {{
-                        color: '#2684FF',
-                    }}/>
-                </Content> 
-                <Detail>
-                    <Creator color = {this.selectColor(color)} > 
-                        {author.firstName.charAt(0)}
-                    </Creator>
-                    <CreationDate> {/*REPEATED COMPONENT CHRONOLOGY*/}
-                        <AiOutlineClockCircle
-                            style = {{marginTop: "0.08rem", marginRight: "0.5rem"}}
-                        />
-                        {this.getDateItem(doc)}
-                    </CreationDate>
-                </Detail>
-            </Card>
+    renderPlaceholderCard = () => {
+        return (
+            <Placeholder>
+                <RiFileTextFill style = {{
+                    color: '#2684FF',
+                }}/>
+            </Placeholder>
         )
     }
 
-    renderPlaceholder = () => {
-        return <PlaceholderCard >Add Document</PlaceholderCard>
+    renderImage = () => {
+        const { image, loaded } = this.state;
+        
+        const imageJSX = image ? 
+            <ImageContainer2>
+                <ImageContainer src = {image}/>
+            </ImageContainer2>
+            : this.renderPlaceholderCard();
+    
+        if (loaded) return imageJSX;
+
+        return this.renderLoader();
+    }   
+
+    renderLoader = () => {
+        return (
+            <Placeholder>
+                <Oval stroke={"#d9d9e2"}/>
+            </Placeholder>
+        )
+    }
+
+    renderCard = () => {
+        const { doc } = this.props;
+        const { _id, title } = doc;
+
+        return(
+            <CSSTransition
+                in={true}
+                appear = {true}
+                timeout = {150}
+                classNames = "itemcard"
+            >
+                <div>
+                    <Card  onClick = { () => history.push(`?document=${_id}`) } key = {doc._id} >
+                        {this.renderStatus()}
+                        {this.renderImage()}
+                        <Bottom>
+                            <Title>
+                                <StyledIcon>
+                                    <RiFileTextFill style = {{ color: '#2684FF' }}/>
+                                </StyledIcon>
+                                <TitleText>{title}</TitleText>
+                            </Title> 
+                        </Bottom>
+                    </Card>
+                </div>
+            </CSSTransition>
+        )
     }
 
     render(){
-        const { placeholder } = this.props;
-        return placeholder ? this.renderPlaceholder() : this.renderCard();
+        return this.renderCard();
     }
 }
 
-export default ReferenceDocument;
+const mapStateToProps = () => {
+    return {}
+}
 
+export default withRouter(connect(mapStateToProps, {getDocumentImage})(ReferenceDocument));
+
+const Bottom = styled.div`
+    height: 5rem;
+    width: 100%;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+`
+
+const ImageContainer2 = styled.div`
+    overflow-y: hidden;
+    position: relative;
+    padding-bottom: 70%;
+    width: 100%;
+`
+
+const Placeholder = styled.div`
+    width: 100%; 
+    display: flex;
+    align-items: center;
+    justify-content: center;   
+    font-size: 7rem;  
+    height: 14rem;        
+`
+
+const ImageContainer = styled.img`
+    object-fit: cover;
+    position: absolute;
+    top: 0; 
+    left: 0;
+    object-position: center top;
+    width: 100%; 
+    height: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    /*
+    overflow-y: hidden;
+    */
+    /*
+    display: flex;
+    justify-content: center;
+    */
+    
+`
+
+const StyledIcon = styled.div`
+    justify-content: center;
+    align-items: center;
+    display:flex;
+    font-size: 2.2rem;
+    margin-right: 0.8rem;
+`
+
+const Status = styled.div`
+    display: inline-flex;
+    background-color: ${chroma('#19e5be').alpha(0.15)};
+    color:#19e5be;
+    border: 1px solid #19e5be;
+    font-weight: 500;
+    border-radius: 0.3rem;
+    font-size: 1.4rem;
+    padding: 0rem 1rem;
+    align-items: center;
+    height: 2rem;
+    margin-top: -0rem;
+    margin-left: auto;
+    margin-right: 2rem;
+    justify-content: center;
+`
+
+const Title = styled.div`
+    display: flex;
+    font-weight: 500;
+    font-size: 1.4rem;
+    align-items: center;
+    padding-left: 2rem;
+    padding-right: 2rem;
+`
+
+const TitleText = styled.div`
+    width: 14rem;
+    opacity: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+`
+
+const Card = styled.div`
+    width: 20rem;
+    position: relative;
+    color: #172A4E;
+    border-radius: 0.5rem;
+    box-shadow: ${LIGHT_SHADOW_1};
+    background-color: white;
+    /*padding: 1.5rem 2rem;
+    padding-top: 2rem;*/
+    display: flex;
+    align-items: center;
+    padding-top: 1.2rem;
+    flex-direction: column;
+    align-self: ${props => props.top ? "flex-start" : ""};
+    cursor: pointer;
+    &:hover {
+        box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 8px 16px -6px;
+    }
+    text-decoration: none;
+    transition: box-shadow 0.1s;
+    margin-right: 2rem;
+`
+
+/*
 const Status = styled.div`
     display: inline-flex;
     background-color: ${props => chroma(props.color).alpha(0.15)};
@@ -139,9 +312,9 @@ const Detail = styled.div`
 const Creator = styled.div`
     height: 2.5rem;
     width: 2.5rem;
-    /*
+    
     background-color: ${chroma('#1e90ff').alpha(0.2)};
-    color:#1e90ff;*/
+    color:#1e90ff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -166,7 +339,7 @@ const Card = styled.div`
     height: 16rem;
     width: 23rem;
     border-radius: 0.5rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
+    box-shadow: ${LIGHT_SHADOW_1};
     background-color: white;
     padding: 1.5rem 2rem;
     padding-top: 2rem;
@@ -191,3 +364,4 @@ const PlaceholderCard = styled.div`
     margin-right: 3rem;
     opacity: 0.5;
 `
+*/

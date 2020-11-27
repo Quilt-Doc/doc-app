@@ -82,7 +82,10 @@ router.put('/documents/:workspaceId/rename/:documentId', authorizationMiddleware
 router.put('/documents/:workspaceId/move/:documentId', authorizationMiddleware.documentMiddleware, documentController.moveDocument);
 router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
 router.post('/documents/:workspaceId/search', authorizationMiddleware.documentMiddleware, documentController.searchDocuments);
-router.get('/testRoute', documentController.testRoute);
+router.post('/documents/:workspaceId/get_image/:documentId',  authorizationMiddleware.documentMiddleware, documentController.getDocumentImage);
+router.post('/documents/:workspaceId/pusher/auth', documentController.authorizeDocumentPusher);
+
+router.post('/testRoute', documentController.testRoute);
 
 
 router.put('/documents/:workspaceId/:documentId/attach_tag/:tagId', authorizationMiddleware.documentMiddleware, documentController.attachDocumentTag);
@@ -94,6 +97,12 @@ router.put('/documents/:workspaceId/:documentId/remove_reference/:referenceId', 
 
 router.put('/documents/:workspaceId/:documentId/attach_snippet/:snippetId', authorizationMiddleware.documentMiddleware, documentController.attachDocumentSnippet);
 router.put('/documents/:workspaceId/:documentId/remove_snippet/:snippetId', authorizationMiddleware.documentMiddleware, documentController.removeDocumentSnippet);
+
+
+//PUSHER
+const pusherController = require('../controllers/pusher/PusherController');
+router.post('/pusher/webhook', pusherController.handlePusherWebhook);
+
 
 // These routes are not usable yet.
 /*

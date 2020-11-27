@@ -14,7 +14,7 @@ import history from '../../../../history';
 import styled from 'styled-components';
 
 //icons
-import { RiFileList2Line } from 'react-icons/ri';
+import { RiFileList2Line, RiFileTextLine } from 'react-icons/ri';
 
 
 import { withRouter } from 'react-router-dom';
@@ -169,7 +169,7 @@ const DraggableDocument = (props) => {
 				>
 					{props.renderLeftIcon()}
 					<IconBorder3>
-						<RiFileList2Line style = {{fontSize: "1.5rem", marginRight: "0.7rem"}}/>
+						<RiFileTextLine style = {{fontSize: "1.5rem", marginRight: "0.7rem"}}/>
 					</IconBorder3>
 					<Title >{extractTitle(document)}</Title>
 					<IconContainer>

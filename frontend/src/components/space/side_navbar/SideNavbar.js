@@ -15,6 +15,7 @@ import history from '../../../history';
 import { RiSettings5Line, RiCodeSLine, RiStackLine, RiFileTextLine, RiPencilLine, RiNotification2Line, RiNotification3Line} from 'react-icons/ri'
 import { BiBell, BiGridAlt, BiLayer } from 'react-icons/bi';
 import { CgBell, CgSearch } from 'react-icons/cg';
+import final_logo from '../../../images/final_logo_2.svg';
 
 //components
 import CreateButton from './CreateButton';
@@ -80,32 +81,26 @@ class SideNavbar extends React.Component {
                         <BiGridAlt/>
                     </NavbarIcon>
                     <NavbarIcon
-                        fontSize = {"2.1rem"}
+                        fontSize = {"2rem"}
                         active = {history.location.pathname.split("/")[3] === "document"}
                         to = {this.renderKnowledgeLink()}
                     >
                         <IoMdBook/>
                     </NavbarIcon>  
                     <NavbarIcon
-                        fontSize = {"2.4rem"}
+                        fontSize = {"2.1rem"}
                         active = {history.location.pathname.split("/")[3] === "repository"}
                         to = {this.renderCodebaseLink()}
                     >
                         <AiOutlineCodeSandbox/>
                     </NavbarIcon>  
                     <NavbarIcon
-                        fontSize = {"2.1rem"}
+                        fontSize = {"1.9rem"}
                         active = {history.location.pathname.split("/")[3] === "infobank"}
                         to = {this.renderInfobankLink()}
                     >
                         <BiLayer/>
                     </NavbarIcon>
-                    <NavbarIcon
-                        active = {history.location.pathname.split("/")[3] === "settings"}
-                        to = {this.renderSettingsLink()}
-                    >
-                        <RiSettings5Line/>
-                    </NavbarIcon>  
                 </Section>  
             </>
         );
@@ -116,23 +111,29 @@ class SideNavbar extends React.Component {
         const { notificationsOpen } = this.state;
 
         return (
-            <Section marginTop = {'auto'} marginBottom = {'5rem'}>
-                <IconBorder  onClick = {() => setSearch(true)}>
-                    <CgSearch/>
-                </IconBorder>
-                <IconBorder
-
+            <Section marginTop = {"auto"} marginBottom = {'5rem'}>
+                <NavbarIcon
+                        active = {history.location.pathname.split("/")[3] === "settings"}
+                        to = {this.renderSettingsLink()}
+                >
+                    <RiSettings5Line/>
+                </NavbarIcon>  
+                <NavbarIcon
                     onClick = {() => {this.setState({notificationsOpen: !notificationsOpen})}} 
                     id = {"notificationsBorder"} 
                     active = {notificationsOpen}
                 >   
                     {(pendingNotifications !== 0) && <PendingAlert>{pendingNotifications}</PendingAlert>}
-                    <VscBell/>
-                    <NotificationWrapper
-                        closeBubble = {() => this.setState({notificationsOpen: false})}
-                        notificationsOpen = {notificationsOpen}
-                    />
-                </IconBorder>
+                    <BiBell/>
+                <NotificationWrapper
+                    closeBubble = {() => this.setState({notificationsOpen: false})}
+                    notificationsOpen = {notificationsOpen}
+                />
+                </NavbarIcon>
+                <NavbarIcon  onClick = {() => setSearch(true)}>
+                    <CgSearch/>
+                </NavbarIcon>
+              
             </Section>
         )
     }
@@ -145,8 +146,14 @@ class SideNavbar extends React.Component {
                 <CreateButton/>
                 <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 */}
+                
                 <IconsContainer>
+                    <LogoContainer to = {"/workspaces"}>
+                        <LogoIcon src = {final_logo}/>
+                    </LogoContainer>
+                    
                     {this.renderTopSection()}
+                    
                 </IconsContainer>
                 
                 {this.renderBottomSection()}
@@ -174,6 +181,44 @@ const mapStateToProps = (state, ownProps) => {
 
 export default withRouter(connect(mapStateToProps, { })(SideNavbar));
 
+const Divider2 = styled.div`
+    background-color: #2b3345;
+    height: 0.2rem;
+    border-radius: 0.4rem;
+    width: 4rem;
+    margin-left: 2rem;
+    margin-bottom: 2rem;
+`
+
+const LogoContainer = styled(Link)`
+    width: 6rem;
+    margin-left: 1rem;
+    border-radius: 50%;
+    display: flex;
+    /*margin-bottom: 1.5rem;*/
+    align-items: center;
+    justify-content: center;
+    height: 6rem;
+    margin-top: 0.8rem;
+    margin-bottom: 1.8rem;
+    cursor: pointer;
+    text-decoration: none;
+    
+    &:hover {
+        background-color: #2b3345;
+    }
+`
+
+const LogoIcon = styled.img`
+    width: 4.5rem;
+    
+    margin-left: -1.85rem;
+    /*
+    margin-left: 0.9rem;
+    margin-bottom: 1.5rem;
+    */
+`
+
 const Divider = styled.div`
     height: 1px;
     width: 5rem;
@@ -184,7 +229,7 @@ const Divider = styled.div`
 const IconsContainer = styled.div`
     display: flex;
     flex-direction: column;
-    margin-top: 4rem;
+    margin-top: 1.5rem;
 `
 
 //Styled Components
@@ -211,18 +256,16 @@ const SideNavbarContainer = styled.div`
     flex-direction: column;
 
     color: white;
-    min-width: 9rem;
-    max-width: 9rem;
+    min-width: 8rem;
+    max-width: 8rem;
     overflow-y: scroll;
     height: 100vh;
     align-items: center;
-    justify-content: center;
     /*
     border-radius: 1.7rem;
     border-top-left-radius: 0rem;
     border-bottom-left-radius: 0rem;
     */
-
 `
 
 const Section = styled.div`
@@ -234,15 +277,15 @@ const NavbarIcon = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 5rem;
-    width: 9rem;
-    font-size: ${props => props.fontSize ? props.fontSize : "2rem"};
+    height: 4rem;
+    width: 8rem;
+    font-size: ${props => props.fontSize ? props.fontSize : "1.9rem"};
     font-weight: 500;
     /*
     background-color:#3b404f;
     */
     cursor: pointer;
-    margin-bottom: 2.3rem;
+    margin-bottom: 1.9rem;
 
     
     &:hover {
@@ -250,7 +293,7 @@ const NavbarIcon = styled(Link)`
     }
     
 
-    transition: all 0.2s ease-in;
+    transition: all 0.15s ease-in;
     text-decoration: none;
     
     /*border: ${props => props.active ?  '1px solid #f27448': 'none'};*/
@@ -266,7 +309,7 @@ const NavbarIcon2 = styled(Link)`
     align-items: center;
     justify-content: center;
     height: 5rem;
-    width: 9rem;
+    width: 8rem;
     font-size: 2.3rem;
     font-weight: 500;
     /*

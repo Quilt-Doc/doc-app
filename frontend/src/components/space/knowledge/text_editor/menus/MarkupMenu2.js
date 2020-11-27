@@ -34,7 +34,7 @@ import { AiOutlineOrderedList, AiOutlineUnorderedList } from 'react-icons/ai';
 
 const MarkupMenu = (props) => {
 
-    const { documentModal, dispatch } = props;
+    const { doc, documentModal, dispatch } = props;
 
     const editor = useSlate();
     
@@ -183,8 +183,9 @@ const MarkupMenu = (props) => {
         let rect = { top, left, height };
         
         if (documentModal) {	
+           
             const { scrollTop } = document.getElementById("documentModalBackground");
-            rect.top = rect.top + scrollTop;
+            //rect.top = rect.top + scrollTop;
         } else {
             /*
             console.log("ENTERD HERE");
@@ -226,8 +227,12 @@ const MarkupMenu = (props) => {
 
 
         if (type === "reference-snippet") {
-            await setOpen(false);
-            dispatch({type: SET_SNIPPET_MENU_ACTIVE, payload: true});
+            if (!doc.repository) {
+                alert("Please attach a repository to embed a snippet.");
+            } else {
+                await setOpen(false);
+                dispatch({type: SET_SNIPPET_MENU_ACTIVE, payload: true});
+            }
         } else if (type === "attachment") {
             //editor.insertBlock({name: "rumbo.png", type: "attachment"});
             await setOpen(false);
@@ -238,7 +243,7 @@ const MarkupMenu = (props) => {
         }
 
         closeMenu();
-    }, [filterText, range, initialSelection]);
+    }, [filterText, range, initialSelection, doc]);
     
 
     const renderOptions = useCallback(() => {
@@ -366,14 +371,14 @@ const ListItemContainer = styled.div`
 const Menu = styled.div`
 	width: 31rem;
     position: absolute;
-    z-index: 1;
+    z-index: 3;
     background-color: white;
 	border-radius: 0.3rem;
     display: flex;
     flex-direction: column;
-	box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
 	color:  #172A4e;
-	margin-top: 2.2rem;
+    margin-top: 2.2rem;
 `
 
 
@@ -422,7 +427,7 @@ const IconBorder = styled.div`
     justify-content: center;
     align-items: center;
 	font-size: 2.5rem;
-	border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.4) : "#E0E4E7"};
+	background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : "#f7f9fb"};
 	font-weight: 400;
 `
 

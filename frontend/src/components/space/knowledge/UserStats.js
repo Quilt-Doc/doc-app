@@ -138,7 +138,7 @@ const Creator = styled.div`
     font-size: 1.6rem;
     margin-top: -0.1rem;
     border-radius: 0.3rem;
-    font-weight: 500;
+    font-weight: 400;
     margin-right: 3rem;
 `
 

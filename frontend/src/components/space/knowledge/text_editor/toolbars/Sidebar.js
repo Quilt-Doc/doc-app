@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {Node, Transforms} from 'slate'
 import { useSlate, ReactEditor } from 'slate-react';
 
@@ -17,30 +17,38 @@ import { HiCode } from 'react-icons/hi';
 import { RiInformationLine, RiScissorsLine } from 'react-icons/ri';
 import { BsImageFill, BsListCheck } from 'react-icons/bs';
 import { IoMdAttach } from 'react-icons/io';
+import { MdTitle } from 'react-icons/md';
+import { GoTextSize } from 'react-icons/go';
 
 const Sidebar = (props) => {
-    let editor = useSlate();
-    let [top, changeTop] = useState(null);
-    let selection = editor.selection;
+    const { documentModal } = props;
     
-    let type;
-    let path;
+    let editor = useSlate();
+    const { selection } = editor;
 
-    if (editor.selection && editor.selection.anchor) {
-        path =  [editor.selection.anchor.path[0]]
-        type = Node.get(editor, path).type
-    }
+    let [top, changeTop] = useState(null);
+    
+    let type = useMemo(() => {
+        if (selection) {
+            let typePath = [selection.anchor.path[0]];
+            return Node.get(editor, typePath).type;
+        }
+    }, [selection]);
+
+    let path = useMemo(() => {
+        if (selection) {
+            return selection.anchor.path;
+        }
+    }, [selection]);
 
     useEffect(() => {
-        
-        if (selection) {
+        if (path) {
             try {
-                let path = [selection.anchor.path[0]];
                 let rect = ReactEditor.toDOMRange(editor, 
                                 {anchor: {offset: 0, path}, 
                     focus: {offset: 0, path }}).getBoundingClientRect();
-                if (props.documentModal) {
-                    changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 183 + rect.height/2);
+                if (documentModal) {
+                    changeTop(document.getElementById("documentModalBackground").scrollTop + rect.top - 123 + rect.height/2);
                 } else {
                     const slateNode = Node.get(editor, path);
                     type = slateNode.type;
@@ -51,15 +59,14 @@ const Sidebar = (props) => {
                     if (type === "reference-snippet") {
                         newTop -= ReactEditor.toDOMNode(editor, slateNode).getBoundingClientRect().height;
                     }
-                    if (type === "code-block") newTop -= 23
+
                     changeTop(newTop);
                 }
             } catch (err) {
                 console.log(err);
             }
         }
-    }
-    , [selection, type])
+    }, [path, type])
 
     
     return (
@@ -148,8 +155,10 @@ class ToolIcon extends React.Component {
                     return <BsImageFill/>
                 case "attachment":
                     return <IoMdAttach/>
+                case "title":
+                    return <TitleText><MdTitle/></TitleText>
                 default:
-                    return  <BiParagraph/>
+                    return  <GoTextSize/>
             }	
         }
         return null
@@ -323,8 +332,19 @@ const TurnIntoContainer = styled.div`
     opacity: ${props => props.active ? 1 : 0.5};
 `
 
+const TitleText = styled.div`
+    letter-spacing: 1.5;
+    font-weight: 500;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`
+
 const HeadingText = styled.div`
-    font-family: 'Slabo 27px', serif;
+    /*font-family: 'Slabo 27px', serif;*/
+    letter-spacing: 1.5;
+    font-weight: 500;
 `
 
 const IntoOption = styled.div`
@@ -405,7 +425,7 @@ const BlockMenu = styled.div`
     background-color: white;
 
     z-index: 0;
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     margin-top: 30rem;
     margin-left: -15.5rem;
     margin-left: ${props => {return props.marginLeft}}rem;

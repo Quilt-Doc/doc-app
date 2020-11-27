@@ -173,7 +173,7 @@ const IconColorMenu = styled.div`
     border-radius: 0.3rem;
     /*
     box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);*/
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     color: #172A4e;
     display: flex;
     padding: 1.5rem;

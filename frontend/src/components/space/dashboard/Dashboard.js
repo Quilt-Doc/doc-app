@@ -3,6 +3,7 @@ import React, {Component} from 'react';
 // styles
 import styled from 'styled-components';
 import chroma from 'chroma-js';
+import { LIGHT_SHADOW_1 } from '../../../styles/shadows';
 
 // components
 import Checks from './checks/Checks';
@@ -71,11 +72,11 @@ const ContentContainer = styled.div`
 `
 
 const LeftContainer = styled.div`
-    min-width: 40rem;
-    max-width: 40rem;
+    min-width: 35rem;
+    max-width: 35rem;
     flex-direction: column;
-    margin-right: 3rem;
-    margin-left: 6rem;
+    margin-right: 2.5rem;
+    margin-left: 0rem;
 `
 
 /* box-shadow: 5px 0 3px -3px rgba(0,0,0,0.1);*/
@@ -88,13 +89,14 @@ const RightContainer = styled.div`
     z-index: 2;
     background-color: white;
     margin-top: 2.7rem;
-    padding: 2rem;
-    padding-right: 3rem;
-    border-radius: 0.7rem;
+    padding: 2rem 3rem;
+    padding-right: 0rem;
+    padding-bottom: 0rem;
+    border-radius: 0.3rem;
     height: 85vh;
-    margin-right: 6rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px 0px, rgba(9, 30, 66, 0.25) 0px 5px 10px -5px;
-    min-width: 70rem;
+    box-shadow: ${LIGHT_SHADOW_1};
+    min-width: 75rem;
+    padding-bottom: 0rem;
 `
 
 const Content = styled.div`
@@ -145,8 +147,7 @@ const Leftbar = styled.div`
 const Container = styled.div`
     /*background-color: #F7F8FA;#f6f7f9;*/
     height: 100vh;
-    padding: 2.1rem 2.5rem;
-    padding-right: 3rem;
+    padding: 2.1rem 3.5rem;
 `
 
 const FlexContainer = styled.div`

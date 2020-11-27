@@ -21,6 +21,7 @@
     "fs-path": "0.0.24",
     "js-yaml": "^3.14.0",
     "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.20",
     "logform": "^2.2.0",
     "lower-case": "^2.0.1",
     "mongoose": "^5.9.19",

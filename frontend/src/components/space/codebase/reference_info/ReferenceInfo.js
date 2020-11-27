@@ -192,8 +192,11 @@ class ReferenceInfo extends React.Component {
     }
 
     renderStaticView = () => {
-        const { currentReference, documents } = this.props;
+        const { currentReference, currentRepository, documents } = this.props;
         const { tags } = currentReference;
+        
+        const small = currentReference.name === currentRepository.fullName;
+
         return (
             <>
                 {tags.length > 0 && 
@@ -205,15 +208,20 @@ class ReferenceInfo extends React.Component {
                 }
                 { documents.length > 0 &&
                     <List style = {{marginBottom: "2rem"}}>
-                        <InfoList2>{this.renderDocuments()}</InfoList2></List>
+                        <InfoList2 small = {small}>
+                            {this.renderDocuments()}
+                        </InfoList2>
+                    </List>
                 }
             </>
         )
     }
 
     renderEditView = () => {
-        const { currentReference, documents } = this.props;
+        const { currentReference, currentRepository, documents } = this.props;
         const { tags } = currentReference;
+
+        const small = currentReference.name === currentRepository.fullName;
 
         return (
             <>
@@ -227,7 +235,7 @@ class ReferenceInfo extends React.Component {
                 </List>
                 <List style = {{marginBottom: "2rem"}}>
                     {this.renderDocumentMenu()}
-                    {documents.length  > 0 ? <InfoList2 edit = {true}>{this.renderDocuments()}</InfoList2> : 
+                    {documents.length  > 0 ? <InfoList2  small = {small} edit = {true}>{this.renderDocuments()}</InfoList2> : 
                         <Message>
                             Add Documentation
                         </Message>
@@ -289,6 +297,7 @@ const DocList = styled.div`
 const List = styled.div`
     display: flex;
     align-items: center;
+    position: relative;
 `
 
 
@@ -302,10 +311,26 @@ const InfoList = styled.div`
     margin-top: ${props => props.edit ? "" : "-1rem"};
 `
 
+const Gradient = styled.div`
+    position:absolute;
+    z-index:2;
+    width: 20rem;
+    height: calc(100% - 2rem);
+    top: 0;
+    right:0; 
+    background-image: linear-gradient(to bottom, 
+        rgba(255,255,255, 0), 
+        rgba(255,255,255, 1) 90%);
+`
+
 const InfoList2 = styled.div`
     display: flex;
     align-items: center;
-    margin-left: ${props => props.edit ? "1.5rem" : ""};
+    margin-left: ${props => props.edit ? "2rem" : ""};
+    max-width: ${props => props.small ? props.edit ? "70rem" : "75rem" : "100%"};
+    overflow-x: scroll;
+    padding: 1rem;
+    margin-left: ${props => props.edit  ? "0.5rem" : "-1rem"}; 
 `
 
 

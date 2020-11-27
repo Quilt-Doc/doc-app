@@ -141,7 +141,7 @@ getRepositoryFileSafe = async (req, res) => {
     var treeResponse;
     try {
         // /repos/{owner}/{repo}/git/trees/{tree_sha}
-        treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${treeSha}`);
+        treeResponse = await installationClient.get(`/repos/${fullName}/git/trees/${treeSha}?recursive=true`);
     }
     catch (err) {
         await logger.error({source: 'backend-api',
@@ -425,7 +425,7 @@ retrieveRepositories = async (req, res) => {
                             error: `Error find repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
                             trace: err});
     }
-    
+
     // make sure that repository is in accessible workspace
     returnedRepositories = returnedRepositories.filter((repo) => repositoriesInWorkspace.includes(repo));
 

@@ -262,7 +262,7 @@ const Container = styled.div`
     transform: translateY(${props => props.rect.top}px);
     z-index: 1;
     position: absolute;
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     border-radius: 0.3rem;
     display: flex;
     align-items: center;

@@ -55,7 +55,7 @@ loginSuccess = async (req, res) => {
     try {
         var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
 
-        console.log(`Decoded JWT: ${decoded}`);
+        // console.log(`Decoded JWT: ${decoded}`);
 
         var user = await User.findById(decoded.userId).lean().exec();
 

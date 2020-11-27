@@ -3,9 +3,9 @@ const Document = require('../models/Document');
 const Repository = require('../models/Repository');
 const Reference = require('../models/Reference');
 
-const ReportingController = require('../controllers/reporting/ReportingController');
-const UserStatsController = require('../controllers/reporting/UserStatsController');
-const ActivityFeedItemController = require('../controllers/reporting/ActivityFeedItemController');
+const ReportingController = require('./reporting/ReportingController');
+const UserStatsController = require('./reporting/UserStatsController');
+const ActivityFeedItemController = require('./reporting/ActivityFeedItemController');
 
 var mongoose = require('mongoose');
 const UserStats = require('../models/reporting/UserStats');
@@ -18,6 +18,18 @@ const Mixpanel = require('mixpanel');
 // create an instance of the mixpanel client
 const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
 
+// pusher
+const Pusher = require("pusher");
+
+// create pusher instance
+const { PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER } = process.env;
+const pusher = new Pusher({
+    appId: PUSHER_APP_ID,
+    key: PUSHER_KEY,
+    secret: PUSHER_SECRET,
+    cluster: PUSHER_CLUSTER,
+    useTLS: true
+});
 
 let db = mongoose.connection;
 
@@ -29,17 +41,20 @@ checkValid = (item) => {
     return false;
 }
 
-
 escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
-
 
 /// parents children and path are updated, document is returned
 /// FARAZ TODO: Make title a required field during document creation (in modal)
 /// FARAZ TODO: Log times of middleware and of major points in controller methods
 createDocument = async (req, res) => {
     const session = await db.startSession();
+    /*
+    await session.withTransaction(async () => {
+        throw Error("Can we gracefully handle");
+    });
+    */
 
     let output = {};
     try {
@@ -57,8 +72,8 @@ createDocument = async (req, res) => {
                 throw new Error("createDocument error: no authorId provided.");
             }
 
-            if (!checkValid(title) || (title === "" && !root)) {
-                output = {success: false, error: "createDocument error: no title provided.", result: null, alert: "Please provide a title"};
+            if (!checkValid(title)) {
+                output = {success: false, error: "createDocument error: title param not provided.", result: null, alert: "Please provide a title"};
                 throw new Error("createDocument error: no title provided.");
             }
 
@@ -66,6 +81,7 @@ createDocument = async (req, res) => {
                 output = {success: false, error: "createDocument error: no markup provided."};
                 throw new Error("createDocument error: no markup provided.");
             }
+            /*
             // make sure title doesn't exist already in space
             try {
                 let duplicate = await Document.exists({title, workspace: workspaceId}, { session });
@@ -83,7 +99,7 @@ createDocument = async (req, res) => {
                                     function: 'createDocument'});
                 output = {success: false, error: "createDocument Error: validation on duplicate title failed.", trace: err};
                 throw new Error("createDocument Error: validation on duplicate title failed.");
-            }
+            }*/
 
             // Check that repositoryId is in accessible workspace
             const validRepositoryIds = req.workspaceObj.repositories;
@@ -130,28 +146,31 @@ createDocument = async (req, res) => {
                                     errorDescription: `Create Document Error no parentPath provided  - workspaceId, authorId: ${workspaceId}, ${authorId}`,
                                     function: 'createDocument'});
                 output = {success: false, error: "createDocument Error: no parentPath provided."};
-                throw newError("createDocument Error: no parentPath provided.");
+                throw new Error("createDocument Error: no parentPath provided.");
             }
 
-            let documentPath = "";
-
-            // Remove dash from title for new path creation, path is only dependent on title and parentPath if root doesn't exist
-            // TODO: will need to add validation with regard to backslash (possibly)
-            if (!root) {    
-                let dashRemovedTitle = title.replace('/', "<replacedDash>");
-                documentPath = `${parent.path}/${dashRemovedTitle}`
-            }
 
             let document = new Document(
                 {
                     author: ObjectId(authorId),
                     workspace: ObjectId(workspaceId),
                     title,
-                    path: documentPath,
                     markup,
                     status: 'valid'
                 },
             );
+
+
+            //set path
+            let documentPath = "";
+
+            // Remove dash from title for new path creation, path is only dependent on title and parentPath if root doesn't exist
+            if (!root) {    
+                let dashRemovedTitle = title.replace('/', "<replacedDash>");
+                documentPath = `${parent.path}/${dashRemovedTitle}-${document._id}`
+            }
+
+            document.path = documentPath;
 
             // set optional fields of document
             if (checkValid(root)) document.root = root;
@@ -403,7 +422,7 @@ moveDocument = async (req, res) => {
         
                 // mongoose bulkwrite for one many update db call
                 try {
-                await Document.bulkWrite(bulkWritePathOps, { session });
+                    await Document.bulkWrite(bulkWritePathOps, { session });
                 } catch (err) {
                     await logger.error({source: 'backend-api',
                                         error: err,
@@ -593,14 +612,14 @@ deleteDocument = async (req, res) => {
 
 // title + path of main doc changed, path of descendants changed
 renameDocument = async (req, res) => {
-
     // extract new title that will be used to rename
     const session = await db.startSession();
-    console.log("RENAME ENTERED", output);
+
     let output = {};
     try {
         await session.withTransaction(async () => {
             const { title } = req.body;
+
             if (!checkValid(title)) {
                 output = {success: false, error: 'renameDocument: error no title provided', alert: "Please provide a title"};
                 throw new Error('renameDocument: error no title provided');
@@ -613,6 +632,7 @@ renameDocument = async (req, res) => {
                                 message: `Rename Document attempting to rename ${documentObj._id} - workspaceId, userId, oldTitle, newTitle: ${workspaceId}, ${req.tokenPayload.userId}, ${documentObj.title}, ${title}`,
                                 function: 'renameDocument'});
 
+            /*
             // make sure title doesn't exist already in space
             try {
                 let duplicate = await Document.exists({title, workspace: workspaceId}, { session });
@@ -625,14 +645,15 @@ renameDocument = async (req, res) => {
                     throw new Error("renameDocument Error: duplicate title.");
                 }
             } catch (err) {
+                console.log("ERROR", err);
                 await logger.error({source: 'backend-api',
                                     message: err,
                                     errorDescription: `Rename Document Error title exists query failed - workspaceId, userId, title: ${workspaceId}, ${req.tokenPayload.userId}, ${title}`,
                                     function: `renameDocument`});
 
-                output = {success: false, error: "renameDocument Error: validation on duplicate title failed.", trace: err};
+                output = {success: false, error: "renameDocument Error: validation on duplicate title failed.", alert: "Duplicate title in space.. Please select a unique title", trace: err};
                 throw new Error("renameDocument Error: validation on duplicate title failed.");
-            }
+            }*/
             
 
             // extract prefix path for all documents that will need to be updated (path) by name change 
@@ -655,8 +676,14 @@ renameDocument = async (req, res) => {
             }
 
             // the new path of the renamed doc
-            let documentPath = documentObj.path;
-            documentPath = documentPath.slice(0, documentPath.length - documentObj.title.length) + title;
+            let splitDocumentPath = documentObj.path.split('/');
+            splitDocumentPath = splitDocumentPath.slice(0, splitDocumentPath.length - 1)
+
+            const modTitle = title.replace('/', "<replacedDash>");
+
+            let documentPath = `${splitDocumentPath.join('/')}/${modTitle}-${documentObj._id}`;
+
+            //documentPath.slice(0, documentPath.length - documentObj.title.length) + title;
 
             // create update ops for each descendant of renamed doc + the actual renamed doc
             let bulkWritePathOps = renamedDocuments.map((doc) => {
@@ -714,7 +741,6 @@ renameDocument = async (req, res) => {
     }
 
     session.endSession();
-    console.log("RENAME OUTPUT", output);
     return res.json(output);
 
 } 
@@ -742,8 +768,9 @@ getDocument = async (req, res) => {
 
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
-    const { markup, referenceIds, repositoryId, image, content, title } = req.body;
+    const { markup, referenceIds, repositoryId, image, content } = req.body;
 
+    console.log("ENTERED EDIT DOCUMENT");
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
 
@@ -863,6 +890,7 @@ retrieveHelper = async (body, req) => {
 retrieveDocuments = async (req, res) => {
 
     let { root, documentIds, referenceIds, limit, skip, minimal, fill } = req.body;
+
     // use helper above to retrieve queried documents
     let response = await retrieveHelper({ root, documentIds, referenceIds, limit, skip, minimal }, req);
     
@@ -877,6 +905,8 @@ retrieveDocuments = async (req, res) => {
         let moreDocuments = secondResponse.result;
         returnedDocuments = [...returnedDocuments, ...moreDocuments];
     }
+
+    // console.log(`Retrieve Documents Returning: ${JSON.stringify(returnedDocuments)}`);
 
     return res.json({ success: true, result: returnedDocuments});
 }
@@ -1177,13 +1207,71 @@ searchDocuments = async (req, res) => {
     return res.json({success: true, result: documents});
 }
 
+getDocumentImage = async (req, res) => {
+    const documentId = req.documentObj._id.toString();
+    const workspaceId = req.workspaceObj._id.toString();
+
+    let returnDocument;
+
+    try {
+        returnDocument =  await Document.findOne({_id: documentId, workspace: workspaceId}).select('image')
+        .lean().exec();
+    } catch (err) {
+        return res.json({ success: false, error: "getDocumentImage Error: unable to get document", trace: err });
+    }
+
+    const { image } = returnDocument;
+
+    return res.json({ success: true, result: image });
+}
+
+authorizeDocumentPusher = async (req, res) => {
+    //console.log("ENTERED IN HERE");
+    const { socket_id, channel_name } = req.body;
+
+    //console.log("REQUEST", requester);
+    //console.log("SOCKET ID", socket_id);
+    //console.log("CHANNEL NAME", channel_name);
+    
+    // console.log("REQ PAYLOAD", req.tokenPayload);
+
+    const { userId } = req.tokenPayload;
+    /*
+    const presenceData = {
+        user_id: "unique_user_id",
+        user_info: {
+        name: "Mr Channels",
+        twitter_id: "@pusher"
+        }
+    };*/
+
+    const socketId = socket_id;
+    const channel = channel_name;
+    const presenceData = { user_id: `${userId}-${Date.now()}` }
+
+    let auth;
+
+    if (channel.split('-')[0] === "presence") {
+        auth = pusher.authenticate(socketId, channel, presenceData);
+    } else {
+        auth = pusher.authenticate(socketId, channel);
+    }
+   
+    //console.log("AUTH", auth);
+    res.send(auth);
+}
+
 
 testRoute = async (req, res) => {
     console.log('TEST ROUTE');
     console.log(req.body);
+    console.log("ORIGIN", req.get('origin'));
+    console.log("COOKIES", req.cookies);
+    console.log(req.headers.authorization);
+    console.log(req.cookies['user-jwt']);
 }
 
-module.exports = { testRoute, searchDocuments,
+module.exports = { authorizeDocumentPusher, getDocumentImage, testRoute, searchDocuments,
     createDocument, getDocument, editDocument, deleteDocument,
     renameDocument, moveDocument, retrieveDocuments, attachDocumentTag, removeDocumentTag, attachDocumentSnippet,
     removeDocumentSnippet, attachDocumentReference, removeDocumentReference }

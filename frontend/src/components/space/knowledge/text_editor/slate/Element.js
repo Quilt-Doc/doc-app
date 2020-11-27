@@ -16,6 +16,8 @@ import { faBars } from '@fortawesome/free-solid-svg-icons'
 import SnippetEmbeddable from './element_units/SnippetEmbeddable';
 import CheckListItemElement from './element_units/CheckListItemElement';
 import Attachment from './element_units/Attachment';
+import CodeLine from './element_units/code_block/CodeLine';
+import CodeBlock from './element_units/code_block/CodeBlock';
 
 //reactdnd
 import {ItemTypes} from './types/Drag_Types';
@@ -41,13 +43,18 @@ class Element extends React.Component {
 		if (element.type ==='list-item') {
 			return (
 				<ListItem {...attributes}>
-					<PlainText>
+					{/*
+					<ListBulletContainer contentEditable = {false}>
+						<ListBullet/>
+					</ListBulletContainer>
+					*/}
+					<PlainText>	
 						{children}
 					</PlainText>
 				</ListItem>
 			)
 		} else if (element.type === 'code-line') {
-			return <CodeLine {...attributes}>{children}</CodeLine>
+			return <CodeLine element = {element} attributes = {attributes} children = {children} />
 		} else {
 			return <ElementWrapper element = {element} attributes = {attributes} children = {children}/>
 		}		
@@ -121,6 +128,8 @@ const getCorrectElement = props => {
 	const { borderTop, element: {type}, attributes, children } = props;
 	
 	switch (type) {
+		case 'title':
+			return <Title {...attributes}>{children}</Title>
 		case 'heading-one':
 			return <H1 borderTop = {borderTop}  {...attributes}>{children}</H1>
 		case 'heading-two':
@@ -134,7 +143,7 @@ const getCorrectElement = props => {
 		case 'check-list':
 			return <CheckListItemElement {...props} />
 		case 'code-block':
-			return <CodeBlock borderTop = {borderTop} {...attributes}>{children}</CodeBlock>
+			return <CodeBlock {...props}/>
 		case 'note':
 			return <Note {...attributes}>
 						<div>
@@ -218,41 +227,117 @@ const BlockTool = (props) => {
 	)
 }*/
 
+const Title = styled.div`
+	font-size: 3.7rem;
+	line-height: 4rem;
+	overflow-wrap: break-word;
+	hyphens: auto;
+	color: #172A4E;
+	margin-bottom: 2rem;
+	&::placeholder {
+		color: #172A4E;
+		opacity: 0.4;
+	}
+	margin-top: 3.5rem;
+	font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+	font-weight: 500;
+`
+
+
+const UL = styled.ul`
+	/*font-size: 120%;
+	line-height: 2rem;
+	margin-top: 2rem !important;
+	margin-left: 2.3rem;
+	*/
+	border-top: 2px solid transparent;
+	border-top: ${props => props.borderTop};
+	overflow-wrap: break-word;
+	margin: 0;
+	padding: 0;
+	/*
+	margin-top: 2.4rem;
+	*/
+	margin-left: 2rem;
+`
+
+const OL = styled.ol`
+	border-top: 2px solid transparent;
+	border-top: ${props => props.borderTop};
+	overflow-wrap: break-word;
+	margin-left: 2rem;
+	padding: 0;
+`
+
 const ListItem = styled.li`
-	margin-bottom: 0.8rem;
+	margin-top: 1rem;
+
+	/*margin-bottom: 0.8rem;*/
+	
+	/*margin-top: 
+	
 	:before{
 		vertical-align: top;
 		margin-right: 10px;
 	}
+	*/
+	&:before{
+		font-size: 2.2rem;
+		font-weight: 500;
+	}
+	/*display: flex;*/
+	/*list-style-type: none;*/
+`
+
+const ListBulletContainer = styled.div`
+	min-height: 3rem;
+	min-width: 2rem;
+	max-width: 2rem;
+	max-height: 3rem;
+	display: flex;
+	align-items: center;
+`
+
+const ListBullet = styled.div`
+	background-color: #172A4E;
+	min-height: 0.63rem;
+	height: 0.63rem;
+	min-width: 0.63rem;
+	width: 0.63rem;
+	border-radius: 50%;
 `
 
 const PlainText = styled.span`
-	font-size: 1.63rem;
+	font-size: 1.6rem;
+  	line-height: 1.73;
+/*
+	font-size: 1.6rem;
 	display: inline-table;
 	vertical-align: middle;
 	padding-bottom: 4px;
+*/
 `
 
 const Note = styled.div`
 	background-color: ${chroma('#6762df').alpha(0.15)};
-	font-size: 1.63rem;
+	font-size: 1.6rem;
+	line-height: 1.73;
 	padding: 1rem 1.7rem;
 	display: flex;
 	align-items: center;
 	color: #172A4e;
 	margin-top: 2rem !important;
 	border-radius: 0.3rem;
-	border: 1px solid #6762df;
+	border-left: 1rem solid ${chroma('#6762df').alpha(0.3)};
 	font-weight: 500;
 `
 
 const Quote = styled.div`
-	font-size: 1.63rem;
+	font-size: 1.6rem;
 	padding: 1rem;
-	border-left: 2px solid #DFDFDF;
+	border-left: 4px solid ${chroma('#172A4E').alpha(0.3)};
 	margin-top: 2rem !important;
-	color: ${chroma('#172A4E').alpha(0.6)}
-	display: flex;
+	color: ${chroma('#172A4E').alpha(0.6)};
 `
 
 const OptionHeader = styled.div`
@@ -417,8 +502,8 @@ const H3 = styled.div`
 
 const P = styled.div`
   margin-top: 1.5rem !important;
-  font-size: 1.63rem;
-  line-height: 1.76;
+  font-size: 1.6rem;
+  line-height: 1.73;
   color: rgb(9, 30, 66);
   box-shadow: none;
   border-top: 2px solid transparent;
@@ -426,43 +511,17 @@ const P = styled.div`
   overflow-wrap: break-word;
 `
 
-const UL = styled.ul`
-	font-size: 120%;
-	line-height: 2rem;
-	margin-top: 2rem !important;
-	margin-left: 2.3rem;
-	border-top: 2px solid transparent;
-	border-top: ${props => props.borderTop};
-	overflow-wrap: break-word;
-`
-
-const OL = styled.ol`
-	margin-top: 2rem !important;
-	margin-left: 2rem;
-	border-top: 2px solid transparent;
-	border-top: ${props => props.borderTop};
-	overflow-wrap: break-word;
-`
-
-const CodeBlock = styled.div`
-    margin-top: 2.5rem;
-    background-color: #F7F9FB;
-	padding: 2.5rem;
-	tab-size: 4;
-	border-top: 2px solid transparent;
-  	border-top: ${props => props.borderTop};
-`
-
+/*
 const CodeLine = styled.div`
 	font-family: 'Roboto Mono', monospace !important;
-    font-size: 1.35rem;
+    font-size: 1.4rem;
     padding: 0.1rem !important;
-    /*boxShadow: 0 0 60px rgba(0, 0, 0, 0.08) !important;*/
+    
 	white-space: pre-wrap !important;
 	color: #172A4E;
 	overflow-wrap: break-word;
 `
-
+*/
 
 /*
   for further --

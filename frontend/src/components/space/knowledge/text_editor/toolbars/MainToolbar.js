@@ -5,7 +5,8 @@ import chroma from 'chroma-js';
 import {RiEdit2Line, RiCheckFill, RiCloseFill} from 'react-icons/ri';
 import {CgOptions} from 'react-icons/cg';
 import DocumentOptionsMenu from '../../../../menus/DocumentOptionsMenu';
-import { AiOutlineExclamation } from 'react-icons/ai';
+import { AiOutlineExclamation, AiOutlinePullRequest } from 'react-icons/ai';
+import { GoGitBranch } from 'react-icons/go';
 
 //components
 import LabelMenu from '../../../../menus/LabelMenu';
@@ -18,6 +19,8 @@ import { connect } from 'react-redux';
 
 //react-router
 import { withRouter } from 'react-router-dom';
+import { APP_LIGHT_PRIMARY_COLOR } from '../../../../../styles/colors';
+import { FiChevronDown } from 'react-icons/fi';
 
 
 class MainToolbar extends React.Component {
@@ -49,6 +52,11 @@ class MainToolbar extends React.Component {
         const { document } = this.props;
         if (document) {
             let paths = this.props.document.path.split('/').slice(1);
+            paths = paths.map(path => {
+                let dashSplit = path.split('-');
+                const joinedSplit = dashSplit.slice(0, dashSplit.length - 1).join('-');
+                return joinedSplit ? joinedSplit : "Untitled";
+            });
 
             if (paths.length > 3) {
                 paths = [paths[0], '...', paths[paths.length - 2], paths[paths.length - 1]];
@@ -69,13 +77,6 @@ class MainToolbar extends React.Component {
         switch (status) {
             case "valid":
                 return  <Status color = {"#19e5be"}>
-                            <RiCheckFill 
-                                style = 
-                                {{
-                                    marginRight: "0.3rem",
-                                    fontSize: "1.5rem"
-                                }}
-                            />
                             Valid
                         </Status>
             case "resolve":
@@ -90,28 +91,44 @@ class MainToolbar extends React.Component {
                             Resolve
                         </Status>
             case "invalid":
-                return <Status color = {"#ff4757"}>
-                            <RiCloseFill
-                                style = 
-                                {{
-                                    marginRight: "0.3rem",
-                                    fontSize: "1.5rem"
-                                }}
-                            />
-                            Invalid
+                return <Status color = {"#ca3e8c"}>
+                            INVALID
+                                {/*
+                                <PullRequest>
+                                    <PullRequestIcon>
+                                        <AiOutlinePullRequest/>
+                                    </PullRequestIcon>
+                                    Advanced Search Support
+                                </PullRequest>
+                                */}
                         </Status>
             default:
                 return  <Status color = {"#19e5be"}>
-                            <RiCheckFill 
-                                style = 
-                                {{
-                                    marginRight: "0.3rem",
-                                    fontSize: "1.5rem"
-                                }}
-                            />
                             Valid
                         </Status>
         }
+    }
+
+    renderBranch = () => {
+        return null;
+        return (
+            <PullRequest>
+                <PullRequestIcon>
+                    {/*
+                    <AiOutlinePullRequest/>*/}
+                    <GoGitBranch/>
+                </PullRequestIcon>
+                master
+                <FiChevronDown
+                    style = {{
+                        marginLeft: "0.5rem",
+                        marginRight: "0.3rem",
+                        marginTop: "0.1rem",
+                        fontSize: "1.2rem"
+                    }}
+                />
+            </PullRequest>
+        )
     }
 
     render(){
@@ -125,6 +142,7 @@ class MainToolbar extends React.Component {
                             {this.renderPath()}
                         </Path>
                         {this.renderStatus()}
+                        {this.renderBranch()}
                         <Left>
                             <Button active = {this.props.write}
                                 onClick = {this.props.setWrite}
@@ -161,6 +179,26 @@ const mapStateToProps = () => {
 export default withRouter(connect(mapStateToProps, {
     attachDocumentTag, removeDocumentTag })(MainToolbar));
 
+const PullRequestIcon = styled.div`
+    display: flex;
+    align-items: center;
+    margin-right: 0.35rem;
+    font-size: 1.55rem;
+    margin-top: -0.1rem;
+`
+
+const PullRequest = styled.div`
+    display: flex;
+    align-items: center;
+    margin-left: 2rem;
+    background-color: ${APP_LIGHT_PRIMARY_COLOR};
+   /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
+    border-radius: 0.4rem;
+    font-weight: 500;
+    padding: 0.7rem 1rem;
+    font-size: 1.3rem;
+`
+
 const PathSection = styled.div`
     &:hover {
         text-decoration: underline;
@@ -175,17 +213,19 @@ const PathSection = styled.div`
 
 const Status = styled.div`
     display: inline-flex;
-    background-color: ${props => chroma(props.color).alpha(0.2)};
+    background-color: ${props => chroma(props.color).alpha(0.13)};
     color: ${props => props.color};
     border: 1px solid ${props => props.color};
     font-weight: 500;
     border-radius: 0.3rem;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     padding: 0rem 1rem;
+    justify-content: center;
     align-items: center;
+    width: 7rem;
     margin-left: 2rem;
-    height: 2rem;
-    margin-top: -0rem;
+    height: 2.3rem;
+    text-transform: uppercase;
 `
 
 const Button = styled.div`

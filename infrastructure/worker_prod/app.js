@@ -45,7 +45,7 @@ app.post('/job', async function(req, res) {
     // Scan Repository Job
     if(jobType == constants.jobs.JOB_SCAN_REPOSITORIES) {
 
-        const { workspaceId, repositoryIdList, installationId } = req.body;
+        const { workspaceId, repositoryIdList, installationIdLookup, repositoryInstallationIds, installationId } = req.body;
         
         if (!checkValid(workspaceId))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No workspaceId provided for scanRepositories job`)),
@@ -59,6 +59,22 @@ app.post('/job', async function(req, res) {
                                 source: 'worker-instance', function: 'app.js'}});
             res.status(400).end();
         }
+
+        if (!checkValid(installationIdLookup)) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No installationIdLookup provided for scanRepositories job`)),
+                                errorDescription: 'No installationIdLookup provided for scanRepositories job',
+                                source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
+
+        if (!checkValid(repositoryInstallationIds)) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No repositoryInstallationIds provided for scanRepositories job`)),
+                                errorDescription: 'No repositoryInstallationIds provided for scanRepositories job',
+                                source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
+
+        // DEPRECATED
         if (!checkValid(installationId))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No installationId provided for scanRepositories job`)),
                                 errorDescription: 'No installationId provided for scanRepositories job',
@@ -71,7 +87,12 @@ app.post('/job', async function(req, res) {
 
         process.env.workspaceId = workspaceId;
         process.env.repositoryIdList = JSON.stringify(repositoryIdList);
+        process.env.installationIdLookup = JSON.stringify(installationIdLookup);
+        process.env.repositoryInstallationIds = JSON.stringify(repositoryInstallationIds);
+
+        // DEPRECATED
         process.env.installationId = installationId;
+
         try {
             await scanRepositories.scanRepositories();
         }

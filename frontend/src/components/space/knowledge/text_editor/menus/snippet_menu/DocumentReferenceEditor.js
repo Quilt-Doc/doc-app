@@ -12,6 +12,7 @@ import styled from 'styled-components';
 
 //router
 import { withRouter } from 'react-router-dom';
+import history from '../../../../../../history';
 
 //components
 import { CSSTransition } from 'react-transition-group';
@@ -57,7 +58,8 @@ class DocumentReferenceEditor extends Component {
     componentDidMount = async () => {
         const { match, openedReference, getRepositoryFile, documents } = this.props;
 
-        const { workspaceId, documentId }  = match.params;
+        const { workspaceId }  = match.params;
+        const documentId = this.getDocumentId(this.props);
 
         const currentDocument = documents[documentId];
 
@@ -77,8 +79,22 @@ class DocumentReferenceEditor extends Component {
         this.setState({fileContents, allLinesJSX, loaded: true});
     }
 
+    getDocumentId = (props) => {
+        const { match } = props;
+        let { documentId } = match.params;
+
+        // if the editor is a modal, the id is in the params
+        if (!documentId) {
+            let search = history.location.search;
+            let params = new URLSearchParams(search);
+            documentId = params.get('document');
+        }
+
+        return documentId;
+    }
+
      // creates the selection object that allows for selecting/creating snippets
-     createSelection = () => {
+    createSelection = () => {
         const selection = new Selection({
             // Class for the selection-area
             class: 'selection',
@@ -234,7 +250,9 @@ class DocumentReferenceEditor extends Component {
 
         const { fileContents } = this.state;
         const { createSnippet, undoModal, match, openedReference, user, editor, range } = this.props;
-        const { documentId, workspaceId } = match.params;
+        const { workspaceId } = match.params;
+
+        const documentId = this.getDocumentId(this.props);
 
         let selectedLines = this.selection.getSelection();
         if (selectedLines.length === 0) return alert("No lines were selected..");

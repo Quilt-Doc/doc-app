@@ -79,12 +79,18 @@ class DocumentCreationModal extends React.Component {
 
         const markup = JSON.stringify(
             [{
+                type: 'title',
+                children: [
+                { text: '' },
+                ],
+            },
+            {
                 type: 'paragraph',
                 children: [
                 { text: '' },
                 ],
             }]
-        )
+        );
 
         let affectedDocuments =  await createDocument({
             authorId: user._id,
@@ -325,11 +331,10 @@ const ModalContent = styled.div`
     box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
     display: flex;
     flex-direction: column;
-    max-width: 75rem;
+    max-width: 85rem;
     border-radius: 0.3rem;
     background-color: white;
     color: #172A4e;
-    background-color: white;
 `
 
 const Bottom = styled.div`
@@ -347,7 +352,9 @@ const Bottom = styled.div`
 `
 
 const Body = styled.div`
-    width: 65rem;
+    padding-left: 5rem;
+    padding-right: 5rem;
+    width: 100%;
     padding-bottom: 3rem;
 `
 
@@ -493,9 +500,9 @@ const Reference = styled.div`
 
 const Header = styled.div`
     font-weight: 500;
-    font-size: 1.9rem;
+    font-size: 1.7rem;
     font-weight: 500;
-    padding: 2.2rem 4rem;
+    padding: 1.8rem 4rem;
     display: flex;
     align-items: center;
     color: white;

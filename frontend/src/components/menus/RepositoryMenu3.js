@@ -199,7 +199,8 @@ const MenuButton = styled.div`
         background-color: ${props => props.active ?  chroma('#6762df').alpha(0.2) : "#F4F4F6" };
     }
     cursor: pointer;
-    border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.2) : props.borderColor}; 
+    border: 1px solid ${props => props.active ? chroma('#6762df').alpha(0.2) : 
+        chroma('#172A4e').alpha(0.9)}; 
 `
 
 const Title = styled.div`
@@ -317,7 +318,7 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: 0 2px 2px 2px rgba(60,64,67,.15);
+    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
     position: absolute;
     font-size: 1.4rem;
     margin-top: 0.5rem;

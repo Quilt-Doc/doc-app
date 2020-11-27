@@ -16,13 +16,15 @@ import { connect } from 'react-redux';
 
 //icons
 import {RiGitRepositoryLine, RiFileFill, RiAddLine} from 'react-icons/ri'
-import {AiFillFolder} from 'react-icons/ai';
+import {AiFillFolder, AiOutlinePullRequest} from 'react-icons/ai';
 import {VscRepo} from 'react-icons/vsc';
 
 //router
 import { withRouter } from 'react-router-dom';
 import history from '../../../../../history';
 import { IoIosHammer } from 'react-icons/io';
+import { LIGHT_SHADOW_1 } from '../../../../../styles/shadows';
+import { APP_LIGHT_PRIMARY_COLOR, PRIMARY_COLOR } from '../../../../../styles/colors';
 
 class DocumentInfo extends React.Component {
     constructor(props){
@@ -34,7 +36,7 @@ class DocumentInfo extends React.Component {
         return `${split[1]}`
     }
 
-    renderFolders = (references, invalid) => {
+    renderFolders = (references) => {
         //let {references} = this.props.document
         let directories = references.filter(reference => reference.kind === "dir")
         
@@ -43,6 +45,8 @@ class DocumentInfo extends React.Component {
         }
 
         return directories.map((directory, i) => {
+            const { status } = directory;
+            let invalid = status === "invalid"
             return (    <Reference invalid = {invalid}>
                             <AiFillFolder style = {{marginRight: "0.5rem"}}/>
                             <Title>{directory.name}</Title>
@@ -51,7 +55,7 @@ class DocumentInfo extends React.Component {
         })
     }
 
-    renderFiles = (references, invalid) => {
+    renderFiles = (references) => {
         //let {references} = this.props.document
         let files = references.filter(reference => reference.kind === "file")
 
@@ -60,6 +64,8 @@ class DocumentInfo extends React.Component {
         }
 
         return files.map((file, i) => {
+            const { status } = file;
+            let invalid = status === "invalid"
             return (
                 <Reference invalid = {invalid}>
                     <RiFileFill style = {{width: "1rem", fontSize: "1.1rem" ,marginRight: "0.5rem"}}/>
@@ -112,18 +118,18 @@ class DocumentInfo extends React.Component {
 
     renderEditData = () => {
         const { document: {references, repository} } = this.props;
-        const validReferences = references.filter(ref => ref.status === 'valid');
-        const invalidReferences = references.filter(ref => ref.status === 'invalid');
+        //const validReferences = references.filter(ref => ref.status === 'valid');
+        //const invalidReferences = references.filter(ref => ref.status === 'invalid');
 
         return (
             <>
                 <RepositoryMenu2 darkBorder = {true} document={this.props.document}/>
                 <List>
                     {this.renderReferenceMenu()}
-                    {   (validReferences && validReferences.length > 0) ? 
+                    {   (references && references.length > 0) ? 
                          <InfoList edit = {true}>
-                            {this.renderFolders(validReferences, false)}
-                            {this.renderFiles(validReferences, false)}
+                            {this.renderFolders(references)}
+                            {this.renderFiles(references)}
                         </InfoList> :
                          <Message>
                             { repository ? 
@@ -133,15 +139,6 @@ class DocumentInfo extends React.Component {
                         </Message>
                     }
                 </List>
-                { (invalidReferences && invalidReferences.length > 0) &&
-                    <List>
-                        {this.renderFixButton()}
-                        <InfoList edit = {true}>
-                            {this.renderFolders(invalidReferences, true)}
-                            {this.renderFiles(invalidReferences, true)}
-                        </InfoList>
-                    </List>
-                }
             </>
         )
     }
@@ -149,8 +146,8 @@ class DocumentInfo extends React.Component {
     renderStaticData = () => {
         const { document: {references, repository} } = this.props;
         
-        const validReferences = references.filter(ref => ref.status === 'valid');
-        const invalidReferences = references.filter(ref => ref.status === 'invalid');
+        //const validReferences = references.filter(ref => ref.status === 'valid');
+        //const invalidReferences = references.filter(ref => ref.status === 'invalid');
 
         return (
             <>
@@ -162,19 +159,11 @@ class DocumentInfo extends React.Component {
                     {this.renderFullName()}
                 </RepositoryButton>
             }
-            { (validReferences && validReferences.length > 0) &&
+            { (references && references.length > 0) &&
                 <List>
                     <InfoList>
-                        {this.renderFolders(validReferences, false)}
-                        {this.renderFiles(validReferences, false)}
-                    </InfoList>
-                </List>
-            }
-            { (invalidReferences && invalidReferences.length > 0) &&
-                <List>
-                    <InfoList>
-                        {this.renderFolders(invalidReferences, true)}
-                        {this.renderFiles(invalidReferences, true)}
+                        {this.renderFolders(references)}
+                        {this.renderFiles(references)}
                     </InfoList>
                 </List>
             }
@@ -215,6 +204,45 @@ export default withRouter(connect(mapStateToProps, {
     getDocument, editDocument })(DocumentInfo));
 
 
+const PullRequestIcon = styled.div`
+    display: flex;
+    align-items: center;
+    margin-right: 0.35rem;
+    font-size: 1.8rem;
+    margin-top: -0.1rem;
+`
+
+const PullRequest = styled.div`
+    display: inline-flex;
+    align-items: center;
+    background-color: ${APP_LIGHT_PRIMARY_COLOR};
+    font-weight: 500;
+    font-size: 1.4rem;
+    padding: 0.7rem 1rem;
+    border-radius: 0.3rem;
+    margin-bottom: 1rem;
+`
+
+const Recommendation = styled.div`
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+`
+
+const RecDetail = styled.div`
+    font-weight: 500;
+    font-size: 1.3rem;
+    width: 10rem;
+`
+
+const PullRequestRecs = styled.div`
+    margin-bottom: 2rem;
+    width: 100%;
+    box-shadow: ${LIGHT_SHADOW_1};
+    border-radius: 0.6rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+`
 
 const FixButton = styled.div`
     height: 3rem;
@@ -267,7 +295,7 @@ const AddButton = styled.div`
 `
 
 const Reference = styled.div`
-    background-color: ${props => props.invalid ? chroma("#ff4757").alpha(0.12) : chroma("#6762df").alpha(0.12)};
+    background-color: ${props => props.invalid ? chroma("#ca3e8c").alpha(0.2)  : chroma("#6762df").alpha(0.12)};
     /*color: ${chroma("#6762df").alpha(0.9)};*/
     border-radius: 0.2rem;
     font-size: 1.3rem;

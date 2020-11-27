@@ -39,6 +39,7 @@ createUserStats = async (params) => {
     await logger.info({source: 'backend-api', message: `Successfully created UserStats object - userId, workspaceId: ${userId}, ${workspaceId}`,
                         function: 'createUserStats'});
 
+
     return userStats;
 }
 
@@ -56,12 +57,12 @@ retrieveUserStats = async (req, res) => {
     if (checkValid(limit)) query.limit(Number(limit));
     if (checkValid(skip)) query.skip(Number(skip));
 
-    query.populate('user');
+    // query.populate('user');
 
     var statItems;
 
     try {
-        statItems = await query.exec();
+        statItems = await query.populate('user').exec();
     }
     catch(err) {
         await logger.error({source: 'backend-api', message: err,
@@ -74,7 +75,8 @@ retrieveUserStats = async (req, res) => {
         var textB = b.user.username.toUpperCase();
         return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
     });
-    
+
+
     return res.json({success: true, result: statItems});
 }
 
