@@ -15,11 +15,14 @@ const { createUserJWTToken } = require('../../utils/jwt');
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
+const axios = require('axios');
+
 const logger = require('../../logging/index').logger;
 
 const fs = require('fs');
 var jwt = require('jsonwebtoken');
 const GithubAuthProfile = require("../../models/authentication/GithubAuthProfile");
+const JiraSite = require("../../models/integrations/JiraSite");
 
 
 checkValid = (item) => {
@@ -150,6 +153,125 @@ checkInstallation = async (req, res) => {
     return res.json({success: true, result: installationResponse.data.installations})
 }
 
+jiraAuthResponse = async (req, res) => {
+    
+    const readJiraIssueScope = "read:jira-work";
+
+    /*
+    curl --request POST \
+        --url 'https://auth.atlassian.com/oauth/token' \
+        --header 'Content-Type: application/json' \
+        --data '{"grant_type": "authorization_code","client_id": "Y
+        OUR_CLIENT_ID","client_secret": "YOUR_CLIENT_SECRET","code": "YOUR_AUTHORIZATION_CODE","redirect_uri": "https://YOUR_APP_CALLBACK_URL"}'
+    */
+
+    const { state, code } = req.query;
+
+    console.log(`Code from JIRA: ${code}`);
+    console.log(`State from JIRA: ${state}`);
+
+    var workspaceId = state.split('-')[0];
+    var userId = state.split('-')[1];
+
+    var jiraClientId = process.env.JIRA_CLIENT_ID;
+    var jiraClientSecret = process.env.JIRA_CLIENT_SECRET;
+    var jiraRedirectURI = process.env.JIRA_CALLBACK_URL;
+
+
+    var jiraAuthClient = axios.create({
+        baseURL: "https://auth.atlassian.com",
+        headers: {
+            "Content-Type": "application/json",
+        }
+    });
+
+    var jiraAccessTokenData = {
+        grant_type: "authorization_code",
+        client_id: jiraClientId,
+        client_secret: jiraClientSecret,
+        code,
+        redirect_uri: jiraRedirectURI,
+    }
+
+    console.log(`jiraAccessTokenData: ${JSON.stringify(jiraAccessTokenData)}`);
+
+    var jiraTokenResponse;
+    try {
+        jiraTokenResponse = await jiraAuthClient.post("/oauth/token?scope=offline_access", jiraAccessTokenData);
+    }
+    catch (err) {
+        // console.log(jiraTokenResponse.data);
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error fetching OAuth token - jiraAccessTokenData: ${JSON.stringify(jiraAccessTokenData)}`,
+                            function: 'jiraAuthResponse'});
+        return res.json({success: false, error: err});
+    }
+
+    console.log(`jiraTokenResponse.data: ${JSON.stringify(jiraTokenResponse.data)}`);
+
+
+    var jiraAPIClient = axios.create({
+        baseURL: "https://api.atlassian.com",
+        headers: {
+            "Authorization": `Bearer ${jiraTokenResponse.data.access_token}`,
+            "Accept": "application/json",
+        }
+    });
+
+    // Get the cloudid
+    /*
+    curl --request GET \
+        --url https://api.atlassian.com/oauth/token/accessible-resources \
+        --header 'Authorization: Bearer ACCESS_TOKEN' \
+        --header 'Accept: application/json'
+    */
+
+    var jiraCloudIdResponse;
+    try {
+        jiraCloudIdResponse = await jiraAPIClient.get('/oauth/token/accessible-resources');
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error fetching JIRA cloudId - jiraAccessToken: ${jiraTokenResponse.data.access_token}`,
+                            function: 'jiraAuthResponse'});
+        return res.json({success: false, error: err});
+    }
+
+    console.log(`JIRA cloudId response: ${JSON.stringify(jiraCloudIdResponse.data)}`);
+
+    console.log(`JIRA accessToken: ${jiraTokenResponse.data.access_token}`);
+
+    try {
+        await JiraSite.create({cloudId: jiraCloudIdResponse.data[0].id, userId, workspaceId, accessToken: jiraTokenResponse.data.access_token});
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api',
+                            message: err,
+                            errorDescription: `Error creating JiraSite - cloudId, userId, workspaceId: ${jiraCloudIdResponse.data[0].id}, ${userId}, ${workspaceId}`,
+                            function: 'jiraAuthResponse'});
+        return res.json({success: false, error: err});   
+    }
+
+    // https://api.atlassian.com/ex/jira/11223344-a1b2-3b33-c444-def123456789/rest/api/2/project
+
+
+
+
+
+    // To Refresh the Access Token
+    /*
+    curl --request POST \
+        --url 'https://auth.atlassian.com/oauth/token' \
+        --header 'Content-Type: application/json' \
+        --data '{ "grant_type": "refresh_token", "client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_CLIENT_SECRET", "refresh_token": "YOUR_REFRESH_TOKEN" }'
+    */
+
+    return res.json({success: true, result: true});
+
+}
+
 
 /*
 retrieveDomainRepositories = async (req, res) => {
@@ -175,5 +297,5 @@ retrieveDomainRepositories = async (req, res) => {
 */
 
 module.exports = {
-    loginSuccess, loginFailed, logout, checkInstallation // , retrieveDomainRepositories
+    loginSuccess, loginFailed, logout, checkInstallation, jiraAuthResponse // , retrieveDomainRepositories
 }

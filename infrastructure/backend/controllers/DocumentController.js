@@ -50,11 +50,11 @@ escapeRegExp = (string) => {
 /// FARAZ TODO: Log times of middleware and of major points in controller methods
 createDocument = async (req, res) => {
     const session = await db.startSession();
-    /*
+    
     await session.withTransaction(async () => {
         throw Error("Can we gracefully handle");
     });
-    */
+
 
     let output = {};
     try {

@@ -91,6 +91,7 @@ app.use(
 
 const nonAuthPaths = ['/auth/login/success',
                       '/auth/login/failed',
+                      '/auth/jira',
                       '/auth/github',
                       '/api/auth/github',
                       '/auth/github/redirect',

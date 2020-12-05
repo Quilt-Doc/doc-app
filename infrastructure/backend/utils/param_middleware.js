@@ -10,6 +10,9 @@ const { ObjectId } = mongoose.Types;
 
 
 const workspaceIdParam = async (req, res, next, workspaceId) => {
+
+    // console.log('workspaceParamMiddleware called!');
+
     if (req.workspaceObj) {
         next();
     }
@@ -20,6 +23,7 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
             next(new Error("workspaceIdParam: workspaceId doesn't exist"));
         }
         req.workspaceObj = foundWorkspace;
+        // console.log(`workspaceParamMiddleware setting workspaceObj to foundWorkspace: ${JSON.stringify(foundWorkspace)}`);
     }
     catch(err) {
         next(err);
