@@ -433,4 +433,7 @@ router.get('/integrations/create', integrationController.createIntegration);
 router.get('/integrations/trello/authorize', integrationController.authorizeTrello);
 router.get('/integrations/trello/callback', integrationController.trelloCallback);
 
+const ticketController = require('../controllers/integrations/TicketController');
+router.post('/tickets/:workspaceId/retrieve', ticketController.retrieveTickets);
+
 module.exports = router;

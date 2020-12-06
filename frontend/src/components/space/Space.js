@@ -36,6 +36,7 @@ import { retrieveDocuments } from '../../actions/Document_Actions';
 import { retrieveReferences } from '../../actions/Reference_Actions';
 import { retrieveTags } from '../../actions/Tag_Actions';
 import { getPendingCount } from '../../actions/Notification_Actions'
+import TicketTest from '../trello_test/TicketTest';
 
 // component that holds the features of an individual workspace
 class Space extends React.Component {
@@ -129,6 +130,7 @@ class Space extends React.Component {
                                 
                                 <RightView id = {"rightView"} >
                                     <Router history = {history}>
+                                        <Route path = "/workspaces/:workspaceId/ticket_test" component = { TicketTest } />
                                         <Route path = "/workspaces/:workspaceId/trello_test" component = { TrelloTest } />
                                         <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
                                         <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId" component = { DirectoryNavigator } />
