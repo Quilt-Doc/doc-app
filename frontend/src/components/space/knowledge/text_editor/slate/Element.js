@@ -18,6 +18,9 @@ import CheckListItemElement from './element_units/CheckListItemElement';
 import Attachment from './element_units/Attachment';
 import CodeLine from './element_units/code_block/CodeLine';
 import CodeBlock from './element_units/code_block/CodeBlock';
+import Note from './element_units/note/Note';
+import Image from './element_units/Image';
+import Video from './element_units/Video';
 
 //reactdnd
 import {ItemTypes} from './types/Drag_Types';
@@ -125,8 +128,8 @@ const ElementWrapper = ({children, attributes, element}) => {
 }
 
 const getCorrectElement = props => {
-	const { borderTop, element: {type}, attributes, children } = props;
-	
+	const { borderTop, element, attributes, children } = props;
+	const { type } = element;
 	switch (type) {
 		case 'title':
 			return <Title {...attributes}>{children}</Title>
@@ -145,19 +148,23 @@ const getCorrectElement = props => {
 		case 'code-block':
 			return <CodeBlock {...props}/>
 		case 'note':
-			return <Note {...attributes}>
-						<div>
-							{children}
-						</div>
-					</Note>
+			return <Note {...props}/>
 		case 'quote':
 			return <Quote {...attributes}>
 						{children}
 					</Quote>
 		case 'attachment':
 			return <Attachment {...props}/>
+		case 'image':
+			return <Image {...props} />
+		case 'video':
+			return <Video {...props} />
 		case 'reference-snippet':
 			return <SnippetEmbeddable {...props} />
+		case 'link':
+			return <Link {...attributes} href={element.url}>{children}</Link>
+		case 'text-line':
+			return <div {...attributes}>{children}</div>
 		default:
 			return <P borderTop = {borderTop}  {...attributes}>{children}</P>
 	}
@@ -227,6 +234,10 @@ const BlockTool = (props) => {
 	)
 }*/
 
+const Link = styled.a`
+	color: #1255CC;
+`
+
 const Title = styled.div`
 	font-size: 3.7rem;
 	line-height: 4rem;
@@ -243,6 +254,25 @@ const Title = styled.div`
 	font-weight: 500;
 `
 
+const ListItem = styled.li`
+	margin-top: 1rem;
+
+	/*margin-bottom: 0.8rem;*/
+	
+	/*margin-top: 
+	
+	:before{
+		vertical-align: top;
+		margin-right: 10px;
+	}
+	*/
+	&:before{
+		font-size: 2.2rem;
+		font-weight: 500;
+	}
+	/*display: flex;*/
+	/*list-style-type: none;*/
+`
 
 const UL = styled.ul`
 	/*font-size: 120%;
@@ -269,25 +299,6 @@ const OL = styled.ol`
 	padding: 0;
 `
 
-const ListItem = styled.li`
-	margin-top: 1rem;
-
-	/*margin-bottom: 0.8rem;*/
-	
-	/*margin-top: 
-	
-	:before{
-		vertical-align: top;
-		margin-right: 10px;
-	}
-	*/
-	&:before{
-		font-size: 2.2rem;
-		font-weight: 500;
-	}
-	/*display: flex;*/
-	/*list-style-type: none;*/
-`
 
 const ListBulletContainer = styled.div`
 	min-height: 3rem;
@@ -318,6 +329,7 @@ const PlainText = styled.span`
 */
 `
 
+/*
 const Note = styled.div`
 	background-color: ${chroma('#6762df').alpha(0.15)};
 	font-size: 1.6rem;
@@ -331,13 +343,14 @@ const Note = styled.div`
 	border-left: 1rem solid ${chroma('#6762df').alpha(0.3)};
 	font-weight: 500;
 `
+*/
 
 const Quote = styled.div`
 	font-size: 1.6rem;
-	padding: 1rem;
-	border-left: 4px solid ${chroma('#172A4E').alpha(0.3)};
+	padding: 1.5rem 1rem;
+	border-left: 3px solid ${chroma('#172A4E').alpha(0.2)};
 	margin-top: 2rem !important;
-	color: ${chroma('#172A4E').alpha(0.6)};
+	color: ${chroma('#172A4E').alpha(0.55)};
 `
 
 const OptionHeader = styled.div`

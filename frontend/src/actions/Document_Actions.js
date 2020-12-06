@@ -34,29 +34,39 @@ export const getDocumentImage = (formValues) => async () => {
 }
 
 export const getUpload = (formValues) => async () => {
-    const { fileName } = formValues;
+    let { targetName, download } = formValues;
 
-    if (!fileName) {
-        throw new Error("getUpload: fileName not provided");
+    if (!targetName) {
+        throw new Error("getUpload: targetName not provided");
     }
 
     var response;
     try {
-        response = await api.get(`/uploads/${encodeURIComponent(fileName)}`, { responseType: 'blob', timeout: 30000 });
+        response = await api.get(`/uploads/${encodeURIComponent(targetName)}/${download}`, { responseType: 'blob', timeout: 30000 });
+        //response = await api.get(`/uploads/${encodeURIComponent(targetName)}/${download}`);
     }
     catch (err) {
         console.log(err);
         return;
+    }
+    
+
+    download = download === "true" ? true : false;
+    
+   
+    if (!download) {
+        const url = window.URL.createObjectURL(response.data);
+        return url
     }
 
     // 1. Convert the data into 'blob'
     // response = response.blob();
 
     // 2. Create blob link to download
-    const url = window.URL.createObjectURL(new Blob([response.body]));
+    const url = window.URL.createObjectURL(response.data);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', fileName.split('/').slice(-1));
+    link.setAttribute('download', targetName.split('/').slice(-1));
     // 3. Append to html page
     document.body.appendChild(link);
     // 4. Force download
@@ -66,7 +76,7 @@ export const getUpload = (formValues) => async () => {
 }
 
 export const uploadAttachment = (formValues) => async (dispatch) => {
-    const { attachment, documentId, workspaceId, name } = formValues;
+    const { attachment, documentId, workspaceId, isImage, isVideo, name } = formValues;
 
     if (!attachment) {
         throw new Error("uploadAttachment: attachment not provided");
@@ -90,6 +100,9 @@ export const uploadAttachment = (formValues) => async (dispatch) => {
     formData.append('documentId', documentId);
     formData.append('workspaceId', workspaceId);
     formData.append('name', name);
+
+    if (isImage) formData.append('isImage', isImage);
+    if (isVideo) formData.append('isVideo', isVideo);
 
     const config = {
         headers: {
@@ -240,13 +253,12 @@ export const getDocument = (formValues) => async dispatch => {
         throw new Error("getDocument: documentId not provided");
     }
 
-
     const response = await api.get(`/documents/${workspaceId}/get/${documentId}`);
 
-    console.log("RESPONSE OF GET", response.data.result);
     if (response.data.success == false) {
         throw new Error(response.data.error);
     }
+
     else {
         dispatch({ type: GET_DOCUMENT, payload: response.data.result });
         return response.data.result
@@ -409,6 +421,7 @@ export const editDocument = (formValues) => async dispatch => {
         throw new Error("editDocument: documentId not provided");
     }
 
+    console.log("FORMVALUES", formValues);
     const response = await api.put(`/documents/${workspaceId}/edit/${documentId}`, formValues);
     
 

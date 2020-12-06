@@ -43,7 +43,7 @@ const Attachment = (props) => {
     const handleMouseDown = (e) => {
         e.preventDefault();
         if (doc.attachments.includes(path)) {
-            getUpload({fileName: path});
+            getUpload({targetName: path, download: "true"});
         } else {
             alert("Error: Attachment cannot be downloaded")
         }

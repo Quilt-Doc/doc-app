@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react'
 
 //slate
 import { ReactEditor, useSlate } from 'slate-react'
-import { Editor, Range, Node } from 'slate'
+import { Editor, Range, Node, Transforms } from 'slate'
 
 //styles
 import styled from 'styled-components';
@@ -30,10 +30,17 @@ import { faBold, faTable, faImage,  faRemoveFormat, faLink,  faItalic, faUnderli
 import { 
     toggleBlockActive, toggleBlock, isMarkActive, toggleMark, removeMarks
 } from '../slate/Utility';
+
+import {
+    isLinkActive, insertLink, unwrapLink
+} from '../slate/WithLinks'
+
 import { AiOutlineBold, AiOutlineItalic, AiOutlineOrderedList, AiOutlineStrikethrough, AiOutlineUnderline, AiOutlineUnorderedList } from 'react-icons/ai';
 import { BsCode } from 'react-icons/bs';
-import { MdFormatClear } from 'react-icons/md'
-import {  BiLink } from 'react-icons/bi';
+import { MdFormatClear, MdFormatUnderlined } from 'react-icons/md'
+import {  BiBold, BiItalic, BiLink, BiStrikethrough } from 'react-icons/bi';
+import { MENU_SHADOW } from '../../../../../styles/shadows';
+import { HiCode, HiLink } from 'react-icons/hi';
 
 const HOTKEYS = {
 	'mod+b': 'bold',
@@ -69,13 +76,13 @@ const HoveringToolbar = () => {
  
     const checkSelection = useCallback(() => {
         if ( !selection || !ReactEditor.isFocused(editor) 
-            || Range.isCollapsed(selection) || Editor.string(editor, selection) === '') {
+            || Range.isCollapsed(selection) || Editor.string(editor, selection) === '' || type === 'title') {
             //selection is not a range
             return true;
         } else {
             return false;
         }
-    }, [selection])
+    }, [selection, type])
 
     const handleMouseUp = useCallback((event) => {
         if (checkSelection()) {
@@ -149,11 +156,11 @@ const HoveringToolbar = () => {
 
     const renderMarkers = () => {
         const markers = [
-            { type: "bold", icon: <AiOutlineBold/> },
-            { type: "italic", icon: <AiOutlineItalic/> },
-            { type: "underlined", icon: <AiOutlineUnderline style = {{marginTop: "0.15rem"}}/>, fontSize: "1.65rem"},
-            { type: "strike", icon: <AiOutlineStrikethrough/>},
-            { type: "code", icon: <BsCode/>, fontSize: "1.7rem"},
+            { type: "bold", icon: <BiBold/> },
+            { type: "italic", icon: <BiItalic/> },
+            { type: "underlined", icon: <MdFormatUnderlined style = {{marginTop: "0.15rem"}}/>, fontSize: "1.65rem"},
+            { type: "strike", icon: <BiStrikethrough/>},
+            { type: "code", icon: <HiCode/>, fontSize: "1.7rem"},
         ]
 
         return markers.map(({type, icon, fontSize}) =>
@@ -195,31 +202,22 @@ const HoveringToolbar = () => {
                     <ColorMenu editor = {editor}
                         back = {true}/>
                 </IconBlock>
-                <IconBlock>
-                    <IconBorder
-                        fontSize = {"1.75rem"}
-                        active = {type ? type === "bulleted-list" : false}
-                        onMouseDown = {event => {
+                <IconBlock position = {"relative"}>
+                    <IconBorder 
+                        fontSize = {"1.7rem"}
+                        active = {isLinkActive(editor)}
+                        onMouseDown={event => {
                             event.preventDefault()
-                            toggleBlockActive(editor, "bulleted-list")
+                            if (isLinkActive(editor)) {
+                                unwrapLink(editor);
+                            } else {
+                                const url = window.prompt('Enter the URL of the link:')
+                                if (!url) return
+                                insertLink(editor, url)
+                            }
                         }}
                     >
-                        <AiOutlineUnorderedList/>
-                    </IconBorder>
-                    <IconBorder
-                        fontSize = {"1.75rem"}
-                        active = {type ? type === "numbered-list" : false}
-                        onMouseDown = {event => {
-                            event.preventDefault()
-                            toggleBlockActive(editor, "numbered-list")
-                        }}
-                    >
-                        <AiOutlineOrderedList/>
-                    </IconBorder>
-                </IconBlock>
-                <IconBlock>
-                    <IconBorder fontSize = {"1.7rem"}>
-                        <BiLink/>
+                        <HiLink/>
                     </IconBorder>
                 </IconBlock>
             </>
@@ -235,12 +233,92 @@ const HoveringToolbar = () => {
                 style = {{
                     left: rect ? rect.left : '-1000px'
                 }}
-                onMouseDown = {(e) => e.preventDefault()}
             >
                 {renderMenu()}
             </Container>
     )
 }
+
+
+const LinkMenu = ({editor}) => {
+    const inputRef = useRef();
+
+    return (
+        <LinkMenuContainer>
+            <LinkMenuHeader>
+                <BiLink/>
+                <LinkMenuHeaderText>Paste a Link</LinkMenuHeaderText>
+            </LinkMenuHeader>  
+            <LinkMenuInput 
+                ref = {inputRef}
+                placeholder = {"Paste your link here.."}
+
+            />
+            <LinkMenuEmbedButton>Embed</LinkMenuEmbedButton>
+        </LinkMenuContainer>
+    )
+}
+
+
+const SubContainer = styled.div`
+    position: relative;
+`
+
+const LinkMenuEmbedButton = styled.div`
+    font-size: 1.5rem;
+    background-color: ${chroma('#6762df').alpha(0.15)};
+    font-weight: 500;
+    padding: 1rem 2rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    &:hover {
+        background-color: ${chroma('#6762df').alpha(0.3)};
+    }
+    display: flex;
+    align-items: center;
+    margin-top: 1.5rem;
+`
+
+const LinkMenuContainer = styled.div`
+    position: absolute;
+    top: 3rem;
+    right: 0rem;
+    padding: 1.5rem 1rem;
+    width: 30rem;
+    background-color: white;
+    box-shadow: ${MENU_SHADOW};
+    border-radius: 0.3rem;
+`
+const LinkMenuHeader = styled.div`
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.8rem;
+`
+
+const LinkMenuInput = styled.input`
+    outline: none;
+    border: none;
+    font-size: 1.3rem;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 1.5rem 1rem;
+    /*height: 3rem;*/
+    width: 100%;
+    border-radius: 0.3rem;
+    background-color: ${chroma("#6762df").alpha(0.15)};
+    color: #172A4E;
+
+    &::placeholder {
+        color: #172A4E;
+        opacity: 0.5;
+    }
+`
+
+const LinkMenuHeaderText = styled.div`
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+`
+
 
 
   /*<CSSTransition
@@ -253,20 +331,22 @@ classNames = "dropmenu"
         </CSSTransition>*/
 
 export default HoveringToolbar;
+
 const BlockContainer = styled.div`
     height: 100%;
 `
 
 const Container = styled.div`
-    background-color:white;
+    background-color: white;
     transform: translateY(${props => props.rect.top}px);
     z-index: 1;
     position: absolute;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
-    border-radius: 0.3rem;
+    box-shadow: rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    border-radius: 0.4rem;
     display: flex;
     align-items: center;
-    height: 4rem;
+    height: 3.4rem;
+
 `
 
 const IconBlock = styled.div`
@@ -274,20 +354,22 @@ const IconBlock = styled.div`
     padding: 0rem 1.3rem;
     border-right: 1px solid #e7edf3;
     align-items: center;
-    height: 4rem;
+    height: 3.4rem;
     &:first-of-type {
         padding: 0rem;
     }
     &:last-of-type {
         border-right:none;
     }
+
+    position: ${props => props.position};
 `
 
 const IconBorder = styled.div`
     margin-left: ${props => props.marginLeft};
     margin-right: 0.3rem;
     display: flex;
-    font-size: ${props => props.fontSize ? props.fontSize : "1.45rem"};
+    font-size: ${props => props.fontSize ? props.fontSize : "1.65rem"};
     align-items: center;
     justify-content: center;
    

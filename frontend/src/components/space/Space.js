@@ -8,6 +8,7 @@ import { DARK_SHADOW_1, DARK_SHADOW_2 } from '../../styles/shadows';
 //components
 import EditorWrapper from './knowledge/text_editor/EditorWrapper';
 import Infobank from './infobank/Infobank';
+import TrelloTest from '../trello_test/TrelloTest'
 import SideNavbar from './side_navbar/SideNavbar';
 import DocumentNavbar from './side_navbar/DocumentNavbar';
 import MainNavbar from './main_navbar/MainNavbar';
@@ -123,9 +124,12 @@ class Space extends React.Component {
                 >
                     <div>
                         <Container>
-                            <SideNavbar setSearch = {this.setSearch}/>                         
+                            {/*<SideNavbar setSearch = {this.setSearch}/>*/}        
+                                <SideNavbar setSearch = {this.setSearch}/>     
+                                
                                 <RightView id = {"rightView"} >
                                     <Router history = {history}>
+                                        <Route path = "/workspaces/:workspaceId/trello_test" component = { TrelloTest } />
                                         <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
                                         <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId" component = { DirectoryNavigator } />
                                         <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />
@@ -196,12 +200,11 @@ const Container = styled.div`
 `
 
 const RightView = styled.div`
-    box-shadow: ${DARK_SHADOW_1};
     width: 100%;
     overflow-y: scroll;
     /*height: calc(100vh - 5.5rem);*/
     z-index: 1;
-    border-top-left-radius: 1.2rem;
     height: 100vh;
     background-color: ${APP_LIGHT_PRIMARY_COLOR};
+    border-top-left-radius: 1.2rem;
 `

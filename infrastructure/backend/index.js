@@ -98,12 +98,13 @@ const nonAuthPaths = ['/auth/login/success',
                       '/auth/github/fork',
                       '/api/auth/github/fork',
                       '/api/testRoute',
-                      '/api/pusher/webhook'
+                      '/api/pusher/webhook',
+                      '/api/integrations/create'
                     ];
 
 app.use(function (req, res, next) {
   req.path = req.path.trim();
-
+  console.log("REQ PATH", req.path);
   const authHeader = req.headers.authorization;
 
   var isNonAuthPath = false;
@@ -118,7 +119,7 @@ app.use(function (req, res, next) {
   }
   
   // Check if asset call
-  if (req.path.includes('/assets')) {
+  if (req.path.includes('/assets') || req.path.includes('/integrations/trello')) {
     isNonAuthPath = true;
   }
   

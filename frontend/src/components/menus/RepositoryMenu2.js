@@ -23,6 +23,7 @@ import {VscRepo} from 'react-icons/vsc';
 
 //styles
 import styled from "styled-components";
+import { CgRemove } from 'react-icons/cg';
 
 class RepositoryMenu extends React.Component {
     
@@ -49,7 +50,8 @@ class RepositoryMenu extends React.Component {
             this.closeMenu()
         } else {
             let { workspaceId } = this.props.match.params;
-            this.props.editDocument({workspaceId, documentId: this.props.document._id, repositoryId: repo._id, referenceIds: []}); 
+            const repositoryId = repo ? repo._id : null;
+            this.props.editDocument({workspaceId, documentId: this.props.document._id, repositoryId, referenceIds: []}); 
             this.closeMenu()
         }
     }
@@ -57,7 +59,28 @@ class RepositoryMenu extends React.Component {
 
     renderListItems(){
         const { emptyReferences, repositories } = this.props;
-        return repositories.map((repo, i) => {
+
+        const deselectOption = (
+                <ListItem 
+                    onClick = {() => {
+                        if (emptyReferences) emptyReferences();
+                        this.selectRepository(null);
+                    }} 
+                >
+                    <CgRemove style = {
+                        {fontSize: "1.7rem", marginRight: "1rem"}
+                        }
+                    />
+                    <Title>No Repository</Title>
+                </ListItem>
+        )
+
+        let repos = repositories.map((repo, i) => {
+            const splitName = repo.fullName.split('/');
+            splitName.slice(1).join('/');
+
+            const modifiedName = `${splitName[0]} / ${splitName.slice(1).join('/')}`
+
             return(
                 <ListItem 
                     onClick = {() => {
@@ -66,13 +89,15 @@ class RepositoryMenu extends React.Component {
                     }} 
                 >
                     <VscRepo style = {
-                        {fontSize: "1.5rem", marginRight: "0.7rem"}
+                        {fontSize: "1.7rem", marginRight: "1rem"}
                         }
                     />
-                     <Title>{repo.fullName}</Title>
+                     <Title>{modifiedName}</Title>
                 </ListItem>
             )
         })
+
+        return [deselectOption, ...repos];
     }
 
     openMenu(e) {
@@ -141,7 +166,9 @@ class RepositoryMenu extends React.Component {
                     classNames = "dropmenu"
                 >
                     <Container  flip = {this.flip()}   ref = {node => this.node = node}>
-                        <HeaderContainer>Select a repository</HeaderContainer>
+                        <HeaderContainer>
+                            Repositories
+                        </HeaderContainer>
                         <ListContainer>
                             {this.renderListItems()}
                         </ListContainer>
@@ -206,7 +233,7 @@ const Title = styled.div`
     overflow: hidden;
     font-weight: 500;
     width: 18rem;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
 `
 
 const PageIcon = styled.div`
@@ -314,13 +341,13 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     color: #172A4E;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
+    box-shadow: 0 30px 60px -12px rgba(50,50,93,0.25),0 18px 36px -18px rgba(0,0,0,0.3);
     position: absolute;
     font-size: 1.4rem;
     margin-top: 0.5rem;
     z-index: 2;
     background-color: white;
-    border-radius: 0.2rem;
+    border-radius: 0.4rem;
     bottom: ${props => `${props.flip}px`};
     margin-top: ${props => props.flip ? "" : '0.5rem'};
 `
@@ -365,14 +392,15 @@ const Searchbar = styled.input`
 `
 
 const HeaderContainer = styled.div`
-    height: 3.5rem;
+    height: 4rem;
     display: flex;
     align-items: center;
-    font-size: 1.3rem;
+    justify-content: center;
+    font-size: 1.4rem;
     padding: 1rem;
     color: #172A4E;
     font-weight: 500;
-    border-bottom: 1px solid #E0E4E7;
+    border-bottom: 1px solid #E0E4e7;
 `
 
 const ListHeader = styled.div`
@@ -389,18 +417,17 @@ const ListHeader = styled.div`
 const ListContainer = styled.div`
     display: flex;
     flex-direction: column;
-    padding: 1rem 0rem;
 `
 
 const ListItem = styled.div`
-    height: 3.5rem;
+    height: 4.5rem;
     border-radius: 0.3rem;
     margin-bottom: 0rem
     color: #172A4E;
-    padding: 1rem;
+    padding: 0rem 1.5rem;
     display: flex;
     align-items: center;
-    
+    font-size: 1.4rem;
     background-color: white;
     /*border: 1px solid #E0E4E7;*/
     &:hover {

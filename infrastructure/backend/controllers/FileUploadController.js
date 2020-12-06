@@ -31,7 +31,7 @@ const postFile = async (req, res) => {
     //Multer middleware adds file(in case of single file ) or files(multiple files) object to the request object.
     // req.file is the attachment
 
-    const { workspaceId, documentId } = req.body;
+    const { workspaceId, documentId, isImage, isVideo } = req.body;
 
     if (!checkValid(workspaceId)) return res.json({success: false, error: 'file upload no workspaceId provided'});
     if (!checkValid(documentId)) return res.json({success: false, error: 'file upload no documentId provided'});
@@ -42,11 +42,14 @@ const postFile = async (req, res) => {
                         message: `Beginning to upload file - req.file.path, req.file.filename: ${req.file.path}, ${req.file.filename}`,
                         function: 'postFile'});
 
-    var source = req.file.path;
-    var targetName = `${workspaceId}/${documentId}/${req.file.filename}`;
+    const source = req.file.path;
+
+    const prefix = isImage ? "images" : isVideo ? "videos" : "attachments";
+
+    const targetName = `${workspaceId}/${documentId}/${prefix}/${req.file.filename}`;
 
     // Read from disk where multer stored the file
-    var fileData;
+    let fileData;
     try {
         fileData = await fs.promises.readFile(source);
     }
@@ -65,7 +68,7 @@ const postFile = async (req, res) => {
     };
 
     try {
-        var data = await s3.putObject(putParams).promise();
+        await s3.putObject(putParams).promise();
     }
     catch (err) {
         await logger.error({source: 'backend-api',
@@ -86,16 +89,17 @@ const postFile = async (req, res) => {
     }
 
     // Add file key to 'attachments' field of Document model
-    var document;
+    let document;
     try {
-        document = await Document.findByIdAndUpdate(documentId, { $push: { attachments: targetName } }, { new: true }).select('_id attachments').lean().exec();
+        const selectionQuery = `_id ${prefix}`;
+        document = await Document.findByIdAndUpdate(documentId, { $push: { [prefix] : targetName } }, { new: true }).select(selectionQuery).lean().exec();
     }
     catch (err) {
         await logger.error({source: 'backend-api',
-                            message: `Error pushing to Document 'attachments' - documentId, targetName: ${documentId}, ${targetName}`,
-                            function: 'postFile'});
+        message: `Error pushing to Document '${prefix}' - documentId, targetName: ${documentId}, ${targetName}`,
+        function: 'postFile'});
 
-        return res.json({success: false, error: `Error pushing to Document 'attachments'`});
+        return res.json({success: false, error: `Error pushing to Document '${prefix}'`});
     }
 
     return res.json({success: true, result: document});
@@ -104,16 +108,15 @@ const postFile = async (req, res) => {
 // '/get_file/:file_name'
 const getFile = async (req, res) => {
 
-    const { fileName } = req.params;
+    let { targetName, download } = req.params;
+    download = download === "true" ? true : false;
 
-    if (!checkValid(fileName)) return res.json({success: false, error: 'file upload no fileName provided'});
+    if (!checkValid(targetName)) return res.json({success: false, error: 'file upload no targetName provided'});
 
-
-    console.log(`fileName: ${fileName}`);
 
     const getParams = {
         Bucket: process.env.AWS_S3_ATTACHMENTS_BUCKET,
-        Key: fileName
+        Key: targetName
     };
 
     var data;
@@ -124,26 +127,25 @@ const getFile = async (req, res) => {
         console.log('S3 Error: ');
         console.log(err);
         await logger.error({source: 'backend-api',
-                            message: `Error getting file from S3 - Bucket, Key: ${process.env.AWS_S3_ATTACHMENTS_BUCKET}, ${fileName}`,
+                            message: `Error getting file from S3 - Bucket, Key: ${process.env.AWS_S3_ATTACHMENTS_BUCKET}, ${targetName}`,
                             function: 'postFile'});
         return res.json({success: false, error: `Error getting file from S3`});
     }
 
-    var downloadName = fileName.split('/').slice(-1);
+    if (download) {
+        var downloadName = targetName.split('/').slice(-1);
 
-    // Set Content-Disposition header so file will be downloaded
-    res.set(
-        'Content-Disposition',
-        `attachment; filename=${downloadName}`
-    );
-    
+        // Set Content-Disposition header so file will be downloaded
+        res.set(
+            'Content-Disposition',
+            `attachment; filename=${downloadName}`
+        );
+    }
 
     // request(url_to_file).pipe(res);
 
-    console.log('Returning: ');
-    console.log(data.Body);
-
     return res.send(data.Body);
+    
 };
 
 module.exports = {

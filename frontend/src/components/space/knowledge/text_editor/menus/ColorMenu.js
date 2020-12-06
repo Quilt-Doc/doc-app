@@ -11,6 +11,7 @@ import { ImTextColor } from 'react-icons/im';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { RiCheckFill } from 'react-icons/ri';
 import { AiOutlineFormatPainter } from 'react-icons/ai';
+import { BiPaintRoll } from 'react-icons/bi';
 
 class ColorMenu extends React.Component {
     constructor(props) {
@@ -111,7 +112,7 @@ class ColorMenu extends React.Component {
             <IconBorder active = {this.state.open} onMouseDown = {(e) => {this.openMenu(e)}} > 
                 {this.props.back ? 
                     <IconColor color = {this.findActiveColor()}>
-                        <AiOutlineFormatPainter/>
+                        <BiPaintRoll/>
                     </IconColor> : 
                     <IconColor color = {this.findActiveColor()}><ImTextColor/></IconColor>}
                 {this.state.open && 
@@ -171,9 +172,7 @@ const IconColorMenu = styled.div`
     position: absolute;
     margin-top: 9rem;
     border-radius: 0.3rem;
-    /*
-    box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);*/
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
+    box-shadow: 0 30px 60px -12px rgba(50,50,93,0.25),0 18px 36px -18px rgba(0,0,0,0.3);
     color: #172A4e;
     display: flex;
     padding: 1.5rem;

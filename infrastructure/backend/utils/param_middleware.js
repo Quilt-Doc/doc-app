@@ -14,6 +14,7 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
         next();
     }
     // try to get the workspace object and attach it to the request object
+
     try {
         var foundWorkspace = await Workspace.findById(workspaceId).lean().exec();
         if (!foundWorkspace || foundWorkspace == null) {

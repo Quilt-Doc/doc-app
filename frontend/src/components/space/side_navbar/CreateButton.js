@@ -6,10 +6,19 @@ import { SECONDARY_COLOR } from '../../../styles/colors';
 
 //router
 import history from '../../../history';
+import { withRouter } from 'react-router-dom';
 
 //icons
 import { RiPencilLine } from 'react-icons/ri';
 import { FiPlus } from 'react-icons/fi';
+
+//actions
+import { createDocument } from '../../../actions/Document_Actions';
+import { clearSelected } from '../../../actions/Selected_Actions';
+
+//react-redux
+import { connect } from 'react-redux';
+
 
 //button to create a new document
 class CreateButton extends React.Component {
@@ -17,10 +26,70 @@ class CreateButton extends React.Component {
         super(props);
     }
 
+    createDocument = async (e) => {
+        const { user, match, createDocument, clearSelected, selected, documents } = this.props;
+        const { workspaceId } = match.params;
+
+        console.log("ENTERED HERE");
+
+        e.stopPropagation();
+        e.preventDefault();
+
+        const markup = JSON.stringify(
+            [{
+                type: 'title',
+                children: [
+                { text: '' },
+                ],
+            },
+            {
+                type: 'paragraph',
+                children: [
+                { text: '' },
+                ],
+            }]
+        );
+
+        let repositoryId = (selected && selected.length > 0) ? selected[0].repository._id : null;
+        let referenceIds = selected.map(item => item._id);
+
+
+        console.log("ABOUT TO CREATE DOC", {
+            authorId: user._id,
+            workspaceId,
+            repositoryId,
+            referenceIds,
+            title: "",
+            parentPath: "",
+            markup
+        })
+
+
+        let affectedDocuments =  await createDocument({
+            authorId: user._id,
+            workspaceId,
+            repositoryId,
+            referenceIds,
+            title: "",
+            parentPath: "",
+            markup
+        });
+
+        console.log("CREATED DOCS", affectedDocuments);
+        if (affectedDocuments) {
+            const { documents } = this.props;
+
+            let doc = documents[affectedDocuments[0]._id];
+                
+            history.push(`?document=${doc._id}&edit=${true}`);
+            clearSelected();
+        }
+    }
+
     render(){
         return(
             <>
-                <NavbarIcon onClick = {() => history.push(`?create_document=true`)} >
+                <NavbarIcon onClick = {this.createDocument} > 
                     <FiPlus/>
                 </NavbarIcon>
             </>
@@ -28,8 +97,20 @@ class CreateButton extends React.Component {
     }
 }
 
+const mapStateToProps = (state, ownProps) => {
+    const { selected, auth: { user }, documents } = state;
 
-export default CreateButton;
+    return {
+        user,
+        selected: Object.values(selected),
+        documents
+    }   
+}
+//history.push(`?create_document=true`)} >
+
+
+export default withRouter(connect(mapStateToProps, {clearSelected, createDocument})(CreateButton));
+
 
 
 const NavbarIcon = styled.div`
@@ -43,8 +124,8 @@ const NavbarIcon = styled.div`
     cursor: pointer;
     font-size: 1.8rem;
     color: white;
-    margin-left: 2rem;
-    margin-bottom: 3rem;
+    margin-left: 1.5rem;
+    margin-bottom: 2rem;
     &:hover {
         background-color:#2b3345;
     }

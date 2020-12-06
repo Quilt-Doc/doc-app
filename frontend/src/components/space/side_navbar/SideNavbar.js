@@ -111,7 +111,7 @@ class SideNavbar extends React.Component {
         const { notificationsOpen } = this.state;
 
         return (
-            <Section marginTop = {"auto"} marginBottom = {'5rem'}>
+            <Section marginTop = {'auto'} marginBottom = {'5rem'}>
                 <NavbarIcon
                         active = {history.location.pathname.split("/")[3] === "settings"}
                         to = {this.renderSettingsLink()}
@@ -147,16 +147,17 @@ class SideNavbar extends React.Component {
                 <WorkspaceIcon to = {"/workspaces"}>{name[0]}</WorkspaceIcon>
                 */}
                 
+
                 <IconsContainer>
                     <LogoContainer to = {"/workspaces"}>
                         <LogoIcon src = {final_logo}/>
                     </LogoContainer>
-                    
                     {this.renderTopSection()}
-                    
+                    {this.renderBottomSection()}
                 </IconsContainer>
                 
-                {this.renderBottomSection()}
+                
+               
             </SideNavbarContainer>
         )
     }
@@ -199,9 +200,8 @@ const LogoContainer = styled(Link)`
     align-items: center;
     justify-content: center;
     height: 6rem;
-    margin-top: 0.8rem;
-    margin-bottom: 1.8rem;
-    cursor: pointer;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
     text-decoration: none;
     
     &:hover {
@@ -212,7 +212,7 @@ const LogoContainer = styled(Link)`
 const LogoIcon = styled.img`
     width: 4.5rem;
     
-    margin-left: -1.85rem;
+    margin-left: -2.6rem;
     /*
     margin-left: 0.9rem;
     margin-bottom: 1.5rem;
@@ -251,13 +251,15 @@ const IconBorder = styled.div`
 
 const SideNavbarContainer = styled.div`
     /*border-top: 2px solid #252832;*/
-    background-color: ${PRIMARY_COLOR}; /*#272a35;*/
+    /*
+    background-color: #272a35 /#2C2E33 ${PRIMARY_COLOR}; #F1F2F4
+    */
     display: flex;
     flex-direction: column;
 
     color: white;
-    min-width: 8rem;
-    max-width: 8rem;
+    min-width: 6.5rem;
+    max-width: 6.5rem;
     overflow-y: scroll;
     height: 100vh;
     align-items: center;
@@ -277,29 +279,30 @@ const NavbarIcon = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 4rem;
-    width: 8rem;
+    height: 4.5rem;
+    width: 100%;
+    
     font-size: ${props => props.fontSize ? props.fontSize : "1.9rem"};
     font-weight: 500;
     /*
     background-color:#3b404f;
     */
     cursor: pointer;
-    margin-bottom: 1.9rem;
+    margin-bottom: 1.5rem;
 
     
     &:hover {
-        border-left: ${props => props.active ? `3px solid ${SECONDARY_COLOR}` : '3px solid white'};
+        border-left: ${props => props.active ? `2.5px solid ${SECONDARY_COLOR}` : '2.5px solid white'};
     }
     
 
     transition: all 0.15s ease-in;
     text-decoration: none;
     
-    /*border: ${props => props.active ?  '1px solid #f27448': 'none'};*/
+    /*border: ${props => props.active ?  'px solid #f27448': 'none'};*/
 
-    border-left: ${props => props.active ? `3px solid ${SECONDARY_COLOR}` : `3px solid transparent`};
-    border-right: 3px solid transparent;
+    border-left: ${props => props.active ? `2.5px solid ${SECONDARY_COLOR}` : `2.5px solid transparent`};
+    border-right: 2.5px solid transparent;
     color: ${props => props.active ? SECONDARY_COLOR : TERTIARY_COLOR};
 `
 

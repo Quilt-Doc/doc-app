@@ -13,6 +13,7 @@ const TopNavbar = () => {
 
     return (
         <Container>
+            {/*
             <LeftItems>
                 <SearchbarButton>
                     <SearchbarText>Search</SearchbarText>
@@ -27,6 +28,7 @@ const TopNavbar = () => {
                     F
                 </UserButton>
             </LeftItems>
+            */}
         </Container>
     )
 }
@@ -34,11 +36,13 @@ const TopNavbar = () => {
 export default TopNavbar;
 
 const Container = styled.div`
-    width: ${MINUS_SIDENAVBAR};
-    height: 7rem;
+    background-color: #221E32;
+    width: 100vw; /*${MINUS_SIDENAVBAR};*/
+    height: 6rem;
     display: flex;
     align-items: center;
     padding-right: 15rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `
 
 const LeftItems = styled.div`
@@ -50,7 +54,7 @@ const LeftItems = styled.div`
 
 const SearchbarButton = styled.div`
     width: 27rem;
-    height: 4rem;
+    height: 3.5rem;
     border-radius: 0.6rem;
     background-color: ${PRIMARY_LIGHT_COLOR};
     display: flex;
@@ -75,8 +79,8 @@ const IconContainer = styled.div`
 `
 
 const NotificationButton = styled.div`
-    height: 4rem;
-    width: 4rem;
+    height: 3.5rem;
+    width: 3.5rem;
     font-size: 1.7rem;
     margin-left: 2rem;
     display: flex;

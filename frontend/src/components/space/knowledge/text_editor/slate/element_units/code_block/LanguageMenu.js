@@ -14,7 +14,7 @@ class LanguageMenu extends Component {
         super(props);
 
         this.state = {
-            optionsOpen: true
+            filter: ""
         }
     }
 
@@ -23,39 +23,98 @@ class LanguageMenu extends Component {
     renderOptions = () => {
         const { changeLanguage } = this.props;
 
-        const languages = ["Python", "Javascript", "Java", "PHP",
+        let languages = ["Python", "Javascript", "Java", "PHP",
         "C", "C++", "C#", "Haskell", "Ruby", "Rust", "Scala",
         "Swift", "Typescript", "Lua", "Objective-C", "Go", "Perl",
         "Dart", "Kotlin", "Shell", "R", "Matlab"];
 
         languages.sort();
 
-        return languages.map(lang => {
+        const { filter } = this.state;
+
+        if (filter) {
+            languages = languages.filter(lang => lang.toLowerCase().includes(filter.toLowerCase()))
+        }
+
+        if (languages.length > 0) {
+            return languages.map(lang => {
+                return (
+                    <Option 
+                        onClick = {() => changeLanguage(lang)}
+                        key = {lang}
+                    >
+                        {lang}
+                    </Option>
+                );
+            });
+        } else {
             return (
-                <Option 
-                    onClick = {() => changeLanguage(lang)}
-                    key = {lang}
-                >
-                    {lang}
-                </Option>
-            );
-        });
+                <EmptyPlaceholder>
+                    No Results..
+                </EmptyPlaceholder>
+            )
+        }
+    }
+
+    openOptions = (e) => {
+        e.stopPropagation(); 
+        e.preventDefault(); 
+        const { setOptionsOpen } = this.props;
+        document.addEventListener('mousedown', this.handleClickOutside, false);
+        setOptionsOpen(true);
+    }
+
+    handleClickOutside = (e) => {
+        if (this.node && !this.node.contains(e.target)) {
+            const { setOptionsOpen } = this.props;
+            document.removeEventListener('mousedown', this.handleClickOutside, false);
+            setOptionsOpen(false);
+
+            const { container, setMenuVisibility } = this.props;
+
+            if (container && !container.contains(e.target)) {
+                setMenuVisibility(false)
+            }
+        }
+    }
+
+    renderSelectionFieldContent = () => {
+        const { optionsOpen } = this.props;
+
+        if (!optionsOpen) {
+            const { language } = this.props;
+            const languageText = language ? language : "Select Language";
+            return (
+                <>
+                    <SelectionText>{languageText}</SelectionText>
+                    <Icon>
+                        <FiChevronDown/>
+                    </Icon>
+                </>
+            )
+        } else {
+            const { filter } = this.state;
+            return (
+                <SelectionInput
+                    autoFocus = {true}
+                    value = {filter}
+                    onChange = {(e) => this.setState({filter: e.target.value})}
+                />
+            )
+        }
     }
 
     render(){
-        const { optionsOpen } = this.state;
+        const { optionsOpen } = this.props;
         return (
             <>
                 <Container>
-                    <SelectionField>
-                        <SelectionText>Select Language</SelectionText>
-                        <Icon>
-                            <FiChevronDown/>
-                        </Icon>
+                    <SelectionField onClick = {this.openOptions}>
+                        {this.renderSelectionFieldContent()}
                     </SelectionField>
                 </Container>
                 {optionsOpen && 
-                    <LanguageOptions>
+                    <LanguageOptions ref = {node => this.node = node}>
                         {this.renderOptions()}
                     </LanguageOptions>
                 }
@@ -66,6 +125,14 @@ class LanguageMenu extends Component {
 
 export default LanguageMenu;
 
+const EmptyPlaceholder = styled.div`
+    height: 5rem;
+    display: flex;
+    align-items: center;
+    padding: 0rem 1.5rem;
+    font-size: 1.3rem;
+`
+
 const Option = styled.div`
     padding: 0.5rem 1.5rem;
     font-size: 1.3rem;
@@ -73,11 +140,12 @@ const Option = styled.div`
         background-color: ${chroma("#6762df").alpha(0.2)};
     }
     cursor: pointer;
+    font-weight: 400;
 `
 
 const LanguageOptions = styled.div`
     margin-top: 1rem;
-    height: 30rem;
+    max-height: 30rem;
     overflow-y: scroll;
     box-shadow: ${MENU_SHADOW};
     border-radius: 0.4rem;
@@ -99,10 +167,19 @@ const SelectionField = styled.div`
     &:hover {
         background-color: ${chroma("#6762df").alpha(0.3)};
     }
-`   
+`  
+
+const SelectionInput = styled.input`
+    border: none;
+    outline: none;
+    font-size: 1.4rem;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+    background-color: transparent;
+`
 
 const SelectionText = styled.div`
     margin-right: 0.5rem;
+    font-weight: 500;
 `
 
 const Icon = styled.div`

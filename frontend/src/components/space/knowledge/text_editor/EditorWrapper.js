@@ -38,7 +38,8 @@ class EditorWrapper extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            initialMarkup: null
+            data: {},
+            loaded: false
         }
     }
 
@@ -51,8 +52,8 @@ class EditorWrapper extends React.Component {
         const documentId = this.getDocumentId(this.props);
         this.saveCanvas(documentId, this.acquireCanvas());
         
-        const { setDocumentLoaded } = this.props;
-        setDocumentLoaded(false);
+        //const { setDocumentLoaded } = this.props;
+        //setDocumentLoaded(false);
     }
 
     getSnapshotBeforeUpdate = (prevProps) => {
@@ -73,6 +74,7 @@ class EditorWrapper extends React.Component {
 
     getDocumentId = (props) => {
         const { documentModal, match } = props;
+        
         let { documentId } = match.params;
 
         // if the editor is a modal, the id is in the params
@@ -87,11 +89,11 @@ class EditorWrapper extends React.Component {
 
     // loads all the data needed for the editor
     loadResources = async () => {
-        const { match, getDocument, setDocumentLoaded, syncEditDocument, loaded } = this.props;
+        const { match, getDocument, setDocumentLoaded, syncEditDocument } = this.props;
         const { workspaceId } = match.params;
 
         //if (loaded) setDocumentLoaded(false);
-        if (loaded)  setDocumentLoaded(false);
+        //if (loaded)  setDocumentLoaded(false);
 
         const documentId = this.getDocumentId(this.props);
 
@@ -99,10 +101,12 @@ class EditorWrapper extends React.Component {
         await getDocument({workspaceId, documentId});
 
         // add the parsed content as a field in the document
-        const { documents } = this.props;
+        const { documents, documentModal } = this.props;
+
         const { markup, title } = documents[documentId];
 
         let initialMarkup = JSON.parse(markup);
+
         if (Node.string(initialMarkup[0]) !== title) {
             initialMarkup[0] = { 
                 type: 'title',
@@ -111,11 +115,12 @@ class EditorWrapper extends React.Component {
                 ],
             }
         }
-        this.setState({ initialMarkup });
+
+        this.setState({ data: { _id: documentId, initialMarkup }, loaded: true });
         //syncEditDocument({_id: documentId, parsedMarkup: JSON.parse(markup)});
 
         // DOM is ready to be loaded
-        setDocumentLoaded(true);
+        //setDocumentLoaded(true);
     }
 
     acquireCanvas = async () => {
@@ -160,13 +165,18 @@ class EditorWrapper extends React.Component {
     }
 
     renderTextEditor = () => {
-        const { documentModal, documents, loaded, match, renameDocument, syncRenameDocument, editDocument } = this.props;
-        const { initialMarkup } = this.state;
+        const { documentModal, documents, match, renameDocument, syncRenameDocument, editDocument } = this.props;
+        const { data, loaded } = this.state;
         const { workspaceId } = match.params;
 
         const document = documents[this.getDocumentId(this.props)];
 
-        if (loaded && document) {
+        const ready = data && document && loaded 
+            && data._id === document._id && data.initialMarkup;
+
+        if (ready) {
+            const { initialMarkup } = data;
+
             return (
                 <CSSTransition
                     in={true}

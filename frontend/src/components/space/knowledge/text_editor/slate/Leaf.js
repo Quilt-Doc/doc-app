@@ -53,7 +53,7 @@ const Leaf = ({ attributes, children, leaf }) => {
 								use the sidebar on the left.
 						</ContainedSpan>
 					</Container>
-			} else if (isSelected && Range.isCollapsed(selection)) {
+			} else if (isSelected && Range.isCollapsed(selection) && children.props.parent.children.length === 1) {
 				children = <Container>
 						{children}
 						<span 
@@ -139,7 +139,7 @@ const SubContainer = styled.div`
 
 const Code = styled.span`
 	font-family: 'Roboto Mono', monospace !important;
-	background-color: #F3F4F7;
+	background-color: #F7F9FB;
 	padding: 0.2rem 0.5rem;
 	border-radius: 0.3rem;
 	font-size: 1.4rem;

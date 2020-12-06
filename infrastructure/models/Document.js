@@ -34,7 +34,8 @@ let documentSchema = new Schema({
     image: String,
 
     attachments: [{type: String}],
-
+    images: [{type: String}],
+    videos: [{type: String}],
     //NOT USED
     canWrite: [{type: ObjectId, ref: 'User'}],
 	canRead: [{type: ObjectId, ref: 'User'}]

@@ -758,14 +758,16 @@ getDocument = async (req, res) => {
         return res.json({ success: false, error: "getDocument Error: unable to get document", trace: err });
     }
 
+    if (returnDocument._id.toString() === "5fc965b89c36137093c6e6e1") {
+        console.log("RETURN DOC MARKUP", returnDocument.markup);
+    }
+
     return res.json({ success: true, result: returnDocument });
 }
 
 // update any of the values that were returned on edit
 editDocument = async (req, res) => {
     const { markup, referenceIds, repositoryId, image, content } = req.body;
-
-    console.log("ENTERED EDIT DOCUMENT");
     const workspaceId = req.workspaceObj._id.toString();
     const documentId = req.documentObj._id.toString();
 
@@ -791,8 +793,9 @@ editDocument = async (req, res) => {
         selection += " markup";
     }
 
-    if (checkValid(repositoryId)) {
+    if (checkValid(repositoryId) || repositoryId === null) {
         update.repository = repositoryId
+        console.log("markup", markup);
         selection += " repository";
         population += " repository";
     }
@@ -813,6 +816,8 @@ editDocument = async (req, res) => {
         population += " references";
     }
 
+    console.log("UPDATE", update);
+
     try {
         let query = Document.findOneAndUpdate({_id: documentId, workspace: workspaceId}, { $set: update }, { new: true }).lean();
         query.select(selection);
@@ -822,6 +827,7 @@ editDocument = async (req, res) => {
         return res.json({ success: false, error: "editDocument Error: update document query failed", trace: err });
     }
 
+    console.log("RETURN DOC", returnDocument);
     return res.json({ success: true, result: returnDocument });
 }
 

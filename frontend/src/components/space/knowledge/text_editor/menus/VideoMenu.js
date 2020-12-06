@@ -14,7 +14,7 @@ import { useSlate, ReactEditor } from 'slate-react';
 import { uploadAttachment } from '../../../../../actions/Document_Actions';
 
 //types
-import { SET_ATTACHMENT_MENU_ACTIVE } from '../editor/reducer/Editor_Types';
+import { SET_VIDEO_MENU_ACTIVE } from '../editor/reducer/Editor_Types';
 
 //redux
 import { connect } from 'react-redux';
@@ -26,18 +26,22 @@ import history from '../../../../../history';
 
 //icons
 import { IoMdAttach } from 'react-icons/io';
+import { BsImageFill } from 'react-icons/bs';
+import { BiVideo } from 'react-icons/bi';
 
-
-const AttachmentMenu = (props) => {
-    const { uploadAttachment, match, dispatch, documentModal } = props;
+const VideoMenu = (props) => {
+    const { uploadAttachment, match, dispatch } = props;
 
     const [open, setOpen] = useState(false);
     const [rect, setRect] = useState(null);
     const [initialSelection, setSelection] = useState(null);
+    const [canEmbed, setCanEmbed] = useState(false);
 
     const editor = useSlate();
 
     let menu = useRef();
+
+    let embedInput = useRef(null);
 
     useEffect(() => {
 
@@ -56,7 +60,7 @@ const AttachmentMenu = (props) => {
 
     const handleClickOutside = useCallback((event) => {
         if (menu.current && !menu.current.contains(event.target)) {
-            dispatch({type: SET_ATTACHMENT_MENU_ACTIVE, payload: false});
+            dispatch({type: SET_VIDEO_MENU_ACTIVE, payload: false});
         }
     }, [menu]);
 
@@ -72,13 +76,6 @@ const AttachmentMenu = (props) => {
     const calculateRect = (clientRect) => {
         const { top, left, height } = clientRect;
         let rect = { top, left, height };
-       
-        /*
-        if (this.menu.current) {
-            if (rect.top + 385 - 100 > window.innerHeight){
-                rect.top = rect.top - 385;
-            }
-        }*/
 
         const parentRect = document.getElementById('editorSubContainer').getBoundingClientRect();
 
@@ -103,7 +100,7 @@ const AttachmentMenu = (props) => {
         return documentId;
     }
 
-    const handleFileUpload = (event) => {
+    const handleFileUpload = async (event) => {
         const { workspaceId } = match.params;
 
         const documentId = getDocumentId(props);
@@ -115,14 +112,80 @@ const AttachmentMenu = (props) => {
         Transforms.select(editor, initialSelection);
 
         editor.insertBlock({
-            type: "attachment", 
+            type: "video", 
+            width: 100,
             name: file.name, 
-            path: `${workspaceId}/${documentId}/attachments/${file.name}`
+            path: `${workspaceId}/${documentId}/videos/${file.name}`,
+            uploaded: false
         });
 
-        uploadAttachment({ attachment: file, documentId, workspaceId, name: 'attachment' });
+        dispatch({type: SET_VIDEO_MENU_ACTIVE, payload: false});
 
-        dispatch({type: SET_ATTACHMENT_MENU_ACTIVE, payload: false});
+        await uploadAttachment({ attachment: file, documentId, workspaceId, name: 'attachment', isVideo: true });
+
+        Transforms.setNodes(editor, { uploaded: true }, {at: initialSelection, match: n => n.type === 'video' && n.name === file.name})
+    }
+
+    const handleEmbedLink = () => {
+        if (!embedInput || !embedInput.current || !embedInput.current.value || !initialSelection) return;
+
+        
+        const link = embedInput.current.value;
+
+        Transforms.select(editor, initialSelection);
+
+        editor.insertBlock({
+            type: "video", 
+            isLink: true,
+            link,
+            width: 100,
+        });
+
+        dispatch({type: SET_VIDEO_MENU_ACTIVE, payload: false});
+    }
+
+    const renderOptions = () => {
+        return (
+            <>
+                <FileInput
+                    type="file" 
+                    id="fileAttachmentButton" 
+                    name="file" 
+                    multiple 
+                    onChange={handleFileUpload}
+                />
+                <FileLabel for="fileAttachmentButton">
+                    <IconBorder>
+                        <BiVideo/>
+                    </IconBorder>
+                    Upload
+                </FileLabel>
+                <EmbedButton onClick = {() => setCanEmbed(true)}>
+                    <IconBorder>
+                        <BiVideo/>
+                    </IconBorder>
+                    Embed Link
+                </EmbedButton>
+            </>
+        )
+    }
+
+    const renderEmbedInput = () => {
+        return (
+            <InputContainer>
+                <EmbedInput 
+                    ref = {embedInput}
+                    autoFocus = {true} 
+                    placeholder = {"Enter Video Link..."}
+                />
+                <EmbedButton onClick = {handleEmbedLink}>
+                    <IconBorder>
+                        <BiVideo/>
+                    </IconBorder>
+                    Embed
+                </EmbedButton>
+            </InputContainer>
+        )
     }
 
     return (
@@ -141,19 +204,7 @@ const AttachmentMenu = (props) => {
                 }}
                 ref = {menu}
             >
-                <FileInput
-                    type="file" 
-                    id="fileAttachmentButton" 
-                    name="file" 
-                    multiple 
-                    onChange={handleFileUpload}
-                />
-                <FileLabel for="fileAttachmentButton">
-                    <IconBorder>
-                        <IoMdAttach/>
-                    </IconBorder>
-                    Upload
-                </FileLabel>
+                {canEmbed ? renderEmbedInput() : renderOptions()}
             </Container>    
         </CSSTransition>
     )
@@ -163,9 +214,30 @@ const mapStateToProps = (state, ownProps) => {
     return { }
 }
 
-export default withRouter(connect(mapStateToProps, { uploadAttachment })(AttachmentMenu));
+export default withRouter(connect(mapStateToProps, { uploadAttachment })(VideoMenu));
 
-const FileLabel = styled.label`
+const InputContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+`
+
+const EmbedInput = styled.input`
+    width: 25rem;
+    font-size: 1.3rem;
+    padding: 1rem 1.5rem;
+    outline: none;
+    border: none;
+    background-color: ${chroma('#6762df').alpha(0.15)};
+    border-radius: 0.3rem;
+    font-family: -apple-system,BlinkMacSystemFont, sans-serif;
+    &::placeholder {
+        color: #172A4E;
+        opacity: 0.5;
+    }
+`
+
+const EmbedButton = styled.div`
     font-size: 1.5rem;
     background-color: ${chroma('#6762df').alpha(0.15)};
     font-weight: 500;
@@ -177,6 +249,22 @@ const FileLabel = styled.label`
     }
     display: flex;
     align-items: center;
+    margin-top: 1.5rem;
+`
+
+const FileLabel = styled.label`
+    font-size: 1.5rem;
+    background-color: ${chroma('#6762df').alpha(0.15)};
+    font-weight: 500;
+    padding: 1rem 2rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    &:hover {
+        background-color: ${chroma('#6762df').alpha(0.3)};
+    }
+    display: inline-flex;
+    align-items: center;
+    width: 12rem;
 `
 
 const IconBorder = styled.div`
@@ -184,7 +272,7 @@ const IconBorder = styled.div`
     align-items: center;
     justify-content: center;
     height: 2rem;
-    margin-right: 0.5rem;
+    margin-right: 0.8rem;
     font-size: 1.5rem;
 `
 
@@ -193,15 +281,15 @@ const FileInput = styled.input`
 `
 
 const Container = styled.div`
-    width: 20rem;
-    height: 10rem;
+    padding: 1.5rem 3rem;
     position: absolute;
     z-index: 1;
     background-color: white;
     border-radius: 0.5rem;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    /*align-items: center;*/
+    /*justify-content: center;*/
     box-shadow: 0 30px 60px -12px rgba(50,50,93,0.25),0 18px 36px -18px rgba(0,0,0,0.3);
     color:  #172A4e;
     margin-top: 2.2rem;

@@ -29,14 +29,14 @@ const withFunctionality = (editor, dispatch) => {
 
 		const isList = LIST_TYPES.includes(attributes.type);
 		const isCode = CODE_TYPES.includes(attributes.type);
-		const isSnippet = SNIPPET_TYPES.includes(attributes.type);
-		const isAttachment = attributes.type === 'attachment';
 
 		if (text !== '') {
 
 			let node = { ...attributes, children: [] }
 
-			node.type = isList ? "list-item" : isCode ? "code-line" : node.type
+			node.type = isList ? "list-item" 
+				: isCode ? "code-line" 
+				: node.type
 
 			Transforms.insertNodes(
 				editor,
@@ -177,8 +177,8 @@ const withFunctionality = (editor, dispatch) => {
 			})
 
 			let [block, path] = match;
-
-			if (block.type !== 'code-line') dispatch({ type: SET_MARKUP_MENU_ACTIVE, payload: true });
+			
+			if (block.type !== 'code-line' && block.type !== 'title') dispatch({ type: SET_MARKUP_MENU_ACTIVE, payload: true });
 		}
 
 		if (text === ' ' && selection && Range.isCollapsed(selection)) {

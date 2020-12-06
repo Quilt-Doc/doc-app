@@ -141,7 +141,7 @@ class MainToolbar extends React.Component {
                         <Path>
                             {this.renderPath()}
                         </Path>
-                        {this.renderStatus()}
+                        {/*this.renderStatus()*/}
                         {this.renderBranch()}
                         <Left>
                             <Button active = {this.props.write}
@@ -258,12 +258,12 @@ const Slash = styled.div`
 
 const Path = styled.div`
     font-size: 1.4rem;
-    font-weight: 500;
     display: flex;
     align-items: center;
     position: relative;
     z-index: 0;
-    opacity: 0.8;
+    opacity: 0.7;
+    font-weight: 500;
 `
 
 const Container = styled.div`

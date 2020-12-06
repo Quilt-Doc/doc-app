@@ -15,21 +15,27 @@ import chroma from 'chroma-js';
 import { CSSTransition } from 'react-transition-group';
 
 //icons
-import { BiLink, BiParagraph, BiTable } from 'react-icons/bi';
+import { BiCodeBlock, BiLink, BiNote, BiParagraph, BiTable, BiVideo } from 'react-icons/bi';
 import { BsImageFill, BsListCheck } from 'react-icons/bs';
-import { HiCode } from 'react-icons/hi';
+import { CgCheckR } from 'react-icons/cg';
+import { HiCode, HiLink } from 'react-icons/hi';
 import { RiScissorsLine, RiInformationLine } from 'react-icons/ri';
 import { GrBlockQuote } from 'react-icons/gr';
 import { IoMdAttach } from 'react-icons/io';
 
 //types
 import { 
-	SET_MARKUP_MENU_ACTIVE, SET_SNIPPET_MENU_ACTIVE, SET_ATTACHMENT_MENU_ACTIVE
+    SET_MARKUP_MENU_ACTIVE, 
+    SET_SNIPPET_MENU_ACTIVE, 
+    SET_ATTACHMENT_MENU_ACTIVE,
+    SET_IMAGE_MENU_ACTIVE,
+    SET_VIDEO_MENU_ACTIVE
 } from '../editor/reducer/Editor_Types';
 
 //lodash
 import _ from 'lodash'
 import { AiOutlineOrderedList, AiOutlineUnorderedList } from 'react-icons/ai';
+import { GoQuote, GoTextSize } from 'react-icons/go';
 
 
 const MarkupMenu = (props) => {
@@ -237,7 +243,14 @@ const MarkupMenu = (props) => {
             //editor.insertBlock({name: "rumbo.png", type: "attachment"});
             await setOpen(false);
             dispatch({type: SET_ATTACHMENT_MENU_ACTIVE, payload: true});
-        } else {
+        } else if (type === "image") {
+            //editor.insertBlock({name: "rumbo.png", type: "attachment"});
+            await setOpen(false);
+            dispatch({type: SET_IMAGE_MENU_ACTIVE, payload: true});
+        } else if (type === "video") {
+            await setOpen(false);
+            dispatch({type: SET_VIDEO_MENU_ACTIVE, payload: true});
+        } {
             editor.insertBlock(attributes);
             //editor.insertText("&") // needs change
         }
@@ -292,7 +305,6 @@ const MarkupMenu = (props) => {
                 }}
                 onMouseDown = {(e) => e.preventDefault()}
             >
-                <HeaderContainer>Insert Markup</HeaderContainer>
                 <ListItemContainer id = "markupMenuList">
                     {renderOptions()}
                 </ListItemContainer>
@@ -304,11 +316,11 @@ const MarkupMenu = (props) => {
 
 const defaultOptions = {
     "paragraph": {type: "paragraph", name: "Paragraph", description: "Plain paragraph style text"},
+    "quote": { type: "quote", name: "Quote", description: "Block for direct quotations"},
+    "note": { type: "note", name: "Note", description: "Informational note to guide readers"},
     "heading-one": {type: "heading-one", name: "Heading 1", description: "Large sized header"},
     "heading-two": {type: "heading-two", name: "Heading 2",  description: "Medium sized header"},
     "heading-three": {type: "heading-three", name: "Heading 3", description: "Small sized header"},
-    "quote": { type: "quote", name: "Quote", description: "Block for direct quotations"},
-    "note": { type: "note", name: "Note", description: "Informational note to guide readers"},
     "bulleted-list": { type: "bulleted-list", name: "Bulleted List", description: "Bulleted list to order phrases"},
     "numbered-list": { type: "numbered-list", name: "Numbered List", description: "Numbered list to display series"},
     "check-list": { type: "check-list", name: "Check List", description: "Check list to keep track"},
@@ -316,56 +328,53 @@ const defaultOptions = {
     "reference-snippet": { type: "reference-snippet", name: "Reference Snippet", description: "Segments of repository files"},
     "attachment": { type: "attachment", name: "Attachment", description: "Upload a local file" },
     "link": { type: "link", name: "Link", description: "Link to any url"},
-    "table": { type: "table", name: "Table", description: "Table for complex formatting"},
     "image": { type: "image", name: "Image", description: "Image embedded into block"},
+    "video": { type: "video", name: "Video", description: "Embed or upload a video"}
 }
 
 const getMenuIcon = (type) => {
     switch (type) {
         case "heading-one":
-            return <HeadingText>{"H1"}</HeadingText>
+            return <HeadingText type = {1}>{"H1"}</HeadingText>
         case "heading-two":
-            return <HeadingText>{"H2"}</HeadingText>
+            return <HeadingText type = {2}>{"H2"}</HeadingText>
         case "heading-three":
-            return <HeadingText>{"H3"}</HeadingText>
+            return <HeadingText type = {3}>{"H3"}</HeadingText>
         case "quote":
-            return <GrBlockQuote/>
+            return <GoQuote/>
         case "bulleted-list":
             return <AiOutlineUnorderedList/>
         case "numbered-list":
             return <AiOutlineOrderedList/>
         case "code-block":
-            return <HiCode/>
+            return <BiCodeBlock/>
         case "reference-snippet":
             return <RiScissorsLine/>
         case "check-list":
-            return <BsListCheck/>
+            return <CgCheckR/>
         case "attachment":
             return <IoMdAttach/>
         case "link":
-            return <BiLink/>
+            return <HiLink/>
         case "note":
-            return < RiInformationLine/>
-        case "table":
-            return <BiTable/>
+            return <BiNote/>
+        case "video":
+            return <BiVideo/>
         case "image":
             return <BsImageFill/>
         default:
-            return  <BiParagraph/>
+            return  <GoTextSize/>
     }	
 }
 
 
 export default MarkupMenu;
 
-
 const ListItemContainer = styled.div`
 	display: flex;
 	flex-direction: column;
-	padding: 0rem 0rem;
 	max-height: 35rem;
 	overflow-y: scroll;
-	padding-bottom: 1rem;
 `
 
 const Menu = styled.div`
@@ -373,15 +382,13 @@ const Menu = styled.div`
     position: absolute;
     z-index: 3;
     background-color: white;
-	border-radius: 0.3rem;
+	border-radius: 0.4rem;
     display: flex;
     flex-direction: column;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
+    box-shadow:  0 30px 60px -12px rgba(50,50,93,0.25),0 18px 36px -18px rgba(0,0,0,0.3);
 	color:  #172A4e;
     margin-top: 2.2rem;
 `
-
-
 
 const HeaderContainer = styled.div`
     height: 3.5rem;
@@ -419,7 +426,7 @@ const MenuButtonDescription = styled.div`
 `
 
 const IconBorder = styled.div`
-    border-radius: 0.3rem;
+    border-radius: 0.4rem;
     width: 4.5rem;
     height: 4.5rem;
     background-color: white;
@@ -427,13 +434,16 @@ const IconBorder = styled.div`
     justify-content: center;
     align-items: center;
 	font-size: 2.5rem;
-	background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : "#f7f9fb"};
+    background-color: ${props => props.active ? chroma('#6762df').alpha(0.2) : ""};
+    border: ${props => props.active ? "" : "1px solid #e0e4e7"};
 	font-weight: 400;
 `
 
 const HeadingText = styled.div`
+    letter-spacing: 1.5;
+    font-weight: 500;
     font-size: 1.8rem;
-    font-family: 'Slabo 27px', serif;
+
 `
 
 const MenuButton = styled.div`
@@ -444,5 +454,14 @@ const MenuButton = styled.div`
     background-color: ${props => props.active ? chroma('#6762df').alpha(0.15) : "" };
     align-items: center;
 	padding: 0.7rem 1.3rem;
-	transition: background-color 0.05s ease-out;
+    transition: background-color 0.05s ease-out;
+    &:first-of-type {
+        border-top-left-radius: 0.4rem;
+        border-top-right-radius: 0.4rem;
+    }
+
+    &:last-of-type {
+        border-bottom-left-radius: 0.4rem;
+        border-bottom-right-radius: 0.4rem;
+    }
 `

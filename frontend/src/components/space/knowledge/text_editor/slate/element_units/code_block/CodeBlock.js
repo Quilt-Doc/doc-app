@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 
 //styles
 import styled from 'styled-components';
@@ -15,16 +15,15 @@ const CodeBlock = (props) => {
     const { attributes, children, element } = props;
 
     const [menuVisible, setMenuVisibility] = useState(false);
+    const [optionsOpen, setOptionsOpen] = useState(false);
 
     const readOnly = useReadOnly()
     const editor = useEditor();
 
     const changeLanguage = useMemo(() => (language) => {
+        if (language === element.language) return;
         const path = ReactEditor.findPath(editor, element);
         
-
-       
-
         const node = { type: 'code-block', children: [], language: language }
         Transforms.wrapNodes(editor, node, {
             at: path
@@ -35,27 +34,25 @@ const CodeBlock = (props) => {
             at: path
         });
 
-
-        /*
-        Transforms.setNodes(
-            editor,
-            { language: language },
-            { at: path, match: n => n.type === 'code-block', }
-        )
-            */
-
-
     }, []);
 
+   
     return (
         <Container 
             {...attributes}
             onMouseOver = {() => setMenuVisibility(true)} 
-            onMouseLeave = {() => setMenuVisibility(false)} 
+            onMouseLeave = {() => {if (!optionsOpen) setMenuVisibility(false) }} 
         >
             {(!readOnly && menuVisible) && 
                 <MenuContainer contentEditable={false} >
-                    <LanguageMenu changeLanguage = {changeLanguage}/>
+                    <LanguageMenu 
+                        language = {element.language}
+                        optionsOpen = {optionsOpen}
+                        setOptionsOpen = {setOptionsOpen}
+                        setMenuVisibility = {setMenuVisibility}
+                        changeLanguage = {changeLanguage}
+                        container = {attributes['ref'].current}
+                    />
                 </MenuContainer>
             }
             <CodeContainer>

@@ -6,6 +6,7 @@ import { Node, Transforms, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import withFunctionality from '../slate/WithFunctionality'
 import withLayout from '../slate/WithLayout';
+import { withLinks } from '../slate/WithLinks';
 
 //slate utility
 import {onKeyDownHelper, decorate, 
@@ -28,6 +29,7 @@ import EditorToolbar from '../toolbars/EditorToolbar';
 import DocumentInfo from './DocumentInfo';
 import MarkupMenu from '../menus/MarkupMenu';
 import MarkupMenu2 from '../menus/MarkupMenu2';
+import VideoMenu from '../menus/VideoMenu';
 import HoveringToolbar from '../toolbars/HoveringToolbar';
 import SnippetMenuWrapper from '../menus/snippet_menu/SnippetMenuWrapper';
 import PullRequestRecs from './PullRequestRecs';
@@ -47,6 +49,7 @@ import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import AttachmentMenu from '../menus/AttachmentMenu'
 import { editDocument } from '../../../../../actions/Document_Actions'
+import ImageMenu from '../menus/ImageMenu'
 
 
 //PREVENT SCROLL IF ACTIVE
@@ -97,7 +100,9 @@ const TextEditor = (props) => {
 	const initialState = {
 		isMarkupMenuActive: false, 
 		isSnippetMenuActive: false,
-		isAttachmentMenuActive: false
+		isAttachmentMenuActive: false,
+		isImageMenuActive: false,
+		isVideoMenuActive: false
 	}
 
 	const [state, dispatch] = useReducer(
@@ -117,11 +122,11 @@ const TextEditor = (props) => {
 	const renderElement = useCallback(props => <Element {...props} />, [])
 	const renderLeaf = useCallback(props => <Leaf {...props} />, [])
 
-	const editor = useMemo(() => withLayout(withFunctionality(withHistory(withReact(createEditor())), dispatch)), [])
+	const editor = useMemo(() => withLinks(withLayout(withFunctionality(withHistory(withReact(createEditor())), dispatch))), [])
 	
 	//updateMarkupType(state, dispatch, range, blocktypes, editor)
 
-	const { isMarkupMenuActive, isSnippetMenuActive, isAttachmentMenuActive } = state;
+	const { isMarkupMenuActive, isSnippetMenuActive, isAttachmentMenuActive, isImageMenuActive, isVideoMenuActive } = state;
 	
 	
 	useEffect(() => {
@@ -345,6 +350,12 @@ const TextEditor = (props) => {
 											dispatch={dispatch} 
 										/>
 									}
+									{isImageMenuActive &&
+										<ImageMenu dispatch={dispatch} />
+									}
+									{isVideoMenuActive &&
+										<VideoMenu dispatch = {dispatch} />
+									}
 									<DocumentInfo write  = {write} />
 									{/*
 									{ write ? 
@@ -480,20 +491,20 @@ const Container = styled.div`
 	display: flex;	
 	justify-content: center;
 	min-width: 65rem;
+
 `
 
 const EditorContainer2 = styled.div`
 	flex-direction: column;
 	display: flex;
 	width: 100%;
-	padding-top: 1.5rem;
 `
 
 const EditorContainer = styled.div`
 	display: flex;
 	width: 94rem;
 
-	margin-top: ${props => props.documentModal ? "" : "1.5rem"};
+	margin-top: ${props => props.documentModal ? "" : "2rem"};
 	/*box-shadow: ${props => props.documentModal ? "": "0 1px 2px rgba(0, 0, 0, 0.2)"};*/
 	border-radius: 0.2rem;
 	position: relative;

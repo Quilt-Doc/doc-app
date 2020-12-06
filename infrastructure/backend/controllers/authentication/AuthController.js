@@ -150,7 +150,6 @@ checkInstallation = async (req, res) => {
     return res.json({success: true, result: installationResponse.data.installations})
 }
 
-
 /*
 retrieveDomainRepositories = async (req, res) => {
     var userRepositoriesResponse;

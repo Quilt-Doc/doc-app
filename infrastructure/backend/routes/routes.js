@@ -356,7 +356,7 @@ const badgeController = require('../controllers/badges/BadgeController');
 router.get('/badges/status/', badgeController.getBadge);
 
 
-var multer = require('multer');
+const multer = require('multer');
 
 // configuring the DiscStorage engine.
 const storage = multer.diskStorage({
@@ -367,7 +367,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage,
-                        limits: { fileSize: 5 * 1024 * 1024  }, //1 * 1024 * 1024 = 1MB
+                        limits: { fileSize: 10 * 1024 * 1024  }, //1 * 1024 * 1024 = 1MB
 
                         /*
                         // other settings here then:
@@ -391,30 +391,26 @@ const upload = multer({ storage: storage,
                         */
                     });
 
-var upload_method = upload.single('attachment')
+const upload_method = upload.single('attachment')
 
 const fileUploadController = require('../controllers/FileUploadController');
 
-// router.post('/uploads/create_attachment', upload.single('attachment'), fileUploadController.postFile);
-
 router.post('/uploads/create_attachment', function (req, res) {
     upload_method(req, res, function (err) {
-      if (err instanceof multer.MulterError) {
-        // A Multer error occurred when uploading.
-        return res.json({success: false, error: err.message, alert: err.message});
-      } else if (err) {
-        // An unknown error occurred when uploading.
-        return res.json({success: false, error: err.message, alert: err.message});
+        if (err instanceof multer.MulterError) {
+            // A Multer error occurred when uploading.
+            return res.json({success: false, error: err.message, alert: err.message});
+        } else if (err) {
+            // An unknown error occurred when uploading.
+            return res.json({success: false, error: err.message, alert: err.message});
+        }
 
-      }
-  
-      // Everything went fine.
-      fileUploadController.postFile(req, res);
+        // Everything went fine.
+        fileUploadController.postFile(req, res);
     })
 });
 
-
-router.get('/uploads/:fileName', fileUploadController.getFile);
+router.get('/uploads/:targetName/:download', fileUploadController.getFile);
 
 /*
 app.post('/profile', function (req, res) {
@@ -429,5 +425,12 @@ app.post('/profile', function (req, res) {
     })
   })
 */
+
+
+//INTEGRATION ROUTES
+const integrationController = require('../controllers/integrations/IntegrationController');
+router.get('/integrations/create', integrationController.createIntegration);
+router.get('/integrations/trello/authorize', integrationController.authorizeTrello);
+router.get('/integrations/trello/callback', integrationController.trelloCallback);
 
 module.exports = router;

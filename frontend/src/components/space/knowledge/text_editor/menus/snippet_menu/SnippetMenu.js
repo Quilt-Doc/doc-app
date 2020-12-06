@@ -435,8 +435,8 @@ const Container = styled.div`
     flex-direction: column;
     z-index: 1;
     background-color: white;
-    border-radius: 0.3rem;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
+    border-radius: 0.4rem;
+    box-shadow: 0 30px 60px -12px rgba(50,50,93,0.25),0 18px 36px -18px rgba(0,0,0,0.3);
     color: #172A4E;
     margin-top: 2.2rem;
 `

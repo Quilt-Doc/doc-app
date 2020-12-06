@@ -190,9 +190,6 @@ const Container = styled.div`
     padding: 2.1rem;
     color: #172A4E;
     border-top-left-radius: 1rem;
-
-    background-color: #f6f7f9;
-    
 `
 
 const DocumentContainer = styled.div`

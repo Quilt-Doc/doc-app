@@ -353,7 +353,7 @@ const SearchBubble = styled.div`
     top: 5rem;
     display: flex;
     flex-direction: column;
-    box-shadow: rgba(9, 30, 66, 0.31) 0px 0px 1px, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px;
+    box-shadow: 0 30px 60px -12px rgba(50,50,93,0.25),0 18px 36px -18px rgba(0,0,0,0.3);
 `
 
 const SearchbarWrapper = styled.div`

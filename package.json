@@ -12,6 +12,7 @@
   "dependencies": {
     "concurrently": "^5.0.2",
     "github-webhook-handler": "^1.0.0",
+    "is-url": "^1.2.4",
     "lodash": "^4.17.15",
     "react-textarea-autosize": "^8.0.1"
   }
