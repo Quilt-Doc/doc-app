@@ -84,5 +84,4 @@ getJiraSiteIssues = async (req, res) => {
 
 }
 
-
 module.exports = { getWorkspaceJiraSites, getJiraSiteIssues }

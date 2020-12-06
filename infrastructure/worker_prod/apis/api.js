@@ -7,6 +7,17 @@ var AWS = require('aws-sdk');
 // Set the region 
 AWS.config.update({region: 'us-east-1'});
 
+const requestJiraClient = ( cloudId, accessToken ) => {
+    const axios = require('axios');
+    return axios.create({
+        baseURL: `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3`,
+        headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            'Accept': 'application/json',
+        }
+    });
+}
+
 
 const requestBackendClient = () => {
 	const axios = require('axios');
@@ -106,6 +117,7 @@ const requestInstallationClient = async (installationId) => {
 }
 
 module.exports = {
+    requestJiraClient,
     requestGithubClient,
     requestSQSServiceObject,
     requestBackendClient,

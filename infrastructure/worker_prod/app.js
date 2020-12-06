@@ -1,6 +1,7 @@
 const updateReferences = require('./update_references');
 const scanRepositories = require('./scan_repositories');
 const updateChecks = require('./update_checks');
+const importJiraIssues = require('./import_jira_issues');
 
 const {serializeError, deserializeError} = require('serialize-error');
 
@@ -223,6 +224,37 @@ app.post('/job', async function(req, res) {
 
         res.status(200).end();
     }
+
+    // Import Jira Issues Job
+    else if (jobType == constants.jobs.JOB_IMPORT_JIRA_ISSUES) {
+        const { jiraSiteId } = req.body;
+
+        if (!checkValid(jiraSiteId))  {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No jiraSiteId provided for importJiraIssues job'`)),
+                                errorDescription: 'No jiraSiteId provided for importJiraIssues job',
+                                source: 'worker-instance', function: 'app.js'}});
+            res.status(400).end();
+        }
+
+        worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', function: 'app.js',
+                                            message: `Running Import Jira Issues Job - jiraSiteId: ${jiraSiteId}`}});
+
+
+        process.env.jiraSiteId = jiraSiteId;
+
+        try {
+            await importJiraIssues.importJiraIssues();
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                errorDescription: `Error aborted 'Import Jira Issues' job`,
+                                source: 'worker-instance', function: 'app.js'}});
+            res.status(500).end();
+        }
+
+        res.status(200).end();
+    }
+
 });
 
 var port = process.env.WORKER_PORT || 3000;

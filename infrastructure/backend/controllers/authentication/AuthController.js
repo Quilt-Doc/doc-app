@@ -19,10 +19,14 @@ const axios = require('axios');
 
 const logger = require('../../logging/index').logger;
 
+const jobs = require('../../apis/jobs');
+
 const fs = require('fs');
 var jwt = require('jsonwebtoken');
 const GithubAuthProfile = require("../../models/authentication/GithubAuthProfile");
 const JiraSite = require("../../models/integrations/JiraSite");
+
+const constants = require('../../constants');
 
 
 checkValid = (item) => {
@@ -239,26 +243,57 @@ jiraAuthResponse = async (req, res) => {
         return res.json({success: false, error: err});
     }
 
-    console.log(`JIRA cloudId response: ${JSON.stringify(jiraCloudIdResponse.data)}`);
+    // Get all Jira Site's in cloudId list
+    // Need read:jira-work permission
+    var validJiraCloudIds = jiraCloudIdResponse.data.filter(siteObj => {
+        return siteObj.scopes.includes("read:jira-work");
+    });
 
+
+
+
+    console.log(`JIRA cloudId response: ${JSON.stringify(jiraCloudIdResponse.data)}`);
     console.log(`JIRA accessToken: ${jiraTokenResponse.data.access_token}`);
 
+
+    let jiraSite = new JiraSite({cloudIds: validJiraCloudIds.map(siteObj => siteObj.id),
+                                    userId,
+                                    workspaceId,
+                                    accessToken: jiraTokenResponse.data.access_token});
+
+    // Save new JiraSite
     try {
-        await JiraSite.create({cloudId: jiraCloudIdResponse.data[0].id, userId, workspaceId, accessToken: jiraTokenResponse.data.access_token});
+        jiraSite = await jiraSite.save();
     }
     catch (err) {
+        console.log(err);
         await logger.error({source: 'backend-api',
                             message: err,
-                            errorDescription: `Error creating JiraSite - cloudId, userId, workspaceId: ${jiraCloudIdResponse.data[0].id}, ${userId}, ${workspaceId}`,
-                            function: 'jiraAuthResponse'});
-        return res.json({success: false, error: err});   
+                            errorDescription: `Error saving new JiraSite - cloudIds, userId, workspaceId, accessToken: ${JSON.stringify(cloudIds)}, ${userId}, ${workspaceId}, ${accessToken}`,
+                            function: "jiraAuthResponse"});
+
+        return res.json({success: false, error: 'error creating JiraSite'});
     }
 
+    var runImportJiraIssuesData = {};
+    runImportJiraIssuesData['jiraSiteId'] = jiraSite._id.toString();
+    runImportJiraIssuesData['jobType'] = constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString();
+
+    try {
+        await jobs.dispatchImportJiraIssuesJob(runImportJiraIssuesData);
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                        errorDescription: `Error dispatching update import Jira Issues job - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
+                        function: 'jiraAuthResponse'});
+        return res.json({success: false, error: `Error dispatching update import Jira Issues job - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`});
+    }
+
+    await logger.info({source: 'backend-api',
+                        message: `Successfully began importing Jira issues - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
+                        function: 'jiraAuthResponse'});
+
     // https://api.atlassian.com/ex/jira/11223344-a1b2-3b33-c444-def123456789/rest/api/2/project
-
-
-
-
 
     // To Refresh the Access Token
     /*
