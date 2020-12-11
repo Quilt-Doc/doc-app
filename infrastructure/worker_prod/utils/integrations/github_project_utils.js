@@ -12,7 +12,7 @@ const Ticket = require('../../models/integrations/Ticket');
 // Scrape a single github repo, call with Promises and so forth to scrape all repositories
 // Assumption GithubProject Column names are unique
 // KARAN TODO: Decide if this method should be in a transaction or not, currently don't think there's really a need
-scrapeGithubRepoProjects = async (installationId, repositoryId, installationClient, repositoryObj, worker) => {
+scrapeGithubRepoProjects = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, worker) => {
 
     /*
     Lists the projects in a repository.
@@ -413,6 +413,7 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
                 */
 
                 allTicketsToCreate.push({   source: 'github',
+                                            workspace: ObjectId(workspaceId.toString()),
                                             githubCardGithubProjectId: ObjectId(currentProjectCardsList.githubProjectObj._id.toString()),
                                             githubCardNote: currentCard.note,
                                             githubCardColumnId: currentColumnId,

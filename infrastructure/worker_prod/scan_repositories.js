@@ -147,6 +147,7 @@ const scanRepositories = async () => {
                         repositoryObj._id.toString(),
                         installationClientList[unscannedRepositories[idx].installationId],
                         repositoryObj,
+                        workspaceId,
                         worker);
                 }
                 catch (err) {

@@ -5,6 +5,7 @@ const { ObjectId } = Schema.Types;
 let ticketSchema = new Schema({
     source: {type: String, enum: ['jira', 'github', 'trello'], required: true},
 
+    workspace: {type: ObjectId, ref: 'Workspace'},
 
     githubCardGithubProjectId: { type: ObjectId, ref: 'GithubProject' },
 

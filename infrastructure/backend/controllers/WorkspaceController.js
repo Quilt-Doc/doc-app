@@ -11,6 +11,12 @@ const UserStats = require('../models/reporting/UserStats');
 const ActivityFeedItem = require('../models/reporting/ActivityFeedItem');
 const User = require('../models/authentication/User');
 
+const GithubProject = require('../models/integrations/GithubProject');
+const JiraSite = require('../models/integrations/JiraSite');
+const JiraProject = require('../models/integrations/JiraProject');
+const Ticket = require('../models/integrations/Ticket');
+
+
 
 const UserStatsController = require('./reporting/UserStatsController');
 const NotificationController = require('./reporting/NotificationController');
@@ -281,6 +287,14 @@ getWorkspace = async (req, res) => {
 // Remove Workspace from User.workspaces
 // Delete Workspace Document
 
+// TODO:
+// GithubProject -- delete all GithubProjects from Repositories on the Workspace
+
+// JiraSite -- has a workspaceId attached
+// JiraProject -- Could use the Ids of all the JiraSites found to be deleted in the prior step
+
+// Ticket -- has a workspaceId attached
+
 deleteWorkspace = async (req, res) => {
 
     const workspaceId = req.workspaceObj._id.toString();
@@ -447,6 +461,111 @@ deleteWorkspace = async (req, res) => {
                 output = {success: false, error: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`, trace: err};
                 throw new Error(`deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`);
             }
+
+
+
+
+
+            // INTEGRATION DELETION SECTION START --------------------------------------------------------
+
+            var workspaceRepositories = deletedWorkspace.repositories;
+
+
+            // GithubProject -- delete all GithubProjects from Repositories on the Workspace
+            // Delete All GithubProjects
+            var deleteGithubProjectsResponse;
+            try {
+                deleteGithubProjectsResponse = await GithubProject.deleteMany({repositoryId: { $in: workspaceRepositories.map(id => ObjectId(id.toString()))}}, { session }).exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+            
+            
+            // JiraSite -- has a workspaceId attached
+            // Delete All JiraSites
+            var deletedJiraSites;
+
+            var jiraSitesToDelete;
+
+            try {
+                jiraSitesToDelete = await JiraSite.find({workspace: ObjectId(workspaceId.toString())}, '_id', { session }).lean().exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`);
+            }
+
+            try {
+                // deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId, { session }).select('_id repositories').lean().exec();
+                deletedJiraSites = await JiraSite.deleteMany({ _id: { $in: jiraSitesToDelete.map(jiraSiteObj => ObjectId(jiraSiteObj._id.toString())) } }, { session }).exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+            // JiraProject -- Use the Ids of all the JiraSites found to be deleted in the prior step
+            // Delete All JiraProjects
+            var deleteJiraProjectsResponse;
+            try {
+                deleteJiraProjectsResponse = await JiraProject.deleteMany({jiraSiteId: { $in: jiraSitesToDelete.map(jiraSiteObj => ObjectId(jiraSiteObj._id.toString()))}}, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+            // Ticket -- has a workspaceId attached
+            // Delete All Tickets
+            var deleteTicketResponse;
+            try {
+                deleteTicketResponse = await Ticket.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+
+            // INTEGRATION DELETION SECTION END --------------------------------------------------------
+
+
+
 
             // Set all Repositories in deletedWorkspace.repositories back to 'initRepository state'
             // scanned: false,

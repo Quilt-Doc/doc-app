@@ -46,6 +46,8 @@ const importJiraIssues = async () => {
     
     var jiraSite = await getJiraSiteObj(jiraSiteId);
 
+    var workspaceId = jiraSite.workspaceId.toString();
+
     var jiraCloudIds = jiraSite.cloudIds;
 
     var jiraApiClientList = jiraCloudIds.map( cloudId => apis.requestJiraClient( cloudId , jiraSite.accessToken));
@@ -239,7 +241,13 @@ const importJiraIssues = async () => {
 
     var jiraTicketList = issueValidResults.map(promiseObj => {
         var newTickets = promiseObj.value.issueData.map(issueObj => {
-            return { type: 'jira', jiraSiteId: issueObj.jiraSiteId, jiraTicketId: issueObj.id, jiraSummary: issueObj.summary, jiraProjectId: promiseObj.value.projectId}
+            return {    type: 'jira',
+                        workspace: ObjectId(workspaceId.toString()),
+                        jiraSiteId: issueObj.jiraSiteId,
+                        jiraTicketId: issueObj.id,
+                        jiraSummary: issueObj.summary,
+                        jiraProjectId: promiseObj.value.projectId
+                    }
         });
         return newTickets;
     });

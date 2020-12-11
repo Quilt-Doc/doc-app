@@ -258,7 +258,7 @@ jiraAuthResponse = async (req, res) => {
 
     let jiraSite = new JiraSite({cloudIds: validJiraCloudIds.map(siteObj => siteObj.id),
                                     userId,
-                                    workspaceId,
+                                    workspace: workspaceId,
                                     accessToken: jiraTokenResponse.data.access_token});
 
     // Save new JiraSite
