@@ -229,10 +229,18 @@ createWorkspace = async (req, res) => {
     }
 
     catch (err) {
+        // Try aborting Transaction again, just to be sure, it should have already aborted, but that doesn't seem to happen
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+
+        // End Session to remove locking
+        await session.endSession();
+
         return res.json(output);
     }
 
-    session.endSession();
+    await session.endSession();
 
     try {
         await jobs.dispatchScanRepositoriesJob(scanRepositoriesData);

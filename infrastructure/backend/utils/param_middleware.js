@@ -20,7 +20,7 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
     try {
         var foundWorkspace = await Workspace.findById(workspaceId).lean().exec();
         if (!foundWorkspace || foundWorkspace == null) {
-            next(new Error("workspaceIdParam: workspaceId doesn't exist"));
+            next(new Error(`workspaceIdParam, workspace with workspaceId doesn't exist - workspaceId: ${workspaceId}`));
         }
         req.workspaceObj = foundWorkspace;
         // console.log(`workspaceParamMiddleware setting workspaceObj to foundWorkspace: ${JSON.stringify(foundWorkspace)}`);

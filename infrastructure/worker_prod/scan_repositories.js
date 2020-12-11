@@ -16,6 +16,7 @@ const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
 const { filterVendorFiles } = require('./utils/validate_utils');
+const { scrapeGithubRepoProjects } = require('./utils/integrations/github_project_utils');
 
 
 const {serializeError, deserializeError} = require('serialize-error');
@@ -42,9 +43,6 @@ const scanRepositories = async () => {
             var repositoryInstallationIds = JSON.parse(process.env.repositoryInstallationIds);
 
             var repositoryIdList = JSON.parse(process.env.repositoryIdList);
-
-            // DEPRECATED
-            var installationId = process.env.installationId;
 
             var urlList;
 
@@ -113,26 +111,6 @@ const scanRepositories = async () => {
                 throw Error(`Error updating unscannedRepositories 'currentlyScanning: true' - unscannedRepositoryIdList: ${JSON.stringify(unscannedRepositoryIdList)}`);
             }
 
-
-            // DEPRECATED SECTION START
-            var installationClient;
-
-            try {
-                installationClient = await apis.requestInstallationClient(installationId);
-
-            }
-            catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error fetching installationClient - installationId: ${installationId}`,
-                                                            function: 'scanRepositories'}});
-
-                transactionAborted = true;
-                transactionError.message = `Error fetching installationClient - installationId: ${installationId}`;
-                
-                throw new Error(`Error fetching installationClient installationId: ${installationId}`);
-            }
-            // DEPRECATED SECTION END
-
             var installationClientList;
 
             try {
@@ -156,13 +134,52 @@ const scanRepositories = async () => {
 
 
 
+            // Import Github Projects for all Repositories in Workspace
+
+            // unscannedRepositories
+
+            // KARAN TODO: Remove this hardcoding for the first unscannedRepositories object
+            // installationId, repositoryId, installationClient, repositoryObj, worker
+
+            var repositoryProjectsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+                try {
+                    await scrapeGithubRepoProjects(repositoryObj.installationId,
+                        repositoryObj._id.toString(),
+                        installationClientList[unscannedRepositories[idx].installationId],
+                        repositoryObj,
+                        worker);
+                }
+                catch (err) {
+                    console.log(err);
+                    return {error: 'Error'};
+                }
+                return { success: true }
+            });
+        
+            // Execute all requests
+            var projectScrapeListResults;
+            try {
+                projectScrapeListResults = await Promise.allSettled(repositoryProjectsRequestList);
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error',
+                                                            source: 'worker-instance',
+                                                            message: serializeError(err),
+                                                            errorDescription: `Error Scraping Repository Projects - unscannedRepositories: ${JSON.stringify(unscannedRepositories)}`,
+                                                            function: 'scanRepositories'}});
+                throw err;
+            }
+
+
+
+
             // Get Repository objects from github for all unscanned Repositories
             var repositoryListObjects;
             try {
                 urlList = unscannedRepositories.map(repositoryObj => {
                     return {url: `/repos/${repositoryObj.fullName}`, repositoryId: repositoryObj._id.toString()};
                 });
-                // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
+                // fetch the correct installationClient by getting relevant installationId from the repositoryId
                 var requestPromiseList = urlList.map( async (urlObj) => {
                     var currentInstallationId = installationIdLookup[urlObj.repositoryId];
                     return await installationClientList[currentInstallationId].get(urlObj.url);
@@ -546,6 +563,14 @@ const scanRepositories = async () => {
         });
     }
     catch (err) {
+
+
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Attempting to deleteWorkspace due to receiving error - workspaceId: ${workspaceId}`,
+                                                    source: 'worker-instance',
+                                                    function: 'scanRepositories'}});
+
         // Try aborting Transaction again, just to be sure, it should have already aborted, but that doesn't seem to happen
         if (session.inTransaction()) {
             await session.abortTransaction();
@@ -561,9 +586,11 @@ const scanRepositories = async () => {
             await backendClient.delete(`/workspaces/delete/${workspaceId}`);
         }
         catch (err) {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+            await worker.send({action: 'log', info: {level: 'error',
+                                                        message: serializeError(err),
                                                         errorDescription: `Error Deleting Workspace - workspaceId: ${workspaceId}`,
-                                                        source: 'worker-instance', function: 'scanRepositories'}});
+                                                        source: 'worker-instance',
+                                                        function: 'scanRepositories'}});
 
             throw new Error(`Error Deleting Workspace - workspaceId: ${workspaceId}`);
         }

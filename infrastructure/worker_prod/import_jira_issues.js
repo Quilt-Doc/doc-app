@@ -73,7 +73,7 @@ const importJiraIssues = async () => {
         }
         return { projectData: projectListResponse.data, cloudId };
     });
-    
+
     // Execute all requests
     var projectListResults;
     try {
@@ -211,7 +211,7 @@ const importJiraIssues = async () => {
         }
         return { issueData: issueListResponse.data.issues, siteId: jiraProjectObj.jiraSiteId, cloudId: jiraProjectObj.cloudId, projectId: jiraProjectObj._id.toString() };
     });
-    
+
     // Execute all requests
     var issueListResults;
     try {
@@ -266,9 +266,6 @@ const importJiraIssues = async () => {
 
         throw new Error(`Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(jiraTicketList)}`);
     }
-
-
-
 
 }
 

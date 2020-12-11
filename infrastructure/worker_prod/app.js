@@ -35,7 +35,8 @@ app.post('/job', async function(req, res) {
     if (!checkValid(jobType))  {
         await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No jobType provided`)), errorDescription: 'No jobType provided',
                             source: 'worker-instance', function: 'app.js'}});
-        res.status(400).end();
+        res.status(200).end();
+        // res.status(400).end();
     }
 
     worker.send({action: 'log', info: {level: 'info', message: `Received jobType: ${jobType}`, source: 'worker-instance', function: 'app.js'}});
@@ -52,27 +53,31 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No workspaceId provided for scanRepositories job`)),
                                 errorDescription: 'No workspaceId provided for scanRepositories job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(repositoryIdList))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No repositoryIdList provided for scanRepositories job`)),
                                 errorDescription: 'No repositoryIdList provided for scanRepositories job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
 
         if (!checkValid(installationIdLookup)) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No installationIdLookup provided for scanRepositories job`)),
                                 errorDescription: 'No installationIdLookup provided for scanRepositories job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
 
         if (!checkValid(repositoryInstallationIds)) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No repositoryInstallationIds provided for scanRepositories job`)),
                                 errorDescription: 'No repositoryInstallationIds provided for scanRepositories job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
 
         // DEPRECATED
@@ -80,7 +85,8 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No installationId provided for scanRepositories job`)),
                                 errorDescription: 'No installationId provided for scanRepositories job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
 
         worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', function: 'app.js',
@@ -101,7 +107,8 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
                                 errorDescription: `Error aborted 'Scan Repositories' job`,
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(500).end();
+            res.status(200).end();
+            // res.status(500).end();
         }
         res.status(200).end();
     }
@@ -117,37 +124,43 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No cloneUrl provided for updateReferences job`)),
                                 errorDescription: 'No cloneUrl provided for updateReferences job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(installationId))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No installationId provided for updateReferences job`)),
                                 errorDescription: 'No installationId provided for updateReferences job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(fullName))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No fullName provided for updateReferences job`)),
                                 errorDescription: 'No fullName provided for updateReferences job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(headCommit))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No headCommit provided for updateReferences job`)),
                                 errorDescription: 'No headCommit provided for updateReferences job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(message))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No message provided for updateReferences job`)),
                                 errorDescription: 'No message provided for updateReferences job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(pusher))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No pusher provided for updateReferences job`)),
                                 errorDescription: 'No pusher provided for updateReferences job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
 
 
@@ -169,7 +182,8 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
                                 errorDescription: `Error aborted 'Update References' job`,
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(500).end();
+            res.status(200).end();
+            // res.status(500).end();
         }
 
         res.status(200).end();
@@ -186,19 +200,22 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No repositoryId provided for Upate Checks job`)),
                                                         errorDescription: `No repositoryId provided for Upate Checks job`,
                                                         source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(validatedDocuments)) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No validatedDocuments provided for Upate Checks job`)),
                                                         errorDescription: `No validatedDocuments provided for Upate Checks job`,
                                                         source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
         if (!checkValid(validatedSnippets)) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No validatedSnippets provided for Upate Checks job`)),
                                                         errorDescription: `No validatedSnippets provided for Upate Checks job`,
                                                         source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
 
         worker.send({action: 'log', info: {level: 'info', 
@@ -219,7 +236,8 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
                                 errorDescription: `Error aborted 'Update Checks' job`,
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(500).end();
+            res.status(200).end();
+            // res.status(500).end();
         }
 
         res.status(200).end();
@@ -233,7 +251,8 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No jiraSiteId provided for importJiraIssues job'`)),
                                 errorDescription: 'No jiraSiteId provided for importJiraIssues job',
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(400).end();
+            res.status(200).end();
+            // res.status(400).end();
         }
 
         worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', function: 'app.js',
@@ -249,7 +268,8 @@ app.post('/job', async function(req, res) {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
                                 errorDescription: `Error aborted 'Import Jira Issues' job`,
                                 source: 'worker-instance', function: 'app.js'}});
-            res.status(500).end();
+            res.status(200).end();
+            // res.status(500).end();
         }
 
         res.status(200).end();
