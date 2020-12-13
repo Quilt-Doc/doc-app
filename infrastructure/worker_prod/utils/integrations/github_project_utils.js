@@ -161,7 +161,7 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
     var invalidResults = columnListResults.filter(resultObj => resultObj.value && resultObj.value.error);
 
     await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `columnListResults validResults: ${JSON.stringify(validResults)}`,
+                                                message: `columnListResults validResults.length: ${validResults.length}`,
                                                 source: 'worker-instance',
                                                 function:'scrapeGithubRepoProjects'}});
     
@@ -285,18 +285,14 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
 
             allCardsInColumn = allCardsInColumn.flat();
 
-            if (idx2 == 0) {
+            // if (idx2 == 0) {
+
                 await worker.send({action: 'log', info: {level: 'info', 
-                                                            message: `columnName, columnId, allCardsInColumn: ${columnName}, ${projectObj.columnIdList[idx2]}, ${JSON.stringify(allCardsInColumn)}`,
+                                                            message: `Scraped cards for column ${columnName} - allCardsInColumn.length, columnName, columnId: ${allCardsInColumn.length}, ${columnName}, ${projectObj.columnIdList[idx2]}`,
                                                             source: 'worker-instance',
                                                             function:'scrapeGithubRepoProjects'}});
-                
-                await worker.send({action: 'log', info: {level: 'info', 
-                                                            message: `Scraped cards for column ${columnName} - cardData, columnName, columnId: ${JSON.stringify(allCardsInColumn)}, ${columnName}, ${projectObj.columnIdList[idx2]}`,
-                                                            source: 'worker-instance',
-                                                            function:'scrapeGithubRepoProjects'}});
-                
-            }
+
+            // }
     
             return { cardData: allCardsInColumn, columnData: {columnName: columnName, columnId: projectObj.columnIdList[idx2]} };
         });
@@ -319,7 +315,7 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
         if (idx == 0) {
 
             await worker.send({action: 'log', info: {level: 'info', 
-                                                        message: `cardPageResults: ${JSON.stringify(cardPageResults)}`,
+                                                        message: `cardPageResults.length: ${cardPageResults.length}`,
                                                         source: 'worker-instance',
                                                         function:'scrapeGithubRepoProjects'}});
         }
@@ -335,7 +331,7 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
         if (idx == 0) {
 
             await worker.send({action: 'log', info: {level: 'info', 
-                                                        message: `cardPageResults validCardResults: ${JSON.stringify(validCardResults)}`,
+                                                        message: `cardPageResults validCardResults.length: ${validCardResults.length}`,
                                                         source: 'worker-instance',
                                                         function:'scrapeGithubRepoProjects'}});
         }
@@ -412,9 +408,19 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
 
                 */
 
+                /*
+                if (currentCard.note == null) {
+                    worker.send({action: 'log', info: {level: 'info', 
+                                                                message: `Card found with null note - currentCard, githubCardGithubProjectId: ${JSON.stringify(currentCard)}, ${currentProjectCardsList.githubProjectObj._id.toString()}`,
+                                                                source: 'worker-instance',
+                                                                function:'scrapeGithubRepoProjects'}});
+                }
+                */
+
                 allTicketsToCreate.push({   source: 'github',
                                             workspace: ObjectId(workspaceId.toString()),
                                             githubCardGithubProjectId: ObjectId(currentProjectCardsList.githubProjectObj._id.toString()),
+                                            githubCardId: currentCard.id,
                                             githubCardNote: currentCard.note,
                                             githubCardColumnId: currentColumnId,
                                             githubCardCreatedAt: currentCard.created_at,
@@ -430,7 +436,7 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
     allTicketsToCreate = allTicketsToCreate.flat();
 
     await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `allTicketsToCreate: ${JSON.stringify(allTicketsToCreate)}`,
+                                                message: `allTicketsToCreate.length: ${allTicketsToCreate.length}`,
                                                 source: 'worker-instance',
                                                 function:'scrapeGithubRepoProjects'}});
 

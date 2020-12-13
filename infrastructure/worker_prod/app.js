@@ -17,6 +17,9 @@ var app = express();
 app.use(bodyParser.urlencoded({ limit: '20mb', extended: false }));
 app.use(bodyParser.json({ limit: '20mb'}));
 
+const mongoose = require("mongoose")
+mongoose.Schema.Types.String.checkRequired(v => v != null);
+
 checkValid = (item) => {
     if (item !== null && item !== undefined) {
         return true

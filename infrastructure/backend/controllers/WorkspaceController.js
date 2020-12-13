@@ -16,6 +16,9 @@ const JiraSite = require('../models/integrations/JiraSite');
 const JiraProject = require('../models/integrations/JiraProject');
 const Ticket = require('../models/integrations/Ticket');
 
+const apis = require('../apis/api');
+
+
 
 
 const UserStatsController = require('./reporting/UserStatsController');
@@ -66,6 +69,8 @@ createWorkspace = async (req, res) => {
 
     const session = await db.startSession();
     let output = {};
+
+    var repositoryFullNameList = [];
 
     var scanRepositoriesData = {};
     try {
@@ -174,7 +179,7 @@ createWorkspace = async (req, res) => {
             // Get the list of installationIds for all Repositories
             var repositoryInstallationIds;
             try {
-                repositoryInstallationIds = await Repository.find({ _id: { $in: repositoryIds}, }, '_id installationId', { session }).lean().exec();
+                repositoryInstallationIds = await Repository.find({ _id: { $in: repositoryIds}, }, '_id fullName installationId', { session }).lean().exec();
             }
             catch (err) {
                 await logger.error({source: 'backend-api', message: err,
@@ -189,7 +194,9 @@ createWorkspace = async (req, res) => {
                 installationIdLookup[repositoryInstallationIds[i]._id.toString()] = repositoryInstallationIds[i].installationId.toString()
             }
 
-            
+            // KARAN TODO: DELETE THIS
+            repositoryFullNameList = repositoryInstallationIds.map(repositoryObj => repositoryObj.fullName);
+
             repositoryInstallationIds = [ ...new Set (repositoryInstallationIds.map(repoObj => repoObj.installationId)) ];
 
             await logger.info({source: 'backend-api',
@@ -489,8 +496,8 @@ deleteWorkspace = async (req, res) => {
             }
 
 
-            
-            
+
+
             // JiraSite -- has a workspaceId attached
             // Delete All JiraSites
             var deletedJiraSites;

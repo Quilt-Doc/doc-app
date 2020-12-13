@@ -171,6 +171,8 @@ jiraAuthResponse = async (req, res) => {
 
     const { state, code } = req.query;
 
+    console.log(`JIRA QUERY: ${JSON.stringify(req.query)}`);
+
     console.log(`Code from JIRA: ${code}`);
     console.log(`State from JIRA: ${state}`);
 
@@ -196,12 +198,18 @@ jiraAuthResponse = async (req, res) => {
         code,
         redirect_uri: jiraRedirectURI,
     }
+    /* 
+        {   "grant_type": "refresh_token",
+            "client_id": "YOUR_CLIENT_ID",
+            "client_secret": "YOUR_CLIENT_SECRET",
+            "refresh_token": "YOUR_REFRESH_TOKEN" }
 
+    */
     console.log(`jiraAccessTokenData: ${JSON.stringify(jiraAccessTokenData)}`);
 
     var jiraTokenResponse;
     try {
-        jiraTokenResponse = await jiraAuthClient.post("/oauth/token?scope=offline_access", jiraAccessTokenData);
+        jiraTokenResponse = await jiraAuthClient.post("/oauth/token", jiraAccessTokenData);
     }
     catch (err) {
         // console.log(jiraTokenResponse.data);

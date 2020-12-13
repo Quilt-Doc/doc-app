@@ -8,6 +8,7 @@ let ticketSchema = new Schema({
     workspace: {type: ObjectId, ref: 'Workspace'},
 
     githubCardGithubProjectId: { type: ObjectId, ref: 'GithubProject' },
+    githubCardId: { type: String },
 
     githubCardNote: { type: String },
 

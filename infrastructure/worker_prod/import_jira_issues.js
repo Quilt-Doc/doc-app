@@ -46,7 +46,7 @@ const importJiraIssues = async () => {
     
     var jiraSite = await getJiraSiteObj(jiraSiteId);
 
-    var workspaceId = jiraSite.workspaceId.toString();
+    var workspaceId = jiraSite.workspace.toString();
 
     var jiraCloudIds = jiraSite.cloudIds;
 
@@ -241,7 +241,7 @@ const importJiraIssues = async () => {
 
     var jiraTicketList = issueValidResults.map(promiseObj => {
         var newTickets = promiseObj.value.issueData.map(issueObj => {
-            return {    type: 'jira',
+            return {    source: 'jira',
                         workspace: ObjectId(workspaceId.toString()),
                         jiraSiteId: issueObj.jiraSiteId,
                         jiraTicketId: issueObj.id,
@@ -265,6 +265,7 @@ const importJiraIssues = async () => {
         bulkInsertResult = await Ticket.insertMany(jiraTicketList);
     }
     catch (err) {
+
 
         await worker.send({action: 'log', info: {level: 'error',
                                                     source: 'worker-instance',

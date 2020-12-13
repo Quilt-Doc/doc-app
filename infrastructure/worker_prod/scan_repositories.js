@@ -16,7 +16,9 @@ const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
 const { filterVendorFiles } = require('./utils/validate_utils');
+
 const { scrapeGithubRepoProjects } = require('./utils/integrations/github_project_utils');
+const { scrapeGithubRepoIssues } = require('./utils/integrations/github_issue_utils');
 
 
 const {serializeError, deserializeError} = require('serialize-error');
@@ -170,6 +172,42 @@ const scanRepositories = async () => {
                                                             function: 'scanRepositories'}});
                 throw err;
             }
+
+
+
+
+
+
+            var repositoryIssuesRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+                try {
+                    await scrapeGithubRepoIssues(repositoryObj.installationId,
+                        repositoryObj._id.toString(),
+                        installationClientList[unscannedRepositories[idx].installationId],
+                        repositoryObj,
+                        workspaceId,
+                        worker);
+                }
+                catch (err) {
+                    console.log(err);
+                    return {error: 'Error'};
+                }
+                return { success: true }
+            });
+        
+            // Execute all requests
+            var issueScrapeListResults;
+            try {
+                issueScrapeListResults = await Promise.allSettled(repositoryProjectsRequestList);
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error',
+                                                            source: 'worker-instance',
+                                                            message: serializeError(err),
+                                                            errorDescription: `Error Scraping Repository Issues - unscannedRepositories: ${JSON.stringify(unscannedRepositories)}`,
+                                                            function: 'scanRepositories'}});
+                throw err;
+            }
+
 
 
 

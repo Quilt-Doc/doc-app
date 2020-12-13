@@ -130,7 +130,8 @@ class UserSettings extends Component {
     render() {
         const { workspace, user, memberUsers } = this.props;
 
-        var jiraAuthURL = `https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=${process.env.REACT_APP_JIRA_CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work&redirect_uri=${encodeURIComponent(process.env.REACT_APP_JIRA_CALLBACK_URL)}&state=${workspace._id.toString()}-${user._id.toString()}&response_type=code&prompt=consent`;
+        var jiraAuthURL = `https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=${process.env.REACT_APP_JIRA_CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work%20offline_access&redirect_uri=${encodeURIComponent(process.env.REACT_APP_JIRA_CALLBACK_URL)}&state=${workspace._id.toString()}-${user._id.toString()}&response_type=code&prompt=consent`;
+        console.log(`jiraAuthURL: ${jiraAuthURL}`);
 
         let renderWorkspaceSettings;
 
