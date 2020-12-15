@@ -21,6 +21,8 @@ exports.handler = async (event) => {
     hmac.update(event.body, 'binary')
     var expected = 'sha1=' + hmac.digest('hex')
 
+    // Modify
+
     if ( !(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) ) {
         let response = {
             statusCode: 401,
