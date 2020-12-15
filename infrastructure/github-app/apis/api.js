@@ -8,8 +8,6 @@ const requestBackendClient = () => {
 	    backendUrl = process.env.BACKEND_API_URL;
     }
 
-    console.log('backendUrl: ', backendUrl);
-
 	return axios.create({
         baseURL: backendUrl,
         headers: {

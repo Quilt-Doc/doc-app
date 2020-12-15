@@ -436,5 +436,9 @@ const jiraController = require('../controllers/integration/JiraController');
 router.get('/integrations/:workspaceId/jira', jiraController.getWorkspaceJiraSites);
 router.post('/integrations/:workspaceId/jira/get', jiraController.getJiraSiteIssues);
 
+const branchController = require('../controllers/BranchController');
+
+router.post('/branch/create', authorizationMiddleware.branchMiddleware, branchController.createBranch);
+
 module.exports = router;
 

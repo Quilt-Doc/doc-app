@@ -600,6 +600,19 @@ const notificationMiddleware = async (req, res, next) => {
     }
 };
 
+const branchMiddleware = async (req, res, next) => {
+
+    var requesterId = req.tokenPayload.userId.toString();
+    var requesterRole = req.tokenPayload.role;
+
+    if (requesterRole == 'dev') {
+        return next();
+    }
+    else {
+        return next(new Error("Error: only dev tokens can access the branch API"));
+    }
+}
+
 module.exports = {
     referenceMiddleware,
     documentMiddleware,
@@ -613,4 +626,5 @@ module.exports = {
     reportingMiddleware,
     checkMiddleware,
     notificationMiddleware,
+    branchMiddleware,
 }
