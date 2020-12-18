@@ -27,7 +27,8 @@ const authorizeTrello = (userId, workspaceId) => {
     const name = "Quilt";
     const TRELLO_API_KEY = "5d50547bb9f5efe9ae09cb17e51deef6";
     const responseType = "fragment";
-    const url = `http://localhost:3001/api/integrations/trello/authorize?workspace_id=${workspaceId}&user_id=${userId}`;
+    
+    const url = `http://localhost:3001/api/integrations/connect/trello?workspace_id=${workspaceId}&user_id=${userId}`;
 
     window.open(url, "_self");
     //window.open(`${trelloAuthEndpoint}?callback_method=${callbackMethod}&user_id=${userId}&workspace_id=${workspaceId}&return_url=${returnURL}&expiration=${expiration}&name=${name}&scope=${scope}&response_type=${responseType}&key=${TRELLO_API_KEY}`, "_self");

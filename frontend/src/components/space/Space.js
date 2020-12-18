@@ -8,7 +8,8 @@ import { DARK_SHADOW_1, DARK_SHADOW_2 } from '../../styles/shadows';
 //components
 import EditorWrapper from './knowledge/text_editor/EditorWrapper';
 import Infobank from './infobank/Infobank';
-import TrelloTest from '../trello_test/TrelloTest'
+import TrelloTest from '../trello_test/TrelloTest';
+import GoogleTest from '../google_test/GoogleTest';
 import SideNavbar from './side_navbar/SideNavbar';
 import DocumentNavbar from './side_navbar/DocumentNavbar';
 import MainNavbar from './main_navbar/MainNavbar';
@@ -132,6 +133,7 @@ class Space extends React.Component {
                                     <Router history = {history}>
                                         <Route path = "/workspaces/:workspaceId/ticket_test" component = { TicketTest } />
                                         <Route path = "/workspaces/:workspaceId/trello_test" component = { TrelloTest } />
+                                        <Route path = "/workspaces/:workspaceId/google_test" component = { GoogleTest } />
                                         <Route path = "/workspaces/:workspaceId/dashboard" component = { Dashboard } />
                                         <Route path = "/workspaces/:workspaceId/repository/:repositoryId/dir/:referenceId" component = { DirectoryNavigator } />
                                         <Route path = "/workspaces/:workspaceId/repository/:repositoryId/code/:referenceId" component = { ReferenceEditor } />

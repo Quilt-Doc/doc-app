@@ -427,13 +427,20 @@ app.post('/profile', function (req, res) {
 */
 
 
-//INTEGRATION ROUTES
-const integrationController = require('../controllers/integrations/IntegrationController');
-router.get('/integrations/create', integrationController.createIntegration);
-router.get('/integrations/trello/authorize', integrationController.authorizeTrello);
-router.get('/integrations/trello/callback', integrationController.trelloCallback);
+//TRELLO INTEGRATION ROUTES
+const trelloIntegrationController = require('../controllers/integrations/trello/TrelloIntegrationController');
+router.get('/integrations/connect/trello', trelloIntegrationController.beginTrelloConnect);
+router.get('/integrations/connect/trello/callback', trelloIntegrationController.handleTrelloConnectCallback);
+
+//GOOGLE INTEGRATION ROUTES
+/*
+const googleIntegrationController = require('../controllers/integrations/GoogleIntegrationController');
+router.get('/integrations/connect/google', googleIntegrationController.beginGoogleConnect);
+router.get('/integrations/connect/google/callback', googleIntegrationController.handleGoogleConnectCallback);
+*/
 
 const ticketController = require('../controllers/integrations/TicketController');
 router.post('/tickets/:workspaceId/retrieve', ticketController.retrieveTickets);
+
 
 module.exports = router;

@@ -1,7 +1,10 @@
 const passport = require("passport");
-const GithubStrategy = require("passport-github2").Strategy;
+
 const User = require("../models/authentication/User");
 const GithubAuthProfile = require('../models/authentication/GithubAuthProfile');
+
+const GithubStrategy = require("passport-github2").Strategy;
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
@@ -23,7 +26,7 @@ passport.deserializeUser((id, done) => {
         });
 });
 */
-
+//authentication
 passport.use(
     new GithubStrategy(
         {
@@ -93,3 +96,17 @@ passport.use(
         }
     )
 )
+
+
+//google strategy
+passport.use(new GoogleStrategy({
+        clientID: "853252530536-gp2q5g9qla3hmdrfggl6lkq6tnsdcdqr.apps.googleusercontent.com",
+        clientSecret: "U0zcrinRVgKyA_D8KH5W29ny",
+        callbackURL: "http://localhost:3001/api/integrations/connect/google/callback"
+    },
+    (accessToken, refreshToken, profile, cb) => {
+        console.log("IN HERE", {accessToken, refreshToken, profile});
+        const usefulParams = { accessToken, refreshToken, profile };
+        return cb(null, usefulParams);
+    }
+));
