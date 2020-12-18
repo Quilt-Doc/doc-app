@@ -10,6 +10,9 @@ const { ObjectId } = mongoose.Types;
 
 
 const workspaceIdParam = async (req, res, next, workspaceId) => {
+
+    // console.log('workspaceParamMiddleware called!');
+
     if (req.workspaceObj) {
         next();
     }
@@ -18,9 +21,10 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
     try {
         var foundWorkspace = await Workspace.findById(workspaceId).lean().exec();
         if (!foundWorkspace || foundWorkspace == null) {
-            next(new Error("workspaceIdParam: workspaceId doesn't exist"));
+            next(new Error(`workspaceIdParam, workspace with workspaceId doesn't exist - workspaceId: ${workspaceId}`));
         }
         req.workspaceObj = foundWorkspace;
+        // console.log(`workspaceParamMiddleware setting workspaceObj to foundWorkspace: ${JSON.stringify(foundWorkspace)}`);
     }
     catch(err) {
         next(err);
@@ -51,7 +55,7 @@ const documentIdParam = async (req, res, next, documentId) => {
         next();
     }
 
-    console.log(`Searching for documentId: ${documentId}`);
+    // console.log(`Searching for documentId: ${documentId}`);
 
     // try to get the reference object and attach it to the request object
     try {

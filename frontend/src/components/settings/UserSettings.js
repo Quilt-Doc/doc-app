@@ -18,13 +18,22 @@ import history from '../../history';
 import { editUser } from '../../actions/User_Actions';
 import { sendInvite } from '../../actions/Auth_Actions';
 import { deleteWorkspace } from '../../actions/Workspace_Actions';
+import { getWorkspaceJiraSites, getJiraSiteIssues } from '../../actions/Integration_Actions';
+
+
+//integrations
+import jiraSVG from '../../images/integrations/mark-gradient-neutral-jira.svg';
 
 //email validation
 import * as EmailValidator from 'email-validator';
  
 class UserSettings extends Component {
     constructor(props) {
-        super(props)
+        super(props);
+        this.state = {
+            issueList: [],
+        }
+        this.issueList = this.issueList.bind(this);
     }
 
 
@@ -82,12 +91,50 @@ class UserSettings extends Component {
         await deleteWorkspace({ workspaceId });
     }
 
+    loadJiraTickets = async () => {
+
+        const { match } = this.props;
+        const { workspaceId } = match.params;
+
+        var jiraSites;
+        jiraSites = await getWorkspaceJiraSites({ workspaceId });
+
+        console.log(`Jira Sites: ${JSON.stringify(jiraSites)}`);
+        var jiraSiteIssues;
+        console.log(`Getting Jira Site Issues - workspaceId, jiraSites.cloudId: ${workspaceId}, ${jiraSites.cloudId}`);
+        jiraSiteIssues = await getJiraSiteIssues({ workspaceId, cloudId: jiraSites.cloudId });
+
+        this.setState({ issueList: jiraSiteIssues});
+    }
+
+    issueList = () => {
+        console.log('issueList Called!');
+
+        console.log(`state in method: ${JSON.stringify(this.state)}`);
+
+        console.log(`issueList in method: ${JSON.stringify(this.state.issueList)}`);
+        // console.log(issueItems);
+
+        const issueItems = this.state.issueList.map((issueSummary) =>
+            <li>{issueSummary}</li>
+        );
+
+        console.log('issueItems: ');
+        console.log(issueItems);
+
+        return (
+            <ul>{issueItems}</ul>
+        );
+    }
+
     render() {
         const { workspace, user, memberUsers } = this.props;
 
+        var jiraAuthURL = `https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=${process.env.REACT_APP_JIRA_CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work%20offline_access&redirect_uri=${encodeURIComponent(process.env.REACT_APP_JIRA_CALLBACK_URL)}&state=${workspace._id.toString()}-${user._id.toString()}&response_type=code&prompt=consent`;
+        console.log(`jiraAuthURL: ${jiraAuthURL}`);
 
         let renderWorkspaceSettings;
-        
+
         if (workspace) {
             renderWorkspaceSettings = workspace.creator._id === user._id;
         }
@@ -212,6 +259,24 @@ class UserSettings extends Component {
                                                 Save User Settings
                                             </SaveButton>
                                         </Bottom>
+                                    </Block>
+                                    <Block>
+                                        <SettingHeader>
+                                            Integration Settings
+                                        </SettingHeader>
+
+                                        <DualSection>
+                                            <Section>
+                                                <JiraButton onClick = {() => window.open(jiraAuthURL, '_blank', 'noopener,noreferrer,scrollbars')} >
+                                                    <img src={jiraSVG}/>
+                                                </JiraButton>
+                                                <JiraButton onClick = {() => this.loadJiraTickets()} >
+                                                    Load JIRA Data
+                                                </JiraButton>
+                                                {this.issueList()}
+                                            </Section>
+                                        </DualSection>
+
                                     </Block>
                                 
                                 </Content>
@@ -494,6 +559,24 @@ const FieldInput = styled.input`
 `
 
 const SaveButton = styled.div`
+    background-color: white;
+    margin-left: auto;
+    border: 1px solid  #E0E4e7;
+    display: inline-flex;
+    font-size: 1.5rem;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-radius: 0.4rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+    cursor: pointer;
+    &:hover {
+        background-color: #f7f9fb;
+    }
+`
+
+const JiraButton = styled.div`
     background-color: white;
     margin-left: auto;
     border: 1px solid  #E0E4e7;

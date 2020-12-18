@@ -202,6 +202,7 @@ const authController = require('../controllers/authentication/AuthController');
 router.get('/auth/login/success', authController.loginSuccess);
 router.get('/auth/login/failed', authController.loginFailed);
 router.get('/auth/logout', authController.logout);
+router.get('/auth/jira', authController.jiraAuthResponse);
 
 
 // router.get('/auth/github', passport.authenticate("github"));
@@ -439,8 +440,15 @@ router.get('/integrations/connect/google', googleIntegrationController.beginGoog
 router.get('/integrations/connect/google/callback', googleIntegrationController.handleGoogleConnectCallback);
 */
 
-const ticketController = require('../controllers/integrations/TicketController');
-router.post('/tickets/:workspaceId/retrieve', ticketController.retrieveTickets);
 
+const jiraController = require('../controllers/integration/JiraController');
+
+router.get('/integrations/:workspaceId/jira', jiraController.getWorkspaceJiraSites);
+router.post('/integrations/:workspaceId/jira/get', jiraController.getJiraSiteIssues);
+
+const branchController = require('../controllers/BranchController');
+
+router.post('/branch/create', authorizationMiddleware.branchMiddleware, branchController.createBranch);
 
 module.exports = router;
+

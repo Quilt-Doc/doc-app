@@ -21,6 +21,8 @@ exports.handler = async (event) => {
     hmac.update(event.body, 'binary')
     var expected = 'sha1=' + hmac.digest('hex')
 
+    // Modify
+
     if ( !(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) ) {
         let response = {
             statusCode: 401,
@@ -47,6 +49,8 @@ exports.handler = async (event) => {
     event.body = JSON.parse(event.body);
 
     var githubAction = event.headers['x-github-event'];
+
+    await logger.info({source: 'github-lambda', message: `Github action received - githubAction: ${githubAction}`, function: 'handler'});
     
     if (githubAction == 'error') {
         await logger.info({source: 'github-lambda', message: `Github 'error' action received`, function: 'handler'});
@@ -298,6 +302,45 @@ exports.handler = async (event) => {
       var pullRequestObjId = event.body.pull_request.id;
       var pullRequestNumber = event.body.number;
 
+    }
+
+    else if (githubAction == 'create' && event.body.ref_type == 'branch') {
+        await logger.info({source: 'github-lambda',
+                            message: `Branch '${event.body.action}' Event Received`,
+                            function: 'handler'});
+    
+        var branchName = event.body.ref;
+        var defaultBranchName = event.body.master_branch;
+        var repositoryFullName = event.body.repository.full_name;
+        var installationId = event.body.installation.id;
+        var githubUserId = event.body.sender.id;
+
+
+        var createBranchResponse;
+
+        var branchCreateData = {
+                                    ref: branchName,
+                                    masterBranch: defaultBranchName,
+                                    installationId: installationId,
+                                    fullName: repositoryFullName,
+                                    githubUserId: githubUserId,
+                                };
+
+        try {
+            createBranchResponse = await backendClient.post("/branch/create", branchCreateData);
+        }
+        catch (err) {
+            await logger.error({source: 'github-lambda',
+                                message: err,
+                                errorDescription: `Error creating branch - branchCreateData: ${JSON.stringify(branchCreateData)}`,
+                                function: 'handler'});
+
+            let response = {
+                statusCode: 200,
+                body: JSON.stringify({ message: "200 OK" })
+            };
+            return response;
+        }
     }
 
 
