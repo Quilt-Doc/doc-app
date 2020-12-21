@@ -18,19 +18,18 @@ const integrationTicketSchema = new Schema({
     link: String, // trelloCardLink: String,
     creator: {type: ObjectId, ref: 'IntegrationUser'},
     assignees: [{type: ObjectId, ref: 'IntegrationUser'}], // trelloCardMember
-    events: [{type: ObjectId, ref: 'IntegrationEvent'}], // trelloCardListUpdateDates: [{type: Date}],
     labels: [{type: ObjectId, ref: 'IntegrationLabel'}], //trelloCardLabels
     board: [{type: ObjectId, ref: 'IntegrationBoard'}],
     column: [{type: ObjectId, ref: 'IntegrationColumn'}], //  trelloCardList: String,
     comments: [{type: ObjectId, ref: 'IntegrationComments'}],
-    attachments: [type: ObjectId, ref: 'IntegrationAttachments'],
+    attachments: [{type: ObjectId, ref: 'IntegrationAttachments'}],
+    intervals: [{type: ObjectId, ref: 'IntegrationInterval'}],
 
     trelloIntegration: { type: ObjectId, ref: 'TrelloIntegration'},
     trelloCardRelevantMembers: [{type: Object}],
     trelloCardDue: Date,
     trelloCardDueComplete: Boolean,
     trelloCardDateLastActivity: Date,
-    trelloCardAttachments: [{type: Object}],
     
 });
 
