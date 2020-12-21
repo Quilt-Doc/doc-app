@@ -6,8 +6,6 @@ const _ = require('lodash');
 
 const jaccardDistance = require('@extra-string/jaccard-distance');
 
-const apis = require('../../apis/api');
-
 const mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
 
@@ -154,10 +152,11 @@ handleTrelloConnectCallback = async (req, res) => {
 
             quiltProductBoard = boards.filter(board => board.name === "Quilt Product")[0];
             
+            /*
             await bulkScrapeTrello(trelloIntegration, [quiltProductBoard.id], 
                 [{type: "start", name: "In-Progress"}, {type: "end", name: "Done"}]);
 
-            await generateTrelloAssociations(trelloIntegration);
+            */
 
             res.redirect(LOCALHOST_HOME_PAGE_URL);
         }
@@ -166,6 +165,7 @@ handleTrelloConnectCallback = async (req, res) => {
 
 
 // do we want to save the actual boards we care about somewhere?
+/*
 bulkScrapeTrello = async (trelloIntegration, requiredBoardIds, relevantLists) => {
     const { workspace, repositories } = trelloIntegration;
 
@@ -375,7 +375,7 @@ bulkScrapeTrello = async (trelloIntegration, requiredBoardIds, relevantLists) =>
 
         currentRepositories = _.map(currentRepositories, 'fullName');
 
-        Object.values(cards).map(card => {
+        Object.values(cards).map(async (card) => {
             let { id, idList, dateLastActivity, desc, name, attachments,
                 due, dueComplete, idMembers, url, eventIds } = card;
     
@@ -466,7 +466,7 @@ bulkScrapeTrello = async (trelloIntegration, requiredBoardIds, relevantLists) =>
             console.log("ERROR", err);
         }
     }
-}
+}*/
 
 
 module.exports = {

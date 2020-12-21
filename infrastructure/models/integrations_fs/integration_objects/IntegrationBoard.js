@@ -4,7 +4,7 @@ const { ObjectId } = Schema.Types;
 
 let integrationBoardSchema = new Schema({
     created: {type: Date, default: Date.now},
-    creator: { type: ObjectId, ref: IntegrationUser },
+    creator: { type: ObjectId, ref: 'IntegrationUser' },
     name: String,
     source: String,
     sourceId: String,
