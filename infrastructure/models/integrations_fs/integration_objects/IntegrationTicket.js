@@ -1,3 +1,5 @@
+const IntegrationAttachment = require("./IntegrationAttachment");
+
 const mongoose = require.main.require("mongoose")
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
@@ -21,6 +23,7 @@ const integrationTicketSchema = new Schema({
     board: [{type: ObjectId, ref: 'IntegrationBoard'}],
     column: [{type: ObjectId, ref: 'IntegrationColumn'}], //  trelloCardList: String,
     comments: [{type: ObjectId, ref: 'IntegrationComments'}],
+    attachments: [type: ObjectId, ref: 'IntegrationAttachments'],
 
     trelloIntegration: { type: ObjectId, ref: 'TrelloIntegration'},
     trelloCardRelevantMembers: [{type: Object}],
