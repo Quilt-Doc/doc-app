@@ -1,24 +1,25 @@
 const CryptoJS = require("crypto-js");
 
 //models
-const Document = require('../../models/Document');
+const Document = require("../../models/Document");
 
 // pusher
 const Pusher = require("pusher");
 
-const Slate = require('slate');
+const Slate = require("slate");
 const { Node } = Slate;
 
 // create pusher instance
 const { PUSHER_SECRET } = process.env;
 
 //logger
-const logger = require('../../logging/index').logger;
-
+const logger = require("../../logging/index").logger;
 
 const handlePusherWebhook = async (req, res) => {
     const bodyString = JSON.stringify(req.body);
-    const hmac = CryptoJS.HmacSHA256(bodyString, PUSHER_SECRET).toString(CryptoJS.enc.Hex);
+    const hmac = CryptoJS.HmacSHA256(bodyString, PUSHER_SECRET).toString(
+        CryptoJS.enc.Hex
+    );
     /*
     if (hmac === req.headers['x-pusher-signature']) {
         const { events } = req.body;
@@ -63,9 +64,9 @@ const handlePusherWebhook = async (req, res) => {
         return res.status(404);
     }
     */
-   return res.status(200);
-}
+    return res.status(200);
+};
 
 module.exports = {
-    handlePusherWebhook
-}
+    handlePusherWebhook,
+};

@@ -99,6 +99,7 @@ const nonAuthPaths = ['/auth/login/success',
                       '/auth/github/fork',
                       '/api/auth/github/fork',
                       '/api/testRoute',
+                      '/api/example_route',
                       '/api/pusher/webhook',
                       '/api/integrations/create'
                     ];

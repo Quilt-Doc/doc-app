@@ -450,5 +450,19 @@ const branchController = require('../controllers/BranchController');
 
 router.post('/branch/create', authorizationMiddleware.branchMiddleware, branchController.createBranch);
 
+router.post('/example_route', (req, res) => {
+    console.log("BODY", req.body);
+
+    const { integrationId, integrationType } = req.body;
+
+    let tickets = [{
+        likelyPullRequests: [], 
+        likelyIssues: [], 
+        likelyCommits: [],
+        likelyBranches: []
+    }];
+
+    return res.json({success: true, result: tickets});
+})
 module.exports = router;
 
