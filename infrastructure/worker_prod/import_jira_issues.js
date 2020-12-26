@@ -7,9 +7,9 @@ require('dotenv').config();
 
 const constants = require('./constants/index');
 
-const JiraSite = require('./models/integrations/JiraSite');
-const JiraProject = require('./models/integrations/JiraProject');
-const Ticket = require('./models/integrations/Ticket');
+const JiraSite = require('./models/integrations_fs/jira/JiraSite');
+const JiraProject = require('./models/integrations_fs/jira/JiraProject');
+const IntegrationTicket = require('./models/integrations_fs/integration_objects/IntegrationTicket');
 
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
@@ -262,7 +262,7 @@ const importJiraIssues = async () => {
 
     var bulkInsertResult;
     try {
-        bulkInsertResult = await Ticket.insertMany(jiraTicketList);
+        bulkInsertResult = await IntegrationTicket.insertMany(jiraTicketList);
     }
     catch (err) {
 
