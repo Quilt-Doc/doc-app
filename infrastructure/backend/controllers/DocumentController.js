@@ -50,6 +50,11 @@ escapeRegExp = (string) => {
 /// FARAZ TODO: Log times of middleware and of major points in controller methods
 createDocument = async (req, res) => {
     const session = await db.startSession();
+    
+    await session.withTransaction(async () => {
+        throw Error("Can we gracefully handle");
+    });
+
 
     let output = {};
     try {
@@ -141,7 +146,7 @@ createDocument = async (req, res) => {
                                     errorDescription: `Create Document Error no parentPath provided  - workspaceId, authorId: ${workspaceId}, ${authorId}`,
                                     function: 'createDocument'});
                 output = {success: false, error: "createDocument Error: no parentPath provided."};
-                throw newError("createDocument Error: no parentPath provided.");
+                throw new Error("createDocument Error: no parentPath provided.");
             }
 
 
@@ -891,6 +896,7 @@ retrieveHelper = async (body, req) => {
 retrieveDocuments = async (req, res) => {
 
     let { root, documentIds, referenceIds, limit, skip, minimal, fill } = req.body;
+
     // use helper above to retrieve queried documents
     let response = await retrieveHelper({ root, documentIds, referenceIds, limit, skip, minimal }, req);
     
@@ -905,6 +911,8 @@ retrieveDocuments = async (req, res) => {
         let moreDocuments = secondResponse.result;
         returnedDocuments = [...returnedDocuments, ...moreDocuments];
     }
+
+    // console.log(`Retrieve Documents Returning: ${JSON.stringify(returnedDocuments)}`);
 
     return res.json({ success: true, result: returnedDocuments});
 }
@@ -1231,7 +1239,7 @@ authorizeDocumentPusher = async (req, res) => {
     //console.log("SOCKET ID", socket_id);
     //console.log("CHANNEL NAME", channel_name);
     
-    console.log("REQ PAYLOAD", req.tokenPayload);
+    // console.log("REQ PAYLOAD", req.tokenPayload);
 
     const { userId } = req.tokenPayload;
     /*

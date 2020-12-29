@@ -21,10 +21,13 @@ class WaitCreation extends Component {
     async componentDidMount(){
         const { workspaceId, getWorkspace, createDocument, user } = this.props;
 
+        await getWorkspace(workspaceId);
+        /*
         await Promise.all([
             getWorkspace(workspaceId),
             createDocument({ authorId: user._id, title: "", root: true, workspaceId })
         ]);
+        */
 
         const { workspace: {setupComplete} } = this.props;
 

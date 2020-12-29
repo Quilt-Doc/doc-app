@@ -11,6 +11,15 @@ const UserStats = require('../models/reporting/UserStats');
 const ActivityFeedItem = require('../models/reporting/ActivityFeedItem');
 const User = require('../models/authentication/User');
 
+const GithubProject = require('../models/integrations/GithubProject');
+const JiraSite = require('../models/integrations/JiraSite');
+const JiraProject = require('../models/integrations/JiraProject');
+const Ticket = require('../models/integrations/Ticket');
+
+const apis = require('../apis/api');
+
+
+
 
 const UserStatsController = require('./reporting/UserStatsController');
 const NotificationController = require('./reporting/NotificationController');
@@ -61,6 +70,8 @@ createWorkspace = async (req, res) => {
     const session = await db.startSession();
     let output = {};
 
+    var repositoryFullNameList = [];
+
     var scanRepositoriesData = {};
     try {
         await session.withTransaction(async () => {
@@ -108,6 +119,36 @@ createWorkspace = async (req, res) => {
                 throw Error(`error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(repositories)}`);
             }
 
+            // Create Root Document
+            var document = new Document(
+                {
+                    author: ObjectId(creatorId),
+                    workspace: ObjectId(workspace._id.toString()),
+                    title: "",
+                    path: "",
+                    status: 'valid'
+                },
+            );
+
+            document.root = true;
+
+            // save document
+            try {
+                document = await document.save({ session });
+            } 
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(repositories)}`,
+                                    function: 'createWorkspace'});
+
+                output = {success: false,
+                            error: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(repositories)}`,
+                            trace: err};
+
+                throw new Error(`Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(repositories)}`);
+            }
+
             // Update User.workspaces array
             var user;
             try {
@@ -124,6 +165,7 @@ createWorkspace = async (req, res) => {
 
             // Create UserStats object for creator
             try {
+                // console.log(`CREATING USERSTATS - USER ID: ${creatorId}`);
                 await UserStatsController.createUserStats({userId: creatorId, workspaceId: workspace._id.toString(), session});
             }
             catch (err) {
@@ -134,26 +176,10 @@ createWorkspace = async (req, res) => {
                 throw Error(`error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`);
             }
 
-            // DO THIS IN SCAN_REPOSITORIES
-            /*
-            // Set all workspace Repositories 'currentlyScanning' to true
-            var workspaceRepositories;
-            try {
-                workspaceRepositories = await Repository.updateMany({_id: { $in: repositoryIds}, scanned: false}, {$set: { currentlyScanning: true }}, { session });
-            }
-            catch (err) {
-                await logger.error({source: 'backend-api', message: err,
-                                        errorDescription: `error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`,
-                                        function: 'createWorkspace'});
-                output = {success: false, error: "createWorkspace error: Could not update workspace repositories", trace: err};
-                throw Error(`error updating workspace repositories to 'currentlyScanning: true' repositoryIds: ${JSON.stringify(repositoryIds)}`);
-            }
-            */
-
             // Get the list of installationIds for all Repositories
             var repositoryInstallationIds;
             try {
-                repositoryInstallationIds = await Repository.find({ _id: { $in: repositoryIds}, }, '_id installationId', { session }).lean().exec();
+                repositoryInstallationIds = await Repository.find({ _id: { $in: repositoryIds}, }, '_id fullName installationId', { session }).lean().exec();
             }
             catch (err) {
                 await logger.error({source: 'backend-api', message: err,
@@ -168,7 +194,9 @@ createWorkspace = async (req, res) => {
                 installationIdLookup[repositoryInstallationIds[i]._id.toString()] = repositoryInstallationIds[i].installationId.toString()
             }
 
-            
+            // KARAN TODO: DELETE THIS
+            repositoryFullNameList = repositoryInstallationIds.map(repositoryObj => repositoryObj.fullName);
+
             repositoryInstallationIds = [ ...new Set (repositoryInstallationIds.map(repoObj => repoObj.installationId)) ];
 
             await logger.info({source: 'backend-api',
@@ -214,10 +242,18 @@ createWorkspace = async (req, res) => {
     }
 
     catch (err) {
+        // Try aborting Transaction again, just to be sure, it should have already aborted, but that doesn't seem to happen
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+
+        // End Session to remove locking
+        await session.endSession();
+
         return res.json(output);
     }
 
-    session.endSession();
+    await session.endSession();
 
     try {
         await jobs.dispatchScanRepositoriesJob(scanRepositoriesData);
@@ -257,6 +293,14 @@ getWorkspace = async (req, res) => {
 
 // Remove Workspace from User.workspaces
 // Delete Workspace Document
+
+// TODO:
+// GithubProject -- delete all GithubProjects from Repositories on the Workspace
+
+// JiraSite -- has a workspaceId attached
+// JiraProject -- Could use the Ids of all the JiraSites found to be deleted in the prior step
+
+// Ticket -- has a workspaceId attached
 
 deleteWorkspace = async (req, res) => {
 
@@ -424,6 +468,111 @@ deleteWorkspace = async (req, res) => {
                 output = {success: false, error: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`, trace: err};
                 throw new Error(`deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`);
             }
+
+
+
+
+
+            // INTEGRATION DELETION SECTION START --------------------------------------------------------
+
+            var workspaceRepositories = deletedWorkspace.repositories;
+
+
+            // GithubProject -- delete all GithubProjects from Repositories on the Workspace
+            // Delete All GithubProjects
+            var deleteGithubProjectsResponse;
+            try {
+                deleteGithubProjectsResponse = await GithubProject.deleteMany({repositoryId: { $in: workspaceRepositories.map(id => ObjectId(id.toString()))}}, { session }).exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+
+
+            // JiraSite -- has a workspaceId attached
+            // Delete All JiraSites
+            var deletedJiraSites;
+
+            var jiraSitesToDelete;
+
+            try {
+                jiraSitesToDelete = await JiraSite.find({workspace: ObjectId(workspaceId.toString())}, '_id', { session }).lean().exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`);
+            }
+
+            try {
+                // deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId, { session }).select('_id repositories').lean().exec();
+                deletedJiraSites = await JiraSite.deleteMany({ _id: { $in: jiraSitesToDelete.map(jiraSiteObj => ObjectId(jiraSiteObj._id.toString())) } }, { session }).exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+            // JiraProject -- Use the Ids of all the JiraSites found to be deleted in the prior step
+            // Delete All JiraProjects
+            var deleteJiraProjectsResponse;
+            try {
+                deleteJiraProjectsResponse = await JiraProject.deleteMany({jiraSiteId: { $in: jiraSitesToDelete.map(jiraSiteObj => ObjectId(jiraSiteObj._id.toString()))}}, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+            // Ticket -- has a workspaceId attached
+            // Delete All Tickets
+            var deleteTicketResponse;
+            try {
+                deleteTicketResponse = await Ticket.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
+            }
+            catch (err) {
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+
+            // INTEGRATION DELETION SECTION END --------------------------------------------------------
+
+
+
 
             // Set all Repositories in deletedWorkspace.repositories back to 'initRepository state'
             // scanned: false,

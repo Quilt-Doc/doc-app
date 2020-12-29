@@ -214,7 +214,7 @@ const TextEditor = (props) => {
 				}
 			});
 		}
-		
+
 		return () => {
 			if (presenceChannel) {
 				presenceChannel.unbind('pusher:member_removed');
