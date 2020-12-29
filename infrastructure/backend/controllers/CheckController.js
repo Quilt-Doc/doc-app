@@ -21,13 +21,9 @@ const logger = require('../logging/index').logger;
 
 const checkConstants = require('../constants/index').checks;
 
+const { checkValid } = require('../utils/utils');
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+
 
 generateCheckSummary = (brokenDocuments, brokenSnippets) => {
 

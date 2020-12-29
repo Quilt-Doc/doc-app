@@ -13,6 +13,7 @@ const { fetchAllRepoBranchesAPI } = require('./github_repos/branch_utils');
 const { fetchAllRepoPRsAPI } = require('./github_repos/pr_utils');
 const { at } = require("lodash");
 
+const { cloneInstallationRepo } = require('./github_repos/cli_utils');
 
 
 // Procedure:
@@ -229,6 +230,8 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
 
 const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, worker) => {
 
+
+    // Fetch all branches and PRs from Github
     var foundPRList;
     try {
         foundPRList = await fetchAllRepoPRsAPI(installationClient, installationId, repositoryObj.fullName, worker);
@@ -240,7 +243,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
                                                     source: 'worker-instance',
                                                     function: 'scrapeGithubRepoCommitsMixed'}
                             });
-        throw err;
+        throw Error(`Error fetching all repo PRs - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
     }
 
     var foundBranchList;
@@ -254,10 +257,33 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
                                                     source: 'worker-instance',
                                                     function: 'scrapeGithubRepoCommitsMixed'}
                             });
-        throw err;
+        throw Error(`Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
     }
 
+    // Clone Repository
+    var repoDiskPath;
 
+    try {
+        repoDiskPath = await cloneInstallationRepo(installationId, process.env.cloneUrl, false, '', worker);
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`,
+                                                    source: 'worker-instance',
+                                                    function: 'scrapeGithubRepoCommitsMixed'}
+        });
+
+        throw Error(`Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
+
+    }
+
+    // Create PR/Branch objects ready for insertion
+    
+
+
+    // git rev-list --all --min-parents=2 --date=iso --format=%H%n%cd%n%T%n%an%n%cn%n%ce%n%s$n%P$%n%D%n
+    
 
 }
 

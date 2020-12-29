@@ -8,12 +8,8 @@ const logger = require('../logging/index').logger;
 const populationString = "repository tags"
 const minSelectionString = "name kind path _id created status"
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../utils/utils');
+
 
 escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string

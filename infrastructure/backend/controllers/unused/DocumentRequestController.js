@@ -25,12 +25,8 @@ const { ObjectId } = mongoose.Types;
 
 const { json } = require('body-parser');
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../../utils/utils');
+
 
 /*
     created: {type: Date, default: Date.now },

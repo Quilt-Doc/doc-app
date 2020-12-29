@@ -24,17 +24,13 @@ const jobs = require('../../apis/jobs');
 const fs = require('fs');
 var jwt = require('jsonwebtoken');
 const GithubAuthProfile = require("../../models/authentication/GithubAuthProfile");
-const JiraSite = require("../../models/integrations/JiraSite");
+const JiraSite = require("../../models/integrations_fs/jira/JiraSite");
 
 const constants = require('../../constants');
 
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../../utils/utils');
+
 // TODO: Change just to validate JWT
 loginSuccess = async (req, res) => {
 

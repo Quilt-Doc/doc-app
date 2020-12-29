@@ -441,7 +441,7 @@ router.get('/integrations/connect/google/callback', googleIntegrationController.
 */
 
 
-const jiraController = require('../controllers/integration/JiraController');
+const jiraController = require('../controllers/integrations/jira/JiraController');
 
 router.get('/integrations/:workspaceId/jira', jiraController.getWorkspaceJiraSites);
 router.post('/integrations/:workspaceId/jira/get', jiraController.getJiraSiteIssues);

@@ -15,12 +15,8 @@ const {
 const renderStatsCard = require("./cards/stats-card");
 
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true;
-    }
-    return false;
-}
+const { checkValid } = require('../../utils/utils');
+
 
 
 getBadge = async (req, res) => {

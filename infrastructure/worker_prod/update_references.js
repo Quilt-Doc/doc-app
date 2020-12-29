@@ -5,6 +5,8 @@ const fs_promises = require('fs').promises;
 const { filterVendorFiles, parseCommitObjects,
         parseGithubFileChangeList, getFileChangeList } = require('./utils/validate_utils');
 
+const { cloneInstallationRepo, ensureRepoCloneCommit } = require('./utils/github_repos/cli_utils');
+
 const { runSnippetValidation } = require('./update_snippets');
 
 const _ = require('lodash');
@@ -315,90 +317,41 @@ const runUpdateProcedure = async () => {
 
             await worker.send({action: 'log', info: {level: 'info', message: `Using repoCommit..headCommit: ${repoCommit}..${headCommit}`,
                                                 source: 'worker-instance', function: 'runUpdateProcedure'}});
-
             // Clone the Repository
-            var timestamp = Date.now().toString();
-            var repoDiskPath = 'git_repos/' + timestamp +'/';
-
-            var installToken;
+            var repoDiskPath
             try {
-                installToken = await tokenUtils.getInstallToken(process.env.installationId, worker, session);
-            }
-            catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                            errorDescription: `Error fetching Install Token for installationId: ${process.env.installationId}`,
-                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-                
-                transactionAborted = true;
-                transactionError.message = `Error fetching Install Token for installationId: ${process.env.installationId}`
-
-                throw new Error(`Error fetching Install Token for installationId: ${process.env.installationId}`);
-            }
-
-            var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + process.env.cloneUrl.replace("https://", "");
-
-            try {
-                // Format to only clone one specific branch
-                // git clone -b opencv-2.4 --single-branch https://github.com/Itseez/opencv.git
-                const gitClone = spawnSync('git', ['clone', '-b', repoObj.defaultBranch, '--single-branch', cloneUrl, repoDiskPath]);
-            }
-            catch(err) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err), errorDescription: `Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`,
-                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-
-                transactionAborted = true;
-                transactionError.message = `Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`;
-
-                throw new Error(`Error Cloning Git Repository at cloneUrl: ${process.env.cloneUrl}`);
-            }
-
-            // Make sure repository is at correct commit
-            try {
-                const ensureCommit = spawnSync('git', ['reset', '--hard', `${headCommit}`], {cwd: repoDiskPath});
+                // installationId, cloneUrlRaw, cloneSingleBranch, defaultBranch, worker
+                repoDiskPath = await cloneInstallationRepo(process.env.installationId, process.env.cloneUrl, true, repoObj.defaultBranch, worker);
             }
             catch(err) {
                 await worker.send({action: 'log', info: {level: 'error',
                                                             message: serializeError(err),
-                                                            errorDescription: `Error hard resetting to headCommit - repoId, cloneUrl, headCommit: ${repoId}, ${process.env.cloneUrl}, ${headCommit}`,
-                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-                
-                transactionAborted = true;
-                transactionError.message = `Error hard resetting to headCommit - repoId, cloneUrl, headCommit: ${repoId}, ${process.env.cloneUrl}, ${headCommit}`;
-
-                throw new Error(`Error hard resetting to headCommit - repoId, cloneUrl, headCommit: ${repoId}, ${process.env.cloneUrl}, ${headCommit}`);
-            }
-
-            // Verify that we have successfully set the Repository to the correct commit
-            var getCurrentCommitResponse;
-            try {
-                getCurrentCommitResponse = spawnSync('git', ['log', '-1', '--pretty=%H'], {cwd: './' + repoDiskPath});
-            }
-            catch (err) {
-                await worker.send({action: 'log', info: {level: 'error',
-                                                            message: serializeError(err),
-                                                            errorDescription: `Error getting local repository current commit - repoId, headCommit, cloneUrl: ${repoId}, ${process.env.cloneUrl}, ${headCommit}`,
-                                                            source: 'worker-instance', function: 'runUpdateProcedure'}});
-                
-                transactionAborted = true;
-                transactionError.message = `Error getting local repository current commit - repoId, headCommit, cloneUrl: ${repoId}, ${process.env.cloneUrl}, ${headCommit}`;
-                    
-                throw new Error(`Error getting local repository current commit - repoId, headCommit, cloneUrl: ${repoId}, ${process.env.cloneUrl}, ${headCommit}`);
-            }
-
-            var currentCommitSha = getCurrentCommitResponse.stdout.toString().trim();
-
-            if (currentCommitSha != headCommit) {
-                await worker.send({action: 'log', info: {level: 'error',
-                                                            message: serializeError(err),
-                                                            errorDescription: `Error local repository commit sha doesn't match headCommit - repoId, localCommit, headCommit: ${repoId}, ${currentCommitSha}, ${headCommit}`,
+                                                            errorDescription: `Error Cloning Git Repository - installationId, cloneUrl: ${installationId}, ${process.env.cloneUrl}`,
                                                             source: 'worker-instance',
                                                             function: 'runUpdateProcedure'}});
-                transactionAborted = true;
-                transactionError.message = `Error local repository commit sha doesn't match headCommit - repoId, localCommit, headCommit: ${repoId}, ${currentCommitSha}, ${headCommit}`;
 
-                throw new Error(`Error local repository commit sha doesn't match headCommit - repoId, localCommit, headCommit: ${repoId}, ${currentCommitSha}, ${headCommit}`);
+                transactionAborted = true;
+                transactionError.message = `Error Cloning Git Repository - installationId, cloneUrl: ${installationId}, ${process.env.cloneUrl}`;
+
+                throw new Error(`Error Cloning Git Repository - installationId, cloneUrl: ${installationId}, ${process.env.cloneUrl}`);
             }
 
+            // Ensure cloned repository headCommit = process.env.headCommit
+            try {
+                await ensureRepoCloneCommit(repoDiskPath, headCommit, worker);
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error',
+                                                            message: serializeError(err),
+                                                            errorDescription: `Error running ensureRepoCloneCommit - repoDiskPath, headCommit: ${repoDiskPath}, ${headCommit}`,
+                                                            source: 'worker-instance',
+                                                            function: 'runUpdateProcedure'}});
+
+                transactionAborted = true;
+                transactionError.message = `Error running ensureRepoCloneCommit - repoDiskPath, headCommit: ${repoDiskPath}, ${headCommit}`;
+
+                throw new Error(`Error running ensureRepoCloneCommit - repoDiskPath, headCommit: ${repoDiskPath}, ${headCommit}`);
+            }
 
 
             worker.send({action: 'log', info: {level: 'info', message: `repoId, repoDiskPath: ${repoId}, ${repoDiskPath}`,

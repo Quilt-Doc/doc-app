@@ -1,0 +1,23 @@
+{
+  "name": "github-app",
+  "version": "1.0.0",
+  "description": "Github App test",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@acuris/aws-es-connection": "^1.1.1",
+    "@elastic/elasticsearch": "^7.9.1",
+    "aws-sdk": "^2.702.0",
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "github-webhook-handler": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "logform": "^2.2.0",
+    "request": "^2.88.2",
+    "winston": "^3.3.3"
+  }
+}
