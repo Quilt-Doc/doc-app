@@ -28,6 +28,24 @@ const JiraSite = require("../../models/integrations/JiraSite");
 
 const constants = require("../../constants");
 
+const Pusher = require("pusher");
+
+// create pusher instance
+const {
+    PUSHER_APP_ID,
+    PUSHER_KEY,
+    PUSHER_SECRET,
+    PUSHER_CLUSTER,
+} = process.env;
+
+const pusher = new Pusher({
+    appId: PUSHER_APP_ID,
+    key: PUSHER_KEY,
+    secret: PUSHER_SECRET,
+    cluster: PUSHER_CLUSTER,
+    useTLS: true,
+});
+
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
         return true;
@@ -380,10 +398,31 @@ retrieveDomainRepositories = async (req, res) => {
 }
 */
 
+authorizeIDEClient = (ideToken, user) => {
+    console.log("ENTERED IDE AUTHORIZATION PHASE");
+
+    const { _id: userId, role } = user;
+
+    const jwtToken = createUserJWTToken(userId, role);
+
+    console.log("JWT", jwtToken);
+
+    pusher.trigger(`private-${ideToken}`, "vscode-user-authorized", {
+        jwt: jwtToken,
+        user: user,
+        isAuthorized: true,
+    });
+
+    console.log("TRIGGERED ROUTE");
+
+    return;
+};
+
 module.exports = {
     loginSuccess,
     loginFailed,
     logout,
     checkInstallation,
     jiraAuthResponse, // , retrieveDomainRepositories
+    authorizeIDEClient,
 };

@@ -191,6 +191,7 @@ router.put(
 //PUSHER
 const pusherController = require("../controllers/pusher/PusherController");
 router.post("/pusher/webhook", pusherController.handlePusherWebhook);
+router.post("/pusher/vscode/auth", pusherController.authorizeVSCode);
 
 // These routes are not usable yet.
 /*
@@ -388,7 +389,7 @@ router.get("/auth/jira", authController.jiraAuthResponse);
 
 // router.get('/auth/github', passport.authenticate("github"));
 router.get("/auth/github", function (req, res, next) {
-    const { email } = req.query;
+    const { email, ide_token } = req.query;
     let options = { session: false };
 
     var state = {};
@@ -399,8 +400,12 @@ router.get("/auth/github", function (req, res, next) {
         state.source = "localhost";
     }
 
+    console.log("IDE TOKEN", ide_token);
+
     if (email) {
         state.email = email;
+    } else if (ide_token) {
+        state.ideToken = ide_token;
     }
 
     console.log(`Final State to Pass: ${JSON.stringify(state)}`);
@@ -461,11 +466,32 @@ router.get(
             return res.redirect("/login");
         }
 
+        // IDE AUTH
+        const { state } = req.query;
+
+        try {
+            console.log("CHECKING IDE TOKEN");
+
+            const { ideToken } = JSON.parse(
+                Buffer.from(state, "base64").toString()
+            );
+
+            console.log("RECEIVED IDE TOKEN", ideToken);
+
+            if (ideToken) {
+                console.log("CALLING IDE CLIENT");
+                authController.authorizeIDEClient(ideToken, req.user);
+                return res.redirect("/login");
+            }
+        } catch (err) {
+            console.log("NOT AUTHENTICATING THROUGH IDE", err);
+        }
+
+        // IDE AUTH END
+
         var jwtToken = createUserJWTToken(req.user._id, req.user.role);
 
         res.cookie("user-jwt", jwtToken, { httpOnly: true });
-
-        const { state } = req.query;
 
         if (state === "installing") {
             return res.redirect(INSTALLED_URL);
@@ -694,21 +720,26 @@ app.post('/profile', function (req, res) {
     })
   })
 */
+//ASSOCIATION ROUTES ("TEST");
+const associationController = require("../controllers/associations/AssociationController");
 
-//INTEGRATION ROUTES
-const integrationController = require("../controllers/integrations/IntegrationController");
-router.get("/integrations/create", integrationController.createIntegration);
+//TRELLO INTEGRATION ROUTES
+const trelloIntegrationController = require("../controllers/integrations/trello/TrelloIntegrationController");
 router.get(
-    "/integrations/trello/authorize",
-    integrationController.authorizeTrello
+    "/integrations/connect/trello",
+    trelloIntegrationController.beginTrelloConnect
 );
 router.get(
-    "/integrations/trello/callback",
-    integrationController.trelloCallback
+    "/integrations/connect/trello/callback",
+    trelloIntegrationController.handleTrelloConnectCallback
 );
 
-const ticketController = require("../controllers/integrations/TicketController");
-router.post("/tickets/:workspaceId/retrieve", ticketController.retrieveTickets);
+//GOOGLE INTEGRATION ROUTES
+/*
+const googleIntegrationController = require('../controllers/integrations/GoogleIntegrationController');
+router.get('/integrations/connect/google', googleIntegrationController.beginGoogleConnect);
+router.get('/integrations/connect/google/callback', googleIntegrationController.handleGoogleConnectCallback);
+*/
 
 const jiraController = require("../controllers/integration/JiraController");
 
@@ -729,4 +760,20 @@ router.post(
     branchController.createBranch
 );
 
+router.post("/example_route", (req, res) => {
+    console.log("BODY", req.body);
+
+    const { integrationId, integrationType } = req.body;
+
+    let tickets = [
+        {
+            likelyPullRequests: [],
+            likelyIssues: [],
+            likelyCommits: [],
+            likelyBranches: [],
+        },
+    ];
+
+    return res.json({ success: true, result: tickets });
+});
 module.exports = router;

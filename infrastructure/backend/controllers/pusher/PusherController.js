@@ -1,24 +1,39 @@
 const CryptoJS = require("crypto-js");
 
 //models
-const Document = require('../../models/Document');
+const Document = require("../../models/Document");
 
 // pusher
 const Pusher = require("pusher");
 
-const Slate = require('slate');
+const Slate = require("slate");
+
 const { Node } = Slate;
 
 // create pusher instance
-const { PUSHER_SECRET } = process.env;
+const {
+    PUSHER_APP_ID,
+    PUSHER_KEY,
+    PUSHER_SECRET,
+    PUSHER_CLUSTER,
+} = process.env;
+
+const pusher = new Pusher({
+    appId: PUSHER_APP_ID,
+    key: PUSHER_KEY,
+    secret: PUSHER_SECRET,
+    cluster: PUSHER_CLUSTER,
+    useTLS: true,
+});
 
 //logger
-const logger = require('../../logging/index').logger;
-
+const logger = require("../../logging/index").logger;
 
 const handlePusherWebhook = async (req, res) => {
     const bodyString = JSON.stringify(req.body);
-    const hmac = CryptoJS.HmacSHA256(bodyString, PUSHER_SECRET).toString(CryptoJS.enc.Hex);
+    const hmac = CryptoJS.HmacSHA256(bodyString, PUSHER_SECRET).toString(
+        CryptoJS.enc.Hex
+    );
     /*
     if (hmac === req.headers['x-pusher-signature']) {
         const { events } = req.body;
@@ -63,9 +78,26 @@ const handlePusherWebhook = async (req, res) => {
         return res.status(404);
     }
     */
-   return res.status(200);
-}
+    return res.status(200);
+};
+
+const authorizeVSCode = async (req, res) => {
+    console.log("ASKING FOR PUSHER AUTHORIZATION");
+
+    const { socket_id, channel_name } = req.body;
+
+    const socketId = socket_id;
+
+    const channel = channel_name;
+
+    console.log("PUSHER VSCODE AUTH PARAMS", { socketId, channel });
+
+    const auth = pusher.authenticate(socketId, channel);
+
+    res.send(auth);
+};
 
 module.exports = {
-    handlePusherWebhook
-}
+    handlePusherWebhook,
+    authorizeVSCode,
+};
