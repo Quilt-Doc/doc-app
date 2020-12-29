@@ -6,76 +6,94 @@ if (process.env.IS_PRODUCTION) {
 
 const client = require("../../apis/api").requestGithubClient();
 
-const User = require('../../models/authentication/User');
+const User = require("../../models/authentication/User");
 
-const querystring = require('querystring');
+const querystring = require("querystring");
 
-const { createUserJWTToken } = require('../../utils/jwt');
+const { createUserJWTToken } = require("../../utils/jwt");
 
-var mongoose = require('mongoose')
+var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const axios = require('axios');
+const axios = require("axios");
 
-const logger = require('../../logging/index').logger;
+const logger = require("../../logging/index").logger;
 
-const jobs = require('../../apis/jobs');
+const jobs = require("../../apis/jobs");
 
-const fs = require('fs');
-var jwt = require('jsonwebtoken');
+const fs = require("fs");
+var jwt = require("jsonwebtoken");
 const GithubAuthProfile = require("../../models/authentication/GithubAuthProfile");
 const JiraSite = require("../../models/integrations/JiraSite");
 
-const constants = require('../../constants');
+const constants = require("../../constants");
 
+const Pusher = require("pusher");
+
+// create pusher instance
+const {
+    PUSHER_APP_ID,
+    PUSHER_KEY,
+    PUSHER_SECRET,
+    PUSHER_CLUSTER,
+} = process.env;
+
+const pusher = new Pusher({
+    appId: PUSHER_APP_ID,
+    key: PUSHER_KEY,
+    secret: PUSHER_SECRET,
+    cluster: PUSHER_CLUSTER,
+    useTLS: true,
+});
 
 checkValid = (item) => {
     if (item !== undefined && item !== null) {
-        return true
+        return true;
     }
-    return false
-}
+    return false;
+};
 // TODO: Change just to validate JWT
 loginSuccess = async (req, res) => {
-
     const authHeader = req.headers.authorization;
 
     // Get token
     var token = undefined;
     if (authHeader) {
-        token = authHeader.split(' ')[1];
-    }
-    else if (req.cookies['user-jwt']) {
-        token = req.cookies['user-jwt'];
-    }
-
-
-    else {
+        token = authHeader.split(" ")[1];
+    } else if (req.cookies["user-jwt"]) {
+        token = req.cookies["user-jwt"];
+    } else {
         return res.json({
             success: false,
             authenticated: false,
-            user: {}
-        })
+            user: {},
+        });
     }
 
-    var publicKey = fs.readFileSync('docapp-test-public.pem', 'utf8');
+    var publicKey = fs.readFileSync("docapp-test-public.pem", "utf8");
     try {
-        var decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+        var decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 
         // console.log(`Decoded JWT: ${decoded}`);
 
         var user = await User.findById(decoded.userId).lean().exec();
 
         // Check that User's Github refresh Token has not expired
-        var refreshTokenExpireTime = await GithubAuthProfile.findOne({user: decoded.userId, status: 'valid'}).select("refreshTokenExpireTime").lean().exec();
+        var refreshTokenExpireTime = await GithubAuthProfile.findOne({
+            user: decoded.userId,
+            status: "valid",
+        })
+            .select("refreshTokenExpireTime")
+            .lean()
+            .exec();
 
         // If no GithubAuthProfile found, return false
         if (!refreshTokenExpireTime) {
             return res.json({
                 success: false,
                 authenticated: false,
-                user: {}
-            })
+                user: {},
+            });
         }
 
         refreshTokenExpireTime = refreshTokenExpireTime.refreshTokenExpireTime;
@@ -86,13 +104,15 @@ loginSuccess = async (req, res) => {
             return res.json({
                 success: false,
                 authenticated: false,
-                user: {}
+                user: {},
             });
         }
 
-
-        await logger.info({source: 'backend-api', message: `User ${decoded.userId} successfully authenticated.`, function: 'loginSuccess'});
-
+        await logger.info({
+            source: "backend-api",
+            message: `User ${decoded.userId} successfully authenticated.`,
+            function: "loginSuccess",
+        });
 
         // res.clearCookie('user-jwt');
         return res.json({
@@ -100,65 +120,85 @@ loginSuccess = async (req, res) => {
             authenticated: true,
             message: "user has successfully authenticated",
             user,
-            cookies: req.cookies
+            cookies: req.cookies,
         });
-    }
-    catch(err) {
-        await logger.error({source: 'backend-api', message: err, errorDescription: `Error authenticating User`,
-                             function: 'loginSuccess'});
+    } catch (err) {
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `Error authenticating User`,
+            function: "loginSuccess",
+        });
         return res.status(403);
     }
-}
+};
 
 loginFailed = (req, res) => {
     return res.status(401).json({
         success: false,
-        message: "user failed to authenticate."
+        message: "user failed to authenticate.",
     });
-}
+};
 
 logout = (req, res) => {
-    res.clearCookie('user-jwt', { path: '/' });
-    res.json({success: true, result: true});
+    res.clearCookie("user-jwt", { path: "/" });
+    res.json({ success: true, result: true });
     // res.redirect(CLIENT_HOME_PAGE_URL);
-}
+};
 
 checkInstallation = async (req, res) => {
-
     const { userId } = req.body;
 
-    if (!checkValid(userId)) return res.json({success: false, error: `No userId provided to checkInstallation method.`});
+    if (!checkValid(userId))
+        return res.json({
+            success: false,
+            error: `No userId provided to checkInstallation method.`,
+        });
 
     var userAccessToken;
     try {
-       userAccessToken = await GithubAuthProfile.findOne({user: userId, status: 'valid'}).select("accessToken").lean().exec();
-       userAccessToken = userAccessToken.accessToken;
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                            errorDescription: `Error fetching GithubAuthProfile - userId: ${userId}`, function: 'checkInstallation'});
-        return res.json({success: false, error: err});
+        userAccessToken = await GithubAuthProfile.findOne({
+            user: userId,
+            status: "valid",
+        })
+            .select("accessToken")
+            .lean()
+            .exec();
+        userAccessToken = userAccessToken.accessToken;
+    } catch (err) {
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `Error fetching GithubAuthProfile - userId: ${userId}`,
+            function: "checkInstallation",
+        });
+        return res.json({ success: false, error: err });
     }
 
     var installationResponse;
     try {
-        installationResponse = await client.get("/user/installations",  
-            { headers: {
-                    Authorization: `token ${userAccessToken}`,
-                    Accept: 'application/vnd.github.v3+json'
-                }
-            });
+        installationResponse = await client.get("/user/installations", {
+            headers: {
+                Authorization: `token ${userAccessToken}`,
+                Accept: "application/vnd.github.v3+json",
+            },
+        });
+    } catch (err) {
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `Error fetching installation - userId: ${req.tokenPayload.userId}`,
+            function: "checkInstallation",
+        });
+        return res.json({ success: false, error: err });
     }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                            errorDescription: `Error fetching installation - userId: ${req.tokenPayload.userId}`, function: 'checkInstallation'});
-        return res.json({success: false, error: err});
-    }
-    return res.json({success: true, result: installationResponse.data.installations})
-}
+    return res.json({
+        success: true,
+        result: installationResponse.data.installations,
+    });
+};
 
 jiraAuthResponse = async (req, res) => {
-    
     const readJiraIssueScope = "read:jira-work";
 
     /*
@@ -176,19 +216,18 @@ jiraAuthResponse = async (req, res) => {
     console.log(`Code from JIRA: ${code}`);
     console.log(`State from JIRA: ${state}`);
 
-    var workspaceId = state.split('-')[0];
-    var userId = state.split('-')[1];
+    var workspaceId = state.split("-")[0];
+    var userId = state.split("-")[1];
 
     var jiraClientId = process.env.JIRA_CLIENT_ID;
     var jiraClientSecret = process.env.JIRA_CLIENT_SECRET;
     var jiraRedirectURI = process.env.JIRA_CALLBACK_URL;
 
-
     var jiraAuthClient = axios.create({
         baseURL: "https://auth.atlassian.com",
         headers: {
             "Content-Type": "application/json",
-        }
+        },
     });
 
     var jiraAccessTokenData = {
@@ -197,7 +236,7 @@ jiraAuthResponse = async (req, res) => {
         client_secret: jiraClientSecret,
         code,
         redirect_uri: jiraRedirectURI,
-    }
+    };
     /* 
         {   "grant_type": "refresh_token",
             "client_id": "YOUR_CLIENT_ID",
@@ -209,26 +248,33 @@ jiraAuthResponse = async (req, res) => {
 
     var jiraTokenResponse;
     try {
-        jiraTokenResponse = await jiraAuthClient.post("/oauth/token", jiraAccessTokenData);
-    }
-    catch (err) {
+        jiraTokenResponse = await jiraAuthClient.post(
+            "/oauth/token",
+            jiraAccessTokenData
+        );
+    } catch (err) {
         // console.log(jiraTokenResponse.data);
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Error fetching OAuth token - jiraAccessTokenData: ${JSON.stringify(jiraAccessTokenData)}`,
-                            function: 'jiraAuthResponse'});
-        return res.json({success: false, error: err});
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `Error fetching OAuth token - jiraAccessTokenData: ${JSON.stringify(
+                jiraAccessTokenData
+            )}`,
+            function: "jiraAuthResponse",
+        });
+        return res.json({ success: false, error: err });
     }
 
-    console.log(`jiraTokenResponse.data: ${JSON.stringify(jiraTokenResponse.data)}`);
-
+    console.log(
+        `jiraTokenResponse.data: ${JSON.stringify(jiraTokenResponse.data)}`
+    );
 
     var jiraAPIClient = axios.create({
         baseURL: "https://api.atlassian.com",
         headers: {
-            "Authorization": `Bearer ${jiraTokenResponse.data.access_token}`,
-            "Accept": "application/json",
-        }
+            Authorization: `Bearer ${jiraTokenResponse.data.access_token}`,
+            Accept: "application/json",
+        },
     });
 
     // Get the cloudid
@@ -241,65 +287,80 @@ jiraAuthResponse = async (req, res) => {
 
     var jiraCloudIdResponse;
     try {
-        jiraCloudIdResponse = await jiraAPIClient.get('/oauth/token/accessible-resources');
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Error fetching JIRA cloudId - jiraAccessToken: ${jiraTokenResponse.data.access_token}`,
-                            function: 'jiraAuthResponse'});
-        return res.json({success: false, error: err});
+        jiraCloudIdResponse = await jiraAPIClient.get(
+            "/oauth/token/accessible-resources"
+        );
+    } catch (err) {
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `Error fetching JIRA cloudId - jiraAccessToken: ${jiraTokenResponse.data.access_token}`,
+            function: "jiraAuthResponse",
+        });
+        return res.json({ success: false, error: err });
     }
 
     // Get all Jira Site's in cloudId list
     // Need read:jira-work permission
-    var validJiraCloudIds = jiraCloudIdResponse.data.filter(siteObj => {
+    var validJiraCloudIds = jiraCloudIdResponse.data.filter((siteObj) => {
         return siteObj.scopes.includes("read:jira-work");
     });
 
-
-
-
-    console.log(`JIRA cloudId response: ${JSON.stringify(jiraCloudIdResponse.data)}`);
+    console.log(
+        `JIRA cloudId response: ${JSON.stringify(jiraCloudIdResponse.data)}`
+    );
     console.log(`JIRA accessToken: ${jiraTokenResponse.data.access_token}`);
 
-
-    let jiraSite = new JiraSite({cloudIds: validJiraCloudIds.map(siteObj => siteObj.id),
-                                    userId,
-                                    workspace: workspaceId,
-                                    accessToken: jiraTokenResponse.data.access_token});
+    let jiraSite = new JiraSite({
+        cloudIds: validJiraCloudIds.map((siteObj) => siteObj.id),
+        userId,
+        workspace: workspaceId,
+        accessToken: jiraTokenResponse.data.access_token,
+    });
 
     // Save new JiraSite
     try {
         jiraSite = await jiraSite.save();
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
-        await logger.error({source: 'backend-api',
-                            message: err,
-                            errorDescription: `Error saving new JiraSite - cloudIds, userId, workspaceId, accessToken: ${JSON.stringify(cloudIds)}, ${userId}, ${workspaceId}, ${accessToken}`,
-                            function: "jiraAuthResponse"});
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `Error saving new JiraSite - cloudIds, userId, workspaceId, accessToken: ${JSON.stringify(
+                cloudIds
+            )}, ${userId}, ${workspaceId}, ${accessToken}`,
+            function: "jiraAuthResponse",
+        });
 
-        return res.json({success: false, error: 'error creating JiraSite'});
+        return res.json({ success: false, error: "error creating JiraSite" });
     }
 
     var runImportJiraIssuesData = {};
-    runImportJiraIssuesData['jiraSiteId'] = jiraSite._id.toString();
-    runImportJiraIssuesData['jobType'] = constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString();
+    runImportJiraIssuesData["jiraSiteId"] = jiraSite._id.toString();
+    runImportJiraIssuesData[
+        "jobType"
+    ] = constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString();
 
     try {
         await jobs.dispatchImportJiraIssuesJob(runImportJiraIssuesData);
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                        errorDescription: `Error dispatching update import Jira Issues job - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
-                        function: 'jiraAuthResponse'});
-        return res.json({success: false, error: `Error dispatching update import Jira Issues job - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`});
+    } catch (err) {
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `Error dispatching update import Jira Issues job - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
+            function: "jiraAuthResponse",
+        });
+        return res.json({
+            success: false,
+            error: `Error dispatching update import Jira Issues job - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
+        });
     }
 
-    await logger.info({source: 'backend-api',
-                        message: `Successfully began importing Jira issues - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
-                        function: 'jiraAuthResponse'});
+    await logger.info({
+        source: "backend-api",
+        message: `Successfully began importing Jira issues - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
+        function: "jiraAuthResponse",
+    });
 
     // https://api.atlassian.com/ex/jira/11223344-a1b2-3b33-c444-def123456789/rest/api/2/project
 
@@ -311,10 +372,8 @@ jiraAuthResponse = async (req, res) => {
         --data '{ "grant_type": "refresh_token", "client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_CLIENT_SECRET", "refresh_token": "YOUR_REFRESH_TOKEN" }'
     */
 
-    return res.json({success: true, result: true});
-
-}
-
+    return res.json({ success: true, result: true });
+};
 
 /*
 retrieveDomainRepositories = async (req, res) => {
@@ -339,6 +398,31 @@ retrieveDomainRepositories = async (req, res) => {
 }
 */
 
+authorizeIDEClient = (ideToken, user) => {
+    console.log("ENTERED IDE AUTHORIZATION PHASE");
+
+    const { _id: userId, role } = user;
+
+    const jwtToken = createUserJWTToken(userId, role);
+
+    console.log("JWT", jwtToken);
+
+    pusher.trigger(`private-${ideToken}`, "vscode-user-authorized", {
+        jwt: jwtToken,
+        user: user,
+        isAuthorized: true,
+    });
+
+    console.log("TRIGGERED ROUTE");
+
+    return;
+};
+
 module.exports = {
-    loginSuccess, loginFailed, logout, checkInstallation, jiraAuthResponse // , retrieveDomainRepositories
-}
+    loginSuccess,
+    loginFailed,
+    logout,
+    checkInstallation,
+    jiraAuthResponse, // , retrieveDomainRepositories
+    authorizeIDEClient,
+};
