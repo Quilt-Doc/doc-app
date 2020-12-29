@@ -47,7 +47,6 @@ let pullRequestSchema = new Schema({
     state: { type: String, enum: ['open', 'closed'], required: true },
     locked: { type: Boolean},
     title: { type: String },
-    user: { type: ObjectId, ref: 'IntegrationUser' },
     body: { type: String },
     labels: [{ type: String }],
     createdAt: { type: Date },
@@ -55,29 +54,34 @@ let pullRequestSchema = new Schema({
     closedAt: { type: Date },
     mergedAt: { type: Date },
     mergeCommitSha: { type: String },
-    assignees: [{ type: ObjectId, ref: 'IntegrationUser' }], // We ignore the assignee field since it's always a subset of the content of this field, which is an empty array when there are no assignees
-    requestedReviewers: [{ type: ObjectId, ref: 'IntegrationUser' }],
+    labels: [{ type: String }],
+
+
     headRef: {type: String, required: true},
     headLabel: {type: String, required: true},
     baseRef: {type: String, required: true},
     baseLabel: {type: String, required: true},
 
-    comments: [{ type: ObjectId, ref: 'IntegrationComment' }],
-    commits: [{ type: ObjectId, ref: 'Commit' }],
-    fileChanges: [{ type: ObjectId, ref: 'FileChange' }],
-    members: [{ type: ObjectId, ref: 'IntegrationUser' }],
-    labels: [{ type: String }],
-
     draft: { type: Boolean },
     merged: { type: Boolean },
-    mergedBy: { type: ObjectId, ref: 'IntegrationUser' },
-
     commentNum: { type: Number },
     reviewCommentNum: { type: Number },
     commitNum: { type: Number },
     additionNum: { type: Number },
     deletionNum: { type: Number },
     changedFileNum: { type: Number },
+
+
+    // KARAN TODO: Verify each of these being generated correctly
+    user: { type: ObjectId, ref: 'IntegrationUser' },
+    comments: [{ type: ObjectId, ref: 'IntegrationComment' }],
+    commits: [{ type: ObjectId, ref: 'Commit' }],
+    fileChanges: [{ type: ObjectId, ref: 'FileChange' }],
+    members: [{ type: ObjectId, ref: 'IntegrationUser' }],
+    assignees: [{ type: ObjectId, ref: 'IntegrationUser' }], // We ignore the assignee field since it's always a subset of the content of this field, which is an empty array when there are no assignees
+    requestedReviewers: [{ type: ObjectId, ref: 'IntegrationUser' }],
+    mergedBy: { type: ObjectId, ref: 'IntegrationUser' },
+
 
 
 });

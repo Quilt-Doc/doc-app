@@ -275,11 +275,20 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
         });
 
         throw Error(`Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
-
     }
 
     // Create PR/Branch objects ready for insertion
-    
+    var prObjectsToInsert = [];
+
+    foundPRList.map(prObj => {
+        prObjectsToInsert.push({
+            installationId: ,
+            repository: ,
+            pullRequestId: ,
+            number: ,
+            
+        });
+    });
 
 
     // git rev-list --all --min-parents=2 --date=iso --format=%H%n%cd%n%T%n%an%n%cn%n%ce%n%s$n%P$%n%D%n
