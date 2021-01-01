@@ -1,6 +1,8 @@
 
 const {serializeError, deserializeError} = require('serialize-error');
 
+const PullRequest = require('../../models/PullRequest');
+
 // const { fetchAppToken, requestInstallationToken } = require('../../apis/api');
 
 const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, worker) => {
@@ -87,6 +89,114 @@ const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, 
     return foundPRList;
 }
 
+
+
+const insertAllPRsFromAPI = async (foundPRList, installationId, repositoryId, worker) => {
+    var prObjectsToInsert = [];
+
+    // Insert the following basic id fields:
+    /*
+        installationId: { type: Number, required: true },
+        checks: [{ type: ObjectId, ref: "Check" }],
+        repository: { type: ObjectId, ref: "Repository", required: true },
+
+        pullRequestId: { type: Number, required: true },
+        number: { type: Number, required: true },
+
+    */
+
+    // Insert the following non Mongo Model fields
+    /*
+        htmlUrl: { type: String },
+        issueUrl: { type: String },
+        state: { type: String, enum: ["open", "closed"], required: true },
+        locked: { type: Boolean },
+        title: { type: String },
+        body: { type: String },
+        labels: [{ type: String }],
+        createdAt: { type: Date },
+        updatedAt: { type: Date },
+        closedAt: { type: Date },
+        mergedAt: { type: Date },
+        mergeCommitSha: { type: String },
+        labels: [{ type: String }],
+
+        headRef: { type: String, required: true },
+        headLabel: { type: String, required: true },
+        baseRef: { type: String, required: true },
+        baseLabel: { type: String, required: true },
+
+        draft: { type: Boolean },
+        merged: { type: Boolean },
+        commentNum: { type: Number },
+        reviewCommentNum: { type: Number },
+        commitNum: { type: Number },
+        additionNum: { type: Number },
+        deletionNum: { type: Number },
+        changedFileNum: { type: Number },
+    */
+
+    foundPRList.map(prObj => {
+
+        var labelList = prObj.labels.map(labelObj => labelObj.name);
+
+        prObjectsToInsert.push({
+            installationId: installationId,
+            repository: repositoryId,
+
+            pullRequestId: prObj.id,
+            number: prObj.number,
+
+            htmlUrl: prObj.html_url,
+            issueUrl: prObj.issue_url,
+            state: prObj.state,
+            locked: prObj.locked,
+            title: prObj.title,
+            body: prObj.body,
+            labels: prObj.labels,
+            createdAt: prObj.created_at,
+            updatedAt: prObj.updated_at,
+            closedAt: prObj.closed_at,
+            mergedAt: prObj.merged_at,
+            mergeCommitSha: prObj.merge_commit_sha,
+            labels: labelList,
+
+            headRef: prObj.head.ref,
+            headLabel: prObj.head.label,
+            baseRef: prObj.base.ref,
+            baseLabel: prObj.base.label,
+
+            draft: prObj.draft,
+            merged: prObj.merged,
+            commentNum: prObj.comments,
+            reviewCommentNum: prObj.review_comments,
+            commitNum: prObj.commits,
+            additionNum: prObj.additions,
+            deletionNum: prObj.deletions,
+            changedFileNum: prObj.changed_files,
+            
+        });
+    });
+
+    var bulkInsertResult;
+    try {
+        bulkInsertResult = await PullRequest.insertMany(prObjectsToInsert);
+    }
+    catch (err) {
+
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    source: 'worker-instance',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Error bulk inserting PullRequests - prObjectsToInsert.length: ${prObjectsToInsert.length}`,
+                                                    function: 'insertAllPRsFromAPI'}});
+
+        throw new Error(`Error bulk inserting PullRequests - prObjectsToInsert.length: ${prObjectsToInsert.length}`);
+    }
+
+    return prObjectsToInsert;
+}
+
 module.exports = {
-    fetchAllRepoPRsAPI
+    fetchAllRepoPRsAPI,
+    insertAllPRsFromAPI,
 }

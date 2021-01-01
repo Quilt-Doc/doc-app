@@ -6,6 +6,13 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
+const logger = require('../../../logging/index').logger;
+
+
+const jobs = require('../../../apis/jobs');
+const jobConstants = require('../../../constants/index').jobs;
+
+
 const TrelloIntegration = require("../../../models/integrations_fs/trello/TrelloIntegration");
 const TrelloConnectProfile = require("../../../models/integrations_fs/trello/TrelloConnectProfile");
 
@@ -56,7 +63,7 @@ beginTrelloConnect = async (req, res) => {
   const userId = user_id;
   const workspaceId = workspace_id;
 
-  oauth.getOAuthRequestToken((error, token, tokenSecret, results) => {
+  await oauth.getOAuthRequestToken( async (error, token, tokenSecret, results) => {
     if (error) {
       console.log("ERROR", error);
     }
@@ -69,7 +76,7 @@ beginTrelloConnect = async (req, res) => {
     });
 
     try {
-      trelloConnectProfile = trelloConnectProfile.save();
+      trelloConnectProfile = await trelloConnectProfile.save();
     } catch (err) {
       console.log("ERROR", err);
     }
@@ -165,6 +172,25 @@ handleTrelloConnectCallback = async (req, res) => {
         (board) => board.name === "Quilt Product"
       )[0];
 
+      // trelloIntegrationId, requiredBoardIdList, relevantLists
+      var runTrelloScrapeData = {};
+      runTrelloScrapeData['trelloIntegrationId'] = trelloIntegration._id.toString();
+      runTrelloScrapeData['requiredBoardIdList'] = [quiltProductBoard.id];
+      runTrelloScrapeData['relevantLists'] = [{type: "start", name: "In-Progress"}, {type: "end", name: "Done"}];
+      runTrelloScrapeData['jobType'] = jobConstants.JOB_SCRAPE_TRELLO;
+  
+      try {
+        await jobs.dispatchTrelloScrapeJob(runTrelloScrapeData);
+      }
+      catch (err) {
+        await logger.error({source: 'backend-api',
+                              message: err,
+                              errorDescription: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(requiredBoardIdList)}, ${JSON.stringify(relevantLists)}`,
+                              function: 'handleTrelloConnectCallback'});
+
+        return res.json({success: false, error: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(requiredBoardIdList)}, ${JSON.stringify(relevantLists)}`});
+      }
+
       /*
             await bulkScrapeTrello(trelloIntegration, [quiltProductBoard.id], 
                 [{type: "start", name: "In-Progress"}, {type: "end", name: "Done"}]);
@@ -177,7 +203,7 @@ handleTrelloConnectCallback = async (req, res) => {
 };
 
 // do we want to save the actual boards we care about somewhere?
-
+/*
 bulkScrapeTrello = async (
   trelloIntegration,
   requiredBoardIds,
@@ -211,7 +237,7 @@ bulkScrapeTrello = async (
 
   const { accessToken } = trelloConnectProfile;
 
-  //TODO: If population > 1000, need to handle further data extraction (since, until)
+  // TODO: If population > 1000, need to handle further data extraction (since, until)
   // want all correct actions of the board
   // want all lists of the board
   // want all cards of the board
@@ -529,7 +555,7 @@ bulkScrapeTrello = async (
     }
   }
 };
-
+*/
 module.exports = {
   beginTrelloConnect,
   handleTrelloConnectCallback,

@@ -46,17 +46,8 @@ const pusher = new Pusher({
     useTLS: true,
 });
 
-<<<<<<< HEAD
 const { checkValid } = require('../../utils/utils');
 
-=======
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true;
-    }
-    return false;
-};
->>>>>>> master
 // TODO: Change just to validate JWT
 loginSuccess = async (req, res) => {
     const authHeader = req.headers.authorization;

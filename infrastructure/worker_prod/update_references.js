@@ -359,6 +359,7 @@ const runUpdateProcedure = async () => {
 
 
             // git log -M --numstat --name-status --pretty=%H
+            // git show --name-only $(git rev-list HEAD -- PATH)
             /*
             const child = execFile('git', ['log', '-M', '--numstat', '--name-status', '--pretty=%H',
             repoCommit + '..' + headCommit],

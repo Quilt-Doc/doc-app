@@ -183,7 +183,7 @@ const scanRepositories = async () => {
 
 
 
-
+            
             var repositoryCommitsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
                 try {
                     await scrapeGithubRepoCommitsMixed(repositoryObj.installationId,

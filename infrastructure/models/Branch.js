@@ -21,17 +21,19 @@ const { ObjectId } = Schema.Types;
 
 let branchSchema = new Schema({
     repository: { type: ObjectId, ref: 'Repository' },
+    installationId: { type: Number, required: true },
 
     ref: { type: String, required: true },
     branchLabel: { type: String },
+
     lastCommit: { type: ObjectId, ref: 'Commit' },
     commitUser: { type: ObjectId, ref: 'IntegrationUser' },
+
+
     members: { type: ObjectId, ref: 'IntegrationUser' },
     commits: [{ type: ObjectId, ref: 'Commit' }],
 
-
     masterBranch: { type: String, required: true },
-    installationId: { type: Number, required: true },
 });
 
 let Branch = mongoose.model("Branch", branchSchema);

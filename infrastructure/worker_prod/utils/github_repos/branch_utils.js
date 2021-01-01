@@ -88,6 +88,44 @@ const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullN
     return foundBranchList;
 }
 
+
+const insertAllBranchesFromAPI = async (foundBranchesList, insertedPRList, installationId, repositoryId, worker) => {
+
+    // Use ref as opposed to label for deduplication
+
+    var branchObjectsToInsert;
+
+    // Create Objects from foundBranchesList
+
+    /*
+        repository: { type: ObjectId, ref: 'Repository' },
+        installationId: { type: Number, required: true },
+
+        ref: { type: String, required: true },
+        branchLabel: { type: String },
+        lastCommit: { type: ObjectId, ref: 'Commit' },
+        commitUser: { type: ObjectId, ref: 'IntegrationUser' },
+    */
+
+    foundBranchesList.map(branchObj => {
+        branchObjectsToInsert.push({
+            repository: repositoryId,
+            installationId: installationId,
+            ref: branchObj.name,
+            // branchLabel: , doesn't exist here
+            lastCommit: branchObj.commit.sha,
+            // commitUser: ,
+        });
+    });
+
+
+
+
+
+}
+
+
 module.exports = {
-    fetchAllRepoBranchesAPI
+    fetchAllRepoBranchesAPI,
+    insertAllBranchesFromAPI
 }

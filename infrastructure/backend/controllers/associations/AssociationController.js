@@ -2,7 +2,7 @@
 const PullRequest = require("../../models/PullRequest");
 const Branch = require("../../models/Branch");
 const Commit = require("../../models/Commit");
-const GithubIssue = require("../../models/integrations/GithubIssue");
+const GithubIssue = require("../../models/integrations_fs/github/GithubIssue");
 
 //association
 const Association = require("../../models/associations/Association");
