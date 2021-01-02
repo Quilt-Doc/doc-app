@@ -1,6 +1,9 @@
 
 const {serializeError, deserializeError} = require('serialize-error');
 
+const mongoose = require("mongoose")
+const { ObjectId } = mongoose.Types;
+
 const PullRequest = require('../../models/PullRequest');
 
 // const { fetchAppToken, requestInstallationToken } = require('../../apis/api');
@@ -91,7 +94,7 @@ const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, 
 
 
 
-const insertAllPRsFromAPI = async (foundPRList, installationId, repositoryId, worker) => {
+const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installationId, repositoryId, worker) => {
     var prObjectsToInsert = [];
 
     // Insert the following basic id fields:
@@ -136,13 +139,29 @@ const insertAllPRsFromAPI = async (foundPRList, installationId, repositoryId, wo
         changedFileNum: { type: Number },
     */
 
+
+    // Attach the correct Branch Model ObjectId, if applicable
+
     foundPRList.map(prObj => {
 
         var labelList = prObj.labels.map(labelObj => labelObj.name);
 
+        // Get all Branch Objects from branchToPRMappingList, who have labels in branchLabelList
+        var branchIdList = [];
+        var i = 0;
+        for (i = 0; i < branchToPRMappingList.length; i++) {
+            if (prObj.branchLabelList.includes(branchToPRMappingList[i].label)) {
+                branchIdList.push(branchToPRMappingList[i]._id.toString());
+            }
+        }
+
+        branchIdList = branchIdList.map(id => ObjectId(id.toString()));
+
         prObjectsToInsert.push({
             installationId: installationId,
             repository: repositoryId,
+            branchLabelList: prObj.branchLabelList,
+            branches: branchIdList,
 
             pullRequestId: prObj.id,
             number: prObj.number,
@@ -179,8 +198,10 @@ const insertAllPRsFromAPI = async (foundPRList, installationId, repositoryId, wo
     });
 
     var bulkInsertResult;
+    var newPRIds;
     try {
-        bulkInsertResult = await PullRequest.insertMany(prObjectsToInsert);
+        bulkInsertResult = await PullRequest.insertMany(prObjectsToInsert, { rawResult: true });
+        newPRIds = Object.values(bulkInsertResult.insertedIds).map(id => id.toString());
     }
     catch (err) {
 
@@ -193,10 +214,26 @@ const insertAllPRsFromAPI = async (foundPRList, installationId, repositoryId, wo
         throw new Error(`Error bulk inserting PullRequests - prObjectsToInsert.length: ${prObjectsToInsert.length}`);
     }
 
-    return prObjectsToInsert;
+
+    // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
+    var createdPRObjects;
+    try {
+        createdPRObjects = await PullRequest.find({_id: { $in: newPRIds.map(id => ObjectId(id.toString())) } }, '_id pullRequestId branches').lean().exec();
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Branch find failed - newBranchIds: ${JSON.stringify(newBranchIds)}`,
+                                                    source: 'worker-instance',
+                                                    function: 'insertBranchesFromAPI'}});
+
+        throw new Error(`Branch find failed - newBranchIds: ${JSON.stringify(newBranchIds)}`);
+    }
+
+    return createdPRObjects;
 }
 
 module.exports = {
     fetchAllRepoPRsAPI,
-    insertAllPRsFromAPI,
+    insertPRsFromAPI,
 }

@@ -1,8 +1,8 @@
-const updateReferences = require('./update_references');
-const scanRepositories = require('./scan_repositories');
-const updateChecks = require('./update_checks');
-const scrapeTrello = require('./trello_scrape');
-const importJiraIssues = require('./import_jira_issues');
+const updateReferences = require('./jobs/update_references');
+const scanRepositories = require('./jobs/scan_repositories');
+const updateChecks = require('./jobs/update_checks');
+const scrapeTrello = require('./jobs/trello_scrape');
+const importJiraIssues = require('./jobs/import_jira_issues');
 
 const {serializeError, deserializeError} = require('serialize-error');
 

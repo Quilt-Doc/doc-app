@@ -1,15 +1,15 @@
 const fs = require('fs');
 
-const apis = require('./apis/api');
+const apis = require('../apis/api');
 
 
 require('dotenv').config();
 
-const constants = require('./constants/index');
+const constants = require('../constants/index');
 
-const JiraSite = require('./models/integrations_fs/jira/JiraSite');
-const JiraProject = require('./models/integrations_fs/jira/JiraProject');
-const IntegrationTicket = require('./models/integrations_fs/integration_objects/IntegrationTicket');
+const JiraSite = require('../models/integrations_fs/jira/JiraSite');
+const JiraProject = require('../models/integrations_fs/jira/JiraProject');
+const IntegrationTicket = require('../models/integrations_fs/integration_objects/IntegrationTicket');
 
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
@@ -69,7 +69,7 @@ const importJiraIssues = async () => {
         }
         if (idx == 0) {
             await worker.send({action: 'log', info: {level: 'info', 
-                    message: `projectListResponse.data: ${JSON.stringify(projectListResponse.data)}`,
+                    message: `projectListResponse.data.length: ${projectListResponse.data.length}`,
                     source: 'worker-instance',
                     function:'importJiraIssues', }});
         }
@@ -97,7 +97,7 @@ const importJiraIssues = async () => {
     var invalidResults = projectListResults.filter(resultObj => resultObj.value && resultObj.value.error);
 
     await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `projectListResults validResults: ${JSON.stringify(validResults)}`,
+                                                message: `projectListResults validResults.length: ${validResults.length}`,
                                                 source: 'worker-instance',
                                                 function:'importJiraIssues'}});
 
@@ -235,7 +235,7 @@ const importJiraIssues = async () => {
     var issueInvalidResults = issueListResults.filter(resultObj => resultObj.value && resultObj.value.error);
 
     await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `issueListResults issueValidResults: ${JSON.stringify(issueValidResults)}`,
+                                                message: `issueListResults issueValidResults.length: ${issueValidResults.length}`,
                                                 source: 'worker-instance',
                                                 function:'importJiraIssues'}});
 
@@ -244,7 +244,7 @@ const importJiraIssues = async () => {
             return {    source: 'jira',
                         workspace: ObjectId(workspaceId.toString()),
                         jiraSiteId: issueObj.jiraSiteId,
-                        jiraTicketId: issueObj.id,
+                        jiraIssueId: issueObj.id,
                         jiraSummary: issueObj.summary,
                         jiraProjectId: promiseObj.value.projectId
                     }
@@ -254,10 +254,12 @@ const importJiraIssues = async () => {
 
     jiraTicketList = jiraTicketList.flat();
 
-    await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `jiraTicketList: ${JSON.stringify(jiraTicketList)}`,
-                                                source: 'worker-instance',
-                                                function:'importJiraIssues'}});
+    if (jiraTicketList.length > 0) {
+        await worker.send({action: 'log', info: {level: 'info', 
+                                                    message: `jiraTicketList[0]: ${JSON.stringify(jiraTicketList[0])}`,
+                                                    source: 'worker-instance',
+                                                    function:'importJiraIssues'}});
+    }
 
 
     var bulkInsertResult;

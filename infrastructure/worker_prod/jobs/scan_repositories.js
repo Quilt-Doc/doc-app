@@ -1,25 +1,25 @@
 const fs = require('fs');
 
-const apis = require('./apis/api');
+const apis = require('../apis/api');
 
 
 require('dotenv').config();
 
-const constants = require('./constants/index');
+const constants = require('../constants/index');
 
-const Workspace = require('./models/Workspace');
-const Repository = require('./models/Repository');
-const Reference = require('./models/Reference');
+const Workspace = require('../models/Workspace');
+const Repository = require('../models/Repository');
+const Reference = require('../models/Reference');
 
 
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
-const { filterVendorFiles } = require('./utils/validate_utils');
+const { filterVendorFiles } = require('../utils/validate_utils');
 
-const { scrapeGithubRepoCommitsAPI, scrapeGithubRepoCommitsMixed } = require('./utils/commit_scrape');
-const { scrapeGithubRepoProjects } = require('./utils/integrations/github_project_utils');
-const { scrapeGithubRepoIssues } = require('./utils/integrations/github_issue_utils');
+const { scrapeGithubRepoCommitsAPI, scrapeGithubRepoCommitsMixed } = require('../utils/commit_scrape');
+const { scrapeGithubRepoProjects } = require('../utils/integrations/github_project_utils');
+const { scrapeGithubRepoIssues } = require('../utils/integrations/github_issue_utils');
 
 
 const {serializeError, deserializeError} = require('serialize-error');

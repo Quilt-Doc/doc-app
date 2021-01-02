@@ -2,8 +2,8 @@
 const axios = require("axios");
 const _ = require("lodash");
 
-const Workspace = require('./models/Workspace');
-const Repository = require("./models/Repository");
+const Workspace = require('../models/Workspace');
+const Repository = require("../models/Repository");
 
 
 const mongoose = require("mongoose");
@@ -12,16 +12,16 @@ const { ObjectId } = mongoose.Types;
 
 const {serializeError, deserializeError} = require('serialize-error');
 
-const IntegrationAttachment = require("./models/integrations_fs/integration_objects/IntegrationAttachment");
-const IntegrationTicket = require('./models/integrations_fs/integration_objects/IntegrationTicket');
-const IntegrationUser = require("./models/integrations_fs/integration_objects/IntegrationUser");
-const IntegrationColumn = require("./models/integrations_fs/integration_objects/IntegrationColumn");
-const IntegrationBoard = require("./models/integrations_fs/integration_objects/IntegrationBoard");
-const IntegrationEvent = require("./models/integrations_fs/integration_objects/IntegrationEvent");
+const IntegrationAttachment = require("../models/integrations_fs/integration_objects/IntegrationAttachment");
+const IntegrationTicket = require('../models/integrations_fs/integration_objects/IntegrationTicket');
+const IntegrationUser = require("../models/integrations_fs/integration_objects/IntegrationUser");
+const IntegrationColumn = require("../models/integrations_fs/integration_objects/IntegrationColumn");
+const IntegrationBoard = require("../models/integrations_fs/integration_objects/IntegrationBoard");
+const IntegrationEvent = require("../models/integrations_fs/integration_objects/IntegrationEvent");
 
 
-const TrelloIntegration = require("./models/integrations_fs/trello/TrelloIntegration");
-const TrelloConnectProfile = require("./models/integrations_fs/trello/TrelloConnectProfile");
+const TrelloIntegration = require("../models/integrations_fs/trello/TrelloIntegration");
+const TrelloConnectProfile = require("../models/integrations_fs/trello/TrelloConnectProfile");
 
 
 

@@ -23,21 +23,21 @@ Possible status letters are:
 
 const fs = require('fs');
 
-const api = require('./apis/api').requestBackendClient();
+const api = require('../apis/api').requestBackendClient();
 
 const fs_promises = require('fs').promises;
 
-const { findNewSnippetRegion } = require('./snippet_validator');
+const { findNewSnippetRegion } = require('../snippet_validator');
 
-const tokenUtils = require('./utils/token_utils');
+const tokenUtils = require('../utils/token_utils');
 
 require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
-const constants = require('./constants/index');
+const constants = require('../constants/index');
 
-const Snippet = require('./models/Snippet');
-const Reference = require('./models/Reference');
+const Snippet = require('../models/Snippet');
+const Reference = require('../models/Reference');
 
 const mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;

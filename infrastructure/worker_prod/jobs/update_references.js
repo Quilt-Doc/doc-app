@@ -3,9 +3,9 @@ const fs = require('fs');
 const fs_promises = require('fs').promises;
 
 const { filterVendorFiles, parseCommitObjects,
-        parseGithubFileChangeList, getFileChangeList } = require('./utils/validate_utils');
+        parseGithubFileChangeList, getFileChangeList } = require('../utils/validate_utils');
 
-const { cloneInstallationRepo, ensureRepoCloneCommit } = require('./utils/github_repos/cli_utils');
+const { cloneInstallationRepo, ensureRepoCloneCommit } = require('../utils/github_repos/cli_utils');
 
 const { runSnippetValidation } = require('./update_snippets');
 
@@ -17,23 +17,23 @@ const _ = require('lodash');
 require('dotenv').config();
 const { exec, execFile, spawnSync } = require('child_process');
 
-const constants = require('./constants/index');
+const constants = require('../constants/index');
 
-const apis = require('./apis/api');
+const apis = require('../apis/api');
 
 
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
-const tokenUtils = require('./utils/token_utils');
+const tokenUtils = require('../utils/token_utils');
 
-const Reference = require('./models/Reference');
-const Document = require('./models/Document');
-const Repository = require('./models/Repository');
-const UserStats = require('./models/reporting/UserStats');
-const Workspace = require('./models/Workspace');
+const Reference = require('../models/Reference');
+const Document = require('../models/Document');
+const Repository = require('../models/Repository');
+const UserStats = require('../models/reporting/UserStats');
+const Workspace = require('../models/Workspace');
 
-const breakAttachedDocuments = require('./utils/document_utils').breakAttachedDocuments;
+const breakAttachedDocuments = require('../utils/document_utils').breakAttachedDocuments;
 
 
 const {serializeError, deserializeError} = require('serialize-error');

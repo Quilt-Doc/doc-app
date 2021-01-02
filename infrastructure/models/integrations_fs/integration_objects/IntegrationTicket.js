@@ -4,6 +4,7 @@ const mongoose = require.main.require("mongoose")
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
+
 const integrationTicketSchema = new Schema({
 
     repositories: [{type: ObjectId, ref: 'Repository'}],
@@ -57,8 +58,10 @@ const integrationTicketSchema = new Schema({
     // Jira specific fields
     jiraSiteId: {type: ObjectId, ref: 'JiraSite'},
     jiraProjectId: {type: ObjectId, ref: 'JiraProject'},
-    jiraSummary: {type: String},
-    jiraTicketId: {type: String},
+    jiraSummary: { type: String },
+    jiraIssueId: { type: String },
+    jiraIssueKey: { type: String },
+    jiraIssueSummary: { type: String },
 
 });
 

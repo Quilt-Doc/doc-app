@@ -24,12 +24,15 @@ let branchSchema = new Schema({
     installationId: { type: Number, required: true },
 
     ref: { type: String, required: true },
-    branchLabel: { type: String },
+    label: { type: String },
+
+    pullRequestObjIdList: [{ type: String }],
+    pullRequests: [{type: ObjectId, ref: 'PullRequest'}],
 
     lastCommit: { type: String },// { type: ObjectId, ref: 'Commit' },
+
+
     commitUser: { type: ObjectId, ref: 'IntegrationUser' },
-
-
     members: { type: ObjectId, ref: 'IntegrationUser' },
     commits: [{ type: ObjectId, ref: 'Commit' }],
 

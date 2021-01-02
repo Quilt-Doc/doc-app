@@ -1,19 +1,19 @@
 
 require('dotenv').config();
 
-const constants = require('./constants/index');
+const constants = require('../constants/index');
 
-const apis = require('./apis/api');
+const apis = require('../apis/api');
 
-const Repository = require('./models/Repository');
-const Check = require('./models/Check');
+const Repository = require('../models/Repository');
+const Check = require('../models/Check');
 
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
-const tokenUtils = require('./utils/token_utils');
+const tokenUtils = require('../utils/token_utils');
 
-const checkUtils = require('./utils/check_utils');
+const checkUtils = require('../utils/check_utils');
 
 const _ = require('underscore');
 
