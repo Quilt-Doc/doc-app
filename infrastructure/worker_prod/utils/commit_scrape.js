@@ -11,6 +11,8 @@ const queryString = require('query-string');
 
 const { fetchAllRepoBranchesAPI, insertAllBranchesFromAPI } = require('./github_repos/branch_utils');
 const { fetchAllRepoPRsAPI, insertAllPRsFromAPI } = require('./github_repos/pr_utils');
+const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github_repos/commit_utils');
+
 const { at } = require("lodash");
 
 const { cloneInstallationRepo } = require('./github_repos/cli_utils');
@@ -264,7 +266,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
     var repoDiskPath;
 
     try {
-        repoDiskPath = await cloneInstallationRepo(installationId, process.env.cloneUrl, false, '', worker);
+        repoDiskPath = await cloneInstallationRepo(installationId, repositoryObj.cloneUrl, false, '', worker);
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error',
@@ -276,6 +278,22 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
         throw Error(`Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
     }
+
+
+    var foundCommitList;
+    try {
+        foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath, worker);
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Error fetching all repo commits - installationId, repositoryId, repoDiskPath: ${installationId}, ${repositoryObj._id.toString()}, ${repoDiskPath}`,
+                                                    source: 'worker-instance',
+                                                    function: 'scrapeGithubRepoCommitsMixed'}
+                            });
+        throw Error(`Error fetching all repo commits - installationId, repositoryId, repoDiskPath: ${installationId}, ${repositoryObj._id.toString()}, ${repoDiskPath}`);
+    }
+    
 
     // Create PR/Branch objects ready for insertion
 
@@ -308,6 +326,21 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
         });
 
         throw Error(`Error inserting Branches from API - foundBranchList.length, installationId, repositoryId: ${foundBranchList.length}, ${installationId}, ${repositoryId}`);
+    }
+
+    var insertedCommitsCLI;
+    try {
+        insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId, worker);
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Error inserting Commits from CLI - foundCommitList.length, installationId, repositoryId: ${foundBrafoundCommitListnchList.length}, ${installationId}, ${repositoryId}`,
+                                                    source: 'worker-instance',
+                                                    function: 'scrapeGithubRepoCommitsMixed'}
+        });
+
+        throw Error(`Error inserting Branches from API - foundCommitList.length, installationId, repositoryId: ${foundCommitList.length}, ${installationId}, ${repositoryId}`);
     }
 
 

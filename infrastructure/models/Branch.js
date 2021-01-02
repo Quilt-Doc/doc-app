@@ -26,14 +26,14 @@ let branchSchema = new Schema({
     ref: { type: String, required: true },
     branchLabel: { type: String },
 
-    lastCommit: { type: ObjectId, ref: 'Commit' },
+    lastCommit: { type: String },// { type: ObjectId, ref: 'Commit' },
     commitUser: { type: ObjectId, ref: 'IntegrationUser' },
 
 
     members: { type: ObjectId, ref: 'IntegrationUser' },
     commits: [{ type: ObjectId, ref: 'Commit' }],
 
-    masterBranch: { type: String, required: true },
+    masterBranch: { type: String},
 });
 
 let Branch = mongoose.model("Branch", branchSchema);

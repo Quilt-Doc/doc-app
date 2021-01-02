@@ -138,6 +138,71 @@ const scanRepositories = async () => {
 
 
 
+
+
+            // Get Repository objects from github for all unscanned Repositories
+            var repositoryListObjects;
+            try {
+                urlList = unscannedRepositories.map(repositoryObj => {
+                    return {url: `/repos/${repositoryObj.fullName}`, repositoryId: repositoryObj._id.toString()};
+                });
+                // fetch the correct installationClient by getting relevant installationId from the repositoryId
+                var requestPromiseList = urlList.map( async (urlObj) => {
+                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
+                    return await installationClientList[currentInstallationId].get(urlObj.url);
+                });
+
+                repositoryListObjects = await Promise.all(requestPromiseList);
+            }
+            catch (err) {
+                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
+                                                            errorDescription: `Error getting repository objects urlList: ${JSON.stringify(urlList)}`,
+                                                            function: 'scanRepositories'}});
+
+                transactionAborted = true;
+                transactionError.message = `Error getting repository objects urlList: ${JSON.stringify(urlList)}`;
+
+                throw new Error(`Error getting repository objects urlList: ${JSON.stringify(urlList)}`);
+            }
+
+            // Bulk update 'cloneUrl', 'htmlUrl', and 'defaultBranch' fields
+            // Update our local list of unscannedRepositories to include the default_branch at the same time
+            const bulkFieldUpdateOps = repositoryListObjects.map((repositoryListObjectResponse, idx) => {
+                unscannedRepositories[idx].defaultBranch = repositoryListObjectResponse.data.default_branch
+                unscannedRepositories[idx].cloneUrl = repositoryListObjectResponse.data.clone_url;
+                return {
+                    updateOne: {
+                            filter: { _id: unscannedRepositories[idx]._id },
+                            // Where field is the field you want to update
+                            update: { $set: { htmlUrl: repositoryListObjectResponse.data.html_url,
+                                                cloneUrl: repositoryListObjectResponse.data.clone_url,
+                                                defaultBranch:  repositoryListObjectResponse.data.default_branch} },
+                            upsert: false
+                    }
+                }
+            });
+
+            if (bulkFieldUpdateOps.length > 0) {
+                try {
+                    const bulkResult = await Repository.collection.bulkWrite(bulkFieldUpdateOps, { session });
+                    await worker.send({action: 'log', info: {level: 'info', message: `bulk Repository 'html_url', 'clone_url', 'default_branch' update results: ${JSON.stringify(bulkResult)}`,
+                                                        source: 'worker-instance', function: 'scanRepositories'}});
+                }
+                catch(err) {
+                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
+                                                                errorDescription: `Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
+                                                                source: 'worker-instance', function: 'scanRepositories'}});
+
+                    transactionAborted = true;
+                    transactionError.message = `Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`;
+                                                    
+                    throw new Error(`Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`);
+                }
+            }
+
+
+
+
             // Import Github Projects for all Repositories in Workspace
 
             // unscannedRepositories
@@ -176,13 +241,6 @@ const scanRepositories = async () => {
             }
 
 
-
-
-
-
-
-
-
             
             var repositoryCommitsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
                 try {
@@ -213,10 +271,6 @@ const scanRepositories = async () => {
                                                             function: 'scanRepositories'}});
                 throw err;
             }
-
-
-
-
 
 
 
@@ -254,64 +308,26 @@ const scanRepositories = async () => {
 
 
 
-            // Get Repository objects from github for all unscanned Repositories
-            var repositoryListObjects;
-            try {
-                urlList = unscannedRepositories.map(repositoryObj => {
-                    return {url: `/repos/${repositoryObj.fullName}`, repositoryId: repositoryObj._id.toString()};
-                });
-                // fetch the correct installationClient by getting relevant installationId from the repositoryId
-                var requestPromiseList = urlList.map( async (urlObj) => {
-                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
-                    return await installationClientList[currentInstallationId].get(urlObj.url);
-                });
 
-                repositoryListObjects = await Promise.all(requestPromiseList);
-            }
-            catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error getting repository objects urlList: ${JSON.stringify(urlList)}`,
-                                                            function: 'scanRepositories'}});
 
-                transactionAborted = true;
-                transactionError.message = `Error getting repository objects urlList: ${JSON.stringify(urlList)}`;
 
-                throw new Error(`Error getting repository objects urlList: ${JSON.stringify(urlList)}`);
-            }
 
-            // Bulk update 'cloneUrl', 'htmlUrl', and 'defaultBranch' fields
-            // Update our local list of unscannedRepositories to include the default_branch at the same time
-            const bulkFieldUpdateOps = repositoryListObjects.map((repositoryListObjectResponse, idx) => {
-                unscannedRepositories[idx].defaultBranch = repositoryListObjectResponse.data.default_branch
-                return {
-                    updateOne: {
-                            filter: { _id: unscannedRepositories[idx]._id },
-                            // Where field is the field you want to update
-                            update: { $set: { htmlUrl: repositoryListObjectResponse.data.html_url,
-                                                cloneUrl: repositoryListObjectResponse.data.clone_url,
-                                                defaultBranch:  repositoryListObjectResponse.data.default_branch} },
-                            upsert: false
-                    }
-                }
-            });
 
-            if (bulkFieldUpdateOps.length > 0) {
-                try {
-                    const bulkResult = await Repository.collection.bulkWrite(bulkFieldUpdateOps, { session });
-                    await worker.send({action: 'log', info: {level: 'info', message: `bulk Repository 'html_url', 'clone_url', 'default_branch' update results: ${JSON.stringify(bulkResult)}`,
-                                                        source: 'worker-instance', function: 'scanRepositories'}});
-                }
-                catch(err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                                errorDescription: `Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
-                                                                source: 'worker-instance', function: 'scanRepositories'}});
 
-                    transactionAborted = true;
-                    transactionError.message = `Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`;
-                                                    
-                    throw new Error(`Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`);
-                }
-            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
             // Get Repository commits for all unscanned Repositories

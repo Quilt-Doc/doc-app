@@ -1,6 +1,9 @@
 
 const {serializeError, deserializeError} = require('serialize-error');
 
+const Branch = require('../../models/Branch');
+
+
 
 const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullName, worker) => {
 
@@ -93,7 +96,7 @@ const insertAllBranchesFromAPI = async (foundBranchesList, insertedPRList, insta
 
     // Use ref as opposed to label for deduplication
 
-    var branchObjectsToInsert;
+    var branchObjectsToInsert = [];
 
     // Create Objects from foundBranchesList
 
@@ -118,9 +121,22 @@ const insertAllBranchesFromAPI = async (foundBranchesList, insertedPRList, insta
         });
     });
 
+    var bulkInsertResult;
+    try {
+        bulkInsertResult = await Branch.insertMany(branchObjectsToInsert);
+    }
+    catch (err) {
 
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    source: 'worker-instance',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Error bulk inserting Branches - branchObjectsToInsert.length: ${branchObjectsToInsert.length}`,
+                                                    function: 'insertAllBranchesFromAPI'}});
 
+        throw new Error(`Error bulk inserting Branches - branchObjectsToInsert.length: ${branchObjectsToInsert.length}`);
+    }
 
+    return branchObjectsToInsert;
 
 }
 

@@ -29,7 +29,8 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
 
 
 
-    var cloneUrl = "https://x-access-token:" + installToken  + "@" + cloneUrlRaw.replace("https://", "");
+    var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + cloneUrlRaw.replace("https://", "");
+
 
     var optionsList = [];
 
@@ -43,6 +44,11 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
 
     optionsList.push(cloneUrl);
     optionsList.push(repoDiskPath);
+
+    console.log(`cloneUrlRaw: ${cloneUrlRaw}`);
+    console.log(`cloneUrl: ${cloneUrl}`);
+    console.log(`repoDiskPath: ${repoDiskPath}`);
+    console.log(`optionsList: ${JSON.stringify(optionsList)}`);
 
 
     try {
