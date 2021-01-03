@@ -4,8 +4,8 @@ const { ObjectId } = mongoose.Types;
 
 const {serializeError, deserializeError} = require('serialize-error');
 
-const GithubIssue = require('../../models/integrations/GithubIssue');
-const Ticket = require('../../models/integrations/Ticket');
+const GithubIssue = require('../../models/integrations_fs/github/GithubIssue');
+const IntegrationTicket = require('../../models/integrations_fs/integration_objects/IntegrationTicket');
 
 scrapeGithubRepoIssues = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, worker) => {
     // TEST ISSUE SCRAPING
@@ -91,17 +91,18 @@ scrapeGithubRepoIssues = async (installationId, repositoryId, installationClient
 
 
         await worker.send({action: 'log', info: {level: 'info',
-                                                    message: `GithubIssue - bulkGithubIssueInsertList: ${JSON.stringify(bulkGithubIssueInsertList)}`,
+                                                    message: `GithubIssue - bulkGithubIssueInsertList.length: ${bulkGithubIssueInsertList.length}`,
                                                     source: 'worker-instance',
                                                     function: 'scrapeGithubRepoIssues'}});
 
         try {
             bulkInsertResult = await GithubIssue.insertMany(bulkGithubIssueInsertList, { rawResult: true, });
-
+            /*
             await worker.send({action: 'log', info: {level: 'info',
                                                         message: `GithubIssue insertMany success - bulkInsertResult: ${JSON.stringify(bulkInsertResult)}`,
                                                         source: 'worker-instance',
                                                         function: 'scrapeGithubRepoIssues'}});
+            */
         }
         catch(err) {
             await worker.send({action: 'log', info: {level: 'error',

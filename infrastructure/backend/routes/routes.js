@@ -5,17 +5,17 @@ var cors = require("cors");
 var CLIENT_HOME_PAGE_URL = process.env.LOCALHOST_HOME_PAGE_URL;
 
 if (process.env.IS_PRODUCTION) {
-    CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_HOME_PAGE_URL;
+  CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_HOME_PAGE_URL;
 }
 
 var INSTALLED_URL = process.env.LOCALHOST_INSTALLED_URL;
 if (process.env.IS_PRODUCTION) {
-    INSTALLED_URL = process.env.PRODUCTION_INSTALLED_URL;
+  INSTALLED_URL = process.env.PRODUCTION_INSTALLED_URL;
 }
 
 var ONBOARD_URL = process.env.LOCALHOST_ONBOARD_URL;
 if (process.env.IS_PRODUCTION) {
-    ONBOARD_URL = process.env.PRODUCTION_ONBOARD_URL;
+  ONBOARD_URL = process.env.PRODUCTION_ONBOARD_URL;
 }
 
 const express = require("express");
@@ -61,131 +61,131 @@ router.param("userId", paramMiddleware.userIdParam);
 const referenceController = require("../controllers/ReferenceController");
 
 router.post(
-    "/references/create",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.createReferences
+  "/references/create",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.createReferences
 );
 router.get(
-    "/references/:workspaceId/get/:referenceId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.getReference
+  "/references/:workspaceId/get/:referenceId",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.getReference
 );
 router.put(
-    "/references/:workspaceId/edit/:referenceId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.editReference
+  "/references/:workspaceId/edit/:referenceId",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.editReference
 );
 router.delete(
-    "/references/:workspaceId/delete/:referenceId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.deleteReference
+  "/references/:workspaceId/delete/:referenceId",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.deleteReference
 );
 router.put(
-    "/references/:workspaceId/:referenceId/attach_tag/:tagId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.attachReferenceTag
+  "/references/:workspaceId/:referenceId/attach_tag/:tagId",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.attachReferenceTag
 );
 router.put(
-    "/references/:workspaceId/:referenceId/remove_tag/:tagId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.removeReferenceTag
+  "/references/:workspaceId/:referenceId/remove_tag/:tagId",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.removeReferenceTag
 );
 router.post(
-    "/references/:workspaceId/retrieve",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.retrieveReferences
+  "/references/:workspaceId/retrieve",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.retrieveReferences
 );
 router.post(
-    "/references/:workspaceId/search",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.searchReferences
+  "/references/:workspaceId/search",
+  authorizationMiddleware.referenceMiddleware,
+  referenceController.searchReferences
 );
 
 // Validate workspace membership for calling user; all methods
 const documentController = require("../controllers/DocumentController");
 router.post(
-    "/documents/:workspaceId/create",
-    authorizationMiddleware.documentMiddleware,
-    documentController.createDocument
+  "/documents/:workspaceId/create",
+  authorizationMiddleware.documentMiddleware,
+  documentController.createDocument
 );
 router.get(
-    "/documents/:workspaceId/get/:documentId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.getDocument
+  "/documents/:workspaceId/get/:documentId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.getDocument
 );
 router.put(
-    "/documents/:workspaceId/edit/:documentId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.editDocument
+  "/documents/:workspaceId/edit/:documentId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.editDocument
 );
 router.delete(
-    "/documents/:workspaceId/delete/:documentId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.deleteDocument
+  "/documents/:workspaceId/delete/:documentId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.deleteDocument
 );
 router.put(
-    "/documents/:workspaceId/rename/:documentId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.renameDocument
+  "/documents/:workspaceId/rename/:documentId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.renameDocument
 );
 router.put(
-    "/documents/:workspaceId/move/:documentId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.moveDocument
+  "/documents/:workspaceId/move/:documentId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.moveDocument
 );
 router.post(
-    "/documents/:workspaceId/retrieve",
-    authorizationMiddleware.documentMiddleware,
-    documentController.retrieveDocuments
+  "/documents/:workspaceId/retrieve",
+  authorizationMiddleware.documentMiddleware,
+  documentController.retrieveDocuments
 );
 router.post(
-    "/documents/:workspaceId/search",
-    authorizationMiddleware.documentMiddleware,
-    documentController.searchDocuments
+  "/documents/:workspaceId/search",
+  authorizationMiddleware.documentMiddleware,
+  documentController.searchDocuments
 );
 router.post(
-    "/documents/:workspaceId/get_image/:documentId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.getDocumentImage
+  "/documents/:workspaceId/get_image/:documentId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.getDocumentImage
 );
 router.post(
-    "/documents/:workspaceId/pusher/auth",
-    documentController.authorizeDocumentPusher
+  "/documents/:workspaceId/pusher/auth",
+  documentController.authorizeDocumentPusher
 );
 
 router.post("/testRoute", documentController.testRoute);
 
 router.put(
-    "/documents/:workspaceId/:documentId/attach_tag/:tagId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.attachDocumentTag
+  "/documents/:workspaceId/:documentId/attach_tag/:tagId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.attachDocumentTag
 );
 router.put(
-    "/documents/:workspaceId/:documentId/remove_tag/:tagId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.removeDocumentTag
-);
-
-router.put(
-    "/documents/:workspaceId/:documentId/attach_reference/:referenceId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.attachDocumentReference
-);
-router.put(
-    "/documents/:workspaceId/:documentId/remove_reference/:referenceId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.removeDocumentReference
+  "/documents/:workspaceId/:documentId/remove_tag/:tagId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.removeDocumentTag
 );
 
 router.put(
-    "/documents/:workspaceId/:documentId/attach_snippet/:snippetId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.attachDocumentSnippet
+  "/documents/:workspaceId/:documentId/attach_reference/:referenceId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.attachDocumentReference
 );
 router.put(
-    "/documents/:workspaceId/:documentId/remove_snippet/:snippetId",
-    authorizationMiddleware.documentMiddleware,
-    documentController.removeDocumentSnippet
+  "/documents/:workspaceId/:documentId/remove_reference/:referenceId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.removeDocumentReference
+);
+
+router.put(
+  "/documents/:workspaceId/:documentId/attach_snippet/:snippetId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.attachDocumentSnippet
+);
+router.put(
+  "/documents/:workspaceId/:documentId/remove_snippet/:snippetId",
+  authorizationMiddleware.documentMiddleware,
+  documentController.removeDocumentSnippet
 );
 
 //PUSHER
@@ -208,29 +208,29 @@ router.put('/documents/:workspaceId/remove_canread/:id', authorizationMiddleware
 // Validate workspace membership for calling user; all methods
 const snippetController = require("../controllers/SnippetController");
 router.post(
-    "/snippets/:workspaceId/:referenceId/create",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.createSnippet
+  "/snippets/:workspaceId/:referenceId/create",
+  authorizationMiddleware.snippetMiddleware,
+  snippetController.createSnippet
 );
 router.get(
-    "/snippets/:workspaceId/get/:snippetId",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.getSnippet
+  "/snippets/:workspaceId/get/:snippetId",
+  authorizationMiddleware.snippetMiddleware,
+  snippetController.getSnippet
 );
 router.put(
-    "/snippets/:workspaceId/edit/:snippetId",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.editSnippet
+  "/snippets/:workspaceId/edit/:snippetId",
+  authorizationMiddleware.snippetMiddleware,
+  snippetController.editSnippet
 );
 router.delete(
-    "/snippets/:workspaceId/delete/:snippetId",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.deleteSnippet
+  "/snippets/:workspaceId/delete/:snippetId",
+  authorizationMiddleware.snippetMiddleware,
+  snippetController.deleteSnippet
 );
 router.post(
-    "/snippets/:workspaceId/retrieve",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.retrieveSnippets
+  "/snippets/:workspaceId/retrieve",
+  authorizationMiddleware.snippetMiddleware,
+  snippetController.retrieveSnippets
 );
 
 const repositoryController = require("../controllers/RepositoryController");
@@ -241,24 +241,24 @@ const repositoryController = require("../controllers/RepositoryController");
 // update - dev role only
 
 router.post(
-    "/repositories/init",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.initRepository
+  "/repositories/init",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.initRepository
 );
 router.post(
-    "/repositories/update",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.updateRepository
+  "/repositories/update",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.updateRepository
 );
 router.post(
-    "/repositories/job_retrieve",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.jobRetrieveRepositories
+  "/repositories/job_retrieve",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.jobRetrieveRepositories
 );
 router.post(
-    "/repositories/remove_installation",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.removeInstallation
+  "/repositories/remove_installation",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.removeInstallation
 );
 
 // User accessible
@@ -273,29 +273,29 @@ router.post(
 // get - verify user is in a workspace with this repository added
 // delete - verify user is in a workspace with this repository added
 router.post(
-    "/repositories/:userId/retrieve_creation",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.retrieveCreationRepositories
+  "/repositories/:userId/retrieve_creation",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.retrieveCreationRepositories
 );
 router.post(
-    "/repositories/:workspaceId/get_file/:repositoryId",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.getRepositoryFileSafe
+  "/repositories/:workspaceId/get_file/:repositoryId",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.getRepositoryFileSafe
 );
 router.post(
-    "/repositories/:workspaceId/retrieve",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.retrieveRepositories
+  "/repositories/:workspaceId/retrieve",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.retrieveRepositories
 );
 router.get(
-    "/repositories/:workspaceId/get/:repositoryId",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.getRepository
+  "/repositories/:workspaceId/get/:repositoryId",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.getRepository
 );
 router.delete(
-    "/repositories/:workspaceId/delete/:repositoryId",
-    authorizationMiddleware.repositoryMiddleware,
-    repositoryController.deleteRepository
+  "/repositories/:workspaceId/delete/:repositoryId",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.deleteRepository
 );
 
 // create - verify user exists
@@ -311,35 +311,35 @@ const workspaceController = require("../controllers/WorkspaceController");
 
 // TODO: This route cannot be properly secured without a list of repositories that a particular user has access to.
 router.post(
-    "/workspaces/create",
-    authorizationMiddleware.workspaceMiddleware,
-    workspaceController.createWorkspace
+  "/workspaces/create",
+  authorizationMiddleware.workspaceMiddleware,
+  workspaceController.createWorkspace
 );
 router.post(
-    "/workspaces/search/:workspaceId",
-    authorizationMiddleware.workspaceMiddleware,
-    workspaceController.searchWorkspace
+  "/workspaces/search/:workspaceId",
+  authorizationMiddleware.workspaceMiddleware,
+  workspaceController.searchWorkspace
 );
 router.get(
-    "/workspaces/get/:workspaceId",
-    authorizationMiddleware.workspaceMiddleware,
-    workspaceController.getWorkspace
+  "/workspaces/get/:workspaceId",
+  authorizationMiddleware.workspaceMiddleware,
+  workspaceController.getWorkspace
 );
 router.delete(
-    "/workspaces/delete/:workspaceId",
-    authorizationMiddleware.workspaceMiddleware,
-    workspaceController.deleteWorkspace
+  "/workspaces/delete/:workspaceId",
+  authorizationMiddleware.workspaceMiddleware,
+  workspaceController.deleteWorkspace
 );
 router.put(
-    "/workspaces/:workspaceId/remove_user/:userId",
-    authorizationMiddleware.workspaceMiddleware,
-    workspaceController.removeWorkspaceUser
+  "/workspaces/:workspaceId/remove_user/:userId",
+  authorizationMiddleware.workspaceMiddleware,
+  workspaceController.removeWorkspaceUser
 );
 
 router.post(
-    "/workspaces/retrieve",
-    authorizationMiddleware.workspaceMiddleware,
-    workspaceController.retrieveWorkspaces
+  "/workspaces/retrieve",
+  authorizationMiddleware.workspaceMiddleware,
+  workspaceController.retrieveWorkspaces
 );
 
 // DEPRECATED
@@ -355,29 +355,29 @@ router.post(
 
 const tagController = require("../controllers/TagController");
 router.post(
-    "/tags/:workspaceId/create",
-    authorizationMiddleware.tagMiddleware,
-    tagController.createTag
+  "/tags/:workspaceId/create",
+  authorizationMiddleware.tagMiddleware,
+  tagController.createTag
 );
 router.get(
-    "/tags/:workspaceId/get/:tagId",
-    authorizationMiddleware.tagMiddleware,
-    tagController.getTag
+  "/tags/:workspaceId/get/:tagId",
+  authorizationMiddleware.tagMiddleware,
+  tagController.getTag
 );
 router.put(
-    "/tags/:workspaceId/edit/:tagId",
-    authorizationMiddleware.tagMiddleware,
-    tagController.editTag
+  "/tags/:workspaceId/edit/:tagId",
+  authorizationMiddleware.tagMiddleware,
+  tagController.editTag
 );
 router.delete(
-    "/tags/:workspaceId/delete/:tagId",
-    authorizationMiddleware.tagMiddleware,
-    tagController.deleteTag
+  "/tags/:workspaceId/delete/:tagId",
+  authorizationMiddleware.tagMiddleware,
+  tagController.deleteTag
 );
 router.post(
-    "/tags/:workspaceId/retrieve",
-    authorizationMiddleware.tagMiddleware,
-    tagController.retrieveTags
+  "/tags/:workspaceId/retrieve",
+  authorizationMiddleware.tagMiddleware,
+  tagController.retrieveTags
 );
 
 //auth routes
@@ -389,49 +389,49 @@ router.get("/auth/jira", authController.jiraAuthResponse);
 
 // router.get('/auth/github', passport.authenticate("github"));
 router.get("/auth/github", function (req, res, next) {
-    const { email, ide_token } = req.query;
-    let options = { session: false };
+  const { email, ide_token } = req.query;
+  let options = { session: false };
 
-    var state = {};
+  var state = {};
 
-    if (process.env.IS_PRODUCTION) {
-        state.source = "production";
-    } else {
-        state.source = "localhost";
+  if (process.env.IS_PRODUCTION) {
+    state.source = "production";
+  } else {
+    state.source = "localhost";
+  }
+
+  console.log("IDE TOKEN", ide_token);
+
+  if (email) {
+    state.email = email;
+  } else if (ide_token) {
+    state.ideToken = ide_token;
+  }
+
+  console.log(`Final State to Pass: ${JSON.stringify(state)}`);
+
+  state = Buffer.from(JSON.stringify(state)).toString("base64");
+
+  options = { ...options, scope: [], state };
+
+  passport.authenticate("github", options, function (err, user, info) {
+    console.log("Passport Auth callback");
+    if (err) {
+      return next(err);
     }
 
-    console.log("IDE TOKEN", ide_token);
-
-    if (email) {
-        state.email = email;
-    } else if (ide_token) {
-        state.ideToken = ide_token;
+    // TODO: Change this to appropriate route
+    if (!user) {
+      console.log("!user == true");
+      return res.redirect("/login");
     }
 
-    console.log(`Final State to Pass: ${JSON.stringify(state)}`);
+    // var jwtToken = createUserJWTToken(user._id, user.role);
 
-    state = Buffer.from(JSON.stringify(state)).toString("base64");
-
-    options = { ...options, scope: [], state };
-
-    passport.authenticate("github", options, function (err, user, info) {
-        console.log("Passport Auth callback");
-        if (err) {
-            return next(err);
-        }
-
-        // TODO: Change this to appropriate route
-        if (!user) {
-            console.log("!user == true");
-            return res.redirect("/login");
-        }
-
-        // var jwtToken = createUserJWTToken(user._id, user.role);
-
-        // res.cookie('user-jwt', jwtToken, { httpOnly: true });
-        console.log("About to redirect");
-        // return res.redirect('https://localhost:3001/api/auth/github/redirect');
-    })(req, res, next);
+    // res.cookie('user-jwt', jwtToken, { httpOnly: true });
+    console.log("About to redirect");
+    // return res.redirect('https://localhost:3001/api/auth/github/redirect');
+  })(req, res, next);
 });
 
 /*
@@ -454,153 +454,151 @@ router.get('/auth/github/fork', (req, res) => {
 */
 
 router.get(
-    "/auth/github/redirect",
-    passport.authenticate("github", { session: false }),
-    (req, res) => {
-        // console.log('Request Host: ', req.get('host'));
-        // if (err) { return res.json({success: false, error: err}) }
-        // TODO: Change this to appropriate route
-        console.log("Entered");
-        if (!req.user) {
-            console.log("req.user != true");
-            return res.redirect("/login");
-        }
+  "/auth/github/redirect",
+  passport.authenticate("github", { session: false }),
+  (req, res) => {
+    // console.log('Request Host: ', req.get('host'));
+    // if (err) { return res.json({success: false, error: err}) }
+    // TODO: Change this to appropriate route
+    console.log("Entered");
+    if (!req.user) {
+      console.log("req.user != true");
+      return res.redirect("/login");
+    }
 
-        // IDE AUTH
-        const { state } = req.query;
+    // IDE AUTH
+    const { state } = req.query;
+
+    try {
+      console.log("CHECKING IDE TOKEN");
+
+      const { ideToken } = JSON.parse(Buffer.from(state, "base64").toString());
+
+      console.log("RECEIVED IDE TOKEN", ideToken);
+
+      if (ideToken) {
+        console.log("CALLING IDE CLIENT");
+        authController.authorizeIDEClient(ideToken, req.user);
+        return res.redirect("/login");
+      }
+    } catch (err) {
+      console.log("NOT AUTHENTICATING THROUGH IDE", err);
+    }
+
+    // IDE AUTH END
+
+    var jwtToken = createUserJWTToken(req.user._id, req.user.role);
+
+    res.cookie("user-jwt", jwtToken, { httpOnly: true });
+
+    if (state === "installing") {
+      return res.redirect(INSTALLED_URL);
+    }
+
+    if (req.query.state != "installing") {
+      if (!req.user.onboarded) {
+        console.log(
+          `${JSON.stringify(
+            JSON.parse(Buffer.from(state, "base64").toString())
+          )}`
+        );
+
+        const { email, source } = JSON.parse(
+          Buffer.from(state, "base64").toString()
+        );
 
         try {
-            console.log("CHECKING IDE TOKEN");
-
-            const { ideToken } = JSON.parse(
-                Buffer.from(state, "base64").toString()
-            );
-
-            console.log("RECEIVED IDE TOKEN", ideToken);
-
-            if (ideToken) {
-                console.log("CALLING IDE CLIENT");
-                authController.authorizeIDEClient(ideToken, req.user);
-                return res.redirect("/login");
-            }
+          if (typeof email === "string") {
+            return res.redirect(`${ONBOARD_URL}?email=${email}`);
+          }
         } catch (err) {
-            console.log("NOT AUTHENTICATING THROUGH IDE", err);
+          console.log(err);
         }
 
-        // IDE AUTH END
+        return res.redirect(ONBOARD_URL);
+      }
 
-        var jwtToken = createUserJWTToken(req.user._id, req.user.role);
-
-        res.cookie("user-jwt", jwtToken, { httpOnly: true });
-
-        if (state === "installing") {
-            return res.redirect(INSTALLED_URL);
-        }
-
-        if (req.query.state != "installing") {
-            if (!req.user.onboarded) {
-                console.log(
-                    `${JSON.stringify(
-                        JSON.parse(Buffer.from(state, "base64").toString())
-                    )}`
-                );
-
-                const { email, source } = JSON.parse(
-                    Buffer.from(state, "base64").toString()
-                );
-
-                try {
-                    if (typeof email === "string") {
-                        return res.redirect(`${ONBOARD_URL}?email=${email}`);
-                    }
-                } catch (err) {
-                    console.log(err);
-                }
-
-                return res.redirect(ONBOARD_URL);
-            }
-
-            return res.redirect(CLIENT_HOME_PAGE_URL);
-        }
+      return res.redirect(CLIENT_HOME_PAGE_URL);
     }
+  }
 );
 
 router.post(
-    "/auth/check_installation",
-    authorizationMiddleware.authMiddleware,
-    authController.checkInstallation
+  "/auth/check_installation",
+  authorizationMiddleware.authMiddleware,
+  authController.checkInstallation
 );
 // router.post('/auth/retrieve_domain_repositories', authorizationMiddleware.authMiddleware, authController.retrieveDomainRepositories);
 
 const reportingController = require("../controllers/reporting/ReportingController");
 router.post(
-    "/reporting/:workspaceId/retrieve_broken_documents",
-    authorizationMiddleware.reportingMiddleware,
-    reportingController.retrieveBrokenDocuments
+  "/reporting/:workspaceId/retrieve_broken_documents",
+  authorizationMiddleware.reportingMiddleware,
+  reportingController.retrieveBrokenDocuments
 );
 router.post(
-    "/reporting/:workspaceId/retrieve_activity_feed_items",
-    authorizationMiddleware.reportingMiddleware,
-    reportingController.retrieveActivityFeedItems
+  "/reporting/:workspaceId/retrieve_activity_feed_items",
+  authorizationMiddleware.reportingMiddleware,
+  reportingController.retrieveActivityFeedItems
 );
 router.post(
-    "/reporting/:workspaceId/retrieve_user_stats",
-    authorizationMiddleware.reportingMiddleware,
-    reportingController.retrieveUserStats
+  "/reporting/:workspaceId/retrieve_user_stats",
+  authorizationMiddleware.reportingMiddleware,
+  reportingController.retrieveUserStats
 );
 
 const userController = require("../controllers/authentication/UserController");
 
 router.get(
-    "/users/get/:userId",
-    authorizationMiddleware.userMiddleware,
-    userController.getUser
+  "/users/get/:userId",
+  authorizationMiddleware.userMiddleware,
+  userController.getUser
 );
 router.put(
-    "/users/edit/:userId",
-    authorizationMiddleware.userMiddleware,
-    userController.editUser
+  "/users/edit/:userId",
+  authorizationMiddleware.userMiddleware,
+  userController.editUser
 );
 router.put(
-    "/users/attach_workspace/:workspaceId",
-    authorizationMiddleware.userMiddleware,
-    userController.attachUserWorkspace
+  "/users/attach_workspace/:workspaceId",
+  authorizationMiddleware.userMiddleware,
+  userController.attachUserWorkspace
 );
 router.put(
-    "/users/remove_workspace/:workspaceId",
-    authorizationMiddleware.userMiddleware,
-    userController.removeUserWorkspace
+  "/users/remove_workspace/:workspaceId",
+  authorizationMiddleware.userMiddleware,
+  userController.removeUserWorkspace
 );
 router.delete(
-    "/users/delete_user/:workspaceId",
-    authorizationMiddleware.userMiddleware,
-    userController.deleteUser
+  "/users/delete_user/:workspaceId",
+  authorizationMiddleware.userMiddleware,
+  userController.deleteUser
 );
 
 //token routes
 // must be a dev JWT
 const tokenController = require("../controllers/TokenController");
 router.post(
-    "/tokens/create",
-    authorizationMiddleware.tokenMiddleware,
-    tokenController.createToken
+  "/tokens/create",
+  authorizationMiddleware.tokenMiddleware,
+  tokenController.createToken
 );
 router.post(
-    "/tokens/delete",
-    authorizationMiddleware.tokenMiddleware,
-    tokenController.deleteInstallationToken
+  "/tokens/delete",
+  authorizationMiddleware.tokenMiddleware,
+  tokenController.deleteInstallationToken
 );
 
 const checkController = require("../controllers/CheckController");
 router.post(
-    "/checks/:repositoryId/create",
-    authorizationMiddleware.checkMiddleware,
-    checkController.createCheck
+  "/checks/:repositoryId/create",
+  authorizationMiddleware.checkMiddleware,
+  checkController.createCheck
 );
 router.post(
-    "/checks/:workspaceId/:repositoryId/retrieve",
-    authorizationMiddleware.checkMiddleware,
-    checkController.retrieveChecks
+  "/checks/:workspaceId/:repositoryId/retrieve",
+  authorizationMiddleware.checkMiddleware,
+  checkController.retrieveChecks
 );
 
 const emailVerifyController = require("../controllers/authentication/EmailVerifyController");
@@ -619,24 +617,24 @@ router.get("/assets/snippet", assetController.getSnippetIcon);
 
 const notificationController = require("../controllers/reporting/NotificationController");
 router.post(
-    "/notifications/:workspaceId/:userId/retrieve",
-    authorizationMiddleware.notificationMiddleware,
-    notificationController.retrieveNotifications
+  "/notifications/:workspaceId/:userId/retrieve",
+  authorizationMiddleware.notificationMiddleware,
+  notificationController.retrieveNotifications
 );
 router.post(
-    "/notifications/:workspaceId/:userId/set_hidden",
-    authorizationMiddleware.notificationMiddleware,
-    notificationController.setNotificationsHidden
+  "/notifications/:workspaceId/:userId/set_hidden",
+  authorizationMiddleware.notificationMiddleware,
+  notificationController.setNotificationsHidden
 );
 router.get(
-    "/notifications/:workspaceId/:userId/pending",
-    authorizationMiddleware.notificationMiddleware,
-    notificationController.getPendingCount
+  "/notifications/:workspaceId/:userId/pending",
+  authorizationMiddleware.notificationMiddleware,
+  notificationController.getPendingCount
 );
 router.post(
-    "/notifications/:workspaceId/:userId/hide_all",
-    authorizationMiddleware.notificationMiddleware,
-    notificationController.hideAllNotifications
+  "/notifications/:workspaceId/:userId/hide_all",
+  authorizationMiddleware.notificationMiddleware,
+  notificationController.hideAllNotifications
 );
 
 const badgeController = require("../controllers/badges/BadgeController");
@@ -646,17 +644,17 @@ const multer = require("multer");
 
 // configuring the DiscStorage engine.
 const storage = multer.diskStorage({
-    destination: "uploads/",
-    filename: function (req, file, cb) {
-        cb(null, file.originalname);
-    },
+  destination: "uploads/",
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
 });
 
 const upload = multer({
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, //1 * 1024 * 1024 = 1MB
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, //1 * 1024 * 1024 = 1MB
 
-    /*
+  /*
                         // other settings here then:
                         onFileSizeLimit: function (file) {
                             // but res (response) object is not existing here
@@ -683,26 +681,26 @@ const upload_method = upload.single("attachment");
 const fileUploadController = require("../controllers/FileUploadController");
 
 router.post("/uploads/create_attachment", function (req, res) {
-    upload_method(req, res, function (err) {
-        if (err instanceof multer.MulterError) {
-            // A Multer error occurred when uploading.
-            return res.json({
-                success: false,
-                error: err.message,
-                alert: err.message,
-            });
-        } else if (err) {
-            // An unknown error occurred when uploading.
-            return res.json({
-                success: false,
-                error: err.message,
-                alert: err.message,
-            });
-        }
+  upload_method(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred when uploading.
+      return res.json({
+        success: false,
+        error: err.message,
+        alert: err.message,
+      });
+    } else if (err) {
+      // An unknown error occurred when uploading.
+      return res.json({
+        success: false,
+        error: err.message,
+        alert: err.message,
+      });
+    }
 
-        // Everything went fine.
-        fileUploadController.postFile(req, res);
-    });
+    // Everything went fine.
+    fileUploadController.postFile(req, res);
+  });
 });
 
 router.get("/uploads/:targetName/:download", fileUploadController.getFile);
@@ -722,16 +720,17 @@ app.post('/profile', function (req, res) {
 */
 //ASSOCIATION ROUTES ("TEST");
 const associationController = require("../controllers/associations/AssociationController");
+router.post("/associations/:repositoryId/get_file_context", associationController.getFileContext);
 
 //TRELLO INTEGRATION ROUTES
 const trelloIntegrationController = require("../controllers/integrations/trello/TrelloIntegrationController");
 router.get(
-    "/integrations/connect/trello",
-    trelloIntegrationController.beginTrelloConnect
+  "/integrations/connect/trello",
+  trelloIntegrationController.beginTrelloConnect
 );
 router.get(
-    "/integrations/connect/trello/callback",
-    trelloIntegrationController.handleTrelloConnectCallback
+  "/integrations/connect/trello/callback",
+  trelloIntegrationController.handleTrelloConnectCallback
 );
 
 //GOOGLE INTEGRATION ROUTES
@@ -741,39 +740,38 @@ router.get('/integrations/connect/google', googleIntegrationController.beginGoog
 router.get('/integrations/connect/google/callback', googleIntegrationController.handleGoogleConnectCallback);
 */
 
-const jiraController = require("../controllers/integration/JiraController");
-
+const jiraController = require("../controllers/integrations/jira/JiraController");
 router.get(
-    "/integrations/:workspaceId/jira",
-    jiraController.getWorkspaceJiraSites
+  "/integrations/:workspaceId/jira",
+  jiraController.getWorkspaceJiraSites
 );
 router.post(
-    "/integrations/:workspaceId/jira/get",
-    jiraController.getJiraSiteIssues
+  "/integrations/:workspaceId/jira/get",
+  jiraController.getJiraSiteIssues
 );
 
 const branchController = require("../controllers/BranchController");
 
 router.post(
-    "/branch/create",
-    authorizationMiddleware.branchMiddleware,
-    branchController.createBranch
+  "/branch/create",
+  authorizationMiddleware.branchMiddleware,
+  branchController.createBranch
 );
 
 router.post("/example_route", (req, res) => {
-    console.log("BODY", req.body);
+  console.log("BODY", req.body);
 
-    const { integrationId, integrationType } = req.body;
+  const { integrationId, integrationType } = req.body;
 
-    let tickets = [
-        {
-            likelyPullRequests: [],
-            likelyIssues: [],
-            likelyCommits: [],
-            likelyBranches: [],
-        },
-    ];
+  let tickets = [
+    {
+      likelyPullRequests: [],
+      likelyIssues: [],
+      likelyCommits: [],
+      likelyBranches: [],
+    },
+  ];
 
-    return res.json({ success: true, result: tickets });
+  return res.json({ success: true, result: tickets });
 });
 module.exports = router;

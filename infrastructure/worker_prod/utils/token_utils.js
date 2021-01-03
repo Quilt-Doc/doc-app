@@ -5,8 +5,12 @@ const {serializeError, deserializeError} = require('serialize-error');
 const getInstallToken = async (installationId, worker, session) => {
     var token;
 
+    var queryOptions = {}
+
+    if (session) queryOptions.session = session;
+
     try {
-        token = await Token.findOne({ installationId, type: 'INSTALL' }, null, { session }).exec();
+        token = await Token.findOne({ installationId, type: 'INSTALL' }, null, queryOptions).exec();
 
 
         if (!token) {

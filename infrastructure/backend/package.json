@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "description": "backend of DocApp",
   "main": "index.js",
-  "jest": {
-    "testSequencer": "__tests__config/sequencer.js",
-    "globalSetup": "__tests__config/setup.js",
-    "globalTeardown": "__tests__config/teardown.js"
-  },
   "scripts": {
     "test": "jest -i"
   },

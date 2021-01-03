@@ -5,12 +5,9 @@ const { ObjectId } = mongoose.Types;
 
 const logger = require("../logging/index").logger;
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true;
-    }
-    return false;
-};
+const { checkValid } = require('../utils/utils');
+
+
 
 createTag = async (req, res) => {
     const { label } = req.body;

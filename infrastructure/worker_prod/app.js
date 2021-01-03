@@ -1,7 +1,8 @@
-const updateReferences = require('./update_references');
-const scanRepositories = require('./scan_repositories');
-const updateChecks = require('./update_checks');
-const importJiraIssues = require('./import_jira_issues');
+const updateReferences = require('./jobs/update_references');
+const scanRepositories = require('./jobs/scan_repositories');
+const updateChecks = require('./jobs/update_checks');
+const scrapeTrello = require('./jobs/trello_scrape');
+const importJiraIssues = require('./jobs/import_jira_issues');
 
 const {serializeError, deserializeError} = require('serialize-error');
 
@@ -115,7 +116,6 @@ app.post('/job', async function(req, res) {
         }
         res.status(200).end();
     }
-
 
 
     // Update Reference Job
@@ -245,6 +245,85 @@ app.post('/job', async function(req, res) {
 
         res.status(200).end();
     }
+
+    // relevantLists - [{type: "start", name: "In-Progress"}, {type: "end", name: "Done"}]
+    else if (jobType == constants.jobs.JOB_SCRAPE_TRELLO) {
+        /*
+        bulkScrapeTrello = async (
+            trelloIntegration,
+            requiredBoardIds,
+            relevantLists
+        ) => {
+            const { workspace, repositories } = trelloIntegration;
+        
+            const workspaceId = workspace;
+            const repositoryIds = repositories;
+        
+            relevantLists = _.map(relevantLists, "name");
+        
+            let { boardIds, trelloConnectProfile } = trelloIntegration;
+        */
+
+        // trelloIntegration.workspaceId
+        // trelloIntegration.repositoryIds
+        // trelloIntegration.boardIds
+        // trelloIntegration.trelloConnectProfile
+        // requiredBoardIds - list of trello board ids
+        // relevantLists - list of objects
+        const { trelloIntegrationId, requiredBoardIdList, relevantLists } = req.body;
+
+        if (!checkValid(trelloIntegrationId))  {
+            await worker.send({action: 'log', info: {level: 'error',
+                                                        message: serializeError(Error(`No trelloIntegrationId provided for scrapeTrello job`)),
+                                                        errorDescription: 'No trelloIntegrationId provided for scrapeTrello job',
+                                                        source: 'worker-instance',
+                                                        function: 'app.js'}});
+            res.status(200).end();
+            // res.status(400).end();
+        }
+
+        if (!checkValid(requiredBoardIdList))  {
+            await worker.send({action: 'log', info: {level: 'error',
+                                                        message: serializeError(Error(`No requiredBoardIdList provided for scrapeTrello job`)),
+                                                        errorDescription: 'No requiredBoardIdList provided for scrapeTrello job',
+                                                        source: 'worker-instance',
+                                                        function: 'app.js'}});
+            res.status(200).end();
+            // res.status(400).end();
+        }
+
+        if (!checkValid(relevantLists))  {
+            await worker.send({action: 'log', info: {level: 'error',
+                                                        message: serializeError(Error(`No relevantLists provided for scrapeTrello job`)),
+                                                        errorDescription: 'No relevantLists provided for scrapeTrello job',
+                                                        source: 'worker-instance',
+                                                        function: 'app.js'}});
+            res.status(200).end();
+            // res.status(400).end();
+        }
+
+
+        process.env.trelloIntegrationId = trelloIntegrationId;
+        process.env.requiredBoardIdList = JSON.stringify(requiredBoardIdList);
+        process.env.relevantLists = JSON.stringify(relevantLists);
+
+        try {
+            await scrapeTrello.bulkScrapeTrello();
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {level: 'error',
+                                                        message: serializeError(err),
+                                                        errorDescription: `Error aborted 'scrapeTrello' job`,
+                                                        source: 'worker-instance',
+                                                        function: 'app.js'}});
+            res.status(200).end();
+            // res.status(500).end();
+        }
+
+        res.status(200).end();
+
+    }
+
 
     // Import Jira Issues Job
     else if (jobType == constants.jobs.JOB_IMPORT_JIRA_ISSUES) {

@@ -5,8 +5,8 @@ const { ObjectId } = mongoose.Types;
 const {serializeError, deserializeError} = require('serialize-error');
 
 
-const GithubProject = require('../../models/integrations/GithubProject');
-const Ticket = require('../../models/integrations/Ticket');
+const GithubProject = require('../../models/integrations_fs/github/GithubProject');
+const IntegrationTicket = require('../../models/integrations_fs/integration_objects/IntegrationTicket');
 
 
 // Scrape a single github repo, call with Promises and so forth to scrape all repositories
@@ -67,6 +67,8 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
             name: repositoryProjectObjectResponse.name,
             body: repositoryProjectObjectResponse.body,
             state:  repositoryProjectObjectResponse.state,
+            createdAt: repositoryProjectObjectResponse.created_at,
+            updatedAt: repositoryProjectObjectResponse.updated_at,
         }
     });
 
@@ -445,7 +447,7 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
 
     var bulkInsertResult;
     try {
-        bulkInsertResult = await Ticket.insertMany(allTicketsToCreate);
+        bulkInsertResult = await IntegrationTicket.insertMany(allTicketsToCreate);
     }
     catch (err) {
 
@@ -458,11 +460,9 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
         throw new Error(`Error bulk inserting Github Cards - allTicketsToCreate: ${JSON.stringify(allTicketsToCreate)}`);
     }
 
-
 }
 
 
 module.exports = {
     scrapeGithubRepoProjects,
-
 }

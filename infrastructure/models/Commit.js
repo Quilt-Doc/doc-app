@@ -10,20 +10,37 @@ let commitSchema = new Schema({
     installationId: { type: Number, required: true },
 
     sha: {type: String, required: true},
-    ref: {type: String, required: true},
+    ref: {type: String},
+
+    committerDate: {type: String},
+    treeHash: {type: String},
+    authorName: {type: String},
+    committerName: {type: String},
+    committerEmail: {type: String},
+    commitMessage: {type: String, required: true},
+    fileList: [{ type: String }],
 
     githubId: {type: Number},
 
-    commitMessage: {type: String, required: true},
-    commitTime: {type: Date, required: true},
-
-    pusher: {type: String, required: true},
+    pusher: {type: String},
 
     parents: [{ type: ObjectId, ref: 'Commit' }],
 
-    fileChangeList: [{ type: ObjectId, ref: 'FileChange', required: true }]
+    fileChangeList: [{ type: ObjectId, ref: 'FileChange'}]
 
 });
+
+/*
+                # commit hash
+                # committer date 
+                # tree hash
+                # author name
+                # committer name
+                # committer email
+                # ref name given on the command line by which the commit was reached
+                # parent hashes
+                # ref names without the " (", ")" wrapping.
+*/
 
 let Commit = mongoose.model("Commit", commitSchema);
 

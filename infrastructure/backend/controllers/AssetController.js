@@ -1,12 +1,8 @@
 const logger = require('../logging/index').logger;
 const path = require('path');
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../utils/utils');
+
 
 
 getInvalidDocumentIcon = async (req, res) => {

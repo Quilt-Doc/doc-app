@@ -30,12 +30,8 @@ const crypto = require('crypto');
 
 const sgMail = require('@sendgrid/mail');
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../../utils/utils');
+
 
 beginEmailVerification = async (userId, userEmail) => {
     const TWO_HOURS = 60*60*2000;

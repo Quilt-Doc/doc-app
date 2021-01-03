@@ -11,10 +11,14 @@ const UserStats = require('../models/reporting/UserStats');
 const ActivityFeedItem = require('../models/reporting/ActivityFeedItem');
 const User = require('../models/authentication/User');
 
-const GithubProject = require('../models/integrations/GithubProject');
-const JiraSite = require('../models/integrations/JiraSite');
-const JiraProject = require('../models/integrations/JiraProject');
-const Ticket = require('../models/integrations/Ticket');
+const GithubProject = require('../models/integrations_fs/github/GithubProject');
+const JiraSite = require('../models/integrations_fs/jira/JiraSite');
+const JiraProject = require('../models/integrations_fs/jira/JiraProject');
+const IntegrationTicket = require('../models/integrations_fs/integration_objects/IntegrationTicket');
+
+const Commit = require('../models/Commit');
+const PullRequest = require('../models/PullRequest');
+const Branch = require('../models/Branch');
 
 const apis = require('../apis/api');
 
@@ -48,12 +52,8 @@ const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
 let db = mongoose.connection;
 
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../utils/utils');
+
 
 escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
@@ -300,7 +300,7 @@ getWorkspace = async (req, res) => {
 // JiraSite -- has a workspaceId attached
 // JiraProject -- Could use the Ids of all the JiraSites found to be deleted in the prior step
 
-// Ticket -- has a workspaceId attached
+// IntegrationTicket -- has a workspaceId attached
 
 deleteWorkspace = async (req, res) => {
 
@@ -473,10 +473,67 @@ deleteWorkspace = async (req, res) => {
 
 
 
+
+
             // INTEGRATION DELETION SECTION START --------------------------------------------------------
 
             var workspaceRepositories = deletedWorkspace.repositories;
 
+
+            // Commit -- delete all Commits that have 'repository' ids from repos on workspace
+            var deleteCommitsResponse;
+            try {
+                deleteCommitsResponse = await Commit.deleteMany({repository: { $in: workspaceRepositories.map(id => ObjectId(id.toString()))}}, { session }).exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteCommits error: Commits deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteCommits error: Commits deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteCommits error: Commits deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+            // PullRequest -- delete all PullRequests that have 'repository' ids from repos on workspace
+            var deletePullRequestsResponse;
+            try {
+                deletePullRequestsResponse = await PullRequest.deleteMany({repository: { $in: workspaceRepositories.map(id => ObjectId(id.toString()))}}, { session }).exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deletePullRequests error: PullRequests deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deletePullRequests error: PullRequests deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deletePullRequests error: PullRequests deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+
+
+
+            // Branch -- delete all Branches that have 'repository' ids from repos on workspace
+            var deleteBranchesResponse;
+            try {
+                deleteBranchesResponse = await Branch.deleteMany({repository: { $in: workspaceRepositories.map(id => ObjectId(id.toString()))}}, { session }).exec();
+            }
+            catch (err) {
+                console.log(err);
+                await logger.error({source: 'backend-api',
+                                    error: err,
+                                    errorDescription: `deleteBranches error: Branch deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    function: 'deleteWorkspace'});
+
+                output = {success: false, error: `deleteBranches error: Branch deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteBranches error: Branch deleteMany query failed - workspaceId: ${workspaceId}`);
+            }
+            
+
+
+            
 
             // GithubProject -- delete all GithubProjects from Repositories on the Workspace
             // Delete All GithubProjects
@@ -551,25 +608,29 @@ deleteWorkspace = async (req, res) => {
             }
 
 
-            // Ticket -- has a workspaceId attached
-            // Delete All Tickets
+            // IntegrationTicket -- has a workspaceId attached
+            // Delete All IntegrationTickets
             var deleteTicketResponse;
             try {
-                deleteTicketResponse = await Ticket.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
+                deleteTicketResponse = await IntegrationTicket.deleteMany({workspace:  ObjectId(workspaceId)}, { session }).exec();
             }
             catch (err) {
                 await logger.error({source: 'backend-api',
                                     error: err,
-                                    errorDescription: `deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`,
+                                    errorDescription: `deleteTicket error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`,
                                     function: 'deleteWorkspace'});
 
-                output = {success: false, error: `deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
-                throw new Error(`deleteTicket error: Ticket deleteMany query failed - workspaceId: ${workspaceId}`);
+                output = {success: false, error: `deleteTicket error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`, trace: err};
+                throw new Error(`deleteTicket error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`);
             }
 
 
 
             // INTEGRATION DELETION SECTION END --------------------------------------------------------
+
+
+
+
 
 
 

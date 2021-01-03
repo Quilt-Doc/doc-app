@@ -18,12 +18,8 @@ const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
 let db = mongoose.connection;
 
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../utils/utils');
+
 
 createSnippet = async (req, res) => {
     const { annotation, code, start, 

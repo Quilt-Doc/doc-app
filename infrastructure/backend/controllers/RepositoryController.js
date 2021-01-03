@@ -22,12 +22,8 @@ const { ObjectId } = mongoose.Types;
 const { json } = require('body-parser');
 
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../utils/utils');
+
 
 initRepository = async (req, res) => {
     const {fullName, installationId, icon} = req.body;
