@@ -41,7 +41,7 @@ let pullRequestSchema = new Schema({
   branchLabelList: [{ type: String }],
   branches: [{type: ObjectId, ref: 'Branch'}],
 
-  // sourceId: Number —- replaces pullRequestObjId AND pullRequestNumb
+  // sourceId: Number —- replaces pullRequestObjId AND pullRequestNumber
 
   htmlUrl: { type: String },
   issueUrl: { type: String },
