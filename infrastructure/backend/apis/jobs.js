@@ -79,6 +79,34 @@ const dispatchUpdateChecksJob = async (jobData) => {
     }
 }
 
+
+
+const dispatchTrelloScrapeJob = async (jobData) => {
+    var timestamp = Date.now().toString();
+
+    //  const { trelloIntegrationId, requiredBoardIdList, relevantLists } = req.body;
+    var sqsTrelloData = {
+        MessageAttributes: {},
+        MessageBody: JSON.stringify(jobData),
+        // MessageDeduplicationId: timestamp,
+        MessageGroupId: jobData.trelloIntegrationId.toString(),
+        QueueUrl: queueUrl
+    };
+
+    // Send the update data to the SQS queue
+    try {
+        await sqs.sendMessage(sqsTrelloData).promise();
+    }
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error sending SQS message to scrape Trello job - jobData: ${JSON.stringify(jobData)}`,
+                                function: 'dispatchTrelloScrapeJob'});
+        throw err;
+    }
+}
+
+
+
 const dispatchImportJiraIssuesJob = async (jobData) => {
     var timestamp = Date.now().toString();
 
@@ -106,5 +134,6 @@ module.exports = {
     dispatchScanRepositoriesJob,
     dispatchUpdateReferencesJob,
     dispatchUpdateChecksJob,
-    dispatchImportJiraIssuesJob,
+    dispatchTrelloScrapeJob,
+    dispatchImportJiraIssuesJob,    
 }

@@ -21,12 +21,8 @@ const Mixpanel = require('mixpanel');
 const mixpanel = Mixpanel.init(`${process.env.MIXPANEL_TOKEN}`);
 
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../../utils/utils');
+
 
 // TODO: Create UserStats object on addition
 sendInvite = async (req, res) => {

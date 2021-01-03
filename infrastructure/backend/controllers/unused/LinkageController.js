@@ -3,12 +3,8 @@ var mongoose = require('mongoose');
 const { query } = require('express');
 const { ObjectId } = mongoose.Types;
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../../utils/utils');
+
 
 
 createLinkage = (req, res) => {

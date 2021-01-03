@@ -34,12 +34,8 @@ const pusher = new Pusher({
 let db = mongoose.connection;
 
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true;
-    }
-    return false;
-}
+const { checkValid } = require('../../utils/utils');
+
 
 escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string

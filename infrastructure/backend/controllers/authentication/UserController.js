@@ -9,12 +9,7 @@ const logger = require("../../logging/index").logger;
 const beginEmailVerification = require("./EmailVerifyController")
     .beginEmailVerification;
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true;
-    }
-    return false;
-};
+const { checkValid } = require("../../utils/utils");
 
 getUser = async (req, res) => {
     const userId = req.userObj._id.toString();

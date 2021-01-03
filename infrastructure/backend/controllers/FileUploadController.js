@@ -18,12 +18,8 @@ const s3 = new AWS.S3();
 
 const logger = require('../logging/index').logger;
 
-checkValid = (item) => {
-    if (item !== undefined && item !== null) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../utils/utils');
+
 
 
 // POST method route for uploading file

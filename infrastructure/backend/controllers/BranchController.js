@@ -13,12 +13,8 @@ const Repository = require('../models/Repository');
 const logger = require('../logging/index').logger;
 
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../utils/utils');
+
 
 /*
     {   ref: branchName,

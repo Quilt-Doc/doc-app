@@ -5,12 +5,8 @@ const { ObjectId } = mongoose.Types;
 
 const logger = require('../../logging/index').logger;
 
-checkValid = (item) => {
-    if (item !== null && item !== undefined) {
-        return true
-    }
-    return false
-}
+const { checkValid } = require('../../utils/utils');
+
 
 
 createInvalidNotifications = async (notificationData) => {
