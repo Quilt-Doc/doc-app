@@ -34,6 +34,7 @@ let pullRequestSchema = new Schema({
   installationId: { type: Number, required: true },
   checks: [{ type: ObjectId, ref: "Check" }],
   repository: { type: ObjectId, ref: "Repository", required: true },
+  fileList: [{ type: String }],
 
   pullRequestId: { type: Number, required: true },
   number: { type: Number, required: true },
@@ -59,8 +60,11 @@ let pullRequestSchema = new Schema({
 
   headRef: { type: String, required: true },
   headLabel: { type: String, required: true },
+  headSha: { type: String, },
+
   baseRef: { type: String, required: true },
   baseLabel: { type: String, required: true },
+  baseSha: { type: String, },
 
   draft: { type: Boolean },
   merged: { type: Boolean },

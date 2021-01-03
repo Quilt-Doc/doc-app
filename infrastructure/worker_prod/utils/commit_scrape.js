@@ -10,7 +10,7 @@ const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
 const { fetchAllRepoBranchesAPI, enrichBranchesAndPRs, enhanceBranchesWithPRMongoIds, insertBranchesFromAPI } = require('./github_repos/branch_utils');
-const { fetchAllRepoPRsAPI, insertPRsFromAPI } = require('./github_repos/pr_utils');
+const { fetchAllRepoPRsAPI, enrichPRsWithFileList, insertPRsFromAPI } = require('./github_repos/pr_utils');
 const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github_repos/commit_utils');
 
 const { at } = require("lodash");
@@ -277,6 +277,21 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
         throw Error(`Error enrichingBranchesAndPRs - installationId, repositoryId, foundBranchList.length, foundPRList.length: ${installationId}, ${repositoryId}, ${foundBranchList.length}, ${foundPRList.length}`);
     }
 
+    // Query from Github & set fileList field on PRs
+    try {
+        foundPRList = await enrichPRsWithFileList(foundPRList, installationClient, installationId, repositoryObj.fullName, worker);
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    message: serializeError(err),
+                                                    errorDescription: `Error enrichPRsWithFileList - installationId, repositoryObj.fullName, foundPRList.length: ${installationId}, ${repositoryObj.fullName}, ${foundPRList.length}`,
+                                                    source: 'worker-instance',
+                                                    function: 'scrapeGithubRepoCommitsMixed'}
+                            });
+        throw Error(`Error enrichPRsWithFileList - installationId, repositoryObj.fullName, foundPRList.length: ${installationId}, ${repositoryObj.fullName}, ${foundPRList.length}`);
+    }
+
+
 
     // insertBranchesFromAPI
     var branchToPRMappingList;
@@ -361,6 +376,10 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
                             });
         throw Error(`Error fetching all repo commits - installationId, repositoryId, repoDiskPath: ${installationId}, ${repositoryObj._id.toString()}, ${repoDiskPath}`);
     }
+
+
+
+    // Associate Commits with PullRequests and Branches
     
 
 

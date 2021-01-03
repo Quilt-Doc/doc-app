@@ -93,6 +93,122 @@ const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, 
 }
 
 
+const enrichPRsWithFileList = async (foundPRList, installationClient, installationId, fullName, worker) => {
+
+    var enrichedPRList = [];
+
+    var fileListAPIRequestList = foundPRList.map( async (prObj) => {
+        enrichedPRList.push(await addFileListToPR(prObj, installationClient, installationId, fullName, worker));
+    });
+
+    try {
+        await Promise.all(fileListAPIRequestList);
+    }
+    catch (err) {
+        await worker.send({action: 'log', info: {level: 'error',
+                                                    message: serializeError(err),
+                                                    errorDescription: `fileListAPIRequestList, addFileListToPR failed - fullName, installationId, foundPRList.length: ${fullName}, ${installationId}, ${foundPRList.length}`,
+                                                    source: 'worker-instance',
+                                                    function: 'enrichPRsWithFileList'}});
+
+        throw new Error(`fileListAPIRequestList, addFileListToPR failed - fullName, installationId, foundPRList.length: ${fullName}, ${installationId}, ${foundPRList.length}`);
+    }
+
+    await worker.send({action: 'log', info: {
+        level: 'info',
+        message: `enrichPRsWithFileList - enrichedPRList[0]: ${JSON.stringify(enrichedPRList[0])}`,
+        source: 'worker-instance',
+        function: 'enrichPRsWithFileList',
+    }});
+
+
+    return enrichedPRList;
+
+}
+
+
+const addFileListToPR = async (foundPR, installationClient, installationId, fullName, worker) => {
+
+    var perPage = 100;
+    var pageNum = 0;
+
+    var fileListResponse;
+
+    // Default value of 10
+    var lastPageNum = 10;
+
+    var foundFileList = [];
+    var searchString;
+
+    while (pageNum < lastPageNum) {
+        try {
+            fileListResponse = await installationClient.get(`/repos/${fullName}/pulls/${foundPR.number}/files?per_page=${perPage}&page=${pageNum}`);
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {level: 'error',
+                                                        message: serializeError(err),
+                                                        errorDescription: `Github API List PR file list failed - installationId, fullName, foundPR.number: ${installationId}, ${fullName}, ${foundPR.number}`,
+                                                        source: 'worker-instance',
+                                                        function: 'addFileListToPR'}});
+
+            break;
+            // throw new Error(`Github API List Branches failed - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
+        }
+
+        // We've gotten all results
+        if (!fileListResponse.headers.link) {
+            pageNum = lastPageNum;
+        }
+
+        else {
+            var link = LinkHeader.parse(fileListResponse.headers.link);
+            
+            /*
+            await worker.send({action: 'log', info: {
+                level: 'info',
+                message: `fileListResponse.headers.link: ${JSON.stringify(link)}`,
+                source: 'worker-instance',
+                function: 'fetchAllRepoPRsAPI',
+            }});
+            */
+    
+    
+            var i;
+            for (i = 0; i < link.refs.length; i++) {
+                if (link.refs[i].rel == 'last') {
+                    searchString = parseUrl(link.refs[i].uri).search;
+    
+                    lastPageNum = queryString.parse(searchString).page;
+                    break;
+                }
+            }
+        }
+
+        if (fileListResponse.data.length < 1) {
+            break;
+        }
+
+        await worker.send({action: 'log', info: {
+            level: 'info',
+            message: `Adding fileListResponse.data.length: ${fileListResponse.data.length}`,
+            source: 'worker-instance',
+            function: 'addFileListToPR',
+        }});
+
+        pageNum += 1;
+
+        fileListResponse.data = fileListResponse.data.map(fileObj => fileObj.filename);
+
+        foundFileList.push(fileListResponse.data);
+    }
+
+    foundFileList = foundFileList.flat();
+    foundFileList = [...new Set(foundFileList)];
+
+    return Object.assign({}, foundPR, {fileList: foundFileList});
+}
+
+
 
 const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installationId, repositoryId, worker) => {
     var prObjectsToInsert = [];
@@ -140,6 +256,14 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
     */
 
 
+   await worker.send({action: 'log', info: {
+        level: 'info',
+        message: `insertPRsFromAPI received - foundPRList[0]: ${JSON.stringify(foundPRList[0])}`,
+        source: 'worker-instance',
+        function: 'insertPRsFromAPI',
+    }});
+
+
     // Attach the correct Branch Model ObjectId, if applicable
 
     foundPRList.map(prObj => {
@@ -160,8 +284,11 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
         prObjectsToInsert.push({
             installationId: installationId,
             repository: repositoryId,
+            fileList: prObj.fileList,
+
             branchLabelList: prObj.branchLabelList,
             branches: branchIdList,
+
 
             pullRequestId: prObj.id,
             number: prObj.number,
@@ -182,8 +309,11 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
 
             headRef: prObj.head.ref,
             headLabel: prObj.head.label,
+            headSha: prObj.head.sha,
+
             baseRef: prObj.base.ref,
             baseLabel: prObj.base.label,
+            baseSha: prObj.base.sha,
 
             draft: prObj.draft,
             merged: prObj.merged,
@@ -243,5 +373,6 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
 
 module.exports = {
     fetchAllRepoPRsAPI,
+    enrichPRsWithFileList,
     insertPRsFromAPI,
 }
