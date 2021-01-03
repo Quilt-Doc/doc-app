@@ -101,6 +101,7 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
     // Note: Currently, we will use branch LABELS ('user-name/branch-name') for distinction,
     // if there is a duplication in branch naming, then associations will be made to both branches
     
+    var initialBranchNum = foundBranchList.length;
     
     // Create a list of branch objects using the foundPRList
 
@@ -118,6 +119,9 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
 
         currentPRObj = foundPRList[i];
 
+
+        currentPRObj.branchLabelList = [];
+
         // Useful fields in these objects:
         // label - octocat:new-topic
         // ref - new-topic
@@ -125,6 +129,9 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
         // user: {}
         currentHead = currentPRObj.head;
         currentBase = currentPRObj.base;
+
+        currentPRObj.branchLabelList.push(currentHead.label);
+        currentPRObj.branchLabelList.push(currentBase.label);
 
         // If this head label not seen before, create branch object here
         if (!distinctBranchLabels.has(currentHead.label)) {
@@ -139,8 +146,6 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
                 pullRequestObjIdList: [currentPRObj.id],
             });
 
-            currentPRObj.branchLabelList = [currentHead.label];
-
         }
         // Add the pullRequestObjId to the existing branches' pullRequestObjIdList
         else {
@@ -149,9 +154,7 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
             var targetBranchIdx = branchObjectList.findIndex(e => e.label == currentHead.label);
 
             // Add currentHead.id to pullRequestObjIdList
-            branchObjectList[targetBranchIdx].pullRequestObjIdList.push(targetBranchIdx);
-
-            currentPRObj.branchLabelList.push(currentHead.label);
+            branchObjectList[targetBranchIdx].pullRequestObjIdList.push(currentPRObj.id);
 
         }
 
@@ -169,19 +172,16 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
                 pullRequestObjIdList: [currentPRObj.id],
             });
 
-            currentPRObj.branchLabelList = [currentBase.label];
         }
         // Add the pullRequestObjId to the existing branches' pullRequestObjIdList
         else {
             // Find the branch object whose label matches this one
             var targetBranchIdx = branchObjectList.findIndex(e => e.label == currentBase.label);
 
-            // Add currentHead.id to pullRequestObjIdList
-            branchObjectList[targetBranchIdx].pullRequestObjIdList.push(targetBranchIdx);
+            // Add currentPRObj.id.id to pullRequestObjIdList
+            branchObjectList[targetBranchIdx].pullRequestObjIdList.push(currentPRObj.id);
 
-            currentPRObj.branchLabelList.push(currentBase.label);
         }
-
     }
 
     // Merge foundBranchList with branchObjectList
@@ -207,9 +207,9 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
         }
 
         // If currentAPIBranch.commit.sha is not in matchingBranchObjects.map(branchObj => branchObj.lastCommit):
-            // Add currentAPIBranch to matchingBranchObjects
+            // Add currentAPIBranch to branchObjectList
         if ( !( matchingBranchObjects.map(branchObj => branchObj.lastCommit).includes(currentAPIBranch.commit.sha) ) ) {
-            matchingBranchObjects.push({
+            branchObjectList.push({
                 repository: repositoryId,
                 installationId: installationId,
                 ref: currentAPIBranch.name,
@@ -217,10 +217,16 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
                 lastCommit: currentAPIBranch.commit.sha,
             });
         }
-
     }
 
-    return [matchingBranchObjects, foundPRList];
+    await worker.send({action: 'log', info: {
+        level: 'info',
+        message: `Enriched foundBranchList - initialBranchNum -> branchObjectList.length: ${initialBranchNum} -> ${branchObjectList.length}`,
+        source: 'worker-instance',
+        function: 'enrichBranchesAndPRs',
+    }});
+
+    return [branchObjectList, foundPRList];
 
     // Create Objects from foundBranchesList
 
@@ -251,15 +257,29 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
 
 const enhanceBranchesWithPRMongoIds = async (prToBranchMapping, installationId, repositoryId, worker) => {
 
+
+    await worker.send({action: 'log', info: {
+        level: 'info',
+        message: `Adding PR ObjectIds to Branch Objects - prToBranchMapping: ${JSON.stringify(prToBranchMapping)}`,
+        source: 'worker-instance',
+        function: 'enhanceBranchesWithPRMongoIds',
+    }});
+
     var allUpdatePairs = [];
 
-    var i = 0;
-    for(i = 0; i < prToBranchMapping.length; i++) {
-        var k = 0;
-        for (k = 0; k < prToBranchMapping[i].branches; k++) {
-            allUpdatePairs.push({branchId: prToBranchMapping[i].branches[k].toString(), pullRequestId: prToBranchMapping[i]._id.toString()});
+    prToBranchMapping.map(prObj => {
+        var i = 0;
+        for(i = 0; i < prObj.branches.length; i++) {
+            allUpdatePairs.push({ branchId: prObj.branches[i].toString(), pullRequestId: prObj._id.toString() });
         }
-    }
+    });
+
+    await worker.send({action: 'log', info: {
+        level: 'info',
+        message: `Adding PR ObjectIds to Branch Objects - allUpdatePairs: ${JSON.stringify(allUpdatePairs)}`,
+        source: 'worker-instance',
+        function: 'enhanceBranchesWithPRMongoIds',
+    }});
 
     // create a list of operations for updating many docs with one db call
     let bulkWriteAssociateOps = allUpdatePairs.map((idPair) => {

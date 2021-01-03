@@ -296,7 +296,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
     // branchToPRMappingList
 
-
+    // Insert PRs with Branch ObjectsIds
     var prToBranchMapping;
     try {
         prToBranchMapping = await insertPRsFromAPI(foundPRList, branchToPRMappingList, installationId, repositoryId, worker);
@@ -312,6 +312,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
         throw Error(`Error inserting PRs from API - foundPRList.length, installationId, repositoryId: ${foundPRList.length}, ${installationId}, ${repositoryId}`);
     }
 
+    // Add PullRequest ObjectIds to Branch Objects
     try {
         await enhanceBranchesWithPRMongoIds(prToBranchMapping, installationId, repositoryId, worker);
     }
@@ -325,7 +326,6 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
         throw Error(`Error updating Branch Objects to have PullRequest ids- prToBranchMapping.length, installationId, repositoryId: ${prToBranchMapping.length}, ${installationId}, ${repositoryId}`);
     }
-
 
 
 
@@ -361,10 +361,6 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
                             });
         throw Error(`Error fetching all repo commits - installationId, repositoryId, repoDiskPath: ${installationId}, ${repositoryObj._id.toString()}, ${repoDiskPath}`);
     }
-
-
-
-
     
 
 

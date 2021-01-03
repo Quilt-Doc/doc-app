@@ -214,6 +214,14 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
         throw new Error(`Error bulk inserting PullRequests - prObjectsToInsert.length: ${prObjectsToInsert.length}`);
     }
 
+    await worker.send({action: 'log', info: {
+        level: 'info',
+        message: `InsertPRsFromAPI finding created PR objects - newPRIds.length: ${newPRIds.length}`,
+        source: 'worker-instance',
+        function: 'insertAllPRsFromAPI',
+    }});
+
+
 
     // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
     var createdPRObjects;
