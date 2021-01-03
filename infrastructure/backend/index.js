@@ -97,6 +97,7 @@ const nonAuthPaths = [
     "/api/example_route",
     "/api/pusher/webhook",
     "/api/integrations/create",
+    "/integrations/connect/trello",
 ];
 
 app.use(function (req, res, next) {

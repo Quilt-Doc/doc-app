@@ -106,13 +106,13 @@ handleTrelloConnectCallback = async (req, res) => {
     const workspaceId = workspace;
 
     const verifier = query.oauth_verifier;
-
+    e;
     oauth.getOAuthAccessToken(
         authorizeToken,
         authorizeTokenSecret,
         verifier,
         async (error, accessToken, accessTokenSecret, results) => {
-            // In a real app, the accessToken and accessTokenSecret should be stored
+            // In a real app, the accssToken and accessTokenSecret should be stored
 
             if (error) console.log("ERROR", err);
 
@@ -161,9 +161,10 @@ handleTrelloConnectCallback = async (req, res) => {
                 return boardResponse.data;
             });
 
+            /*
             quiltProductBoard = boards.filter(
                 (board) => board.name === "Quilt Product"
-            )[0];
+            )[0]; */
 
             /*
             await bulkScrapeTrello(trelloIntegration, [quiltProductBoard.id], 
