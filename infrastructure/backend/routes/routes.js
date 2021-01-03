@@ -720,6 +720,7 @@ app.post('/profile', function (req, res) {
 */
 //ASSOCIATION ROUTES ("TEST");
 const associationController = require("../controllers/associations/AssociationController");
+router.post("/associations/:repositoryId/get_file_context", associationController.getFileContext);
 
 //TRELLO INTEGRATION ROUTES
 const trelloIntegrationController = require("../controllers/integrations/trello/TrelloIntegrationController");
