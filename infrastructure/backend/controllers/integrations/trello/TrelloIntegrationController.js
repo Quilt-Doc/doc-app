@@ -188,7 +188,7 @@ bulkScrapeTrello = async (
     const workspaceId = workspace;
     const repositoryIds = repositories;
 
-    relevantLists = _.map(relevantLists, "name");
+    relevantLists = _.mapKeys(relevantLists, "name");
 
     let { boardIds, trelloConnectProfile } = trelloIntegration;
 
@@ -415,7 +415,7 @@ bulkScrapeTrello = async (
 
         let currentRepositories = await query.exec();
 
-        currentRepositories = _.map(currentRepositories, "fullName");
+        currentRepositories = _.mapKeys(currentRepositories, "fullName");
 
         Object.values(cards).map(async (card) => {
             let {
