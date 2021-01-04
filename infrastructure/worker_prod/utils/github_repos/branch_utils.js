@@ -155,6 +155,8 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
         // Add the pullRequestObjId to the existing branches' pullRequestObjIdList
         else {
 
+            // KARAN TODO: Compare the existing branch here with the new proposed branch, and keep the more recent branch
+
             // Find the branch object whose label matches this one
             var targetBranchIdx = branchObjectList.findIndex(e => e.label == currentHead.label);
 
@@ -180,6 +182,9 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
         }
         // Add the pullRequestObjId to the existing branches' pullRequestObjIdList
         else {
+
+            // KARAN TODO: Compare the existing branch here with the new proposed branch, and keep the more recent branch
+
             // Find the branch object whose label matches this one
             var targetBranchIdx = branchObjectList.findIndex(e => e.label == currentBase.label);
 
@@ -298,19 +303,22 @@ const enhanceBranchesWithPRMongoIds = async (prToBranchMapping, installationId, 
         })
     })
 
-    // mongoose bulkwrite for one many update db call
-    try {
-        await Branch.bulkWrite(bulkWriteAssociateOps);
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {
-            level: 'error',
-            message: serializeError(err),
-            errorDescription: `Failed to bulk add PullRequest Ids to Branch Objects -  idPair: ${JSON.stringify(idPair)}`,
-            source: 'worker-instance',
-            function: 'enhanceBranchesWithPRMongoIds',
-        }});
-        throw new Error(`Failed to bulk add PullRequest Ids to Branch Objects -  idPair: ${JSON.stringify(idPair)}`);
+    // Update only if associations between branches and PRs were actually found
+    if (bulkWriteAssociateOps.length > 0) {
+        // mongoose bulkwrite for one many update db call
+        try {
+            await Branch.bulkWrite(bulkWriteAssociateOps);
+        }
+        catch (err) {
+            await worker.send({action: 'log', info: {
+                level: 'error',
+                message: serializeError(err),
+                errorDescription: `Failed to bulk add PullRequest Ids to Branch Objects -  idPair: ${JSON.stringify(idPair)}`,
+                source: 'worker-instance',
+                function: 'enhanceBranchesWithPRMongoIds',
+            }});
+            throw new Error(`Failed to bulk add PullRequest Ids to Branch Objects -  idPair: ${JSON.stringify(idPair)}`);
+        }
     }
 }
 

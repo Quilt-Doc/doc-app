@@ -6,6 +6,11 @@
   "scripts": {
     "test": "jest -i"
   },
+  "jest": {
+    "testSequencer": "<rootDir>/__tests__config/sequencer.js",
+    "globalSetup": "<rootDir>/__tests__config/setup.js",
+    "globalTeardown": "<rootDir>/__tests__config/teardown.js"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {

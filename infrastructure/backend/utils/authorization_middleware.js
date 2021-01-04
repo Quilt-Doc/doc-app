@@ -185,7 +185,8 @@ const repositoryMiddleware = async (req, res, next) => {
         requestedPath.includes('/repositories/init') ||
         requestedPath.includes('/repositories/update') ||
         requestedPath.includes('/repositories/job_retrieve') ||
-        requestedPath.includes('/repositories/remove_installation')
+        requestedPath.includes('/repositories/remove_installation') ||
+        requestedPath.includes('/repositories/test/retrieve')
         ) {
         
         if (requesterRole == 'dev') {

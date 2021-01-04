@@ -35,7 +35,7 @@ var dbRoute = `mongodb+srv://${user}:${password}@docapp-cluster-hnftq.mongodb.ne
 console.log(process.env.USE_EXTERNAL_DB);
 
 if (process.env.USE_EXTERNAL_DB == 0) {
-    dbRoute = "mongodb://127.0.0.1:27017?retryWrites=true&w=majority";
+  dbRoute = "mongodb://127.0.0.1:27017?retryWrites=true&w=majority";
 }
 console.log(dbRoute);
 
@@ -74,129 +74,129 @@ app.use(passport.initialize());
 // app.use(cors({credentials: true}));
 
 app.use(
-    cors({
-        // allow server to accept request from different origin
-        origin: true, // ['http://localhost:3000', 'https://getquilt.app', 'https://www.getquilt.app'],
-        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-        credentials: true, // allow session cookie from browser to pass through
-    })
+  cors({
+    // allow server to accept request from different origin
+    origin: true, // ['http://localhost:3000', 'https://getquilt.app', 'https://www.getquilt.app'],
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true, // allow session cookie from browser to pass through
+  })
 );
 
 const nonAuthPaths = [
-    "/pusher/vscode/auth",
-    "/auth/login/success",
-    "/auth/login/failed",
-    "/auth/jira",
-    "/auth/github",
-    "/api/auth/github",
-    "/auth/github/redirect",
-    "/api/verify/",
-    "/auth/github/fork",
-    "/api/auth/github/fork",
-    "/api/testRoute",
-    "/api/example_route",
-    "/api/pusher/webhook",
-    "/api/integrations/create",
+  "/pusher/vscode/auth",
+  "/auth/login/success",
+  "/auth/login/failed",
+  "/auth/jira",
+  "/auth/github",
+  "/api/auth/github",
+  "/auth/github/redirect",
+  "/api/verify/",
+  "/auth/github/fork",
+  "/api/auth/github/fork",
+  "/api/testRoute",
+  "/api/example_route",
+  "/api/pusher/webhook",
+  "/api/integrations/create",
 ];
 
 app.use(function (req, res, next) {
-    req.path = req.path.trim();
-    console.log("REQ PATH", req.path);
-    const authHeader = req.headers.authorization;
+  req.path = req.path.trim();
+  console.log("REQ PATH", req.path);
+  const authHeader = req.headers.authorization;
 
-    var isNonAuthPath = false;
-    var i;
+  var isNonAuthPath = false;
+  var i;
 
-    // Check if nonAuth API call
-    for (i = 0; i < nonAuthPaths.length; i++) {
-        if (req.path.includes(nonAuthPaths[i])) {
-            isNonAuthPath = true;
-            break;
-        }
+  // Check if nonAuth API call
+  for (i = 0; i < nonAuthPaths.length; i++) {
+    if (req.path.includes(nonAuthPaths[i])) {
+      isNonAuthPath = true;
+      break;
     }
+  }
 
-    // Check if asset call
-    if (
-        req.path.includes("/assets") ||
-        req.path.includes("/integrations/trello")
-    ) {
-        isNonAuthPath = true;
-    }
+  // Check if asset call
+  if (
+    req.path.includes("/assets") ||
+    req.path.includes("/integrations/trello")
+  ) {
+    isNonAuthPath = true;
+  }
 
-    if (isNonAuthPath) {
-        next();
-        return;
-    }
-
-    // Get token
-    var token = undefined;
-    if (authHeader) {
-        token = authHeader.split(" ")[1];
-    } else if (req.cookies["user-jwt"]) {
-        token = req.cookies["user-jwt"];
-    } else {
-        return res.status(401).json({
-            authenticated: false,
-            message: "user has not been authenticated",
-        });
-    }
-
-    var publicKey = fs.readFileSync("docapp-test-public.pem", "utf8");
-    try {
-        var decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
-
-        req.tokenPayload = decoded;
-    } catch (err) {
-        console.log("JWT Verify Failed Error: ");
-        console.log(err);
-        return res.status(403);
-    }
-
+  if (isNonAuthPath) {
     next();
+    return;
+  }
+
+  // Get token
+  var token = undefined;
+  if (authHeader) {
+    token = authHeader.split(" ")[1];
+  } else if (req.cookies["user-jwt"]) {
+    token = req.cookies["user-jwt"];
+  } else {
+    return res.status(401).json({
+      authenticated: false,
+      message: "user has not been authenticated",
+    });
+  }
+
+  var publicKey = fs.readFileSync("docapp-test-public.pem", "utf8");
+  try {
+    var decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
+
+    req.tokenPayload = decoded;
+  } catch (err) {
+    console.log("JWT Verify Failed Error: ");
+    console.log(err);
+    return res.status(403);
+  }
+
+  next();
 });
 
 var routes = require("./routes/routes");
 app.use("/api", routes);
 
 const authCheck = (req, res, next) => {
-    if (!req.user) {
-        res.status(401).json({
-            authenticated: false,
-            message: "user has not been authenticated",
-        });
-    } else {
-        next();
-    }
+  if (!req.user) {
+    res.status(401).json({
+      authenticated: false,
+      message: "user has not been authenticated",
+    });
+  } else {
+    next();
+  }
 };
 
 // if it's already login, send the profile response,
 // otherwise, send a 401 response that the user is not authenticated
 // authCheck before navigating to home page
 app.get("/", authCheck, (req, res) => {
-    return res.status(200).json({
-        authenticated: true,
-        message: "user successfully authenticated",
-        user: req.user,
-        cookies: req.cookies,
-    });
+  return res.status(200).json({
+    authenticated: true,
+    message: "user successfully authenticated",
+    user: req.user,
+    cookies: req.cookies,
+  });
 });
 
 if (process.env.IS_PRODUCTION) {
-    setupESConnection().then(() => {
-        app.listen(API_PORT, "0.0.0.0", () =>
-            logger.info({
-                source: "backend-api",
-                message: `Listening on port ${API_PORT}`,
-                function: "index.js",
-            })
-        );
-    });
-} else {
+  setupESConnection().then(() => {
     app.listen(API_PORT, "0.0.0.0", () =>
-        logger.debug({
-            source: "backend-api",
-            message: `Listening on port ${API_PORT}`,
-            function: "index.js",
-        })
+      logger.info({
+        source: "backend-api",
+        message: `Listening on port ${API_PORT}`,
+        function: "index.js",
+      })
     );
+  });
+} else {
+  app.listen(API_PORT, "0.0.0.0", () =>
+    logger.debug({
+      source: "backend-api",
+      message: `Listening on port ${API_PORT}`,
+      function: "index.js",
+    })
+  );
 }

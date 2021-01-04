@@ -1,20 +1,6 @@
 require('dotenv').config();
-const api = require('../apis/api');
 
-const utils = require('../__tests__config/utils');
 
-// var createdWorkspaceId;
-// var createdRepositoryIds;
-
-const MAX_WORKSPACE_POLL_RETRIES = 4;
-
-function delay(t, val) {
-    return new Promise(function(resolve) {
-        setTimeout(function() {
-            resolve(val);
-        }, t);
-    });
-}
 
 
 describe("Create Workspace", () => {
@@ -154,19 +140,3 @@ describe("Create Workspace", () => {
     });
 
 });
-
-
-/*
-describe("Scan Repositories", async () => {
-
-});
-*/
-
-/*
-describe("Filter function", () => {
-    test("it should filter by a search term (link)", () => {
-      expect(1==1).toEqual(true);
-    });
-});
-*/
-

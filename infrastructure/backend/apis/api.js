@@ -28,6 +28,7 @@ const requestTestingUserBackendClient = () => {
 
 const requestTestingDevBackendClient = () => {
     const axios = require('axios');
+    console.log(`Creating testing dev client - testingApiEndpoint: ${testingApiEndpoint}`);
     return axios.create({
         baseURL: testingApiEndpoint,
         headers: {

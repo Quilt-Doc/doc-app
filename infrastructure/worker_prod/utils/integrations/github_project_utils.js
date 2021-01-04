@@ -99,6 +99,10 @@ scrapeGithubRepoProjects = async (installationId, repositoryId, installationClie
             throw new Error(`GithubProject insertMany failed - bulkGithubProjectInsertList: ${JSON.stringify(bulkGithubProjectInsertList)}`);
         }
     }
+    // No Github Projects found, return from method
+    else {
+        return;
+    }
 
     // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
     var createdGithubProjects;

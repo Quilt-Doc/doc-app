@@ -12,7 +12,7 @@ let trelloConnectProfileSchema = new Schema({
 
     accessToken: {type: String, index: true},
     accessTokenSecret: String
-    
+
 });
 
 let TrelloConnectProfile = mongoose.model("TrelloConnectProfile",trelloConnectProfileSchema);

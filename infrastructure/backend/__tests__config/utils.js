@@ -4,7 +4,7 @@ const api = require('../apis/api');
 
 
 // TODO: Get the repositoryIds from this
-const initializeRepositories = async () => {
+const fetchRepositories = async () => {
 
     var backendClient = api.requestTestingDevBackendClient();
 
@@ -16,14 +16,14 @@ const initializeRepositories = async () => {
             icon: defaultIcon,
         },
         {
-            fullName: 'kgodara-testing/hamecha',
+            fullName: 'kgodara-testing/doc-app',
             installationId: process.env.TESTING_INSTALLATION_ID,
             icon: defaultIcon,
         },
     ];
 
 
-    var requestPromiseList = repositoryCreateData.map(postDataObj => backendClient.post("/repositories/init", postDataObj));
+    var requestPromiseList = repositoryCreateData.map(postDataObj => backendClient.post("/repositories/:workspaceId/retrieve", postDataObj));
 
     var results;
     try {
@@ -35,7 +35,9 @@ const initializeRepositories = async () => {
     }
 
     // createdRepositoryIds
-    return results.map(response => response.data.result._id);
+    return results.map(response => {
+        return { _id: response.data.result._id, fullName: response.data.result.fullName}
+    });
 
 }
 
@@ -47,7 +49,7 @@ const deleteRepositories = async (createdWorkspaceId, createdRepositoryIds) => {
     /repositories/:workspaceId/delete/:repositoryId
     */
 
-   var repositoryDeleteRoutes = createdRepositoryIds.map(repositoryId => `/repositories/${createdWorkspaceId}/delete/${repositoryId}`);
+   var repositoryDeleteRoutes = createdRepositoryIds.map(repositoryId => `/repositories/delete_test/${repositoryId}`);
 
 
     var requestPromiseList = repositoryDeleteRoutes.map(deleteDataRoute => backendClient.delete(deleteDataRoute));
@@ -112,7 +114,7 @@ const fetchWorkspace = async () => {
 }
 
 module.exports = {
-    initializeRepositories,
+    fetchRepositories,
     deleteRepositories,
     createWorkspace,
     deleteWorkspace,
