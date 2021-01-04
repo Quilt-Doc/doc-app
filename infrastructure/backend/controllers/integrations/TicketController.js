@@ -1,4 +1,4 @@
-const Ticket = require("../../models/integrations_fs/Ticket");
+const Ticket = require("../../models/integrations/Ticket");
 
 retrieveTickets = async (req, res) => {
     const { workspaceId } = req.params;

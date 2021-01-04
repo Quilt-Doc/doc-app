@@ -11,16 +11,18 @@ const logger = require("../../../logging/index").logger;
 const jobs = require("../../../apis/jobs");
 const jobConstants = require("../../../constants/index").jobs;
 
-const TrelloIntegration = require("../../../models/integrations_fs/trello/TrelloIntegration");
-const TrelloConnectProfile = require("../../../models/integrations_fs/trello/TrelloConnectProfile");
+const TrelloIntegration = require("../../../models/integrations/trello/TrelloIntegration");
+const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
 
-const IntegrationUser = require("../../../models/integrations_fs/integration_objects/IntegrationUser");
-const IntegrationTicket = require("../../../models/integrations_fs/integration_objects/IntegrationTicket");
-const IntegrationBoard = require("../../../models/integrations_fs/integration_objects/IntegrationBoard");
-const IntegrationColumn = require("../../../models/integrations_fs/integration_objects/IntegrationColumn");
-const IntegrationEvent = require("../../../models/integrations_fs/integration_objects/IntegrationEvent");
-const IntegrationLabel = require("../../../models/integrations_fs/integration_objects/IntegrationLabel");
-const IntegrationAttachment = require("../../../models/integrations_fs/integration_objects/IntegrationAttachment");
+const IntegrationUser = require("../../../models/integrations/integration_objects/IntegrationUser");
+const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationColumn = require("../../../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationEvent = require("../../../models/integrations/integration_objects/IntegrationEvent");
+const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
+
+const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
 
 const {
     TRELLO_API_KEY,
@@ -55,11 +57,102 @@ const trelloAPI = axios.create({
     baseURL: "https://api.trello.com",
 });
 
+getTrelloConnectProfile = async (req, res) => {
+    const { userId, workspaceId } = req.params;
+
+    let profile;
+
+    console.log("USERID", userId);
+
+    try {
+        profile = await TrelloConnectProfile.findOne({
+            user: userId,
+            isReady: true,
+        })
+            .lean()
+            .exec();
+    } catch (err) {
+        console.log("ERROR", err);
+        return res.json({
+            success: false,
+            error: "getTrelloConnectProfile Error: Find query failed",
+            trace: err,
+        });
+    }
+
+    if (!profile) return res.json({ success: true, result: null });
+
+    const { accessToken, sourceId: memberId } = profile;
+
+    let boardsReponse;
+
+    try {
+        boardsReponse = await trelloAPI.get(
+            `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name`
+        );
+    } catch (err) {
+        console.log("ERROR", err);
+
+        return res.json({
+            success: false,
+            error:
+                "getTrelloConnectProfile Error: trello board API request failed",
+            trace: err,
+        });
+    }
+
+    let boards = boardsReponse.data;
+
+    console.log("BOARDS", boards);
+
+    let boardContexts;
+
+    try {
+        boardContexts = await BoardWorkspaceContext.find({
+            workspace: workspaceId,
+        })
+            .lean()
+            .select("board")
+            .populate("board")
+            .exec();
+    } catch (err) {
+        return res.json({
+            success: false,
+            error:
+                "getTrelloConnectProfile Error: board context response query failed",
+            trace: err,
+        });
+    }
+
+    console.log("BOARD CONTEXTS", boardContexts);
+
+    const integratedBoardIds = new Set(
+        boardContexts.map((context) => {
+            const { board } = context;
+
+            const { sourceId } = board;
+
+            return sourceId;
+        })
+    );
+
+    console.log("Integrated Board Ids", integratedBoardIds);
+
+    boards = boards.filter((board) => {
+        const { id } = board;
+
+        return !integratedBoardIds.has(id);
+    });
+
+    console.log("FINAL BOARDS", boards);
+
+    return res.json({ success: true, result: boards });
+};
+
 beginTrelloConnect = async (req, res) => {
-    const { user_id, workspace_id } = req.query;
+    const { user_id } = req.query;
 
     const userId = user_id;
-    const workspaceId = workspace_id;
 
     await oauth.getOAuthRequestToken(
         async (error, token, tokenSecret, results) => {
@@ -67,11 +160,16 @@ beginTrelloConnect = async (req, res) => {
                 console.log("ERROR", error);
             }
 
+            try {
+                await TrelloConnectProfile.deleteMany({ user: userId });
+            } catch (err) {
+                console.log("ERROR", err);
+            }
+
             let trelloConnectProfile = new TrelloConnectProfile({
                 authorizeToken: token,
                 authorizeTokenSecret: tokenSecret,
                 user: ObjectId(userId),
-                workspace: ObjectId(workspaceId),
             });
 
             try {
@@ -81,7 +179,7 @@ beginTrelloConnect = async (req, res) => {
             }
 
             res.redirect(
-                `${authorizeURL}?oauth_token=${token}&name=${appName}&scope=${scope}&expiration=${expiration}`
+                `${authorizeURL}?oauth_token=${token}&name=${appName}&scope=${scope}&expiration=${expiration}&state=bing`
             );
         }
     );
@@ -89,6 +187,9 @@ beginTrelloConnect = async (req, res) => {
 
 handleTrelloConnectCallback = async (req, res) => {
     const query = url.parse(req.url, true).query;
+
+    console.log("QUERY", query);
+
     const token = query.oauth_token;
 
     let trelloConnectProfile;
@@ -101,16 +202,9 @@ handleTrelloConnectCallback = async (req, res) => {
         console.log("ERROR", err);
     }
 
-    const {
-        authorizeToken,
-        authorizeTokenSecret,
-        user,
-        workspace,
-    } = trelloConnectProfile;
+    const { authorizeToken, authorizeTokenSecret, user } = trelloConnectProfile;
 
     // NOT POPULATED SO THEY ARE IDS
-    const userId = user;
-    const workspaceId = workspace;
 
     const verifier = query.oauth_verifier;
 
@@ -119,12 +213,22 @@ handleTrelloConnectCallback = async (req, res) => {
         authorizeTokenSecret,
         verifier,
         async (error, accessToken, accessTokenSecret, results) => {
-            // In a real app, the accessToken and accessTokenSecret should be stored
-
             if (error) console.log("ERROR", err);
+
+            const response = await trelloAPI.get(
+                `/1/members/me/?key=${TRELLO_API_KEY}&token=${accessToken}`
+            );
+
+            console.log("MEMBER RESPONSE", response.data);
+
+            const {
+                data: { id },
+            } = response;
 
             trelloConnectProfile.accessToken = accessToken;
             trelloConnectProfile.accessTokenSecret = accessTokenSecret;
+            trelloConnectProfile.sourceId = id;
+            trelloConnectProfile.isReady = true;
 
             try {
                 trelloConnectProfile = await trelloConnectProfile.save();
@@ -132,13 +236,29 @@ handleTrelloConnectCallback = async (req, res) => {
                 console.log("ERROR", err);
             }
 
-            const response = await trelloAPI.get(
-                `/1/members/me/?key=${TRELLO_API_KEY}&token=${accessToken}`
-            );
-            const {
-                data: { id, idBoards },
-            } = response;
+            console.log("FINAL TRELLO CONNECT PROFILE", trelloConnectProfile);
 
+            return res.redirect("http://getquilt.app");
+            /*
+            let boardsReponse;
+
+            try {
+                boardsReponse = await trelloAPI.get(
+                    `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name`
+                );
+            } catch (err) {
+                return res.json({
+                    success: false,
+                    error:
+                        "handleTrelloConnectCallback Error: trello board API request failed",
+                    trace: err,
+                });
+            }
+
+            let boards = boardsReponse.data;
+
+            return { success: true, result: boards };*/
+            /*
             let trelloIntegration = new TrelloIntegration({
                 boardIds: idBoards,
                 profileId: id,
@@ -572,4 +692,5 @@ bulkScrapeTrello = async (
 module.exports = {
     beginTrelloConnect,
     handleTrelloConnectCallback,
+    getTrelloConnectProfile,
 };

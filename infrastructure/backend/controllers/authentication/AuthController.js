@@ -24,7 +24,7 @@ const jobs = require("../../apis/jobs");
 const fs = require("fs");
 var jwt = require("jsonwebtoken");
 const GithubAuthProfile = require("../../models/authentication/GithubAuthProfile");
-const JiraSite = require("../../models/integrations_fs/jira/JiraSite");
+const JiraSite = require("../../models/integrations/jira/JiraSite");
 
 const constants = require("../../constants");
 
@@ -46,7 +46,7 @@ const pusher = new Pusher({
     useTLS: true,
 });
 
-const { checkValid } = require('../../utils/utils');
+const { checkValid } = require("../../utils/utils");
 
 // TODO: Change just to validate JWT
 loginSuccess = async (req, res) => {

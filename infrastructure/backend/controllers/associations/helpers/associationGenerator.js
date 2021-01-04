@@ -2,10 +2,10 @@
 const PullRequest = require("../../../models/PullRequest");
 const Branch = require("../../../models/Branch");
 const Commit = require("../../../models/Commit");
-const GithubIssue = require("../../../models/integrations/GithubIssue");
+const GithubIssue = require("../../../models/integrations/github/GithubIssue");
 
 //integrations
-const TrelloIntegration = require("../../../models/integrations_fs/trello/TrelloIntegration");
+const TrelloIntegration = require("../../../models/integrations/trello/TrelloIntegration");
 
 class AssociationGenerator {
     tickets = [];

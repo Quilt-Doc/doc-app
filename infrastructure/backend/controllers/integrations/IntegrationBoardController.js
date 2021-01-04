@@ -1,12 +1,11 @@
-const GithubProject = require('../../models/integrations_fs/github/GithubProject');
+const GithubProject = require("../../models/integrations/github/GithubProject");
 
-
-var mongoose = require('mongoose');
+var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const logger = require('../logging/index').logger;
+const logger = require("../logging/index").logger;
 
-const { checkValid } = require('../../utils/utils');
+const { checkValid } = require("../../utils/utils");
 
 /*
     repositoryId: { type: ObjectId, ref: 'Repository', required: true },
@@ -22,15 +21,27 @@ const { checkValid } = require('../../utils/utils');
 */
 
 createGithubProject = async (req, res) => {
-    const { repositoryFullName, projectId, projectNumber, projectColumnsUrl,
-            projectName, projectBody, projectState, installationId } = req.body;
+    const {
+        repositoryFullName,
+        projectId,
+        projectNumber,
+        projectColumnsUrl,
+        projectName,
+        projectBody,
+        projectState,
+        installationId,
+    } = req.body;
 
-    const source = 'github';
+    const source = "github";
 
-    if (!checkValid(repositoryFullName)) return res.json({success: false, error: 'no integrationBoard repositoryFullName provided'});
-    if (!checkValid(projectId)) return res.json({success: false, error: 'no integrationBoard projectId provided'});
-
-
-
-
-}
+    if (!checkValid(repositoryFullName))
+        return res.json({
+            success: false,
+            error: "no integrationBoard repositoryFullName provided",
+        });
+    if (!checkValid(projectId))
+        return res.json({
+            success: false,
+            error: "no integrationBoard projectId provided",
+        });
+};
