@@ -6,9 +6,10 @@ const integrationAttachmentSchema = new Schema({
     created: { type: Date, default: Date.now },
 
     //MOST IMPORTANT:
-    modelName: String,
+    modelType: String,
     sourceId: String,
     repository: { type: ObjectId, ref: "Repository" },
+    isAssociation: { type: Boolean, default: false },
 
     link: String,
     sourceCreationDate: Date,

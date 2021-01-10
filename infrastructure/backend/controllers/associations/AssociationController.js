@@ -135,13 +135,14 @@ generateAssociations = async (integrationId, integrationType) => {
         integrationType
     );
 
+    /*
     const likelyGenerator = new LikelyAssociationGenerator(
         integrationId,
         integrationType
-    );
+    );*/
 
     await Promise.all([
-        likelyGenerator.generateLikelyAssociations(),
+        // likelyGenerator.generateLikelyAssociations(),
         directGenerator.generateDirectAssociations(),
     ]);
 };
