@@ -7,7 +7,7 @@ const boardWorkspaceContextSchema = new Schema({
     board: { type: ObjectId, ref: "IntegrationBoard" },
     workspace: { type: ObjectId, ref: "Workspace" },
     repositories: [{ type: ObjectId, ref: "Repository" }],
-    events: [{ type: ObjectId, ref: "IntegrationEvent" }],
+    events: { type: ObjectId, ref: "IntegrationEvent" },
     creator: [{ type: ObjectId, ref: "User" }],
     type: String,
 });
