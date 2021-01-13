@@ -1,42 +1,44 @@
-const fs = require('fs');
+const fs = require("fs");
 
-const apis = require('../apis/api');
+const apis = require("../apis/api");
 
+require("dotenv").config();
 
-require('dotenv').config();
+const constants = require("../constants/index");
 
-const constants = require('../constants/index');
+const JiraSite = require("../models/integrations/jira/JiraSite");
+const JiraProject = require("../models/integrations/jira/JiraProject");
+const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
 
-const JiraSite = require('../models/integrations_fs/jira/JiraSite');
-const JiraProject = require('../models/integrations_fs/jira/JiraProject');
-const IntegrationTicket = require('../models/integrations_fs/integration_objects/IntegrationTicket');
-
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const {serializeError, deserializeError} = require('serialize-error');
-
+const { serializeError, deserializeError } = require("serialize-error");
 
 let db = mongoose.connection;
 
 const getJiraSiteObj = async (jiraSiteId) => {
-    
     var jiraSiteObj;
     try {
-        jiraSiteObj = await JiraSite.findById(ObjectId(jiraSiteId)).lean().exec();
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    source: 'worker-instance',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching JiraSite - jiraSiteId: ${jiraSiteId}`,
-                                                    function: 'getJiraSiteObj'}});
+        jiraSiteObj = await JiraSite.findById(ObjectId(jiraSiteId))
+            .lean()
+            .exec();
+    } catch (err) {
+        await worker.send({
+            action: "log",
+            info: {
+                level: "error",
+                source: "worker-instance",
+                message: serializeError(err),
+                errorDescription: `Error fetching JiraSite - jiraSiteId: ${jiraSiteId}`,
+                function: "getJiraSiteObj",
+            },
+        });
 
         throw Error(`Error fetching JiraSite - jiraSiteId: ${jiraSiteId}`);
     }
     return jiraSiteObj;
-
-}
+};
 
 
 
@@ -182,18 +184,19 @@ const getJiraSiteProjects = async (jiraCloudIds, jiraApiClientList) => {
 
 
 const importJiraIssues = async () => {
-
-    var worker = require('cluster').worker;
+    var worker = require("cluster").worker;
 
     var jiraSiteId = process.env.jiraSiteId;
-    
+
     var jiraSite = await getJiraSiteObj(jiraSiteId);
 
     var workspaceId = jiraSite.workspace.toString();
 
     var jiraCloudIds = jiraSite.cloudIds;
 
-    var jiraApiClientList = jiraCloudIds.map( cloudId => apis.requestJiraClient( cloudId , jiraSite.accessToken));
+    var jiraApiClientList = jiraCloudIds.map((cloudId) =>
+        apis.requestJiraClient(cloudId, jiraSite.accessToken)
+    );
 
 
 
@@ -210,23 +213,28 @@ const importJiraIssues = async () => {
     // Get the projects associated with each cloudId
 
     var projectSearchRequestList = jiraCloudIds.map(async (cloudId, idx) => {
-
         var projectListResponse;
         var jiraSiteApiClient = jiraApiClientList[idx];
 
         // GET /rest/api/3/project/search
         try {
-            projectListResponse = await jiraSiteApiClient.get('/project/search');
-        }
-        catch (err) {
+            projectListResponse = await jiraSiteApiClient.get(
+                "/project/search"
+            );
+        } catch (err) {
             console.log(err);
-            return {error: 'Error', cloudId};
+            return { error: "Error", cloudId };
         }
         if (idx == 0) {
-            await worker.send({action: 'log', info: {level: 'info', 
+            await worker.send({
+                action: "log",
+                info: {
+                    level: "info",
                     message: `projectListResponse.data.length: ${projectListResponse.data.length}`,
-                    source: 'worker-instance',
-                    function:'importJiraIssues', }});
+                    source: "worker-instance",
+                    function: "importJiraIssues",
+                },
+            });
         }
         return { projectData: projectListResponse.data, cloudId };
     });
@@ -235,26 +243,41 @@ const importJiraIssues = async () => {
     var projectListResults;
     try {
         projectListResults = await Promise.allSettled(projectSearchRequestList);
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    source: 'worker-instance',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching project list - cloudIds: ${JSON.stringify(cloudIds)}`,
-                                                    function: 'importJiraIssues'}});
+    } catch (err) {
+        await worker.send({
+            action: "log",
+            info: {
+                level: "error",
+                source: "worker-instance",
+                message: serializeError(err),
+                errorDescription: `Error fetching project list - cloudIds: ${JSON.stringify(
+                    cloudIds
+                )}`,
+                function: "importJiraIssues",
+            },
+        });
         throw err;
     }
 
     // Non-error responses
-    var validResults = projectListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
+    var validResults = projectListResults.filter(
+        (resultObj) => resultObj.value && !resultObj.value.error
+    );
 
     // Error responses
-    var invalidResults = projectListResults.filter(resultObj => resultObj.value && resultObj.value.error);
+    var invalidResults = projectListResults.filter(
+        (resultObj) => resultObj.value && resultObj.value.error
+    );
 
-    await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `projectListResults validResults.length: ${validResults.length}`,
-                                                source: 'worker-instance',
-                                                function:'importJiraIssues'}});
+    await worker.send({
+        action: "log",
+        info: {
+            level: "info",
+            message: `projectListResults validResults.length: ${validResults.length}`,
+            source: "worker-instance",
+            function: "importJiraIssues",
+        },
+    });
 
     var jiraProjectsToCreate = [];
     var currentResult;
@@ -319,16 +342,28 @@ const importJiraIssues = async () => {
 
     var insertedJiraProjects;
     try {
-        insertedJiraProjects = await JiraProject.insertMany(jiraProjectsToCreate);
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    source: 'worker-instance',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`,
-                                                    function: 'importJiraIssues'}});
+        insertedJiraProjects = await JiraProject.insertMany(
+            jiraProjectsToCreate
+        );
+    } catch (err) {
+        await worker.send({
+            action: "log",
+            info: {
+                level: "error",
+                source: "worker-instance",
+                message: serializeError(err),
+                errorDescription: `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(
+                    insertedJiraProjects
+                )}`,
+                function: "importJiraIssues",
+            },
+        });
 
-        throw new Error(`Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`);
+        throw new Error(
+            `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(
+                insertedJiraProjects
+            )}`
+        );
     }
 
 
@@ -351,76 +386,116 @@ const importJiraIssues = async () => {
 
     // Query for the tickets relevant to each project
 
+    var issueSearchRequestList = insertedJiraProjects.map(
+        async (jiraProjectObj, idx) => {
+            var issueListResponse;
 
-    var issueSearchRequestList = insertedJiraProjects.map(async (jiraProjectObj, idx) => {
+            // Get appropriate client by matching cloudId
+            var jiraIssueApiClient;
 
-        var issueListResponse;
+            await worker.send({
+                action: "log",
+                info: {
+                    level: "info",
+                    message: `jiraApiClientList[0].defaults.baseURL: ${JSON.stringify(
+                        jiraApiClientList[0].defaults.baseURL
+                    )}`,
+                    source: "worker-instance",
+                    function: "importJiraIssues",
+                },
+            });
 
-        // Get appropriate client by matching cloudId
-        var jiraIssueApiClient;
-
-        await worker.send({action: 'log', info: {level: 'info', 
-                                                    message: `jiraApiClientList[0].defaults.baseURL: ${JSON.stringify(jiraApiClientList[0].defaults.baseURL)}`,
-                                                    source: 'worker-instance',
-                                                    function:'importJiraIssues'}});
-
-        for (i = 0; i < jiraApiClientList.length; i++) {
-            if (jiraApiClientList[i].defaults.baseURL.includes(jiraProjectObj.cloudId)) {
-                jiraIssueApiClient = jiraApiClientList[i];
+            for (i = 0; i < jiraApiClientList.length; i++) {
+                if (
+                    jiraApiClientList[i].defaults.baseURL.includes(
+                        jiraProjectObj.cloudId
+                    )
+                ) {
+                    jiraIssueApiClient = jiraApiClientList[i];
+                }
             }
-        }
 
-        // jiraIssueResponse = await jiraApiClient.get('/search?jql=project=QKC&maxResults=1000');
-        try {
-            issueListResponse = await jiraIssueApiClient.get(`/search?jql=project=${jiraProjectObj.key}&maxResults=1000`);
+            // jiraIssueResponse = await jiraApiClient.get('/search?jql=project=QKC&maxResults=1000');
+            try {
+                issueListResponse = await jiraIssueApiClient.get(
+                    `/search?jql=project=${jiraProjectObj.key}&maxResults=1000`
+                );
+            } catch (err) {
+                console.log(err);
+                return { error: "Error", cloudId: jiraProjectObj.cloudId };
+            }
+            if (idx < 1) {
+                await worker.send({
+                    action: "log",
+                    info: {
+                        level: "info",
+                        message: `issueListResponse.data.issues: ${JSON.stringify(
+                            issueListResponse.data.issues
+                        )}`,
+                        source: "worker-instance",
+                        function: "importJiraIssues",
+                    },
+                });
+            }
+            return {
+                issueData: issueListResponse.data.issues,
+                siteId: jiraProjectObj.jiraSiteId,
+                cloudId: jiraProjectObj.cloudId,
+                projectId: jiraProjectObj._id.toString(),
+            };
         }
-        catch (err) {
-            console.log(err);
-            return {error: 'Error', cloudId: jiraProjectObj.cloudId};
-        }
-        if (idx < 1) {
-            await worker.send({action: 'log', info: {level: 'info', 
-                    message: `issueListResponse.data.issues: ${JSON.stringify(issueListResponse.data.issues)}`,
-                    source: 'worker-instance',
-                    function:'importJiraIssues', }});
-        }
-        return { issueData: issueListResponse.data.issues, siteId: jiraProjectObj.jiraSiteId, cloudId: jiraProjectObj.cloudId, projectId: jiraProjectObj._id.toString() };
-    });
+    );
 
     // Execute all requests
     var issueListResults;
     try {
         issueListResults = await Promise.allSettled(issueSearchRequestList);
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    source: 'worker-instance',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching issue list - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`,
-                                                    function: 'importJiraIssues'}});
+    } catch (err) {
+        await worker.send({
+            action: "log",
+            info: {
+                level: "error",
+                source: "worker-instance",
+                message: serializeError(err),
+                errorDescription: `Error fetching issue list - insertedJiraProjects: ${JSON.stringify(
+                    insertedJiraProjects
+                )}`,
+                function: "importJiraIssues",
+            },
+        });
         throw err;
     }
 
     // Non-error responses
-    var issueValidResults = issueListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
+    var issueValidResults = issueListResults.filter(
+        (resultObj) => resultObj.value && !resultObj.value.error
+    );
 
     // Error responses
-    var issueInvalidResults = issueListResults.filter(resultObj => resultObj.value && resultObj.value.error);
+    var issueInvalidResults = issueListResults.filter(
+        (resultObj) => resultObj.value && resultObj.value.error
+    );
 
-    await worker.send({action: 'log', info: {level: 'info', 
-                                                message: `issueListResults issueValidResults.length: ${issueValidResults.length}`,
-                                                source: 'worker-instance',
-                                                function:'importJiraIssues'}});
+    await worker.send({
+        action: "log",
+        info: {
+            level: "info",
+            message: `issueListResults issueValidResults.length: ${issueValidResults.length}`,
+            source: "worker-instance",
+            function: "importJiraIssues",
+        },
+    });
 
-    var jiraTicketList = issueValidResults.map(promiseObj => {
-        var newTickets = promiseObj.value.issueData.map(issueObj => {
-            return {    source: 'jira',
-                        workspace: ObjectId(workspaceId.toString()),
-                        jiraSiteId: issueObj.jiraSiteId,
-                        jiraIssueId: issueObj.id,
-                        jiraSummary: issueObj.summary,
-                        jiraProjectId: promiseObj.value.projectId
-                    }
+    var jiraTicketList = issueValidResults.map((promiseObj) => {
+        var newTickets = promiseObj.value.issueData.map((issueObj) => {
+            return {
+                source: "jira",
+                workspace: ObjectId(workspaceId.toString()),
+                jiraSiteId: issueObj.jiraSiteId,
+                jiraIssueId: issueObj.id,
+                jiraSummary: issueObj.summary,
+                jiraProjectId: promiseObj.value.projectId,
+            };
         });
         return newTickets;
     });
@@ -428,31 +503,44 @@ const importJiraIssues = async () => {
     jiraTicketList = jiraTicketList.flat();
 
     if (jiraTicketList.length > 0) {
-        await worker.send({action: 'log', info: {level: 'info', 
-                                                    message: `jiraTicketList[0]: ${JSON.stringify(jiraTicketList[0])}`,
-                                                    source: 'worker-instance',
-                                                    function:'importJiraIssues'}});
+        await worker.send({
+            action: "log",
+            info: {
+                level: "info",
+                message: `jiraTicketList[0]: ${JSON.stringify(
+                    jiraTicketList[0]
+                )}`,
+                source: "worker-instance",
+                function: "importJiraIssues",
+            },
+        });
     }
-
 
     var bulkInsertResult;
     try {
         bulkInsertResult = await IntegrationTicket.insertMany(jiraTicketList);
+    } catch (err) {
+        await worker.send({
+            action: "log",
+            info: {
+                level: "error",
+                source: "worker-instance",
+                message: serializeError(err),
+                errorDescription: `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
+                    jiraTicketList
+                )}`,
+                function: "importJiraIssues",
+            },
+        });
+
+        throw new Error(
+            `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
+                jiraTicketList
+            )}`
+        );
     }
-    catch (err) {
-
-
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    source: 'worker-instance',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(jiraTicketList)}`,
-                                                    function: 'importJiraIssues'}});
-
-        throw new Error(`Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(jiraTicketList)}`);
-    }
-
-}
+};
 
 module.exports = {
-    importJiraIssues
-}
+    importJiraIssues,
+};

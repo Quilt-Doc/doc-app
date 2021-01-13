@@ -2,22 +2,16 @@
 const PullRequest = require("../../../models/PullRequest");
 const Branch = require("../../../models/Branch");
 const Commit = require("../../../models/Commit");
-const GithubIssue = require("../../../models/integrations/GithubIssue");
-
-//integrations
-const TrelloIntegration = require("../../../models/integrations_fs/trello/TrelloIntegration");
+const GithubIssue = require("../../../models/integrations/github/GithubIssue");
 
 class AssociationGenerator {
     tickets = [];
 
-    integration = null;
+    boardIds = [];
 
-    acceptedTypes = {
-        trello: {
-            integrationModel: TrelloIntegration,
-            integrationField: "trelloIntegration",
-        },
-    };
+    workspaceId = null;
+
+    contexts = [];
 
     coModelMapping = {
         issue: GithubIssue,
@@ -26,44 +20,26 @@ class AssociationGenerator {
         branch: Branch,
     };
 
-    constructor(integrationId, integrationType) {
-        if (!(integrationType in this.acceptedTypes)) {
-            throw new Error("Not Correct IntegrationType");
-        }
+    constructor(workspaceId, contexts) {
+        this.contexts = contexts;
 
-        this.integrationId = integrationId;
+        this.workspaceId = workspaceId;
 
-        this.integrationType = integrationType;
+        this.boardIds = contexts.map((context) => context.board);
     }
 
     acquireIntegrationObjects = async () => {
-        const { integrationModel, integrationField } = this.acceptedTypes[
-            integrationType
-        ];
+        let query = IntegrationTicket.find();
 
-        // use the integrationModel and integrationField to find tickets (with only
-        // attachment and _id information ) of
-        // the new integration
-        const integration = await integrationModel
-            .find({ _id: integrationId })
-            .lean()
-            .exec();
+        query.where("board").in(this.boardIds);
 
-        let query = IntegrationTicket.find({
-            [integrationField]: integration._id,
-        })
-            .lean()
-            .exec();
+        query.select("board attachments intervals _id");
 
-        query.select("attachments intervals _id");
-
-        query.populate({ path: "attachments intervals" });
+        query.populate({ path: "board attachments intervals" });
 
         const tickets = await query.lean().exec();
 
         this.tickets = tickets;
-
-        this.integration = integration;
     };
 }
 
