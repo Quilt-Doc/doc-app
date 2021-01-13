@@ -741,8 +741,13 @@ router.get(
 );
 
 router.get(
-    "/integrations/trello/:workspaceId/:userId/get_trello_connect_boards",
-    trelloIntegrationController.getTrelloConnectProfile
+    "/integrations/:workspaceId/:userId/trello/get_external_boards",
+    trelloIntegrationController.getExternalTrelloBoards
+);
+
+router.post(
+    "/integrations/:workspaceId/:userId/trello/trigger_scrape",
+    trelloIntegrationController.triggerTrelloScrape
 );
 
 //GOOGLE INTEGRATION ROUTES

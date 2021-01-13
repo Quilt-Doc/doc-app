@@ -56,7 +56,7 @@ const trelloAPI = axios.create({
     baseURL: "https://api.trello.com",
 });
 
-getTrelloConnectProfile = async (req, res) => {
+getExternalTrelloBoards = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
     let profile;
@@ -71,10 +71,9 @@ getTrelloConnectProfile = async (req, res) => {
             .lean()
             .exec();
     } catch (err) {
-        console.log("ERROR", err);
         return res.json({
             success: false,
-            error: "getTrelloConnectProfile Error: Find query failed",
+            error: "getExternalTrelloBoards Error: Find query failed",
             trace: err,
         });
     }
@@ -87,7 +86,7 @@ getTrelloConnectProfile = async (req, res) => {
 
     try {
         boardsReponse = await trelloAPI.get(
-            `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name`
+            `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name&lists=all&list_fields=id,name`
         );
     } catch (err) {
         console.log("ERROR", err);
@@ -95,7 +94,7 @@ getTrelloConnectProfile = async (req, res) => {
         return res.json({
             success: false,
             error:
-                "getTrelloConnectProfile Error: trello board API request failed",
+                "getExternalTrelloBoards Error: trello board API request failed",
             trace: err,
         });
     }
@@ -118,7 +117,7 @@ getTrelloConnectProfile = async (req, res) => {
         return res.json({
             success: false,
             error:
-                "getTrelloConnectProfile Error: board context response query failed",
+                "getExternalTrelloBoards Error: board context response query failed",
             trace: err,
         });
     }
@@ -236,8 +235,10 @@ handleTrelloConnectCallback = async (req, res) => {
     );
 };
 
-setupBulkScrape = async (req, res) => {
-    let { userId, workspaceId, boardWorkspaceContexts } = req.body;
+triggerTrelloScrape = async (req, res) => {
+    const { userId, workspaceId } = req.params;
+
+    const { contexts } = req.body;
 
     const accessToken = await acquireAccessToken(userId);
 
@@ -252,14 +253,22 @@ setupBulkScrape = async (req, res) => {
 
     console.log("WORKSPACEID", workspaceId);
 
-    console.log("CONTEXTS", boardWorkspaceContexts);
+    console.log("CONTEXTS", contexts);
 
-    await bulkScrapeTrello(
-        accessToken,
-        userId,
-        workspaceId,
-        boardWorkspaceContexts
-    );
+    return res.json("BANG");
+    //await bulkScrapeTrello(accessToken, userId, workspaceId, contexts);
+};
+
+cleanUp = async (members) => {
+    if (members) {
+        let query = IntegrationUser.deleteMany();
+
+        const memberIds = members.map((member) => member._id);
+
+        query.where("_id").in(memberIds);
+
+        await query.exec();
+    }
 };
 
 acquireAccessToken = async (userId) => {
@@ -371,17 +380,10 @@ handleExistingBoards = async (accessToken, userId, boardWorkspaceContexts) => {
     return new Set(existingBoards.map((board) => board._id));
 };
 
-// boardWorkspaceContexts -> (boardId, events: [{beginListId, endListId}], repositories: [repositoryIds],
-bulkScrapeTrello = async (
-    accessToken,
-    userId,
-    workspaceId,
-    boardWorkspaceContexts
-) => {
-    const boardIds = boardWorkspaceContexts.map((context) => context.boardId);
-
-    for (let i = 0; i < boardIds.length; i++) {
-        const boardId = boardIds[i];
+// boardWorkspaceContexts -> (boardId, event: {beginListId, endListId}, repositories: [repositoryIds],
+bulkScrapeTrello = async (accessToken, userId, workspaceId, contexts) => {
+    contexts.map(async (context) => {
+        const { board: boardId } = context;
 
         const boardData = await acquireTrelloData(boardId, accessToken);
 
@@ -416,19 +418,19 @@ bulkScrapeTrello = async (
         cards = _.mapKeys(cards, "id");
 
         //create IntegrationIntervals
-        const currentContext = boardWorkspaceContexts[i];
+        let { event, repositories } = context;
 
-        const event = extractTrelloEvent(board, lists, currentContext.event);
+        event = extractTrelloEvent(board, lists, event);
 
-        const boardWorkspaceContext = new BoardWorkspaceContext({
+        context = new BoardWorkspaceContext({
             board: board._id,
             event: event._id,
-            workspace: workspace._id,
-            repositories: currentContext.repositories,
+            workspace: workspaceId,
+            repositories: repositories,
             creator: userId,
         });
 
-        await boardWorkspaceContext.save();
+        await context.save();
 
         await modifyTrelloActions(actions, cards);
 
@@ -501,7 +503,7 @@ bulkScrapeTrello = async (
         } catch (err) {
             console.log("ERROR", err);
         }
-    }
+    });
 };
 
 // TODO: If population > 1000, need to handle further data extraction (since, until)
@@ -912,7 +914,8 @@ extractTrelloIntervals = async (event, cards, lists) => {
 module.exports = {
     beginTrelloConnect,
     handleTrelloConnectCallback,
-    getTrelloConnectProfile,
+    getExternalTrelloBoards,
+    triggerTrelloScrape,
 };
 
 /*
