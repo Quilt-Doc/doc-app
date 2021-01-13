@@ -287,6 +287,12 @@ router.post(
     authorizationMiddleware.repositoryMiddleware,
     repositoryController.retrieveRepositories
 );
+router.post(
+  "/repositories/test/retrieve",
+  authorizationMiddleware.repositoryMiddleware,
+  repositoryController.retrieveRepositories
+);
+
 router.get(
     "/repositories/:workspaceId/get/:repositoryId",
     authorizationMiddleware.repositoryMiddleware,
@@ -297,6 +303,7 @@ router.delete(
     authorizationMiddleware.repositoryMiddleware,
     repositoryController.deleteRepository
 );
+
 
 // create - verify user exists
 

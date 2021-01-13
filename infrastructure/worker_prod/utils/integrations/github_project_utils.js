@@ -135,6 +135,10 @@ scrapeGithubRepoProjects = async (
             );
         }
     }
+    // No Github Projects found, return from method
+    else {
+        return;
+    }
 
     // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
     var createdGithubProjects;

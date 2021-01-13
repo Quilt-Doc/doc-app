@@ -316,24 +316,17 @@ deleteRepository = async (req, res) => {
         return res.json({success: false, error: `Error findByIdAndRemove Repository - repositoryId: ${repositoryId}`, trace: err});
     }
 
-
-    var referenceDeleteResult;
-    try {
-        referenceDeleteResult = await Reference.deleteMany({repository: ObjectId(repositoryId)});
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error deleteMany Reference - repositoryId: ${repositoryId}`,
-                                function: 'deleteRepository'});
-        return res.json({success: false, error: `Error deleteMany Reference - repositoryId: ${repositoryId}`, trace: err});
-    }
-
     await logger.info({source: 'backend-api',
-                        message: `Successfully deleted Repository & References - fullName, installationId: ${returnedRepository.fullName}, ${returnedRepository.installationId}`,
+                        message: `Successfully deleted Repository - fullName, installationId: ${returnedRepository.fullName}, ${returnedRepository.installationId}`,
                         function: 'deleteRepository'});
 
     return res.json({success: true, result: returnedRepository});
 }
+
+
+
+
+
 
 retrieveCreationRepositories = async (req, res) => {
     const userId = req.userObj._id.toString();
@@ -427,6 +420,38 @@ retrieveRepositories = async (req, res) => {
 
     return res.json({success: true, result: returnedRepositories});
 }
+
+
+
+retrieveRepositoriesTest = async (req, res) => {
+    const {fullName, installationId, fullNames} = req.body;
+
+    let query = Repository.find();
+
+    if (fullName) query.where('fullName').equals(fullName);
+    if (installationId) query.where('installationId').equals(installationId);
+    if (fullNames) query.where('fullName').in(fullNames);
+
+    let returnedRepositories;
+
+    try {
+        returnedRepositories = await query.lean().exec()
+    } 
+    catch (err) {
+        await logger.error({source: 'backend-api', message: err,
+                                errorDescription: `Error find repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
+                                function: 'deleteRepository'});
+        return res.json({success: false,
+                            error: `Error find repositories - fullName, fullNames, installationId: ${fullName}, ${JSON.stringify(fullNames)}, ${installationId}`,
+                            trace: err});
+    }
+
+    return res.json({success: true, result: returnedRepositories});
+}
+
+
+
+
 /*
 retrieveCreationRepositories = async (req, res) => {
     const { fullName, installationId, fullNames } = req.body;
@@ -635,6 +660,7 @@ module.exports = {
     initRepository, getRepositoryFile,
     getRepositoryFileSafe, getRepository,
     deleteRepository, retrieveRepositories,
+    retrieveRepositoriesTest,
     updateRepository, jobRetrieveRepositories,
     retrieveCreationRepositories, removeInstallation
 }

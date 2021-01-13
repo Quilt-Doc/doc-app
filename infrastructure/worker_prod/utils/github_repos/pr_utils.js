@@ -216,6 +216,11 @@ const addFileListToPR = async (foundPR, installationClient, installationId, full
 
 
 const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installationId, repositoryId, worker) => {
+
+    if (foundPRList.length < 1) {
+        return [];
+    }
+
     var prObjectsToInsert = [];
 
     // Insert the following basic id fields:

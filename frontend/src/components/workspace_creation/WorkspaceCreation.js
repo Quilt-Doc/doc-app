@@ -85,7 +85,7 @@ class WorkspaceCreation extends Component {
             <>
                 {this.renderTransitionWrapper(page === 0, true, provider)}
                 {this.renderTransitionWrapper(page === 1, false, repos)}
-                {this.renderTransitionWrapper(page === 2, faCholse, name)}
+                {this.renderTransitionWrapper(page === 2, false, name)}
                 {this.renderTransitionWrapper(page === 3, false, wait)}
             </>
         );
