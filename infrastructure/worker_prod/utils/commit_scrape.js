@@ -73,48 +73,54 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
                 // throw new Error(`Github API List Commits failed - installationId, repositoryObj.fullName, branchName: ${installationId}, ${repositoryObj.fullName}, ${foundBranchList[0].name}`);
             }
 
-            var link = LinkHeader.parse(commitListResponse.headers.link);
+            if (!commitListResponse.headers.link) {
+                pageNum = lastPageNum;
+            }
+            
+            else {
+                var link = LinkHeader.parse(commitListResponse.headers.link);
 
-            await worker.send({action: 'log', info: {
-                level: 'info',
-                message: `commitListResponse.headers.link: ${JSON.stringify(link)}`,
-                source: 'worker-instance',
-                function: 'scrapeGithubRepoCommitsAPI',
-            }});
+                await worker.send({action: 'log', info: {
+                    level: 'info',
+                    message: `commitListResponse.headers.link: ${JSON.stringify(link)}`,
+                    source: 'worker-instance',
+                    function: 'scrapeGithubRepoCommitsAPI',
+                }});
 
 
-            var i;
-            for (i = 0; i < link.refs.length; i++) {
-                if (link.refs[i].rel == 'last') {
-                    /*
-                    await worker.send({action: 'log', info: {
-                        level: 'info',
-                        message: `found last ref - link.refs[i]: ${JSON.stringify(link.refs[i])}`,
-                        source: 'worker-instance',
-                        function: 'scrapeGithubRepoCommits',
-                    }});
-                    */
+                var i;
+                for (i = 0; i < link.refs.length; i++) {
+                    if (link.refs[i].rel == 'last') {
+                        /*
+                        await worker.send({action: 'log', info: {
+                            level: 'info',
+                            message: `found last ref - link.refs[i]: ${JSON.stringify(link.refs[i])}`,
+                            source: 'worker-instance',
+                            function: 'scrapeGithubRepoCommits',
+                        }});
+                        */
 
-                    searchString = parseUrl(link.refs[i].uri).search;
+                        searchString = parseUrl(link.refs[i].uri).search;
 
-                    /*
-                    await worker.send({action: 'log', info: {
-                        level: 'info',
-                        message: `last ref searchString - searchString: ${searchString}`,
-                        source: 'worker-instance',
-                        function: 'scrapeGithubRepoCommits',
-                    }});
-                    
-                    await worker.send({action: 'log', info: {
-                        level: 'info',
-                        message: `parsed searchString - queryString.parse(searchString): ${JSON.stringify(queryString.parse(searchString))}`,
-                        source: 'worker-instance',
-                        function: 'scrapeGithubRepoCommits',
-                    }});
-                    */
+                        /*
+                        await worker.send({action: 'log', info: {
+                            level: 'info',
+                            message: `last ref searchString - searchString: ${searchString}`,
+                            source: 'worker-instance',
+                            function: 'scrapeGithubRepoCommits',
+                        }});
+                        
+                        await worker.send({action: 'log', info: {
+                            level: 'info',
+                            message: `parsed searchString - queryString.parse(searchString): ${JSON.stringify(queryString.parse(searchString))}`,
+                            source: 'worker-instance',
+                            function: 'scrapeGithubRepoCommits',
+                        }});
+                        */
 
-                    lastPageNum = queryString.parse(searchString).page;
-                    break;
+                        lastPageNum = queryString.parse(searchString).page;
+                        break;
+                    }
                 }
             }
 

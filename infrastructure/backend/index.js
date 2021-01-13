@@ -83,20 +83,21 @@ app.use(
 );
 
 const nonAuthPaths = [
-  "/pusher/vscode/auth",
-  "/auth/login/success",
-  "/auth/login/failed",
-  "/auth/jira",
-  "/auth/github",
-  "/api/auth/github",
-  "/auth/github/redirect",
-  "/api/verify/",
-  "/auth/github/fork",
-  "/api/auth/github/fork",
-  "/api/testRoute",
-  "/api/example_route",
-  "/api/pusher/webhook",
-  "/api/integrations/create",
+    "/pusher/vscode/auth",
+    "/auth/login/success",
+    "/auth/login/failed",
+    "/auth/jira",
+    "/auth/github",
+    "/api/auth/github",
+    "/auth/github/redirect",
+    "/api/verify/",
+    "/auth/github/fork",
+    "/api/auth/github/fork",
+    "/api/testRoute",
+    "/api/example_route",
+    "/api/pusher/webhook",
+    "/api/integrations/create",
+    "/integrations/connect/trello",
 ];
 
 app.use(function (req, res, next) {

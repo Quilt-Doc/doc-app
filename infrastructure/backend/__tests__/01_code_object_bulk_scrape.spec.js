@@ -2,7 +2,7 @@ require('dotenv').config();
 
 
 
-
+/*
 describe("Create Workspace", () => {
 
     var createdWorkspaceId = process.env.TEST_CREATED_WORKSPACE_ID;
@@ -140,3 +140,5 @@ describe("Create Workspace", () => {
     });
 
 });
+
+*/

@@ -6,12 +6,10 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const logger = require('../../../logging/index').logger;
+const logger = require("../../../logging/index").logger;
 
-
-const jobs = require('../../../apis/jobs');
-const jobConstants = require('../../../constants/index').jobs;
-
+const jobs = require("../../../apis/jobs");
+const jobConstants = require("../../../constants/index").jobs;
 
 const TrelloIntegration = require("../../../models/integrations_fs/trello/TrelloIntegration");
 const TrelloConnectProfile = require("../../../models/integrations_fs/trello/TrelloConnectProfile");
@@ -25,11 +23,11 @@ const IntegrationLabel = require("../../../models/integrations_fs/integration_ob
 const IntegrationAttachment = require("../../../models/integrations_fs/integration_objects/IntegrationAttachment");
 
 const {
-  TRELLO_API_KEY,
-  TRELLO_SECRET,
-  IS_PRODUCTION,
-  LOCALHOST_HOME_PAGE_URL,
-  PRODUCTION_HOME_PAGE_URL,
+    TRELLO_API_KEY,
+    TRELLO_SECRET,
+    IS_PRODUCTION,
+    LOCALHOST_HOME_PAGE_URL,
+    PRODUCTION_HOME_PAGE_URL,
 } = process.env;
 
 const requestURL = "https://trello.com/1/OAuthGetRequestToken";
@@ -44,162 +42,177 @@ const secret = TRELLO_SECRET;
 
 const loginCallback = `http://localhost:3001/api/integrations/connect/trello/callback`;
 const oauth = new OAuth(
-  requestURL,
-  accessURL,
-  key,
-  secret,
-  "1.0A",
-  loginCallback,
-  "HMAC-SHA1"
+    requestURL,
+    accessURL,
+    key,
+    secret,
+    "1.0A",
+    loginCallback,
+    "HMAC-SHA1"
 );
 
 const trelloAPI = axios.create({
-  baseURL: "https://api.trello.com",
+    baseURL: "https://api.trello.com",
 });
 
 beginTrelloConnect = async (req, res) => {
-  const { user_id, workspace_id } = req.query;
+    const { user_id, workspace_id } = req.query;
 
-  const userId = user_id;
-  const workspaceId = workspace_id;
+    const userId = user_id;
+    const workspaceId = workspace_id;
 
-  await oauth.getOAuthRequestToken( async (error, token, tokenSecret, results) => {
-    if (error) {
-      console.log("ERROR", error);
-    }
+    await oauth.getOAuthRequestToken(
+        async (error, token, tokenSecret, results) => {
+            if (error) {
+                console.log("ERROR", error);
+            }
 
-    let trelloConnectProfile = new TrelloConnectProfile({
-      authorizeToken: token,
-      authorizeTokenSecret: tokenSecret,
-      user: ObjectId(userId),
-      workspace: ObjectId(workspaceId),
-    });
+            let trelloConnectProfile = new TrelloConnectProfile({
+                authorizeToken: token,
+                authorizeTokenSecret: tokenSecret,
+                user: ObjectId(userId),
+                workspace: ObjectId(workspaceId),
+            });
 
-    try {
-      trelloConnectProfile = await trelloConnectProfile.save();
-    } catch (err) {
-      console.log("ERROR", err);
-    }
+            try {
+                trelloConnectProfile = await trelloConnectProfile.save();
+            } catch (err) {
+                console.log("ERROR", err);
+            }
 
-    res.redirect(
-      `${authorizeURL}?oauth_token=${token}&name=${appName}&scope=${scope}&expiration=${expiration}`
+            res.redirect(
+                `${authorizeURL}?oauth_token=${token}&name=${appName}&scope=${scope}&expiration=${expiration}`
+            );
+        }
     );
-  });
 };
 
 handleTrelloConnectCallback = async (req, res) => {
-  const query = url.parse(req.url, true).query;
-  const token = query.oauth_token;
+    const query = url.parse(req.url, true).query;
+    const token = query.oauth_token;
 
-  let trelloConnectProfile;
+    let trelloConnectProfile;
 
-  try {
-    trelloConnectProfile = await TrelloConnectProfile.findOne({
-      authorizeToken: token,
-    });
-  } catch (err) {
-    console.log("ERROR", err);
-  }
-
-  const {
-    authorizeToken,
-    authorizeTokenSecret,
-    user,
-    workspace,
-  } = trelloConnectProfile;
-
-  // NOT POPULATED SO THEY ARE IDS
-  const userId = user;
-  const workspaceId = workspace;
-
-  const verifier = query.oauth_verifier;
-
-  oauth.getOAuthAccessToken(
-    authorizeToken,
-    authorizeTokenSecret,
-    verifier,
-    async (error, accessToken, accessTokenSecret, results) => {
-      // In a real app, the accessToken and accessTokenSecret should be stored
-
-      if (error) console.log("ERROR", err);
-
-      trelloConnectProfile.accessToken = accessToken;
-      trelloConnectProfile.accessTokenSecret = accessTokenSecret;
-
-      try {
-        trelloConnectProfile = await trelloConnectProfile.save();
-      } catch (err) {
+    try {
+        trelloConnectProfile = await TrelloConnectProfile.findOne({
+            authorizeToken: token,
+        });
+    } catch (err) {
         console.log("ERROR", err);
-      }
+    }
 
-      const response = await trelloAPI.get(
-        `/1/members/me/?key=${TRELLO_API_KEY}&token=${accessToken}`
-      );
-      const {
-        data: { id, idBoards },
-      } = response;
+    const {
+        authorizeToken,
+        authorizeTokenSecret,
+        user,
+        workspace,
+    } = trelloConnectProfile;
 
-      let trelloIntegration = new TrelloIntegration({
-        boardIds: idBoards,
-        profileId: id,
-        user: ObjectId(userId),
-        workspace: ObjectId(workspaceId),
-        repositories: [],
-        trelloConnectProfile: ObjectId(trelloConnectProfile._id),
-      });
+    // NOT POPULATED SO THEY ARE IDS
+    const userId = user;
+    const workspaceId = workspace;
 
-      try {
-        trelloIntegration = await trelloIntegration.save();
-      } catch (err) {
-        console.log("ERROR", err);
-      }
+    const verifier = query.oauth_verifier;
 
-      console.log("TRELLO INTEGRATION", trelloIntegration);
+    oauth.getOAuthAccessToken(
+        authorizeToken,
+        authorizeTokenSecret,
+        verifier,
+        async (error, accessToken, accessTokenSecret, results) => {
+            // In a real app, the accessToken and accessTokenSecret should be stored
 
-      const boardRequests = idBoards.map((boardId) =>
-        trelloAPI.get(
-          `/1/boards/${boardId}?key=${TRELLO_API_KEY}&token=${accessToken}`
-        )
-      );
+            if (error) console.log("ERROR", err);
 
-      const boardResponses = await Promise.all(boardRequests);
+            trelloConnectProfile.accessToken = accessToken;
+            trelloConnectProfile.accessTokenSecret = accessTokenSecret;
 
-      const boards = boardResponses.map((boardResponse) => {
-        return boardResponse.data;
-      });
+            try {
+                trelloConnectProfile = await trelloConnectProfile.save();
+            } catch (err) {
+                console.log("ERROR", err);
+            }
 
-      quiltProductBoard = boards.filter(
-        (board) => board.name === "Quilt Product"
-      )[0];
+            const response = await trelloAPI.get(
+                `/1/members/me/?key=${TRELLO_API_KEY}&token=${accessToken}`
+            );
+            const {
+                data: { id, idBoards },
+            } = response;
 
-      // trelloIntegrationId, requiredBoardIdList, relevantLists
-      var runTrelloScrapeData = {};
-      runTrelloScrapeData['trelloIntegrationId'] = trelloIntegration._id.toString();
-      runTrelloScrapeData['requiredBoardIdList'] = [quiltProductBoard.id];
-      runTrelloScrapeData['relevantLists'] = [{type: "start", name: "In-Progress"}, {type: "end", name: "Done"}];
-      runTrelloScrapeData['jobType'] = jobConstants.JOB_SCRAPE_TRELLO;
-  
-      try {
-        await jobs.dispatchTrelloScrapeJob(runTrelloScrapeData);
-      }
-      catch (err) {
-        await logger.error({source: 'backend-api',
-                              message: err,
-                              errorDescription: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(requiredBoardIdList)}, ${JSON.stringify(relevantLists)}`,
-                              function: 'handleTrelloConnectCallback'});
+            let trelloIntegration = new TrelloIntegration({
+                boardIds: idBoards,
+                profileId: id,
+                user: ObjectId(userId),
+                workspace: ObjectId(workspaceId),
+                repositories: [],
+                trelloConnectProfile: ObjectId(trelloConnectProfile._id),
+            });
 
-        return res.json({success: false, error: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(requiredBoardIdList)}, ${JSON.stringify(relevantLists)}`});
-      }
+            try {
+                trelloIntegration = await trelloIntegration.save();
+            } catch (err) {
+                console.log("ERROR", err);
+            }
 
-      /*
+            console.log("TRELLO INTEGRATION", trelloIntegration);
+
+            const boardRequests = idBoards.map((boardId) =>
+                trelloAPI.get(
+                    `/1/boards/${boardId}?key=${TRELLO_API_KEY}&token=${accessToken}`
+                )
+            );
+
+            const boardResponses = await Promise.all(boardRequests);
+
+            const boards = boardResponses.map((boardResponse) => {
+                return boardResponse.data;
+            });
+
+            quiltProductBoard = boards.filter(
+                (board) => board.name === "Quilt Product"
+            )[0];
+
+            // trelloIntegrationId, requiredBoardIdList, relevantLists
+            var runTrelloScrapeData = {};
+            runTrelloScrapeData[
+                "trelloIntegrationId"
+            ] = trelloIntegration._id.toString();
+            runTrelloScrapeData["requiredBoardIdList"] = [quiltProductBoard.id];
+            runTrelloScrapeData["relevantLists"] = [
+                { type: "start", name: "In-Progress" },
+                { type: "end", name: "Done" },
+            ];
+            runTrelloScrapeData["jobType"] = jobConstants.JOB_SCRAPE_TRELLO;
+
+            try {
+                await jobs.dispatchTrelloScrapeJob(runTrelloScrapeData);
+            } catch (err) {
+                await logger.error({
+                    source: "backend-api",
+                    message: err,
+                    errorDescription: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(
+                        requiredBoardIdList
+                    )}, ${JSON.stringify(relevantLists)}`,
+                    function: "handleTrelloConnectCallback",
+                });
+
+                return res.json({
+                    success: false,
+                    error: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(
+                        requiredBoardIdList
+                    )}, ${JSON.stringify(relevantLists)}`,
+                });
+            }
+
+            /*
             await bulkScrapeTrello(trelloIntegration, [quiltProductBoard.id], 
                 [{type: "start", name: "In-Progress"}, {type: "end", name: "Done"}]);
 
             */
 
-      res.redirect(LOCALHOST_HOME_PAGE_URL);
-    }
-  );
+            res.redirect(LOCALHOST_HOME_PAGE_URL);
+        }
+    );
 };
 
 // do we want to save the actual boards we care about somewhere?
@@ -557,6 +570,6 @@ bulkScrapeTrello = async (
 };
 */
 module.exports = {
-  beginTrelloConnect,
-  handleTrelloConnectCallback,
+    beginTrelloConnect,
+    handleTrelloConnectCallback,
 };
