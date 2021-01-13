@@ -22,8 +22,20 @@ const fetchRepositories = async () => {
         },
     ];
 
+    var fullNameList = ['kgodara-testing/brodal_queue', 'kgodara-testing/doc-app'];
+    var response;
+    try {
+        response = await backendClient.post("/repositories/test_retrieve", { fullNames: fullNameList });
+    }
+    catch (err) {
+        console.log('Failed to successfully Fetch Repositories');
+        throw err;
+    }
 
-    var requestPromiseList = repositoryCreateData.map(postDataObj => backendClient.post("/repositories/:workspaceId/retrieve", postDataObj));
+    return response.data.result;
+
+    /*
+    var requestPromiseList = repositoryCreateData.map(postDataObj => backendClient.post("/repositories/test/retrieve", postDataObj));
 
     var results;
     try {
@@ -36,8 +48,9 @@ const fetchRepositories = async () => {
 
     // createdRepositoryIds
     return results.map(response => {
-        return { _id: response.data.result._id, fullName: response.data.result.fullName}
+        return { _id: response.data.result[0]._id, fullName: response.data.result[0].fullName}
     });
+    */
 
 }
 
@@ -67,6 +80,9 @@ const deleteRepositories = async (createdWorkspaceId, createdRepositoryIds) => {
 }
 
 const createWorkspace = async ( createdRepositoryIds ) => {
+    console.log('createWorkspace() -  createdRepositoryIds: ');
+    console.log(createdRepositoryIds);
+
     var backendClient = api.requestTestingUserBackendClient();
 
     var postData = { name: "Testing Workspace",
@@ -79,9 +95,12 @@ const createWorkspace = async ( createdRepositoryIds ) => {
         createWorkspaceResponse = await backendClient.post('/workspaces/create', postData);
     }
     catch (err) {
-        console.log('Error creating workspace');
+        console.log('Error creating workspace - utils.js');
         throw err;
     }
+
+    console.log('createWorkspace() returning: ');
+    console.log(createWorkspaceResponse.data);
 
     // createdWorkspaceId
     return createWorkspaceResponse.data.result._id;

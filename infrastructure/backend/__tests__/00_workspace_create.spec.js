@@ -6,7 +6,7 @@ const utils = require('../__tests__config/utils');
 // var createdWorkspaceId;
 // var createdRepositoryIds;
 
-const MAX_WORKSPACE_POLL_RETRIES = 4;
+const MAX_WORKSPACE_POLL_RETRIES = 20;
 
 function delay(t, val) {
     return new Promise(function(resolve) {

@@ -283,14 +283,15 @@ router.post(
     repositoryController.getRepositoryFileSafe
 );
 router.post(
+    "/repositories/test_retrieve",
+  //  authorizationMiddleware.repositoryMiddleware,
+    repositoryController.retrieveRepositoriesTest
+);
+
+router.post(
     "/repositories/:workspaceId/retrieve",
     authorizationMiddleware.repositoryMiddleware,
     repositoryController.retrieveRepositories
-);
-router.post(
-  "/repositories/test/retrieve",
-  authorizationMiddleware.repositoryMiddleware,
-  repositoryController.retrieveRepositories
 );
 
 router.get(
