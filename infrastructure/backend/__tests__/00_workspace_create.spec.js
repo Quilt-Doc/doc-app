@@ -1,7 +1,7 @@
-require('dotenv').config();
-const api = require('../apis/api');
+require("dotenv").config();
+const api = require("../apis/api");
 
-const utils = require('../__tests__config/utils');
+const utils = require("../__tests__config/utils");
 
 // var createdWorkspaceId;
 // var createdRepositoryIds;
@@ -9,20 +9,20 @@ const utils = require('../__tests__config/utils');
 const MAX_WORKSPACE_POLL_RETRIES = 4;
 
 function delay(t, val) {
-    return new Promise(function(resolve) {
-        setTimeout(function() {
+    return new Promise(function (resolve) {
+        setTimeout(function () {
             resolve(val);
         }, t);
     });
 }
 
-
 describe("Create Workspace", () => {
-
     var createdWorkspaceId = process.env.TEST_CREATED_WORKSPACE_ID;
 
     var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
-    var createdRepositoryIds = createdRepositories.map(repositoryObj => repositoryObj._id);
+    var createdRepositoryIds = createdRepositories.map(
+        (repositoryObj) => repositoryObj._id
+    );
 
     var backendUserClient;
 
@@ -30,21 +30,29 @@ describe("Create Workspace", () => {
         backendUserClient = api.requestTestingUserBackendClient();
     });
 
-
     // router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
     test("Root Document should be created", async () => {
-
         // var backendUserClient = await api.requestTestingUserBackendClient();
 
-        var documentRetrieveData = { root: true, limit: 1, skip: 0, minimal: true, fill: false };
+        var documentRetrieveData = {
+            root: true,
+            limit: 1,
+            skip: 0,
+            minimal: true,
+            fill: false,
+        };
 
         var documentRetrieveResponse;
 
         try {
-            documentRetrieveResponse = await backendUserClient.post(`/documents/${createdWorkspaceId}/retrieve`, documentRetrieveData);
-        }
-        catch (err) {
-            console.log(`Error retrieving Root Document - workspaceId: ${createdWorkspaceId}`);
+            documentRetrieveResponse = await backendUserClient.post(
+                `/documents/${createdWorkspaceId}/retrieve`,
+                documentRetrieveData
+            );
+        } catch (err) {
+            console.log(
+                `Error retrieving Root Document - workspaceId: ${createdWorkspaceId}`
+            );
             throw err;
         }
 
@@ -60,22 +68,24 @@ describe("Create Workspace", () => {
 
         // Single Document returned should be the root Document
         expect(retrievedDocuments[0].root).toEqual(true);
-
     });
 
     // router.post('/reporting/:workspaceId/retrieve_user_stats', authorizationMiddleware.reportingMiddleware, reportingController.retrieveUserStats);
     test("UserStats should be created for test User <-> Workspace", async () => {
-        
         // var backendUserClient = await api.requestTestingUserBackendClient();
 
         var userStatRetrieveData = { limit: 1, skip: 0 };
-        
+
         var userStatRetrieveResponse;
         try {
-            userStatRetrieveResponse = await backendUserClient.post(`/reporting/${createdWorkspaceId}/retrieve_user_stats`, userStatRetrieveData);
-        }
-        catch (err) {
-            console.log(`Error retrieving UserStats - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TESTING_USER_ID}`);
+            userStatRetrieveResponse = await backendUserClient.post(
+                `/reporting/${createdWorkspaceId}/retrieve_user_stats`,
+                userStatRetrieveData
+            );
+        } catch (err) {
+            console.log(
+                `Error retrieving UserStats - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TEST_USER_ID}`
+            );
             throw err;
         }
 
@@ -83,15 +93,16 @@ describe("Create Workspace", () => {
 
         var retrievedUserStats = userStatRetrieveResponse.data.result;
 
-        // `Error expected to retrieve one UserStats, found ${retrievedUserStats.length} - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TESTING_USER_ID}`
+        // `Error expected to retrieve one UserStats, found ${retrievedUserStats.length} - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TEST_USER_ID}`
         expect(retrievedUserStats.length).toEqual(1);
 
-        // UserStat returned should be for process.env.TESTING_USER_ID
-        expect(retrievedUserStats[0].user._id).toEqual(process.env.TESTING_USER_ID);
+        // UserStat returned should be for process.env.TEST_USER_ID
+        expect(retrievedUserStats[0].user._id).toEqual(
+            process.env.TEST_USER_ID
+        );
 
         // UserStat returned should be for ${createdWorkspaceId}
         expect(retrievedUserStats[0].workspace).toEqual(createdWorkspaceId);
-
     });
 
     // router.get('/users/get/:userId', authorizationMiddleware.userMiddleware, userController.getUser);
@@ -100,10 +111,13 @@ describe("Create Workspace", () => {
 
         var userGetResponse;
         try {
-            userGetResponse = await backendUserClient.get(`/users/get/${process.env.TESTING_USER_ID}`);
-        }
-        catch (err) {
-            console.log(`Error retrieving User - userId: ${process.env.TESTING_USER_ID}`);
+            userGetResponse = await backendUserClient.get(
+                `/users/get/${process.env.TEST_USER_ID}`
+            );
+        } catch (err) {
+            console.log(
+                `Error retrieving User - userId: ${process.env.TEST_USER_ID}`
+            );
             throw err;
         }
 
@@ -113,15 +127,18 @@ describe("Create Workspace", () => {
         expect(userGetResult.success).toEqual(true);
 
         // User._id should match userId requested
-        expect(userGetResult.result._id).toEqual(process.env.TESTING_USER_ID);
+        expect(userGetResult.result._id).toEqual(process.env.TEST_USER_ID);
 
         // User.workspaces contains createdWorkspaceId
-        expect(userGetResult.result.workspaces.map(workspaceObj => workspaceObj._id.toString())).toContain(createdWorkspaceId);
+        expect(
+            userGetResult.result.workspaces.map((workspaceObj) =>
+                workspaceObj._id.toString()
+            )
+        ).toContain(createdWorkspaceId);
     });
 
     // router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspaceController.getWorkspace);
     test("Workspace.setupComplete should be equal to true", async () => {
-        
         var workspaceGetResponse;
         var setupSuccess = false;
 
@@ -130,14 +147,19 @@ describe("Create Workspace", () => {
 
         for (i = 0; i < MAX_WORKSPACE_POLL_RETRIES; i++) {
             try {
-                workspaceGetResponse = await backendUserClient.get(`/workspaces/get/${createdWorkspaceId}`);
-            }
-            catch (err) {
-                console.log(`Error retrieving Workspace - workspaceId: ${createdWorkspaceId}`);
+                workspaceGetResponse = await backendUserClient.get(
+                    `/workspaces/get/${createdWorkspaceId}`
+                );
+            } catch (err) {
+                console.log(
+                    `Error retrieving Workspace - workspaceId: ${createdWorkspaceId}`
+                );
                 throw err;
             }
             if (workspaceGetResponse.data.success != true) {
-                throw Error(`Failed to get Workspace - workspaceId: ${createdWorkspaceId}`);
+                throw Error(
+                    `Failed to get Workspace - workspaceId: ${createdWorkspaceId}`
+                );
             }
 
             if (workspaceGetResponse.data.result.setupComplete == true) {
@@ -147,14 +169,11 @@ describe("Create Workspace", () => {
 
             // Wait 2 seconds
             await delay(2000);
-
         }
 
         expect(setupSuccess).toEqual(true);
     });
-
 });
-
 
 /*
 describe("Scan Repositories", async () => {
@@ -169,4 +188,3 @@ describe("Filter function", () => {
     });
 });
 */
-

@@ -1,6 +1,4 @@
-require('dotenv').config();
-
-
+require("dotenv").config();
 
 /*
 describe("Create Workspace", () => {
@@ -61,7 +59,7 @@ describe("Create Workspace", () => {
             userStatRetrieveResponse = await backendUserClient.post(`/reporting/${createdWorkspaceId}/retrieve_user_stats`, userStatRetrieveData);
         }
         catch (err) {
-            console.log(`Error retrieving UserStats - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TESTING_USER_ID}`);
+            console.log(`Error retrieving UserStats - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TEST_USER_ID}`);
             throw err;
         }
 
@@ -69,11 +67,11 @@ describe("Create Workspace", () => {
 
         var retrievedUserStats = userStatRetrieveResponse.data.result;
 
-        // `Error expected to retrieve one UserStats, found ${retrievedUserStats.length} - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TESTING_USER_ID}`
+        // `Error expected to retrieve one UserStats, found ${retrievedUserStats.length} - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TEST_USER_ID}`
         expect(retrievedUserStats.length).toEqual(1);
 
-        // UserStat returned should be for process.env.TESTING_USER_ID
-        expect(retrievedUserStats[0].user._id).toEqual(process.env.TESTING_USER_ID);
+        // UserStat returned should be for process.env.TEST_USER_ID
+        expect(retrievedUserStats[0].user._id).toEqual(process.env.TEST_USER_ID);
 
         // UserStat returned should be for ${createdWorkspaceId}
         expect(retrievedUserStats[0].workspace).toEqual(createdWorkspaceId);
@@ -86,10 +84,10 @@ describe("Create Workspace", () => {
 
         var userGetResponse;
         try {
-            userGetResponse = await backendUserClient.get(`/users/get/${process.env.TESTING_USER_ID}`);
+            userGetResponse = await backendUserClient.get(`/users/get/${process.env.TEST_USER_ID}`);
         }
         catch (err) {
-            console.log(`Error retrieving User - userId: ${process.env.TESTING_USER_ID}`);
+            console.log(`Error retrieving User - userId: ${process.env.TEST_USER_ID}`);
             throw err;
         }
 
@@ -99,7 +97,7 @@ describe("Create Workspace", () => {
         expect(userGetResult.success).toEqual(true);
 
         // User._id should match userId requested
-        expect(userGetResult.result._id).toEqual(process.env.TESTING_USER_ID);
+        expect(userGetResult.result._id).toEqual(process.env.TEST_USER_ID);
 
         // User.workspaces contains createdWorkspaceId
         expect(userGetResult.result.workspaces.map(workspaceObj => workspaceObj._id.toString())).toContain(createdWorkspaceId);
