@@ -18,14 +18,23 @@ module.exports = async () => {
     }
 
     var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
-    var createdRepositoryIds = createdRepositories.map(repositoryObj => repositoryObj._id);
+
+    console.log('setup.js createdRepositories: ');
+    console.log(createdRepositories);
+
+    var createdRepositoryIds = createdRepositories.map(repositoryObj => {
+        console.log('repositoryObj')
+        console.log(repositoryObj._id);
+        return repositoryObj._id;
+    });
+    console.log('createdRepositoryIds');
 
     try {
         // global.createdWorkspaceId = await utils.createWorkspace( createdRepositoryIds );
         process.env.TEST_CREATED_WORKSPACE_ID = await utils.createWorkspace( createdRepositoryIds );
     }
     catch (err) {
-        console.log('Error creating Workspace');
+        console.log('Error creating Workspace/fetching Repositories setup.js');
         throw err;
     }
 

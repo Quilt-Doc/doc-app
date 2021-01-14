@@ -9,7 +9,8 @@
   "jest": {
     "testSequencer": "<rootDir>/__tests__config/sequencer.js",
     "globalSetup": "<rootDir>/__tests__config/setup.js",
-    "globalTeardown": "<rootDir>/__tests__config/teardown.js"
+    "globalTeardown": "<rootDir>/__tests__config/teardown.js",
+    "testTimeout": 20000
   },
   "author": "",
   "license": "ISC",

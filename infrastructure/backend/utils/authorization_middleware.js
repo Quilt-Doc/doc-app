@@ -180,6 +180,8 @@ const repositoryMiddleware = async (req, res, next) => {
     var searchWorkspaceId;
     var searchRepositoryId = undefined;
 
+    console.log('REPOSITORY MIDDLEWARE');
+
     // Dev routes
     if (
         requestedPath.includes('/repositories/init') ||
@@ -190,12 +192,15 @@ const repositoryMiddleware = async (req, res, next) => {
         ) {
         
         if (requesterRole == 'dev') {
+            console.log('DEV TOKEN FOUND');
             return next();
         }
         else {
             return next(new Error("Error: only dev tokens can access this repository route."));
         }
     }
+
+    console.log('REPOSITORY MIDDLEWARE SHOULDNT PRINT');
 
     // User routes
 

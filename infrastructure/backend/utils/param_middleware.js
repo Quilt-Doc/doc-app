@@ -11,7 +11,7 @@ const { ObjectId } = mongoose.Types;
 
 const workspaceIdParam = async (req, res, next, workspaceId) => {
 
-    // console.log('workspaceParamMiddleware called!');
+    console.log('workspaceParamMiddleware called!');
 
     if (req.workspaceObj) {
         next();
