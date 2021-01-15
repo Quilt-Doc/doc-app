@@ -63,6 +63,7 @@ const {
     extractTrelloLabels,
     modifyTrelloActions,
     populateExistingTrelloDirectAttachments,
+    deleteTrelloBoardComplete,
 } = require("./TrelloControllerHelpers");
 
 getExternalTrelloBoards = async (req, res) => {
@@ -238,6 +239,155 @@ triggerTrelloScrape = async (req, res) => {
     await bulkScrapeTrello(profile, userId, workspaceId, contexts);
 };
 
+// boardWorkspaceContexts -> (boardId, event: {beginListId, endListId}, repositories: [repositoryIds],
+bulkScrapeTrello = async (profile, userId, workspaceId, contexts) => {
+    const { accessToken } = profile;
+
+    let resultMapping = {};
+
+    for (let i = 0; i < contexts.length; i++) {
+        let context = contexts[i];
+
+        const { board: boardId } = context;
+
+        const boardData = await acquireTrelloData(boardId, accessToken);
+
+        let {
+            actions,
+            cards,
+            lists,
+            members,
+            labels,
+            id,
+            name,
+            idMemberCreator,
+            url,
+        } = boardData;
+
+        //create IntegrationUsers for members
+        members = await extractTrelloMembers(workspaceId, members, profile);
+
+        // create IntegrationBoard
+        const board = await extractTrelloBoard(
+            members,
+            id,
+            name,
+            idMemberCreator,
+            url
+        );
+
+        lists = await extractTrelloLists(lists, board);
+
+        const attachmentResponse = await extractTrelloDirectAttachments(
+            cards,
+            context
+        );
+
+        cards = attachmentResponse.cards;
+
+        cards = _.mapKeys(cards, "id");
+
+        let { event, repositories } = context;
+
+        cards = await modifyTrelloActions(actions, cards, event);
+
+        event = extractTrelloEvent(board, lists, event);
+
+        context = new BoardWorkspaceContext({
+            board: board._id,
+            event: event._id,
+            workspace: workspaceId,
+            repositories: repositories,
+            creator: userId,
+        });
+
+        await context.save();
+
+        const intervalResponse = await extractTrelloIntervals(
+            event,
+            cards,
+            lists
+        );
+
+        cards = intervalResponse.cards;
+
+        labels = await extractTrelloLabels(labels);
+
+        let insertOps = [];
+
+        Object.values(cards).map(async (card) => {
+            let {
+                id,
+                idList,
+                dateLastActivity,
+                desc,
+                name,
+                attachmentIds,
+                intervalIds,
+                due,
+                dueComplete,
+                idMembers,
+                url,
+            } = card;
+
+            const columnId = lists[idList]._id;
+
+            const assigneeIds = idMembers.map(
+                (memberId) => members[memberId]._id
+            );
+
+            const labelIds = card.labels
+                ? card.labels.map(
+                      (label) => labels[`${label.name}-${label.color}`]._id
+                  )
+                : [];
+
+            let cardParams = {
+                name,
+                source: "trello",
+                sourceId: id,
+                description: desc,
+                link: url,
+                assignees: assigneeIds, // trelloCardMember, // trelloCardListUpdateDates: [{type: Date}],
+                members: assigneeIds,
+                column: columnId,
+                board: board._id,
+            };
+
+            if (due) cardParams.trelloCardDue = new Date(due);
+
+            if (dueComplete) cardParams.trelloCardDueComplete = dueComplete;
+
+            if (dateLastActivity)
+                cardParams.trelloCardDateLastActivity = new Date(
+                    dateLastActivity
+                );
+
+            if (attachmentIds && attachmentIds.length > 0)
+                cardParams.attachments = attachmentIds;
+
+            if (intervalIds && intervalIds.length > 0)
+                cardParams.intervals = intervalIds;
+
+            if (labelIds && labelIds.length > 0) cardParams.labels = labelIds;
+
+            insertOps.push(cardParams);
+        });
+
+        let tickets;
+
+        try {
+            tickets = await IntegrationTicket.insertMany(insertOps);
+        } catch (err) {
+            console.log("ERROR", err);
+        }
+
+        resultMapping[context._id] = { context, tickets };
+    }
+
+    return resultMapping;
+};
+
 handleExistingBoards = async (accessToken, userId, boardWorkspaceContexts) => {
     const boardIds = boardWorkspaceContexts.map((context) => context.boardId);
 
@@ -321,138 +471,6 @@ handleExistingBoards = async (accessToken, userId, boardWorkspaceContexts) => {
     });
 
     return new Set(existingBoards.map((board) => board._id));
-};
-
-// boardWorkspaceContexts -> (boardId, event: {beginListId, endListId}, repositories: [repositoryIds],
-bulkScrapeTrello = async (profile, userId, workspaceId, contexts) => {
-    const { accessToken } = profile;
-
-    contexts.map(async (context) => {
-        const { board: boardId } = context;
-
-        const boardData = await acquireTrelloData(boardId, accessToken);
-
-        let {
-            actions,
-            cards,
-            lists,
-            members,
-            labels,
-            id,
-            name,
-            idMemberCreator,
-            url,
-        } = boardData;
-
-        //create IntegrationUsers for members
-        members = await extractTrelloMembers(workspaceId, members, profile);
-
-        // create IntegrationBoard
-        const board = await extractTrelloBoard(
-            members,
-            id,
-            name,
-            idMemberCreator,
-            url
-        );
-
-        lists = await extractTrelloLists(lists, board);
-
-        cards = await extractTrelloDirectAttachments(cards, context);
-
-        cards = _.mapKeys(cards, "id");
-
-        cards = await modifyTrelloActions(actions, cards, event);
-
-        //create IntegrationIntervals
-        let { event, repositories } = context;
-
-        event = extractTrelloEvent(board, lists, event);
-
-        context = new BoardWorkspaceContext({
-            board: board._id,
-            event: event._id,
-            workspace: workspaceId,
-            repositories: repositories,
-            creator: userId,
-        });
-
-        await context.save();
-
-        cards = await extractTrelloIntervals(event, cards, lists);
-
-        labels = await extractTrelloLabels(labels);
-
-        let insertOps = [];
-
-        Object.values(cards).map(async (card) => {
-            let {
-                id,
-                idList,
-                dateLastActivity,
-                desc,
-                name,
-                attachmentIds,
-                intervalIds,
-                due,
-                dueComplete,
-                idMembers,
-                url,
-            } = card;
-
-            const columnId = lists[idList]._id;
-
-            const assigneeIds = idMembers.map(
-                (memberId) => members[memberId]._id
-            );
-
-            const labelIds = card.labels
-                ? card.labels.map(
-                      (label) => labels[`${label.name}-${label.color}`]._id
-                  )
-                : [];
-
-            let cardParams = {
-                name,
-                source: "trello",
-                sourceId: id,
-                description: desc,
-                link: url,
-                assignees: assigneeIds, // trelloCardMember, // trelloCardListUpdateDates: [{type: Date}],
-                column: columnId,
-                board: board._id,
-            };
-
-            if (due) cardParams.trelloCardDue = new Date(due);
-
-            if (dueComplete) cardParams.trelloCardDueComplete = dueComplete;
-
-            if (dateLastActivity)
-                cardParams.trelloCardDateLastActivity = new Date(
-                    dateLastActivity
-                );
-
-            if (attachmentIds && attachmentIds.length > 0)
-                cardParams.attachments = attachmentIds;
-
-            if (intervalIds && intervalIds.length > 0)
-                cardParams.intervals = intervalIds;
-
-            if (labelIds && labelIds.length > 0) cardParams.labels = labelIds;
-
-            insertOps.push(cardParams);
-        });
-
-        let tickets;
-
-        try {
-            tickets = await IntegrationTicket.insertMany(insertOps);
-        } catch (err) {
-            console.log("ERROR", err);
-        }
-
-        return tickets;
-    });
 };
 
 module.exports = {

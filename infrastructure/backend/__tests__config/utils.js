@@ -18,13 +18,17 @@ const fetchRepositories = async () => {
         },
     ];
 
-    var fullNameList = ['kgodara-testing/brodal_queue', 'kgodara-testing/doc-app'];
+    var fullNameList = [
+        "kgodara-testing/brodal_queue",
+        "kgodara-testing/doc-app",
+    ];
     var response;
     try {
-        response = await backendClient.post("/repositories/test_retrieve", { fullNames: fullNameList });
-    }
-    catch (err) {
-        console.log('Failed to successfully Fetch Repositories');
+        response = await backendClient.post("/repositories/test_retrieve", {
+            fullNames: fullNameList,
+        });
+    } catch (err) {
+        console.log("Failed to successfully Fetch Repositories");
         throw err;
     }
 
@@ -46,9 +50,7 @@ const fetchRepositories = async () => {
         return { _id: response.data.result[0]._id, fullName: response.data.result[0].fullName}
     });
     */
-
-}
-
+};
 
 // TODO: Change this to call the normal repository delete method, so tests can run concurrently, and use repositoryIds
 const deleteRepositories = async (createdWorkspaceId, createdRepositoryIds) => {
@@ -74,10 +76,8 @@ const deleteRepositories = async (createdWorkspaceId, createdRepositoryIds) => {
     }
 };
 
-}
-
-const createWorkspace = async ( createdRepositoryIds ) => {
-    console.log('createWorkspace() -  createdRepositoryIds: ');
+const createWorkspace = async (createdRepositoryIds) => {
+    console.log("createWorkspace() -  createdRepositoryIds: ");
     console.log(createdRepositoryIds);
 
     var backendClient = api.requestTestingUserBackendClient();
@@ -91,14 +91,16 @@ const createWorkspace = async ( createdRepositoryIds ) => {
 
     var createWorkspaceResponse;
     try {
-        createWorkspaceResponse = await backendClient.post('/workspaces/create', postData);
-    }
-    catch (err) {
-        console.log('Error creating workspace - utils.js');
+        createWorkspaceResponse = await backendClient.post(
+            "/workspaces/create",
+            postData
+        );
+    } catch (err) {
+        console.log("Error creating workspace - utils.js");
         throw err;
     }
 
-    console.log('createWorkspace() returning: ');
+    console.log("createWorkspace() returning: ");
     console.log(createWorkspaceResponse.data);
 
     // createdWorkspaceId

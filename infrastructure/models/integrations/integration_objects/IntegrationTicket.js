@@ -23,15 +23,15 @@ const integrationTicketSchema = new Schema({
 
     creator: { type: ObjectId, ref: "IntegrationUser" },
     assignees: [{ type: ObjectId, ref: "IntegrationUser" }], // trelloCardMember
+    members: [{ type: ObjectId, ref: "IntegrationUser" }],
     labels: [{ type: ObjectId, ref: "IntegrationLabel" }], //trelloCardLabels
-    board: [{ type: ObjectId, ref: "IntegrationBoard" }],
-    column: [{ type: ObjectId, ref: "IntegrationColumn" }], //  trelloCardList: String,
+    board: { type: ObjectId, ref: "IntegrationBoard" },
+    column: { type: ObjectId, ref: "IntegrationColumn" }, //  trelloCardList: String,
     comments: [{ type: ObjectId, ref: "IntegrationComments" }],
     attachments: [{ type: ObjectId, ref: "IntegrationAttachments" }],
     intervals: [{ type: ObjectId, ref: "IntegrationInterval" }],
 
     // Trello specific fields
-    trelloCardRelevantMembers: [{ type: Object }],
     trelloCardDue: Date,
     trelloCardDueComplete: Boolean,
     trelloCardDateLastActivity: Date,

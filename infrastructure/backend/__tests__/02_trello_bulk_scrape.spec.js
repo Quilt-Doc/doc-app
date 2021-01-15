@@ -2,13 +2,77 @@ require("dotenv").config();
 
 const api = require("../apis/api");
 
+const mongoose = require("mongoose");
+
+const _ = require("lodash");
+
 const trelloControllerHelpers = require("../controllers/integrations/trello/TrelloControllerHelpers");
 
-const {
-    bulkScrapeTrello,
-} = require("../controllers/integrations/trello/TrelloIntegrationController");
+const testData = require("../__tests__data/02_trello_bulk_scrape_data");
 
-const { TEST_USER_ID, TEST_CREATED_WORKSPACE_ID } = process.env;
+const {
+    TEST_USER_ID,
+    TEST_CREATED_WORKSPACE_ID,
+    EXTERNAL_DB_PASS,
+    EXTERNAL_DB_USER,
+} = process.env;
+
+beforeAll(async () => {
+    const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
+
+    await mongoose.connect(dbRoute, { useNewUrlParser: true });
+
+    let db = mongoose.connection;
+
+    db.once("open", () => console.log("connected to the database"));
+
+    db.on("error", console.error.bind(console, "MongoDB connection error:"));
+});
+
+afterAll(async () => {
+    const { deleteTrelloBoardComplete } = trelloControllerHelpers;
+
+    const extractArray = (envVar) => {
+        if (envVar) return Object.values(JSON.parse(envVar));
+
+        return null;
+    };
+
+    const deleteParams = {
+        members: extractArray(process.env.TEST_TRELLO_MEMBERS),
+        board: process.env.TEST_TRELLO_BOARD
+            ? JSON.parse(process.env.TEST_TRELLO_BOARD)
+            : null,
+        lists: extractArray(process.env.TEST_TRELLO_LISTS),
+        attachments: extractArray(process.env.TEST_TRELLO_ATTACHMENTS),
+        cards: extractArray(process.env.TEST_TRELLO_CARDS),
+        event: process.env.TEST_TRELLO_EVENT
+            ? JSON.parse(process.env.TEST_TRELLO_EVENT)
+            : null,
+        labels: extractArray(process.env.TEST_TRELLO_LABELS),
+        intervals: extractArray(process.env.TEST_TRELLO_INTERVALS),
+    };
+
+    try {
+        await deleteTrelloBoardComplete(deleteParams);
+    } catch (e) {
+        console.log(e);
+    }
+
+    delete process.env.TEST_TRELLO_MEMBERS;
+
+    delete process.env.TEST_TRELLO_BOARD;
+
+    delete process.env.TEST_TRELLO_LISTS;
+
+    delete process.env.TEST_TRELLO_ATTACHMENTS;
+
+    delete process.env.TEST_TRELLO_CARDS;
+
+    delete process.env.TEST_TRELLO_EVENT;
+
+    delete process.env.TEST_TRELLO_LABELS;
+});
 
 describe("Test Trello Bulk Scrape", () => {
     let backendUserClient;
@@ -41,7 +105,7 @@ describe("Test Trello Bulk Scrape", () => {
 
         expect(externalBoards).not.toBeNull();
 
-        expect(externalBoards.length).toEqual(1);
+        expect(externalBoards.length).toEqual(2);
 
         const boardNames = externalBoards.map((board) => board.name);
 
@@ -53,6 +117,8 @@ describe("Test Trello Bulk Scrape", () => {
 
         const { lists } = testBoard;
 
+        expect(lists.length).toEqual(4);
+
         const beginListId = lists.filter(
             (list) => list.name === "In Progress"
         )[0].id;
@@ -61,9 +127,12 @@ describe("Test Trello Bulk Scrape", () => {
 
         let repositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
 
-        repositories = repositories.filter((repository) => {
-            repository.fullName === "kgodara-testing/brodal_queue";
-        })[0]._id;
+        repositories = repositories
+            .filter(
+                (repository) =>
+                    repository.fullName == "kgodara-testing/brodal_queue"
+            )
+            .map((repo) => repo._id);
 
         const context = {
             board: testBoard.id,
@@ -77,7 +146,6 @@ describe("Test Trello Bulk Scrape", () => {
         process.env.TEST_TRELLO_CONTEXT = JSON.stringify(context);
     });
 
-    /*
     test("trelloControllerHelpers.acquireTrelloData: \
     Trello board data extracted through Trello API is \
     populated correctly", async () => {
@@ -91,7 +159,7 @@ describe("Test Trello Bulk Scrape", () => {
 
         const { accessToken } = profile;
 
-        const boardData = await acquireTrelloData(boardId, accessToken);
+        let boardData = await acquireTrelloData(boardId, accessToken);
 
         let {
             actions,
@@ -105,6 +173,7 @@ describe("Test Trello Bulk Scrape", () => {
             url,
         } = boardData;
 
+        //boardData.cards = cards.map((card) => {});
         expect(actions).toBeDefined();
 
         expect(cards).toBeDefined();
@@ -164,20 +233,20 @@ describe("Test Trello Bulk Scrape", () => {
         for (let i = 0; i < createdMembers.length; i++) {
             const createdMember = createdMembers[i];
 
-            let realMember = members.filter((member) => {
-                member.id == createdMember.sourceId;
-            });
+            let realMember = members.filter(
+                (member) => member.id == createdMember.sourceId
+            );
 
             expect(realMember.length).toEqual(1);
 
             realMember = realMember[0];
 
-            const { _id, sourceId, source, user } = createdMember;
+            const { _id, sourceId, source, user: userId } = createdMember;
 
             expect(source).toEqual("trello");
 
             if (sourceId === profile.sourceId) {
-                expect(user).toEqual(TEST_USER_ID);
+                expect(userId.toString()).toBe(TEST_USER_ID);
             }
 
             expect(_id).toBeDefined();
@@ -203,19 +272,25 @@ describe("Test Trello Bulk Scrape", () => {
             url
         );
 
+        process.env.TEST_TRELLO_BOARD = JSON.stringify(board);
+
         expect(board).toBeDefined();
 
-        expect(board).toEqual({
-            creator: members[idMemberCreator],
+        const expectedBoard = {
+            creator: members[idMemberCreator]._id,
             name,
             link: url,
             source: "trello",
             sourceId: id,
-        });
+        };
+
+        let receivedBoard = board.toJSON();
+
+        receivedBoard.creator = receivedBoard.creator.toString();
+
+        expect(receivedBoard).toMatchObject(expectedBoard);
 
         expect(board.name).toEqual("Quilt Test Trello Board");
-
-        process.env.TEST_TRELLO_BOARD = JSON.stringify(board);
     });
 
     test("trelloControllerHelpers.extractTrelloLists: expect lists to match", async () => {
@@ -229,18 +304,20 @@ describe("Test Trello Bulk Scrape", () => {
 
         const createdListsObj = await extractTrelloLists(lists, board);
 
+        process.env.TEST_TRELLO_LISTS = JSON.stringify(createdListsObj);
+
         expect(createdListsObj).toBeDefined();
 
-        const createdLists = Object.values(listsObj);
+        const createdLists = Object.values(createdListsObj);
 
-        expect(createdLists.length).toEqual(4);
+        expect(createdLists.length).toEqual(5);
 
         expect(createdLists.length).toEqual(lists.length);
 
         const createdNames = createdLists.map((list) => list.name);
 
         expect(createdNames.sort()).toEqual(
-            ["Backlog", "To Do", "In Progress", "Done"].sort()
+            ["Backlog", "To Do", "In Progress", "Done", "Misc"].sort()
         );
 
         createdLists.map((list) => {
@@ -260,8 +337,6 @@ describe("Test Trello Bulk Scrape", () => {
 
             expect(name).toEqual(realList.name);
         });
-
-        process.env.TEST_TRELLO_LISTS = JSON.stringify(createdListsObj);
     });
 
     test("trelloControllerHelpers.getContextRepositories: expect repositories of context to be retrieved", async () => {
@@ -281,9 +356,46 @@ describe("Test Trello Bulk Scrape", () => {
     });
 
     test("trelloControllerHelpers.extractTrelloDirectAttachments: expect direct attachments to be extracted", async () => {
-        // create cards
-        // create attachments on the card
-        // expect attachments to be on the card as specified on the test board
+        const { extractTrelloDirectAttachments } = trelloControllerHelpers;
+
+        const context = JSON.parse(process.env.TEST_TRELLO_CONTEXT);
+
+        const boardData = JSON.parse(process.env.TEST_TRELLO_BOARD_DATA);
+
+        const { cards, attachments } = await extractTrelloDirectAttachments(
+            boardData.cards,
+            context
+        );
+
+        process.env.TEST_TRELLO_ATTACHMENTS = JSON.stringify(attachments);
+
+        process.env.TEST_TRELLO_CARDS = JSON.stringify(cards);
+
+        const attachmentObj = _.mapKeys(attachments, "_id");
+
+        const { cardDirectAttachments } = testData;
+
+        cards.map((card) => {
+            const { name, attachmentIds } = card;
+
+            let expectedAttachments = cardDirectAttachments[name];
+
+            if (expectedAttachments) {
+                expectedAttachments = expectedAttachments.sort((a, b) =>
+                    a.link < b.link ? 1 : -1
+                );
+
+                const receivedAttachments = attachmentIds
+                    .map((id) => attachmentObj[id])
+                    .sort((a, b) => (a.link < b.link ? 1 : -1));
+
+                expect(receivedAttachments.length).toEqual(
+                    expectedAttachments.length
+                );
+
+                expect(receivedAttachments).toMatchObject(expectedAttachments);
+            }
+        });
     });
 
     test("trelloControllerHelpers.modifyTrelloActions: check to see actions were stored correctly on card", async () => {
@@ -291,7 +403,9 @@ describe("Test Trello Bulk Scrape", () => {
 
         const boardData = JSON.parse(process.env.TEST_TRELLO_BOARD_DATA);
 
-        let { actions, cards } = boardData;
+        let { actions } = boardData;
+
+        let cards = JSON.parse(process.env.TEST_TRELLO_CARDS);
 
         const context = JSON.parse(process.env.TEST_TRELLO_CONTEXT);
 
@@ -300,6 +414,34 @@ describe("Test Trello Bulk Scrape", () => {
         cards = _.mapKeys(cards, "id");
 
         cards = modifyTrelloActions(actions, cards, event);
+
+        const { cardRelevantActions } = testData;
+
+        Object.values(cards).map((card) => {
+            const { actions, name } = card;
+
+            const expectedActions = cardRelevantActions[name];
+
+            const { inProg, done } = expectedActions;
+
+            if (!actions) {
+                expect(inProg).toEqual(0);
+
+                expect(done).toEqual(0);
+            } else {
+                const inProgressActions = actions.filter(
+                    (action) => action.listName === "In Progress"
+                );
+
+                const doneActions = actions.filter(
+                    (action) => action.listName === "Done"
+                );
+
+                expect(inProgressActions.length).toEqual(inProg);
+
+                expect(doneActions.length).toEqual(done);
+            }
+        });
 
         process.env.TEST_TRELLO_CARDS = JSON.stringify(cards);
     });
@@ -317,6 +459,14 @@ describe("Test Trello Bulk Scrape", () => {
 
         const extractedEvent = await extractTrelloEvent(board, lists, event);
 
+        let receivedEvent = extractedEvent.toJSON();
+
+        receivedEvent.board = receivedEvent.board.toString();
+
+        receivedEvent.beginList = receivedEvent.beginList.toString();
+
+        receivedEvent.endList = receivedEvent.endList.toString();
+
         const expectedEvent = {
             board: board._id,
             beginList: lists[event.beginListId]._id,
@@ -325,7 +475,7 @@ describe("Test Trello Bulk Scrape", () => {
             action: "movement",
         };
 
-        expect(extractedEvent).toEqual(expectedEvent);
+        expect(receivedEvent).toMatchObject(expectedEvent);
 
         process.env.TEST_TRELLO_EVENT = JSON.stringify(extractedEvent);
     });
@@ -333,19 +483,34 @@ describe("Test Trello Bulk Scrape", () => {
     test("trelloControllerHelpers.extractTrelloIntervals: expect intervals to match", async () => {
         const { extractTrelloIntervals } = trelloControllerHelpers;
 
-        const cards = JSON.parse(process.env.TEST_TRELLO_CARDS);
+        const prevCards = JSON.parse(process.env.TEST_TRELLO_CARDS);
 
         const event = JSON.parse(process.env.TEST_TRELLO_EVENT);
 
         const lists = JSON.parse(process.env.TEST_TRELLO_LISTS);
 
-        const extractedCardObjs = await extractTrelloIntervals(
+        const { cards, intervals } = await extractTrelloIntervals(
             event,
-            cards,
+            prevCards,
             lists
         );
 
-        process.env.TEST_TRELLO_CARDS = JSON.stringify(extractedCardObjs);
+        const intervalCardNames = Object.values(cards)
+            .filter(
+                (card) =>
+                    card.intervalIds !== null &&
+                    card.intervalIds !== undefined &&
+                    card.intervalIds.length > 0
+            )
+            .map((card) => card.name);
+
+        expect(intervalCardNames.sort()).toEqual(
+            ["Test11", "Test2", "Test4", "Test3"].sort()
+        );
+
+        process.env.TEST_TRELLO_INTERVALS = JSON.stringify(intervals);
+
+        process.env.TEST_TRELLO_CARDS = JSON.stringify(cards);
     });
 
     test("trelloControllerHelpers.extractTrelloLabels: expect labels to match", async () => {
@@ -357,50 +522,173 @@ describe("Test Trello Bulk Scrape", () => {
 
         const createdLabelsObj = await extractTrelloLabels(labels);
 
+        const createdLabels = Object.values(createdLabelsObj);
+
+        const { expectedLabels } = testData;
+
+        expect(
+            createdLabels.sort((a, b) => (a.name < b.name ? 1 : -1))
+        ).toMatchObject(
+            expectedLabels.sort((a, b) => (a.name < b.name ? 1 : -1))
+        );
+
         process.env.TEST_TRELLO_LABELS = JSON.stringify(createdLabelsObj);
     });
 
-    
     test("bulkScrape: expect cards to match", async () => {
-        const { bulkScrapeTrello } = trelloControllerHelpers;
+        const helpers = {
+            acquireTrelloData: {
+                data: process.env.TEST_TRELLO_BOARD_DATA,
+                spy: null,
+            },
+            extractTrelloMembers: {
+                data: process.env.TEST_TRELLO_MEMBERS,
+                spy: null,
+            },
+            extractTrelloBoard: {
+                data: process.env.TEST_TRELLO_BOARD,
+                spy: null,
+            },
+            extractTrelloLists: {
+                data: process.env.TEST_TRELLO_LISTS,
+                spy: null,
+            },
+            extractTrelloDirectAttachments: {
+                data: {
+                    cards: JSON.parse(process.env.TEST_TRELLO_CARDS),
+                    attachments: JSON.parse(
+                        process.env.TEST_TRELLO_ATTACHMENTS
+                    ),
+                },
+                spy: null,
+            },
+            modifyTrelloActions: {
+                data: process.env.TEST_TRELLO_CARDS,
+                spy: null,
+            },
+            extractTrelloEvent: {
+                data: process.env.TEST_TRELLO_EVENT,
+                spy: null,
+            },
+            extractTrelloIntervals: {
+                data: {
+                    cards: JSON.parse(process.env.TEST_TRELLO_CARDS),
+                    intervals: JSON.parse(process.env.TEST_TRELLO_INTERVALS),
+                },
+                spy: null,
+            },
+            extractTrelloLabels: {
+                data: process.env.TEST_TRELLO_LABELS,
+                spy: null,
+            },
+        };
 
-        trelloControllerHelpers.acquireTrelloData = jest.fn(
-            trelloControllerHelpers.acquireTrelloData
-        );
+        Object.keys(helpers).map((helper) => {
+            let { data } = helpers[helper];
 
-        trelloControllerHelpers.acquireTrelloData.mockImplementation(() => {
-            return JSON.parse(process.env.TEST_TRELLO_BOARD_DATA);
+            if (typeof data === "string") data = JSON.parse(data);
+
+            let spy = jest.spyOn(trelloControllerHelpers, helper);
+
+            spy.mockImplementation(() => data);
+
+            helpers[helper].spy = spy;
         });
 
+        const profile = JSON.parse(process.env.TEST_TRELLO_CONNECT_PROFILE);
+
+        const contexts = [JSON.parse(process.env.TEST_TRELLO_CONTEXT)];
+
+        const {
+            bulkScrapeTrello,
+        } = require("../controllers/integrations/trello/TrelloIntegrationController");
+
+        const resultMapping = await bulkScrapeTrello(
+            profile,
+            TEST_USER_ID,
+            TEST_CREATED_WORKSPACE_ID,
+            contexts
+        );
+
+        Object.keys(helpers).map((helper) => {
+            const { spy } = helper;
+
+            if (spy) spy.mockRestore();
+        });
+
+        const finalCards = Object.values(resultMapping)[0].tickets;
+
+        expect(finalCards.length).toEqual(10);
+
+        const { expectedCardCounts } = testData;
+
+        const helperCards = JSON.parse(process.env.TEST_TRELLO_CARDS);
+
+        finalCards.map((card) => {
+            const {
+                name,
+                sourceId,
+                attachments,
+                members,
+                intervals,
+                labels,
+            } = card;
+
+            const counts = expectedCardCounts[name];
+
+            const getLength = (arr) => (arr ? arr.length : 0);
+
+            expect(getLength(attachments)).toEqual(counts.attachments);
+
+            expect(getLength(members)).toEqual(counts.members);
+
+            expect(getLength(intervals)).toEqual(counts.intervals);
+
+            expect(getLength(attachments)).toEqual(counts.attachments);
+        });
+
+        process.env.TRELLO_BULK_SCRAPE_RESULT = JSON.stringify(finalCards);
+    });
+});
+
+/*
+
+       
         trelloControllerHelpers.extractTrelloMembers = jest.fn(
             trelloControllerHelpers.extractTrelloMembers
         );
 
-        trelloControllerHelpers.extractTrelloMembers.mockImplementation(() => {
-            return JSON.parse(process.env.TEST_TRELLO_MEMBERS);
-        });
+        trelloControllerHelpers.extractTrelloMembers.mockImplementationOnce(
+            () => {
+                return JSON.parse(process.env.TEST_TRELLO_MEMBERS);
+            }
+        );
 
         trelloControllerHelpers.extractTrelloBoard = jest.fn(
             trelloControllerHelpers.extractTrelloBoard
         );
 
-        trelloControllerHelpers.extractTrelloBoard.mockImplementation(() => {
-            return JSON.parse(process.env.TEST_TRELLO_BOARD);
-        });
+        trelloControllerHelpers.extractTrelloBoard.mockImplementationOnce(
+            () => {
+                return JSON.parse(process.env.TEST_TRELLO_BOARD);
+            }
+        );
 
         trelloControllerHelpers.extractTrelloLists = jest.fn(
             trelloControllerHelpers.extractTrelloLists
         );
 
-        trelloControllerHelpers.extractTrelloLists.mockImplementation(() => {
-            return JSON.parse(process.env.TEST_TRELLO_LISTS);
-        });
+        trelloControllerHelpers.extractTrelloLists.mockImplementationOnce(
+            () => {
+                return JSON.parse(process.env.TEST_TRELLO_LISTS);
+            }
+        );
 
         trelloControllerHelpers.extractTrelloDirectAttachments = jest.fn(
             trelloControllerHelpers.extractTrelloDirectAttachments
         );
 
-        trelloControllerHelpers.extractTrelloDirectAttachments.mockImplementation(
+        trelloControllerHelpers.extractTrelloDirectAttachments.mockImplementationOnce(
             () => {
                 return JSON.parse(process.env.TEST_TRELLO_CARDS);
             }
@@ -410,23 +698,27 @@ describe("Test Trello Bulk Scrape", () => {
             trelloControllerHelpers.modifyTrelloActions
         );
 
-        trelloControllerHelpers.modifyTrelloActions.mockImplementation(() => {
-            return JSON.parse(process.env.TEST_TRELLO_CARDS);
-        });
+        trelloControllerHelpers.modifyTrelloActions.mockImplementationOnce(
+            () => {
+                return JSON.parse(process.env.TEST_TRELLO_CARDS);
+            }
+        );
 
         trelloControllerHelpers.extractTrelloEvent = jest.fn(
             trelloControllerHelpers.extractTrelloEvent
         );
 
-        trelloControllerHelpers.extractTrelloEvent.mockImplementation(() => {
-            return JSON.parse(process.env.TEST_TRELLO_EVENT);
-        });
+        trelloControllerHelpers.extractTrelloEvent.mockImplementationOnce(
+            () => {
+                return JSON.parse(process.env.TEST_TRELLO_EVENT);
+            }
+        );
 
         trelloControllerHelpers.extractTrelloIntervals = jest.fn(
             trelloControllerHelpers.extractTrelloIntervals
         );
 
-        trelloControllerHelpers.extractTrelloIntervals.mockImplementation(
+        trelloControllerHelpers.extractTrelloIntervals.mockImplementationOnce(
             () => {
                 return JSON.parse(process.env.TEST_TRELLO_CARDS);
             }
@@ -436,19 +728,8 @@ describe("Test Trello Bulk Scrape", () => {
             trelloControllerHelpers.extractTrelloLabels
         );
 
-        trelloControllerHelpers.extractTrelloLabels.mockImplementation(() => {
-            return JSON.parse(process.env.TEST_TRELLO_LABELS);
-        });
-
-        const profile = JSON.parse(process.env.TEST_TRELLO_CONNECT_PROFILE);
-
-        const contexts = [JSON.parse(process.env.TEST_TRELLO_CONTEXT)];
-
-        const tickets = await bulkScrapeTrello(
-            profile,
-            TEST_USER_ID,
-            TEST_CREATED_WORKSPACE_ID,
-            contexts
-        );
-    });*/
-});
+        trelloControllerHelpers.extractTrelloLabels.mockImplementationOnce(
+            () => {
+                return JSON.parse(process.env.TEST_TRELLO_LABELS);
+            }
+        );*/
