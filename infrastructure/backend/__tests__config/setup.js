@@ -9,6 +9,15 @@ module.exports = async () => {
     // global.__MONGOD__ = mongod;
 
     try {
+        await utils.removeWorkspaces();
+    }
+    catch (err) {
+        console.log('Error Clearing Test User Workspaces');
+        console.log(err);
+        throw err;
+    }
+
+    try {
         // global.createdRepositoryIds = await utils.initializeRepositories();
         process.env.TEST_CREATED_REPOSITORIES = JSON.stringify(await utils.fetchRepositories());
     }
