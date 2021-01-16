@@ -52,10 +52,32 @@ const integrationTicketSchema = new Schema({
     // Jira specific fields
     jiraSiteId: { type: ObjectId, ref: "JiraSite" },
     jiraProjectId: { type: ObjectId, ref: "JiraProject" },
-    jiraSummary: { type: String },
     jiraIssueId: { type: String },
     jiraIssueKey: { type: String },
     jiraIssueSummary: { type: String },
+    jiraIssueResolutionStatus: { type: Boolean },
+    jiraIssueResolutionDate: { type: Date },
+    jiraIssueCreationDate: { type: Date },
+    jiraIssueUpdatedDate: { type: Date },
+
+
+    // Github Issue specific fields
+    repositoryId: { type: ObjectId, ref: 'Repository' },
+    // id: repositoryIssueObj.id, --> sourceId
+    githubIssueHtmlUrl: { type: String },
+    githubIssueNumber: { type: Number },
+    githubIssueState: { type: String },
+    githubIssueTitle: { type: String },
+    githubIssueBody:  { type: String },
+    githubIssueUserId: { type: String },
+    githubIssueLabels: [{ type: String }],
+    githubIssueLocked: { type: String },
+    githubIssueCommentNumber: { type: Number },
+    githubIssueClosedAt: { type: Date, default: null },
+    githubIssueCreatedAt: { type: Date },
+    githubIssueUpdatedAt:{ type: Date },
+    githubIssueAuthorAssociation: { type: String },
+
 });
 
 const IntegrationTicket = mongoose.model(

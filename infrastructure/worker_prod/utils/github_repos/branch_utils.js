@@ -325,6 +325,10 @@ const enhanceBranchesWithPRMongoIds = async (prToBranchMapping, installationId, 
 
 const insertBranchesFromAPI = async (branchObjectsToInsert, installationId, repositoryId, worker) => {
 
+    branchObjectsToInsert = branchObjectsToInsert.map(branchObj => {
+        return Object.assign({}, branchObj, { sourceId: branchObj.ref});
+    });
+
 
 
     // Insert Branch Objects and get Ids of inserted Objects
