@@ -11,6 +11,60 @@ const {serializeError, deserializeError} = require('serialize-error');
 const Branch = require('../../models/Branch');
 
 
+// Uses 'ref' as Branch sourceId
+const fetchAllRepoBranchCommitDates = async (foundBranchList, installationClient, fullName, worker) => {
+
+    var commitDateRequestList = foundBranchList.map( async (branchObj) => {
+
+        var commitResponse;
+
+        var sha = branchObj.lastCommit;
+        try {
+            commitResponse = await installationClient.get(`/repos/${fullName}/commits/${sha}`);
+        }
+        catch (err) {
+            console.log(err);
+            return {error: 'Error', userId}
+        }
+
+        return { branchRef: branchObj.ref, branchLastCommit: branchObj.lastCommit, commitDate:  commitResponse.data.commit.committer.date};
+    });
+
+    // Execute all requests
+    var results;
+    try {
+      results = await Promise.allSettled(commitDateRequestList);
+    }
+    catch (err) {
+        await logger.error({source: 'worker-instance',
+                            message: serializeError(err),
+                            errorDescription: `Error Promise.allSettled getting branch commitDates`,
+                            function: 'fetchAllRepoBranchCommitDates'});
+        throw err;
+    }
+
+    // Non-error responses
+    validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
+
+    // Error responses
+    invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
+
+    validResults.map(resultObj => {
+        var matchingBranchIndex = -1;
+
+        matchBranchIndex = foundBranchList.findIndex((branchObj) => branchObj.ref == resultObj.branchRef && branchObj.lastCommit == resultObj.branchLastCommit);
+
+        if (matchBranchIndex > 0) {
+            foundBranchList[matchBranchIndex].sourceUpdatedDate = resultObj.commitDate;
+        }
+
+    });
+
+    return foundBranchList;    
+
+}
+
+
 
 const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullName, worker) => {
 
