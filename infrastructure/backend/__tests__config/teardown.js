@@ -2,8 +2,17 @@
 
 const utils = require('./utils');
 
-module.exports = async function () {
+const fs = require("fs");
 
+module.exports = async function () {
+    /*
+    try {
+        fs.unlinkSync("./test_env.json");
+    }
+    catch (err) {
+        console.log("Couldn't find JSON env file to delete");
+    }
+    */
 
     try {
         await utils.deleteWorkspace( process.env.TEST_CREATED_WORKSPACE_ID );

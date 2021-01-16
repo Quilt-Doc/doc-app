@@ -7,7 +7,7 @@ const removeWorkspaces = async () => {
     try {
         retrieveWorkspaceResponse = await backendClient.post(
             "/workspaces/retrieve",
-            { creatorId: process.env.TESTING_USER_ID }
+            { creatorId: process.env.TEST_USER_ID }
         );
     } catch (err) {
         console.log("Failed to successfully Fetch Repositories");

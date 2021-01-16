@@ -1,6 +1,3 @@
-/**
- * @jest-environment ./__tests__config/my-custom-environment
- */
 
 require('dotenv').config();
 const api = require('../apis/api');
@@ -19,13 +16,15 @@ const fs = require("fs");
 
 
 const MAX_WORKSPACE_POLL_RETRIES = 20;
-/*
+
+var MAGIC_VALUE = -1;
+
 afterAll(() => {
-    console.log('WRITING process.env.MY_MAGIC_TEST: ');
-    console.log(process.env.MY_MAGIC_TEST);
+    console.log('WRITING process.env.MAGIC_VALUE: ');
+    process.env.MAGIC_VALUE = MAGIC_VALUE;
     fs.writeFileSync('./test_env.json', JSON.stringify(process.env));
 })
-*/
+
 function delay(t, val) {
     return new Promise(function (resolve) {
         setTimeout(function () {
@@ -37,6 +36,9 @@ function delay(t, val) {
 
 
 describe("Create Workspace", () => {
+
+    MAGIC_VALUE=1;
+
     var createdWorkspaceId = process.env.TEST_CREATED_WORKSPACE_ID;
 
     var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);

@@ -1,8 +1,3 @@
-/**
- * @jest-environment ./__tests__config/my-custom-environment
- */
-
-
 
 require('dotenv').config();
 const fs = require("fs");
@@ -65,8 +60,38 @@ const fetchAllCommits = async (repositoryId) => {
 
 
 
+const {
+    TEST_USER_ID,
+    TEST_CREATED_WORKSPACE_ID,
+    EXTERNAL_DB_PASS,
+    EXTERNAL_DB_USER,
+} = process.env;
+
+
+beforeAll(async () => {
+    const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
+
+    await mongoose.connect(dbRoute, { useNewUrlParser: true });
+
+    let db = mongoose.connection;
+
+    db.once("open", () => console.log("connected to the database"));
+
+    db.on("error", console.error.bind(console, "MongoDB connection error:"));
+
+    var data = fs.readFileSync('./test_env.json', 'utf8');
+    process.env = JSON.parse(data);
+
+});
+
+
+
 
 describe("Branch Scraping", () => {
+
+    test("Environment variable should be passed", () => {
+        expect(parseInt(process.env.MAGIC_VALUE)).toEqual(1);
+    });
     
     var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
     var createdRepositoryIds = createdRepositories.map(repositoryObj => repositoryObj._id);

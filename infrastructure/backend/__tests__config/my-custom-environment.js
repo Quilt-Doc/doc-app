@@ -22,6 +22,8 @@ class CustomEnvironment extends NodeEnvironment {
 
   async teardown() {
     // 
+    // console.log("WRITING process.env.MAGIC_VALUE: ");
+    // console.log(process.env.MAGIC_VALUE");
     fs.writeFileSync('./test_env.json', JSON.stringify(process.env));
     await super.teardown();
   }
