@@ -10,9 +10,11 @@ const JiraSite = require("../models/integrations/jira/JiraSite");
 const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
 const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
 const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
+const IntegrationAttachment = require("../models/integrations/integration_objects/IntegrationAttachment");
 
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
+const _ = require("lodash");
 
 const { serializeError, deserializeError } = require("serialize-error");
 
@@ -154,6 +156,173 @@ const createJiraIssueIntervals = async (insertedIssueIds) => {
         }
     }
 };
+
+
+function flatten(items) {
+    const flat = [];
+    items.map(item => {
+      flat.push(item)
+      if (Array.isArray(item.content) && item.content.length > 0) {
+        flat.push(...flatten(item.content));
+        delete item.content
+      }
+      delete item.content
+    });
+    return flat;
+}
+
+
+const parseDescriptionAttachments = (cards) => {
+    cards.map((card) => {
+        const { jiraIssueDescription, attachments } = card;
+
+        // KARAN TODO: Handle case where there is no description
+        var flattenedTree = flatten(jiraIssueDescription.content);
+        var allURLs = [];
+        var i = 0;
+
+        var currentTreeObj;
+        for (i = 0; i < flattenedTree.length; i++) {
+            currentTreeObj = flattenedTree[i];
+            if (currentTreeObj.attrs) {
+                if (currentTreeObj.attrs.url) {
+                    allURLs.push(currentTreeObj.attrs.url);
+                }
+                if (currentTreeObj.attr.href) {
+                    allURLs.push(currentTreeObj.attrs.href);
+                }
+            }
+
+            if (currentTreeObj.marks) {
+                if (currentTreeObj.marks.attrs) {
+                    if (currentTreeObj.marks.attrs.url) {
+                        allURLs.push(currentTreeObj.marks.attrs.url);
+                    }
+                    if (currentTreeObj.marks.attr.href) {
+                        allURLs.push(currentTreeObj.marks.attrs.href);
+                    }
+                }
+            }
+        }
+
+
+        allURLs = allURLs.map((url) => {
+            return { url: url };
+        });
+
+        card.attachments = [...attachments, ...allURLs];
+    });
+    return cards;
+}
+
+const enrichJiraIssueDirectAttachments = async (jiraIssueList) => {
+
+    // KARAN TODO: Remove this Section
+    var repositoryId = '600032b77c780a751fd82db4';
+    jiraIssueList = jiraIssueList.map(issueObj => {
+        return Object.assign({}, issueObj, { attachments: [] });
+    });
+
+    jiraIssueList = parseDescriptionAttachments(jiraIssueList);
+
+
+    let insertOps = [];
+
+    let seenUrls = new Set();
+
+    jiraIssueList.map((issueObj) => {
+        const { attachments } = issueObj;
+
+        const modelTypeMap = {
+            tree: "branch",
+            issues: "issue",
+            pull: "pullRequest",
+            commit: "commit",
+        };
+
+        attachments.map((attachment) => {
+            const { date, url, name } = attachment;
+
+            if (
+                !url ||
+                !url.includes("https://github.com") ||
+                seenUrls.has(url)
+            )
+                return;
+
+            const splitURL = url.split("/");
+
+            try {
+                if (splitURL.length < 2) return null;
+
+                let githubType = splitURL.slice(
+                    splitURL.length - 2,
+                    splitURL.length - 1
+                )[0];
+
+                const modelType = modelTypeMap[githubType];
+
+                if (!modelType) return;
+
+                const sourceId = splitURL.slice(splitURL.length - 1)[0];
+
+                const fullName = splitURL
+                    .slice(splitURL.length - 4, splitURL.length - 2)
+                    .join("/");
+
+                attachment = {
+                    modelType,
+                    link: url,
+                    sourceId,
+                };
+
+                if (date) attachment.sourceCreationDate = new Date(date);
+
+                /*
+                if (currentRepositories[fullName]) {
+                    attachment.repository = currentRepositories[fullName]._id;
+                }
+                */
+
+                insertOps.push(attachment);
+
+                seenUrls.add(url);
+            } catch (err) {
+                return null;
+            }
+        });
+    });
+
+
+    let attachments;
+
+    try {
+        attachments = await IntegrationAttachment.insertMany(insertOps);
+    } catch (e) {
+        console.log(e);
+    }
+
+    attachments = _.mapKeys(attachments, "link");
+
+    jiraIssueList.map((issueObj) => {
+        issueObj.attachmentIds = issueObj.attachments
+            .map((attachment) => {
+                const { url } = attachment;
+
+                if (attachments[url]) {
+                    return attachments[url]._id;
+                }
+
+                return null;
+            })
+            .filter((attachmentId) => attachmentId != null);
+    });
+
+    return { attachments, cards };
+}
+
+
+
 
 const getJiraSiteObj = async (jiraSiteId) => {
     var jiraSiteObj;
@@ -318,7 +487,6 @@ const getJiraSiteProjects = async (
 
     var insertedJiraProjects;
     try {
-<<<<<<< HEAD
         insertedJiraProjects = await IntegrationBoard.insertMany(jiraProjectsToCreate);
     }
     catch (err) {
@@ -329,30 +497,6 @@ const getJiraSiteProjects = async (
                                                     function: 'importJiraIssues'}});
 
         throw new Error(`Error inserting IntegrationBoards(source = "jira") - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`);
-=======
-        insertedJiraProjects = await JiraProject.insertMany(
-            jiraProjectsToCreate
-        );
-    } catch (err) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "error",
-                source: "worker-instance",
-                message: serializeError(err),
-                errorDescription: `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(
-                    insertedJiraProjects
-                )}`,
-                function: "importJiraIssues",
-            },
-        });
-
-        throw new Error(
-            `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(
-                insertedJiraProjects
-            )}`
-        );
->>>>>>> 3089ccf8c4668a91045e20e8991b3db0d36ad830
     }
 
     return insertedJiraProjects;
@@ -420,7 +564,7 @@ const importJiraIssues = async () => {
             // jiraIssueResponse = await jiraApiClient.get('/search?jql=project=QKC&maxResults=1000');
             try {
                 issueListResponse = await jiraIssueApiClient.get(
-                    `/search?jql=project=${jiraProjectObj.key}&fields=resolution,summary,resolutiondate,created,updated&maxResults=1000`
+                    `/search?jql=project=${jiraProjectObj.key}&fields=resolution,summary,resolutiondate,created,description,updated&expand=changelog&maxResults=1000`
                 );
             } catch (err) {
                 console.log(err);
@@ -504,6 +648,7 @@ const importJiraIssues = async () => {
                 jiraIssueId: issueObj.id,
                 jiraIssueKey: issueObj.key,
                 jiraIssueSummary: issueObj.fields.summary,
+                jiraIssueDescription: issueObj.fields.description,
                 jiraIssueResolutionStatus: isResolved,
                 jiraIssueResolutionDate: isResolved
                     ? issueObj.fields.resolutiondate
@@ -516,6 +661,9 @@ const importJiraIssues = async () => {
     });
 
     jiraTicketList = jiraTicketList.flat();
+
+    // Enrich Jira Issues
+    // await enrichJiraIssueDirectAttachments(jiraTicketList);
 
     if (jiraTicketList.length > 0) {
         await worker.send({

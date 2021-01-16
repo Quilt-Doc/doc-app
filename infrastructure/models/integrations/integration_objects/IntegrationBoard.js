@@ -6,9 +6,9 @@ let integrationBoardSchema = new Schema({
     created: { type: Date, default: Date.now },
     creator: { type: ObjectId, ref: "IntegrationUser" },
     name: String,
-<<<<<<< HEAD
     source: { type: String, enum: ["jira", "trello", "github"] },
     sourceId: String, // == jiraId
+    link: String,
 
 
     // Jira Project fields
@@ -24,12 +24,6 @@ let integrationBoardSchema = new Schema({
     cloudId: {type: String, required: true},
     jiraSiteId: {type: ObjectId, ref: 'JiraSite', required: true},
 
-
-=======
-    link: String,
-    source: String,
-    sourceId: String,
->>>>>>> 3089ccf8c4668a91045e20e8991b3db0d36ad830
 });
 
 let IntegrationBoard = mongoose.model(

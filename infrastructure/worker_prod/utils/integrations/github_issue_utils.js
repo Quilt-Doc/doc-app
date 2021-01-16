@@ -7,6 +7,9 @@ var LinkHeader = require( 'http-link-header' );
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
+const getUrls = require('get-urls');
+const _ = require("lodash");
+
 
 const GithubIssue = require("../../models/integrations/github/GithubIssue");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
@@ -112,6 +115,247 @@ const createGithubIssueIntervals = async (insertedIssueIds) => {
     }
 
 }
+
+
+
+
+
+parseBodyAttachments = (issueList) => {
+    issueList.map((issueObj) => {
+        const { githubIssueBody, attachments } = issueObj;
+
+        var urlTokens = getUrls(githubIssueBody);
+
+        urlTokens = urlTokens.map((url) => {
+            return { url: token };
+        });
+
+        issueObj.attachments = [...attachments, ...tokens];
+    });
+
+    return issueList;
+};
+
+
+
+
+
+
+const enrichGithubIssueDirectAttachments = async (issueList) => {
+
+    issueList = issueList.map(issueObj => {
+        return Object.assign({}, issueObj, { attachments: [] });
+    });
+
+    issueList = parseBodyAttachments(issueList);
+
+    let insertOps = [];
+
+    let seenUrls = new Set();
+
+    issueList.map((issueObj) => {
+        const { attachments } = issueObj;
+
+        const modelTypeMap = {
+            tree: "branch",
+            issues: "issue",
+            pull: "pullRequest",
+            commit: "commit",
+        };
+
+        attachments.map((attachment) => {
+            const { date, url, name } = attachment;
+
+            if (
+                !url ||
+                !url.includes("https://github.com") ||
+                seenUrls.has(url)
+            )
+                return;
+
+            const splitURL = url.split("/");
+
+            try {
+                if (splitURL.length < 2) return null;
+
+                let githubType = splitURL.slice(
+                    splitURL.length - 2,
+                    splitURL.length - 1
+                )[0];
+
+                const modelType = modelTypeMap[githubType];
+
+                if (!modelType) return;
+
+                const sourceId = splitURL.slice(splitURL.length - 1)[0];
+
+                const fullName = splitURL
+                    .slice(splitURL.length - 4, splitURL.length - 2)
+                    .join("/");
+
+                attachment = {
+                    modelType,
+                    link: url,
+                    sourceId,
+                };
+
+                if (date) attachment.sourceCreationDate = new Date(date);
+
+                /*
+                if (currentRepositories[fullName]) {
+                    attachment.repository = currentRepositories[fullName]._id;
+                }
+                */
+
+                insertOps.push(attachment);
+
+                seenUrls.add(url);
+            } catch (err) {
+                return null;
+            }
+        });
+    });
+
+    let attachments;
+
+    try {
+        attachments = await IntegrationAttachment.insertMany(insertOps);
+    } catch (e) {
+        console.log(e);
+    }
+
+    attachments = _.mapKeys(attachments, "link");
+
+    cards.map((card) => {
+        card.attachmentIds = card.attachments
+            .map((attachment) => {
+                const { url } = attachment;
+
+                if (attachments[url]) {
+                    return attachments[url]._id;
+                }
+
+                return null;
+            })
+            .filter((attachmentId) => attachmentId != null);
+    });
+
+}
+
+
+
+
+    /*
+```
+
+extractTrelloDirectAttachments = async (cards, context) => {
+    const currentRepositories = await getContextRepositories(context);
+
+    cards = parseDescriptionAttachments(cards);
+    //console.log("CURRENT REPOS", currentRepositories);
+
+    let insertOps = [];
+
+    let seenUrls = new Set();
+
+    cards.map((card) => {
+        const { attachments } = card;
+
+        const modelTypeMap = {
+            tree: "branch",
+            issues: "issue",
+            pull: "pullRequest",
+            commit: "commit",
+        };
+
+        attachments.map((attachment) => {
+            const { date, url, name } = attachment;
+
+            if (
+                !url ||
+                !url.includes("https://github.com") ||
+                seenUrls.has(url)
+            )
+                return;
+
+            const splitURL = url.split("/");
+
+            try {
+                if (splitURL.length < 2) return null;
+
+                let githubType = splitURL.slice(
+                    splitURL.length - 2,
+                    splitURL.length - 1
+                )[0];
+
+                const modelType = modelTypeMap[githubType];
+
+                if (!modelType) return;
+
+                const sourceId = splitURL.slice(splitURL.length - 1)[0];
+
+                const fullName = splitURL
+                    .slice(splitURL.length - 4, splitURL.length - 2)
+                    .join("/");
+
+                attachment = {
+                    modelType,
+                    link: url,
+                    sourceId,
+                };
+
+                if (date) attachment.sourceCreationDate = new Date(date);
+
+                if (currentRepositories[fullName]) {
+                    attachment.repository = currentRepositories[fullName]._id;
+                }
+
+                insertOps.push(attachment);
+
+                seenUrls.add(url);
+            } catch (err) {
+                return null;
+            }
+        });
+    });
+
+    let attachments;
+
+    try {
+        attachments = await IntegrationAttachment.insertMany(insertOps);
+    } catch (e) {
+        console.log(e);
+    }
+
+    attachments = _.mapKeys(attachments, "link");
+
+    cards.map((card) => {
+        card.attachmentIds = card.attachments
+            .map((attachment) => {
+                const { url } = attachment;
+
+                if (attachments[url]) {
+                    return attachments[url]._id;
+                }
+
+                return null;
+            })
+            .filter((attachmentId) => attachmentId != null);
+    });
+
+    return { attachments, cards };
+};```
+
+
+*/
+
+
+
+
+
+
+
+
 
 
 
