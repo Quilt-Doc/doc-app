@@ -8,6 +8,9 @@ const PullRequest = require("../../../models/PullRequest");
 
 const _ = require("lodash");
 
+const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Types;
+
 class DirectAssociationGenerator extends AssociationGenerator {
     ticketsToCO = {};
 
@@ -127,14 +130,14 @@ class DirectAssociationGenerator extends AssociationGenerator {
                 if (!modelTypes.includes(modelType) || isScraped) return null;
 
                 coQueries[modelType].push({
-                    repository,
+                    repository: ObjectId(repository),
                     sourceId,
                 });
 
                 if (modelType === "branch") {
                     coQueries["pullRequest"].push({
                         $and: [
-                            { repository },
+                            { repository: ObjectId(repository) },
                             {
                                 $or: [
                                     { baseRef: sourceId },
@@ -155,7 +158,7 @@ class DirectAssociationGenerator extends AssociationGenerator {
                     },
                 };
 
-                const project = { $project: { _id: 1 } };
+                const project = { $project: { _id: 1, sourceId: 1 } };
 
                 queries[key][ticket._id] = [match, project];
             });
@@ -165,13 +168,15 @@ class DirectAssociationGenerator extends AssociationGenerator {
             const key = modelTypes[i];
 
             if (!_.isEmpty(queries[key])) {
-                this.ticketsToCO[key] = await this.coModelMapping[
+                const aggregateResult = await this.coModelMapping[
                     key
                 ].aggregate([
                     {
                         $facet: queries[key],
                     },
                 ]);
+
+                this.ticketsToCO[key] = aggregateResult[0];
             }
         }
 
@@ -180,6 +185,13 @@ class DirectAssociationGenerator extends AssociationGenerator {
 
     async insertDirectAssociations() {
         let associations = [];
+
+        const mongModelMapping = {
+            pullRequest: "PullRequest",
+            issue: "IntegrationTicket",
+            commit: "Commit",
+            branch: "Branch",
+        };
 
         Object.keys(this.ticketsToCO).map((modelType) => {
             const ticketCOMapping = this.ticketsToCO[modelType];
@@ -190,60 +202,29 @@ class DirectAssociationGenerator extends AssociationGenerator {
                 const seen = new Set();
 
                 ticketCodeObjects.map((codeObject) => {
-                    if (!codeObject || seen.has(codeObject._id)) return;
+                    if (!codeObject || seen.has(codeObject._id.toString()))
+                        return;
 
                     let association = {
                         workspaces: [this.workspaceId],
                         firstElement: ticketId,
                         firstElementModelType: "IntegrationTicket",
                         secondElement: codeObject._id,
-                        secondElementModelType:
-                            codeObject.constructor.modelName,
+                        secondElementModelType: mongModelMapping[modelType],
                         direct: true,
                     };
 
                     associations.push(association);
 
-                    seen.add(codeObject._id);
+                    seen.add(codeObject._id.toString());
                 });
             });
         });
 
-        associations = await Association.insertMany(associations).lean();
+        associations = await Association.insertMany(associations);
 
         return associations;
     }
 }
 
 module.exports = DirectAssociationGenerator;
-
-/*
- this.ticketsToCO.map((ticketCodeObjects, i) => {
-            //extract relevant ticket for code object grouping
-            const ticket = this.tickets[i];
-
-            const seen = new Set();
-
-            ticketCodeObjects.map((codeObject) => {
-                if (!codeObject && !seen.has(codeObject._id)) return;
-
-                let association = {
-                    workspaces: [this.workspaceId],
-                    firstElement: ticket._id,
-                    firstElementType: "IntegrationTicket",
-                    secondElement: codeObject._id,
-                    secondElementType: codeObject.constructor.modelName,
-                    quality: 1,
-                    associationLevel: 1,
-                };
-
-                associations.push(association);
-
-                seen.add(codeObject._id);
-            });
-        });
-
-        associations = await Association.insertMany(associations).lean();
-
-        return associations;
-*/

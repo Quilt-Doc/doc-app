@@ -51,6 +51,7 @@ afterAll(async () => {
             : null,
         labels: extractArray(process.env.TEST_TRELLO_LABELS),
         intervals: extractArray(process.env.TEST_TRELLO_INTERVALS),
+        associations: extractArray(process.env.TEST_TRELLO_ASSOCIATIONS),
     };
 
     try {
@@ -76,6 +77,8 @@ afterAll(async () => {
     delete process.env.TEST_TRELLO_CONTEXT;
 
     delete process.env.TEST_TRELLO_BULK_SCRAPE_RESULT;
+
+    delete process.env.TEST_TRELLO_ASSOCIATIONS;
 });
 
 describe("Test Trello Bulk Scrape Basic", () => {
@@ -718,7 +721,7 @@ describe("Test Direct Association Creation Basic", () => {
         await directGenerator.updateScrapedAssociations();
     });
 
-    test("DirectAssociationGenerator.updateScrapedAssociations: expect code objects to have been queried correctly", async () => {
+    test("DirectAssociationGenerator.ueryDirectAttachments: expect code objects to have been queried correctly", async () => {
         const queries = await directGenerator.queryDirectAttachments();
 
         let cards = JSON.parse(process.env.TEST_TRELLO_BULK_SCRAPE_RESULT);
@@ -745,5 +748,97 @@ describe("Test Direct Association Creation Basic", () => {
                     expect(expectedCardQueries[key][modelType]).toEqual(0);
             });
         });
+
+        const { expectedTicketToCO } = testDataAssoc;
+
+        Object.keys(directGenerator.ticketsToCO).map((key) => {
+            const expectedTicketCO = expectedTicketToCO[key];
+
+            const ticketCO = directGenerator.ticketsToCO[key];
+
+            Object.keys(ticketCO).map((ticketId) => {
+                const card = cards[ticketId];
+
+                const { name } = card;
+
+                const expectedCO = expectedTicketCO[name];
+
+                const receivedCO = ticketCO[ticketId];
+
+                expect(receivedCO.length).toEqual(expectedCO.length);
+
+                expect(receivedCO.map((co) => co.sourceId).sort()).toEqual(
+                    expectedCO.map((co) => co.sourceId).sort()
+                );
+            });
+        });
+    });
+
+    test("DirectAssociationGenerator.insertDirectAssociations: expect associations to be inserted correctly", async () => {
+        const associations = await directGenerator.insertDirectAssociations();
+
+        expect(associations.length).toEqual(14);
+
+        let associationLengthMapping = {};
+
+        associations.map((association) => {
+            const {
+                firstElement,
+                firstElementModelType,
+                secondElementModelType,
+                direct,
+            } = association;
+
+            expect(direct).toBeTruthy();
+
+            expect(firstElementModelType).toEqual("IntegrationTicket");
+
+            if (associationLengthMapping[firstElement]) {
+                if (
+                    associationLengthMapping[firstElement][
+                        secondElementModelType
+                    ]
+                ) {
+                    associationLengthMapping[firstElement][
+                        secondElementModelType
+                    ] += 1;
+                } else {
+                    associationLengthMapping[firstElement][
+                        secondElementModelType
+                    ] = 1;
+                }
+            } else {
+                associationLengthMapping[firstElement] = {};
+
+                associationLengthMapping[firstElement][
+                    secondElementModelType
+                ] = 1;
+            }
+        });
+
+        const { expectedTicketToCO } = testDataAssoc;
+
+        let cards = JSON.parse(process.env.TEST_TRELLO_BULK_SCRAPE_RESULT);
+
+        cards = _.mapKeys(cards, "_id");
+
+        Object.keys(associationLengthMapping).map((ticketId) => {
+            Object.keys(associationLengthMapping[ticketId]).map((modelType) => {
+                const mapping = {
+                    PullRequest: "pullRequest",
+                    IntegrationTicket: "issue",
+                    Branch: "branch",
+                    Commit: "commit",
+                };
+
+                const modelType2 = mapping[modelType];
+
+                expect(associationLengthMapping[ticketId][modelType]).toEqual(
+                    expectedTicketToCO[modelType2][cards[ticketId].name].length
+                );
+            });
+        });
+
+        process.env.TEST_TRELLO_ASSOCIATIONS = JSON.stringify(associations);
     });
 });

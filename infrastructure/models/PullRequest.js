@@ -29,67 +29,66 @@ repository
 */
 
 let pullRequestSchema = new Schema({
-  created: { type: Date, default: Date.now },
+    created: { type: Date, default: Date.now },
 
-  installationId: { type: Number, required: true },
-  checks: [{ type: ObjectId, ref: "Check" }],
-  repository: { type: ObjectId, ref: "Repository", required: true },
-  fileList: [{ type: String }],
+    installationId: { type: Number, required: true },
+    checks: [{ type: ObjectId, ref: "Check" }],
+    repository: { type: ObjectId, ref: "Repository", required: true },
+    fileList: [{ type: String }],
 
-  pullRequestId: { type: Number, required: true },
-  number: { type: Number, required: true },
+    pullRequestId: { type: Number, required: true },
+    number: { type: Number, required: true },
 
-  sourceId: { type: Number },
-  sourceCreationDate: { type: Date },
-  sourceUpdateDate: { type: Date },
-  sourceCloseDate: { type: Date },
+    sourceId: { type: String },
+    sourceCreationDate: { type: Date },
+    sourceUpdateDate: { type: Date },
+    sourceCloseDate: { type: Date },
 
+    branchLabelList: [{ type: String }],
+    branches: [{ type: ObjectId, ref: "Branch" }],
 
-  branchLabelList: [{ type: String }],
-  branches: [{type: ObjectId, ref: 'Branch'}],
+    // sourceId: Number —- replaces pullRequestObjId AND pullRequestNumber
 
-  // sourceId: Number —- replaces pullRequestObjId AND pullRequestNumber
+    htmlUrl: { type: String },
+    issueUrl: { type: String },
+    state: { type: String, enum: ["open", "closed"], required: true },
+    locked: { type: Boolean },
+    title: { type: String },
+    body: { type: String },
+    labels: [{ type: String }],
+    createdAt: { type: Date },
+    updatedAt: { type: Date },
+    closedAt: { type: Date },
+    mergedAt: { type: Date },
+    mergeCommitSha: { type: String },
+    labels: [{ type: String }],
 
-  htmlUrl: { type: String },
-  issueUrl: { type: String },
-  state: { type: String, enum: ["open", "closed"], required: true },
-  locked: { type: Boolean },
-  title: { type: String },
-  body: { type: String },
-  labels: [{ type: String }],
-  createdAt: { type: Date },
-  updatedAt: { type: Date },
-  closedAt: { type: Date },
-  mergedAt: { type: Date },
-  mergeCommitSha: { type: String },
-  labels: [{ type: String }],
+    headRef: { type: String, required: true },
+    headLabel: { type: String, required: true },
+    headSha: { type: String },
 
-  headRef: { type: String, required: true },
-  headLabel: { type: String, required: true },
-  headSha: { type: String, },
+    baseRef: { type: String, required: true },
+    baseLabel: { type: String, required: true },
+    baseSha: { type: String },
 
-  baseRef: { type: String, required: true },
-  baseLabel: { type: String, required: true },
-  baseSha: { type: String, },
+    draft: { type: Boolean },
+    merged: { type: Boolean },
+    commentNum: { type: Number },
+    reviewCommentNum: { type: Number },
+    commitNum: { type: Number },
+    additionNum: { type: Number },
+    deletionNum: { type: Number },
+    changedFileNum: { type: Number },
 
-  draft: { type: Boolean },
-  merged: { type: Boolean },
-  commentNum: { type: Number },
-  reviewCommentNum: { type: Number },
-  commitNum: { type: Number },
-  additionNum: { type: Number },
-  deletionNum: { type: Number },
-  changedFileNum: { type: Number },
-
-  // KARAN TODO: Verify each of these being generated correctly
-  user: { type: ObjectId, ref: "IntegrationUser" },
-  comments: [{ type: ObjectId, ref: "IntegrationComment" }],
-  commits: [{ type: ObjectId, ref: "Commit" }],
-  fileChanges: [{ type: ObjectId, ref: "FileChange" }],
-  members: [{ type: ObjectId, ref: "IntegrationUser" }],
-  assignees: [{ type: ObjectId, ref: "IntegrationUser" }], // We ignore the assignee field since it's always a subset of the content of this field, which is an empty array when there are no assignees
-  requestedReviewers: [{ type: ObjectId, ref: "IntegrationUser" }],
-  mergedBy: { type: ObjectId, ref: "IntegrationUser" },
+    // KARAN TODO: Verify each of these being generated correctly
+    user: { type: ObjectId, ref: "IntegrationUser" },
+    comments: [{ type: ObjectId, ref: "IntegrationComment" }],
+    commits: [{ type: ObjectId, ref: "Commit" }],
+    fileChanges: [{ type: ObjectId, ref: "FileChange" }],
+    members: [{ type: ObjectId, ref: "IntegrationUser" }],
+    assignees: [{ type: ObjectId, ref: "IntegrationUser" }], // We ignore the assignee field since it's always a subset of the content of this field, which is an empty array when there are no assignees
+    requestedReviewers: [{ type: ObjectId, ref: "IntegrationUser" }],
+    mergedBy: { type: ObjectId, ref: "IntegrationUser" },
 });
 
 // Final mapping from source --> PullRequest
