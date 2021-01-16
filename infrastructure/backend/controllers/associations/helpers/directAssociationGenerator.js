@@ -19,7 +19,7 @@ class DirectAssociationGenerator extends AssociationGenerator {
     }
 
     async generateDirectAssociations() {
-        await super.acquireIntegrationObjects();
+        await this.acquireIntegrationObjects();
 
         await this.identifyScrapedRepositories();
 
@@ -222,6 +222,8 @@ class DirectAssociationGenerator extends AssociationGenerator {
         });
 
         associations = await Association.insertMany(associations);
+
+        this.associations = associations;
 
         return associations;
     }

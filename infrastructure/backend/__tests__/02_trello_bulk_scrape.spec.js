@@ -112,7 +112,7 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         expect(externalBoards).not.toBeNull();
 
-        expect(externalBoards.length).toEqual(2);
+        expect(externalBoards.length).toEqual(3);
 
         const boardNames = externalBoards.map((board) => board.name);
 

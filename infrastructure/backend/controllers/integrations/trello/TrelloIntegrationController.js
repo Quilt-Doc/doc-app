@@ -225,7 +225,7 @@ handleTrelloConnectCallback = async (req, res) => {
 triggerTrelloScrape = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
-    const { contexts } = req.body;
+    let { contexts } = req.body;
 
     const profile = await acquireTrelloConnectProfile(userId);
 
@@ -236,7 +236,28 @@ triggerTrelloScrape = async (req, res) => {
         !existingBoards.has(context.boardId)
     });*/
 
-    await bulkScrapeTrello(profile, userId, workspaceId, contexts);
+    let resultMapping;
+
+    try {
+        resultMapping = await bulkScrapeTrello(
+            profile,
+            userId,
+            workspaceId,
+            contexts
+        );
+    } catch (e) {
+        console.log("ERROR", e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    contexts = Object.keys(resultMapping).map((key) => {
+        //console.log("RESULT MAPPING TICKETS", resultMapping[key].tickets);
+
+        return resultMapping[key].context;
+    });
+
+    return res.json({ success: true, result: contexts });
 };
 
 // boardWorkspaceContexts -> (boardId, event: {beginListId, endListId}, repositories: [repositoryIds],
@@ -291,7 +312,7 @@ bulkScrapeTrello = async (profile, userId, workspaceId, contexts) => {
 
         cards = await modifyTrelloActions(actions, cards, event);
 
-        event = extractTrelloEvent(board, lists, event);
+        event = await extractTrelloEvent(board, lists, event);
 
         context = new BoardWorkspaceContext({
             board: board._id,

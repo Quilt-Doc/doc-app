@@ -284,7 +284,7 @@ router.post(
 );
 router.post(
     "/repositories/test_retrieve",
-  //  authorizationMiddleware.repositoryMiddleware,
+    //  authorizationMiddleware.repositoryMiddleware,
     repositoryController.retrieveRepositoriesTest
 );
 
@@ -304,7 +304,6 @@ router.delete(
     authorizationMiddleware.repositoryMiddleware,
     repositoryController.deleteRepository
 );
-
 
 // create - verify user exists
 
@@ -733,6 +732,11 @@ const associationController = require("../controllers/associations/AssociationCo
 router.post(
     "/associations/:repositoryId/get_file_context",
     associationController.getFileContext
+);
+
+router.post(
+    "/associations/:workspaceId/generate_associations",
+    associationController.generateAssociations
 );
 
 //TRELLO INTEGRATION ROUTES

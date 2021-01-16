@@ -9,6 +9,7 @@ const Commit = require("../../models/Commit");
 const { checkValid } = require("../../utils/utils");
 
 var mongoose = require("mongoose");
+const BoardWorkspaceContext = require("../../models/integrations/context/BoardWorkspaceContext");
 const { ObjectId } = mongoose.Types;
 
 const getFileContext = async (req, res) => {
@@ -129,22 +130,50 @@ const getFileContext = async (req, res) => {
     return res.json({ success: true, result: returnObj });
 };
 
-generateAssociations = async (integrationId, integrationType) => {
+generateAssociations = async (req, res) => {
+    const { workspaceId } = req.params;
+
+    const { contexts } = req.body;
+
     const directGenerator = new DirectAssociationGenerator(
-        integrationId,
-        integrationType
+        workspaceId,
+        contexts
     );
 
+    const contextIds = contexts.map((context) => context._id);
+
+    const newContexts = await BoardWorkspaceContext.updateMany(
+        { _id: { $in: contextIds } },
+        { $set: { isScraped: true } }
+    );
+
+    console.log("NEW CONTEXTS", newContexts);
     /*
     const likelyGenerator = new LikelyAssociationGenerator(
         integrationId,
         integrationType
     );*/
 
+    /*
     await Promise.all([
         // likelyGenerator.generateLikelyAssociations(),
         directGenerator.generateDirectAssociations(),
-    ]);
+    ]);*/
+
+    try {
+        await directGenerator.generateDirectAssociations();
+    } catch (e) {
+        console.log("ERROR", e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    console.log("FINAL ASSOCIATIONS MADE :O", directGenerator.associations);
+
+    return res.json({
+        success: true,
+        result: directGenerator.associations,
+    });
 };
 
 module.exports = {
