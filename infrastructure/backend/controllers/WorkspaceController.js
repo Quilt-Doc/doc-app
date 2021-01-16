@@ -56,6 +56,8 @@ escapeRegExp = (string) => {
 createWorkspace = async (req, res) => {
     const { name, creatorId, installationId, repositoryIds } = req.body;
 
+    console.log({ name, creatorId, installationId, repositoryIds });
+
     if (!checkValid(name))
         return res.json({
             success: false,

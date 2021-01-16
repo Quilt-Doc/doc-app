@@ -7,19 +7,13 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
 const logger = require("../../../logging/index").logger;
-
 const jobs = require("../../../apis/jobs");
 const jobConstants = require("../../../constants/index").jobs;
 
 const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
 
-const IntegrationUser = require("../../../models/integrations/integration_objects/IntegrationUser");
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
 const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
-const IntegrationColumn = require("../../../models/integrations/integration_objects/IntegrationColumn");
-const IntegrationEvent = require("../../../models/integrations/integration_objects/IntegrationEvent");
-const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
-const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
 
 const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
 
@@ -56,53 +50,51 @@ const trelloAPI = axios.create({
     baseURL: "https://api.trello.com",
 });
 
-getTrelloConnectProfile = async (req, res) => {
+const {
+    acquireTrelloConnectProfile,
+    acquireExternalTrelloBoards,
+    acquireTrelloData,
+    extractTrelloMembers,
+    extractTrelloBoard,
+    extractTrelloLists,
+    extractTrelloDirectAttachments,
+    getContextRepositories,
+    extractTrelloEvent,
+    extractTrelloLabels,
+    modifyTrelloActions,
+    populateExistingTrelloDirectAttachments,
+    deleteTrelloBoardComplete,
+} = require("./TrelloControllerHelpers");
+
+getExternalTrelloBoards = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
     let profile;
 
-    console.log("USERID", userId);
-
     try {
-        profile = await TrelloConnectProfile.findOne({
-            user: userId,
-            isReady: true,
-        })
-            .lean()
-            .exec();
-    } catch (err) {
-        console.log("ERROR", err);
+        profile = await acquireTrelloConnectProfile(userId);
+    } catch (e) {
         return res.json({
             success: false,
-            error: "getTrelloConnectProfile Error: Find query failed",
+            error: "getExternalTrelloBoards Error: Find query failed",
             trace: err,
         });
     }
 
     if (!profile) return res.json({ success: true, result: null });
 
-    const { accessToken, sourceId: memberId } = profile;
-
-    let boardsReponse;
+    let boards;
 
     try {
-        boardsReponse = await trelloAPI.get(
-            `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name`
-        );
-    } catch (err) {
-        console.log("ERROR", err);
-
+        boards = await acquireExternalTrelloBoards(profile);
+    } catch (e) {
         return res.json({
             success: false,
             error:
-                "getTrelloConnectProfile Error: trello board API request failed",
+                "getExternalTrelloBoards Error: trello board API request failed",
             trace: err,
         });
     }
-
-    let boards = boardsReponse.data;
-
-    console.log("BOARDS", boards);
 
     let boardContexts;
 
@@ -118,12 +110,10 @@ getTrelloConnectProfile = async (req, res) => {
         return res.json({
             success: false,
             error:
-                "getTrelloConnectProfile Error: board context response query failed",
+                "getExternalTrelloBoards Error: board context response query failed",
             trace: err,
         });
     }
-
-    console.log("BOARD CONTEXTS", boardContexts);
 
     const integratedBoardIds = new Set(
         boardContexts.map((context) => {
@@ -135,15 +125,11 @@ getTrelloConnectProfile = async (req, res) => {
         })
     );
 
-    console.log("Integrated Board Ids", integratedBoardIds);
-
     boards = boards.filter((board) => {
         const { id } = board;
 
         return !integratedBoardIds.has(id);
     });
-
-    console.log("FINAL BOARDS", boards);
 
     return res.json({ success: true, result: boards });
 };
@@ -236,10 +222,12 @@ handleTrelloConnectCallback = async (req, res) => {
     );
 };
 
-setupBulkScrape = async (req, res) => {
-    let { userId, workspaceId, boardWorkspaceContexts } = req.body;
+triggerTrelloScrape = async (req, res) => {
+    const { userId, workspaceId } = req.params;
 
-    const accessToken = await acquireAccessToken(userId);
+    const { contexts } = req.body;
+
+    const profile = await acquireTrelloConnectProfile(userId);
 
     /*
     const existingBoards = await handleExistingBoards(accessToken, userId, boardWorkspaceContexts);
@@ -248,42 +236,156 @@ setupBulkScrape = async (req, res) => {
         !existingBoards.has(context.boardId)
     });*/
 
-    console.log("ACCESS TOKEN", accessToken);
-
-    console.log("WORKSPACEID", workspaceId);
-
-    console.log("CONTEXTS", boardWorkspaceContexts);
-
-    await bulkScrapeTrello(
-        accessToken,
-        userId,
-        workspaceId,
-        boardWorkspaceContexts
-    );
+    await bulkScrapeTrello(profile, userId, workspaceId, contexts);
 };
 
-acquireAccessToken = async (userId) => {
-    let trelloConnectProfile;
+// boardWorkspaceContexts -> (boardId, event: {beginListId, endListId}, repositories: [repositoryIds],
+bulkScrapeTrello = async (profile, userId, workspaceId, contexts) => {
+    const { accessToken } = profile;
 
-    try {
-        trelloConnectProfile = await TrelloConnectProfile.findOne({
-            user: userId,
-            isReady: true,
-        })
-            .lean()
-            .exec();
-    } catch (err) {
-        return res.json({
-            success: false,
-            error:
-                "bulkScrapeTrello Error: TrelloConnectProfile.findOne query failed",
-            trace: err,
+    let resultMapping = {};
+
+    for (let i = 0; i < contexts.length; i++) {
+        let context = contexts[i];
+
+        const { board: boardId } = context;
+
+        const boardData = await acquireTrelloData(boardId, accessToken);
+
+        let {
+            actions,
+            cards,
+            lists,
+            members,
+            labels,
+            id,
+            name,
+            idMemberCreator,
+            url,
+        } = boardData;
+
+        //create IntegrationUsers for members
+        members = await extractTrelloMembers(workspaceId, members, profile);
+
+        // create IntegrationBoard
+        const board = await extractTrelloBoard(
+            members,
+            id,
+            name,
+            idMemberCreator,
+            url
+        );
+
+        lists = await extractTrelloLists(lists, board);
+
+        const attachmentResponse = await extractTrelloDirectAttachments(
+            cards,
+            context
+        );
+
+        cards = attachmentResponse.cards;
+
+        cards = _.mapKeys(cards, "id");
+
+        let { event, repositories } = context;
+
+        cards = await modifyTrelloActions(actions, cards, event);
+
+        event = extractTrelloEvent(board, lists, event);
+
+        context = new BoardWorkspaceContext({
+            board: board._id,
+            event: event._id,
+            workspace: workspaceId,
+            repositories: repositories,
+            creator: userId,
         });
+
+        await context.save();
+
+        const intervalResponse = await extractTrelloIntervals(
+            event,
+            cards,
+            lists
+        );
+
+        cards = intervalResponse.cards;
+
+        labels = await extractTrelloLabels(labels);
+
+        let insertOps = [];
+
+        Object.values(cards).map(async (card) => {
+            let {
+                id,
+                idList,
+                dateLastActivity,
+                desc,
+                name,
+                attachmentIds,
+                intervalIds,
+                due,
+                dueComplete,
+                idMembers,
+                url,
+            } = card;
+
+            const columnId = lists[idList]._id;
+
+            const assigneeIds = idMembers.map(
+                (memberId) => members[memberId]._id
+            );
+
+            const labelIds = card.labels
+                ? card.labels.map(
+                      (label) => labels[`${label.name}-${label.color}`]._id
+                  )
+                : [];
+
+            let cardParams = {
+                name,
+                source: "trello",
+                sourceId: id,
+                description: desc,
+                link: url,
+                assignees: assigneeIds, // trelloCardMember, // trelloCardListUpdateDates: [{type: Date}],
+                members: assigneeIds,
+                column: columnId,
+                board: board._id,
+            };
+
+            if (due) cardParams.trelloCardDue = new Date(due);
+
+            if (dueComplete) cardParams.trelloCardDueComplete = dueComplete;
+
+            if (dateLastActivity)
+                cardParams.trelloCardDateLastActivity = new Date(
+                    dateLastActivity
+                );
+
+            if (attachmentIds && attachmentIds.length > 0)
+                cardParams.attachments = attachmentIds;
+
+            if (intervalIds && intervalIds.length > 0)
+                cardParams.intervals = intervalIds;
+
+            if (labelIds && labelIds.length > 0) cardParams.labels = labelIds;
+
+            insertOps.push(cardParams);
+        });
+
+        let tickets;
+
+        try {
+            tickets = await IntegrationTicket.insertMany(insertOps);
+        } catch (err) {
+            console.log("ERROR", err);
+        }
+
+        resultMapping[context._id] = { context, tickets };
     }
 
-    const { accessToken } = trelloConnectProfile;
-
-    return accessToken;
+    return resultMapping;
 };
 
 handleExistingBoards = async (accessToken, userId, boardWorkspaceContexts) => {
@@ -371,548 +473,12 @@ handleExistingBoards = async (accessToken, userId, boardWorkspaceContexts) => {
     return new Set(existingBoards.map((board) => board._id));
 };
 
-// boardWorkspaceContexts -> (boardId, events: [{beginListId, endListId}], repositories: [repositoryIds],
-bulkScrapeTrello = async (
-    accessToken,
-    userId,
-    workspaceId,
-    boardWorkspaceContexts
-) => {
-    const boardIds = boardWorkspaceContexts.map((context) => context.boardId);
-
-    for (let i = 0; i < boardIds.length; i++) {
-        const boardId = boardIds[i];
-
-        const boardData = await acquireTrelloData(boardId, accessToken);
-
-        let {
-            actions,
-            cards,
-            lists,
-            members,
-            labels,
-            id,
-            name,
-            idMemberCreator,
-            url,
-        } = boardData;
-
-        //create IntegrationUsers for members
-        members = await extractTrelloMembers(workspaceId, members);
-
-        // create IntegrationBoard
-        const board = await extractTrelloBoard(
-            members,
-            id,
-            name,
-            idMemberCreator,
-            url
-        );
-
-        lists = await extractTrelloLists(lists, board);
-
-        await extractTrelloDirectAttachments(cards);
-
-        cards = _.mapKeys(cards, "id");
-
-        //create IntegrationIntervals
-        const currentContext = boardWorkspaceContexts[i];
-
-        const event = extractTrelloEvent(board, lists, currentContext.event);
-
-        const boardWorkspaceContext = new BoardWorkspaceContext({
-            board: board._id,
-            event: event._id,
-            workspace: workspace._id,
-            repositories: currentContext.repositories,
-            creator: userId,
-        });
-
-        await boardWorkspaceContext.save();
-
-        await modifyTrelloActions(actions, cards);
-
-        await extractTrelloIntervals(event, Object.values(cards), lists);
-
-        labels = await extractTrelloLabels(labels);
-
-        let insertOps = [];
-
-        Object.values(cards).map(async (card) => {
-            let {
-                id,
-                idList,
-                dateLastActivity,
-                desc,
-                name,
-                attachmentIds,
-                intervalIds,
-                due,
-                dueComplete,
-                idMembers,
-                url,
-            } = card;
-
-            const columnId = lists[idList]._id;
-
-            const assigneeIds = idMembers.map(
-                (memberId) => members[memberId]._id
-            );
-
-            const labelIds = card.labels
-                ? card.labels.map(
-                      (label) => labels[`${label.name}-${label.color}`]._id
-                  )
-                : [];
-
-            let cardParams = {
-                name,
-                source: "trello",
-                sourceId: id,
-                description: desc,
-                link: url,
-                assignees: assigneeIds, // trelloCardMember, // trelloCardListUpdateDates: [{type: Date}],
-                column: columnId,
-                board: board._id,
-            };
-
-            if (due) cardParams.trelloCardDue = new Date(due);
-
-            if (dueComplete) cardParams.trelloCardDueComplete = dueComplete;
-
-            if (dateLastActivity)
-                cardParams.trelloCardDateLastActivity = new Date(
-                    dateLastActivity
-                );
-
-            if (attachmentIds && attachmentIds.length > 0)
-                cardParams.attachments = attachmentIds;
-
-            if (intervalIds && intervalIds.length > 0)
-                cardParams.intervals = intervalIds;
-
-            if (labelIds && labelIds.length > 0) cardParams.labels = labelIds;
-
-            insertOps.push(cardParams);
-        });
-
-        try {
-            await IntegrationTicket.insertMany(insertOps);
-        } catch (err) {
-            console.log("ERROR", err);
-        }
-    }
-};
-
-// TODO: If population > 1000, need to handle further data extraction (since, until)
-acquireTrelloData = async (boardId, accessToken, isMinimal) => {
-    const requestIdParams = `${boardId}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name,idMemberCreator,url`;
-
-    const nestedListParam = "&lists=all&list_fields=id,name";
-
-    const nestedCardFields =
-        "&card_fields=id,idList,dateLastActivity,desc,name,due,dueComplete,idMembers,labels,url";
-
-    const nestedCardParam = `&cards=all&card_members=true&card_attachments=true${nestedCardFields}`;
-
-    const nestedActionParam =
-        "&actions=updateCard:idList&actions_limit=1000&action_member=false&action_memberCreator_fields=fullName,username";
-
-    const nestedMemberParam = "&members=all";
-
-    const nestedLabelParam =
-        "&labels=all&label_fields=color,name&labels_limit=1000";
-
-    const finalQuery = minimal
-        ? `/1/boards/${requestIdParams}${nestedActionParam}`
-        : `/1/boards/${requestIdParams}${nestedListParam}${nestedCardParam}${nestedActionParam}${nestedMemberParam}${nestedLabelParam}`;
-
-    const boardResponse = await trelloAPI.get(finalQuery);
-
-    return boardResponse.data;
-};
-
-extractTrelloMembers = async (workspaceId, members) => {
-    const currentWorkspace = await Workspace.findById(workspaceId)
-        .lean()
-        .select("memberUsers")
-        .populate("memberUsers");
-
-    const workspaceUsers = currentWorkspace.memberUsers;
-
-    try {
-        members = await Promise.all(
-            members.map((member) => {
-                const { id, username, fullName } = member;
-
-                member = new IntegrationUser({
-                    sourceId: id,
-                    source: "trello",
-                    userName: username,
-                    name: fullName,
-                });
-
-                const splitName = fullName.split(" ");
-
-                if (splitName.length > 0) {
-                    const likelyFirstName = splitName[0];
-
-                    const likelyLastName = splitName[splitName.length - 1];
-
-                    const likelyUsers = workspaceUsers.filter((user) => {
-                        return (
-                            (user.firstName === likelyFirstName &&
-                                user.lastName === likelyLastName) ||
-                            user.username === username
-                        );
-                    });
-
-                    if (likelyUsers.length > 0)
-                        member.user = likelyUsers[0]._id;
-                }
-
-                return member.save();
-            })
-        );
-    } catch (err) {
-        console.log("ERROR", err);
-    }
-
-    members = _.mapKeys(members, "sourceId");
-
-    return members;
-};
-
-extractTrelloBoard = async (members, id, name, idMemberCreator, url) => {
-    let board;
-
-    try {
-        const boardCreator = members[idMemberCreator];
-
-        board = new IntegrationBoard({
-            creator: boardCreator._id,
-            name,
-            source: "trello",
-            link: url,
-            sourceId: id,
-        });
-
-        board = await board.save();
-    } catch (err) {
-        console.log("ERROR", err);
-    }
-
-    return board;
-};
-
-extractTrelloLists = async (lists, board) => {
-    lists = lists ? lists : [];
-    // create IntegrationColumn
-    try {
-        lists = await Promise.all(
-            lists.map((list) => {
-                const { id, name } = list;
-
-                list = new IntegrationColumn({
-                    name,
-                    source: "trello",
-                    sourceId: id,
-                    board: board._id,
-                });
-
-                return list.save();
-            })
-        );
-    } catch (err) {
-        console.log("ERR", err);
-    }
-
-    lists = _.mapKeys(lists, "sourceId");
-
-    return lists;
-};
-
-extractTrelloEvent = async (board, lists, event) => {
-    let { beginListId, endListId } = event;
-
-    const beginList = lists[beginListId];
-
-    const endList = lists[endListId];
-
-    event = await IntegrationEvent.findOne({
-        beginList: beginList._id,
-        endList: endList._id,
-    })
-        .lean()
-        .exec();
-
-    if (!event) {
-        event = new IntegrationEvent({
-            board: board._id,
-            beginList: beginList._id,
-            endList: endList._id,
-            source: "trello",
-            action: "movement",
-        });
-
-        event = await event.save();
-    }
-
-    return event;
-};
-
-modifyTrelloActions = (actions, cards) => {
-    actions.map((action) => {
-        const {
-            date,
-            data: {
-                card,
-                listAfter: { name: listName },
-            },
-        } = action;
-
-        if (cards[card.id]) {
-            const { actions } = cards[card.id];
-
-            action = { listName, date };
-
-            if (actions) {
-                actions.push(action);
-            } else {
-                actions = [action];
-            }
-        }
-    });
-};
-
-extractTrelloLabels = async (labels) => {
-    if (labels) {
-        labels = await Promise.all(
-            labels.map((label) => {
-                const { color, name } = label;
-
-                label = new IntegrationLabel({
-                    color,
-                    text: name,
-                    source: "trello",
-                });
-
-                label.save();
-            })
-        );
-
-        labels = labels.map(
-            (label) => (label.sourceId = `${label.name}-${label.color}`)
-        );
-
-        labels = _.mapKeys(labels, "sourceId");
-
-        return labels;
-    } else {
-        return {};
-    }
-};
-
-getContextRepositories = async (context) => {
-    const { repositoryIds } = context;
-
-    let query = Repository.find({}).lean().select("fullName");
-
-    query.where("_id").in(repositoryIds);
-
-    let currentRepositories = await query.exec();
-
-    currentRepositories = _.map(currentRepositories, "fullName");
-};
-
-//context, attachments, desc
-extractTrelloDirectAttachments = async (cards, context) => {
-    const currentRepositories = await getContextRepositories(context);
-
-    let insertOps = {};
-
-    cards.map((card) => {
-        const { attachments, description } = card;
-
-        let seenUrls = {};
-
-        attachments.map((attachment) => {
-            const { date, url, name } = attachment;
-
-            if (
-                !url ||
-                !url.includes("https://github.com") ||
-                seenUrls.has(url)
-            )
-                return;
-
-            const splitURL = url.split("/");
-
-            try {
-                let type = splitURL.slice(
-                    splitURL.length - 2,
-                    splitURL.length - 1
-                )[0];
-
-                const modelType =
-                    type === "tree"
-                        ? "branch"
-                        : type === "issues"
-                        ? "issue"
-                        : type === "pull"
-                        ? "pullRequest"
-                        : type;
-
-                const sourceId = splitURL.slice(splitURL.length - 1)[0];
-
-                const fullName = splitURL
-                    .slice(splitURL.length - 4, splitURL.length - 2)
-                    .join("/");
-
-                attachment = {
-                    sourceCreationDate: new Date(date),
-                    modelType,
-                    link: url,
-                    sourceId,
-                };
-
-                if (currentRepositories[fullName]) {
-                    attachment.repository = currentRepositories[fullName]._id;
-                }
-
-                insertOps.push(attachment);
-
-                seenUrls.add(url);
-            } catch (err) {
-                return null;
-            }
-        });
-    });
-
-    let attachments;
-
-    try {
-        await IntegrationAttachment.insertMany(insertOps).lean();
-    } catch (err) {
-        console.log("ERROR");
-    }
-
-    attachments = _.mapKeys(attachments, "link");
-
-    cards.map((card) => {
-        card.attachmentIds = card.attachments
-            .map((attachment) => {
-                const { url } = attachment;
-
-                if (attachments[url]) {
-                    return attachments[url]._id;
-                }
-
-                return null;
-            })
-            .filter((attachmentId) => attachmentId != null);
-    });
-};
-
-populateExistingTrelloDirectAttachments = async (context, attachments) => {
-    const currentRepositories = await getContextRepositories(context);
-
-    const bulkOps = attachments
-        .map((attachment) => {
-            const { link: url, _id: attachmentId } = attachment;
-
-            const splitURL = url.split("/");
-
-            const fullName = splitURL
-                .slice(splitURL.length - 4, splitURL.length - 2)
-                .join("/");
-
-            if (!currentRepositories[fullName]) return null;
-
-            return {
-                updateOne: {
-                    filter: { _id: attachmentId },
-                    // Where field is the field you want to update
-                    update: { $set: { repository } },
-                    upsert: false,
-                },
-            };
-        })
-        .filter((request) => request != null);
-
-    await IntegrationAttachment.bulkWrite(bulkOps);
-};
-
-extractTrelloIntervals = async (event, cards, lists) => {
-    let seen = new Set();
-
-    const { beginList: beginListId, endList: endListId } = event;
-
-    const beginList = lists[beginListId];
-
-    const endList = lists[endListId];
-
-    let insertOps = [];
-
-    cards.map((card) => {
-        const { actions } = card;
-
-        let interval = {
-            start: null,
-            end: null,
-            event: event._id,
-        };
-
-        actions.map((action) => {
-            const { listName, date } = action;
-
-            const { start, end } = interval;
-
-            if (listName == beginList.name) {
-                if (!start || start.getTime() > date.getTime()) {
-                    interval.start = date;
-                }
-            }
-
-            if (listName == endList.name) {
-                if (!end || end.getTime() < date.getTime()) {
-                    interval.end = date;
-                }
-            }
-        });
-
-        if (interval.end && interval.start) {
-            const intervalIdentifier = `${interval.start.getTime()}-${interval.end.getTime()}`;
-
-            if (!seen.has(intervalIdentifier)) {
-                insertOps.push(interval);
-
-                card.intervalIdentifier = `${interval.start.getTime()}-${interval.end.getTime()}`;
-
-                seen.add(intervalIdentifier);
-            }
-        }
-    });
-
-    let intervals = IntegrationInterval.insertMany(insertOps);
-
-    intervals.map((interval) => {
-        interval.identifier = `${interval.start.getTime()}-${interval.end.getTime()}`;
-    });
-
-    intervals = _.mapKeys(intervals, "identifier");
-
-    cards.map((card) => {
-        if (card.intervalIdentifier) {
-            card.intervalIds = [intervals[intervalIdentifier]];
-        }
-    });
-};
-
 module.exports = {
     beginTrelloConnect,
     handleTrelloConnectCallback,
-    getTrelloConnectProfile,
+    getExternalTrelloBoards,
+    triggerTrelloScrape,
+    bulkScrapeTrello,
 };
 
 /*

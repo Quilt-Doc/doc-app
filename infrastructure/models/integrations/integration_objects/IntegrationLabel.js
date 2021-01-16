@@ -1,14 +1,17 @@
-const mongoose = require.main.require("mongoose")
+const mongoose = require.main.require("mongoose");
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 var integrationLabelSchema = new Schema({
-	created: {type: Date, default: Date.now},
+    created: { type: Date, default: Date.now },
     color: String,
-    text: String,
-    source: String
+    name: String,
+    source: String,
 });
 
-var IntegrationLabel = mongoose.model("IntegrationLabel", integrationLabelSchema);
+var IntegrationLabel = mongoose.model(
+    "IntegrationLabel",
+    integrationLabelSchema
+);
 
 module.exports = IntegrationLabel;

@@ -6,7 +6,11 @@ const Association = require("../../../models/associations/Association");
 const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
 const PullRequest = require("../../../models/PullRequest");
 
+const _ = require("lodash");
+
 class DirectAssociationGenerator extends AssociationGenerator {
+    ticketsToCO = {};
+
     constructor(workspaceId, contexts) {
         super(workspaceId, contexts);
     }
@@ -28,7 +32,9 @@ class DirectAssociationGenerator extends AssociationGenerator {
     async identifyScrapedRepositories() {
         this.scrapedRepositories = {};
 
-        this.contexts.map(async (context) => {
+        for (let i = 0; i < this.contexts.length; i++) {
+            let context = this.contexts[i];
+
             const { repositories: repositoryIds, board: boardId } = context;
 
             let query = BoardWorkspaceContext.find({
@@ -36,26 +42,33 @@ class DirectAssociationGenerator extends AssociationGenerator {
                 board: boardId,
             });
 
-            query.where(board).equals(boardId);
+            query.where("board").equals(boardId);
 
-            query.where(repositories).in(repositoryIds);
+            query.where("repositories").in(repositoryIds);
 
             const otherContexts = await query.lean().exec();
 
             let otherContextRepos = [];
 
             otherContexts.map((otherContext) => {
-                return [...otherContextRepos, ...otherContext.repositories];
+                otherContextRepos = [
+                    ...otherContextRepos,
+                    ...otherContext.repositories,
+                ];
             });
+
+            otherContextRepos = otherContextRepos.map((repoId) =>
+                repoId.toString()
+            );
 
             otherContextRepos = new Set(otherContextRepos);
 
             this.scrapedRepositories[boardId] = new Set(
                 repositoryIds.filter((repositoryId) => {
-                    otherContextRepos.has(repositoryId);
+                    return otherContextRepos.has(repositoryId);
                 })
             );
-        });
+        }
     }
 
     async updateScrapedAssociations() {
@@ -81,73 +94,131 @@ class DirectAssociationGenerator extends AssociationGenerator {
     async queryDirectAttachments() {
         // make a promise.all call to evaluate all queries for each
         // ticket together
+        let queries = {
+            pullRequest: {},
+            commit: {},
+            branch: {},
+            issue: {},
+        };
 
-        const codeObjects = await Promise.all(
-            this.tickets.map((ticket) => {
-                const { attachments, board } = ticket;
+        const modelTypes = Object.keys(queries);
 
-                let branchPRRequests = [];
+        this.tickets.map((ticket) => {
+            const { attachments, board } = ticket;
 
-                let ticketCORequests = attachments.map((attachment) => {
-                    const { modelType, repository, sourceId } = attachment;
+            if (!attachments || attachments.length === 0) return;
 
-                    const acceptedTypes = [
-                        "pullRequest",
-                        "commit",
-                        "branch",
-                        "issue",
-                    ];
+            let coQueries = {
+                pullRequest: [],
+                commit: [],
+                branch: [],
+                issue: [],
+            };
 
-                    const isScraped =
-                        this.scrapedRepositories[board] &&
-                        this.scrapedRepositories[board].has(repository);
+            attachments.map((attachment) => {
+                const { modelType, repository, sourceId } = attachment;
 
-                    if (!acceptedTypes.includes(type) || isScraped) {
-                        return null;
-                    }
+                if (!repository) return;
 
-                    // acquire the model for the attachment currently inspected
-                    const attachmentModel = this.coModelMapping[modelType];
+                const isScraped =
+                    this.scrapedRepositories[board] &&
+                    this.scrapedRepositories[board].has(repository);
 
-                    let query = attachmentModel.find({
-                        sourceId,
-                        repository,
-                    });
+                if (!modelTypes.includes(modelType) || isScraped) return null;
 
-                    query.select("_id");
-
-                    if (modelType === "branch") {
-                        let secondQuery = PullRequest.find({
-                            $or: [{ baseRef: sourceId }, { headRef: sourceId }],
-                        });
-
-                        secondQuery.select("_id");
-
-                        secondQuery.exec();
-
-                        branchPRRequests.push(secondQuery);
-                    }
-
-                    return query.exec();
+                coQueries[modelType].push({
+                    repository,
+                    sourceId,
                 });
 
-                ticketCORequests = [...ticketCORequests, ...branchPRRequests];
+                if (modelType === "branch") {
+                    coQueries["pullRequest"].push({
+                        $and: [
+                            { repository },
+                            {
+                                $or: [
+                                    { baseRef: sourceId },
+                                    { headRef: sourceId },
+                                ],
+                            },
+                        ],
+                    });
+                }
+            });
 
-                return Promise.all(ticketCORequests);
-            })
-        );
+            Object.keys(coQueries).map((key) => {
+                if (!coQueries[key] || coQueries[key].length === 0) return;
 
-        this.codeObjects = codeObjects;
+                const match = {
+                    $match: {
+                        $or: coQueries[key],
+                    },
+                };
+
+                const project = { $project: { _id: 1 } };
+
+                queries[key][ticket._id] = [match, project];
+            });
+        });
+
+        for (let i = 0; i < modelTypes.length; i++) {
+            const key = modelTypes[i];
+
+            if (!_.isEmpty(queries[key])) {
+                this.ticketsToCO[key] = await this.coModelMapping[
+                    key
+                ].aggregate([
+                    {
+                        $facet: queries[key],
+                    },
+                ]);
+            }
+        }
+
+        return queries;
     }
-
-    /*
-        associations that still exist need to be added with regard to workspace
-    */
 
     async insertDirectAssociations() {
         let associations = [];
 
-        this.codeObjects.map((ticketCodeObjects, i) => {
+        Object.keys(this.ticketsToCO).map((modelType) => {
+            const ticketCOMapping = this.ticketsToCO[modelType];
+
+            Object.keys(ticketCOMapping).map((ticketId) => {
+                const ticketCodeObjects = ticketCOMapping[ticketId];
+
+                const seen = new Set();
+
+                ticketCodeObjects.map((codeObject) => {
+                    if (!codeObject || seen.has(codeObject._id)) return;
+
+                    let association = {
+                        workspaces: [this.workspaceId],
+                        firstElement: ticketId,
+                        firstElementModelType: "IntegrationTicket",
+                        secondElement: codeObject._id,
+                        secondElementModelType:
+                            codeObject.constructor.modelName,
+                        direct: true,
+                    };
+
+                    associations.push(association);
+
+                    seen.add(codeObject._id);
+                });
+            });
+        });
+
+        associations = await Association.insertMany(associations).lean();
+
+        return associations;
+    }
+}
+
+module.exports = DirectAssociationGenerator;
+
+/*
+ this.ticketsToCO.map((ticketCodeObjects, i) => {
             //extract relevant ticket for code object grouping
             const ticket = this.tickets[i];
 
@@ -175,7 +246,4 @@ class DirectAssociationGenerator extends AssociationGenerator {
         associations = await Association.insertMany(associations).lean();
 
         return associations;
-    }
-}
-
-module.exports = DirectAssociationGenerator;
+*/

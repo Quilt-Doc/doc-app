@@ -8,8 +8,9 @@ const boardWorkspaceContextSchema = new Schema({
     workspace: { type: ObjectId, ref: "Workspace" },
     repositories: [{ type: ObjectId, ref: "Repository" }],
     events: { type: ObjectId, ref: "IntegrationEvent" },
-    creator: [{ type: ObjectId, ref: "User" }],
+    creator: { type: ObjectId, ref: "User" },
     type: String,
+    isScraped: { type: Boolean, default: false },
 });
 
 const BoardWorkspaceContext = mongoose.model(
