@@ -4,6 +4,7 @@ const { ObjectId } = Schema.Types;
 
 var integrationIntervalSchema = new Schema({
     created: { type: Date, default: Date.now },
+    integrationTicket: { type: ObjectId, ref: 'IntegrationTicket' },
     start: Date,
     end: Date,
     event: { type: ObjectId, ref: "IntegrationEvent" },

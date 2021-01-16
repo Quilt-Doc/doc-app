@@ -9,6 +9,8 @@ const constants = require("../constants/index");
 const JiraSite = require("../models/integrations/jira/JiraSite");
 const JiraProject = require("../models/integrations/jira/JiraProject");
 const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
+
 
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
@@ -16,6 +18,110 @@ const { ObjectId } = mongoose.Types;
 const { serializeError, deserializeError } = require("serialize-error");
 
 let db = mongoose.connection;
+
+const createJiraIssueIntervals = async (insertedIssueIds) => {
+
+        // Fetch Jira Issue IntegrationTickets
+        var scrapedIssues;
+        try {
+            scrapedIssues = await IntegrationTicket.find({ _id: { $in: insertedIssueIds.map(id => ObjectId(id.toString())) } },
+                                                            '_id jiraIssueResolutionStatus jiraIssueResolutionDate jiraIssueCreationDate jiraIssueUpdatedDate')
+                                        .lean()
+                                        .exec();
+        }
+        catch (err) {
+            console.log(err);
+            throw new Error(`Error finding scraped Jira Issue Integration Tickets - insertedIssueIds.length - ${insertedIssueIds.length}`);
+        }
+
+
+        var integrationIntervalsToCreate = [];
+
+        var currentIssue;
+        var i = 0;
+        for (i = 0; i < scrapedIssues.length; i++) {
+            currentIssue = scrapedIssues[i];
+            // Create IntegrationInterval, for resolved Jira Issue
+            if (currentIssue.jiraIssueResolutionStatus) {
+                integrationIntervalsToCreate.push({
+                    integrationTicket: currentIssue._id,
+                    start: currentIssue.jiraIssueCreationDate,
+                    end: currentIssue.jiraIssueResolutionDate,
+                });
+            }
+    
+            // Check if jiraIssueCreationDate and jiraIssueUpdatedDate dates are different, if so make an interval, otherwise continue
+            else {
+                if (currentIssue.jiraIssueCreationDate.toString() != currentIssue.jiraIssueUpdatedDate.toString()) {
+                    integrationIntervalsToCreate.push({
+                        integrationTicket: currentIssue._id,
+                        start: currentIssue.jiraIssueCreationDate,
+                        end: currentIssue.jiraIssueUpdatedDate,
+                    }); 
+                }
+                else {
+                    continue;
+                }
+            }
+        }
+
+
+        if (integrationIntervalsToCreate.length > 0) {
+            var insertResults;
+            var insertedIntervalIds;
+    
+            // Create IntegrationIntervals
+            try {
+                insertResults = await IntegrationInterval.insertMany(integrationIntervalsToCreate, { rawResult: true });
+    
+                console.log('IntegrationInterval.insertMany.insertResults.insertedIds');
+                console.log(insertResults.insertedIds);
+    
+                insertedIntervalIds = Object.values(insertResults.insertedIds).map(id => id.toString());
+            }
+            catch (err) {
+                console.log(err);
+                throw new Error(`Error could not insert IntegrationIntervals - integrationIntervalsToCreate.length: ${integrationIntervalsToCreate.length}`);
+            }
+    
+            // Fetch new IntegrationIntervals
+    
+            var insertedIntervals;
+            try {
+                insertedIntervals = await IntegrationInterval.find({ _id: { $in: insertedIntervalIds.map(id => ObjectId(id.toString())) } }, '_id integrationTicket')
+                                            .lean()
+                                            .exec();
+            }
+            catch (err) {
+                console.log(err);
+                throw new Error(`Error finding inserted IntegrationIntervals - insertedIntervalIds.length - ${insertedIntervalIds.length}`);
+            }
+    
+            // Update IntegrationTickets with IntegrationIntervals
+    
+            let bulkUpdateIntegrationTicketsOps = insertedIntervals.map((intervalObj) => {
+                return ({
+                    updateOne: {
+                        filter: { _id: ObjectId(intervalObj.integrationTicket.toString()) },
+                        // Where field is the field you want to update
+                        update: { $push: { intervals: ObjectId(intervalObj._id.toString()) } },
+                        upsert: false
+                    }
+                })
+            })
+    
+            // mongoose bulkwrite for one many update db call
+            try {
+                await IntegrationTicket.bulkWrite(bulkUpdateIntegrationTicketsOps);
+            } 
+            catch (err) {
+                console.log(err);
+                throw new Error("createJiraIssueIntervals Error: bulk update of IntegrationTickets failed");
+            }
+        }
+
+}
+
 
 const getJiraSiteObj = async (jiraSiteId) => {
     var jiraSiteObj;
@@ -46,7 +152,7 @@ const getJiraSiteObj = async (jiraSiteId) => {
 
 
 
-const getJiraSiteProjects = async (jiraCloudIds, jiraApiClientList) => {
+const getJiraSiteProjects = async (jiraCloudIds, jiraApiClientList, jiraSiteId, worker) => {
     // Get the projects associated with each cloudId
 
     var projectSearchRequestList = jiraCloudIds.map(async (cloudId, idx) => {
@@ -196,192 +302,16 @@ const importJiraIssues = async () => {
 
     var jiraApiClientList = jiraCloudIds.map((cloudId) =>
         apis.requestJiraClient(cloudId, jiraSite.accessToken)
-    );
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    // Get the projects associated with each cloudId
-
-    var projectSearchRequestList = jiraCloudIds.map(async (cloudId, idx) => {
-        var projectListResponse;
-        var jiraSiteApiClient = jiraApiClientList[idx];
-
-        // GET /rest/api/3/project/search
-        try {
-            projectListResponse = await jiraSiteApiClient.get(
-                "/project/search"
-            );
-        } catch (err) {
-            console.log(err);
-            return { error: "Error", cloudId };
-        }
-        if (idx == 0) {
-            await worker.send({
-                action: "log",
-                info: {
-                    level: "info",
-                    message: `projectListResponse.data.length: ${projectListResponse.data.length}`,
-                    source: "worker-instance",
-                    function: "importJiraIssues",
-                },
-            });
-        }
-        return { projectData: projectListResponse.data, cloudId };
-    });
-
-    // Execute all requests
-    var projectListResults;
-    try {
-        projectListResults = await Promise.allSettled(projectSearchRequestList);
-    } catch (err) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "error",
-                source: "worker-instance",
-                message: serializeError(err),
-                errorDescription: `Error fetching project list - cloudIds: ${JSON.stringify(
-                    cloudIds
-                )}`,
-                function: "importJiraIssues",
-            },
-        });
-        throw err;
-    }
-
-    // Non-error responses
-    var validResults = projectListResults.filter(
-        (resultObj) => resultObj.value && !resultObj.value.error
-    );
-
-    // Error responses
-    var invalidResults = projectListResults.filter(
-        (resultObj) => resultObj.value && resultObj.value.error
-    );
-
-    await worker.send({
-        action: "log",
-        info: {
-            level: "info",
-            message: `projectListResults validResults.length: ${validResults.length}`,
-            source: "worker-instance",
-            function: "importJiraIssues",
-        },
-    });
-
-    var jiraProjectsToCreate = [];
-    var currentResult;
-    var currentValue;
-
-    for (i = 0; i < validResults.length; i++) {
-        currentResult = validResults[i];
-        if (currentResult.status != "fulfilled") {
-            continue;
-        }
-
-        currentValue = currentResult.value;
-        var currentProject;
-        // Get all Projects from cloudId
-        for (k = 0; k < currentValue.projectData.values.length; k++) {
-            currentProject = currentValue.projectData.values[k];
-            /*
-            "self": "https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/rest/api/3/project/10001",
-            "id": "10001",
-            "key": "QKC",
-            "name": "quilt-kanban-classic",
-            "avatarUrls": {
-              "48x48": "https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/secure/projectavatar?pid=10001&avatarId=10408",
-              "24x24": "https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/secure/projectavatar?size=small&s=small&pid=10001&avatarId=10408",
-              "16x16": "https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/secure/projectavatar?size=xsmall&s=xsmall&pid=10001&avatarId=10408",
-              "32x32": "https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/secure/projectavatar?size=medium&s=medium&pid=10001&avatarId=10408"
-            },
-            "projectTypeKey": "software",
-            "simplified": false,
-            "style": "classic",
-            "isPrivate": false,
-            "properties": {}
-            */
-
-            /*
-                self: {type: String, required: true},
-                jiraId: {type: String, required: true},
-                key:{type: String, required: true},
-                name: {type: String, required: true},
-                projectTypeKey:{type: String, required: true},
-                simplified:{type: Boolean, required: true},
-                style: {type: String, required: true},
-                isPrivate: {type: Boolean, required: true},
-
-                cloudId: {type: String, required: true},
-            */
-
-            jiraProjectsToCreate.push({
-                self: currentProject.self,
-                jiraId: currentProject.id,
-                key: currentProject.key,
-                name: currentProject.name,
-                projectTypeKey: currentProject.projectTypeKey,
-                simplified: currentProject.simplified,
-                style: currentProject.style,
-                isPrivate: currentProject.isPrivate,
-                cloudId: currentValue.cloudId,
-                jiraSiteId: jiraSiteId,
-            });
-        }
-    }
+    )
 
     var insertedJiraProjects;
     try {
-        insertedJiraProjects = await JiraProject.insertMany(
-            jiraProjectsToCreate
-        );
-    } catch (err) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "error",
-                source: "worker-instance",
-                message: serializeError(err),
-                errorDescription: `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(
-                    insertedJiraProjects
-                )}`,
-                function: "importJiraIssues",
-            },
-        });
-
-        throw new Error(
-            `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(
-                insertedJiraProjects
-            )}`
-        );
+        insertedJiraProjects = await getJiraSiteProjects(jiraCloudIds, jiraApiClientList, jiraSiteId, worker);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    catch (err) {
+        console.log(err);
+        throw Error(`Error getting Jira Site Projects`);
+    }
 
 
     // Query for the tickets relevant to each project
@@ -418,7 +348,7 @@ const importJiraIssues = async () => {
             // jiraIssueResponse = await jiraApiClient.get('/search?jql=project=QKC&maxResults=1000');
             try {
                 issueListResponse = await jiraIssueApiClient.get(
-                    `/search?jql=project=${jiraProjectObj.key}&maxResults=1000`
+                    `/search?jql=project=${jiraProjectObj.key}&fields=resolution,summary,resolutiondate,created,updated&maxResults=1000`
                 );
             } catch (err) {
                 console.log(err);
@@ -488,13 +418,19 @@ const importJiraIssues = async () => {
 
     var jiraTicketList = issueValidResults.map((promiseObj) => {
         var newTickets = promiseObj.value.issueData.map((issueObj) => {
+            var isResolved = (issueObj.fields.resolution && issueObj.fields.resolution != null && issueObj.fields.resolution != 'null') ? true : false;
             return {
                 source: "jira",
                 workspace: ObjectId(workspaceId.toString()),
-                jiraSiteId: issueObj.jiraSiteId,
-                jiraIssueId: issueObj.id,
-                jiraSummary: issueObj.summary,
+                jiraSiteId: promiseObj.value.siteId,
                 jiraProjectId: promiseObj.value.projectId,
+                jiraIssueId: issueObj.id,
+                jiraIssueKey: issueObj.key,
+                jiraIssueSummary: issueObj.fields.summary,
+                jiraIssueResolutionStatus: isResolved,
+                jiraIssueResolutionDate: (isResolved) ? issueObj.fields.resolutiondate : undefined,
+                jiraIssueCreationDate: issueObj.fields.created,
+                jiraIssueUpdatedDate: issueObj.fields.updated,
             };
         });
         return newTickets;
@@ -514,31 +450,45 @@ const importJiraIssues = async () => {
                 function: "importJiraIssues",
             },
         });
-    }
 
-    var bulkInsertResult;
-    try {
-        bulkInsertResult = await IntegrationTicket.insertMany(jiraTicketList);
-    } catch (err) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "error",
-                source: "worker-instance",
-                message: serializeError(err),
-                errorDescription: `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
+        var bulkInsertResult;
+        var newIssueIds;
+        try {
+            bulkInsertResult = await IntegrationTicket.insertMany(jiraTicketList, { rawResult: true });
+            newIssueIds = Object.values(bulkInsertResult.insertedIds).map(id => id.toString());
+        } catch (err) {
+            await worker.send({
+                action: "log",
+                info: {
+                    level: "error",
+                    source: "worker-instance",
+                    message: serializeError(err),
+                    errorDescription: `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
+                        jiraTicketList
+                    )}`,
+                    function: "importJiraIssues",
+                },
+            });
+
+            throw new Error(
+                `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
                     jiraTicketList
-                )}`,
-                function: "importJiraIssues",
-            },
-        });
+                )}`
+            );
+        }
 
-        throw new Error(
-            `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
-                jiraTicketList
-            )}`
-        );
+        // Create Integration Intervals for Issues
+        try {
+            await createJiraIssueIntervals(newIssueIds);
+        }
+        catch (err) {
+            console.log(err);
+            throw Error(`Error creating Jira Issue IntegrationIntervals`);
+        }
     }
+
+
+
 };
 
 module.exports = {

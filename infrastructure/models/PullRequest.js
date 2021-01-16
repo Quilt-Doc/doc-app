@@ -39,6 +39,12 @@ let pullRequestSchema = new Schema({
   pullRequestId: { type: Number, required: true },
   number: { type: Number, required: true },
 
+  sourceId: { type: Number },
+  sourceCreationDate: { type: Date },
+  sourceUpdateDate: { type: Date },
+  sourceCloseDate: { type: Date },
+
+
   branchLabelList: [{ type: String }],
   branches: [{type: ObjectId, ref: 'Branch'}],
 

@@ -118,13 +118,14 @@ const enrichPRsWithFileList = async (foundPRList, installationClient, installati
 
         throw new Error(`fileListAPIRequestList, addFileListToPR failed - fullName, installationId, foundPRList.length: ${fullName}, ${installationId}, ${foundPRList.length}`);
     }
-
+    /*
     await worker.send({action: 'log', info: {
         level: 'info',
         message: `enrichPRsWithFileList - enrichedPRList[0]: ${JSON.stringify(enrichedPRList[0])}`,
         source: 'worker-instance',
         function: 'enrichPRsWithFileList',
     }});
+    */
 
 
     return enrichedPRList;
@@ -217,6 +218,7 @@ const addFileListToPR = async (foundPR, installationClient, installationId, full
 
 const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installationId, repositoryId, worker) => {
 
+
     if (foundPRList.length < 1) {
         return [];
     }
@@ -265,13 +267,14 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
         changedFileNum: { type: Number },
     */
 
-
+    /*
    await worker.send({action: 'log', info: {
         level: 'info',
         message: `insertPRsFromAPI received - foundPRList[0]: ${JSON.stringify(foundPRList[0])}`,
         source: 'worker-instance',
         function: 'insertPRsFromAPI',
     }});
+    */
 
 
     // Attach the correct Branch Model ObjectId, if applicable
@@ -295,6 +298,11 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
             installationId: installationId,
             repository: repositoryId,
             fileList: prObj.fileList,
+
+            sourceId: prObj.number,
+            sourceCreationDate: prObj.created_at,
+            sourceUpdateDate: prObj.updated_at,
+            sourceCloseDate: prObj.closed_at,
 
             branchLabelList: prObj.branchLabelList,
             branches: branchIdList,
