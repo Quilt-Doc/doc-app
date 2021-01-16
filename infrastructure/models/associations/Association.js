@@ -9,6 +9,7 @@ let associationSchema = new Schema({
     firstElementModelType: String,
     secondElement: ObjectId,
     secondElementModelType: String,
+    source: String,
     direct: Boolean,
 });
 

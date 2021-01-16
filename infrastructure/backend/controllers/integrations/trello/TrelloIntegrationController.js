@@ -320,6 +320,7 @@ bulkScrapeTrello = async (profile, userId, workspaceId, contexts) => {
             workspace: workspaceId,
             repositories: repositories,
             creator: userId,
+            source: "trello",
         });
 
         await context.save();

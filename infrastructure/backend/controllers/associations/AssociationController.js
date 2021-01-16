@@ -10,8 +10,10 @@ const { checkValid } = require("../../utils/utils");
 
 var mongoose = require("mongoose");
 const BoardWorkspaceContext = require("../../models/integrations/context/BoardWorkspaceContext");
+const Association = require("../../../models/associations/Association");
 const { ObjectId } = mongoose.Types;
 
+/*
 const getFileContext = async (req, res) => {
     const { workspaceId, filePath } = req.body;
 
@@ -128,6 +130,128 @@ const getFileContext = async (req, res) => {
     // Return
 
     return res.json({ success: true, result: returnObj });
+};*/
+
+const getFileContext = async (req, res) => {
+    const { workspaceId, filePath } = req.body;
+
+    const { repositoryId } = req.params;
+
+    if (!checkValid(workspaceId))
+        return res.json({
+            success: false,
+            error: "no association workspaceId provided",
+        });
+
+    if (!checkValid(filePath))
+        return res.json({
+            success: false,
+            error: "no association filePath provided",
+        });
+
+    let result = {
+        github: {
+            //actionType: "POPULATE_GITHUB",
+        },
+        trello: {
+            //actionType: "POPULATE_TRELLO",
+        },
+    };
+
+    // Fetch PRs
+    try {
+        let query = PullRequest.find();
+
+        query.where("repository").equals(repositoryId);
+
+        query.where("fileList").in([filePath]);
+
+        result["github"].pullRequests = await query.limit(20).lean().exec();
+    } catch (err) {
+        return res.json({
+            success: false,
+            error: `error finding PullRequests - repositoryId, filePath: ${repositoryId}, ${filePath}`,
+            trace: err,
+        });
+    }
+
+    // Fetch Commits
+    try {
+        let query = Commit.find();
+
+        query.where("repository").equals(repositoryId);
+
+        query.where("fileList").in([filePath]);
+
+        result["github"].commits = await query.limit(20).lean().exec();
+    } catch (err) {
+        return res.json({
+            success: false,
+            error: `error finding Commits - repositoryId, filePath: ${repositoryId}, ${filePath}`,
+            trace: err,
+        });
+    }
+
+    let sources;
+
+    try {
+        const contexts = BoardWorkspaceContext.find({ workspace: workspaceId })
+            .select("source")
+            .lean()
+            .exec();
+
+        sources = Array.from(
+            new Set(contexts.map((context) => context.source))
+        );
+    } catch (e) {
+        return res.json({
+            success: false,
+            error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
+            trace: e,
+        });
+    }
+
+    let codeObjectIds = [];
+
+    Object.keys(result["github"]).map((modelType) => {
+        codeObjectIds = [
+            ...codeObjectIds,
+            ...result["github"][modelType].map((codeObject) => codeObject._id),
+        ];
+    });
+
+    let associations;
+
+    try {
+        let query = Association.find({
+            $or: [
+                {
+                    firstElement: {
+                        $in: codeObjectIds,
+                    },
+                },
+                {
+                    secondElement: {
+                        $in: codeObjectIds,
+                    },
+                },
+            ],
+        });
+
+        query.where("workspaces").in([workspaceId]);
+
+        associations = await query.lean().exec();
+    } catch (e) {
+        return res.json({
+            success: false,
+            error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
+            trace: e,
+        });
+    }
+
+    // Return
+
+    return res.json({ success: true, result });
 };
 
 generateAssociations = async (req, res) => {
