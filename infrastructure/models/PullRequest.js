@@ -39,7 +39,7 @@ let pullRequestSchema = new Schema({
   pullRequestId: { type: Number, required: true },
   number: { type: Number, required: true },
 
-  sourceId: { type: Number },
+  sourceId: { type: String },
   sourceCreationDate: { type: Date },
   sourceUpdateDate: { type: Date },
   sourceCloseDate: { type: Date },

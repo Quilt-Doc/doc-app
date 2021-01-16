@@ -1,149 +1,108 @@
-require('dotenv').config();
 
-describe("Example Test", () => {
-    test("This should pass", async () => {
-        expect(1).toEqual(1);
+require('dotenv').config();
+const fs = require("fs");
+
+const brodalQueueCodeObjectData = require("../__tests__data/code_objects/brodal_queue/index");
+const docAppCodeObjectData = require("../__tests__data/code_objects/doc-app/index");
+
+const Branch = require('../../models/Branch');
+const PullRequest = require('../../models/PullRequest');
+const Commit = require('../../models/Commit');
+
+
+
+const fetchAllBranches = async (repositoryId) => {
+    var scrapedBranches;
+    try {
+        scrapedBranches = await Branch.find({ repositoryId: ObjectId(repositoryId.toString()) })
+                                                        .lean()
+                                                        .exec();
+    }
+    catch (err) {
+        console.log(err);
+        throw Error(`Couldn't fetch Branches - repositoryId: ${repositoryId}`);
+    }
+    return scrapedBranches;
+}
+
+const fetchAllPRs = async (repositoryId) => {
+    var scrapedPRs;
+    try {
+        scrapedPRs = await PullRequest.find({ repositoryId: ObjectId(repositoryId.toString()) })
+                                                        .lean()
+                                                        .exec();
+    }
+    catch (err) {
+        console.log(err);
+        throw Error(`Couldn't fetch PullRequests - repositoryId: ${repositoryId}`);
+    }
+    return scrapedPRs;
+}
+
+const fetchAllCommits = async (repositoryId) => {
+    var scrapedCommits;
+    try {
+        scrapedCommits = await Commit.find({ repositoryId: ObjectId(repositoryId.toString()) })
+                                                        .lean()
+                                                        .exec();
+    }
+    catch (err) {
+        console.log(err);
+        throw Error(`Couldn't fetch Commits - repositoryId: ${repositoryId}`);
+    }
+    return scrapedCommits;
+
+}
+
+
+
+
+describe("Branch Scraping", () => {
+    
+    var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
+    var createdRepositoryIds = createdRepositories.map(repositoryObj => repositoryObj._id);
+
+    test("Should have scraped correct number of branches from brodal_queue", async () => {
+        var scrapedBranchNum = await fetchAllBranches(createdRepositoryIds[0]);
+        expect(scrapedBranchNum).toEqual(brodalQueueCodeObjectData.branchData.numBranches);
     })
+    test("Should have scraped correct number of branches from doc-app", async () => {
+        var scrapedBranchNum = await fetchAllBranches(createdRepositoryIds[1]);
+        expect(scrapedBranchNum).toEqual(docAppCodeObjectData.branchData.numBranches);
+    });
 })
 
 
-/*
-describe("Create Workspace", () => {
-
-    var createdWorkspaceId = process.env.TEST_CREATED_WORKSPACE_ID;
+describe("Pull Request Scraping", () => {
 
     var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
     var createdRepositoryIds = createdRepositories.map(repositoryObj => repositoryObj._id);
 
-    var backendUserClient;
-
-    beforeEach(() => {
-        backendUserClient = api.requestTestingUserBackendClient();
+    test("Should have scraped correct number of PRs from brodal_queue", async () => {
+        var scrapedPRNum = await fetchAllPRs(createdRepositoryIds[0]);
+        expect(scrapedPRNum).toEqual(brodalQueueCodeObjectData.PRData.numPRs);
     });
 
+    test("Should have scraped correct number of PRs from doc-app", async () => {
+        var scrapedPRNum = await fetchAllPRs(createdRepositoryIds[1]);
+        expect(scrapedPRNum).toEqual(docAppCodeObjectData.PRData.numPRs);
+    });
+})
 
-    // router.post('/documents/:workspaceId/retrieve', authorizationMiddleware.documentMiddleware, documentController.retrieveDocuments);
-    test("Root Document should be created", async () => {
 
-        // var backendUserClient = await api.requestTestingUserBackendClient();
+describe("Commit Scraping", () => {
 
-        var documentRetrieveData = { root: true, limit: 1, skip: 0, minimal: true, fill: false };
+    var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
+    var createdRepositoryIds = createdRepositories.map(repositoryObj => repositoryObj._id);
 
-        var documentRetrieveResponse;
-
-        try {
-            documentRetrieveResponse = await backendUserClient.post(`/documents/${createdWorkspaceId}/retrieve`, documentRetrieveData);
-        }
-        catch (err) {
-            console.log(`Error retrieving Root Document - workspaceId: ${createdWorkspaceId}`);
-            throw err;
-        }
-
-        // `Error retrieving Root Document, success == false - workspaceId: ${createdWorkspaceId}`
-        expect(documentRetrieveResponse.data.success).toEqual(true);
-
-        var retrievedDocuments = documentRetrieveResponse.data.result;
-
-        // console.log(`retrievedDocuments.length: ${retrievedDocuments.length}`)
-
-        // `Error expected to retrieve one root Document, found ${retrievedDocuments.length} - workspaceId: ${createdWorkspaceId}`
-        expect(retrievedDocuments.length).toEqual(1);
-
-        // Single Document returned should be the root Document
-        expect(retrievedDocuments[0].root).toEqual(true);
-
+    test("Should have scraped correct number of commits from brodal_queue", async () => {
+        var scrapedCommitNum = await fetchAllCommits(createdRepositoryIds[0]);
+        expect(scrapedCommitNum).toEqual(brodalQueueCodeObjectData.commitData.numCommits);
     });
 
-    // router.post('/reporting/:workspaceId/retrieve_user_stats', authorizationMiddleware.reportingMiddleware, reportingController.retrieveUserStats);
-    test("UserStats should be created for test User <-> Workspace", async () => {
-        
-        // var backendUserClient = await api.requestTestingUserBackendClient();
-
-        var userStatRetrieveData = { limit: 1, skip: 0 };
-        
-        var userStatRetrieveResponse;
-        try {
-            userStatRetrieveResponse = await backendUserClient.post(`/reporting/${createdWorkspaceId}/retrieve_user_stats`, userStatRetrieveData);
-        }
-        catch (err) {
-            console.log(`Error retrieving UserStats - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TESTING_USER_ID}`);
-            throw err;
-        }
-
-        expect(userStatRetrieveResponse.data.success).toEqual(true);
-
-        var retrievedUserStats = userStatRetrieveResponse.data.result;
-
-        // `Error expected to retrieve one UserStats, found ${retrievedUserStats.length} - workspaceId, userId: ${createdWorkspaceId}, ${process.env.TESTING_USER_ID}`
-        expect(retrievedUserStats.length).toEqual(1);
-
-        // UserStat returned should be for process.env.TESTING_USER_ID
-        expect(retrievedUserStats[0].user._id).toEqual(process.env.TESTING_USER_ID);
-
-        // UserStat returned should be for ${createdWorkspaceId}
-        expect(retrievedUserStats[0].workspace).toEqual(createdWorkspaceId);
-
+    test("Should have scraped correct number of commits from doc-app", async () => {
+        var scrapedCommitNum = await fetchAllCommits(createdRepositoryIds[1]);
+        expect(scrapedCommitNum).toEqual(brodalQueueCodeObjectData.commitData.numCommits);
     });
+})
 
-    // router.get('/users/get/:userId', authorizationMiddleware.userMiddleware, userController.getUser);
-    test("Workspace should be added to User.workspaces", async () => {
-        // var backendUserClient = await api.requestTestingUserBackendClient();
-
-        var userGetResponse;
-        try {
-            userGetResponse = await backendUserClient.get(`/users/get/${process.env.TESTING_USER_ID}`);
-        }
-        catch (err) {
-            console.log(`Error retrieving User - userId: ${process.env.TESTING_USER_ID}`);
-            throw err;
-        }
-
-        var userGetResult = userGetResponse.data;
-
-        // success == true
-        expect(userGetResult.success).toEqual(true);
-
-        // User._id should match userId requested
-        expect(userGetResult.result._id).toEqual(process.env.TESTING_USER_ID);
-
-        // User.workspaces contains createdWorkspaceId
-        expect(userGetResult.result.workspaces.map(workspaceObj => workspaceObj._id.toString())).toContain(createdWorkspaceId);
-    });
-
-    // router.get('/workspaces/get/:workspaceId', authorizationMiddleware.workspaceMiddleware, workspaceController.getWorkspace);
-    test("Workspace.setupComplete should be equal to true", async () => {
-        
-        var workspaceGetResponse;
-        var setupSuccess = false;
-
-        // Wait 1 second
-        await delay(1000);
-
-        for (i = 0; i < MAX_WORKSPACE_POLL_RETRIES; i++) {
-            try {
-                workspaceGetResponse = await backendUserClient.get(`/workspaces/get/${createdWorkspaceId}`);
-            }
-            catch (err) {
-                console.log(`Error retrieving Workspace - workspaceId: ${createdWorkspaceId}`);
-                throw err;
-            }
-            if (workspaceGetResponse.data.success != true) {
-                throw Error(`Failed to get Workspace - workspaceId: ${createdWorkspaceId}`);
-            }
-
-            if (workspaceGetResponse.data.result.setupComplete == true) {
-                setupSuccess = true;
-                break;
-            }
-
-            // Wait 2 seconds
-            await delay(2000);
-
-        }
-
-        expect(setupSuccess).toEqual(true);
-    });
-
-});
-
-*/

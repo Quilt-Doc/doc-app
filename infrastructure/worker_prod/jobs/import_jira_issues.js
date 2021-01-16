@@ -7,7 +7,7 @@ require("dotenv").config();
 const constants = require("../constants/index");
 
 const JiraSite = require("../models/integrations/jira/JiraSite");
-const JiraProject = require("../models/integrations/jira/JiraProject");
+const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
 const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
 const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
 
@@ -249,6 +249,8 @@ const getJiraSiteProjects = async (jiraCloudIds, jiraApiClientList, jiraSiteId, 
             */
 
             jiraProjectsToCreate.push({
+                source: "jira",
+                sourceId: currentProject.id,
                 self: currentProject.self,
                 jiraId: currentProject.id,
                 key: currentProject.key,
@@ -265,16 +267,16 @@ const getJiraSiteProjects = async (jiraCloudIds, jiraApiClientList, jiraSiteId, 
 
     var insertedJiraProjects;
     try {
-        insertedJiraProjects = await JiraProject.insertMany(jiraProjectsToCreate);
+        insertedJiraProjects = await IntegrationBoard.insertMany(jiraProjectsToCreate);
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error',
                                                     source: 'worker-instance',
                                                     message: serializeError(err),
-                                                    errorDescription: `Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`,
+                                                    errorDescription: `Error inserting IntegrationBoards(source = "jira") - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`,
                                                     function: 'importJiraIssues'}});
 
-        throw new Error(`Error inserting Jira Projects - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`);
+        throw new Error(`Error inserting IntegrationBoards(source = "jira") - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`);
     }
 
     return insertedJiraProjects;

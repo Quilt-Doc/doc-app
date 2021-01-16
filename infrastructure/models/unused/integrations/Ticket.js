@@ -20,7 +20,7 @@ let ticketSchema = new Schema({
 
 
     jiraSiteId: {type: ObjectId, ref: 'JiraSite'},
-    jiraProjectId: {type: ObjectId, ref: 'JiraProject'},
+    jiraProjectId: {type: ObjectId, ref: 'IntegrationBoard'},
     jiraSummary: {type: String},
     jiraTicketId: {type: String},
 });

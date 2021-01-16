@@ -12,7 +12,7 @@ const User = require("../models/authentication/User");
 
 const GithubProject = require("../models/integrations/github/GithubProject");
 const JiraSite = require("../models/integrations/jira/JiraSite");
-const JiraProject = require("../models/integrations/jira/JiraProject");
+const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
 const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
 
 const Commit = require("../models/Commit");
@@ -77,6 +77,8 @@ createWorkspace = async (req, res) => {
 
     var repositoryFullNameList = [];
 
+    console.log('Beginning to create workspace');
+
     var scanRepositoriesData = {};
     try {
         await session.withTransaction(async () => {
@@ -134,6 +136,7 @@ createWorkspace = async (req, res) => {
             try {
                 workspace = await workspace.save({ session });
             } catch (err) {
+                console.log(err);
                 await logger.error({
                     source: "backend-api",
                     message: err,
@@ -357,6 +360,8 @@ createWorkspace = async (req, res) => {
                 repositoryNumber: `${repositoryIds.length}`,
             });
 
+            console.log('SENT MIXPANEL EVENT');
+
             output = { success: true, result: workspace };
         });
     } catch (err) {
@@ -368,6 +373,8 @@ createWorkspace = async (req, res) => {
         // End Session to remove locking
         await session.endSession();
 
+
+        console.log(err);
         return res.json(output);
     }
 
@@ -430,7 +437,7 @@ getWorkspace = async (req, res) => {
 // GithubProject -- delete all GithubProjects from Repositories on the Workspace
 
 // JiraSite -- has a workspaceId attached
-// JiraProject -- Could use the Ids of all the JiraSites found to be deleted in the prior step
+// IntegrationBoards ( jira projects) -- Could use the Ids of all the JiraSites found to be deleted in the prior step
 
 // IntegrationTicket -- has a workspaceId attached
 
@@ -835,6 +842,42 @@ deleteWorkspace = async (req, res) => {
                 );
             }
 
+
+            // IntegrationTicket -- delete all Github Issues from Repositories on the Workspace
+                        // GithubProject -- delete all GithubProjects from Repositories on the Workspace
+            // Delete All GithubProjects
+            var deleteGithubIssuesResponse;
+            try {
+                deleteGithubIssuesResponse = await IntegrationTicket.deleteMany(
+                    {
+                        source: "github",
+                        repositoryId: {
+                            $in: workspaceRepositories.map((id) =>
+                                ObjectId(id.toString())
+                            ),
+                        },
+                    },
+                    { session }
+                ).exec();
+            } catch (err) {
+                console.log(err);
+                await logger.error({
+                    source: "backend-api",
+                    error: err,
+                    errorDescription: `deleteGithubIssues error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`,
+                    function: "deleteWorkspace",
+                });
+
+                output = {
+                    success: false,
+                    error: `deleteGithubIssues error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`,
+                    trace: err,
+                };
+                throw new Error(
+                    `deleteGithubIssues error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`
+                );
+            }
+
             // JiraSite -- has a workspaceId attached
             // Delete All JiraSites
             var deletedJiraSites;
@@ -899,12 +942,13 @@ deleteWorkspace = async (req, res) => {
                 );
             }
 
-            // JiraProject -- Use the Ids of all the JiraSites found to be deleted in the prior step
-            // Delete All JiraProjects
+            // IntegrationBoard -- Use the Ids of all the JiraSites found to be deleted in the prior step
+            // Delete All IntegrationBoards from Jira (jira projects)
             var deleteJiraProjectsResponse;
             try {
-                deleteJiraProjectsResponse = await JiraProject.deleteMany(
+                deleteJiraProjectsResponse = await IntegrationBoard.deleteMany(
                     {
+                        source: "jira",
                         jiraSiteId: {
                             $in: jiraSitesToDelete.map((jiraSiteObj) =>
                                 ObjectId(jiraSiteObj._id.toString())
@@ -917,17 +961,17 @@ deleteWorkspace = async (req, res) => {
                 await logger.error({
                     source: "backend-api",
                     error: err,
-                    errorDescription: `deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                    errorDescription: `deleteJiraProjects error: IntegrationBoard(source = "jira") deleteMany query failed - workspaceId: ${workspaceId}`,
                     function: "deleteWorkspace",
                 });
 
                 output = {
                     success: false,
-                    error: `deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                    error: `deleteJiraProjects error: IntegrationBoard(source = "jira") deleteMany query failed - workspaceId: ${workspaceId}`,
                     trace: err,
                 };
                 throw new Error(
-                    `deleteJiraProjects error: JiraProjects deleteMany query failed - workspaceId: ${workspaceId}`
+                    `deleteJiraProjects error: IntegrationBoard(source = "jira") deleteMany query failed - workspaceId: ${workspaceId}`
                 );
             }
 

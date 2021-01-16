@@ -51,7 +51,7 @@ const integrationTicketSchema = new Schema({
 
     // Jira specific fields
     jiraSiteId: { type: ObjectId, ref: "JiraSite" },
-    jiraProjectId: { type: ObjectId, ref: "JiraProject" },
+    jiraProjectId: { type: ObjectId, ref: "IntegrationBoard" },
     jiraIssueId: { type: String },
     jiraIssueKey: { type: String },
     jiraIssueSummary: { type: String },
