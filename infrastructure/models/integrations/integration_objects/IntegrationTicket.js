@@ -28,7 +28,7 @@ const integrationTicketSchema = new Schema({
     board: { type: ObjectId, ref: "IntegrationBoard" },
     column: { type: ObjectId, ref: "IntegrationColumn" }, //  trelloCardList: String,
     comments: [{ type: ObjectId, ref: "IntegrationComments" }],
-    attachments: [{ type: ObjectId, ref: "IntegrationAttachments" }],
+    attachments: [{ type: ObjectId, ref: "IntegrationAttachment" }],
     intervals: [{ type: ObjectId, ref: "IntegrationInterval" }],
 
     // Trello specific fields
