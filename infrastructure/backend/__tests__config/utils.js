@@ -1,31 +1,34 @@
 const api = require("../apis/api");
 
 const removeWorkspaces = async () => {
-
     var backendClient = api.requestTestingUserBackendClient();
 
     var retrieveWorkspaceResponse;
     try {
-        retrieveWorkspaceResponse = await backendClient.post("/workspaces/retrieve", { creatorId: process.env.TESTING_USER_ID });
-    }
-    catch (err) {
-        console.log('Failed to successfully Fetch Repositories');
+        retrieveWorkspaceResponse = await backendClient.post(
+            "/workspaces/retrieve",
+            { creatorId: process.env.TESTING_USER_ID }
+        );
+    } catch (err) {
+        console.log("Failed to successfully Fetch Repositories");
         throw err;
     }
 
     var retrievedWorkspaces = retrieveWorkspaceResponse.data.result;
 
     if (retrievedWorkspaces.length > 0) {
-        retrievedWorkspaces = retrievedWorkspaces.map(workspaceObj => workspaceObj._id.toString());
+        retrievedWorkspaces = retrievedWorkspaces.map((workspaceObj) =>
+            workspaceObj._id.toString()
+        );
     }
 
     var i = 0;
     for (i = 0; i < retrievedWorkspaces.length; i++) {
-        await backendClient.delete(`/workspaces/delete/${retrievedWorkspaces[i]}`);
+        await backendClient.delete(
+            `/workspaces/delete/${retrievedWorkspaces[i]}`
+        );
     }
-
-}
-
+};
 
 // TODO: Get the repositoryIds from this
 const fetchRepositories = async () => {

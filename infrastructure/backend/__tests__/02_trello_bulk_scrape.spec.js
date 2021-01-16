@@ -72,9 +72,13 @@ afterAll(async () => {
     delete process.env.TEST_TRELLO_EVENT;
 
     delete process.env.TEST_TRELLO_LABELS;
+
+    delete process.env.TEST_TRELLO_CONTEXT;
+
+    delete process.env.TEST_TRELLO_BULK_SCRAPE_RESULT;
 });
 
-describe("Test Trello Bulk Scrape", () => {
+describe("Test Trello Bulk Scrape Basic", () => {
     let backendUserClient;
 
     beforeEach(() => {
@@ -616,13 +620,17 @@ describe("Test Trello Bulk Scrape", () => {
             if (spy) spy.mockRestore();
         });
 
-        const finalCards = Object.values(resultMapping)[0].tickets;
+        const { tickets: finalCards, context: contextObj } = Object.values(
+            resultMapping
+        )[0];
+
+        process.env.TEST_TRELLO_CONTEXT = JSON.stringify(contextObj);
 
         expect(finalCards.length).toEqual(10);
 
         const { expectedCardCounts } = testData;
 
-        const helperCards = JSON.parse(process.env.TEST_TRELLO_CARDS);
+        //const helperCards = JSON.parse(process.env.TEST_TRELLO_CARDS);
 
         finalCards.map((card) => {
             const {
@@ -647,89 +655,95 @@ describe("Test Trello Bulk Scrape", () => {
             expect(getLength(attachments)).toEqual(counts.attachments);
         });
 
-        process.env.TRELLO_BULK_SCRAPE_RESULT = JSON.stringify(finalCards);
+        process.env.TEST_TRELLO_BULK_SCRAPE_RESULT = JSON.stringify(finalCards);
     });
 });
 
-/*
+const DirectAssociationGenerator = require("../controllers/associations/helpers/directAssociationGenerator");
 
-       
-        trelloControllerHelpers.extractTrelloMembers = jest.fn(
-            trelloControllerHelpers.extractTrelloMembers
+let directGenerator;
+
+const testDataAssoc = require("../__tests__data/03_direct_association_creation_data");
+
+describe("Test Direct Association Creation Basic", () => {
+    beforeAll(() => {
+        directGenerator = new DirectAssociationGenerator(
+            process.env.TEST_CREATED_WORKSPACE_ID,
+            [JSON.parse(process.env.TEST_TRELLO_CONTEXT)]
         );
+    });
 
-        trelloControllerHelpers.extractTrelloMembers.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_MEMBERS);
-            }
-        );
+    test("AssociationGenerator.acquireIntegrationObjects: expect integration tickets to match", async () => {
+        await directGenerator.acquireIntegrationObjects();
 
-        trelloControllerHelpers.extractTrelloBoard = jest.fn(
-            trelloControllerHelpers.extractTrelloBoard
-        );
+        let cards = JSON.parse(process.env.TEST_TRELLO_BULK_SCRAPE_RESULT);
 
-        trelloControllerHelpers.extractTrelloBoard.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_BOARD);
-            }
-        );
+        cards = _.mapKeys(cards, "_id");
 
-        trelloControllerHelpers.extractTrelloLists = jest.fn(
-            trelloControllerHelpers.extractTrelloLists
-        );
+        directGenerator.tickets.map((ticket) => {
+            const {
+                attachments,
+                intervals,
+                board: { _id: boardId },
+                _id,
+            } = ticket;
 
-        trelloControllerHelpers.extractTrelloLists.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_LISTS);
-            }
-        );
+            const match = cards[_id];
 
-        trelloControllerHelpers.extractTrelloDirectAttachments = jest.fn(
-            trelloControllerHelpers.extractTrelloDirectAttachments
-        );
+            const attachmentIds = attachments.map((attachment) =>
+                attachment._id.toString()
+            );
 
-        trelloControllerHelpers.extractTrelloDirectAttachments.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_CARDS);
-            }
-        );
+            const intervalIds = intervals.map((interval) =>
+                interval._id.toString()
+            );
 
-        trelloControllerHelpers.modifyTrelloActions = jest.fn(
-            trelloControllerHelpers.modifyTrelloActions
-        );
+            expect(boardId.toString()).toEqual(match.board.toString());
 
-        trelloControllerHelpers.modifyTrelloActions.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_CARDS);
-            }
-        );
+            expect(new Set(attachmentIds)).toEqual(new Set(match.attachments));
 
-        trelloControllerHelpers.extractTrelloEvent = jest.fn(
-            trelloControllerHelpers.extractTrelloEvent
-        );
+            expect(new Set(intervalIds)).toEqual(new Set(match.intervals));
+        });
+    });
 
-        trelloControllerHelpers.extractTrelloEvent.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_EVENT);
-            }
-        );
+    test("DirectAssociationGenerator.identifyScrapedRepositories: scrapedRepositories is empty", async () => {
+        await directGenerator.identifyScrapedRepositories();
 
-        trelloControllerHelpers.extractTrelloIntervals = jest.fn(
-            trelloControllerHelpers.extractTrelloIntervals
-        );
+        const boardId = directGenerator.boardIds[0];
 
-        trelloControllerHelpers.extractTrelloIntervals.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_CARDS);
-            }
-        );
+        expect(directGenerator.scrapedRepositories[boardId]).toEqual(new Set());
+    });
 
-        trelloControllerHelpers.extractTrelloLabels = jest.fn(
-            trelloControllerHelpers.extractTrelloLabels
-        );
+    test("DirectAssociationGenerator.updateScrapedAssociations: expect update associations to resolve", async () => {
+        await directGenerator.updateScrapedAssociations();
+    });
 
-        trelloControllerHelpers.extractTrelloLabels.mockImplementationOnce(
-            () => {
-                return JSON.parse(process.env.TEST_TRELLO_LABELS);
-            }
-        );*/
+    test("DirectAssociationGenerator.updateScrapedAssociations: expect code objects to have been queried correctly", async () => {
+        const queries = await directGenerator.queryDirectAttachments();
+
+        let cards = JSON.parse(process.env.TEST_TRELLO_BULK_SCRAPE_RESULT);
+
+        cards = _.mapKeys(cards, "_id");
+
+        const { expectedCardQueries } = testDataAssoc;
+
+        Object.keys(queries).map((modelType) => {
+            let seen = new Set();
+
+            Object.keys(queries[modelType]).map((ticketId) => {
+                const { name } = cards[ticketId];
+
+                expect(
+                    queries[modelType][ticketId][0]["$match"]["$or"].length
+                ).toEqual(expectedCardQueries[name][modelType]);
+
+                seen.add(name);
+            });
+
+            Object.keys(expectedCardQueries).map((key) => {
+                if (!seen.has(key))
+                    expect(expectedCardQueries[key][modelType]).toEqual(0);
+            });
+        });
+    });
+});

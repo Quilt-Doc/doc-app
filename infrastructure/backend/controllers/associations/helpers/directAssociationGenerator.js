@@ -6,8 +6,10 @@ const Association = require("../../../models/associations/Association");
 const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
 const PullRequest = require("../../../models/PullRequest");
 
+const _ = require("lodash");
+
 class DirectAssociationGenerator extends AssociationGenerator {
-    codeObjects = {};
+    ticketsToCO = {};
 
     constructor(workspaceId, contexts) {
         super(workspaceId, contexts);
@@ -49,8 +51,15 @@ class DirectAssociationGenerator extends AssociationGenerator {
             let otherContextRepos = [];
 
             otherContexts.map((otherContext) => {
-                return [...otherContextRepos, ...otherContext.repositories];
+                otherContextRepos = [
+                    ...otherContextRepos,
+                    ...otherContext.repositories,
+                ];
             });
+
+            otherContextRepos = otherContextRepos.map((repoId) =>
+                repoId.toString()
+            );
 
             otherContextRepos = new Set(otherContextRepos);
 
@@ -97,12 +106,19 @@ class DirectAssociationGenerator extends AssociationGenerator {
         this.tickets.map((ticket) => {
             const { attachments, board } = ticket;
 
-            let coQueries = {};
+            if (!attachments || attachments.length === 0) return;
 
-            modelTypes.map((key) => (coQueries[key] = []));
+            let coQueries = {
+                pullRequest: [],
+                commit: [],
+                branch: [],
+                issue: [],
+            };
 
             attachments.map((attachment) => {
                 const { modelType, repository, sourceId } = attachment;
+
+                if (!repository) return;
 
                 const isScraped =
                     this.scrapedRepositories[board] &&
@@ -131,6 +147,8 @@ class DirectAssociationGenerator extends AssociationGenerator {
             });
 
             Object.keys(coQueries).map((key) => {
+                if (!coQueries[key] || coQueries[key].length === 0) return;
+
                 const match = {
                     $match: {
                         $or: coQueries[key],
@@ -146,19 +164,25 @@ class DirectAssociationGenerator extends AssociationGenerator {
         for (let i = 0; i < modelTypes.length; i++) {
             const key = modelTypes[i];
 
-            this.codeObjects[key] = await coModelMapping[key].aggregate([
-                {
-                    $facet: queries[key],
-                },
-            ]);
+            if (!_.isEmpty(queries[key])) {
+                this.ticketsToCO[key] = await this.coModelMapping[
+                    key
+                ].aggregate([
+                    {
+                        $facet: queries[key],
+                    },
+                ]);
+            }
         }
+
+        return queries;
     }
 
     async insertDirectAssociations() {
         let associations = [];
 
-        Object.keys(this.codeObjects).map((modelType) => {
-            const ticketCOMapping = this.codeObjects[modelType];
+        Object.keys(this.ticketsToCO).map((modelType) => {
+            const ticketCOMapping = this.ticketsToCO[modelType];
 
             Object.keys(ticketCOMapping).map((ticketId) => {
                 const ticketCodeObjects = ticketCOMapping[ticketId];
@@ -194,7 +218,7 @@ class DirectAssociationGenerator extends AssociationGenerator {
 module.exports = DirectAssociationGenerator;
 
 /*
- this.codeObjects.map((ticketCodeObjects, i) => {
+ this.ticketsToCO.map((ticketCodeObjects, i) => {
             //extract relevant ticket for code object grouping
             const ticket = this.tickets[i];
 

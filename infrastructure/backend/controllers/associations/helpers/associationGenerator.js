@@ -4,6 +4,8 @@ const Branch = require("../../../models/Branch");
 const Commit = require("../../../models/Commit");
 const GithubIssue = require("../../../models/integrations/github/GithubIssue");
 
+const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
+
 class AssociationGenerator {
     tickets = [];
 
@@ -33,7 +35,7 @@ class AssociationGenerator {
 
         query.where("board").in(this.boardIds);
 
-        query.select("board attachments intervals _id");
+        query.select("board attachments name intervals _id");
 
         query.populate({ path: "board attachments intervals" });
 
