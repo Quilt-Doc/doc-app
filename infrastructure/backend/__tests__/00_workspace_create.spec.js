@@ -1,3 +1,7 @@
+/**
+ * @jest-environment ./__tests__config/my-custom-environment
+ */
+
 require('dotenv').config();
 const api = require('../apis/api');
 

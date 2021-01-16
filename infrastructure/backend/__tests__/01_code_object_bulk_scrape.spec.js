@@ -1,6 +1,15 @@
+/**
+ * @jest-environment ./__tests__config/my-custom-environment
+ */
+
+
 
 require('dotenv').config();
 const fs = require("fs");
+
+var mongoose = require('mongoose')
+const { ObjectId } = mongoose.Types;
+
 
 const brodalQueueCodeObjectData = require("../__tests__data/code_objects/brodal_queue/index");
 const docAppCodeObjectData = require("../__tests__data/code_objects/doc-app/index");
