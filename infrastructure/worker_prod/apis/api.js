@@ -7,7 +7,6 @@ var AWS = require('aws-sdk');
 // Set the region 
 AWS.config.update({region: 'us-east-1'});
 
-const { GraphQLClient, gql, rawRequest, request } = require('graphql-request');
 
 // const { GraphQLClient } = require('../mod-graphql-request/dist');
 
@@ -121,7 +120,8 @@ const requestInstallationClient = async (installationId) => {
     return installationApi;
 }
 
-
+/*
+const { GraphQLClient, gql, rawRequest, request } = require('graphql-request');
 const requestInstallationGraphQLClient = async (installationId) => {
 
     console.log(`Searching for Installation Token for ID: ${installationId}`);
@@ -141,7 +141,7 @@ const requestInstallationGraphQLClient = async (installationId) => {
       });
     return prismaClient
 }
-
+*/
 
 
 
@@ -154,5 +154,5 @@ module.exports = {
     fetchAppToken,
     requestInstallationToken,
     requestInstallationClient,
-    requestInstallationGraphQLClient,
+    // requestInstallationGraphQLClient,
 }

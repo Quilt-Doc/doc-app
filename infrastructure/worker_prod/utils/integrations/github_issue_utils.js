@@ -18,8 +18,10 @@ const IntegrationTicket = require("../../models/integrations/integration_objects
 const IntegrationInterval = require('../../models/integrations/integration_objects/IntegrationInterval');
 
 const api = require('../../apis/api');
-const { gql, rawRequest, request } = require('graphql-request');
 
+/*
+const { gql, rawRequest, request } = require('graphql-request');
+*/
 // const { GraphQLClient } = require('../../mod-graphql-request/dist');
 
 
@@ -255,7 +257,7 @@ const enrichGithubIssueDirectAttachments = async (issueList) => {
 }
 
 
-
+/*
 const generateIssueQuery = (repositoryObj, issueNumber) => {
 
     return gql`
@@ -287,7 +289,6 @@ const generateIssueQuery = (repositoryObj, issueNumber) => {
       }
     `
 }
-
 
 
 
@@ -373,13 +374,16 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj) =
     // End Result is a list of issue numbers indicating what has been linked
     return { issueNumber: issueObj.githubIssueNumber, linkages: linkedIssues };
 }
+*/
+
 
 // issueLinkages -> [{ issueNumber: 5,linkages: [1, 2, 3, 4] }, ... ]
 const generateDirectAttachmentsFromIssueNumbers = async (issueLinkages) => {
 
     issueLinkages = issueLinkages.filter(linkageObj => linkageObj.linkages.length > 0);
 
-    
+
+
 
 }
 
@@ -603,6 +607,7 @@ scrapeGithubRepoIssues = async (
             throw new Error(`GithubIssue create IntegrationIntervals failed`);
         }
 
+        /*
 
         // Create IntegrationAttachments for Issue Timeline Connections
         var getIssueLinkageRequestList = scrapedIssues.map( async (issueObj) => {
@@ -662,6 +667,7 @@ scrapeGithubRepoIssues = async (
 
             throw new Error(`GithubIssue generateDirectAttachmentsFromIssueNumbers failed - validResults: ${JSON.stringify(validResults.map(resultObj => resultObj.value))}`);
         }
+        */
 
     }
 
