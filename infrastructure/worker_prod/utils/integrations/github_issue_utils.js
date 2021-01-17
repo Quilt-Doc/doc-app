@@ -20,7 +20,7 @@ const IntegrationInterval = require('../../models/integrations/integration_objec
 const api = require('../../apis/api');
 const { gql, rawRequest, request } = require('graphql-request');
 
-const { GraphQLClient } = require('../../mod-graphql-request/dist');
+// const { GraphQLClient } = require('../../mod-graphql-request/dist');
 
 
 const fetchScrapedIssues = async (insertedIssueIds) => {
@@ -376,6 +376,10 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj) =
 
 // issueLinkages -> [{ issueNumber: 5,linkages: [1, 2, 3, 4] }, ... ]
 const generateDirectAttachmentsFromIssueNumbers = async (issueLinkages) => {
+
+    issueLinkages = issueLinkages.filter(linkageObj => linkageObj.linkages.length > 0);
+
+    
 
 }
 
