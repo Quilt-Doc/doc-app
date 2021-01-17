@@ -11,12 +11,19 @@ const getUrls = require('get-urls');
 const _ = require("lodash");
 
 
+
+
 const GithubIssue = require("../../models/integrations/github/GithubIssue");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 const IntegrationInterval = require('../../models/integrations/integration_objects/IntegrationInterval');
 
-const createGithubIssueIntervals = async (insertedIssueIds) => {
+const api = require('../../apis/api');
+const { gql, rawRequest, request } = require('graphql-request');
 
+const { GraphQLClient } = require('../../mod-graphql-request/dist');
+
+
+const fetchScrapedIssues = async (insertedIssueIds) => {
     // Fetch Github Issue IntegrationTickets
     var scrapedIssues;
     try {
@@ -28,6 +35,11 @@ const createGithubIssueIntervals = async (insertedIssueIds) => {
         console.log(err);
         throw new Error(`Error finding scraped Github Issue Integration Tickets - insertedIssueIds.length - ${insertedIssueIds.length}`);
     }
+
+    return scrapedIssues;
+}
+
+const createGithubIssueIntervals = async (scrapedIssues) => {
 
     var integrationIntervalsToCreate = [];
 
@@ -244,117 +256,128 @@ const enrichGithubIssueDirectAttachments = async (issueList) => {
 
 
 
+const generateIssueQuery = (repositoryObj, issueNumber) => {
 
-    /*
-```
-
-extractTrelloDirectAttachments = async (cards, context) => {
-    const currentRepositories = await getContextRepositories(context);
-
-    cards = parseDescriptionAttachments(cards);
-    //console.log("CURRENT REPOS", currentRepositories);
-
-    let insertOps = [];
-
-    let seenUrls = new Set();
-
-    cards.map((card) => {
-        const { attachments } = card;
-
-        const modelTypeMap = {
-            tree: "branch",
-            issues: "issue",
-            pull: "pullRequest",
-            commit: "commit",
-        };
-
-        attachments.map((attachment) => {
-            const { date, url, name } = attachment;
-
-            if (
-                !url ||
-                !url.includes("https://github.com") ||
-                seenUrls.has(url)
-            )
-                return;
-
-            const splitURL = url.split("/");
-
-            try {
-                if (splitURL.length < 2) return null;
-
-                let githubType = splitURL.slice(
-                    splitURL.length - 2,
-                    splitURL.length - 1
-                )[0];
-
-                const modelType = modelTypeMap[githubType];
-
-                if (!modelType) return;
-
-                const sourceId = splitURL.slice(splitURL.length - 1)[0];
-
-                const fullName = splitURL
-                    .slice(splitURL.length - 4, splitURL.length - 2)
-                    .join("/");
-
-                attachment = {
-                    modelType,
-                    link: url,
-                    sourceId,
-                };
-
-                if (date) attachment.sourceCreationDate = new Date(date);
-
-                if (currentRepositories[fullName]) {
-                    attachment.repository = currentRepositories[fullName]._id;
+    return gql`
+      {
+        resource(url: "${repositoryObj.htmlUrl}/issues/${issueNumber}") {
+          ... on Issue {
+            timelineItems(itemTypes: [CONNECTED_EVENT, DISCONNECTED_EVENT], first: 100) {
+              nodes {
+                ... on ConnectedEvent {
+                  id
+                  subject {
+                    ... on Issue {
+                      number
+                    }
+                  }
                 }
-
-                insertOps.push(attachment);
-
-                seenUrls.add(url);
-            } catch (err) {
-                return null;
+                ... on DisconnectedEvent {
+                  id
+                  subject {
+                    ... on Issue {
+                      number
+                    }
+                  }
+                }
+              }
             }
-        });
-    });
+          }
+        }
+      }
+    `
+}
 
-    let attachments;
 
+
+
+
+const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj) => {
+
+    var prismaQuery = generateIssueQuery(repositoryObj, issueObj.githubIssueNumber);
+
+    var prismaClient;
+    
     try {
-        attachments = await IntegrationAttachment.insertMany(insertOps);
-    } catch (e) {
-        console.log(e);
+        prismaClient = await api.requestInstallationGraphQLClient(installationId);
+    }
+    catch (err) {
+        await worker.send({
+            action: "log",
+            info: {
+                level: "error",
+                message: serializeError(err),
+                errorDescription: `Error requesting installation GraphQL Client - installationId: ${installationId}`,
+                source: "worker-instance",
+                function: "getGithubIssueLinkages",
+            },
+        });
+
+        throw new Error(
+            `Error requesting installation GraphQL Client - installationId: ${installationId}`
+        );
     }
 
-    attachments = _.mapKeys(attachments, "link");
+    var queryResponse;
+    try {
+        queryResponse = await prismaClient.request(prismaQuery, variables);
+    }
+    catch (err) {
+        await worker.send({
+            action: "log",
+            info: {
+                level: "error",
+                message: serializeError(err),
+                errorDescription: `Error fetching Issue timelineItems - repositoryObj.htmlUrl, issueObj.githubIssueNumber: ${repositoryObj.htmlUrl}, ${issueObj.githubIssueNumber}`,
+                source: "worker-instance",
+                function: "getGithubIssueLinkages",
+            },
+        });
+        throw new Error(
+            `Error fetching Issue timelineItems - repositoryObj.htmlUrl, issueObj.githubIssueNumber: ${repositoryObj.htmlUrl}, ${issueObj.githubIssueNumber}`
+        );
+    }
 
-    cards.map((card) => {
-        card.attachmentIds = card.attachments
-            .map((attachment) => {
-                const { url } = attachment;
-
-                if (attachments[url]) {
-                    return attachments[url]._id;
-                }
-
-                return null;
-            })
-            .filter((attachmentId) => attachmentId != null);
+    const issues = {};
+    queryResponse.data.resource.timelineItems.nodes.map(node => {
+        if (issues.hasOwnProperty(node.subject.number)) {
+            issues[node.subject.number]++;
+        }
+        else {
+            issues[node.subject.number] = 1;
+        }
     });
 
-    return { attachments, cards };
-};```
+    const linkedIssues = [];
+    for (const [issue, count] of Object.entries(issues)) {
+        if (count % 2 != 0) {
+            linkedIssues.push(issue);
+        }
+    }
 
 
-*/
+    await worker.send({action: "log", info: {
+        level: "info",
+        message: `All Issues found to be connected/disconnected - issueObj.githubIssueNumber, issues: ${issueObj.githubIssueNumber}, ${JSON.stringify(issues)}`,
+        source: "worker-instance",
+        function: "getGithubIssueLinkages",
+    }});
 
+    await worker.send({action: "log", info: {
+        level: "info",
+        message: `All Issues currently linked - - issueObj.githubIssueNumber, linkedIssues: ${issueObj.githubIssueNumber}, ${JSON.stringify(linkedIssues)}`,
+        source: "worker-instance",
+        function: "getGithubIssueLinkages",
+    }});
 
+    // End Result is a list of issue numbers indicating what has been linked
+    return { issueNumber: issueObj.githubIssueNumber, linkages: linkedIssues };
+}
 
+// issueLinkages -> [{ issueNumber: 5,linkages: [1, 2, 3, 4] }, ... ]
+const generateDirectAttachmentsFromIssueNumbers = async (issueLinkages) => {
 
-
-
-
+}
 
 
 
@@ -558,9 +581,18 @@ scrapeGithubRepoIssues = async (
             );
         }
 
+        var scrapedIssues;
+        try {
+            scrapedIssues = await fetchScrapedIssues(newTicketIds);
+        }
+        catch (err) {
+            console.log(err);
+            throw Error(`Error fetching Scraped GithubIssues`);
+        }
+
         // Create IntegrationIntervals for scraped Issues
         try {
-            await createGithubIssueIntervals(newTicketIds);
+            await createGithubIssueIntervals(scrapedIssues);
         }
         catch (err) {
             console.log(err);
@@ -568,6 +600,64 @@ scrapeGithubRepoIssues = async (
         }
 
 
+        // Create IntegrationAttachments for Issue Timeline Connections
+        var getIssueLinkageRequestList = scrapedIssues.map( async (issueObj) => {
+            var issueLinkageResponse;
+            try {
+                issueLinkageResponse = await getGithubIssueLinkages(installationId, issueObj, repositoryObj);
+            }
+            catch (err) {
+                console.log(err);
+                return {error: 'Error', issueNumber: issueObj.githubIssueNumber};
+            }
+
+            return issueLinkageResponse;
+
+        });
+
+        // Execute all requests
+        var results;
+        try {
+            results = await Promise.allSettled(getIssueLinkageRequestList);
+        }
+        catch (err) {
+            await worker.send({
+                action: "log",
+                info: {
+                    level: "error",
+                    message: serializeError(err),
+                    errorDescription: `GithubIssue getLinkages failed - getIssueLinkageRequestList.length: ${getIssueLinkageRequestList.length}`,
+                    source: "worker-instance",
+                    function: "scrapeGithubRepoIssues",
+                },
+            });
+
+            throw new Error(`GithubIssue getLinkages failed - getIssueLinkageRequestList.length: ${getIssueLinkageRequestList.length}`);
+        }
+
+        // Non-error responses
+        validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
+
+        // Error responses
+        invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
+
+        try {
+            await generateDirectAttachmentsFromIssueNumbers(validResults.map(resultObj => resultObj.value));
+        }
+        catch (err) {
+            await worker.send({
+                action: "log",
+                info: {
+                    level: "error",
+                    message: serializeError(err),
+                    errorDescription: `GithubIssue generateDirectAttachmentsFromIssueNumbers failed - validResults: ${JSON.stringify(validResults.map(resultObj => resultObj.value))}`,
+                    source: "worker-instance",
+                    function: "scrapeGithubRepoIssues",
+                },
+            });
+
+            throw new Error(`GithubIssue generateDirectAttachmentsFromIssueNumbers failed - validResults: ${JSON.stringify(validResults.map(resultObj => resultObj.value))}`);
+        }
 
     }
 
