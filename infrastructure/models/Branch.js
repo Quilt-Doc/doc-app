@@ -24,6 +24,7 @@ let branchSchema = new Schema({
     installationId: { type: Number, required: true },
 
     sourceId: { type: String },
+    sourceUpdatedDate: { type: Date },
 
 
     ref: { type: String, required: true },

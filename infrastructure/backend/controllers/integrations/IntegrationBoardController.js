@@ -1,4 +1,4 @@
-const GithubProject = require("../../models/integrations/github/GithubProject");
+const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
 
 var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;

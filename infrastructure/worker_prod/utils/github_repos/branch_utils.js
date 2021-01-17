@@ -407,7 +407,7 @@ const insertBranchesFromAPI = async (branchObjectsToInsert, installationId, repo
 
     // Fetch Branch Objects with specific fields necessary for mapping
 
-    // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
+    // Need to use the insertedIds of the new Branches to get the full, unified object from the DB
     var createdBranchObjects;
     try {
         createdBranchObjects = await Branch.find({_id: { $in: newBranchIds.map(id => ObjectId(id.toString())) } }, '_id label lastCommit').lean().exec();

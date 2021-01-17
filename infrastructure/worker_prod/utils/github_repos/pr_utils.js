@@ -371,7 +371,7 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
 
 
 
-    // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
+    // Need to use the insertedIds of the new PRs to get the full, unified object from the DB
     var createdPRObjects;
     try {
         createdPRObjects = await PullRequest.find({_id: { $in: newPRIds.map(id => ObjectId(id.toString())) } }, '_id pullRequestId branches').lean().exec();

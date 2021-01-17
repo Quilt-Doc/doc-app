@@ -15,7 +15,6 @@ let integrationBoardSchema = new Schema({
     self: {type: String, required: true},
     jiraId: {type: String, required: true},
     key:{type: String, required: true},
-    name: {type: String, required: true},
     projectTypeKey:{type: String, required: true},
     simplified:{type: Boolean, required: true},
     style: {type: String, required: true},
@@ -23,6 +22,21 @@ let integrationBoardSchema = new Schema({
 
     cloudId: {type: String, required: true},
     jiraSiteId: {type: ObjectId, ref: 'JiraSite', required: true},
+
+
+    // Github Project fields
+    repositoryId: { type: ObjectId, ref: 'Repository', required: true },
+    projectId: { type: String, required: true },
+    number: { type: Number, required: true },
+
+    columns: [{ type: String, required: true }],
+    columnIdList: [{type: Number, required: true}],
+
+    body: { type: String, required: true },
+    state:  { type: String, enum: ['open', 'closed', 'all'], required: true},
+
+    createdAt: { type: Date, required: true},
+    updatedAt: { type: Date },
 
 });
 

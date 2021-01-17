@@ -294,7 +294,7 @@ const generateIssueQuery = (repositoryObj, issueNumber) => {
 
 
 
-const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj) => {
+const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, worker) => {
 
     var prismaQuery = generateIssueQuery(repositoryObj, issueObj.githubIssueNumber);
 
@@ -438,15 +438,13 @@ const generateDirectAttachmentsFromIssueNumbers = async (issueLinkages, reposito
         var attachmentInsertResponse;
 
         try {
-            attachments = await IntegrationAttachment.insertMany(attachmentsToInsert);
+            attachmentInsertResponse = await IntegrationAttachment.insertMany(attachmentsToInsert);
         }
         catch (err) {
             console.log(err);
             throw err;
         }
     }
-
-
 
 }
 
@@ -539,7 +537,7 @@ scrapeGithubRepoIssues = async (
 
     var repositoryIssueList = foundIssueList;
 
-    // Bulk create GithubProject models for all Objects found
+    // Bulk create IntegrationTicket models for all Objects found
 
     // Filter Out Issues that are PullRequests
     repositoryIssueList = repositoryIssueList.filter(issueObj => !issueObj.pull_request);
@@ -676,7 +674,7 @@ scrapeGithubRepoIssues = async (
         var getIssueLinkageRequestList = scrapedIssues.map( async (issueObj) => {
             var issueLinkageResponse;
             try {
-                issueLinkageResponse = await getGithubIssueLinkages(installationId, issueObj, repositoryObj);
+                issueLinkageResponse = await getGithubIssueLinkages(installationId, issueObj, repositoryObj, worker);
             }
             catch (err) {
                 console.log(err);

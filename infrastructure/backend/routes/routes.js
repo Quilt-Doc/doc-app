@@ -758,6 +758,10 @@ router.post(
     trelloIntegrationController.triggerTrelloScrape
 );
 
+// GithubIssue Routes
+const githubIssueIntegrationController = require("../controllers/integrations/github/GithubIssueController");
+
+
 //GOOGLE INTEGRATION ROUTES
 /*
 const googleIntegrationController = require('../controllers/integrations/GoogleIntegrationController');

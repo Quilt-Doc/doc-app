@@ -3,7 +3,7 @@ const { ObjectId } = mongoose.Types;
 
 const { serializeError, deserializeError } = require("serialize-error");
 
-const GithubProject = require("../../models/integrations/github/GithubProject");
+const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 
 // Scrape a single github repo, call with Promises and so forth to scrape all repositories
@@ -73,6 +73,8 @@ scrapeGithubRepoProjects = async (
     const bulkGithubProjectInsertList = repositoryProjectList.map(
         (repositoryProjectObjectResponse, idx) => {
             return {
+                source: "github",
+                sourceId: repositoryProjectObjectResponse.id, // == projectId
                 repositoryId: repositoryId,
                 projectId: repositoryProjectObjectResponse.id,
                 number: repositoryProjectObjectResponse.number,
@@ -89,7 +91,7 @@ scrapeGithubRepoProjects = async (
         var bulkInsertResult;
         var newGithubProjectIds;
         try {
-            bulkInsertResult = await GithubProject.insertMany(
+            bulkInsertResult = await IntegrationBoard.insertMany(
                 bulkGithubProjectInsertList,
                 { rawResult: true }
             );
@@ -102,7 +104,7 @@ scrapeGithubRepoProjects = async (
                 action: "log",
                 info: {
                     level: "info",
-                    message: `GithubProject insertMany success - bulkInsertResult: ${JSON.stringify(
+                    message: `IntegrationBoard(source="github") insertMany success - bulkInsertResult: ${JSON.stringify(
                         bulkInsertResult
                     )}`,
                     source: "worker-instance",
@@ -115,7 +117,7 @@ scrapeGithubRepoProjects = async (
                 info: {
                     level: "error",
                     message: serializeError(err),
-                    errorDescription: `GithubProject insertMany failed - bulkGithubProjectInsertList: ${JSON.stringify(
+                    errorDescription: `IntegrationBoard(source="github") insertMany failed - bulkGithubProjectInsertList: ${JSON.stringify(
                         bulkGithubProjectInsertList
                     )}`,
                     source: "worker-instance",
@@ -124,12 +126,12 @@ scrapeGithubRepoProjects = async (
             });
 
             transactionAborted = true;
-            transactionError.message = `GithubProject insertMany failed - bulkGithubProjectInsertList: ${JSON.stringify(
+            transactionError.message = `IntegrationBoard(source="github") insertMany failed - bulkGithubProjectInsertList: ${JSON.stringify(
                 bulkGithubProjectInsertList
             )}`;
 
             throw new Error(
-                `GithubProject insertMany failed - bulkGithubProjectInsertList: ${JSON.stringify(
+                `IntegrationBoard(source="github") insertMany failed - bulkGithubProjectInsertList: ${JSON.stringify(
                     bulkGithubProjectInsertList
                 )}`
             );
@@ -143,7 +145,7 @@ scrapeGithubRepoProjects = async (
     // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
     var createdGithubProjects;
     try {
-        createdGithubProjects = await GithubProject.find({
+        createdGithubProjects = await IntegrationBoard.find({
             _id: { $in: newGithubProjectIds.map((id) => ObjectId(id)) },
         })
             .lean()
@@ -154,7 +156,7 @@ scrapeGithubRepoProjects = async (
             info: {
                 level: "error",
                 message: serializeError(err),
-                errorDescription: `GithubProject find failed - newGithubProjectIds: ${JSON.stringify(
+                errorDescription: `IntegrationBoard(source="github") find failed - newGithubProjectIds: ${JSON.stringify(
                     newGithubProjectIds
                 )}`,
                 source: "worker-instance",
@@ -276,7 +278,7 @@ scrapeGithubRepoProjects = async (
     // Update all of the created GithubProjects with their columns
     // KARAN TODO: Verify that these columns are in order
     try {
-        await GithubProject.bulkWrite(bulkWriteColumnOps);
+        await IntegrationBoard.bulkWrite(bulkWriteColumnOps);
     } catch (err) {
         await worker.send({
             action: "log",
@@ -284,7 +286,7 @@ scrapeGithubRepoProjects = async (
                 level: "error",
                 source: "worker-instance",
                 message: serializeError(err),
-                errorDescription: `Error bulk writing columns to GithubProjects - projectColumnsList: ${JSON.stringify(
+                errorDescription: `Error bulk writing columns to IntegrationBoard(source="github") - projectColumnsList: ${JSON.stringify(
                     projectColumnsList
                 )}`,
                 function: "scrapeGithubRepoProjects",
@@ -298,7 +300,7 @@ scrapeGithubRepoProjects = async (
     var columnCompleteGithubProjects;
 
     try {
-        columnCompleteGithubProjects = await GithubProject.find({
+        columnCompleteGithubProjects = await IntegrationBoard.find({
             repositoryId: ObjectId(repositoryId.toString()),
         })
             .lean()
@@ -310,7 +312,7 @@ scrapeGithubRepoProjects = async (
                 level: "error",
                 source: "worker-instance",
                 message: serializeError(err),
-                errorDescription: `Error finding GithubProjects - repositoryId: ${JSON.stringify(
+                errorDescription: `Error finding IntegrationBoard(source="github") - repositoryId: ${JSON.stringify(
                     projectColumnsList
                 )}`,
                 function: "scrapeGithubRepoProjects",
@@ -545,7 +547,7 @@ scrapeGithubRepoProjects = async (
 
                 // Data needed per ticket
                 /*
-                    githubCardGithubProjectId: { type: ObjectId, ref: 'GithubProject', required: true },
+                    githubCardGithubProjectId: { type: ObjectId, ref: 'IntegrationBoard'},
 
                     githubCardNote: { type: String, required: true },
 

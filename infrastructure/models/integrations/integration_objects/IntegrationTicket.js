@@ -36,8 +36,8 @@ const integrationTicketSchema = new Schema({
     trelloCardDueComplete: Boolean,
     trelloCardDateLastActivity: Date,
 
-    // Github specific fields
-    githubCardGithubProjectId: { type: ObjectId, ref: "GithubProject" },
+    // Github Card specific fields
+    githubCardGithubProjectId: { type: ObjectId, ref: "IntegrationBoard" },
     githubCardId: { type: String },
     githubCardColumnId: { type: String },
     githubCardUpdatedAt: { type: Date },

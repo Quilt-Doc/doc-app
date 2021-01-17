@@ -10,7 +10,6 @@ const UserStats = require("../models/reporting/UserStats");
 const ActivityFeedItem = require("../models/reporting/ActivityFeedItem");
 const User = require("../models/authentication/User");
 
-const GithubProject = require("../models/integrations/github/GithubProject");
 const JiraSite = require("../models/integrations/jira/JiraSite");
 const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
 const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
@@ -436,7 +435,7 @@ getWorkspace = async (req, res) => {
 // Delete Workspace Document
 
 // TODO:
-// GithubProject -- delete all GithubProjects from Repositories on the Workspace
+// IntegrationBoards ( github projects ) -- delete all IntegrationBoards(source = "github") from Repositories on the Workspace
 
 // JiraSite -- has a workspaceId attached
 // IntegrationBoards ( jira projects) -- Could use the Ids of all the JiraSites found to be deleted in the prior step
@@ -811,11 +810,11 @@ deleteWorkspace = async (req, res) => {
                 );
             }
 
-            // GithubProject -- delete all GithubProjects from Repositories on the Workspace
-            // Delete All GithubProjects
+            // IntegrationBoards(source = "github") -- delete all github projects from Repositories on the Workspace
+            // Delete All github projects
             var deleteGithubProjectsResponse;
             try {
-                deleteGithubProjectsResponse = await GithubProject.deleteMany(
+                deleteGithubProjectsResponse = await IntegrationBoard.deleteMany(
                     {
                         repositoryId: {
                             $in: workspaceRepositories.map((id) =>
@@ -830,24 +829,23 @@ deleteWorkspace = async (req, res) => {
                 await logger.error({
                     source: "backend-api",
                     error: err,
-                    errorDescription: `deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                    errorDescription: `deleteGithubProjects error: IntegrationBoards deleteMany query failed - workspaceId: ${workspaceId}`,
                     function: "deleteWorkspace",
                 });
 
                 output = {
                     success: false,
-                    error: `deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`,
+                    error: `deleteGithubProjects error: IntegrationBoards deleteMany query failed - workspaceId: ${workspaceId}`,
                     trace: err,
                 };
                 throw new Error(
-                    `deleteGithubProjects error: GithubProjects deleteMany query failed - workspaceId: ${workspaceId}`
+                    `deleteGithubProjects error: IntegrationBoards deleteMany query failed - workspaceId: ${workspaceId}`
                 );
             }
 
 
             // IntegrationTicket -- delete all Github Issues from Repositories on the Workspace
-                        // GithubProject -- delete all GithubProjects from Repositories on the Workspace
-            // Delete All GithubProjects
+            // Delete All IntegrationTickets(github issues)
             var deleteGithubIssuesResponse;
             try {
                 deleteGithubIssuesResponse = await IntegrationTicket.deleteMany(
