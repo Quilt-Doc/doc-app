@@ -10,7 +10,8 @@ const { checkValid } = require("../../utils/utils");
 
 var mongoose = require("mongoose");
 const BoardWorkspaceContext = require("../../models/integrations/context/BoardWorkspaceContext");
-const Association = require("../../../models/associations/Association");
+const Association = require("../../models/associations/Association");
+const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 const { ObjectId } = mongoose.Types;
 
 /*
@@ -133,9 +134,9 @@ const getFileContext = async (req, res) => {
 };*/
 
 const getFileContext = async (req, res) => {
-    const { workspaceId, filePath } = req.body;
+    const { workspaceId, repositoryId } = req.params;
 
-    const { repositoryId } = req.params;
+    const { filePath } = req.body;
 
     if (!checkValid(workspaceId))
         return res.json({
@@ -164,7 +165,7 @@ const getFileContext = async (req, res) => {
 
         query.where("repository").equals(repositoryId);
 
-        query.where("fileList").in([filePath]);
+        //query.where("fileList").in([filePath]);
 
         result["github"].pullRequests = await query.limit(20).lean().exec();
     } catch (err) {
@@ -181,7 +182,7 @@ const getFileContext = async (req, res) => {
 
         query.where("repository").equals(repositoryId);
 
-        query.where("fileList").in([filePath]);
+        //query.where("fileList").in([filePath]);
 
         result["github"].commits = await query.limit(20).lean().exec();
     } catch (err) {
@@ -192,13 +193,19 @@ const getFileContext = async (req, res) => {
         });
     }
 
+    console.log("RESULT", result);
+
     let sources;
 
     try {
-        const contexts = BoardWorkspaceContext.find({ workspace: workspaceId })
+        const contexts = await BoardWorkspaceContext.find({
+            workspace: workspaceId,
+        })
             .select("source")
             .lean()
             .exec();
+
+        console.log("CONTEXTS", contexts);
 
         sources = Array.from(
             new Set(contexts.map((context) => context.source))
@@ -211,6 +218,8 @@ const getFileContext = async (req, res) => {
         });
     }
 
+    console.log("HERE");
+
     let codeObjectIds = [];
 
     Object.keys(result["github"]).map((modelType) => {
@@ -220,25 +229,18 @@ const getFileContext = async (req, res) => {
         ];
     });
 
+    console.log("CODE OBJECT IDS", codeObjectIds);
+
     let associations;
 
     try {
-        let query = Association.find({
-            $or: [
-                {
-                    firstElement: {
-                        $in: codeObjectIds,
-                    },
-                },
-                {
-                    secondElement: {
-                        $in: codeObjectIds,
-                    },
-                },
-            ],
-        });
+        let query = Association.find();
+
+        query.where("secondElement").in(codeObjectIds);
 
         query.where("workspaces").in([workspaceId]);
+
+        query.select("firstElement workspaces");
 
         associations = await query.lean().exec();
     } catch (e) {
@@ -249,7 +251,38 @@ const getFileContext = async (req, res) => {
         });
     }
 
-    // Return
+    console.log("ASSOCIATIONS LENGTH", associations.length);
+
+    const ticketIds = Array.from(
+        new Set(
+            associations.map((association) => {
+                console.log("ASSOCIATION", association);
+
+                const { firstElement: ticketId } = association;
+
+                return ticketId;
+            })
+        )
+    );
+
+    let tickets;
+
+    try {
+        tickets = await IntegrationTicket.find({ _id: { $in: ticketIds } })
+            .lean()
+            .exec();
+    } catch (e) {
+        return res.json({
+            success: false,
+            error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
+            trace: e,
+        });
+    }
+
+    result["trello"].tickets = tickets;
+
+    console.log("RESULT", result);
+    //IntegrationTicket.populate(tickets, {path: "author references workspace repository tags snippets"});
 
     return res.json({ success: true, result });
 };
@@ -304,3 +337,41 @@ module.exports = {
     generateAssociations,
     getFileContext,
 };
+
+/*
+ let associations;
+
+    try {
+        associations = await Promise.all(associationQueries);
+    } catch (e) {
+        return res.json({
+            success: false,
+            error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
+            trace: e,
+        });
+    }
+
+    const codeObjModelTypes = new Set("PullRequest", "Commit");
+
+    sources.map((source, i) => {
+        const sourceAssociations = associations[i];
+
+        sourceAssociations.map((association) => {
+            const { firstElement, firstElementModelType, secondElement, secondElementModelType } = association;
+
+            if (
+                firstElement.source === source &&
+                !codeObjModelTypes.has(firstElementModelType)
+            )
+                return firstElement;
+
+            if (
+                secondElement.source === source &&
+                !codeObjModelTypes.has(secondElementModelType)
+            )
+                return secondElement;
+
+            return null
+        }).filter(element => element != null);
+    }
+    // Return*/
