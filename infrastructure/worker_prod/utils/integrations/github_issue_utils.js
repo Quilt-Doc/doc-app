@@ -7,7 +7,7 @@ var LinkHeader = require( 'http-link-header' );
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
-const getUrls = require('get-urls');
+// const getUrls = require('get-urls');
 const _ = require("lodash");
 
 
@@ -19,9 +19,9 @@ const IntegrationInterval = require('../../models/integrations/integration_objec
 
 const api = require('../../apis/api');
 
-/*
+
 const { gql, rawRequest, request } = require('graphql-request');
-*/
+
 // const { GraphQLClient } = require('../../mod-graphql-request/dist');
 
 
@@ -133,7 +133,7 @@ const createGithubIssueIntervals = async (scrapedIssues) => {
 
 
 
-
+/*
 parseBodyAttachments = (issueList) => {
     issueList.map((issueObj) => {
         const { githubIssueBody, attachments } = issueObj;
@@ -215,11 +215,11 @@ const enrichGithubIssueDirectAttachments = async (issueList) => {
 
                 if (date) attachment.sourceCreationDate = new Date(date);
 
-                /*
-                if (currentRepositories[fullName]) {
-                    attachment.repository = currentRepositories[fullName]._id;
-                }
-                */
+                
+                //if (currentRepositories[fullName]) {
+                //    attachment.repository = currentRepositories[fullName]._id;
+                //}
+                
 
                 insertOps.push(attachment);
 
@@ -255,9 +255,10 @@ const enrichGithubIssueDirectAttachments = async (issueList) => {
     });
 
 }
+*/
 
 
-/*
+
 const generateIssueQuery = (repositoryObj, issueNumber) => {
 
     return gql`
@@ -374,14 +375,76 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj) =
     // End Result is a list of issue numbers indicating what has been linked
     return { issueNumber: issueObj.githubIssueNumber, linkages: linkedIssues };
 }
-*/
+
+const getGithubIssueLinkagesFromMarkdown = async (installationId, issueObj, repositoryObj) => {
+
+    const regex = /[#][0-9]+/g
+
+    var foundMatches = issueObj.githubIssueBody.match(regex);
+
+    if (foundMatches == null) {
+        foundMatches = [];
+    }
+
+    return { issueNumber: issueObj.githubIssueNumber, linkages: foundMatches };
+
+}
+
 
 
 // issueLinkages -> [{ issueNumber: 5,linkages: [1, 2, 3, 4] }, ... ]
-const generateDirectAttachmentsFromIssueNumbers = async (issueLinkages) => {
+const generateDirectAttachmentsFromIssueNumbers = async (issueLinkages, repositoryObj) => {
 
+    // Remove Issues without any linkages
     issueLinkages = issueLinkages.filter(linkageObj => linkageObj.linkages.length > 0);
 
+    // KARAN TODO: Attempt to determine if linkage refers to a PullRequest or not
+
+    // 
+    /*
+    modelType: {type: String, enum: [ "branch", "issue", "pullRequest", "commit" ]},
+    sourceId: String,
+    repository: { type: ObjectId, ref: "Repository" },
+    isAssociation: { type: Boolean, default: false },
+
+    link: String,
+    sourceCreationDate: Date,
+    */
+
+    var attachmentsToInsert = [];
+
+    var i = 0;
+    for ( i = 0; i < issueLinkages.length; i++) {
+
+        var currentLinkageList = issueLinkages[i].linkages;
+        var currentIssueNumber = issueLinkages[i].issueNumber;
+
+        var k = 0;
+        for ( k = 0; k < currentLinkageList.length; k++ ) {
+            
+            attachmentsToInsert.push({
+                modelType: 'issue',
+                sourceId: currentLinkageList[k],
+                repository: repositoryObj._id.toString(),
+                link: `${repositoryObj.htmlUrl}/issues/${currentLinkageList[k]}`,
+            });
+
+        }
+
+    }
+
+    // Create/Insert IntegrationAttachments
+    if (attachmentsToInsert.length > 0) {
+        var attachmentInsertResponse;
+
+        try {
+            attachments = await IntegrationAttachment.insertMany(attachmentsToInsert);
+        }
+        catch (err) {
+            console.log(err);
+            throw err;
+        }
+    }
 
 
 
@@ -607,7 +670,7 @@ scrapeGithubRepoIssues = async (
             throw new Error(`GithubIssue create IntegrationIntervals failed`);
         }
 
-        /*
+        
 
         // Create IntegrationAttachments for Issue Timeline Connections
         var getIssueLinkageRequestList = scrapedIssues.map( async (issueObj) => {
@@ -650,8 +713,22 @@ scrapeGithubRepoIssues = async (
         // Error responses
         invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
 
+
+        var linkagesList = validResults.map(resultObj => resultObj.value);
+
+        // Get any linkages from markdown
+        var markdownLinkages;
+        scrapedIssues.map(issueObj => {
+            markdownLinkages.push(getGithubIssueLinkagesFromMarkdown(installationId, issueObj, repositoryObj));
+        });
+
+        linkagesList.push(markdownLinkages);
+
+        linkagesList = linkagesList.flat();
+
+
         try {
-            await generateDirectAttachmentsFromIssueNumbers(validResults.map(resultObj => resultObj.value));
+            await generateDirectAttachmentsFromIssueNumbers(linkagesList);
         }
         catch (err) {
             await worker.send({
@@ -659,15 +736,15 @@ scrapeGithubRepoIssues = async (
                 info: {
                     level: "error",
                     message: serializeError(err),
-                    errorDescription: `GithubIssue generateDirectAttachmentsFromIssueNumbers failed - validResults: ${JSON.stringify(validResults.map(resultObj => resultObj.value))}`,
+                    errorDescription: `GithubIssue generateDirectAttachmentsFromIssueNumbers failed - validResults: ${JSON.stringify(linkagesList)}`,
                     source: "worker-instance",
                     function: "scrapeGithubRepoIssues",
                 },
             });
 
-            throw new Error(`GithubIssue generateDirectAttachmentsFromIssueNumbers failed - validResults: ${JSON.stringify(validResults.map(resultObj => resultObj.value))}`);
+            throw new Error(`GithubIssue generateDirectAttachmentsFromIssueNumbers failed - validResults: ${JSON.stringify(linkagesList)}`);
         }
-        */
+        
 
     }
 
