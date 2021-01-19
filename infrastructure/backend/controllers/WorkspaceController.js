@@ -105,8 +105,6 @@ const getScanRepositoriesData = async (repositoryIds, workspace, session, logger
     scanRepositoriesData["workspaceId"] = workspace._id.toString();
     scanRepositoriesData["jobType"] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
 
-    // DEPRECATED
-    // scanRepositoriesData["installationId"] = installationId;
 
     return scanRepositoriesData;
 
