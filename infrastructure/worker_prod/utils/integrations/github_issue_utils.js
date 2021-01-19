@@ -322,7 +322,7 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, w
 
     var queryResponse;
     try {
-        queryResponse = await prismaClient.request(prismaQuery, variables);
+        queryResponse = await prismaClient.request(prismaQuery);
     }
     catch (err) {
         await worker.send({
@@ -715,7 +715,7 @@ scrapeGithubRepoIssues = async (
         var linkagesList = validResults.map(resultObj => resultObj.value);
 
         // Get any linkages from markdown
-        var markdownLinkages;
+        var markdownLinkages = [];
         scrapedIssues.map(issueObj => {
             markdownLinkages.push(getGithubIssueLinkagesFromMarkdown(installationId, issueObj, repositoryObj));
         });

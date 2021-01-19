@@ -120,7 +120,7 @@ const requestInstallationClient = async (installationId) => {
     return installationApi;
 }
 
-/*
+
 const { GraphQLClient, gql, rawRequest, request } = require('graphql-request');
 const requestInstallationGraphQLClient = async (installationId) => {
 
@@ -130,7 +130,7 @@ const requestInstallationGraphQLClient = async (installationId) => {
     var installationToken = await requestInstallationToken(appToken, installationId);
 
 
-    const prismaClient = new GraphQLClient("https://api.github.com/", {
+    const prismaClient = new GraphQLClient("https://api.github.com/graphql/", {
         credentials: 'include',
         mode: 'cors',
         headers: {
@@ -141,7 +141,7 @@ const requestInstallationGraphQLClient = async (installationId) => {
       });
     return prismaClient
 }
-*/
+
 
 
 
@@ -154,5 +154,5 @@ module.exports = {
     fetchAppToken,
     requestInstallationToken,
     requestInstallationClient,
-    // requestInstallationGraphQLClient,
+    requestInstallationGraphQLClient,
 }

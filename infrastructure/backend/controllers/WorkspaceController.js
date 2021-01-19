@@ -52,6 +52,72 @@ escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 };
 
+const getScanRepositoriesData = async (repositoryIds, session, logger ) => {
+    // Get the list of installationIds for all Repositories
+    var repositoryInstallationIds;
+    try {
+        repositoryInstallationIds = await Repository.find(
+            { _id: { $in: repositoryIds } },
+            "_id fullName installationId",
+            { session }
+        )
+            .lean()
+            .exec();
+    } catch (err) {
+        await logger.error({
+            source: "backend-api",
+            message: err,
+            errorDescription: `error getting workspace repositories - repositoryIds: ${JSON.stringify(
+                repositoryIds
+            )}`,
+            function: "getScanRepositoriesData",
+        });
+        throw Error(
+            `error getting workspace repositories - repositoryIds: ${JSON.stringify(repositoryIds)}`
+        );
+    }
+
+    var installationIdLookup = {};
+    for (i = 0; i < repositoryInstallationIds.length; i++) {
+        installationIdLookup[
+            repositoryInstallationIds[i]._id.toString()
+        ] = repositoryInstallationIds[i].installationId.toString();
+    }
+
+    repositoryInstallationIds = [
+        ...new Set(
+            repositoryInstallationIds.map(
+                (repoObj) => repoObj.installationId
+            )
+        ),
+    ];
+
+    await logger.info({
+        source: "backend-api",
+        message: `Scan Repository Job - installationIdLookup, repositoryInstallationIds: ${JSON.stringify(installationIdLookup)}, ${JSON.stringify(repositoryInstallationIds)}`,
+        function: `getScanRepositoriesData`,
+    });
+
+    // Kick off Scan Repositories Job
+
+    var scanRepositoriesData = {};
+
+    scanRepositoriesData["installationIdLookup"] = installationIdLookup;
+    scanRepositoriesData["repositoryInstallationIds"] = repositoryInstallationIds;
+
+    scanRepositoriesData["repositoryIdList"] = repositoryIds;
+    scanRepositoriesData["workspaceId"] = workspace._id.toString();
+    scanRepositoriesData["jobType"] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
+
+    // DEPRECATED
+    scanRepositoriesData["installationId"] = installationId;
+
+    return scanRepositoriesData;
+
+}
+
+
+
 createWorkspace = async (req, res) => {
     const { name, creatorId, installationId, repositoryIds } = req.body;
 
@@ -76,54 +142,11 @@ createWorkspace = async (req, res) => {
     const session = await db.startSession();
     let output = {};
 
-    var repositoryFullNameList = [];
-
     console.log('Beginning to create workspace');
 
     var scanRepositoriesData = {};
     try {
         await session.withTransaction(async () => {
-            // Verify that none of the repositories being added exist in any other Workspaces
-            var repositoryOverlapExists = false;
-            try {
-                repositoryOverlapExists = await Workspace.exists({
-                    repositories: {
-                        $in: repositoryIds.map((repoId) => ObjectId(repoId)),
-                    },
-                });
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    message: err,
-                    errorDescription: `Error checking if Repositories existed in other Workspaces - repositoryIds: ${JSON.stringify(
-                        repositoryIds
-                    )}`,
-                    function: "createWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `Error checking if Repositories existed in other Workspaces`,
-                    trace: err,
-                };
-                throw Error(
-                    `Error checking if Repositories existed in other Workspaces`
-                );
-            }
-
-            if (repositoryOverlapExists) {
-                output = {
-                    success: false,
-                    alert:
-                        "Repository in selection already is part of another Workspace",
-                    error: `Cannot attach Repositories to multiple Workspaces`,
-                };
-                throw Error(
-                    `Cannot attach Repositories to multiple Workspaces - repositoryIds: ${JSON.stringify(
-                        repositoryIds
-                    )}`
-                );
-            }
 
             let workspace = new Workspace({
                 name: name,
@@ -160,45 +183,6 @@ createWorkspace = async (req, res) => {
                 );
             }
 
-            // Create Root Document
-            var document = new Document({
-                author: ObjectId(creatorId),
-                workspace: ObjectId(workspace._id.toString()),
-                title: "",
-                path: "",
-                status: "valid",
-            });
-
-            document.root = true;
-
-            // save document
-            try {
-                document = await document.save({ session });
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(
-                        repositories
-                    )}`,
-                    function: "createWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(
-                        repositories
-                    )}`,
-                    trace: err,
-                };
-
-                throw new Error(
-                    `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(
-                        repositories
-                    )}`
-                );
-            }
-
             // Update User.workspaces array
             var user;
             try {
@@ -223,107 +207,29 @@ createWorkspace = async (req, res) => {
                 );
             }
 
-            // Create UserStats object for creator
+
+            // Get data necessary for Job
             try {
-                // console.log(`CREATING USERSTATS - USER ID: ${creatorId}`);
-                await UserStatsController.createUserStats({
-                    userId: creatorId,
-                    workspaceId: workspace._id.toString(),
-                    session,
-                });
-            } catch (err) {
+                scanRepositoriesData = await getScanRepositoriesData(repositoryIds, session, logger);
+            }
+            catch (err) {
                 await logger.error({
                     source: "backend-api",
                     message: err,
-                    errorDescription: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
+                    errorDescription: `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(repositoryIds)}`,
                     function: "createWorkspace",
                 });
+
                 output = {
                     success: false,
-                    error: `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`,
+                    error: `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(repositoryIds)}`,
                     trace: err,
                 };
                 throw Error(
-                    `error creating UserStats object creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`
+                    `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(repositoryIds)}`
                 );
             }
 
-            // Get the list of installationIds for all Repositories
-            var repositoryInstallationIds;
-            try {
-                repositoryInstallationIds = await Repository.find(
-                    { _id: { $in: repositoryIds } },
-                    "_id fullName installationId",
-                    { session }
-                )
-                    .lean()
-                    .exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    message: err,
-                    errorDescription: `error getting workspace repositories - repositoryIds: ${JSON.stringify(
-                        repositoryIds
-                    )}`,
-                    function: "createWorkspace",
-                });
-                output = {
-                    success: false,
-                    error: `error getting workspace repositories - repositoryIds: ${JSON.stringify(
-                        repositoryIds
-                    )}`,
-                    trace: err,
-                };
-                throw Error(
-                    `error getting workspace repositories - repositoryIds: ${JSON.stringify(
-                        repositoryIds
-                    )}`
-                );
-            }
-
-            var installationIdLookup = {};
-            for (i = 0; i < repositoryInstallationIds.length; i++) {
-                installationIdLookup[
-                    repositoryInstallationIds[i]._id.toString()
-                ] = repositoryInstallationIds[i].installationId.toString();
-            }
-
-            // KARAN TODO: DELETE THIS
-            repositoryFullNameList = repositoryInstallationIds.map(
-                (repositoryObj) => repositoryObj.fullName
-            );
-
-            repositoryInstallationIds = [
-                ...new Set(
-                    repositoryInstallationIds.map(
-                        (repoObj) => repoObj.installationId
-                    )
-                ),
-            ];
-
-            await logger.info({
-                source: "backend-api",
-                message: `Scan Repository Job - installationIdLookup, repositoryInstallationIds: ${JSON.stringify(
-                    installationIdLookup
-                )}, ${JSON.stringify(repositoryInstallationIds)}`,
-                function: `createWorkspace`,
-            });
-
-            // Kick off Scan Repositories Job
-
-            scanRepositoriesData["installationIdLookup"] = installationIdLookup;
-            scanRepositoriesData[
-                "repositoryInstallationIds"
-            ] = repositoryInstallationIds;
-
-            scanRepositoriesData["repositoryIdList"] = repositoryIds;
-            scanRepositoriesData["workspaceId"] = workspace._id.toString();
-            scanRepositoriesData[
-                "jobType"
-            ] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
-
-            // DEPRECATED
-            scanRepositoriesData["installationId"] = installationId;
 
             // Returning workspace
             // populate workspace
@@ -352,16 +258,6 @@ createWorkspace = async (req, res) => {
                 );
             }
 
-            //await logger.info({source: 'backend-api', });
-
-            // track an event with optional properties
-            mixpanel.track("Workspace Create", {
-                distinct_id: `${creatorId}`,
-                name: `${name}`,
-                repositoryNumber: `${repositoryIds.length}`,
-            });
-
-            console.log('SENT MIXPANEL EVENT');
 
             output = { success: true, result: workspace };
         });

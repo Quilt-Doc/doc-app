@@ -6,6 +6,7 @@ var mongoose = require('mongoose')
 const { ObjectId } = mongoose.Types;
 
 const IntegrationTicket = require('../../models/integrations/integration_objects/IntegrationTicket');
+const IntegrationAttachment = require('../../models/integrations/integration_objects/IntegrationAttachment');
 
 /*
 beforeAll(() => {
@@ -41,6 +42,25 @@ const getIntegrationIntervalsList = (scrapedIssues) => {
 }
 
 
+const verifyIssueIntegrationAttachmentExists = async (issueNumber, repositoryId) => {
+
+    var attachmentCount;
+    try {
+        attachmentCount = await IntegrationAttachment.countDocuments({repository: ObjectId(repositoryId.toString()), modelType: 'issue', sourceId: issueNumber});
+    }
+    catch (err) {
+        console.log(err);
+        throw Error(`Couldn't verify IntegrationAttachment existence - repositoryId, issueNumber: ${repositoryId}, ${issueNumber}`);
+    }
+
+    if (attachmentCount > 0) {
+        return true;
+    }
+    return false;
+
+}
+
+
 
 
 const {
@@ -73,8 +93,8 @@ describe("Github Issue Bulk Scrape", () => {
     var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
     var createdRepositoryIds = createdRepositories.map(repositoryObj => repositoryObj._id);
 
-    var brodalQueueIssueNum = 2;
-    var docAppIssueNum = 6;
+    var brodalQueueIssueNum = 4;
+    var docAppIssueNum = 8;
 
     var brodalQueueIssueIntervalNum = 2;
     var docAppIssueIntervalNum = 3;
@@ -86,6 +106,52 @@ describe("Github Issue Bulk Scrape", () => {
         var scrapedIssues = await fetchAllGithubIssues(createdRepositoryIds[0]);
 
         expect(scrapedIssues.length).toEqual(brodalQueueIssueNum);
+
+    });
+
+    test("brodal_queue Issues should have timeline-scraped IntegrationAttachments created", async () => {
+
+        var scrapedIssues = await fetchAllGithubIssues(createdRepositoryIds[0]);
+
+        const { brodalQueueIssueObjects } = require('../__tests__data/github_issues/brodal_queue/index');
+
+        var i = 0;
+        var currentIssue;
+
+
+        for (i = 0; i < brodalQueueIssueObjects.length; i++) {
+            currentIssue = brodalQueueIssueObjects[i];
+
+            if (currentIssue.hasDirectAttachment && currentIssue.timelineScraped) {
+                var existence = await verifyIssueIntegrationAttachmentExists(currentIssue.githubIssueNumber, createdRepositoryIds[0]);
+
+                expect(existence).toEqual(true);
+            }
+        }
+
+    });
+
+
+    test("brodal_queue Issues should have markdown-linked IntegrationAttachments created", async () => {
+
+        var scrapedIssues = await fetchAllGithubIssues(createdRepositoryIds[0]);
+
+        const { brodalQueueIssueObjects } = require('../__tests__data/github_issues/brodal_queue/index');
+
+        var i = 0;
+        var currentIssue;
+
+
+        for (i = 0; i < brodalQueueIssueObjects.length; i++) {
+            currentIssue = brodalQueueIssueObjects[i];
+
+            if (currentIssue.hasDirectAttachment && !currentIssue.timelineScraped) {
+                var existence = await verifyIssueIntegrationAttachmentExists(currentIssue.githubIssueNumber, createdRepositoryIds[0]);
+
+                expect(existence).toEqual(true);
+            }
+        }
+
 
     });
 
@@ -108,6 +174,48 @@ describe("Github Issue Bulk Scrape", () => {
 
         expect(scrapedIssues.length).toEqual(docAppIssueNum);
 
+    });
+
+    test("doc-app Issues should have timeline-sraped IntegrationAttachments created", async () => {
+
+        var scrapedIssues = await fetchAllGithubIssues(createdRepositoryIds[1]);
+
+        const { docAppIssueObjects } = require('../__tests__data/github_issues/doc-app/index');
+
+        var i = 0;
+        var currentIssue;
+
+        for (i = 0; i < docAppIssueObjects.length; i++) {
+            currentIssue = docAppIssueObjects[i];
+
+            if (currentIssue.hasDirectAttachment && currentIssue.timelineScraped) {
+                var existence = await verifyIssueIntegrationAttachmentExists(currentIssue.githubIssueNumber, createdRepositoryIds[1]);
+
+                expect(existence).toEqual(true);
+            }
+        }
+
+
+    });
+
+    test("doc-app Issues should have markdown-linked IntegrationAttachments created", async () => {
+       
+        var scrapedIssues = await fetchAllGithubIssues(createdRepositoryIds[1]);
+
+        const { docAppIssueObjects } = require('../__tests__data/github_issues/doc-app/index');
+
+        var i = 0;
+        var currentIssue;
+
+        for (i = 0; i < docAppIssueObjects.length; i++) {
+            currentIssue = docAppIssueObjects[i];
+
+            if (currentIssue.hasDirectAttachment && !currentIssue.timelineScraped) {
+                var existence = await verifyIssueIntegrationAttachmentExists(currentIssue.githubIssueNumber, createdRepositoryIds[1]);
+
+                expect(existence).toEqual(true);
+            }
+        }
     });
 
     test("doc-app Issues should have IntegrationIntervals created.", async () => {
