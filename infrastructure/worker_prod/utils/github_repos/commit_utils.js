@@ -81,7 +81,6 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
             currentCommitObj.fileList = currentFileList;
             currentFileList = [];
 
-
             commitObjects.push(currentCommitObj);
 
             currentCommitObj = {};
@@ -147,7 +146,7 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
     
 
     foundCommitsList = foundCommitsList.map(commitObj => {
-        return Object.assign({}, commitObj, { sourceId: commitObj.sha, sourceCreationDate: commitObj.committerDate});
+        return Object.assign({}, commitObj, { name: commitObj.commitMessage, sourceId: commitObj.sha, sourceCreationDate: commitObj.committerDate});
     });
     
     var bulkInsertResult;

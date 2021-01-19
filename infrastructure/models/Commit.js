@@ -9,7 +9,10 @@ let commitSchema = new Schema({
     repository: { type: ObjectId, ref: 'Repository', required: true },
     installationId: { type: Number, required: true },
 
+    name: { type: String },
+    description: { type: String },
     sourceId: { type: String },
+    creator: { type: ObjectId, ref: "IntegrationUser" },
     sourceCreationDate: { type: Date },
 
     sha: {type: String, required: true},

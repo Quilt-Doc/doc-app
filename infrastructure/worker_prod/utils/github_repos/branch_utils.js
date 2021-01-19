@@ -55,7 +55,7 @@ const fetchAllRepoBranchCommitDates = async (foundBranchList, installationClient
         matchBranchIndex = foundBranchList.findIndex((branchObj) => branchObj.ref == resultObj.branchRef && branchObj.lastCommit == resultObj.branchLastCommit);
 
         if (matchBranchIndex > 0) {
-            foundBranchList[matchBranchIndex].sourceUpdatedDate = resultObj.commitDate;
+            foundBranchList[matchBranchIndex].sourceUpdateDate = resultObj.commitDate;
         }
 
     });
@@ -199,6 +199,11 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
             branchObjectList.push({
                 repository: repositoryId,
                 installationId: installationId,
+
+                name: currentHead.ref,
+                sourceId: currentHead.ref,
+
+
                 ref: currentHead.ref,
                 label: currentHead.label,
                 lastCommit: currentHead.sha,
@@ -227,6 +232,10 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
             branchObjectList.push({
                 repository: repositoryId,
                 installationId: installationId,
+
+                name: currentBase.ref,
+                sourceId: currentBase.ref,
+
                 ref: currentBase.ref,
                 label: currentBase.label,
                 lastCommit: currentBase.sha,
@@ -276,6 +285,12 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
             branchObjectList.push({
                 repository: repositoryId,
                 installationId: installationId,
+
+                name: currentAPIBranch.name,
+                sourceId: currentAPIBranch.name,
+                sourceUpdateDate: currentAPIBranch.commit.commit.committer.date,
+
+
                 ref: currentAPIBranch.name,
                 // label: , doesn't exist here
                 lastCommit: currentAPIBranch.commit.sha,

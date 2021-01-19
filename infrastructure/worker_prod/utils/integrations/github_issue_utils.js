@@ -572,7 +572,14 @@ scrapeGithubRepoIssues = async (
 
         return {
             repositoryId: repositoryId,
+
+            name: repositoryIssueObj.title,
             sourceId: repositoryIssueObj.id,
+            description: repositoryIssueObj.body,
+            sourceCreationDate: repositoryIssueObj.created_at,
+            sourceUpdateDate: repositoryIssueObj.updated_at,
+            sourceCloseDate: (repositoryIssueObj.closed_at == null || repositoryIssueObj.closed_at == 'null') ? undefined : repositoryIssueObj.closed_at,
+
             source: 'github',
             githubIssueHtmlUrl: repositoryIssueObj.html_url,
             githubIssueNumber: repositoryIssueObj.number,

@@ -13,12 +13,14 @@ const integrationTicketSchema = new Schema({
         enum: ["jira", "github", "trello"],
         required: true,
     },
-    description: { type: String }, // trelloCardDescription, githubCardNote: String
-    sourceCreationDate: { type: Date },
-
     // Generalized fields that haven't been fully adopted yet.
     name: { type: String }, // trelloCardName: String,
     sourceId: { type: String }, // trelloCardId: String,
+    description: { type: String }, // trelloCardDescription, githubCardNote: String
+    sourceCreationDate: { type: Date },
+    sourceUpdateDate: { type: Date },
+    sourceCloseDate: { type: Date },
+
     link: { type: String }, // trelloCardLink: String,
 
     creator: { type: ObjectId, ref: "IntegrationUser" },

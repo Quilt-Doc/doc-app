@@ -39,7 +39,11 @@ let pullRequestSchema = new Schema({
   pullRequestId: { type: Number, required: true },
   number: { type: Number, required: true },
 
+  name: { type: String },
+  description: { type: String },
   sourceId: { type: String },
+  creator: { type: ObjectId, ref: "IntegrationUser" },
+
   sourceCreationDate: { type: Date },
   sourceUpdateDate: { type: Date },
   sourceCloseDate: { type: Date },

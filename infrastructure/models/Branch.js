@@ -23,8 +23,9 @@ let branchSchema = new Schema({
     repository: { type: ObjectId, ref: 'Repository' },
     installationId: { type: Number, required: true },
 
+    name: { type: String },
     sourceId: { type: String },
-    sourceUpdatedDate: { type: Date },
+    sourceUpdateDate: { type: Date },
 
 
     ref: { type: String, required: true },

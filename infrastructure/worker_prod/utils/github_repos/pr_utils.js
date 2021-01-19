@@ -299,7 +299,11 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
             repository: repositoryId,
             fileList: prObj.fileList,
 
+            name: prObj.title,
+            description: prObj.description,
             sourceId: prObj.number,
+
+
             sourceCreationDate: prObj.created_at,
             sourceUpdateDate: prObj.updated_at,
             sourceCloseDate: prObj.closed_at,
