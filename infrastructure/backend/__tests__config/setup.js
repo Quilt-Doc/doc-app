@@ -3,6 +3,7 @@
 require('dotenv').config();
 const utils = require('./utils');
 
+
 module.exports = async () => {
     // ...
     // Set reference to mongod in order to close the server during teardown.
@@ -17,34 +18,17 @@ module.exports = async () => {
         throw err;
     }
 
-    try {
-        // global.createdRepositoryIds = await utils.initializeRepositories();
-        process.env.TEST_CREATED_REPOSITORIES = JSON.stringify(await utils.fetchRepositories());
-    }
-    catch (err) {
-        console.log('Error initializing Repositories');
-        throw err;
-    }
-
-    var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
-
-    console.log('setup.js createdRepositories: ');
-    console.log(createdRepositories);
-
-    var createdRepositoryIds = createdRepositories.map(repositoryObj => {
-        console.log('repositoryObj')
-        console.log(repositoryObj._id);
-        return repositoryObj._id;
-    });
-    console.log('createdRepositoryIds');
-
+    var createWorkspaceResponse
     try {
         // global.createdWorkspaceId = await utils.createWorkspace( createdRepositoryIds );
-        process.env.TEST_CREATED_WORKSPACE_ID = await utils.createWorkspace( createdRepositoryIds );
+        createWorkspaceResponse = await utils.createWorkspace( ["kgodara-testing/brodal_queue", "kgodara-testing/doc-app"] );
     }
     catch (err) {
         console.log('Error creating Workspace/fetching Repositories setup.js');
         throw err;
     }
+
+    process.env.TEST_CREATED_WORKSPACE_ID = createWorkspaceResponse.createdWorkspaceId;
+    process.env.TEST_CREATED_REPOSITORIES = JSON.stringify(createWorkspaceResponse.repositoryIds);
 
 };
