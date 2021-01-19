@@ -36,19 +36,6 @@ const integrationTicketSchema = new Schema({
     trelloCardDueComplete: Boolean,
     trelloCardDateLastActivity: Date,
 
-    // Github Card specific fields
-    githubCardGithubProjectId: { type: ObjectId, ref: "IntegrationBoard" },
-    githubCardId: { type: String },
-    githubCardColumnId: { type: String },
-    githubCardUpdatedAt: { type: Date },
-    githubCardContentUrl: { type: String },
-    githubCardPullRequest: { type: ObjectId, ref: "PullRequest" },
-    githubCardIssue: { type: ObjectId, ref: "GithubIssue" },
-
-    // Github Card Fields that have moved to general fields
-    // githubCardCreatedAt: { type: Date } --> sourceCreationDate: { type: Date }
-    // githubCardNote: { type: String } --> description: { type: String }
-
     // Jira specific fields
     jiraSiteId: { type: ObjectId, ref: "JiraSite" },
     jiraProjectId: { type: ObjectId, ref: "IntegrationBoard" },
@@ -60,6 +47,23 @@ const integrationTicketSchema = new Schema({
     jiraIssueResolutionDate: { type: Date },
     jiraIssueCreationDate: { type: Date },
     jiraIssueUpdatedDate: { type: Date },
+
+
+
+    // Github Card specific fields
+    githubCardGithubProjectId: { type: ObjectId, ref: "IntegrationBoard" },
+    githubCardId: { type: String },
+    githubCardColumnId: { type: String },
+    githubCardUpdatedAt: { type: Date },
+    githubCardContentUrl: { type: String },
+    githubCardPullRequest: { type: ObjectId, ref: "PullRequest" },
+    githubCardIssue: { type: ObjectId, ref: "GithubIssue" },
+    isGithubCard: { type: Boolean, default: false },
+
+    // Github Card Fields that have moved to general fields
+    // githubCardCreatedAt: { type: Date } --> sourceCreationDate: { type: Date }
+    // githubCardNote: { type: String } --> description: { type: String }
+
 
 
     // Github Issue specific fields

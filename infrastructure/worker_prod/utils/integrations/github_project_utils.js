@@ -531,13 +531,10 @@ scrapeGithubRepoProjects = async (
         // Create a Ticket for each of the Cards in each of the columns of the Project
         // Iterate through list of columns
         for (i = 0; i < currentProjectCardsList.columnsCardLists.length; i++) {
-            var currentColumnCardList =
-                currentProjectCardsList.columnsCardLists[i].cardData;
-            var currentColumnName =
-                currentProjectCardsList.columnsCardLists[i].columnData
-                    .columnName;
-            var currentColumnId =
-                currentProjectCardsList.columnsCardLists[i].columnData.columnId;
+            
+            var currentColumnCardList = currentProjectCardsList.columnsCardLists[i].cardData;
+            var currentColumnName = currentProjectCardsList.columnsCardLists[i].columnData.columnName;
+            var currentColumnId = currentProjectCardsList.columnsCardLists[i].columnData.columnId;
 
             var currentCard;
 
@@ -578,6 +575,7 @@ scrapeGithubRepoProjects = async (
                     githubCardColumnId: currentColumnId,
                     githubCardCreatedAt: currentCard.created_at,
                     githubCardUpdatedAt: currentCard.updated_at,
+                    isGithubCard: true,
                 });
             }
         }
