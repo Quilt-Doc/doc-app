@@ -740,26 +740,23 @@ router.post(
 );
 
 //TRELLO INTEGRATION ROUTES
-const trelloIntegrationController = require("../controllers/integrations/trello/TrelloIntegrationController");
+const trelloController = require("../controllers/integrations/trello/TrelloController");
 
-router.get(
-    "/integrations/connect/trello",
-    trelloIntegrationController.beginTrelloConnect
-);
+router.get("/integrations/connect/trello", trelloController.beginTrelloConnect);
 
 router.get(
     "/integrations/connect/trello/callback",
-    trelloIntegrationController.handleTrelloConnectCallback
+    trelloController.handleTrelloConnectCallback
 );
 
 router.get(
     "/integrations/:workspaceId/:userId/trello/get_external_boards",
-    trelloIntegrationController.getExternalTrelloBoards
+    trelloController.getExternalTrelloBoards
 );
 
 router.post(
     "/integrations/:workspaceId/:userId/trello/trigger_scrape",
-    trelloIntegrationController.triggerTrelloScrape
+    trelloController.triggerTrelloScrape
 );
 
 //GOOGLE INTEGRATION ROUTES
@@ -803,4 +800,12 @@ router.post("/example_route", (req, res) => {
 
     return res.json({ success: true, result: tickets });
 });
+
+//CONTEXT ROUTES
+const contextController = require("../controllers/integrations/context/BoardWorkspaceContextController");
+router.post(
+    "/contexts/:workspaceId/retrieve",
+    contextController.retrieveContexts
+);
+
 module.exports = router;

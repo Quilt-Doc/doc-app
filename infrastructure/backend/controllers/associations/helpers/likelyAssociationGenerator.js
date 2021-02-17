@@ -22,6 +22,8 @@ const { mean } = require("lodash");
 const { std } = require("mathjs");
 
 class LikelyAssociationGenerator extends AssociationGenerator {
+    queries = {};
+
     uniqueCodeObjectMapping = {
         likelyPullRequests: {},
         likelyIssues: {},
@@ -34,77 +36,60 @@ class LikelyAssociationGenerator extends AssociationGenerator {
     }
 
     async generateLikelyAssociations() {
-        await super.acquireIntegrationObjects();
+        await this.acquireIntegrationObjects();
 
-        await setLikelyCodeObjects();
+        await this.buildQueries();
 
         await generateSemanticAssociations(this.tickets);
     }
 
-    async setLikelyCodeObjects() {
-        const likelyCodeObjects = await Promise.all(
-            this.tickets.map((ticket) => {
-                const { attachments, intervals, creator, assignees } = ticket;
+    async buildQueries() {
+        const contextMap = _.mapKeys(this.contexts, "board");
 
-                const members = Array.from(new Set([creator, ...assignees]));
+        this.tickets.map((ticket) => {
+            const context = contextMap[ticket.board];
 
-                const intervalFilters = intervals.map((interval) => {
-                    let { start, end } = interval;
+            const { repositories: repositoryIds } = context;
 
-                    start = addDays(start, -10);
+            const { attachments, intervals, creator, assignees } = ticket;
 
-                    end = addDays(end, 10);
+            let members = [];
 
-                    return {
-                        sourceCreationDate: {
-                            $gt: start,
-                            $lt: end,
-                        },
-                    };
-                });
+            if (assignees) members = [...assignees];
 
-                const attachmentIds = attachments.map(
-                    (attachment) => attachment.identifier
-                );
+            if (creator) members = [...members, creator];
 
-                const codeObjectModels = [
-                    PullRequest,
-                    GithubIssue,
-                    Commit,
-                    Branch,
-                ];
+            members = Array.from(new Set(members));
 
-                const queries = codeObjectModels.map((model) => {
-                    let query = model.find({ $or: intervalFilters });
+            const intervalFilters = intervals.map((interval) => {
+                let { start, end } = interval;
 
-                    query.where("members").in(members);
+                start = addDays(start, -10);
 
-                    query.where("sourceId").nin(attachmentIds);
+                end = addDays(end, 10);
 
-                    query.lean().exec();
-                });
+                return {
+                    sourceCreationDate: {
+                        $gt: start,
+                        $lt: end,
+                    },
+                };
+            });
 
-                return Promise.all(queries);
-            })
-        );
+            const attachmentSourceIds = attachments.map(
+                (attachment) => attachment.sourceId
+            );
 
-        this.tickets = this.tickets.map((ticket, i) => {
-            const [
-                likelyPullRequests,
-                likelyIssues,
-                likelyCommits,
-                likelyBranches,
-            ] = likelyCodeObjects[i];
-
-            ticket = {
-                ...ticket,
-                likelyPullRequests,
-                likelyIssues,
-                likelyCommits,
-                likelyBranches,
+            let query = {
+                $and: [
+                    { repository: { $in: repositoryIds } },
+                    { sourceId: { $nin: attachmentSourceIds } },
+                    //{ members : { $in: members }}
+                    { $or: intervalFilters },
+                ],
             };
 
-            return ticket;
+            this.queries[ticket._id] = query;
         });
     }
 
@@ -115,6 +100,30 @@ class LikelyAssociationGenerator extends AssociationGenerator {
 
         return result;
     };
+
+    async executeQueries() {
+        const modelMapping = {
+            pullRequest: PullRequest,
+            commit: Commit,
+            branch: Branch,
+        };
+
+        const modelTypes = Object.keys(modelMapping);
+
+        for (let i = 0; i < modelTypes.length; i++) {
+            const modelType = modelTypes[i];
+
+            const model = modelMapping[modelType];
+
+            const aggregateResult = await model.aggregate([
+                {
+                    $facet: this.queries,
+                },
+            ]);
+
+            this.modelTicketMap[modelType] = aggregateResult[0];
+        }
+    }
 
     async generateSemanticAssociations() {
         storeUniqueCodeObjects();
@@ -393,3 +402,70 @@ class LikelyAssociationGenerator extends AssociationGenerator {
 }
 
 module.exports = LikelyAssociationGenerator;
+
+/*
+    const likelyCodeObjects = await Promise.all(
+            this.tickets.map((ticket) => {
+                const { attachments, intervals, creator, assignees } = ticket;
+
+                const members = Array.from(new Set([creator, ...assignees]));
+
+                const intervalFilters = intervals.map((interval) => {
+                    let { start, end } = interval;
+
+                    start = addDays(start, -10);
+
+                    end = addDays(end, 10);
+
+                    return {
+                        sourceCreationDate: {
+                            $gt: start,
+                            $lt: end,
+                        },
+                    };
+                });
+
+                const attachmentIds = attachments.map(
+                    (attachment) => attachment.identifier
+                );
+
+                const codeObjectModels = [
+                    PullRequest,
+                    GithubIssue,
+                    Commit,
+                    Branch,
+                ];
+
+                const queries = codeObjectModels.map((model) => {
+                    let query = model.find({ $or: intervalFilters });
+
+                    query.where("members").in(members);
+
+                    query.where("sourceId").nin(attachmentIds);
+
+                    query.lean().exec();
+                });
+
+                return Promise.all(queries);
+            })
+        );
+
+        this.tickets = this.tickets.map((ticket, i) => {
+            const [
+                likelyPullRequests,
+                likelyIssues,
+                likelyCommits,
+                likelyBranches,
+            ] = likelyCodeObjects[i];
+
+            ticket = {
+                ...ticket,
+                likelyPullRequests,
+                likelyIssues,
+                likelyCommits,
+                likelyBranches,
+            };
+
+            return ticket;
+        });
+*/

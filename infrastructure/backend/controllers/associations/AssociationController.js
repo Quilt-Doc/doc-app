@@ -1,18 +1,55 @@
+//association helpers
 const DirectAssociationGenerator = require("./helpers/directAssociationGenerator");
-const LikelyAssociationGenerator = require("./helpers/likelyAssociationGenerator");
-//code objects
 
+//sentry
+const Sentry = require("@sentry/node");
+
+//code objects
 const PullRequest = require("../../models/PullRequest");
 const Branch = require("../../models/Branch");
 const Commit = require("../../models/Commit");
 
+//utils
 const { checkValid } = require("../../utils/utils");
 
-var mongoose = require("mongoose");
-const BoardWorkspaceContext = require("../../models/integrations/context/BoardWorkspaceContext");
+//models
 const Association = require("../../models/associations/Association");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
-const { ObjectId } = mongoose.Types;
+
+generateAssociations = async (req, res) => {
+    const { workspaceId } = req.params;
+
+    // boards must be provided with unique repositories
+    // in format: [ { _id, repositories }]
+    const { boards } = req.body;
+
+    const directGenerator = new DirectAssociationGenerator(workspaceId, boards);
+
+    try {
+        await directGenerator.generateDirectAssociations();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    /*
+    const likelyGenerator = new LikelyAssociationGenerator(
+        integrationId,
+        integrationType
+    );*/
+
+    /*
+    await Promise.all([
+        // likelyGenerator.generateLikelyAssociations(),
+        directGenerator.generateDirectAssociations(),
+    ]);*/
+
+    return res.json({
+        success: true,
+        result: directGenerator.associations,
+    });
+};
 
 /*
 const getFileContext = async (req, res) => {
@@ -285,52 +322,6 @@ const getFileContext = async (req, res) => {
     //IntegrationTicket.populate(tickets, {path: "author references workspace repository tags snippets"});
 
     return res.json({ success: true, result });
-};
-
-generateAssociations = async (req, res) => {
-    const { workspaceId } = req.params;
-
-    const { contexts } = req.body;
-
-    const directGenerator = new DirectAssociationGenerator(
-        workspaceId,
-        contexts
-    );
-
-    const contextIds = contexts.map((context) => context._id);
-
-    const newContexts = await BoardWorkspaceContext.updateMany(
-        { _id: { $in: contextIds } },
-        { $set: { isScraped: true } }
-    );
-
-    console.log("NEW CONTEXTS", newContexts);
-    /*
-    const likelyGenerator = new LikelyAssociationGenerator(
-        integrationId,
-        integrationType
-    );*/
-
-    /*
-    await Promise.all([
-        // likelyGenerator.generateLikelyAssociations(),
-        directGenerator.generateDirectAssociations(),
-    ]);*/
-
-    try {
-        await directGenerator.generateDirectAssociations();
-    } catch (e) {
-        console.log("ERROR", e);
-
-        return res.json({ success: false, error: e });
-    }
-
-    console.log("FINAL ASSOCIATIONS MADE :O", directGenerator.associations);
-
-    return res.json({
-        success: true,
-        result: directGenerator.associations,
-    });
 };
 
 module.exports = {

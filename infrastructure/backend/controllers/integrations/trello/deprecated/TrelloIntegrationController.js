@@ -6,16 +6,16 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const logger = require("../../../logging/index").logger;
-const jobs = require("../../../apis/jobs");
-const jobConstants = require("../../../constants/index").jobs;
+const logger = require("../../../../logging/index").logger;
+const jobs = require("../../../../apis/jobs");
+const jobConstants = require("../../../../constants/index").jobs;
 
-const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
+const TrelloConnectProfile = require("../../../../models/integrations/trello/TrelloConnectProfile");
 
-const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
-const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationTicket = require("../../../../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationBoard = require("../../../../models/integrations/integration_objects/IntegrationBoard");
 
-const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
+const BoardWorkspaceContext = require("../../../../models/integrations/context/BoardWorkspaceContext");
 
 const {
     TRELLO_API_KEY,
@@ -64,7 +64,7 @@ const {
     modifyTrelloActions,
     populateExistingTrelloDirectAttachments,
     deleteTrelloBoardComplete,
-} = require("./TrelloControllerHelpers");
+} = require("../TrelloControllerHelpers");
 
 getExternalTrelloBoards = async (req, res) => {
     const { userId, workspaceId } = req.params;
@@ -246,8 +246,6 @@ triggerTrelloScrape = async (req, res) => {
             contexts
         );
     } catch (e) {
-        console.log("ERROR", e);
-
         return res.json({ success: false, error: e });
     }
 

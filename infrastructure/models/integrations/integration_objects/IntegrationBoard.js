@@ -9,6 +9,7 @@ let integrationBoardSchema = new Schema({
     link: String,
     source: String,
     sourceId: String,
+    repositories: [{ type: ObjectId, ref: "Repository" }],
 });
 
 let IntegrationBoard = mongoose.model(
