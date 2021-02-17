@@ -30,6 +30,7 @@ let branchSchema = new Schema({
 
     ref: { type: String, required: true },
     label: { type: String },
+    fileList: [{type: String}],
 
     pullRequestObjIdList: [{ type: String }],
     pullRequests: [{type: ObjectId, ref: 'PullRequest'}],

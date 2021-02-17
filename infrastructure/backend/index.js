@@ -3,15 +3,18 @@ const express = require("express");
 var cors = require("cors");
 const bodyParser = require("body-parser");
 // const logger = require('morgan');
-const session = require("express-session");
 
 const fs = require("fs");
 
 require("dotenv").config();
 
+// SENTRY
+const Sentry = require("@sentry/node");
+
 // PASSPORT
 const passport = require("passport");
 const passportSetup = require("./passport_config/passport-setup");
+
 // const cookieSession = require("cookie-session");
 const cookieParser = require("cookie-parser");
 
@@ -19,6 +22,14 @@ var jwt = require("jsonwebtoken");
 
 const API_PORT = 3001;
 const app = express();
+
+//SENTRY
+Sentry.init({
+    dsn:
+        "https://5a8e044d64d24a7e8ec52600ee527944@o504090.ingest.sentry.io/5590374",
+});
+
+app.use(Sentry.Handlers.requestHandler());
 
 const logger = require("./logging/index").logger;
 const setupESConnection = require("./logging/index").setupESConnection;
@@ -32,12 +43,9 @@ const password = process.env.EXTERNAL_DB_PASS;
 const user = process.env.EXTERNAL_DB_USER;
 var dbRoute = `mongodb+srv://${user}:${password}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
 
-console.log(process.env.USE_EXTERNAL_DB);
-
 if (process.env.USE_EXTERNAL_DB == 0) {
     dbRoute = "mongodb://127.0.0.1:27017?retryWrites=true&w=majority";
 }
-console.log(dbRoute);
 
 mongoose.connect(dbRoute, { useNewUrlParser: true });
 
@@ -48,6 +56,7 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 app.use(bodyParser.urlencoded({ limit: "20mb", extended: false }));
 app.use(bodyParser.json({ limit: "20mb" }));
+
 // app.use(logger('dev'));
 
 // handle cookies
@@ -102,7 +111,7 @@ const nonAuthPaths = [
 
 app.use(function (req, res, next) {
     req.path = req.path.trim();
-    console.log("REQ PATH", req.path);
+
     const authHeader = req.headers.authorization;
 
     var isNonAuthPath = false;
@@ -184,6 +193,8 @@ app.get("/", authCheck, (req, res) => {
         cookies: req.cookies,
     });
 });
+
+app.use(Sentry.Handlers.errorHandler());
 
 if (process.env.IS_PRODUCTION) {
     setupESConnection().then(() => {

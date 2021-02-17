@@ -160,6 +160,9 @@ checkInstallation = async (req, res) => {
             .select("accessToken")
             .lean()
             .exec();
+
+        console.log("FOUND GITHUB AUTH PROFILE", userAccessToken);
+
         userAccessToken = userAccessToken.accessToken;
     } catch (err) {
         await logger.error({
@@ -188,6 +191,7 @@ checkInstallation = async (req, res) => {
         });
         return res.json({ success: false, error: err });
     }
+
     return res.json({
         success: true,
         result: installationResponse.data.installations,

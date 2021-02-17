@@ -9,6 +9,7 @@ let integrationBoardSchema = new Schema({
     source: { type: String, enum: ["jira", "trello", "github"] },
     sourceId: String, // == jiraId
     link: String,
+    repositories: [{ type: ObjectId, ref: "Repository" }],
 
 
     // Jira Project fields

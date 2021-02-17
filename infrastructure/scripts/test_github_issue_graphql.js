@@ -1,7 +1,7 @@
 
 const { GraphQLClient, gql, rawRequest, request } = require('graphql-request');
 
-const INSTALLATION_TOKEN="v1.ad5f62eb9ed5150b65abfc91fb535561938b75a0";
+const INSTALLATION_TOKEN="v1.05703c36c379d7e0179d7f0652ed14295430a926";
 
 
 const requestInstallationGraphQLClient = () => {
@@ -9,11 +9,11 @@ const requestInstallationGraphQLClient = () => {
     var installationToken = INSTALLATION_TOKEN
 
 
-    const prismaClient = new GraphQLClient("https://api.github.com/graphql/", {
+    const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
         credentials: 'include',
         mode: 'cors',
         headers: {
-          Authorization: `token ${installationToken}`,
+          Authorization: `bearer ${installationToken}`,
         },
       });
     return prismaClient
@@ -22,13 +22,13 @@ const requestInstallationGraphQLClient = () => {
 
 const generateIssueQuery = (repositoryObj, issueNumber) => {
 
-    var queryString = `{resource(url: "${repositoryObj.htmlUrl}/issues/${issueNumber}") { ... on Issue { timelineItems(itemTypes: [CONNECTED_EVENT, DISCONNECTED_EVENT], first: 100) { nodes {... on ConnectedEvent {id subject { ... on Issue { number } } } } } } } }`;
+   // var queryString = `query {resource(url: "${repositoryObj.htmlUrl}/issues/${issueNumber}") { ... on Issue { timelineItems(itemTypes: [CONNECTED_EVENT, DISCONNECTED_EVENT], first: 100) { nodes {... on ConnectedEvent {id subject { ... on Issue { number } } } } } } } }`;
 
-   return queryString;
+   // return queryString;
 
     return gql`
      {
-        resource(url: "${repositoryObj.htmlUrl}/issues/${issueNumber}") {
+        resource(url: \"${repositoryObj.htmlUrl}/issues/${issueNumber}\") {
             ... on Issue {
                 timelineItems(itemTypes: [CONNECTED_EVENT, DISCONNECTED_EVENT], first: 100) {
                   nodes {
@@ -88,8 +88,11 @@ const getGithubIssueLinkages = async (issueObj, repositoryObj ) => {
         );
     }
 
-    console.log('queryResponse.data: ');
-    console.log(queryResponse.data);
+    console.log('queryResponse: ');
+    console.log(queryResponse);
+
+    console.log('queryResponse.resource.timelineItems.nodes: ');
+    console.log(queryResponse.resource.timelineItems.nodes);
 
 }
 

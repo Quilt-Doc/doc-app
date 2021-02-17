@@ -74,6 +74,15 @@ const scanRepositories = async () => {
             var unscannedRepositories = repositoryObjList.filter(repositoryObj => repositoryObj.scanned == false);
             var unscannedRepositoryIdList = unscannedRepositories.map(repositoryObj => repositoryObj._id);
 
+            // Filter out repositories with 'scanned' == false
+            var scannedRepositories = repositoryObjList.filter(repositoryObj => repositoryObj.scanned == true);
+            var scannedRepositoryIdList = scannedRepositories.map(repositoryObj => repositoryObj._id);
+
+
+            // Create Contexts for all Scanned Repositories
+            
+
+
             // If all repositories within this workspace have already been scanned, nothing to do
             if (unscannedRepositories.length == 0) {
                 // Set workspace 'setupComplete' to true

@@ -10,6 +10,7 @@ const boardWorkspaceContextSchema = new Schema({
     events: { type: ObjectId, ref: "IntegrationEvent" },
     creator: { type: ObjectId, ref: "User" },
     type: String,
+    source: String,
     isScraped: { type: Boolean, default: false },
 });
 
