@@ -2,6 +2,8 @@ const axios = require("axios");
 const _ = require("lodash");
 const isUrl = require("is-url");
 
+const Sentry = require("@sentry/node");
+
 const mongoose = require("mongoose");
 
 const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
@@ -26,18 +28,12 @@ const trelloAPI = axios.create({
 });
 
 acquireTrelloConnectProfile = async (userId) => {
-    let trelloConnectProfile;
-
-    try {
-        trelloConnectProfile = await TrelloConnectProfile.findOne({
-            user: userId,
-            isReady: true,
-        })
-            .lean()
-            .exec();
-    } catch (e) {
-        console.log(`acquireTrelloConnectProfile Error: ${e}`);
-    }
+    const trelloConnectProfile = await TrelloConnectProfile.findOne({
+        user: userId,
+        isReady: true,
+    })
+        .lean()
+        .exec();
 
     return trelloConnectProfile;
 };
@@ -45,30 +41,19 @@ acquireTrelloConnectProfile = async (userId) => {
 acquireExternalTrelloBoards = async (profile) => {
     const { accessToken, sourceId: memberId } = profile;
 
-    let boardsReponse;
+    const boardsReponse = await trelloAPI.get(
+        `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name&lists=open&list_fields=id,name,pos`
+    );
 
-    try {
-        boardsReponse = await trelloAPI.get(
-            `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name&lists=open&list_fields=id,name`
-        );
-    } catch (err) {
-        return res.json({
-            success: false,
-            error:
-                "getExternalTrelloBoards Error: trello board API request failed",
-            trace: err,
-        });
-    }
-
-    let boards = boardsReponse.data;
+    const boards = boardsReponse.data;
 
     return boards;
 };
 
-acquireTrelloData = async (boardId, accessToken, isMinimal) => {
-    const requestIdParams = `${boardId}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name,idMemberCreator,url`;
+acquireTrelloData = async (boardSourceId, accessToken, isMinimal) => {
+    const requestIdParams = `${boardSourceId}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name,idMemberCreator,url`;
 
-    const nestedListParam = "&lists=all&list_fields=id,name";
+    const nestedListParam = "&lists=all&list_fields=id,name,pos";
 
     const nestedCardFields =
         "&card_fields=id,idList,dateLastActivity,desc,name,due,dueComplete,idMembers,labels,url";
@@ -87,7 +72,7 @@ acquireTrelloData = async (boardId, accessToken, isMinimal) => {
         ? `/1/boards/${requestIdParams}${nestedActionParam}`
         : `/1/boards/${requestIdParams}${nestedListParam}${nestedCardParam}${nestedActionParam}${nestedMemberParam}${nestedLabelParam}`;
 
-    const boardResponse = await trelloAPI.get(finalQuery);
+    let boardResponse = await trelloAPI.get(finalQuery);
 
     return boardResponse.data;
 };
@@ -104,70 +89,59 @@ extractTrelloMembers = async (workspaceId, members, profile) => {
 
     let foundMembers = [];
 
-    try {
-        let query = IntegrationUser.find();
+    let query = IntegrationUser.find();
 
-        query.where("sourceId").in(memberSourceIds);
+    query.where("sourceId").in(memberSourceIds);
 
-        query.where("source").equals("trello");
+    query.where("source").equals("trello");
 
-        foundMembers = await query.lean().exec();
-    } catch (e) {
-        console.log(e);
-    }
+    foundMembers = await query.lean().exec();
 
     const foundMemberSourceIds = foundMembers.map((member) => member.sourceId);
 
-    try {
-        members = await Promise.all(
-            members
-                .map((member) => {
-                    const { id, username, fullName } = member;
+    members = await Promise.all(
+        members
+            .map((member) => {
+                const { id, username, fullName } = member;
 
-                    if (foundMemberSourceIds.includes(id)) {
-                        return null;
-                    }
+                if (foundMemberSourceIds.includes(id)) {
+                    return null;
+                }
 
-                    member = new IntegrationUser({
-                        sourceId: id,
-                        source: "trello",
-                        userName: username,
-                        name: fullName,
-                    });
+                member = new IntegrationUser({
+                    sourceId: id,
+                    source: "trello",
+                    userName: username,
+                    name: fullName,
+                });
 
-                    if (id === profile.sourceId) {
-                        member.user = profile.user;
-                    } else {
-                        const splitName = fullName.split(" ");
+                if (id === profile.sourceId) {
+                    member.user = profile.user;
+                } else {
+                    const splitName = fullName.split(" ");
 
-                        if (splitName.length > 0) {
-                            const likelyFirstName = splitName[0];
+                    if (splitName.length > 0) {
+                        const likelyFirstName = splitName[0];
 
-                            const likelyLastName =
-                                splitName[splitName.length - 1];
+                        const likelyLastName = splitName[splitName.length - 1];
 
-                            const likelyUsers = workspaceUsers.filter(
-                                (user) => {
-                                    return (
-                                        (user.firstName === likelyFirstName &&
-                                            user.lastName === likelyLastName) ||
-                                        user.username === username
-                                    );
-                                }
+                        const likelyUsers = workspaceUsers.filter((user) => {
+                            return (
+                                (user.firstName === likelyFirstName &&
+                                    user.lastName === likelyLastName) ||
+                                user.username === username
                             );
+                        });
 
-                            if (likelyUsers.length > 0)
-                                member.user = likelyUsers[0]._id;
-                        }
+                        if (likelyUsers.length > 0)
+                            member.user = likelyUsers[0]._id;
                     }
+                }
 
-                    return member.save();
-                })
-                .filter((request) => request != null)
-        );
-    } catch (err) {
-        console.log("ERROR", err);
-    }
+                return member.save();
+            })
+            .filter((request) => request != null)
+    );
 
     members = [...members, ...foundMembers];
 
@@ -176,60 +150,53 @@ extractTrelloMembers = async (workspaceId, members, profile) => {
     return members;
 };
 
-extractTrelloBoard = async (members, id, name, idMemberCreator, url) => {
-    let board;
+extractTrelloBoard = async (
+    members,
+    id,
+    name,
+    boardCreatorSourceId,
+    url,
+    repositoryIds
+) => {
+    const boardCreator = members[boardCreatorSourceId];
 
-    try {
-        const boardCreator = members[idMemberCreator];
+    let board = new IntegrationBoard({
+        creator: boardCreator._id,
+        name,
+        source: "trello",
+        link: url,
+        sourceId: id,
+        repositories: repositoryIds,
+    });
 
-        board = new IntegrationBoard({
-            creator: boardCreator._id,
-            name,
-            source: "trello",
-            link: url,
-            sourceId: id,
-        });
-
-        board = await board.save();
-    } catch (err) {
-        console.log("ERROR", err);
-    }
+    board = await board.save();
 
     return board;
 };
 
 extractTrelloLists = async (lists, board) => {
-    lists = lists ? lists : [];
-    // create IntegrationColumn
+    lists = await Promise.all(
+        lists.map((list) => {
+            const { id: listSourceId, name } = list;
 
-    try {
-        lists = await Promise.all(
-            lists.map((list) => {
-                const { id, name } = list;
+            list = new IntegrationColumn({
+                name,
+                source: "trello",
+                sourceId: listSourceId,
+                board: board._id,
+            });
 
-                list = new IntegrationColumn({
-                    name,
-                    source: "trello",
-                    sourceId: id,
-                    board: board._id,
-                });
-
-                return list.save();
-            })
-        );
-    } catch (err) {
-        console.log("ERR", err);
-    }
+            return list.save();
+        })
+    );
 
     lists = _.mapKeys(lists, "sourceId");
 
     return lists;
 };
 
-getContextRepositories = async (context) => {
-    const { repositories: repositoryIds } = context;
-
-    let query = Repository.find({}).lean().select("fullName _id");
+getRepositories = async (repositoryIds) => {
+    let query = Repository.find().lean().select("fullName _id");
 
     query.where("_id").in(repositoryIds);
 
@@ -240,29 +207,10 @@ getContextRepositories = async (context) => {
     return currentRepositories;
 };
 
-parseDescriptionAttachments = (cards) => {
-    cards.map((card) => {
-        const { desc, attachments } = card;
-
-        let tokens = desc.split(" ");
-
-        tokens = tokens.filter((token) => isUrl(token));
-
-        tokens = tokens.map((token) => {
-            return { url: token };
-        });
-
-        card.attachments = [...attachments, ...tokens];
-    });
-
-    return cards;
-};
-
-extractTrelloDirectAttachments = async (cards, context) => {
-    const currentRepositories = await getContextRepositories(context);
+extractTrelloDirectAttachments = async (cards, repositoryIds) => {
+    const currentRepositories = await getRepositories(repositoryIds);
 
     cards = parseDescriptionAttachments(cards);
-    //console.log("CURRENT REPOS", currentRepositories);
 
     let insertOps = [];
 
@@ -279,7 +227,7 @@ extractTrelloDirectAttachments = async (cards, context) => {
         };
 
         attachments.map((attachment) => {
-            const { date, url, name } = attachment;
+            const { date, url } = attachment;
 
             if (
                 !url ||
@@ -323,19 +271,13 @@ extractTrelloDirectAttachments = async (cards, context) => {
                 insertOps.push(attachment);
 
                 seenUrls.add(url);
-            } catch (err) {
+            } catch (e) {
                 return null;
             }
         });
     });
 
-    let attachments;
-
-    try {
-        attachments = await IntegrationAttachment.insertMany(insertOps);
-    } catch (e) {
-        console.log(e);
-    }
+    let attachments = await IntegrationAttachment.insertMany(insertOps);
 
     attachments = _.mapKeys(attachments, "link");
 
@@ -356,63 +298,60 @@ extractTrelloDirectAttachments = async (cards, context) => {
     return { attachments, cards };
 };
 
-modifyTrelloActions = (actions, cards, event) => {
-    const { beginListId, endListId } = event;
+parseDescriptionAttachments = (cards) => {
+    cards.map((card) => {
+        const { desc, attachments } = card;
 
-    actions.map((action) => {
-        const {
-            date,
-            data: {
-                card,
-                listAfter: { id, name: listName },
-            },
-        } = action;
+        let tokens = desc.split(" ");
 
-        if (cards[card.id] && (id == beginListId || id == endListId)) {
-            const { actions: cardActions } = cards[card.id];
+        tokens = tokens.filter((token) => isUrl(token));
 
-            let actionDate = new Date(date);
+        tokens = tokens.map((token) => {
+            return { url: token };
+        });
 
-            action = { listId: id, listName, date: actionDate };
-
-            if (cardActions) {
-                cardActions.push(action);
-            } else {
-                cards[card.id].actions = [action];
-            }
-        }
+        card.attachments = [...attachments, ...tokens];
     });
 
     return cards;
 };
 
-extractTrelloEvent = async (board, lists, event) => {
-    let { beginListId, endListId } = event;
+modifyTrelloActions = (actions, cards) => {
+    actions.map((action) => {
+        const {
+            date,
+            data: {
+                card: { id: cardSourceId },
+                listAfter: { id, name: listName },
+            },
+        } = action;
 
-    const beginList = lists[beginListId];
+        const card = cards[cardSourceId];
 
-    const endList = lists[endListId];
+        if (card) {
+            action = { listSourceId: id, listName, date: new Date(date) };
 
-    event = await IntegrationEvent.findOne({
-        beginList: beginList._id,
-        endList: endList._id,
-    })
-        .lean()
-        .exec();
+            if (card.actions) {
+                card.actions.push(action);
+            } else {
+                card.actions = [action];
+            }
+        }
+    });
 
-    if (!event) {
-        event = new IntegrationEvent({
-            board: board._id,
-            beginList: beginList._id,
-            endList: endList._id,
-            source: "trello",
-            action: "movement",
-        });
+    cards = Object.values(cards);
 
-        event = await event.save();
-    }
+    cards.map((card) => {
+        if (card.actions && card.actions.length > 2) {
+            card.actions.sort((a, b) => {
+                return a.date.getTime() > b.date.getTime() ? -1 : 1;
+            });
 
-    return event;
+            card.actions = card.actions.slice(0, 2);
+        }
+    });
+
+    return cards;
 };
 
 extractTrelloLabels = async (labels) => {
@@ -445,68 +384,45 @@ extractTrelloLabels = async (labels) => {
     }
 };
 
-extractTrelloIntervals = async (event, cards, lists) => {
-    cards = Object.values(cards);
+addDays = (date, days) => {
+    let result = new Date(date);
 
-    lists = Object.values(lists);
+    result.setDate(result.getDate() + days);
 
-    lists = _.mapKeys(lists, "_id");
+    return result;
+};
 
-    let seen = new Set();
-
-    let { beginList: beginListId, endList: endListId } = event;
-
-    beginListId = lists[beginListId].sourceId;
-
-    endListId = lists[endListId].sourceId;
-
-    let insertOps = [];
+extractTrelloIntervals = async (cards) => {
+    let insertOpsDict = {};
 
     cards.map((card) => {
-        let { actions } = card;
+        const { actions } = card;
 
-        let interval = {
-            start: null,
-            end: null,
-            event: event._id,
-        };
+        if (actions) {
+            actions.map((action) => {
+                let { date } = action;
 
-        if (!actions) return;
+                date = new Date(date);
 
-        actions.map((action) => {
-            action.date = new Date(action.date);
-        });
+                const start = addDays(date, -10);
 
-        actions = actions.sort((a, b) => {
-            return a.date.getTime() < b.date.getTime() ? -1 : 1;
-        });
+                const identifier = `${start.getTime()}-${date.getTime()}`;
 
-        actions.map((action) => {
-            let { listId, date } = action;
+                insertOpsDict[identifier] = {
+                    start,
+                    end: date,
+                };
 
-            const { start } = interval;
-
-            if (listId == beginListId && !start) interval.start = date;
-
-            if (listId == endListId) interval.end = date;
-        });
-
-        if (
-            interval.end &&
-            interval.start &&
-            interval.start.getTime() < interval.end.getTime()
-        ) {
-            const intervalIdentifier = `${interval.start.getTime()}-${interval.end.getTime()}`;
-
-            if (!seen.has(intervalIdentifier)) {
-                insertOps.push(interval);
-
-                card.intervalIdentifier = `${interval.start.getTime()}-${interval.end.getTime()}`;
-
-                seen.add(intervalIdentifier);
-            }
+                if (card.intervalIdentifiers) {
+                    card.intervalIdentifiers.push(identifier);
+                } else {
+                    card.intervalIdentifiers = [identifier];
+                }
+            });
         }
     });
+
+    const insertOps = Object.values(insertOpsDict);
 
     let intervals = await IntegrationInterval.insertMany(insertOps);
 
@@ -517,10 +433,12 @@ extractTrelloIntervals = async (event, cards, lists) => {
     intervals = _.mapKeys(intervals, "identifier");
 
     cards.map((card) => {
-        const { intervalIdentifier } = card;
+        const { intervalIdentifiers } = card;
 
-        if (intervalIdentifier) {
-            card.intervalIds = [intervals[intervalIdentifier]._id];
+        if (intervalIdentifiers) {
+            card.intervalIds = intervalIdentifiers.map((intervalIdentifier) => {
+                return intervals[intervalIdentifier]._id;
+            });
         }
     });
 
@@ -586,6 +504,7 @@ deleteTrelloBoardComplete = async ({
     }
 };
 
+/*
 populateExistingTrelloDirectAttachments = async (context, attachments) => {
     const currentRepositories = await getContextRepositories(context);
 
@@ -613,7 +532,7 @@ populateExistingTrelloDirectAttachments = async (context, attachments) => {
         .filter((request) => request != null);
 
     await IntegrationAttachment.bulkWrite(bulkOps);
-};
+};*/
 
 module.exports = {
     acquireTrelloConnectProfile,
@@ -623,11 +542,10 @@ module.exports = {
     extractTrelloBoard,
     extractTrelloLists,
     extractTrelloDirectAttachments,
-    getContextRepositories,
-    extractTrelloEvent,
+    getRepositories,
     extractTrelloLabels,
     modifyTrelloActions,
     extractTrelloIntervals,
-    populateExistingTrelloDirectAttachments,
+    //populateExistingTrelloDirectAttachments,
     deleteTrelloBoardComplete,
 };

@@ -1,18 +1,18 @@
-//lodash
-const _ = require("lodash");
-
-//models
-const Association = require("../../../models/associations/Association");
-
-//ancestor class
+//classes
 const AssociationGenerator = require("./associationGenerator");
 
-//mongoose
+//association
+const Association = require("../../../models/associations/Association");
+const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
+const PullRequest = require("../../../models/PullRequest");
+
+const _ = require("lodash");
+
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
 class DirectAssociationGenerator extends AssociationGenerator {
-    // Map of Model Type -> Map of Ticket Ids -> Array of Code Objects
+    //Map of Model Type -> Map of Ticket Ids -> Array of Code Objects
     // -> { "PullRequest" : { "1": [co1, co2] } }
     modelTicketMap = {};
 
@@ -23,11 +23,83 @@ class DirectAssociationGenerator extends AssociationGenerator {
     async generateDirectAssociations() {
         await this.acquireIntegrationObjects();
 
+        await this.identifyScrapedRepositories();
+
+        await this.updateScrapedAssociations();
+
         //acquire all code objects of each direct attachment in the ticket
         await this.queryDirectAttachments();
 
         //create and insert associations using tickets and associated code objects
         await this.insertDirectAssociations();
+    }
+
+    async identifyScrapedRepositories() {
+        this.scrapedRepositories = {};
+
+        // iterates through contexts
+        for (let i = 0; i < this.contexts.length; i++) {
+            let context = this.contexts[i];
+
+            const { repositories: repositoryIds, board: boardId } = context;
+
+            // retrieves other, scraped contexts that have the same board
+            let query = BoardWorkspaceContext.find({
+                isScraped: true,
+                board: boardId,
+            });
+
+            query.where("board").equals(boardId);
+
+            query.where("repositories").in(repositoryIds);
+
+            const otherContexts = await query.lean().exec();
+
+            // identifies repositories of other contexts
+            let otherContextRepos = [];
+
+            otherContexts.map((otherContext) => {
+                otherContextRepos = [
+                    ...otherContextRepos,
+                    ...otherContext.repositories,
+                ];
+            });
+
+            otherContextRepos = otherContextRepos.map((repoId) =>
+                repoId.toString()
+            );
+
+            otherContextRepos = new Set(otherContextRepos);
+
+            // since relationship between board and repo has been created
+            // in other context, can create this.scrapedRepositories field
+            this.scrapedRepositories[boardId] = new Set(
+                repositoryIds.filter((repositoryId) => {
+                    return otherContextRepos.has(repositoryId);
+                })
+            );
+        }
+    }
+
+    // updates associations with board and repository in scraped repositories
+    async updateScrapedAssociations() {
+        await Promise.all(
+            this.boardIds.map((boardId) => {
+                const repositoryIds = Array.from(
+                    this.scrapedRepositories[boardId]
+                );
+
+                return Association.updateMany(
+                    {
+                        $and: [
+                            { repository: { $in: repositoryIds } },
+                            { board: boardId },
+                        ],
+                    },
+                    { $push: { workspaces: this.workspaceId } }
+                );
+            })
+        );
     }
 
     async queryDirectAttachments() {
@@ -44,11 +116,9 @@ class DirectAssociationGenerator extends AssociationGenerator {
         this.tickets.map((ticket) => {
             const { attachments, board } = ticket;
 
-            // if no attachments skip
             if (!attachments || attachments.length === 0) return;
 
-            // holds queries for each model filtered by ticket
-            let ticketQueries = {
+            let modelQueries = {
                 pullRequest: [],
                 commit: [],
                 branch: [],
@@ -59,26 +129,24 @@ class DirectAssociationGenerator extends AssociationGenerator {
             attachments.map((attachment) => {
                 const { modelType, repository, sourceId } = attachment;
 
+                if (!repository) return;
+
                 // make sure association for attachment doesn't already exist
-                if (
-                    !repository ||
-                    !modelTypes.includes(modelType) ||
-                    !this.boards[board._id].repositories.includes(
-                        repository.toString()
-                    )
-                ) {
-                    return null;
-                }
+                const isScraped =
+                    this.scrapedRepositories[board] &&
+                    this.scrapedRepositories[board].has(repository);
+
+                if (!modelTypes.includes(modelType) || isScraped) return null;
 
                 // add query for code object with sourceId and repository
-                ticketQueries[modelType].push({
+                modelQueries[modelType].push({
                     repository: ObjectId(repository),
                     sourceId,
                 });
 
                 // add query for pull request if branch for base/head Ref
                 if (modelType === "branch") {
-                    ticketQueries["pullRequest"].push({
+                    modelQueries["pullRequest"].push({
                         $and: [
                             { repository: ObjectId(repository) },
                             {
@@ -93,17 +161,17 @@ class DirectAssociationGenerator extends AssociationGenerator {
             });
 
             // map through each code object model type
-            Object.keys(ticketQueries).map((modelType) => {
+            Object.keys(modelQueries).map((modelType) => {
                 if (
-                    !ticketQueries[modelType] ||
-                    ticketQueries[modelType].length === 0
+                    !modelQueries[modelType] ||
+                    modelQueries[modelType].length === 0
                 )
                     return;
 
                 // create match query for ticket
                 const match = {
                     $match: {
-                        $or: ticketQueries[modelType],
+                        $or: modelQueries[modelType],
                     },
                 };
 
@@ -137,7 +205,6 @@ class DirectAssociationGenerator extends AssociationGenerator {
     async insertDirectAssociations() {
         let associations = [];
 
-        //mapping of models to string name of mongoose constructor
         const mongModelMapping = {
             pullRequest: "PullRequest",
             issue: "IntegrationTicket",
@@ -145,18 +212,12 @@ class DirectAssociationGenerator extends AssociationGenerator {
             branch: "Branch",
         };
 
-        // map tickets to _id
         const ticketMap = _.mapKeys(this.tickets, "_id");
 
-        // map through the models of modelTicketMap
         Object.keys(this.modelTicketMap).map((modelType) => {
-            // extract the mapping from ticketId to codeObject array for each model
             const ticketCodeObjectMap = this.modelTicketMap[modelType];
 
-            // map over the ticketIds in the ticketCodeObjectMap
             Object.keys(ticketCodeObjectMap).map((ticketId) => {
-                // extract the array of codeObjects of a certain modelType and
-                // certain ticket using the ticketId
                 const ticketCodeObjects = ticketCodeObjectMap[ticketId];
 
                 const seen = new Set();
@@ -166,6 +227,7 @@ class DirectAssociationGenerator extends AssociationGenerator {
                         return;
 
                     let association = {
+                        workspaces: [this.workspaceId],
                         firstElement: ticketId,
                         firstElementModelType: "IntegrationTicket",
                         secondElement: codeObject._id,
@@ -177,8 +239,6 @@ class DirectAssociationGenerator extends AssociationGenerator {
 
                     associations.push(association);
 
-                    // check to make sure code object -- ticket relationship
-                    // is not created > 1
                     seen.add(codeObject._id.toString());
                 });
             });

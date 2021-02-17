@@ -92,16 +92,16 @@ const cardDirectAttachments = {
 };
 
 const cardRelevantActions = {
-    Test1: { inProg: 0, done: 0 },
-    Test2: { inProg: 1, done: 1 },
-    Test3: { inProg: 1, done: 1 },
-    Test4: { inProg: 2, done: 2 },
-    Test5: { inProg: 0, done: 0 },
-    Test6: { inProg: 0, done: 1 },
-    Test7: { inProg: 1, done: 0 },
-    Test8: { inProg: 0, done: 0 },
-    Test10: { inProg: 0, done: 0 },
-    Test11: { inProg: 1, done: 1 },
+    Test1: { num: 1, orderedLists: ["To Do"] },
+    Test2: { num: 2, orderedLists: ["Done", "In Progress"] },
+    Test3: { num: 2, orderedLists: ["Done", "In Progress"] },
+    Test4: { num: 2, orderedLists: ["Done", "In Progress"] },
+    Test5: { num: 1, orderedLists: ["Backlog"] },
+    Test6: { num: 1, orderedLists: ["Done"] },
+    Test7: { num: 1, orderedLists: ["In Progress"] },
+    Test8: { num: 0, orderedLists: [] },
+    Test10: { num: 0, orderedLists: [] },
+    Test11: { num: 2, orderedLists: ["Backlog", "Done"] },
 };
 
 const expectedLabels = [
@@ -133,43 +133,43 @@ const expectedLabels = [
 
 const expectedCardCounts = {
     Test1: {
-        intervals: 0,
+        intervals: 1,
         labels: 2,
         members: 1,
         attachments: 1,
     },
     Test2: {
-        intervals: 1,
+        intervals: 2,
         members: 2,
         labels: 1,
         attachments: 2,
     },
     Test3: {
-        intervals: 1,
+        intervals: 2,
         labels: 0,
         members: 0,
         attachments: 0,
     },
     Test4: {
-        intervals: 1,
+        intervals: 2,
         labels: 2,
         members: 1,
         attachments: 1,
     },
     Test5: {
-        intervals: 0,
+        intervals: 1,
         labels: 0,
         members: 0,
         attachments: 0,
     },
     Test6: {
-        intervals: 0,
+        intervals: 1,
         labels: 0,
         members: 0,
         attachments: 5,
     },
     Test7: {
-        intervals: 0,
+        intervals: 1,
         labels: 0,
         members: 0,
         attachments: 2,
@@ -188,7 +188,7 @@ const expectedCardCounts = {
         attachments: 1,
     },
     Test11: {
-        intervals: 1,
+        intervals: 2,
         labels: 1,
         members: 0,
         attachments: 0,

@@ -6,22 +6,22 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const logger = require("../../../logging/index").logger;
+const logger = require("../../logging/index").logger;
 
-const jobs = require("../../../apis/jobs");
-const jobConstants = require("../../../constants/index").jobs;
+const jobs = require("../../apis/jobs");
+const jobConstants = require("../../constants/index").jobs;
 
-const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
+const TrelloConnectProfile = require("../../models/integrations/trello/TrelloConnectProfile");
 
-const IntegrationUser = require("../../../models/integrations/integration_objects/IntegrationUser");
-const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
-const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
-const IntegrationColumn = require("../../../models/integrations/integration_objects/IntegrationColumn");
-const IntegrationEvent = require("../../../models/integrations/integration_objects/IntegrationEvent");
-const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
-const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationUser = require("../../models/integrations/integration_objects/IntegrationUser");
+const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationColumn = require("../../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationEvent = require("../../models/integrations/integration_objects/IntegrationEvent");
+const IntegrationLabel = require("../../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
 
-const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
+const BoardWorkspaceContext = require("../../models/integrations/context/BoardWorkspaceContext");
 
 const {
     TRELLO_API_KEY,

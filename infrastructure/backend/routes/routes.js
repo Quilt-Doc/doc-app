@@ -284,7 +284,7 @@ router.post(
 );
 router.post(
     "/repositories/test_retrieve",
-  //  authorizationMiddleware.repositoryMiddleware,
+    //  authorizationMiddleware.repositoryMiddleware,
     repositoryController.retrieveRepositoriesTest
 );
 
@@ -304,7 +304,6 @@ router.delete(
     authorizationMiddleware.repositoryMiddleware,
     repositoryController.deleteRepository
 );
-
 
 // create - verify user exists
 
@@ -731,31 +730,33 @@ app.post('/profile', function (req, res) {
 //ASSOCIATION ROUTES ("TEST");
 const associationController = require("../controllers/associations/AssociationController");
 router.post(
-    "/associations/:repositoryId/get_file_context",
+    "/associations/:workspaceId/:repositoryId/get_file_context",
     associationController.getFileContext
 );
 
-//TRELLO INTEGRATION ROUTES
-const trelloIntegrationController = require("../controllers/integrations/trello/TrelloIntegrationController");
-
-router.get(
-    "/integrations/connect/trello",
-    trelloIntegrationController.beginTrelloConnect
+router.post(
+    "/associations/:workspaceId/generate_associations",
+    associationController.generateAssociations
 );
+
+//TRELLO INTEGRATION ROUTES
+const trelloController = require("../controllers/integrations/trello/TrelloController");
+
+router.get("/integrations/connect/trello", trelloController.beginTrelloConnect);
 
 router.get(
     "/integrations/connect/trello/callback",
-    trelloIntegrationController.handleTrelloConnectCallback
+    trelloController.handleTrelloConnectCallback
 );
 
 router.get(
     "/integrations/:workspaceId/:userId/trello/get_external_boards",
-    trelloIntegrationController.getExternalTrelloBoards
+    trelloController.getExternalTrelloBoards
 );
 
 router.post(
     "/integrations/:workspaceId/:userId/trello/trigger_scrape",
-    trelloIntegrationController.triggerTrelloScrape
+    trelloController.triggerTrelloScrape
 );
 
 // GithubIssue Routes
@@ -803,4 +804,12 @@ router.post("/example_route", (req, res) => {
 
     return res.json({ success: true, result: tickets });
 });
+
+//CONTEXT ROUTES
+const contextController = require("../controllers/integrations/context/BoardWorkspaceContextController");
+router.post(
+    "/contexts/:workspaceId/retrieve",
+    contextController.retrieveContexts
+);
+
 module.exports = router;

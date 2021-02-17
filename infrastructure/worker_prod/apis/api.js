@@ -130,7 +130,7 @@ const requestInstallationGraphQLClient = async (installationId) => {
     var installationToken = await requestInstallationToken(appToken, installationId);
 
 
-    const prismaClient = new GraphQLClient("https://api.github.com/graphql/", {
+    const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
         credentials: 'include',
         mode: 'cors',
         headers: {

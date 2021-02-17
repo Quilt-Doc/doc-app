@@ -6,16 +6,16 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const logger = require("../../../logging/index").logger;
-const jobs = require("../../../apis/jobs");
-const jobConstants = require("../../../constants/index").jobs;
+const logger = require("../../../../logging/index").logger;
+const jobs = require("../../../../apis/jobs");
+const jobConstants = require("../../../../constants/index").jobs;
 
-const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
+const TrelloConnectProfile = require("../../../../models/integrations/trello/TrelloConnectProfile");
 
-const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
-const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationTicket = require("../../../../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationBoard = require("../../../../models/integrations/integration_objects/IntegrationBoard");
 
-const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
+const BoardWorkspaceContext = require("../../../../models/integrations/context/BoardWorkspaceContext");
 
 const {
     TRELLO_API_KEY,
@@ -64,7 +64,7 @@ const {
     modifyTrelloActions,
     populateExistingTrelloDirectAttachments,
     deleteTrelloBoardComplete,
-} = require("./TrelloControllerHelpers");
+} = require("../TrelloControllerHelpers");
 
 getExternalTrelloBoards = async (req, res) => {
     const { userId, workspaceId } = req.params;
@@ -225,7 +225,7 @@ handleTrelloConnectCallback = async (req, res) => {
 triggerTrelloScrape = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
-    const { contexts } = req.body;
+    let { contexts } = req.body;
 
     const profile = await acquireTrelloConnectProfile(userId);
 
@@ -236,7 +236,26 @@ triggerTrelloScrape = async (req, res) => {
         !existingBoards.has(context.boardId)
     });*/
 
-    await bulkScrapeTrello(profile, userId, workspaceId, contexts);
+    let resultMapping;
+
+    try {
+        resultMapping = await bulkScrapeTrello(
+            profile,
+            userId,
+            workspaceId,
+            contexts
+        );
+    } catch (e) {
+        return res.json({ success: false, error: e });
+    }
+
+    contexts = Object.keys(resultMapping).map((key) => {
+        //console.log("RESULT MAPPING TICKETS", resultMapping[key].tickets);
+
+        return resultMapping[key].context;
+    });
+
+    return res.json({ success: true, result: contexts });
 };
 
 // boardWorkspaceContexts -> (boardId, event: {beginListId, endListId}, repositories: [repositoryIds],
@@ -291,7 +310,7 @@ bulkScrapeTrello = async (profile, userId, workspaceId, contexts) => {
 
         cards = await modifyTrelloActions(actions, cards, event);
 
-        event = extractTrelloEvent(board, lists, event);
+        event = await extractTrelloEvent(board, lists, event);
 
         context = new BoardWorkspaceContext({
             board: board._id,
@@ -299,6 +318,7 @@ bulkScrapeTrello = async (profile, userId, workspaceId, contexts) => {
             workspace: workspaceId,
             repositories: repositories,
             creator: userId,
+            source: "trello",
         });
 
         await context.save();

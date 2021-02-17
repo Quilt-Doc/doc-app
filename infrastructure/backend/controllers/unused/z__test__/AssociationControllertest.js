@@ -1,4 +1,4 @@
-const LikelyAssociationGenerator = require("../associations/helpers/likelyAssociationGenerator");
+const LikelyAssociationGenerator = require("../../associations/helpers/likelyAssociationGenerator");
 
 const {
     samplePullRequests,
