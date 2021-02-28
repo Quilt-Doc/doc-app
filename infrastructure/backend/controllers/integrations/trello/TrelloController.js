@@ -35,7 +35,10 @@ const {
     handleTrelloConnectCallback,
 } = require("./TrelloAuthorizationController");
 
-const { setupTrelloWebhook } = require("./TrelloWebhookHelpers");
+const {
+    setupTrelloWebhook,
+    verifyTrelloWebhookRequest,
+} = require("./TrelloWebhookHelpers");
 
 removeTrelloIntegration = async (req, res) => {
     const { boardId, workspaceId } = req.params;
@@ -365,7 +368,9 @@ getExternalTrelloBoards = async (req, res) => {
 handleTrelloWebhook = (req, res) => {
     const { workspaceId, userId, boardId } = req.params;
 
-    console.log("REQ BODY", req.body);
+    const isVerified = verifyTrelloWebhookRequest(req);
+
+    if (!isVerified) return;
 };
 
 module.exports = {

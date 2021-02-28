@@ -8,6 +8,8 @@ const Sentry = require("@sentry/node");
 
 const mongoose = require("mongoose");
 
+const crypto = require("crypto");
+
 const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
 
 const IntegrationUser = require("../../../models/integrations/integration_objects/IntegrationUser");
@@ -23,7 +25,7 @@ const Workspace = require("../../../models/Workspace");
 const User = require("../../../models/authentication/User");
 const Repository = require("../../../models/Repository");
 
-const { TRELLO_API_KEY, LOCALHOST_API_URL } = process.env;
+const { TRELLO_API_KEY, LOCALHOST_API_URL, TRELLO_SECRET } = process.env;
 
 const trelloAPI = axios.create({
     baseURL: "https://api.trello.com",
@@ -52,6 +54,28 @@ setupTrelloWebhook = async (profile, boards, workspaceId, userId) => {
     }
 };
 
+verifyTrelloWebhookRequest = (request) => {
+    const base64Digest = (s) => {
+        return crypto
+            .createHmac("sha1", TRELLO_SECRET)
+            .update(s)
+            .digest("base64");
+    };
+
+    const callbackURL = `${request.protocol}://${request.get("host")}${
+        request.originalUrl
+    }`;
+
+    const content = JSON.stringify(request.body) + callbackURL;
+
+    const doubleHash = base64Digest(content);
+
+    const headerHash = request.headers["x-trello-webhook"];
+
+    return doubleHash == headerHash;
+};
+
 module.exports = {
     setupTrelloWebhook,
+    verifyTrelloWebhookRequest,
 };
