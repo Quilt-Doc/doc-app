@@ -38,6 +38,7 @@ const {
 const {
     setupTrelloWebhook,
     verifyTrelloWebhookRequest,
+    handleWebhookUpdateBoard,
 } = require("./TrelloWebhookHelpers");
 
 removeTrelloIntegration = async (req, res) => {
@@ -365,12 +366,34 @@ getExternalTrelloBoards = async (req, res) => {
     return res.json({ success: true, result: boards });
 };
 
-handleTrelloWebhook = (req, res) => {
+handleTrelloWebhook = async (req, res) => {
     const { workspaceId, userId, boardId } = req.params;
 
     const isVerified = verifyTrelloWebhookRequest(req);
 
     if (!isVerified) return;
+
+    let profile;
+
+    try {
+        profile = await acquireTrelloConnectProfile(userId);
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
+    const { action } = req.body;
+
+    const { type } = action;
+
+    const actionMethods = {
+        updateBoard: handleWebhookUpdateBoard,
+    };
+
+    try {
+        await actionMethods[type]();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
 };
 
 module.exports = {

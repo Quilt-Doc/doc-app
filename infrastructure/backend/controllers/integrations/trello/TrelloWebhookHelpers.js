@@ -75,7 +75,50 @@ verifyTrelloWebhookRequest = (request) => {
     return doubleHash == headerHash;
 };
 
+handleWebhookUpdateBoard = async (boardId, profile) => {
+    const { accessToken } = profile;
+
+    let board;
+
+    try {
+        board = await IntegrationBoard.findById(boardId)
+            .select("name sourceId link")
+            .exec();
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    let externalBoard;
+
+    try {
+        externalBoard = await trelloAPI.get(
+            `/1/boards/${sourceId}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name,url`
+        );
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const { url: externalLink, name: externalName } = externalBoard;
+
+    const { link, name } = board;
+
+    if (link != externalLink) {
+        board.link = externalLink;
+    }
+
+    if (name != externalName) {
+        board.name = externalName;
+    }
+
+    try {
+        board = await board.save();
+    } catch (e) {
+        throw new Error(e);
+    }
+};
+
 module.exports = {
     setupTrelloWebhook,
     verifyTrelloWebhookRequest,
+    handleWebhookUpdateBoard,
 };
