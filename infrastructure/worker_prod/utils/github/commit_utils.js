@@ -2,6 +2,7 @@
 const {serializeError, deserializeError} = require('serialize-error');
 
 const Commit = require('../../models/Commit');
+const Repository = require('../../models/Repository');
 
 const { spawnSync } = require('child_process');
 
@@ -168,7 +169,137 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
 }
 
 
+
+
+
+const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList) => {
+    // Get Repository commits for all unscanned Repositories
+    // Handle 409 Responses
+    var repositoryListCommits;
+    try {
+        urlList = unscannedRepositories.map(repositoryObj => {
+            return { url: `/repos/${repositoryObj.fullName}/commits/${repositoryObj.defaultBranch}`, repositoryId: repositoryObj._id.toString()};
+        });
+
+        var requestPromiseList = urlList.map( async (urlObj) => {
+            var response;
+            var currentInstallationId = installationIdLookup[urlObj.repositoryId];
+            try {
+                // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
+                response = await installationClientList[currentInstallationId].get(urlObj.url);
+            }
+            catch (err) {
+
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed fetching repository commits from Github API - GET "/repos/:owner/:name/commits/:default_branch"`,
+                    requestUrl: urlObj.url,
+                });
+
+                Sentry.captureException(err);
+
+                return {error: 'Error', statusCode: err.response.status};
+            }
+            return response;
+        });
+
+        repositoryListCommits = await Promise.allSettled(requestPromiseList);
+
+        // Get all successful results and 409 responses
+        // add 'isEmptyRepository' & 'failed' fields to hold status of request
+        repositoryListCommits = repositoryListCommits.map(resultObj => {
+            var temp = resultObj;
+            if (temp.value) {
+                // Was it an empty Repository
+                if (temp.value.error && temp.value.statusCode == 409) {
+                    temp.isEmptyRepository = true;
+                    temp.failed = false;
+                }
+                // If there's some other error we need to not continue with operations on that Repository
+                else if (temp.value.error) {
+                    temp.isEmptyRepository = false;
+                    temp.failed = true;
+                }
+                // If there's no error field and a value field, treat as success
+                else {
+                    temp.isEmptyRepository = false;
+                    temp.failed = false;
+                }
+            }
+            // If value somehow is falsey, treat as failure
+            else {
+                temp.isEmptyRepository = false;
+                temp.failed = true;
+            }
+            return temp;
+        });
+    }
+    catch (err) {
+        Sentry.setContext("scan-repositories", {
+            message: `scanRepositories failed fetching repository commits from Github API - GET "/repos/:owner/:name/commits/:default_branch"`,
+            urlList: urlList,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
+    }
+
+    // Bulk update repository 'lastProcessedCommit' fields
+    // If repository is empty, set 'lastProcessedCommit' to 'EMPTY'
+    // If repository 'failed' is true, return a value that will be filtered out on the bulkWrite
+    const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => {
+        // TODO: Figure out why this list commits endpoint isn't returning an array
+
+        var commitFieldValue;
+
+        if (repositoryCommitResponse.isEmptyRepository == true && !repositoryCommitResponse.failed) {
+            commitFieldValue = 'EMPTY';
+        }
+
+        else if (!repositoryCommitResponse.failed) {
+            commitFieldValue = repositoryCommitResponse.value.data.sha;
+        }
+
+        // If failed
+        else if (repositoryCommitResponse.failed) {
+            return undefined;
+        }
+
+        return {updateOne: {
+                filter: { _id: unscannedRepositories[idx]._id },
+                // Where field is the field you want to update
+                update: { $set: { lastProcessedCommit: commitFieldValue } },
+                upsert: false
+        }}
+    });
+
+    console.log('BULK LAST COMMIT OPS: ');
+    console.log(JSON.stringify(bulkLastCommitOps));
+
+    if (bulkLastCommitOps.length > 0 && bulkLastCommitOps.filter(op => op).length > 0) {
+        try {
+            // Filter out undefined operations (these are operations on repositories whose '/commits/' API calls have failed)
+            const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps.filter(op => op), { session });
+            await worker.send({action: 'log', info: {level: 'info', message: `bulk Repository 'lastProcessCommit' update results: ${JSON.stringify(bulkResult)}`,
+                                                source: 'worker-instance', function: 'scanRepositories'}});
+        }
+        catch(err) {
+
+            Sentry.setContext("scan-repositories", {
+                message: `scanRepositories failed bulk updating lastProcessedCommit on repositories`,
+                unscannedRepositoryIdList: unscannedRepositoryIdList,
+            });
+
+            Sentry.captureException(err);
+
+            throw err;
+        }
+    }
+}
+
+
 module.exports = {
     fetchAllRepoCommitsCLI,
     insertAllCommitsFromCLI,
+    updateRepositoryLastProcessedCommits,
 }

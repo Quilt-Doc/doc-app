@@ -12,6 +12,8 @@
   "dependencies": {
     "@acuris/aws-es-connection": "^1.1.1",
     "@elastic/elasticsearch": "^7.9.0",
+    "@sentry/node": "^6.2.0",
+    "@sentry/tracing": "^6.2.0",
     "await-spawn": "^3.0.0",
     "aws-sdk": "^2.699.0",
     "axios": "^0.19.2",

@@ -168,142 +168,30 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
 
     var branchObjectList = [];
 
+    foundBranchList.map(currentAPIBranch => {
+        console.log('currentAPIBranch: ');
+        console.log(currentAPIBranch);
 
-    var i = 0;
-    var currentPRObj;
-    var currentHead;
-    var currentBase;
+        branchObjectList.push({
+            repository: repositoryId,
+            installationId: installationId,
 
-    for (i = 0; i < foundPRList.length; i++) {
-
-        currentPRObj = foundPRList[i];
-
-
-        currentPRObj.branchLabelList = [];
-
-        // Useful fields in these objects:
-        // label - octocat:new-topic
-        // ref - new-topic
-        // sha: 6dcb09b5b57875f334f61aebed695e2e4193db5e
-        // user: {}
-        currentHead = currentPRObj.head;
-        currentBase = currentPRObj.base;
-
-        currentPRObj.branchLabelList.push(currentHead.label);
-        currentPRObj.branchLabelList.push(currentBase.label);
-
-        // If this head label not seen before, create branch object here
-        if (!distinctBranchLabels.has(currentHead.label)) {
-            distinctBranchLabels.add(currentHead.label);
-
-            branchObjectList.push({
-                repository: repositoryId,
-                installationId: installationId,
-
-                name: currentHead.ref,
-                sourceId: currentHead.ref,
+            name: currentAPIBranch.name,
+            sourceId: currentAPIBranch.name,
+            // sourceUpdateDate: currentAPIBranch.commit.commit.committer.date,
 
 
-                ref: currentHead.ref,
-                label: currentHead.label,
-                lastCommit: currentHead.sha,
-                pullRequestObjIdList: [currentPRObj.id],
-            });
+            ref: currentAPIBranch.name,
+            // label: , doesn't exist here
+            lastCommit: currentAPIBranch.commit.sha,
+        });
+    });
+    
 
-        }
-        // Add the pullRequestObjId to the existing branches' pullRequestObjIdList
-        else {
+    foundBranchList.map(branchAPIObj => {
+        distinctBranchLabels.add(branchAPIObj.name);
+    });
 
-            // KARAN TODO: Compare the existing branch here with the new proposed branch, and keep the more recent branch
-
-            // Find the branch object whose label matches this one
-            var targetBranchIdx = branchObjectList.findIndex(e => e.label == currentHead.label);
-
-            // Add currentHead.id to pullRequestObjIdList
-            branchObjectList[targetBranchIdx].pullRequestObjIdList.push(currentPRObj.id);
-
-        }
-
-
-        // If this base label not seen before, create branch object here
-        if (!distinctBranchLabels.has(currentBase.label)) {
-            distinctBranchLabels.add(currentBase.label);
-
-            branchObjectList.push({
-                repository: repositoryId,
-                installationId: installationId,
-
-                name: currentBase.ref,
-                sourceId: currentBase.ref,
-
-                ref: currentBase.ref,
-                label: currentBase.label,
-                lastCommit: currentBase.sha,
-                pullRequestObjIdList: [currentPRObj.id],
-            });
-
-        }
-        // Add the pullRequestObjId to the existing branches' pullRequestObjIdList
-        else {
-
-            // KARAN TODO: Compare the existing branch here with the new proposed branch, and keep the more recent branch
-
-            // Find the branch object whose label matches this one
-            var targetBranchIdx = branchObjectList.findIndex(e => e.label == currentBase.label);
-
-            // Add currentPRObj.id.id to pullRequestObjIdList
-            branchObjectList[targetBranchIdx].pullRequestObjIdList.push(currentPRObj.id);
-
-        }
-    }
-
-    // Merge foundBranchList with branchObjectList
-    // We will merge this by iterating over foundBranchList, for each:
-        // Identify all objects in branchObjectList with ref = foundBranchList[i].name, for each:
-            // If the match has an identical commit sha, it's a duplicate, continue
-            // If the match has a different commit sha, it's different, add the branch to the branchObjectList
-            // continue
-    var k = 0;
-
-    for (k = 0; k < foundBranchList.length; k++) {
-
-        var currentAPIBranch = foundBranchList[k];
-
-        var matchingBranchObjects = [];
-
-        // Get all PR branches that possibly match an API branch into matchingBranchObjects
-        var j = 0;
-        for (j = 0; j < branchObjectList.length; j++) {
-            if (branchObjectList[j].ref == currentAPIBranch.name) {
-                matchingBranchObjects.push(branchObjectList[j]);
-            }
-        }
-
-        // If currentAPIBranch.commit.sha is not in matchingBranchObjects.map(branchObj => branchObj.lastCommit):
-            // Add currentAPIBranch to branchObjectList
-        if ( !( matchingBranchObjects.map(branchObj => branchObj.lastCommit).includes(currentAPIBranch.commit.sha) ) ) {
-            branchObjectList.push({
-                repository: repositoryId,
-                installationId: installationId,
-
-                name: currentAPIBranch.name,
-                sourceId: currentAPIBranch.name,
-                sourceUpdateDate: currentAPIBranch.commit.commit.committer.date,
-
-
-                ref: currentAPIBranch.name,
-                // label: , doesn't exist here
-                lastCommit: currentAPIBranch.commit.sha,
-            });
-        }
-    }
-
-    await worker.send({action: 'log', info: {
-        level: 'info',
-        message: `Enriched foundBranchList - initialBranchNum -> branchObjectList.length: ${initialBranchNum} -> ${branchObjectList.length}`,
-        source: 'worker-instance',
-        function: 'enrichBranchesAndPRs',
-    }});
 
     return [branchObjectList, foundPRList];
 

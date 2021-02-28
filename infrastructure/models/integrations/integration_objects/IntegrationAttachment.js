@@ -11,6 +11,8 @@ const integrationAttachmentSchema = new Schema({
     repository: { type: ObjectId, ref: "Repository" },
     isAssociation: { type: Boolean, default: false },
 
+    nonCodeId: { type: ObjectId },
+
     link: String,
     sourceCreationDate: Date,
 });

@@ -506,6 +506,7 @@ const importJiraIssues = async () => {
     var worker = require("cluster").worker;
 
     var jiraSiteId = process.env.jiraSiteId;
+    var jiraProjects = process.env.jiraProjects;
 
     var jiraSite = await getJiraSiteObj(jiraSiteId);
 
