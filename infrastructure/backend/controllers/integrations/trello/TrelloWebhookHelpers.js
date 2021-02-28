@@ -31,6 +31,8 @@ const trelloAPI = axios.create({
     baseURL: "https://api.trello.com",
 });
 
+const { checkValid } = require("../../../utils/utils");
+
 setupTrelloWebhook = async (profile, boards, workspaceId, userId) => {
     const { accessToken } = profile;
 
@@ -75,9 +77,7 @@ verifyTrelloWebhookRequest = (request) => {
     return doubleHash == headerHash;
 };
 
-handleWebhookUpdateBoard = async (boardId, profile) => {
-    const { accessToken } = profile;
-
+handleWebhookUpdateBoard = async (boardId, data) => {
     let board;
 
     try {
@@ -88,25 +88,17 @@ handleWebhookUpdateBoard = async (boardId, profile) => {
         throw new Error(e);
     }
 
-    let externalBoard;
-
-    try {
-        externalBoard = await trelloAPI.get(
-            `/1/boards/${sourceId}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name,url`
-        );
-    } catch (e) {
-        throw new Error(e);
-    }
+    let externalBoard = data["board"];
 
     const { url: externalLink, name: externalName } = externalBoard;
 
     const { link, name } = board;
 
-    if (link != externalLink) {
+    if (checkValid(externalLink) && link != externalLink) {
         board.link = externalLink;
     }
 
-    if (name != externalName) {
+    if (checkValid(externalName) && name != externalName) {
         board.name = externalName;
     }
 
@@ -117,8 +109,62 @@ handleWebhookUpdateBoard = async (boardId, profile) => {
     }
 };
 
+handleWebhookCreateList = async (boardId, data) => {
+    const { id, name } = data["list"];
+
+    list = new IntegrationColumn({
+        name,
+        source: "trello",
+        sourceId: id,
+        board: boardId,
+    });
+
+    try {
+        list = await list.save();
+    } catch (e) {
+        throw new Error(e);
+    }
+};
+
+handleWebhookDeleteList = async (boardId, data) => {
+    const { id } = data["list"];
+
+    try {
+        await IntegrationColumn.findOneAndDelete({ sourceId: id });
+    } catch (e) {
+        throw new Error(e);
+    }
+};
+
+handleWebhookUpdateList = async (boardId, data) => {
+    const { id, name: externalName } = data["list"];
+
+    let list;
+
+    try {
+        list = await IntegrationColumn.findOne({ sourceId: id })
+            .select("name")
+            .exec();
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const { name } = list;
+
+    if (checkValid(externalName) && externalName != name) {
+        try {
+            list = await list.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
 module.exports = {
     setupTrelloWebhook,
     verifyTrelloWebhookRequest,
     handleWebhookUpdateBoard,
+    handleWebhookCreateList,
+    handleWebhookDeleteList,
+    handleWebhookUpdateList,
 };

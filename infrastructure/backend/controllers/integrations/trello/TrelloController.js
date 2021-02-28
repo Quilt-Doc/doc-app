@@ -39,6 +39,9 @@ const {
     setupTrelloWebhook,
     verifyTrelloWebhookRequest,
     handleWebhookUpdateBoard,
+    handleWebhookCreateList,
+    handleWebhookDeleteList,
+    handleWebhookUpdateList,
 } = require("./TrelloWebhookHelpers");
 
 removeTrelloIntegration = async (req, res) => {
@@ -383,10 +386,16 @@ handleTrelloWebhook = async (req, res) => {
 
     const { action } = req.body;
 
-    const { type } = action;
+    const { type, data } = action;
 
     const actionMethods = {
-        updateBoard: handleWebhookUpdateBoard,
+        updateBoard: async () => await handleWebhookUpdateBoard(boardId, data),
+        createList: async () => await handleWebhookCreateList(boardId, data),
+        moveListToBoard: async () =>
+            await handleWebhookCreateList(boardId, data),
+        moveListFromBoard: async () =>
+            await handleWebhookDeleteList(boardId, data),
+        updateList: async () => await handleWebhookUpdateList(boardId, data),
     };
 
     try {
