@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:lucid="lucid" width="82" height="142">
+    <defs>
+        <linearGradient id="myGradient" gradientTransform="rotate(90)">
+        <stop offset="0%"  stop-color="#4776e6" />
+        <stop offset="100%" stop-color="#8e54e9" />
+        </linearGradient>
+  </defs>
+  <g lucid:page-tab-id="0_0" stroke="url('#myGradient')" stroke-width="4" fill="none">
+    <path d="M71 130V87c0-3.3-2.7-6-6-6H17c-3.3 0-6-2.7-6-6V32M71 129.97V131M11 32.03V31"/>
+    <path d="M70 131H57c-3.3 0-6-2.7-6-6V17c0-3.3-2.7-6-6-6H17c-3.3 0-6 2.7-6 6v13M69.97 131H71M11 29.97V31M60.33 130V82M60.33 129.97V131M60.33 82.03V81M11 52.33"/>
+  </g>
+</svg>

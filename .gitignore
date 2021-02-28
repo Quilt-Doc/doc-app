@@ -1,0 +1,57 @@
+
+**/.DS_Store
+**/_DS_Store
+**/.swp
+**/.zip
+
+# Don't include build artifacts
+**/build*
+
+# Don't include credentials
+**/.env
+
+# Don't include private keys
+**/*.pem
+
+# Don't include detached process output
+**/nohup.out
+
+# Ignore python artifacts
+**/__pycache__
+
+# Ignore node_modules
+**/node_modules/*
+
+# Ignore env folder
+**/env/*
+
+# ignore git_repos
+**/git_repo*
+
+# Ignore github-app build artifacts
+infrastructure/github-app/models*
+infrastructure/github-app/constants*
+
+# Ignore token-manager build artifacts
+infrastructure/token-manager/models*
+infrastructure/token-manager/constants*
+
+
+# Ignore dashboard-lambda build artifacts
+infrastructure/dashboard-lambda/models*
+infrastructure/dashboard-lambda/constants*
+
+# Ignore worker_prod build artifacts
+infrastructure/worker_prod/models*
+infrastructure/worker_prod/constants*
+
+
+# Ignore backend build artifacts
+infrastructure/backend/models*
+infrastructure/backend/constants*
+
+# Ignore Windows service executables
+**/daemon*
+
+node_modules/*
+node_modules
