@@ -1,1 +1,0 @@
-export const RETRIEVE_FEEDS = 'RETRIEVE_FEEDS';

@@ -1,1 +1,0 @@
-export const MINUS_SIDENAVBAR = "calc(100vw - 8rem)";

@@ -1,1 +1,0 @@
-export const RETRIEVE_CHECKS = 'RETRIEVE_CHECKS';
