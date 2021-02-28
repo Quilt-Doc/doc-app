@@ -16,6 +16,8 @@ if (process.env.IS_PRODUCTION) {
 
 const requestTestingUserBackendClient = () => {
     const axios = require("axios");
+    // console.log("TEST_USER_JWT: ");
+    // console.log(process.env.TEST_USER_JWT);
     return axios.create({
         baseURL: testingApiEndpoint,
         headers: {

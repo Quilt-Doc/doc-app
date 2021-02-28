@@ -15,7 +15,9 @@ const pushEvents = require('./events/pushEvents');
 const installationEvents = require('./events/installationEvents');
 const pullRequestEvents = require('./events/pullRequestEvents');
 const projectEvents = require('./events/projectEvents');
+const issueEvents = require('./event/issueEvents');
 const refEvents = require('./events/refEvents');
+
 
 exports.handler = async (event) => {
 
@@ -83,6 +85,8 @@ exports.handler = async (event) => {
             case 'project_card':
                 await projectEvents.handleProjectCardEvent(backendClient, event, githubEvent, logger);
                 break;
+            case 'issues':
+                await issueEvents.handleIssueEvent(backendClient, event, githubEvent, logger);
         }
     }
     catch (err) {

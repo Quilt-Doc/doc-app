@@ -6,7 +6,7 @@ const integrationAttachmentSchema = new Schema({
     created: { type: Date, default: Date.now },
 
     //MOST IMPORTANT:
-    modelType: String,
+    modelType: {type: String, enum: [ "branch", "issue", "pullRequest", "commit" ]},
     sourceId: String,
     repository: { type: ObjectId, ref: "Repository" },
     isAssociation: { type: Boolean, default: false },

@@ -7,7 +7,7 @@ const removeWorkspaces = async () => {
     try {
         retrieveWorkspaceResponse = await backendClient.post(
             "/workspaces/retrieve",
-            { creatorId: process.env.TESTING_USER_ID }
+            { creatorId: process.env.TEST_USER_ID }
         );
     } catch (err) {
         console.log("Failed to successfully Fetch Repositories");
@@ -31,27 +31,9 @@ const removeWorkspaces = async () => {
 };
 
 // TODO: Get the repositoryIds from this
-const fetchRepositories = async () => {
+const fetchRepositories = async (fullNameList) => {
     var backendClient = api.requestTestingDevBackendClient();
 
-    var defaultIcon = 1;
-    var repositoryCreateData = [
-        {
-            fullName: "kgodara-testing/brodal_queue",
-            installationId: process.env.TESTING_INSTALLATION_ID,
-            icon: defaultIcon,
-        },
-        {
-            fullName: "kgodara-testing/doc-app",
-            installationId: process.env.TESTING_INSTALLATION_ID,
-            icon: defaultIcon,
-        },
-    ];
-
-    var fullNameList = [
-        "kgodara-testing/brodal_queue",
-        "kgodara-testing/doc-app",
-    ];
     var response;
     try {
         response = await backendClient.post("/repositories/test_retrieve", {
@@ -63,23 +45,6 @@ const fetchRepositories = async () => {
     }
 
     return response.data.result;
-
-    /*
-    var requestPromiseList = repositoryCreateData.map(postDataObj => backendClient.post("/repositories/test/retrieve", postDataObj));
-
-    var results;
-    try {
-        results = await Promise.all(requestPromiseList);
-    } catch (err) {
-        console.log("Failed to successfully Create Repositories");
-        throw err;
-    }
-
-    // createdRepositoryIds
-    return results.map(response => {
-        return { _id: response.data.result[0]._id, fullName: response.data.result[0].fullName}
-    });
-    */
 };
 
 // TODO: Change this to call the normal repository delete method, so tests can run concurrently, and use repositoryIds
@@ -106,11 +71,17 @@ const deleteRepositories = async (createdWorkspaceId, createdRepositoryIds) => {
     }
 };
 
-const createWorkspace = async (createdRepositoryIds) => {
-    console.log("createWorkspace() -  createdRepositoryIds: ");
-    console.log(createdRepositoryIds);
+const createWorkspace = async (fullNameList) => {
 
     var backendClient = api.requestTestingUserBackendClient();
+
+    var createdRepositories = await fetchRepositories(fullNameList);
+
+    var createdRepositoryIds = createdRepositories.map(repositoryObj => {
+        console.log('repositoryObj._id')
+        console.log(repositoryObj._id);
+        return repositoryObj._id;
+    });
 
     var postData = {
         name: "Testing Workspace",
@@ -134,7 +105,7 @@ const createWorkspace = async (createdRepositoryIds) => {
     console.log(createWorkspaceResponse.data);
 
     // createdWorkspaceId
-    return createWorkspaceResponse.data.result._id;
+    return { createdWorkspaceId: createWorkspaceResponse.data.result._id, repositoryIds: createdRepositoryIds};
 };
 
 const deleteWorkspace = async (createdWorkspaceId) => {

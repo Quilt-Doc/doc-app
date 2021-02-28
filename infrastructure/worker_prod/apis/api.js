@@ -7,6 +7,10 @@ var AWS = require('aws-sdk');
 // Set the region 
 AWS.config.update({region: 'us-east-1'});
 
+
+// const { GraphQLClient } = require('../mod-graphql-request/dist');
+
+
 const requestJiraClient = ( cloudId, accessToken ) => {
     const axios = require('axios');
     return axios.create({
@@ -116,6 +120,31 @@ const requestInstallationClient = async (installationId) => {
     return installationApi;
 }
 
+
+const { GraphQLClient, gql, rawRequest, request } = require('graphql-request');
+const requestInstallationGraphQLClient = async (installationId) => {
+
+    console.log(`Searching for Installation Token for ID: ${installationId}`);
+
+    var appToken = await fetchAppToken();
+    var installationToken = await requestInstallationToken(appToken, installationId);
+
+
+    const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
+        credentials: 'include',
+        mode: 'cors',
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `token ${installationToken.value}`,
+        },
+      });
+    return prismaClient
+}
+
+
+
+
 module.exports = {
     requestJiraClient,
     requestGithubClient,
@@ -124,5 +153,6 @@ module.exports = {
 
     fetchAppToken,
     requestInstallationToken,
-    requestInstallationClient
+    requestInstallationClient,
+    requestInstallationGraphQLClient,
 }

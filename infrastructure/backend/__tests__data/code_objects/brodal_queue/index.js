@@ -1,6 +1,6 @@
 
 const branchData = require('./branches');
-const PRData = require('./pullReqeusts');
+const PRData = require('./pullRequests');
 const commitData = require('./commits');
 
 module.exports = {

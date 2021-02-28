@@ -1,12 +1,28 @@
-require("dotenv").config();
-const api = require("../apis/api");
+require('dotenv').config();
+const api = require('../apis/api');
 
-const utils = require("../__tests__config/utils");
+const utils = require('../__tests__config/utils');
+const fs = require("fs");
 
 // var createdWorkspaceId;
 // var createdRepositoryIds;
 
+/*
+"testSequencer": "<rootDir>/__tests__config/sequencer.js",
+    "globalSetup": "<rootDir>/__tests__config/setup.js",
+    "globalTeardown": "<rootDir>/__tests__config/teardown.js",
+*/
+
+
 const MAX_WORKSPACE_POLL_RETRIES = 20;
+
+var MAGIC_VALUE = -1;
+
+afterAll(() => {
+    console.log('WRITING process.env.MAGIC_VALUE: ');
+    process.env.MAGIC_VALUE = MAGIC_VALUE;
+    fs.writeFileSync('./test_env.json', JSON.stringify(process.env));
+})
 
 function delay(t, val) {
     return new Promise(function (resolve) {
@@ -16,7 +32,12 @@ function delay(t, val) {
     });
 }
 
+
+
 describe("Create Workspace", () => {
+
+    MAGIC_VALUE=1;
+
     var createdWorkspaceId = process.env.TEST_CREATED_WORKSPACE_ID;
 
     var createdRepositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);

@@ -11,6 +11,60 @@ const {serializeError, deserializeError} = require('serialize-error');
 const Branch = require('../../models/Branch');
 
 
+// Uses 'ref' as Branch sourceId
+const fetchAllRepoBranchCommitDates = async (foundBranchList, installationClient, fullName, worker) => {
+
+    var commitDateRequestList = foundBranchList.map( async (branchObj) => {
+
+        var commitResponse;
+
+        var sha = branchObj.lastCommit;
+        try {
+            commitResponse = await installationClient.get(`/repos/${fullName}/commits/${sha}`);
+        }
+        catch (err) {
+            console.log(err);
+            return {error: 'Error', userId}
+        }
+
+        return { branchRef: branchObj.ref, branchLastCommit: branchObj.lastCommit, commitDate:  commitResponse.data.commit.committer.date};
+    });
+
+    // Execute all requests
+    var results;
+    try {
+      results = await Promise.allSettled(commitDateRequestList);
+    }
+    catch (err) {
+        await logger.error({source: 'worker-instance',
+                            message: serializeError(err),
+                            errorDescription: `Error Promise.allSettled getting branch commitDates`,
+                            function: 'fetchAllRepoBranchCommitDates'});
+        throw err;
+    }
+
+    // Non-error responses
+    validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
+
+    // Error responses
+    invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
+
+    validResults.map(resultObj => {
+        var matchingBranchIndex = -1;
+
+        matchBranchIndex = foundBranchList.findIndex((branchObj) => branchObj.ref == resultObj.branchRef && branchObj.lastCommit == resultObj.branchLastCommit);
+
+        if (matchBranchIndex > 0) {
+            foundBranchList[matchBranchIndex].sourceUpdateDate = resultObj.commitDate;
+        }
+
+    });
+
+    return foundBranchList;    
+
+}
+
+
 
 const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullName, worker) => {
 
@@ -145,6 +199,11 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
             branchObjectList.push({
                 repository: repositoryId,
                 installationId: installationId,
+
+                name: currentHead.ref,
+                sourceId: currentHead.ref,
+
+
                 ref: currentHead.ref,
                 label: currentHead.label,
                 lastCommit: currentHead.sha,
@@ -173,6 +232,10 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
             branchObjectList.push({
                 repository: repositoryId,
                 installationId: installationId,
+
+                name: currentBase.ref,
+                sourceId: currentBase.ref,
+
                 ref: currentBase.ref,
                 label: currentBase.label,
                 lastCommit: currentBase.sha,
@@ -222,6 +285,12 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
             branchObjectList.push({
                 repository: repositoryId,
                 installationId: installationId,
+
+                name: currentAPIBranch.name,
+                sourceId: currentAPIBranch.name,
+                sourceUpdateDate: currentAPIBranch.commit.commit.committer.date,
+
+
                 ref: currentAPIBranch.name,
                 // label: , doesn't exist here
                 lastCommit: currentAPIBranch.commit.sha,
@@ -353,7 +422,7 @@ const insertBranchesFromAPI = async (branchObjectsToInsert, installationId, repo
 
     // Fetch Branch Objects with specific fields necessary for mapping
 
-    // Need to use the insertedIds of the new GithubProjects to get the full, unified object from the DB
+    // Need to use the insertedIds of the new Branches to get the full, unified object from the DB
     var createdBranchObjects;
     try {
         createdBranchObjects = await Branch.find({_id: { $in: newBranchIds.map(id => ObjectId(id.toString())) } }, '_id label lastCommit').lean().exec();

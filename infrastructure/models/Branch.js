@@ -23,11 +23,14 @@ let branchSchema = new Schema({
     repository: { type: ObjectId, ref: 'Repository' },
     installationId: { type: Number, required: true },
 
+    name: { type: String },
     sourceId: { type: String },
+    sourceUpdateDate: { type: Date },
 
 
     ref: { type: String, required: true },
     label: { type: String },
+    fileList: [{type: String}],
 
     pullRequestObjIdList: [{ type: String }],
     pullRequests: [{type: ObjectId, ref: 'PullRequest'}],

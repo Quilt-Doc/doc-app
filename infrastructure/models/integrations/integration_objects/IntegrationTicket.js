@@ -13,12 +13,14 @@ const integrationTicketSchema = new Schema({
         enum: ["jira", "github", "trello"],
         required: true,
     },
-    description: { type: String }, // trelloCardDescription, githubCardNote: String
-    sourceCreationDate: { type: Date },
-
     // Generalized fields that haven't been fully adopted yet.
     name: { type: String }, // trelloCardName: String,
     sourceId: { type: String }, // trelloCardId: String,
+    description: { type: String }, // trelloCardDescription, githubCardNote: String
+    sourceCreationDate: { type: Date },
+    sourceUpdateDate: { type: Date },
+    sourceCloseDate: { type: Date },
+
     link: { type: String }, // trelloCardLink: String,
 
     creator: { type: ObjectId, ref: "IntegrationUser" },
@@ -36,29 +38,34 @@ const integrationTicketSchema = new Schema({
     trelloCardDueComplete: Boolean,
     trelloCardDateLastActivity: Date,
 
-    // Github specific fields
-    githubCardGithubProjectId: { type: ObjectId, ref: "GithubProject" },
+    // Jira specific fields
+    jiraSiteId: { type: ObjectId, ref: "JiraSite" },
+    jiraProjectId: { type: ObjectId, ref: "IntegrationBoard" },
+    jiraIssueId: { type: String },
+    jiraIssueKey: { type: String },
+    jiraIssueSummary: { type: String },
+    jiraIssueDescription: { type: String },
+    jiraIssueResolutionStatus: { type: Boolean },
+    jiraIssueResolutionDate: { type: Date },
+    jiraIssueCreationDate: { type: Date },
+    jiraIssueUpdatedDate: { type: Date },
+
+
+
+    // Github Card specific fields
+    githubCardGithubProjectId: { type: ObjectId, ref: "IntegrationBoard" },
     githubCardId: { type: String },
     githubCardColumnId: { type: String },
     githubCardUpdatedAt: { type: Date },
     githubCardContentUrl: { type: String },
     githubCardPullRequest: { type: ObjectId, ref: "PullRequest" },
     githubCardIssue: { type: ObjectId, ref: "GithubIssue" },
+    isGithubCard: { type: Boolean, default: false },
 
     // Github Card Fields that have moved to general fields
     // githubCardCreatedAt: { type: Date } --> sourceCreationDate: { type: Date }
     // githubCardNote: { type: String } --> description: { type: String }
 
-    // Jira specific fields
-    jiraSiteId: { type: ObjectId, ref: "JiraSite" },
-    jiraProjectId: { type: ObjectId, ref: "JiraProject" },
-    jiraIssueId: { type: String },
-    jiraIssueKey: { type: String },
-    jiraIssueSummary: { type: String },
-    jiraIssueResolutionStatus: { type: Boolean },
-    jiraIssueResolutionDate: { type: Date },
-    jiraIssueCreationDate: { type: Date },
-    jiraIssueUpdatedDate: { type: Date },
 
 
     // Github Issue specific fields

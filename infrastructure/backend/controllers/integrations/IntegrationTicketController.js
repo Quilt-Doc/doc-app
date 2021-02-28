@@ -8,7 +8,7 @@ const logger = require("../logging/index").logger;
 const { checkValid } = require("../../utils/utils");
 
 /*
-    githubCardGithubProjectId: { type: ObjectId, ref: 'GithubProject' },
+    githubCardGithubProjectId: { type: ObjectId, ref: "IntegrationBoard" },
     githubCardId: { type: String },
     githubCardNote: { type: String } --> description: { type: String }
     githubCardColumnId: { type: String },
