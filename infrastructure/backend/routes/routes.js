@@ -758,14 +758,23 @@ router.get(
     trelloController.getExternalTrelloBoards
 );
 
+router.delete(
+    "/integrations/:workspaceId/:userId/trello/remove_integration/:boardId",
+    trelloController.removeTrelloIntegration
+);
+
 router.post(
     "/integrations/:workspaceId/:userId/trello/trigger_scrape",
     trelloController.triggerTrelloScrape
 );
 
+router.post(
+    "/integrations/:workspaceId/:userId/trello/handle_webhook/:boardId",
+    trelloController.handleTrelloWebhook
+);
+
 // GithubIssue Routes
 const githubIssueIntegrationController = require("../controllers/integrations/github/GithubIssueController");
-
 
 //GOOGLE INTEGRATION ROUTES
 /*

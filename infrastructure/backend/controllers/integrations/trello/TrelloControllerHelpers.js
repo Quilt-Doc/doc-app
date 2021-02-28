@@ -507,35 +507,46 @@ deleteTrelloBoardComplete = async ({
     }
 };
 
-/*
-populateExistingTrelloDirectAttachments = async (context, attachments) => {
-    const currentRepositories = await getContextRepositories(context);
+handleTrelloReintegration = async (boards) => {
+    // get the source Ids of the boards
+    const boardSourceIds = boards.map((board) => board.sourceId);
 
-    const bulkOps = attachments
-        .map((attachment) => {
-            const { link: url, _id: attachmentId } = attachment;
+    // create a boards object mapping keys
+    const boardsObj = _.mapKeys(boards, "sourceId");
 
-            const splitURL = url.split("/");
+    // query for all integration boards that already exist and have a
+    // sourceId equal to one of the boards requested for integration
+    let query = IntegrationBoard.find();
 
-            const fullName = splitURL
-                .slice(splitURL.length - 4, splitURL.length - 2)
-                .join("/");
+    query.where("sourceId").in(boardSourceIds);
 
-            if (!currentRepositories[fullName]) return null;
+    let reintegratedBoards = await query.lean().exec();
 
-            return {
-                updateOne: {
-                    filter: { _id: attachmentId },
-                    // Where field is the field you want to update
-                    update: { $set: { repository } },
-                    upsert: false,
-                },
-            };
-        })
-        .filter((request) => request != null);
+    // map through existing boards and replace repositories with those
+    // that need to be integrated
+    reintegratedBoards.map((board) => {
+        const { sourceId, repositories } = board;
 
-    await IntegrationAttachment.bulkWrite(bulkOps);
-};*/
+        // get already integrated repos
+        const integratedRepos = new Set(
+            repositories.map((repoId) => repoId.toString())
+        );
+
+        // replace repositories field with requested repositories that don't include already integrated repos
+        board.repositories = boardsObj[sourceId].repositoryIds.map(
+            (repoId) => !integratedRepos.has(repoId)
+        );
+    });
+
+    let integratedSourceIds = new Set(
+        reintegratedBoards.map((board) => board.sourceId)
+    );
+
+    // new boards only
+    boards = boards.filter((board) => !integratedSourceIds.has(board.sourceId));
+
+    return { boards, reintegratedBoards };
+};
 
 module.exports = {
     acquireTrelloConnectProfile,
@@ -549,6 +560,7 @@ module.exports = {
     extractTrelloLabels,
     modifyTrelloActions,
     extractTrelloIntervals,
+    handleTrelloReintegration,
     //populateExistingTrelloDirectAttachments,
     deleteTrelloBoardComplete,
 };
