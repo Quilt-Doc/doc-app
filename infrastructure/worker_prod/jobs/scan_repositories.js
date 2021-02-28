@@ -18,11 +18,15 @@ const { ObjectId } = mongoose.Types;
 const { filterVendorFiles } = require('../utils/validate_utils');
 
 const { scrapeGithubRepoCommitsAPI, scrapeGithubRepoCommitsMixed } = require('../utils/commit_scrape');
+const { updateRepositoryLastProcessedCommits } = require('../utils/github/commit_utils');
+
 const { scrapeGithubRepoProjects } = require('../utils/integrations/github_project_utils');
 const { scrapeGithubRepoIssues } = require('../utils/integrations/github_issue_utils');
 
 
 const {serializeError, deserializeError} = require('serialize-error');
+
+const Sentry = require("@sentry/node");
 
 let db = mongoose.connection;
 
@@ -53,18 +57,17 @@ const scanRepositories = async () => {
             var repositoryObjList;
 
             try {
-                // KARAN TODO: Remove installationId here or use array
                 repositoryObjList = await Repository.find({_id: { $in: repositoryIdList}, installationId: { $in: repositoryInstallationIds }}, null, { session });
             }
             catch (err) {
-                // KARAN TODO: Remove installationId here or use array
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                            errorDescription: `Error finding repositories - repositoryInstallationIds repositoryIdList: ${JSON.stringify(repositoryInstallationIds)}, ${JSON.stringify(repositoryIdList)}`,
-                                                            source: 'worker-instance', function: 'scanRepositories'}});
 
-                transactionAborted = true;
-                // KARAN TODO: Remove installationId here or use array
-                transactionError.message = `Error finding repositories - repositoryInstallationIds repositoryIdList: ${JSON.stringify(repositoryInstallationIds)}, ${JSON.stringify(repositoryIdList)}`;
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories could not get Repository Objects from MongoDB`,
+                    repositoryInstallationIds: repositoryInstallationIds,
+                    repositoryIdList: repositoryIdList,
+                });
+
+                Sentry.captureException(err);
 
                 throw err;
             }
@@ -78,11 +81,6 @@ const scanRepositories = async () => {
             var scannedRepositories = repositoryObjList.filter(repositoryObj => repositoryObj.scanned == true);
             var scannedRepositoryIdList = scannedRepositories.map(repositoryObj => repositoryObj._id);
 
-
-            // Create Contexts for all Scanned Repositories
-            
-
-
             // If all repositories within this workspace have already been scanned, nothing to do
             if (unscannedRepositories.length == 0) {
                 // Set workspace 'setupComplete' to true
@@ -90,14 +88,14 @@ const scanRepositories = async () => {
                     await Workspace.findByIdAndUpdate(workspaceId, {$set: {setupComplete: true}}, { session }).exec();
                 }
                 catch (err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                                errorDescription: `Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`,
-                                                                source: 'worker-instance', function: 'scanRepositories'}});
 
-                    transactionAborted = true;
-                    transactionError.message = `Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`;
+                    Sentry.setContext("scan-repositories", {
+                        message: `scanRepositories could not set Workspace.setupComplete = true`,
+                        workspaceId: workspaceId,
+                    });
 
-                    throw new Error(`Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`);
+                    Sentry.captureException(err);
+                    throw err;
                 }
                 await worker.send({action: 'log', info: {level: 'info', message: `No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`,
                                                             source: 'worker-instance', function: 'scanRepositories'}});
@@ -112,16 +110,15 @@ const scanRepositories = async () => {
                 workspaceRepositories = await Repository.updateMany({_id: { $in: unscannedRepositoryIdList.map(id => ObjectId(id.toString()))}, scanned: false}, {$set: { currentlyScanning: true }}, { session });
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error',
-                                                        source: 'worker-instance',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error updating unscannedRepositories 'currentlyScanning: true' - unscannedRepositoryIdList: ${JSON.stringify(unscannedRepositoryIdList)}`,
-                                                        function: 'scanRepositories'}});
 
-                transactionAborted = true;
-                transactionError.message = `Error updating unscannedRepositories 'currentlyScanning: true' - unscannedRepositoryIdList: ${JSON.stringify(unscannedRepositoryIdList)}`;
-                
-                throw Error(`Error updating unscannedRepositories 'currentlyScanning: true' - unscannedRepositoryIdList: ${JSON.stringify(unscannedRepositoryIdList)}`);
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed updating unscannedRepositories 'currentlyScanning: true'`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+
+                throw err;
             }
 
             var installationClientList;
@@ -134,14 +131,14 @@ const scanRepositories = async () => {
                 installationClientList = Object.assign({}, ...installationClientList);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error fetching installationClientList - repositoryInstallationIds: ${JSON.stringify(repositoryInstallationIds)}`,
-                                                            function: 'scanRepositories'}});
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed fetching installationClientList`,
+                    repositoryInstallationIds: repositoryInstallationIds,
+                });
 
-                transactionAborted = true;
-                transactionError.message = `Error fetching installationClientList - repositoryInstallationIds: ${JSON.stringify(repositoryInstallationIds)}`;
+                Sentry.captureException(err);
 
-                throw new Error(`Error fetching installationClientList - repositoryInstallationIds: ${JSON.stringify(repositoryInstallationIds)}`);
+                throw err;
             }
 
 
@@ -164,14 +161,15 @@ const scanRepositories = async () => {
                 repositoryListObjects = await Promise.all(requestPromiseList);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error getting repository objects urlList: ${JSON.stringify(urlList)}`,
-                                                            function: 'scanRepositories'}});
 
-                transactionAborted = true;
-                transactionError.message = `Error getting repository objects urlList: ${JSON.stringify(urlList)}`;
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed fetching Repository objects from Github API - GET "/repos/:owner/:name/"`,
+                    urlList: urlList,
+                });
 
-                throw new Error(`Error getting repository objects urlList: ${JSON.stringify(urlList)}`);
+                Sentry.captureException(err);
+
+                throw err;
             }
 
             // Bulk update 'cloneUrl', 'htmlUrl', and 'defaultBranch' fields
@@ -198,14 +196,15 @@ const scanRepositories = async () => {
                                                         source: 'worker-instance', function: 'scanRepositories'}});
                 }
                 catch(err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                                errorDescription: `Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
-                                                                source: 'worker-instance', function: 'scanRepositories'}});
 
-                    transactionAborted = true;
-                    transactionError.message = `Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`;
-                                                    
-                    throw new Error(`Error bulk Repository 'html_url', 'clone_url', 'default_branch' update failed - repositories: ${JSON.stringify(unscannedRepositoryIdList)}`);
+                    Sentry.setContext("scan-repositories", {
+                        message: `scanRepositories failed bulk updating Repository.{html_url, clone_url, default_branch}`,
+                        unscannedRepositoryIdList: unscannedRepositoryIdList,
+                    });
+    
+                    Sentry.captureException(err);
+
+                    throw err;
                 }
             }
 
@@ -216,7 +215,6 @@ const scanRepositories = async () => {
 
             // unscannedRepositories
 
-            // KARAN TODO: Remove this hardcoding for the first unscannedRepositories object
             // installationId, repositoryId, installationClient, repositoryObj, worker
 
             var repositoryProjectsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
@@ -241,16 +239,19 @@ const scanRepositories = async () => {
                 projectScrapeListResults = await Promise.allSettled(repositoryProjectsRequestList);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error',
-                                                            source: 'worker-instance',
-                                                            message: serializeError(err),
-                                                            errorDescription: `Error Scraping Repository Projects - unscannedRepositories: ${JSON.stringify(unscannedRepositories)}`,
-                                                            function: 'scanRepositories'}});
+            
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed scraping Repository Projects`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+
                 throw err;
             }
 
 
-            
+
             var repositoryCommitsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
                 try {
                     await scrapeGithubRepoCommitsMixed(repositoryObj.installationId,
@@ -273,15 +274,24 @@ const scanRepositories = async () => {
                 commitScrapeListResults = await Promise.allSettled(repositoryCommitsRequestList);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error',
-                                                            source: 'worker-instance',
-                                                            message: serializeError(err),
-                                                            errorDescription: `Error Scraping Repository Commits - unscannedRepositories: ${JSON.stringify(unscannedRepositories)}`,
-                                                            function: 'scanRepositories'}});
+                
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed scraping Repository Commits`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+                
                 throw err;
             }
 
 
+            /*
+            // Create Boards for unscannedRepositories
+            try {
+                await generateGithubIssueAssociations();
+            }
+            */
 
             var repositoryIssuesRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
                 try {
@@ -305,160 +315,32 @@ const scanRepositories = async () => {
                 issueScrapeListResults = await Promise.allSettled(repositoryIssuesRequestList);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error',
-                                                            source: 'worker-instance',
-                                                            message: serializeError(err),
-                                                            errorDescription: `Error Scraping Repository Issues - unscannedRepositories: ${JSON.stringify(unscannedRepositories)}`,
-                                                            function: 'scanRepositories'}});
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed scraping Repository Issues`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
                 throw err;
             }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            // Get Repository commits for all unscanned Repositories
-            // Handle 409 Responses
-            var repositoryListCommits;
+            // Update the lastProcessedCommits for all Repositories
             try {
-                urlList = unscannedRepositories.map(repositoryObj => {
-                    return { url: `/repos/${repositoryObj.fullName}/commits/${repositoryObj.defaultBranch}`, repositoryId: repositoryObj._id.toString()};
-                });
-
-                var requestPromiseList = urlList.map( async (urlObj) => {
-                    var response;
-                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
-                    try {
-                        // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
-                        response = await installationClientList[currentInstallationId].get(urlObj.url);
-                    }
-                    catch (err) {
-                        /*
-                        await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                            errorDescription: `Error retrieving repository commits - url: ${url}`,
-                                            source: 'worker-instance', function: 'scanRepositories'}});
-                        */
-                        return {error: 'Error', statusCode: err.response.status};
-                    }
-                    return response;
-                });
-
-                repositoryListCommits = await Promise.allSettled(requestPromiseList);
-
-                // Get all successful results and 409 responses
-                // add 'isEmptyRepository' & 'failed' fields to hold status of request
-                repositoryListCommits = repositoryListCommits.map(resultObj => {
-                    var temp = resultObj;
-                    if (temp.value) {
-                        // Was it an empty Repository
-                        if (temp.value.error && temp.value.statusCode == 409) {
-                            temp.isEmptyRepository = true;
-                            temp.failed = false;
-                        }
-                        // If there's some other error we need to not continue with operations on that Repository
-                        else if (temp.value.error) {
-                            temp.isEmptyRepository = false;
-                            temp.failed = true;
-                        }
-                        // If there's no error field and a value field, treat as success
-                        else {
-                            temp.isEmptyRepository = false;
-                            temp.failed = false;
-                        }
-                    }
-                    // If value somehow is falsey, treat as failure
-                    else {
-                        temp.isEmptyRepository = false;
-                        temp.failed = true;
-                    }
-                    return temp;
-                });
+                await updateRepositoryLastProcessedCommits(unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error getting repository commits urlList: ${urlList}`,
-                                                            function: 'scanRepositories'}});
-                
-                transactionAborted = true;
-                transactionError.message = `Error getting repository commits urlList: ${urlList}`;
-                
-                throw new Error(`Error getting repository commits urlList: ${urlList}`);
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed to update Repository lastProcessedCommits`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+                throw err;
             }
 
-            // Bulk update repository 'lastProcessedCommit' fields
-            // If repository is empty, set 'lastProcessedCommit' to 'EMPTY'
-            // If repository 'failed' is true, return a value that will be filtered out on the bulkWrite
-            const bulkLastCommitOps = repositoryListCommits.map((repositoryCommitResponse, idx) => {
-                // TODO: Figure out why this list commits endpoint isn't returning an array
 
-                var commitFieldValue;
-
-                if (repositoryCommitResponse.isEmptyRepository == true && !repositoryCommitResponse.failed) {
-                    commitFieldValue = 'EMPTY';
-                }
-
-                else if (!repositoryCommitResponse.failed) {
-                    commitFieldValue = repositoryCommitResponse.value.data.sha;
-                }
-
-                // If failed
-                else if (repositoryCommitResponse.failed) {
-                    return undefined;
-                }
-
-                return {updateOne: {
-                        filter: { _id: unscannedRepositories[idx]._id },
-                        // Where field is the field you want to update
-                        update: { $set: { lastProcessedCommit: commitFieldValue } },
-                        upsert: false
-                }}
-            });
-
-            console.log('BULK LAST COMMIT OPS: ');
-            console.log(JSON.stringify(bulkLastCommitOps));
-
-            if (bulkLastCommitOps.length > 0 && bulkLastCommitOps.filter(op => op).length > 0) {
-                try {
-                    // Filter out undefined operations (these are operations on repositories whose '/commits/' API calls have failed)
-                    const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps.filter(op => op), { session });
-                    await worker.send({action: 'log', info: {level: 'info', message: `bulk Repository 'lastProcessCommit' update results: ${JSON.stringify(bulkResult)}`,
-                                                        source: 'worker-instance', function: 'scanRepositories'}});
-                }
-                catch(err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                                errorDescription: `Error setting lastProcessedCommit bulk update failed on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
-                                                                source: 'worker-instance', function: 'scanRepositories'}});
-                
-                    transactionAborted = true;
-                    transactionError.message = `Error setting lastProcessedCommit bulk update failed on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`;
-                    // TODO: Why is this Error being thrown
-                    throw new Error(`Error setting lastProcessedCommit bulk update failed on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`);
-                }
-            }
-
-            // Get Tree Objects for each Repository
+             // Get Tree Objects for each Repository
             var repositoryTreeResponseList;
 
             // Get tree sha's for latest commit on default branch for each Repository
@@ -507,12 +389,13 @@ const scanRepositories = async () => {
                 repositoryTreeResponseList = await Promise.all(requestPromiseList);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error getting repository tree urlList: ${JSON.stringify(urlList)}`,
-                                                            function: 'scanRepositories'}});
 
-                transactionAborted = true;
-                transactionError.message = `Error getting repository tree urlList: ${JSON.stringify(urlList)}`;                                                                                  
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed fetching repository tree from Github API: "/repos/:owner/:name/git/trees/:tree_sha?recursive=true"`,
+                    urlList: urlList,
+                });
+
+                Sentry.captureException(err);
 
                 throw new Error(`Error getting repository tree urlList: ${JSON.stringify(urlList)}`);
             }
@@ -574,14 +457,15 @@ const scanRepositories = async () => {
                 insertedReferences = await Reference.insertMany(treeReferences, { session });
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', source: 'worker-instance', message: serializeError(err),
-                                                            errorDescription: `Error inserting tree references: ${JSON.stringify(unscannedRepositoryIdList)}`,
-                                                            function: 'scanRepositories'}});
 
-                transactionAborted = true;
-                transactionError.message = `Error inserting tree references: ${JSON.stringify(unscannedRepositoryIdList)}`;
-                
-                throw new Error(`Error inserting tree references: ${JSON.stringify(unscannedRepositoryIdList)}`);
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed inserting tree 'References' from repositories`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+
+                throw err;
             }
 
             await worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', message: `inserted ${insertedReferences.length} tree references`,
@@ -625,14 +509,15 @@ const scanRepositories = async () => {
                                                         source: 'worker-instance', function: 'scanRepositories'}});
                 }
                 catch(err) {
-                    await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                                errorDescription: `Error bulk updating status on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`,
-                                                                source: 'worker-instance', function: 'scanRepositories'}});
 
-                    transactionAborted = true;
-                    transactionError.message = `Error bulk updating status on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`;
-                    
-                    throw new Error(`Error bulk updating status on repositories: ${JSON.stringify(unscannedRepositoryIdList)}`);
+                    Sentry.setContext("scan-repositories", {
+                        message: `scanRepositories failed bulk updating Repository.{scanned, currentlyScanning}`,
+                        unscannedRepositoryIdList: unscannedRepositoryIdList,
+                    });
+    
+                    Sentry.captureException(err);
+
+                    throw err;
                 }
             }
 
@@ -650,14 +535,15 @@ const scanRepositories = async () => {
                                                             .exec();
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error', message: serializeError(err),
-                                                            errorDescription: `Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`,
-                                                            source: 'worker-instance', function: 'scanRepositories'}});
 
-                transactionAborted = true;
-                transactionError.message = `Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`;
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed updating Workspace.setupComplete = true`,
+                    repositoriestoRemove: repositoriestoRemove,
+                });
 
-                throw new Error(`Error setting workspace setupComplete to true, workspaceId: : ${workspaceId}`);
+                Sentry.captureException(err);
+
+                throw err;
             }
 
             await worker.send({action: 'log', info: {level: 'info', message: `Completed scanning repositories: ${unscannedRepositoryIdList}`,
@@ -669,13 +555,14 @@ const scanRepositories = async () => {
         });
     }
     catch (err) {
+        
+        Sentry.setContext("scan-repositories", {
+            message: `scanRepositories attempting to delete Workspace due to transaction error`,
+            workspaceId: workspaceId,
+        });
 
-
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Attempting to deleteWorkspace due to receiving error - workspaceId: ${workspaceId}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scanRepositories'}});
+        Sentry.captureException(err);
+        
 
         // Try aborting Transaction again, just to be sure, it should have already aborted, but that doesn't seem to happen
         if (session.inTransaction()) {
@@ -692,22 +579,17 @@ const scanRepositories = async () => {
             await backendClient.delete(`/workspaces/delete/${workspaceId}`);
         }
         catch (err) {
-            await worker.send({action: 'log', info: {level: 'error',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error Deleting Workspace - workspaceId: ${workspaceId}`,
-                                                        source: 'worker-instance',
-                                                        function: 'scanRepositories'}});
 
-            throw new Error(`Error Deleting Workspace - workspaceId: ${workspaceId}`);
-        }
+            Sentry.setContext("scan-repositories", {
+                message: `scanRepositories failed to delete Workspace`,
+                workspaceId: workspaceId,
+            });
+    
+            Sentry.captureException(err);
 
-        // Throw Error to parent with relevant message
-        if (transactionAborted) {
-            throw new Error(transactionError.message);
-        }
-        else {
             throw err;
         }
+
     }
 
     session.endSession();
