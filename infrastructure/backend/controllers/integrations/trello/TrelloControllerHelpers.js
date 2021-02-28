@@ -66,7 +66,7 @@ acquireTrelloData = async (boardSourceId, accessToken, isMinimal) => {
     const nestedMemberParam = "&members=all";
 
     const nestedLabelParam =
-        "&labels=all&label_fields=color,name&labels_limit=1000";
+        "&labels=all&label_fields=id,color,name&labels_limit=1000";
 
     const finalQuery = isMinimal
         ? `/1/boards/${requestIdParams}${nestedActionParam}`
@@ -359,11 +359,12 @@ extractTrelloLabels = async (labels, board) => {
     if (labels) {
         labels = await Promise.all(
             labels.map((label) => {
-                const { color, name } = label;
+                const { color, name, id } = label;
 
                 label = new IntegrationLabel({
                     color,
                     name,
+                    sourceId: id,
                     source: "trello",
                     board: board._id,
                 });
@@ -373,12 +374,12 @@ extractTrelloLabels = async (labels, board) => {
         );
 
         labels = labels.map((label) => {
-            label.sourceId = `${label.name}-${label.color}`;
+            label.nameColor = `${label.name}-${label.color}`;
 
             return label;
         });
 
-        labels = _.mapKeys(labels, "sourceId");
+        labels = _.mapKeys(labels, "nameColor");
 
         return labels;
     } else {

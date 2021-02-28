@@ -94,25 +94,33 @@ handleWebhookUpdateBoard = async (boardId, data) => {
 
     const { link, name } = board;
 
+    let save = false;
+
     if (checkValid(externalLink) && link != externalLink) {
         board.link = externalLink;
+
+        save = true;
     }
 
     if (checkValid(externalName) && name != externalName) {
         board.name = externalName;
+
+        save = true;
     }
 
-    try {
-        board = await board.save();
-    } catch (e) {
-        throw new Error(e);
+    if (save) {
+        try {
+            board = await board.save();
+        } catch (e) {
+            throw new Error(e);
+        }
     }
 };
 
 handleWebhookCreateList = async (boardId, data) => {
     const { id, name } = data["list"];
 
-    list = new IntegrationColumn({
+    let list = new IntegrationColumn({
         name,
         source: "trello",
         sourceId: id,
@@ -152,8 +160,79 @@ handleWebhookUpdateList = async (boardId, data) => {
     const { name } = list;
 
     if (checkValid(externalName) && externalName != name) {
+        list.name = externalName;
+
         try {
             list = await list.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
+handleWebhookCreateLabel = async (boardId, data) => {
+    const { color, name, id } = data["label"];
+
+    let label = new IntegrationLabel({
+        color,
+        name,
+        sourceId: id,
+        source: "trello",
+        board: boardId,
+    });
+
+    try {
+        label = await label.save();
+    } catch (e) {
+        throw new Error(e);
+    }
+};
+
+handleWebhookDeleteLabel = async (boardId, data) => {
+    const { id } = data["label"];
+
+    try {
+        await IntegrationLabel.findOneAndDelete({
+            board: boardId,
+            sourceId: id,
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+};
+
+handleWebhookUpdateLabel = async (boardId, data) => {
+    const { id, name: externalName, color: externalColor } = data["label"];
+
+    let label;
+
+    try {
+        label = await IntegrationLabel.findOne({ sourceId: id })
+            .select("name, color")
+            .exec();
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const { name, color } = label;
+
+    let save = false;
+
+    if (checkValid(externalName) && externalName != name) {
+        label.name = externalName;
+
+        save = true;
+    }
+
+    if (checkValid(externalColor) && externalColor != color) {
+        label.color = externalColor;
+
+        save = true;
+    }
+
+    if (save) {
+        try {
+            label = await label.save();
         } catch (e) {
             throw new Error(e);
         }
@@ -167,4 +246,7 @@ module.exports = {
     handleWebhookCreateList,
     handleWebhookDeleteList,
     handleWebhookUpdateList,
+    handleWebhookCreateLabel,
+    handleWebhookDeleteLabel,
+    handleWebhookUpdateLabel,
 };
