@@ -13,20 +13,20 @@ let integrationBoardSchema = new Schema({
 
 
     // Jira Project fields
-    self: {type: String, required: true},
-    jiraId: {type: String, required: true},
-    key:{type: String, required: true},
-    projectTypeKey:{type: String, required: true},
-    simplified:{type: Boolean, required: true},
-    style: {type: String, required: true},
-    isPrivate: {type: Boolean, required: true},
+    self: {type: String},
+    jiraId: {type: String},
+    key:{type: String},
+    projectTypeKey:{type: String},
+    simplified:{type: Boolean},
+    style: {type: String},
+    isPrivate: {type: Boolean},
 
-    cloudId: {type: String, required: true},
-    jiraSiteId: {type: ObjectId, ref: 'JiraSite', required: true},
+    cloudId: {type: String},
+    jiraSiteId: {type: ObjectId, ref: 'JiraSite'},
 
 
     // Github Project fields
-    repositoryId: { type: ObjectId, ref: 'Repository', required: true },
+    repositoryId: { type: ObjectId, ref: 'Repository'},
     projectId: { type: String, required: true },
     number: { type: Number, required: true },
 
@@ -34,9 +34,9 @@ let integrationBoardSchema = new Schema({
     columnIdList: [{type: Number, required: true}],
 
     body: { type: String, required: true },
-    state:  { type: String, enum: ['open', 'closed', 'all'], required: true},
+    state:  { type: String, enum: ['open', 'closed', 'all']},
 
-    createdAt: { type: Date, required: true},
+    createdAt: { type: Date},
     updatedAt: { type: Date },
 
 });
