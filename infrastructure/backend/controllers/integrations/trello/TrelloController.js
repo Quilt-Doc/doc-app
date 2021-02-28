@@ -6,8 +6,16 @@ const logger = require("../../../logging/index").logger;
 const jobs = require("../../../apis/jobs");
 const jobConstants = require("../../../constants/index").jobs;
 
+// models
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationColumn = require("../../../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationInterval = require("../../../models/integrations/integration_objects/IntegrationInterval");
+const Workspace = require("../../../models/Workspace");
 
+// helper methods
 const {
     acquireTrelloConnectProfile,
     acquireExternalTrelloBoards,
@@ -26,16 +34,135 @@ const {
     handleTrelloConnectCallback,
 } = require("./TrelloAuthorizationController");
 
+handleReintegration = async (boards) => {
+    // get the source Ids of the boards
+    const boardSourceIds = boards.map((board) => board.sourceId);
+
+    // create a boards object mapping keys
+    const boardsObj = _.mapKeys(boards, "sourceId");
+
+    // query for all integration boards that already exist and have a
+    // sourceId equal to one of the boards requested for integration
+    let query = IntegrationBoard.find();
+
+    query.where("sourceId").in(boardSourceIds);
+
+    let reintegratedBoards = await query.lean().exec();
+
+    // map through existing boards and replace repositories with those
+    // that need to be integrated
+    reintegratedBoards.map((board) => {
+        const { sourceId, repositories } = board;
+
+        // get already integrated repos
+        const integratedRepos = new Set(
+            repositories.map((repoId) => repoId.toString())
+        );
+
+        // replace repositories field with requested repositories that don't include already integrated repos
+        board.repositories = boardsObj[sourceId].repositoryIds.map(
+            (repoId) => !integratedRepos.has(repoId)
+        );
+    });
+
+    let integratedSourceIds = new Set(
+        reintegratedBoards.map((board) => board.sourceId)
+    );
+
+    // new boards only
+    boards = boards.filter((board) => !integratedSourceIds.has(board.sourceId));
+
+    return { boards, reintegratedBoards };
+};
+
+removeIntegration = async (req, res) => {
+    const { boardId, workspaceId } = req.params;
+
+    // remove board from workspace's boards
+    let workspace;
+
+    try {
+        workspace = await Workspace.findById(workspaceId).exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    workspace.boards = workspace.boards.filter((id) => id != boardId);
+
+    try {
+        await workspace.save();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    // if board doesn't exist else where..
+    let shouldDelete;
+
+    try {
+        shouldDelete = !(await Workspace.exists({
+            boards: { $in: [boardId] },
+        }));
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    // delete all integrations associated with board and finally board
+    if (shouldDelete) {
+        const nonBoardsModels = [
+            IntegrationAttachment,
+            IntegrationColumn,
+            IntegrationInterval,
+            IntegrationLabel,
+            IntegrationTicket,
+            Association,
+        ];
+
+        const requests = nonBoardsModels.map((model) => {
+            model.deleteMany({ board: boardId });
+        });
+
+        requests.push(IntegrationBoard.findOneAndDelete({ _id: boardId }));
+
+        try {
+            await Promise.all(requests);
+        } catch (e) {
+            Sentry.captureException(e);
+
+            return res.json({ success: false, error: e });
+        }
+    }
+};
+
 triggerTrelloScrape = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
     // boards is [{ sourceId, repositoryIds }]
-    const { boards } = req.body;
+    let { boards } = req.body;
 
     let profile;
 
     try {
         profile = await acquireTrelloConnectProfile(userId);
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    let reintegratedBoards;
+
+    try {
+        const output = await handleReintegration(boards);
+
+        boards = output.boards;
+
+        reintegratedBoards = output.reintegratedBoards;
     } catch (e) {
         Sentry.captureException(e);
 
@@ -52,7 +179,39 @@ triggerTrelloScrape = async (req, res) => {
         return res.json({ success: false, error: e });
     }
 
-    return res.json({ success: true, result });
+    result = result.map((board) => _.omit(board, ["tickets"]));
+
+    // need to finally mutate workspace to add boards
+    let workspace;
+
+    try {
+        workspace = Workspace.findById(workspaceId).select("boards").exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    boardIds = result.map((board) => board._id);
+
+    reintegratedBoardIds = reintegratedBoards.map((board) => board._id);
+
+    workspace.boards = [
+        ...workspace.boards,
+        ...boardIds,
+        ...reintegratedBoardIds,
+    ];
+
+    try {
+        workspace = workspace.save();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
+    return res.json({
+        success: true,
+        result: { workspace, boards: [...result, ...reintegratedBoards] },
+    });
 };
 
 bulkScrapeTrello = async (profile, boards, workspaceId) => {
@@ -80,7 +239,7 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
         members = await extractTrelloMembers(workspaceId, members, profile);
 
         // create IntegrationBoard
-        const board = await extractTrelloBoard(
+        let board = await extractTrelloBoard(
             members,
             boardSourceId,
             name,
@@ -93,7 +252,8 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
 
         const attachmentResponse = await extractTrelloDirectAttachments(
             cards,
-            repositoryIds
+            repositoryIds,
+            board
         );
 
         cards = attachmentResponse.cards;
@@ -102,11 +262,11 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
 
         cards = await modifyTrelloActions(actions, cards);
 
-        const intervalResponse = await extractTrelloIntervals(cards);
+        const intervalResponse = await extractTrelloIntervals(cards, board);
 
         cards = intervalResponse.cards;
 
-        labels = await extractTrelloLabels(labels);
+        labels = await extractTrelloLabels(labels, board);
 
         let insertOps = [];
 
@@ -177,6 +337,68 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
     }
 
     return result;
+};
+
+getExternalTrelloBoards = async (req, res) => {
+    const { userId, workspaceId } = req.params;
+
+    let profile;
+
+    try {
+        profile = await acquireTrelloConnectProfile(userId);
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    if (!profile) return res.json({ success: true, result: null });
+
+    let boards;
+
+    try {
+        boards = await acquireExternalTrelloBoards(profile);
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: true, error: e });
+    }
+
+    let workspace;
+
+    try {
+        workspace = await Workspace.findById(workspaceId)
+            .lean()
+            .select("boards")
+            .populate("boards")
+            .exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: true, error: e });
+    }
+
+    const workspaceBoardSourceIds = workspace.boards
+        ? workspace.boards.map((board) => board.sourceId)
+        : [];
+
+    const integratedBoardSourceIds = new Set(workspaceBoardSourceIds);
+
+    boards = boards.filter((board) => {
+        const { id } = board;
+
+        return !integratedBoardSourceIds.has(id);
+    });
+
+    return res.json({ success: true, result: boards });
+};
+
+module.exports = {
+    beginTrelloConnect,
+    handleTrelloConnectCallback,
+    getExternalTrelloBoards,
+    triggerTrelloScrape,
+    bulkScrapeTrello,
 };
 
 /*
@@ -266,69 +488,6 @@ handleExistingBoards = async (accessToken, userId, boardWorkspaceContexts) => {
 };
 */
 
-getExternalTrelloBoards = async (req, res) => {
-    const { userId, workspaceId } = req.params;
-
-    let profile;
-
-    try {
-        profile = await acquireTrelloConnectProfile(userId);
-    } catch (e) {
-        Sentry.captureException(e);
-
-        return res.json({ success: false, error: e });
-    }
-
-    if (!profile) return res.json({ success: true, result: null });
-
-    let boards;
-
-    try {
-        boards = await acquireExternalTrelloBoards(profile);
-    } catch (e) {
-        Sentry.captureException(e);
-
-        return res.json({ success: true, error: e });
-    }
-
-    let workspace;
-
-    try {
-        workspace = await Workspace.find({
-            workspace: workspaceId,
-        })
-            .lean()
-            .select("boards")
-            .populate("boards")
-            .exec();
-    } catch (e) {
-        Sentry.captureException(e);
-
-        return res.json({ success: true, error: e });
-    }
-
-    const integratedBoardSourceIds = new Set(
-        workspace.boards.map((board) => board.sourceId)
-    );
-
-    boards = boards.filter((board) => {
-        const { id } = board;
-
-        return !integratedBoardSourceIds.has(id);
-    });
-
-    return res.json({ success: true, result: boards });
-};
-
-module.exports = {
-    beginTrelloConnect,
-    handleTrelloConnectCallback,
-    getExternalTrelloBoards,
-    triggerTrelloScrape,
-    bulkScrapeTrello,
-};
-
-/*
 /*
             let boardsReponse;
 

@@ -39,6 +39,9 @@ const jobConstants = require("../constants/index").jobs;
 
 const logger = require("../logging/index").logger;
 
+//sentry
+const Sentry = require("@sentry/node");
+
 // grab the Mixpanel factory
 const Mixpanel = require("mixpanel");
 
@@ -1553,6 +1556,54 @@ searchWorkspace = async (req, res) => {
     return res.json({ success: true, result: finalResult });
 };
 
+editWorkspace = async (req, res) => {
+    const { workspaceId } = req.params;
+
+    const { name } = req.body;
+
+    console.log("ENTERED TO EDIT WORKSPACE");
+
+    const update = {};
+
+    if (checkValid(name) && name != "") {
+        if (name == "") {
+            return res.json({
+                success: false,
+                message: "Workspace name cannot be empty.",
+            });
+        }
+
+        update.name = name;
+    }
+
+    let returnedWorkspace;
+
+    try {
+        returnedWorkspace = await Workspace.findByIdAndUpdate(
+            workspaceId,
+            { $set: update },
+            { new: true }
+        )
+            .select("name _id")
+            .lean()
+            .exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({
+            success: false,
+            error:
+                "editWorkspace: Failed to update workspace during Mongo Query",
+            trace: e,
+        });
+    }
+
+    return res.json({
+        success: true,
+        result: returnedWorkspace,
+    });
+};
+
 module.exports = {
     createWorkspace,
     searchWorkspace,
@@ -1560,4 +1611,5 @@ module.exports = {
     deleteWorkspace,
     removeWorkspaceUser,
     retrieveWorkspaces,
+    editWorkspace,
 };

@@ -207,7 +207,7 @@ getRepositories = async (repositoryIds) => {
     return currentRepositories;
 };
 
-extractTrelloDirectAttachments = async (cards, repositoryIds) => {
+extractTrelloDirectAttachments = async (cards, repositoryIds, board) => {
     const currentRepositories = await getRepositories(repositoryIds);
 
     cards = parseDescriptionAttachments(cards);
@@ -260,6 +260,7 @@ extractTrelloDirectAttachments = async (cards, repositoryIds) => {
                     modelType,
                     link: url,
                     sourceId,
+                    board: board._id,
                 };
 
                 if (date) attachment.sourceCreationDate = new Date(date);
@@ -354,7 +355,7 @@ modifyTrelloActions = (actions, cards) => {
     return cards;
 };
 
-extractTrelloLabels = async (labels) => {
+extractTrelloLabels = async (labels, board) => {
     if (labels) {
         labels = await Promise.all(
             labels.map((label) => {
@@ -364,6 +365,7 @@ extractTrelloLabels = async (labels) => {
                     color,
                     name,
                     source: "trello",
+                    board: board._id,
                 });
 
                 return label.save();
@@ -392,7 +394,7 @@ addDays = (date, days) => {
     return result;
 };
 
-extractTrelloIntervals = async (cards) => {
+extractTrelloIntervals = async (cards, board) => {
     let insertOpsDict = {};
 
     cards.map((card) => {
@@ -411,6 +413,7 @@ extractTrelloIntervals = async (cards) => {
                 insertOpsDict[identifier] = {
                     start,
                     end: date,
+                    board: board._id,
                 };
 
                 if (card.intervalIdentifiers) {

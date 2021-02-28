@@ -10,6 +10,7 @@ const integrationAttachmentSchema = new Schema({
     sourceId: String,
     repository: { type: ObjectId, ref: "Repository" },
     isAssociation: { type: Boolean, default: false },
+    board: { type: ObjectId, ref: "IntegrationBoard" },
 
     link: String,
     sourceCreationDate: Date,

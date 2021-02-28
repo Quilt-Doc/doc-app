@@ -1,5 +1,7 @@
 var mongoose = require("mongoose");
+
 const { ObjectId } = mongoose.Types;
+
 const logger = require("../../../logging/index").logger;
 
 const apis = require("../../../apis/api");
@@ -7,6 +9,51 @@ const apis = require("../../../apis/api");
 const JiraSite = require("../../../models/integrations/jira/JiraSite");
 
 const axios = require("axios");
+
+const { JIRA_CLIENT_ID } = process.env;
+
+beginJiraConnect = async (req, res) => {
+    const { user_id, workspace_id } = req.query;
+
+    const workspaceId = workspace_id.toString();
+
+    const userId = user_id.toString();
+
+    console.log(`Entered beginJiraConnect, Params: ${workspaceId} ${userId}`);
+
+    const jiraBaseURL = `https://auth.atlassian.com/authorize?audience=api.atlassian.com`;
+
+    const jiraBaseParams = `&client_id=${JIRA_CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work%20offline_access`;
+
+    const jiraCallbackUrl =
+        "http://localhost:3001/api/integrations/connect/jira/callback";
+
+    const jiraSpecParams = `&redirect_uri=${encodeURIComponent(
+        jiraCallbackUrl
+    )}&state=${workspaceId}-${userId}&response_type=code&prompt=consent`;
+
+    const jiraAuthURL = `${jiraBaseURL}${jiraBaseParams}${jiraSpecParams}`;
+
+    return res.redirect(jiraAuthURL);
+};
+
+getExternalJiraProjects = async (req, res) => {
+    const { userId, workspaceId } = req.params;
+
+    /*
+    console.log(
+        `Entered getExternalJiraProjects, Params: ${workspaceId} ${userId}`
+    );*/
+
+    return res.json({ success: true, result: [] });
+};
+
+handleJiraCallback = async (req, res) => {
+    return res.json({
+        success: true,
+        message: "Entered here in browser buddy",
+    });
+};
 
 getWorkspaceJiraSites = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
@@ -105,4 +152,10 @@ getJiraSiteIssues = async (req, res) => {
     return res.json({ success: true, result: jiraIssueResponse.data.issues });
 };
 
-module.exports = { getWorkspaceJiraSites, getJiraSiteIssues };
+module.exports = {
+    getWorkspaceJiraSites,
+    getJiraSiteIssues,
+    beginJiraConnect,
+    getExternalJiraProjects,
+    handleJiraCallback,
+};

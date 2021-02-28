@@ -175,25 +175,24 @@ const getFileContext = async (req, res) => {
 
     const { filePath } = req.body;
 
-    if (!checkValid(workspaceId))
+    if (!checkValid(workspaceId)) {
         return res.json({
             success: false,
             error: "no association workspaceId provided",
         });
+    }
 
-    if (!checkValid(filePath))
+    if (!checkValid(filePath)) {
         return res.json({
             success: false,
             error: "no association filePath provided",
         });
+    }
 
     let result = {
-        github: {
-            //actionType: "POPULATE_GITHUB",
-        },
-        trello: {
-            //actionType: "POPULATE_TRELLO",
-        },
+        github: {},
+        trello: {},
+        jira: {},
     };
 
     // Fetch PRs
@@ -202,7 +201,7 @@ const getFileContext = async (req, res) => {
 
         query.where("repository").equals(repositoryId);
 
-        //query.where("fileList").in([filePath]);
+        query.where("fileList").in([filePath]);
 
         result["github"].pullRequests = await query.limit(20).lean().exec();
     } catch (err) {
@@ -219,7 +218,7 @@ const getFileContext = async (req, res) => {
 
         query.where("repository").equals(repositoryId);
 
-        //query.where("fileList").in([filePath]);
+        query.where("fileList").in([filePath]);
 
         result["github"].commits = await query.limit(20).lean().exec();
     } catch (err) {
@@ -230,33 +229,7 @@ const getFileContext = async (req, res) => {
         });
     }
 
-    console.log("RESULT", result);
-
-    let sources;
-
-    try {
-        const contexts = await BoardWorkspaceContext.find({
-            workspace: workspaceId,
-        })
-            .select("source")
-            .lean()
-            .exec();
-
-        console.log("CONTEXTS", contexts);
-
-        sources = Array.from(
-            new Set(contexts.map((context) => context.source))
-        );
-    } catch (e) {
-        return res.json({
-            success: false,
-            error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            trace: e,
-        });
-    }
-
-    console.log("HERE");
-
+    // Get all Code Object Ids
     let codeObjectIds = [];
 
     Object.keys(result["github"]).map((modelType) => {
@@ -266,8 +239,7 @@ const getFileContext = async (req, res) => {
         ];
     });
 
-    console.log("CODE OBJECT IDS", codeObjectIds);
-
+    // Get all Associations of Code Objects
     let associations;
 
     try {
@@ -288,13 +260,9 @@ const getFileContext = async (req, res) => {
         });
     }
 
-    console.log("ASSOCIATIONS LENGTH", associations.length);
-
     const ticketIds = Array.from(
         new Set(
             associations.map((association) => {
-                console.log("ASSOCIATION", association);
-
                 const { firstElement: ticketId } = association;
 
                 return ticketId;
@@ -302,13 +270,24 @@ const getFileContext = async (req, res) => {
         )
     );
 
-    let tickets;
+    const ticketSources = ["trello", "github", "jira"];
+
+    let ticketsBySource;
 
     try {
-        tickets = await IntegrationTicket.find({ _id: { $in: ticketIds } })
-            .lean()
-            .exec();
+        ticketsBySource = await Promise.all(
+            ticketSources.map((source) => {
+                return IntegrationTicket.find({
+                    _id: { $in: ticketIds },
+                    source,
+                })
+                    .lean()
+                    .exec();
+            })
+        );
     } catch (e) {
+        Sentry.captureException(e);
+
         return res.json({
             success: false,
             error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
@@ -316,9 +295,10 @@ const getFileContext = async (req, res) => {
         });
     }
 
-    result["trello"].tickets = tickets;
+    ticketsBySource.map((tickets, i) => {
+        result[ticketSources[i]].tickets = tickets;
+    });
 
-    console.log("RESULT", result);
     //IntegrationTicket.populate(tickets, {path: "author references workspace repository tags snippets"});
 
     return res.json({ success: true, result });

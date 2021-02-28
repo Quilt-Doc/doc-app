@@ -107,6 +107,8 @@ const nonAuthPaths = [
     "/api/pusher/webhook",
     "/api/integrations/create",
     "/integrations/connect/trello",
+    "/integrations/connect/jira",
+    "/auth/encrypt_ide_token",
 ];
 
 app.use(function (req, res, next) {
@@ -152,6 +154,7 @@ app.use(function (req, res, next) {
     }
 
     var publicKey = fs.readFileSync("docapp-test-public.pem", "utf8");
+    console.log("JWT TOKEN", token);
     try {
         var decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 

@@ -49,6 +49,7 @@ beginTrelloConnect = async (req, res) => {
                 if (error) Sentry.captureMessage(error);
 
                 try {
+                    // user has only one connect profile for now
                     await TrelloConnectProfile.deleteMany({ user: userId });
                 } catch (e) {
                     Sentry.captureException(e);
@@ -65,6 +66,11 @@ beginTrelloConnect = async (req, res) => {
                 } catch (e) {
                     Sentry.captureException(e);
                 }
+
+                console.log(
+                    "SAVED TRELLO CONNECT PROFILE?",
+                    trelloConnectProfile
+                );
 
                 res.redirect(
                     `${authorizeURL}?oauth_token=${token}&name=${appName}&scope=${scope}&expiration=${expiration}`
@@ -126,6 +132,11 @@ handleTrelloConnectCallback = async (req, res) => {
             } catch (e) {
                 Sentry.captureException(e);
             }
+
+            console.log(
+                "FINISHED TRELLO CONNECT PROFILE",
+                trelloConnectProfile
+            );
 
             return res.redirect("http://getquilt.app");
         }

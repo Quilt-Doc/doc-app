@@ -47,8 +47,6 @@ beginGoogleConnect = (req, res, next) => {
         "https://www.googleapis.com/auth/userinfo.email",
     ];
 
-    console.log("SCOPE", scope);
-
     const URL = oauth2Client.generateAuthUrl({
         access_type: "offline",
         prompt: "consent",
@@ -219,6 +217,7 @@ bulkScrapeGoogleDrive = async (googleDriveIntegration) => {
                 const { displayName, emailAddress } = owner;
 
                 googleDriveMembers.push(displayName);
+
                 googleDriveMemberEmails.push(emailAddress);
 
                 for (let i = 0; i < memberUsers.length; i++) {

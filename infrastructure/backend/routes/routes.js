@@ -343,6 +343,12 @@ router.put(
     workspaceController.removeWorkspaceUser
 );
 
+router.put(
+    "/workspaces/edit/:workspaceId",
+    authorizationMiddleware.workspaceMiddleware,
+    workspaceController.editWorkspace
+);
+
 router.post(
     "/workspaces/retrieve",
     authorizationMiddleware.workspaceMiddleware,
@@ -407,15 +413,11 @@ router.get("/auth/github", function (req, res, next) {
         state.source = "localhost";
     }
 
-    console.log("IDE TOKEN", ide_token);
-
     if (email) {
         state.email = email;
     } else if (ide_token) {
         state.ideToken = ide_token;
     }
-
-    console.log(`Final State to Pass: ${JSON.stringify(state)}`);
 
     state = Buffer.from(JSON.stringify(state)).toString("base64");
 
@@ -460,6 +462,8 @@ router.get('/auth/github/fork', (req, res) => {
 });
 */
 
+router.get("/auth/encrypt_ide_token", authController.encryptIDEToken);
+
 router.get(
     "/auth/github/redirect",
     passport.authenticate("github", { session: false }),
@@ -467,7 +471,6 @@ router.get(
         // console.log('Request Host: ', req.get('host'));
         // if (err) { return res.json({success: false, error: err}) }
         // TODO: Change this to appropriate route
-        console.log("Entered");
         if (!req.user) {
             console.log("req.user != true");
             return res.redirect("/login");
@@ -477,16 +480,11 @@ router.get(
         const { state } = req.query;
 
         try {
-            console.log("CHECKING IDE TOKEN");
-
             const { ideToken } = JSON.parse(
                 Buffer.from(state, "base64").toString()
             );
 
-            console.log("RECEIVED IDE TOKEN", ideToken);
-
             if (ideToken) {
-                console.log("CALLING IDE CLIENT");
                 authController.authorizeIDEClient(ideToken, req.user);
                 return res.redirect("/login");
             }
@@ -615,7 +613,13 @@ router.get("/verify/:verifyEmailHash", emailVerifyController.verifyEmail);
 router.post("/verify/add_contact", emailVerifyController.addContact);
 
 const workspaceInviteController = require("../controllers/authentication/WorkspaceInviteController");
+
 router.post("/invites/:workspaceId", workspaceInviteController.sendInvite);
+
+router.post(
+    "/invites/:workspaceId/retrieve",
+    workspaceInviteController.retrieveInvites
+);
 
 const assetController = require("../controllers/AssetController");
 router.get("/assets/invalid_document", assetController.getInvalidDocumentIcon);
@@ -767,6 +771,14 @@ router.get('/integrations/connect/google/callback', googleIntegrationController.
 */
 
 const jiraController = require("../controllers/integrations/jira/JiraController");
+
+router.get("/integrations/connect/jira", jiraController.beginJiraConnect);
+
+router.get(
+    "/integrations/connect/jira/callback",
+    jiraController.handleJiraCallback
+);
+
 router.get(
     "/integrations/:workspaceId/jira",
     jiraController.getWorkspaceJiraSites
@@ -774,6 +786,11 @@ router.get(
 router.post(
     "/integrations/:workspaceId/jira/get",
     jiraController.getJiraSiteIssues
+);
+
+router.get(
+    "/integrations/:workspaceId/:userId/jira/get_external_boards",
+    jiraController.getExternalJiraProjects
 );
 
 const branchController = require("../controllers/BranchController");

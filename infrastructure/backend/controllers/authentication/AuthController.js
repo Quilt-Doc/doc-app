@@ -4,6 +4,10 @@ if (process.env.IS_PRODUCTION) {
     CLIENT_HOME_PAGE_URL = process.env.PRODUCTION_HOME_PAGE_URL;
 }
 
+const cryptoRandomString = require("crypto-random-string");
+
+const CryptoJS = require("crypto-js");
+
 const client = require("../../apis/api").requestGithubClient();
 
 const User = require("../../models/authentication/User");
@@ -397,23 +401,45 @@ retrieveDomainRepositories = async (req, res) => {
     return res.json(filteredResponse)
 }
 */
+encryptIDEToken = (req, res) => {
+    const ideToken = cryptoRandomString({ length: 10 });
 
-authorizeIDEClient = (ideToken, user) => {
-    console.log("ENTERED IDE AUTHORIZATION PHASE");
+    // Encrypt
+    const encryptedToken = CryptoJS.AES.encrypt(
+        ideToken,
+        process.env.IDE_AUTHENTICATION_SECRET
+    ).toString();
+
+    return res.json({ success: true, result: { encryptedToken, ideToken } });
+};
+
+authorizeIDEClient = (initialIDEToken, user) => {
+    initialIDEToken = decodeURIComponent(initialIDEToken);
+
+    let ideToken = initialIDEToken.replace(" ", "+");
 
     const { _id: userId, role } = user;
 
     const jwtToken = createUserJWTToken(userId, role);
 
-    console.log("JWT", jwtToken);
+    // Decrypt
+    const bytes = CryptoJS.AES.decrypt(
+        ideToken,
+        process.env.IDE_AUTHENTICATION_SECRET
+    );
 
+    console.log("USER", user);
+
+    console.log("IDE TOKEN", ideToken);
+
+    ideToken = bytes.toString(CryptoJS.enc.Utf8);
+
+    console.log("IDE TOKEN", ideToken);
     pusher.trigger(`private-${ideToken}`, "vscode-user-authorized", {
         jwt: jwtToken,
         user: user,
         isAuthorized: true,
     });
-
-    console.log("TRIGGERED ROUTE");
 
     return;
 };
@@ -425,4 +451,5 @@ module.exports = {
     checkInstallation,
     jiraAuthResponse, // , retrieveDomainRepositories
     authorizeIDEClient,
+    encryptIDEToken,
 };

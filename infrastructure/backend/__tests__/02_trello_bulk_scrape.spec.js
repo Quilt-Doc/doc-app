@@ -89,6 +89,7 @@ afterAll(async () => {
     delete process.env.TEST_TRELLO_ASSOCIATIONS;
 });
 
+// NEED TO ADD BOARD TO SOME INTEGRATION METHODS AND EQUALITY CHECKS
 describe("Test Trello Bulk Scrape Basic", () => {
     let backendUserClient;
 
@@ -412,9 +413,12 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const boardData = JSON.parse(process.env.TEST_TRELLO_BOARD_DATA);
 
+        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
+
         const { cards, attachments } = await extractTrelloDirectAttachments(
             boardData.cards,
-            repositoryIds
+            repositoryIds,
+            board
         );
 
         process.env.TEST_TRELLO_ATTACHMENTS = JSON.stringify(attachments);
@@ -530,7 +534,12 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const prevCards = JSON.parse(process.env.TEST_TRELLO_CARDS);
 
-        const { cards, intervals } = await extractTrelloIntervals(prevCards);
+        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
+
+        const { cards, intervals } = await extractTrelloIntervals(
+            prevCards,
+            board
+        );
 
         const intervalCardNames = Object.values(cards)
             .filter(
@@ -588,7 +597,9 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const { labels } = boardData;
 
-        const createdLabelsObj = await extractTrelloLabels(labels);
+        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
+
+        const createdLabelsObj = await extractTrelloLabels(labels, board);
 
         const createdLabels = Object.values(createdLabelsObj);
 
@@ -820,14 +831,21 @@ describe("Test Direct Association Creation Basic", () => {
 
         cards = _.mapKeys(cards, "_id");
 
+        // from storage file to compare if queries were produced correctly
         const { expectedCardQueries } = testDataAssoc;
 
+        // map through each model type
         Object.keys(queries).map((modelType) => {
+            // set of seen ticket names
             let seen = new Set();
 
+            // map through queries of that model
             Object.keys(queries[modelType]).map((ticketId) => {
+                // extract name of ticketId
                 const { name } = cards[ticketId];
 
+                // expect the number of or clauses for that model
+                // match actual number of code objects connected to ticket
                 expect(
                     queries[modelType][ticketId][0]["$match"]["$or"].length
                 ).toEqual(expectedCardQueries[name][modelType]);
@@ -836,20 +854,31 @@ describe("Test Direct Association Creation Basic", () => {
             });
 
             Object.keys(expectedCardQueries).map((key) => {
+                // for each ticket not seen
                 if (!seen.has(key)) {
+                    // expect the # of related code objects to equal 0
                     expect(expectedCardQueries[key][modelType]).toEqual(0);
                 }
             });
         });
 
+        // data that has, for each model, for each ticket by name,
+        // the associated code objects with sourceId
         const { expectedTicketToCO } = testDataAssoc;
 
+        // modelTicketMap takes form
+        // Map of Model Type -> Map of Ticket Ids -> Array of Code Objects
+        // -> { "PullRequest" : { "1": [co1, co2] } }
         Object.keys(directGenerator.modelTicketMap).map((key) => {
+            // extract for a model, the expected tickets to code objects
             const expectedTicketCO = expectedTicketToCO[key];
 
+            // extract for a model, the expected tickets to code objects
             const ticketCO = directGenerator.modelTicketMap[key];
 
+            // map through tickets
             Object.keys(ticketCO).map((ticketId) => {
+                // get ticket
                 const card = cards[ticketId];
 
                 const { name } = card;
@@ -858,6 +887,17 @@ describe("Test Direct Association Creation Basic", () => {
 
                 const receivedCO = ticketCO[ticketId];
 
+                if (receivedCO.length !== expectedCO.length) {
+                    console.log("MODEL NAME", key);
+
+                    console.log("NAME OF TICKET", name);
+
+                    console.log("EXPECTED CO", expectedCO);
+
+                    console.log("RECEIVED CO", receivedCO);
+                }
+
+                // compare lengths of associated code object for this specific ticket
                 expect(receivedCO.length).toEqual(expectedCO.length);
 
                 expect(receivedCO.map((co) => co.sourceId).sort()).toEqual(
