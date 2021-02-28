@@ -239,6 +239,69 @@ handleWebhookUpdateLabel = async (boardId, data) => {
     }
 };
 
+handleWebhookCreateMember = (boardId, data) => {
+    const { id, username, fullName } = data["member"];
+
+    let memberExists;
+
+    try {
+        memberExists = IntegrationUser.exists({ sourceId: id });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    if (!memberExists) {
+        let member = new IntegrationUser({
+            sourceId: id,
+            source: "trello",
+            userName: username,
+            name: fullName,
+        });
+
+        try {
+            member = member.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
+handleWebhookUpdateMember = (boardId, data) => {
+    const { username, fullName, id } = data["member"];
+
+    let member;
+
+    try {
+        member = await IntegrationUser.findOne({ sourceId: id }).select("name userName");
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const { userName, name } = member;
+
+    let save = false;
+
+    if (checkValid(username) && username != userName) {
+        member.userName = username;
+
+        save = true;
+    }
+
+    if (checkValid(name) && name != fullName) {
+        member.name = fullName;
+
+        save = true;
+    }
+    
+    if (save) {
+        try {
+            member = await member.save();
+        } catch(e) {
+            throw new Error(e);
+        }
+    }
+};
+
 module.exports = {
     setupTrelloWebhook,
     verifyTrelloWebhookRequest,
@@ -249,4 +312,6 @@ module.exports = {
     handleWebhookCreateLabel,
     handleWebhookDeleteLabel,
     handleWebhookUpdateLabel,
+    handleWebhookCreateMember,
+    handleWebhookUpdateMember,
 };
