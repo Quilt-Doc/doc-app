@@ -32,6 +32,8 @@ const trelloAPI = axios.create({
 });
 
 const { checkValid } = require("../../../utils/utils");
+const { check } = require("prettier");
+const Association = require("../../../models/associations/Association");
 
 setupTrelloWebhook = async (profile, boards, workspaceId, userId) => {
     const { accessToken } = profile;
@@ -266,13 +268,15 @@ handleWebhookCreateMember = (boardId, data) => {
     }
 };
 
-handleWebhookUpdateMember = (boardId, data) => {
+handleWebhookUpdateMember = async (boardId, data) => {
     const { username, fullName, id } = data["member"];
 
     let member;
 
     try {
-        member = await IntegrationUser.findOne({ sourceId: id }).select("name userName");
+        member = await IntegrationUser.findOne({ sourceId: id }).select(
+            "name userName"
+        );
     } catch (e) {
         throw new Error(e);
     }
@@ -292,13 +296,709 @@ handleWebhookUpdateMember = (boardId, data) => {
 
         save = true;
     }
-    
+
     if (save) {
         try {
             member = await member.save();
-        } catch(e) {
+        } catch (e) {
             throw new Error(e);
         }
+    }
+};
+
+/*
+et cardParams = {
+                name,
+                source: "trello",
+                sourceId: id,
+                description: desc,
+                link: url,
+                assignees: assigneeIds, // trelloCardMember, // trelloCardListUpdateDates: [{type: Date}],
+                members: assigneeIds,
+                column: columnId,
+                board: board._id,
+            };
+
+            if (due) cardParams.trelloCardDue = new Date(due);
+
+            if (dueComplete) cardParams.trelloCardDueComplete = dueComplete;
+
+            if (dateLastActivity)
+                cardParams.trelloCardDateLastActivity = new Date(
+                    dateLastActivity
+                );
+
+            if (attachmentIds && attachmentIds.length > 0)
+                cardParams.attachments = attachmentIds;
+
+            if (intervalIds && intervalIds.length > 0)
+                cardParams.intervals = intervalIds;
+
+            if (labelIds && labelIds.length > 0) cardParams.labels = labelIds;
+*/
+addDays = (date, days) => {
+    let result = new Date(date);
+
+    result.setDate(result.getDate() + days);
+
+    return result;
+};
+
+parseDescriptionAttachments = (desc) => {
+    let tokens = desc.split(" ");
+
+    tokens = tokens
+        .filter((token) => isUrl(token))
+        .filter((token) => token.includes("https://github.com"));
+
+    const attachments = tokens.map((token) => {
+        return token;
+    });
+
+    return attachments;
+};
+
+// may need to add attachments
+handleWebhookCreateCard = async (boardId, profile, data) => {
+    const { accessToken } = profile;
+
+    const { id, name } = data["card"];
+
+    let externalCard;
+
+    try {
+        externalCard = await trelloAPI.get(
+            `/1/cards/${id}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=all&actions=updateCard:idList&actions_limit=1000&action_member=false`
+        );
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const {
+        closed,
+        dateLastActivity,
+        desc,
+        due,
+        idLabels,
+        idList,
+        idMembers,
+        actions,
+        name,
+        url,
+    } = externalCard;
+
+    let card = new IntegrationTicket({
+        name,
+        link: url,
+    });
+
+    if (checkValid(closed)) {
+        card.trelloCardDueComplete = closed;
+    }
+
+    if (checkValid(dateLastActivity)) {
+        card.trelloCardDateLastActivity = new Date(dateLastActivity);
+    }
+
+    if (checkValid(desc)) {
+        card.description = desc;
+
+        const attachmentUrls = parseDescriptionAttachments(desc);
+
+        try {
+            newAttachments = await Promise.all(
+                attachmentUrls.map((attUrl) => {
+                    const newAttachment = new IntegrationAttachment({
+                        link: attUrl,
+                        board: boardId,
+                    });
+
+                    return newAttachment.save();
+                })
+            );
+        } catch (e) {
+            throw new Error(e);
+        }
+
+        card.attachments = newAttachments.map((att) => att._id);
+    }
+
+    if (checkValid(due)) {
+        card.trelloCardDue = new Date(due);
+    }
+
+    if (checkValid(idLabels) && idLabels.length > 0) {
+        try {
+            const labels = await IntegrationLabel.find({
+                sourceId: { $in: idLabels },
+            })
+                .select("_id")
+                .lean()
+                .exec();
+
+            card.labels = labels.map((label) => label._id);
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+
+    if (checkValid(idList)) {
+        try {
+            const column = await IntegrationColumn.findOne({
+                sourceId: idList,
+            })
+                .select("_id")
+                .lean()
+                .exec();
+
+            card.column = column;
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+
+    if (checkValid(idMembers) && idMembers.length > 0) {
+        try {
+            const members = await IntegrationUser.find({
+                sourceId: { $in: idMembers },
+            })
+                .select("_id")
+                .lean()
+                .exec();
+
+            card.members = members.map((member) => member._id);
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+
+    if (checkValid(actions) && actions.length > 0) {
+        actions.map(
+            (action) => (action.date = new Date(action.date).getTime())
+        );
+
+        actions.sort((a, b) => {
+            return a.date.getTime() > b.date.getTime() ? -1 : 1;
+        });
+
+        const relevantActions = actions.slice(0, 2);
+
+        const intervals = relevantActions.map((action) => {
+            return new IntegrationInterval({
+                start: addDays(new Date(action.date), -10),
+                end: new Date(action.date),
+            });
+        });
+
+        const intervals = await Promise.all(
+            intervals.map((interval) => interval.save())
+        );
+
+        card.intervals = intervals.map((interval) => interval._id);
+    }
+
+    try {
+        card = await card.save();
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    await generateAttachmentAssociations(card.attachments, card, boardId);
+};
+
+handleWebhookUpdateCard = async (boardId, profile, data) => {
+    const { accessToken } = profile;
+
+    const { id } = data["card"];
+
+    let externalCard;
+
+    try {
+        externalCard = await trelloAPI.get(
+            `/1/cards/${id}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=all&actions=updateCard:idList&actions_limit=1000&action_member=false`
+        );
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const {
+        idList,
+        dateLastActivity,
+        desc,
+        actions,
+        name: externalName,
+        due,
+        dueComplete,
+        url,
+    } = externalCard;
+
+    let card;
+
+    try {
+        card = await IntegrationTicket.findOne({ sourceId: id })
+            .populate({ path: "column attachments" })
+            .select(
+                "column trelloCardDateLastActivity description name trelloCardDue trelloCardDueComplete link intervals attachments"
+            );
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const {
+        column: { sourceId: listSourceId, _id: listId },
+        trelloCardDateLastActivity,
+        description,
+        name,
+        trelloCardDue,
+        trelloCardDueComplete,
+        link,
+    } = card;
+
+    let save = false;
+
+    let interval;
+
+    let newAttachments;
+
+    if (checkValid(idList) && idList != listSourceId) {
+        try {
+            const column = await IntegrationColumn.findOne({
+                sourceId: idList,
+            })
+                .select("_id")
+                .lean()
+                .exec();
+
+            card.column = column._id;
+        } catch (e) {
+            throw new Error(e);
+        }
+
+        if (actions.length > 0) {
+            actions = actions.map(
+                (action) => (action.date = new Date(action.date))
+            );
+
+            actions.sort((a, b) => {
+                return a.date.getTime() > b.date.getTime() ? -1 : 1;
+            });
+
+            const { date } = action.slice(0, 1)[0];
+
+            interval = new IntegrationInterval({
+                start: addDays(new Date(date), -10),
+                end: new Date(date),
+            });
+
+            try {
+                interval = await interval.save();
+            } catch (e) {
+                throw new Error(e);
+            }
+
+            card.intervals.push(interval);
+        }
+
+        save = true;
+    } else {
+        card.column = listId;
+    }
+
+    if (
+        checkValid(dateLastActivity) &&
+        new Date(dateLastActivity).getTime() !=
+            trelloCardDateLastActivity.getTime()
+    ) {
+        card.trelloCardDateLastActivity = new Date(dateLastActivity);
+
+        save = true;
+    }
+
+    if (checkValid(desc) && desc != description) {
+        card.description = desc;
+
+        const attachmentUrls = parseDescriptionAttachments(desc);
+
+        const alreadyAttached = new Set(card.attachments.map((att) => att.url));
+
+        try {
+            newAttachments = await Promise.all(
+                attachmentUrls
+                    .filter((attUrl) => {
+                        !alreadyAttached.includes(attUrl);
+                    })
+                    .map((attUrl) => {
+                        const newAttachment = new IntegrationAttachment({
+                            link: attUrl,
+                            board: boardId,
+                        });
+
+                        return newAttachment.save();
+                    })
+            );
+        } catch (e) {
+            throw new Error(e);
+        }
+
+        card.attachments = [
+            ...newAttachments.map((att) => att._id),
+            ...card.attachments.map((att) => att._id),
+        ];
+
+        save = true;
+    } else {
+        card.attachments = card.attachments.map((att) => att._id);
+    }
+
+    if (checkValid(externalName) && name != externalName) {
+        card.name = externalName;
+
+        save = true;
+    }
+
+    if (
+        checkValid(due) &&
+        new Date(due).getTime() != new Date(trelloCardDue).getTime()
+    ) {
+        card.trelloCardDue = new Date(due);
+
+        save = true;
+    }
+
+    if (checkValid(dueComplete) && dueComplete != trelloCardDueComplete) {
+        card.trelloCardDueComplete = dueComplete;
+
+        save = true;
+    }
+
+    if (checkValid(url) && url != link) {
+        card.link = url;
+
+        save = true;
+    }
+
+    if (save) {
+        try {
+            card = card.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+
+    await generateAttachmentAssociations(newAttachments, card, boardId);
+};
+
+handleWebhookAddAttachment = async (boardId, data) => {
+    const { card: externalCard, attachment: externalAttachment } = data;
+
+    const { id: cardSourceId } = externalCard;
+
+    const { url } = externalAttachment;
+
+    if (!url.includes("https://github.com")) return;
+
+    let attachment;
+
+    try {
+        attachment = new IntegrationAttachment({
+            link: url,
+            board: boardId,
+        });
+
+        try {
+            attachment = await attachment.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    let card;
+
+    try {
+        card = await IntegrationTicket.find({ sourceId: cardSourceId });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    card.attachments.push(attachment._id);
+
+    try {
+        card = await card.save();
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    await generateAttachmentAssociations([attachment], card, boardId);
+};
+
+handleWebhookDeleteCard = async (data) => {
+    const { id } = data["card"];
+
+    try {
+        await IntegrationTicket.findOneAndDelete({ sourceId: id });
+    } catch (e) {
+        throw new Error(e);
+    }
+};
+
+handleWebhookAddLabel = async (data) => {
+    const {
+        card: { id: cardSourceId },
+        label: { id: labelSourceId },
+    } = data;
+
+    let label;
+
+    try {
+        label = await IntegrationLabel.findOne({
+            sourceId: labelSourceId,
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    if (label) {
+        let card;
+
+        try {
+            card = await IntegrationTicket.findOne({
+                sourceId: cardSourceId,
+            });
+        } catch (e) {
+            throw new Error(e);
+        }
+
+        card.labels.push(label._id);
+
+        try {
+            card = await card.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
+handleWebhookRemoveLabel = async (data) => {
+    const {
+        card: { id: cardSourceId },
+        label: { id: labelSourceId },
+    } = data;
+
+    let label;
+
+    try {
+        label = await IntegrationLabel.findOne({
+            sourceId: labelSourceId,
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    if (label) {
+        let card;
+
+        try {
+            card = await IntegrationTicket.findOne({
+                sourceId: cardSourceId,
+            });
+        } catch (e) {
+            throw new Error(e);
+        }
+
+        card.labels = card.labels.filter((labelId) => labelId != label._id);
+
+        try {
+            card = await card.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
+handleWebhookAddMember = async (data) => {
+    const {
+        card: { id: cardSourceId },
+        idMember: memberSourceId,
+    } = data;
+
+    let member;
+
+    try {
+        member = await IntegrationMember.findOne({
+            sourceId: memberSourceId,
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    if (member) {
+        let card;
+
+        try {
+            card = await IntegrationTicket.findOne({
+                sourceId: cardSourceId,
+            });
+        } catch (e) {
+            throw new Error(e);
+        }
+
+        card.members.push(member._id);
+
+        try {
+            card = await card.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
+handleWebhookRemoveMember = async (data) => {
+    const {
+        card: { id: cardSourceId },
+        idMember: memberSourceId,
+    } = data;
+
+    let member;
+
+    try {
+        member = await IntegrationMember.findOne({
+            sourceId: memberSourceId,
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    if (member) {
+        let card;
+
+        try {
+            card = await IntegrationTicket.findOne({
+                sourceId: cardSourceId,
+            });
+        } catch (e) {
+            throw new Error(e);
+        }
+
+        card.members = card.members.filter(
+            (memberId) => memberId != member._id
+        );
+
+        try {
+            card = await card.save();
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
+generateAttachmentAssociations = async (attachments, card, boardId) => {
+    const modelTypeMap = {
+        tree: "branch",
+        issues: "issue",
+        pull: "pullRequest",
+        commit: "commit",
+    };
+
+    let attReqs = [];
+
+    for (let i = 0; i < attachments.length; i++) {
+        const att = attachments[i];
+
+        const { link: url } = att;
+
+        const splitURL = url.split("/");
+
+        try {
+            if (splitURL.length < 2) return null;
+
+            let githubType = splitURL.slice(
+                splitURL.length - 2,
+                splitURL.length - 1
+            )[0];
+
+            const modelType = modelTypeMap[githubType];
+
+            if (!modelType) return;
+
+            const sourceId = splitURL.slice(splitURL.length - 1)[0];
+
+            const fullName = splitURL
+                .slice(splitURL.length - 4, splitURL.length - 2)
+                .join("/");
+
+            attachment.modelType = modelType;
+
+            attachment.sourceId = sourceId;
+
+            let repository;
+
+            try {
+                repository = await Repository.findOne({ fullName: fullName });
+            } catch (e) {
+                throw new Error(e);
+            }
+
+            if (repository) {
+                attachment.repository = repository._id;
+            }
+
+            attReqs.push(attachment.save());
+        } catch (e) {
+            continue;
+        }
+    }
+
+    try {
+        attachments = await Promise.all(attReqs);
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const modelTypeToModel = {
+        branch: Branch,
+        issue: IntegrationTicket,
+        pullRequest: PullRequest,
+        commit: Commit,
+    };
+
+    let assocInsertOps = [];
+
+    for (let i = 0; i < attachments.length; i++) {
+        const { repository, sourceId, modelType } = attachments[i];
+
+        let codeObject;
+
+        if (modelType == "issue") {
+            codeObject = await IntegrationTicket.findOne({
+                sourceId,
+                repositoryId: repository,
+            });
+        } else {
+            codeObject = await modelTypeToModel[modelType].findOne({
+                sourceId,
+                repository,
+            });
+        }
+
+        if (codeObject) {
+            assocInsertOps.push({
+                firstElement: card._id,
+                firstElementModelType: "IntegrationTicket",
+                secondElement: codeObject._id,
+                secondElementModelType: mongModelMapping[modelType],
+                repository: codeObject.repository,
+                board: boardId,
+                direct: true,
+            });
+        }
+    }
+
+    try {
+        Association.insertMany(assocInsertOps);
+    } catch (e) {
+        throw new Error(e);
     }
 };
 
@@ -314,4 +1014,7 @@ module.exports = {
     handleWebhookUpdateLabel,
     handleWebhookCreateMember,
     handleWebhookUpdateMember,
+    handleWebhookCreateCard,
+    handleWebhookAddMember,
+    handleWebhookRemoveMember,
 };

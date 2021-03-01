@@ -47,6 +47,7 @@ const {
     handleWebhookUpdateLabel,
     handleWebhookCreateMember,
     handleWebhookUpdateMember,
+    handleWebhookAddAttachment,
 } = require("./TrelloWebhookHelpers");
 
 removeTrelloIntegration = async (req, res) => {
@@ -416,6 +417,29 @@ handleTrelloWebhook = async (req, res) => {
         updateMember: async () =>
             await handleWebhookUpdateMember(boardId, data),
         // need to handle removeMemberToBoard: async () =>
+
+        createCard: async () => await handleWebhookCreateCard(boardId, data),
+        moveCardToBoard: async () =>
+            await handleWebhookCreateCard(boardId, data),
+        updateCard: async () => await handleWebhookUpdateCard(boardId, data),
+        deleteCard: async () => await handleWebhookDeleteCard(boardId, data),
+        moveCardFromBoard: async () =>
+            await handleWebhookDeleteCard(boardId, data),
+
+        addAttachmentToCard: async () =>
+            await handleWebhookAddAttachment(boardId, data),
+
+        addLabelToCard: async () => await handleWebhookAddLabel(boardId, data),
+        removeLabelFromCard: async () =>
+            await handleWebhookRemoveLabel(boardId, data),
+
+        addMemberToCard: async () =>
+            await handleWebhookAddMember(boardId, data),
+        removeMemberFromCard: async () =>
+            await handleWebhookRemoveMember(boardId, data),
+
+        //deleteAttachmentFromCard: async () =>
+        //   await handleWebhookDeleteAttachment(boardId, data),
     };
 
     try {
