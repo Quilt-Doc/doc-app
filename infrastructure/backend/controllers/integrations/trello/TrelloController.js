@@ -37,6 +37,7 @@ const {
 
 const {
     setupTrelloWebhook,
+    deleteTrelloWebhook,
     verifyTrelloWebhookRequest,
     handleWebhookUpdateBoard,
     handleWebhookCreateList,
@@ -85,6 +86,13 @@ removeTrelloIntegration = async (req, res) => {
         Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
+    }
+
+    // delete board webhook
+    try {
+        await deleteTrelloWebhook(boardId);
+    } catch (e) {
+        Sentry.captureException(e);
     }
 
     // delete all integrations associated with board and finally board
@@ -161,7 +169,7 @@ triggerTrelloScrape = async (req, res) => {
     result = result.map((board) => _.omit(board, ["tickets"]));
 
     // set up webhooks
-    await setupTrelloWebhook(profile, result, workspaceId, userId);
+    await setupTrelloWebhook(profile, result, userId);
 
     // need to finally mutate workspace to add boards
     let workspace;
@@ -197,7 +205,7 @@ triggerTrelloScrape = async (req, res) => {
 };
 
 bulkScrapeTrello = async (profile, boards, workspaceId) => {
-    const { accessToken } = profile;
+    const { accessToken, user: userId } = profile;
 
     const result = [];
 
@@ -227,7 +235,8 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
             name,
             boardCreatorSourceId,
             url,
-            repositoryIds
+            repositoryIds,
+            userId
         );
 
         lists = await extractTrelloLists(lists, board);
@@ -376,7 +385,7 @@ getExternalTrelloBoards = async (req, res) => {
 };
 
 handleTrelloWebhook = async (req, res) => {
-    const { workspaceId, userId, boardId } = req.params;
+    const { userId, boardId } = req.params;
 
     const isVerified = verifyTrelloWebhookRequest(req);
 
@@ -392,51 +401,48 @@ handleTrelloWebhook = async (req, res) => {
 
     const { action } = req.body;
 
-    const { type, data } = action;
+    const { type, data, member } = action;
 
     const actionMethods = {
         // board
-        updateBoard: async () => await handleWebhookUpdateBoard(boardId, data),
+        updateBoard: async () =>
+            await handleWebhookUpdateBoard(boardId, profile, data),
 
         // lists
         createList: async () => await handleWebhookCreateList(boardId, data),
         moveListToBoard: async () =>
             await handleWebhookCreateList(boardId, data),
-        moveListFromBoard: async () =>
-            await handleWebhookDeleteList(boardId, data),
-        updateList: async () => await handleWebhookUpdateList(boardId, data),
+        moveListFromBoard: async () => await handleWebhookDeleteList(data),
+        updateList: async () => await handleWebhookUpdateList(data),
 
         // labels
-        createLabel: async () => await handleWebhookCreateLabel(boardId, data),
-        deleteLabel: async () => await handleWebhookDeleteLabel(boardId, data),
-        updateLabel: async () => await handleWebhookUpdateLabel(boardId, data),
+        createLabel: async () =>
+            await handleWebhookCreateLabel(boardId, profile, data),
+        deleteLabel: async () => await handleWebhookDeleteLabel(data),
+        updateLabel: async () => await handleWebhookUpdateLabel(data),
 
         // users
-        addMemberToBoard: async () =>
-            await handleWebhookCreateMember(boardId, data),
-        updateMember: async () =>
-            await handleWebhookUpdateMember(boardId, data),
+        addMemberToBoard: async () => await handleWebhookCreateMember(member),
+        updateMember: async () => await handleWebhookUpdateMember(member),
         // need to handle removeMemberToBoard: async () =>
 
-        createCard: async () => await handleWebhookCreateCard(boardId, data),
+        createCard: async () =>
+            await handleWebhookCreateCard(boardId, profile, data),
         moveCardToBoard: async () =>
-            await handleWebhookCreateCard(boardId, data),
-        updateCard: async () => await handleWebhookUpdateCard(boardId, data),
-        deleteCard: async () => await handleWebhookDeleteCard(boardId, data),
-        moveCardFromBoard: async () =>
-            await handleWebhookDeleteCard(boardId, data),
+            await handleWebhookCreateCard(boardId, profile, data),
+        updateCard: async () =>
+            await handleWebhookUpdateCard(boardId, profile, data),
+        deleteCard: async () => await handleWebhookDeleteCard(data),
+        moveCardFromBoard: async () => await handleWebhookDeleteCard(data),
 
         addAttachmentToCard: async () =>
             await handleWebhookAddAttachment(boardId, data),
 
-        addLabelToCard: async () => await handleWebhookAddLabel(boardId, data),
-        removeLabelFromCard: async () =>
-            await handleWebhookRemoveLabel(boardId, data),
+        addLabelToCard: async () => await handleWebhookAddLabel(data),
+        removeLabelFromCard: async () => await handleWebhookRemoveLabel(data),
 
-        addMemberToCard: async () =>
-            await handleWebhookAddMember(boardId, data),
-        removeMemberFromCard: async () =>
-            await handleWebhookRemoveMember(boardId, data),
+        addMemberToCard: async () => await handleWebhookAddMember(data),
+        removeMemberFromCard: async () => await handleWebhookRemoveMember(data),
 
         //deleteAttachmentFromCard: async () =>
         //   await handleWebhookDeleteAttachment(boardId, data),

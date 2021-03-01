@@ -4,26 +4,19 @@ const _ = require("lodash");
 
 const isUrl = require("is-url");
 
-const Sentry = require("@sentry/node");
-
-const mongoose = require("mongoose");
-
 const crypto = require("crypto");
-
-const TrelloConnectProfile = require("../../../models/integrations/trello/TrelloConnectProfile");
 
 const IntegrationUser = require("../../../models/integrations/integration_objects/IntegrationUser");
 const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
 const IntegrationColumn = require("../../../models/integrations/integration_objects/IntegrationColumn");
-const IntegrationEvent = require("../../../models/integrations/integration_objects/IntegrationEvent");
 const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
 const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
 const IntegrationInterval = require("../../../models/integrations/integration_objects/IntegrationInterval");
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
-const BoardWorkspaceContext = require("../../../models/integrations/context/BoardWorkspaceContext");
-const Workspace = require("../../../models/Workspace");
-const User = require("../../../models/authentication/User");
 const Repository = require("../../../models/Repository");
+const Association = require("../../../models/associations/Association");
+
+const { acquireTrelloConnectProfile } = require("./TrelloControllerHelpers");
 
 const { TRELLO_API_KEY, LOCALHOST_API_URL, TRELLO_SECRET } = process.env;
 
@@ -32,10 +25,8 @@ const trelloAPI = axios.create({
 });
 
 const { checkValid } = require("../../../utils/utils");
-const { check } = require("prettier");
-const Association = require("../../../models/associations/Association");
 
-setupTrelloWebhook = async (profile, boards, workspaceId, userId) => {
+setupTrelloWebhook = async (profile, boards, userId) => {
     const { accessToken } = profile;
 
     for (let i = 0; i < boards.length; i++) {
@@ -43,15 +34,62 @@ setupTrelloWebhook = async (profile, boards, workspaceId, userId) => {
 
         const { sourceId, _id: boardId } = board;
 
+        const description = `Webhook for board with trello sourceId: ${sourceId}`;
+
+        const callbackURL = `${LOCALHOST_API_URL}/integrations/${boardId}/${userId}/trello/handle_webhook`;
+
+        const idModel = sourceId;
+
         try {
             await trelloAPI.post(
-                `/1/tokens/${accessToken}/webhooks/?key=${TRELLO_API_KEY}`,
-                {
-                    description: `Webhook for board with trello sourceId: ${sourceId}`,
-                    callbackURL: `${LOCALHOST_API_URL}/integrations/${workspaceId}/${userId}/trello/handle_webhook/${boardId}`,
-                    idModel: sourceId,
-                }
+                `/1/tokens/${accessToken}/webhooks/?key=${TRELLO_API_KEY}&token=${accessToken}&callbackURL=${callbackURL}&idModel=${idModel}&description=${description}`
             );
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+};
+
+deleteTrelloWebhook = async (boardId) => {
+    let userId;
+
+    try {
+        const board = await IntegrationBoard.findById(boardId)
+            .select("integrationCreator")
+            .lean()
+            .exec();
+
+        userId = board.integrationCreator;
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    let profile;
+
+    try {
+        profile = await acquireTrelloConnectProfile(userId);
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const { accessToken } = profile;
+
+    let webhooks;
+
+    try {
+        webhooks = await trelloAPI.get(`/1/tokens/${accessToken}/webhooks`);
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    // Should be only 1
+    webhooks = webhooks.filter((hook) => hook.idModel == boardId);
+
+    for (let i = 0; i < webhooks.length; i++) {
+        const { id } = webhooks[i];
+
+        try {
+            await trelloAPI.delete(`/1/webhooks/${id}`);
         } catch (e) {
             throw new Error(e);
         }
@@ -79,7 +117,23 @@ verifyTrelloWebhookRequest = (request) => {
     return doubleHash == headerHash;
 };
 
-handleWebhookUpdateBoard = async (boardId, data) => {
+handleWebhookUpdateBoard = async (boardId, profile, data) => {
+    const { id } = data["board"];
+
+    const { accessToken } = profile;
+
+    let externalBoard;
+
+    try {
+        externalBoard = await trelloAPI.get(
+            `/1/cards/${id}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=name,url`
+        );
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const { url: externalLink, name: externalName } = externalBoard;
+
     let board;
 
     try {
@@ -89,10 +143,6 @@ handleWebhookUpdateBoard = async (boardId, data) => {
     } catch (e) {
         throw new Error(e);
     }
-
-    let externalBoard = data["board"];
-
-    const { url: externalLink, name: externalName } = externalBoard;
 
     const { link, name } = board;
 
@@ -136,7 +186,7 @@ handleWebhookCreateList = async (boardId, data) => {
     }
 };
 
-handleWebhookDeleteList = async (boardId, data) => {
+handleWebhookDeleteList = async (data) => {
     const { id } = data["list"];
 
     try {
@@ -146,7 +196,8 @@ handleWebhookDeleteList = async (boardId, data) => {
     }
 };
 
-handleWebhookUpdateList = async (boardId, data) => {
+// may need to handle archiving list
+handleWebhookUpdateList = async (data) => {
     const { id, name: externalName } = data["list"];
 
     let list;
@@ -172,8 +223,22 @@ handleWebhookUpdateList = async (boardId, data) => {
     }
 };
 
-handleWebhookCreateLabel = async (boardId, data) => {
-    const { color, name, id } = data["label"];
+handleWebhookCreateLabel = async (boardId, profile, data) => {
+    const { id } = data["label"];
+
+    const { accessToken } = profile;
+
+    let externalLabel;
+
+    try {
+        externalLabel = await trelloAPI.get(
+            `/1/labels/${id}?key=${TRELLO_API_KEY}&token=${accessToken}`
+        );
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    const { color, name } = externalLabel;
 
     let label = new IntegrationLabel({
         color,
@@ -190,12 +255,11 @@ handleWebhookCreateLabel = async (boardId, data) => {
     }
 };
 
-handleWebhookDeleteLabel = async (boardId, data) => {
+handleWebhookDeleteLabel = async (data) => {
     const { id } = data["label"];
 
     try {
         await IntegrationLabel.findOneAndDelete({
-            board: boardId,
             sourceId: id,
         });
     } catch (e) {
@@ -203,7 +267,7 @@ handleWebhookDeleteLabel = async (boardId, data) => {
     }
 };
 
-handleWebhookUpdateLabel = async (boardId, data) => {
+handleWebhookUpdateLabel = async (data) => {
     const { id, name: externalName, color: externalColor } = data["label"];
 
     let label;
@@ -241,8 +305,9 @@ handleWebhookUpdateLabel = async (boardId, data) => {
     }
 };
 
-handleWebhookCreateMember = (boardId, data) => {
-    const { id, username, fullName } = data["member"];
+// at same level as data
+handleWebhookCreateMember = (externalMember) => {
+    const { id, username, fullName } = externalMember;
 
     let memberExists;
 
@@ -268,8 +333,8 @@ handleWebhookCreateMember = (boardId, data) => {
     }
 };
 
-handleWebhookUpdateMember = async (boardId, data) => {
-    const { username, fullName, id } = data["member"];
+handleWebhookUpdateMember = async (externalMember) => {
+    const { username, fullName, id } = externalMember;
 
     let member;
 
@@ -306,36 +371,6 @@ handleWebhookUpdateMember = async (boardId, data) => {
     }
 };
 
-/*
-et cardParams = {
-                name,
-                source: "trello",
-                sourceId: id,
-                description: desc,
-                link: url,
-                assignees: assigneeIds, // trelloCardMember, // trelloCardListUpdateDates: [{type: Date}],
-                members: assigneeIds,
-                column: columnId,
-                board: board._id,
-            };
-
-            if (due) cardParams.trelloCardDue = new Date(due);
-
-            if (dueComplete) cardParams.trelloCardDueComplete = dueComplete;
-
-            if (dateLastActivity)
-                cardParams.trelloCardDateLastActivity = new Date(
-                    dateLastActivity
-                );
-
-            if (attachmentIds && attachmentIds.length > 0)
-                cardParams.attachments = attachmentIds;
-
-            if (intervalIds && intervalIds.length > 0)
-                cardParams.intervals = intervalIds;
-
-            if (labelIds && labelIds.length > 0) cardParams.labels = labelIds;
-*/
 addDays = (date, days) => {
     let result = new Date(date);
 
@@ -487,6 +522,7 @@ handleWebhookCreateCard = async (boardId, profile, data) => {
             return new IntegrationInterval({
                 start: addDays(new Date(action.date), -10),
                 end: new Date(action.date),
+                board: boardId,
             });
         });
 
@@ -588,6 +624,7 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
             interval = new IntegrationInterval({
                 start: addDays(new Date(date), -10),
                 end: new Date(date),
+                board: boardId,
             });
 
             try {
@@ -1005,6 +1042,7 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
 module.exports = {
     setupTrelloWebhook,
     verifyTrelloWebhookRequest,
+    deleteTrelloWebhook,
     handleWebhookUpdateBoard,
     handleWebhookCreateList,
     handleWebhookDeleteList,
@@ -1015,6 +1053,11 @@ module.exports = {
     handleWebhookCreateMember,
     handleWebhookUpdateMember,
     handleWebhookCreateCard,
+    handleWebhookUpdateCard,
+    handleWebhookDeleteCard,
+    handleWebhookAddAttachment,
+    handleWebhookAddLabel,
+    handleWebhookRemoveLabel,
     handleWebhookAddMember,
     handleWebhookRemoveMember,
 };

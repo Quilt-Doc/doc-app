@@ -769,7 +769,7 @@ router.post(
 );
 
 router.post(
-    "/integrations/:workspaceId/:userId/trello/handle_webhook/:boardId",
+    "/integrations/:boardId/:userId/trello/handle_webhook",
     trelloController.handleTrelloWebhook
 );
 

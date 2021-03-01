@@ -156,7 +156,8 @@ extractTrelloBoard = async (
     name,
     boardCreatorSourceId,
     url,
-    repositoryIds
+    repositoryIds,
+    userId
 ) => {
     const boardCreator = members[boardCreatorSourceId];
 
@@ -167,6 +168,7 @@ extractTrelloBoard = async (
         link: url,
         sourceId: id,
         repositories: repositoryIds,
+        integrationCreator: userId,
     });
 
     board = await board.save();
