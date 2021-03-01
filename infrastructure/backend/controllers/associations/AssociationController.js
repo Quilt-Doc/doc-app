@@ -16,12 +16,41 @@ const { checkValid } = require("../../utils/utils");
 const Association = require("../../models/associations/Association");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 
+const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
+
+
+const createGithubIssueBoard = async (req, res) => {
+
+    const { repositoryId } = req.body;
+
+    var createdBoard;
+    try {
+        createdBoard = await IntegrationBoard.create({ source: "github", repositories: [repositoryId] });
+    }
+    catch (err) {
+        Sentry.captureException(err);
+        return res.json({success: false, error: err, result: null});
+    }
+
+
+
+    return res.json({success: true, result: createdBoard._id.toString()});
+}
+
+
 generateAssociations = async (req, res) => {
     const { workspaceId } = req.params;
 
+    console.log("Generating Associations");
+
     // boards must be provided with unique repositories
     // in format: [ { _id, repositories }]
-    const { boards } = req.body;
+    const { boards, boardId } = req.body;
+
+    console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
+    console.log(await IntegrationBoard.findById(boardId).lean().exec());
+
+
 
     const directGenerator = new DirectAssociationGenerator(workspaceId, boards);
 
@@ -327,6 +356,7 @@ const getFileContext = async (req, res) => {
 module.exports = {
     generateAssociations,
     getFileContext,
+    createGithubIssueBoard,
 };
 
 /*

@@ -9,13 +9,13 @@ var LinkHeader = require( 'http-link-header' );
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
-const { fetchAllRepoBranchesAPI, enrichBranchesAndPRs, enhanceBranchesWithPRMongoIds, insertBranchesFromAPI } = require('./github_repos/branch_utils');
-const { fetchAllRepoPRsAPI, enrichPRsWithFileList, insertPRsFromAPI } = require('./github_repos/pr_utils');
-const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github_repos/commit_utils');
+const { fetchAllRepoBranchesAPI, enrichBranchesAndPRs, enhanceBranchesWithPRMongoIds, insertBranchesFromAPI } = require('./github/branch_utils');
+const { fetchAllRepoPRsAPI, enrichPRsWithFileList, insertPRsFromAPI } = require('./github/pr_utils');
+const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github/commit_utils');
 
 const { at } = require("lodash");
 
-const { cloneInstallationRepo } = require('./github_repos/cli_utils');
+const { cloneInstallationRepo } = require('./github/cli_utils');
 
 
 // Procedure:
@@ -384,7 +384,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
     var foundCommitList;
     try {
-        foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath, worker);
+        foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath);
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error',
@@ -404,7 +404,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
     var insertedCommitsCLI;
     try {
-        insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId, worker);
+        insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId);
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error',

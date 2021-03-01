@@ -8,7 +8,7 @@ var workspaceSchema = new Schema({
     setupComplete: { type: Boolean, required: true, default: false },
     creator: { type: ObjectId, ref: "User" },
     repositories: [{ type: ObjectId, ref: "Repository" }],
-    boards: [{ type: ObjectId, ref: "Workspace" }],
+    boards: [{ type: ObjectId, ref: "IntegrationBoard" }],
     memberUsers: [{ type: ObjectId, ref: "User" }],
 });
 
