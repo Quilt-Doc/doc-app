@@ -26,14 +26,14 @@ let integrationBoardSchema = new Schema({
 
 
     // Github Project fields
-    repositoryId: { type: ObjectId, ref: 'Repository'},
-    projectId: { type: String, required: true },
-    number: { type: Number, required: true },
+    repositoryId: { type: ObjectId, ref: 'Repository' },
+    projectId: { type: String },
+    number: { type: Number },
 
-    columns: [{ type: String, required: true }],
-    columnIdList: [{type: Number, required: true}],
+    columns: [{ type: String }],
+    columnIdList: [{type: Number }],
 
-    body: { type: String, required: true },
+    body: { type: String },
     state:  { type: String, enum: ['open', 'closed', 'all']},
 
     createdAt: { type: Date},

@@ -6,8 +6,10 @@ const Repository = require('../../models/Repository');
 
 const { spawnSync } = require('child_process');
 
+const Sentry = require("@sentry/node");
 
-const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath, worker) => {
+
+const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath) => {
 
     console.log(`fetchAllRepoCommitsCLI - repoDiskPath: ${repoDiskPath}`);
     var gitShowResponse;
@@ -18,17 +20,17 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
         gitShowResponse = spawnSync('../../test.sh', [], {cwd: repoDiskPath});
     }
     catch(err) {
-            await worker.send({action: 'log',
-                                info: {level: 'error',
-                                        message: serializeError(err),
-                                        errorDescription: `Error running 'git show' - repoDiskPath: ${repoDiskPath}`,
-                                        source: 'worker-instance',
-                                        function: 'fetchAllRepoCommitsCLI'}});
+        console.log(err);
 
-            transactionAborted = true;
-            transactionError.message = `Error running 'git show' - repoDiskPath: ${repoDiskPath}`;
+        Sentry.setContext("fetchAllRepoCommitsCLI", {
+            message: `Failed to run test.sh, cannot get Commit data from CLI`,
+            repositoryId: repositoryId,
+            reposDiskPath: repoDiskPath,
+        });
 
-            throw new Error(`Error running 'git show' - repoDiskPath: ${repoDiskPath}`);
+        Sentry.captureException(err);
+
+        throw err;
     }
 
     var lines = gitShowResponse.stdout.toString().trim().split("\n"); // stdout.split("\n");
@@ -143,7 +145,7 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
     return commitObjects;
 }
 
-const insertAllCommitsFromCLI = async (foundCommitsList, installationId, repositoryId, worker) => {
+const insertAllCommitsFromCLI = async (foundCommitsList, installationId, repositoryId) => {
     
 
     foundCommitsList = foundCommitsList.map(commitObj => {
@@ -156,13 +158,18 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
     }
     catch (err) {
 
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    source: 'worker-instance',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error bulk inserting Commits - foundCommitsList.length: ${foundCommitsList.length}`,
-                                                    function: 'insertAllCommitsFromCLI'}});
+        console.log(err);
 
-        throw new Error(`Error bulk inserting Commits - foundCommitsList.length: ${foundCommitsList.length}`);
+        Sentry.setContext("fetchAllRepoCommitsCLI", {
+            message: `Error bulk inserting Commits`,
+            repositoryId: repositoryId,
+            installationId: installationId,
+            numCommits: foundCommitsList.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
     }
 
     return foundCommitsList;
@@ -172,7 +179,7 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
 
 
 
-const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList) => {
+const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList, session) => {
     // Get Repository commits for all unscanned Repositories
     // Handle 409 Responses
     var repositoryListCommits;
@@ -280,8 +287,7 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
         try {
             // Filter out undefined operations (these are operations on repositories whose '/commits/' API calls have failed)
             const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps.filter(op => op), { session });
-            await worker.send({action: 'log', info: {level: 'info', message: `bulk Repository 'lastProcessCommit' update results: ${JSON.stringify(bulkResult)}`,
-                                                source: 'worker-instance', function: 'scanRepositories'}});
+            console.log(`bulk Repository 'lastProcessCommit' update results: ${JSON.stringify(bulkResult)}`);
         }
         catch(err) {
 
@@ -295,6 +301,9 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
             throw err;
         }
     }
+
+    return repositoryListCommits;
+
 }
 
 

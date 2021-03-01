@@ -169,8 +169,8 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
     var branchObjectList = [];
 
     foundBranchList.map(currentAPIBranch => {
-        console.log('currentAPIBranch: ');
-        console.log(currentAPIBranch);
+        // console.log('currentAPIBranch: ');
+        // console.log(currentAPIBranch);
 
         branchObjectList.push({
             repository: repositoryId,

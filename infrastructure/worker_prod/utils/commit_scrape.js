@@ -384,7 +384,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
     var foundCommitList;
     try {
-        foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath, worker);
+        foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath);
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error',
@@ -404,7 +404,7 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
     var insertedCommitsCLI;
     try {
-        insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId, worker);
+        insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId);
     }
     catch (err) {
         await worker.send({action: 'log', info: {level: 'error',

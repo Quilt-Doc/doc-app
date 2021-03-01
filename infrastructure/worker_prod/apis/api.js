@@ -25,12 +25,23 @@ const requestJiraClient = ( cloudId, accessToken ) => {
 
 const requestBackendClient = () => {
 	const axios = require('axios');
-	return axios.create({
-        baseURL: process.env.BACKEND_API_URL,
-        headers: {
-            "Authorization": `Bearer ${process.env.DEV_TOKEN}`
-        }
-	})
+
+    if (process.env.RUNNING_LOCALLY) {
+        return axios.create({
+            baseURL: process.env.LOCAL_BACKEND_API_URL,
+            headers: {
+                "Authorization": `Bearer ${process.env.DEV_TOKEN}`
+            }
+        });
+    }
+    else {
+        return axios.create({
+            baseURL: process.env.BACKEND_API_URL,
+            headers: {
+                "Authorization": `Bearer ${process.env.DEV_TOKEN}`
+            }
+        })
+    }
 }
 
 const requestGithubClient = () => {

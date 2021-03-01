@@ -3,70 +3,86 @@ const { ObjectId } = mongoose.Types;
 
 const IntegrationBoard = require('../../models/integrations/integration_objects/IntegrationColumn');
 
-const apis = require('../apis/api');
+const apis = require('../../apis/api');
+const Sentry = require("@sentry/node");
 
-const generateGithubIssueAssociations = async (workspaceId, workspaceRepositories) => {
-
-    if (workspaceRepositories.length < 1) {
-        return;
-    }
-
-    var integrationBoardsToCreate = workspaceRepositories.map(repositoryObj => {
-        return { repositories: [repositoryObj._id.toString()] }
-    });
-
-    var insertedBoardIds;
-
-    // Create IntegrationBoards and get Ids
+// Return created boardId
+const generateGithubIssueBoard = async (repositoryId) => {
+    var createdBoard;
     try {
-        insertResults = await IntegrationBoard.insertMany(
-            integrationBoardsToCreate,
-            { rawResult: true }
-        );
-
-        console.log(insertResults.insertedIds);
-
-        insertedBoardIds = Object.values(
-            insertResults.insertedIds
-        ).map((id) => id.toString());
-    } catch (err) {
-        console.log(err);
-        throw new Error(
-            `Error could not insert IntegrationBoards - integrationBoardsToCreate.length: ${integrationBoardsToCreate.length}`
-        );
-    }
-
-    // Fetch IntegrationBoards, as opposed to assuming that insertedBoardIds matches the order of integrationBoardsToCreate accurately
-
-    var insertedBoards;
-
-    try {
-        insertedBoards = await IntegrationBoard.find({ _id: { $in: insertedBoardIds } }, "_id repositories").lean().exec();
+        createdBoard = await IntegrationBoard.create({ source: "github", repositories: [repositoryId.toString()] }).lean().exec();
     }
     catch (err) {
-        console.log(err);
-        throw new Error(
-            `Error could not fetch IntegrationBoards - insertedBoardIds: ${JSON.stringify(insertedBoardIds)}`
-        );
+        Sentry.captureException(err);
+        throw err;
     }
 
-    // Call Association API Endpoint
+    await findBoard(createdBoard._id.toString());
+    
+    return createdBoard._id.toString();
+}
 
-    /*
+// Return created boardId
+const generateGithubIssueBoardAPI = async (repositoryId) => {
+
+    var backendClient = apis.requestBackendClient();
+    var createdBoardId;
+
+    try {
+        createdBoardId = await backendClient.post("/associations/create_board", { "repositoryId": repositoryId });
+        if (createdBoardId.success == false) {
+            throw Error("API Call failed");
+        }
+    }
+    catch (err) {
+        Sentry.captureException(err);
+        throw err;
+    }
+
+    // console.log("/associations/create_board Response: ");
+    // console.log(createdBoardId);
+
+    createdBoardId = createdBoardId.data.result;
+
+    await findBoard(createdBoardId);
+    
+    return createdBoardId;
+}
+
+const findBoard = async (boardId) => {
+    console.log("Created IntegrationBoard: ");
+    console.log(await IntegrationBoard.findById(boardId).lean().exec());
+}
+
+
+const generateAssociationsFromResults = async (workspaceId, successResults) => {
+
+    var createAssociationData = [];
+
+    var i = 0;
+    for (i = 0; i < successResults.length; i++) {
+        createAssociationData.push({ _id: successResults[i].integrationBoardId, repositories: [ successResults[i].repositoryId ] });
+    }
+
     var backendClient = apis.requestBackendClient();
 
+    console.log(`Calling 'generate_associations' - workspaceId: ${workspaceId}`);
+    console.log(createAssociationData);
+
+    await findBoard(createAssociationData[0]._id);
+
     try {
-        await backendClient.post(`/associations/${workspaceId}/generate_associations`, insertedBoards);
+        await backendClient.post(`/associations/${workspaceId}/generate_associations`, { boardId: createAssociationData[0]._id, boards: createAssociationData });
     }
     catch (err) {
-        console.log(err);
-        throw new Error(
-            `Error calling "/associations/${workspaceId}/generate_associations" - insertedBoards: ${JSON.stringify(insertedBoards)}`
-        );
+        Sentry.captureException(err);
+        throw err;
     }
-    */
+}
 
-    return insertedBoards;
+module.exports = {
+    generateGithubIssueBoard,
+    generateGithubIssueBoardAPI,
+    generateAssociationsFromResults,
 
-    
 }

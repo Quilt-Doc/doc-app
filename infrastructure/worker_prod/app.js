@@ -39,6 +39,8 @@ checkValid = (item) => {
     return false
 }
 
+console.log(`process.env.RUNNING_LOCALLY: ${process.env.RUNNING_LOCALLY}`);
+
 app.post('/job', async function(req, res) {
 
     const { jobType } = req.body;

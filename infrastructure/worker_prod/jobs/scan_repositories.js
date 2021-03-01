@@ -24,6 +24,10 @@ const { scrapeGithubRepoProjects } = require('../utils/integrations/github_proje
 const { scrapeGithubRepoIssues } = require('../utils/integrations/github_issue_utils');
 
 
+
+const { generateGithubIssueBoard, generateGithubIssueBoardAPI, generateAssociationsFromResults } = require("../utils/associations/utils");
+
+
 const {serializeError, deserializeError} = require('serialize-error');
 
 const Sentry = require("@sentry/node");
@@ -177,6 +181,8 @@ const scanRepositories = async () => {
             const bulkFieldUpdateOps = repositoryListObjects.map((repositoryListObjectResponse, idx) => {
                 unscannedRepositories[idx].defaultBranch = repositoryListObjectResponse.data.default_branch
                 unscannedRepositories[idx].cloneUrl = repositoryListObjectResponse.data.clone_url;
+                unscannedRepositories[idx].htmlUrl = repositoryListObjectResponse.data.html_url;
+
                 return {
                     updateOne: {
                             filter: { _id: unscannedRepositories[idx]._id },
@@ -294,19 +300,26 @@ const scanRepositories = async () => {
             */
 
             var repositoryIssuesRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+                var integrationBoardId;
                 try {
+
+                    integrationBoardId = await generateGithubIssueBoardAPI(repositoryObj._id.toString());
+
                     await scrapeGithubRepoIssues(repositoryObj.installationId,
                         repositoryObj._id.toString(),
                         installationClientList[unscannedRepositories[idx].installationId],
                         repositoryObj,
                         workspaceId,
+                        integrationBoardId,
                         worker);
+                
                 }
                 catch (err) {
+                    Sentry.captureException(err);
                     console.log(err);
                     return {error: 'Error'};
                 }
-                return { success: true }
+                return { success: true, integrationBoardId: integrationBoardId, repositoryId: repositoryObj._id.toString() };
             });
         
             // Execute all requests
@@ -324,10 +337,27 @@ const scanRepositories = async () => {
                 throw err;
             }
 
+            // Call Association Pipline for Github Issues
+
+            // Non-error responses
+            validResults = issueScrapeListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
+            validResults = validResults.map(resultObj => resultObj.value);
+
+            try {
+                await generateAssociationsFromResults(workspaceId, validResults);
+            }
+            catch (err) {
+                Sentry.captureException(err);
+                throw err;
+            }
+
+
+
 
             // Update the lastProcessedCommits for all Repositories
+            var repositoryListCommits;
             try {
-                await updateRepositoryLastProcessedCommits(unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList);
+                repositoryListCommits = await updateRepositoryLastProcessedCommits(unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList, session);
             }
             catch (err) {
                 Sentry.setContext("scan-repositories", {
@@ -338,6 +368,7 @@ const scanRepositories = async () => {
                 Sentry.captureException(err);
                 throw err;
             }
+
 
 
              // Get Tree Objects for each Repository
@@ -555,7 +586,7 @@ const scanRepositories = async () => {
         });
     }
     catch (err) {
-        
+
         Sentry.setContext("scan-repositories", {
             message: `scanRepositories attempting to delete Workspace due to transaction error`,
             workspaceId: workspaceId,

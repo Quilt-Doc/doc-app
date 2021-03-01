@@ -33,7 +33,7 @@ var CLUSTER_ENV_VARS = {};
 /**
  * fork one process per cpu
  */
-function fork() {
+function fork(options) {
   // Count the machine's CPUs
   var cpuCount = require('os').cpus().length;
 
@@ -42,7 +42,12 @@ function fork() {
 
   for (var i = 0; i < cpuCount; i++) {
       var envClone = _.clone(process.env);
+
       envClone.WORKER_PORT = parseInt(process.env.PORT)+i;
+      if (options.local && options.local != null) {
+        envClone.RUNNING_LOCALLY = options.local;
+      }
+
       var worker = cluster.fork(envClone);
       CLUSTER_ENV_VARS[worker.id] = envClone;
   }
@@ -56,10 +61,19 @@ function fork() {
 
 
 if (cluster.isMaster) {
+
+  const optionDefinitions = [
+    { name: 'local', alias: 'l', type: Boolean, defaultOption: false },
+  ];
+
+  const commandLineArgs = require('command-line-args')
+  const options = commandLineArgs(optionDefinitions)
+
+
   setupESConnection().then(async () => {
     await logger.info({message: `Master ${process.pid} is running`, source: 'worker-instance', function: 'index.js'});
     await logger.info({message: `MongoDB Connection String: ${dbRoute}`, source: 'worker-instance', function: 'index.js'});
-    fork();
+    fork(options);
   });
 
   cluster.on('message', (sendingWorker, message, handle) => {

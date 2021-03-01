@@ -738,6 +738,11 @@ router.post(
     associationController.generateAssociations
 );
 
+router.post(
+    "/associations/create_board",
+    associationController.createGithubIssueBoard
+);
+
 //TRELLO INTEGRATION ROUTES
 const trelloController = require("../controllers/integrations/trello/TrelloController");
 

@@ -14,7 +14,7 @@ const dispatchScanRepositoriesJob = async (jobData) => {
 
         var workerResponse;
         try {
-            workerResponse = await workerClient.post('/job', jobData)
+            workerResponse = await workerClient.post('/job', jobData);
         }
         catch (err) {
             console.log(`dispatchScanRepositoriesJob - Error dispatching scan_repositories job - jobData ${JSON.stringify(jobData)}`);
