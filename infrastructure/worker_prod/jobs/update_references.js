@@ -5,7 +5,7 @@ const fs_promises = require('fs').promises;
 const { filterVendorFiles, parseCommitObjects,
         parseGithubFileChangeList, getFileChangeList } = require('../utils/validate_utils');
 
-const { cloneInstallationRepo, ensureRepoCloneCommit } = require('../utils/github_repos/cli_utils');
+const { cloneInstallationRepo, ensureRepoCloneCommit } = require('../utils/github/cli_utils');
 
 const { runSnippetValidation } = require('./update_snippets');
 

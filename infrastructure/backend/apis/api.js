@@ -14,6 +14,16 @@ if (process.env.IS_PRODUCTION) {
     testingApiEndpoint = process.env.LOCALHOST_API_URL;
 }
 
+const LOCAL_WORKER_PORT = 8080;
+
+const requestLocalWorkerClient = () => {
+    const axios = require("axios");
+
+    return axios.create({
+        baseURL: `http://localhost:${LOCAL_WORKER_PORT}`
+    });
+}
+
 const requestTestingUserBackendClient = () => {
     const axios = require("axios");
     // console.log("TEST_USER_JWT: ");
@@ -201,6 +211,7 @@ const requestInstallationClient = async (installationId) => {
 };
 
 module.exports = {
+    requestLocalWorkerClient,
     requestTestingUserBackendClient,
     requestTestingDevBackendClient,
     requestSendGridClient,

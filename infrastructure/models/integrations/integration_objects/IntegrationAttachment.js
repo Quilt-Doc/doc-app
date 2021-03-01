@@ -12,6 +12,8 @@ const integrationAttachmentSchema = new Schema({
     isAssociation: { type: Boolean, default: false },
     board: { type: ObjectId, ref: "IntegrationBoard" },
 
+    nonCodeId: { type: ObjectId },
+
     link: String,
     sourceCreationDate: Date,
 });

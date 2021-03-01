@@ -398,7 +398,6 @@ const authController = require("../controllers/authentication/AuthController");
 router.get("/auth/login/success", authController.loginSuccess);
 router.get("/auth/login/failed", authController.loginFailed);
 router.get("/auth/logout", authController.logout);
-router.get("/auth/jira", authController.jiraAuthResponse);
 
 // router.get('/auth/github', passport.authenticate("github"));
 router.get("/auth/github", function (req, res, next) {
@@ -743,6 +742,11 @@ router.post(
     associationController.generateAssociations
 );
 
+router.post(
+    "/associations/create_board",
+    associationController.createGithubIssueBoard
+);
+
 //TRELLO INTEGRATION ROUTES
 const trelloController = require("../controllers/integrations/trello/TrelloController");
 
@@ -766,7 +770,6 @@ router.post(
 // GithubIssue Routes
 const githubIssueIntegrationController = require("../controllers/integrations/github/GithubIssueController");
 
-
 //GOOGLE INTEGRATION ROUTES
 /*
 const googleIntegrationController = require('../controllers/integrations/GoogleIntegrationController');
@@ -779,17 +782,17 @@ const jiraController = require("../controllers/integrations/jira/JiraController"
 router.get("/integrations/connect/jira", jiraController.beginJiraConnect);
 
 router.get(
-    "/integrations/connect/jira/callback",
-    jiraController.handleJiraCallback
-);
-
-router.get(
     "/integrations/:workspaceId/jira",
     jiraController.getWorkspaceJiraSites
 );
 router.post(
     "/integrations/:workspaceId/jira/get",
     jiraController.getJiraSiteIssues
+);
+
+router.get(
+    "/integrations/connect/jira/callback",
+    jiraController.handleJiraCallback
 );
 
 router.get(
