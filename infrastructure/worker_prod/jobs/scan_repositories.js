@@ -15,13 +15,19 @@ const Reference = require('../models/Reference');
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
-const { filterVendorFiles } = require('../utils/validate_utils');
+// const { filterVendorFiles } = require('../utils/validate_utils');
 
 const { scrapeGithubRepoCommitsAPI, scrapeGithubRepoCommitsMixed } = require('../utils/commit_scrape');
 const { updateRepositoryLastProcessedCommits } = require('../utils/github/commit_utils');
+const { generateRepositoryReferences } = require('../utils/references/index');
+
 
 const { scrapeGithubRepoProjects } = require('../utils/integrations/github_project_utils');
 const { scrapeGithubRepoIssues } = require('../utils/integrations/github_issue_utils');
+
+const { cloneInstallationRepo } = require('../utils/github/cli_utils');
+
+const { spawnSync } = require('child_process');
 
 
 
@@ -35,6 +41,19 @@ const Sentry = require("@sentry/node");
 let db = mongoose.connection;
 
 
+const deleteClonedRepositories = async (clonedRepositoryDiskPaths) => {
+    var repositoryDeleteProcesses = clonedRepositoryDiskPaths.map( async (repoDiskPath) => {
+
+        var timestamp = repoDiskPath.replace('git_repos/', '').replace('/', '');
+
+        spawnSync('rm', ['-rf', `${timestamp}`], {cwd: './' + 'git_repos/'});
+    });
+
+    await Promise.allSettled(repositoryDeleteProcesses);
+
+}
+
+
 
 const scanRepositories = async () => {
 
@@ -43,6 +62,10 @@ const scanRepositories = async () => {
     const session = await db.startSession();
 
     var workspaceId = process.env.workspaceId;
+
+    var deletedLocalRepos = false;
+
+    var clonedRepositoryDiskPaths = [];
 
     var transactionAborted = false;
     var transactionError = {message: ''};
@@ -223,57 +246,79 @@ const scanRepositories = async () => {
 
             // installationId, repositoryId, installationClient, repositoryObj, worker
 
-            var repositoryProjectsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+            if (!process.env.NO_GITHUB_PROJECTS) {
+                var repositoryProjectsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+                    try {
+                        await scrapeGithubRepoProjects(repositoryObj.installationId,
+                            repositoryObj._id.toString(),
+                            installationClientList[unscannedRepositories[idx].installationId],
+                            repositoryObj,
+                            workspaceId,
+                            worker);
+                    }
+                    catch (err) {
+                        console.log(err);
+                        return {error: 'Error'};
+                    }
+                    return { success: true }
+                });
+            
+                // Execute all requests
+                var projectScrapeListResults;
                 try {
-                    await scrapeGithubRepoProjects(repositoryObj.installationId,
-                        repositoryObj._id.toString(),
-                        installationClientList[unscannedRepositories[idx].installationId],
-                        repositoryObj,
-                        workspaceId,
-                        worker);
+                    projectScrapeListResults = await Promise.allSettled(repositoryProjectsRequestList);
                 }
                 catch (err) {
-                    console.log(err);
-                    return {error: 'Error'};
+                
+                    Sentry.setContext("scan-repositories", {
+                        message: `scanRepositories failed scraping Repository Projects`,
+                        unscannedRepositoryIdList: unscannedRepositoryIdList,
+                    });
+
+                    Sentry.captureException(err);
+
+                    throw err;
                 }
-                return { success: true }
-            });
-        
-            // Execute all requests
-            var projectScrapeListResults;
-            try {
-                projectScrapeListResults = await Promise.allSettled(repositoryProjectsRequestList);
             }
-            catch (err) {
-            
-                Sentry.setContext("scan-repositories", {
-                    message: `scanRepositories failed scraping Repository Projects`,
-                    unscannedRepositoryIdList: unscannedRepositoryIdList,
-                });
 
-                Sentry.captureException(err);
 
-                throw err;
-            }
+
 
 
 
             var repositoryCommitsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
                 try {
+                    // Clone Repository
+                    var repoDiskPath;
+
+                    repoDiskPath = await cloneInstallationRepo(repositoryObj.installationId, repositoryObj.cloneUrl, false, '', worker);
+
+                    clonedRepositoryDiskPaths.push(repoDiskPath);
+
                     await scrapeGithubRepoCommitsMixed(repositoryObj.installationId,
                         repositoryObj._id.toString(),
                         installationClientList[unscannedRepositories[idx].installationId],
                         repositoryObj,
                         workspaceId,
+                        repoDiskPath,
                         worker);
                 }
                 catch (err) {
                     console.log(err);
+
+                    Sentry.setContext("scan-repositories", {
+                        message: `scanRepositories failed scraping Repository Code Objects`,
+                        installationId: repositoryObj.installationId,
+                        cloneUrl: repositoryObj.cloneUrl,
+                    });
+
+                    Sentry.captureException(err);
+
                     return {error: 'Error'};
                 }
                 return { success: true }
             });
-        
+
             // Execute all requests
             var commitScrapeListResults;
             try {
@@ -292,63 +337,62 @@ const scanRepositories = async () => {
             }
 
 
-            /*
-            // Create Boards for unscannedRepositories
-            try {
-                await generateGithubIssueAssociations();
-            }
-            */
 
-            var repositoryIssuesRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
-                var integrationBoardId;
+
+
+            // Scrape Github Issues depending on ENV variable
+            if (!process.env.NO_GITHUB_ISSUES) {
+                var repositoryIssuesRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+                    var integrationBoardId;
+                    try {
+
+                        integrationBoardId = await generateGithubIssueBoardAPI(repositoryObj._id.toString());
+
+                        await scrapeGithubRepoIssues(repositoryObj.installationId,
+                            repositoryObj._id.toString(),
+                            installationClientList[unscannedRepositories[idx].installationId],
+                            repositoryObj,
+                            workspaceId,
+                            integrationBoardId,
+                            worker);
+                    
+                    }
+                    catch (err) {
+                        Sentry.captureException(err);
+                        console.log(err);
+                        return {error: 'Error'};
+                    }
+                    return { success: true, integrationBoardId: integrationBoardId, repositoryId: repositoryObj._id.toString() };
+                });
+            
+                // Execute all requests
+                var issueScrapeListResults;
                 try {
+                    issueScrapeListResults = await Promise.allSettled(repositoryIssuesRequestList);
+                }
+                catch (err) {
+                    Sentry.setContext("scan-repositories", {
+                        message: `scanRepositories failed scraping Repository Issues`,
+                        unscannedRepositoryIdList: unscannedRepositoryIdList,
+                    });
 
-                    integrationBoardId = await generateGithubIssueBoardAPI(repositoryObj._id.toString());
+                    Sentry.captureException(err);
+                    throw err;
+                }
 
-                    await scrapeGithubRepoIssues(repositoryObj.installationId,
-                        repositoryObj._id.toString(),
-                        installationClientList[unscannedRepositories[idx].installationId],
-                        repositoryObj,
-                        workspaceId,
-                        integrationBoardId,
-                        worker);
-                
+                // Call Association Pipline for Github Issues
+
+                // Non-error responses
+                validResults = issueScrapeListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
+                validResults = validResults.map(resultObj => resultObj.value);
+
+                try {
+                    await generateAssociationsFromResults(workspaceId, validResults);
                 }
                 catch (err) {
                     Sentry.captureException(err);
-                    console.log(err);
-                    return {error: 'Error'};
+                    throw err;
                 }
-                return { success: true, integrationBoardId: integrationBoardId, repositoryId: repositoryObj._id.toString() };
-            });
-        
-            // Execute all requests
-            var issueScrapeListResults;
-            try {
-                issueScrapeListResults = await Promise.allSettled(repositoryIssuesRequestList);
-            }
-            catch (err) {
-                Sentry.setContext("scan-repositories", {
-                    message: `scanRepositories failed scraping Repository Issues`,
-                    unscannedRepositoryIdList: unscannedRepositoryIdList,
-                });
-
-                Sentry.captureException(err);
-                throw err;
-            }
-
-            // Call Association Pipline for Github Issues
-
-            // Non-error responses
-            validResults = issueScrapeListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
-            validResults = validResults.map(resultObj => resultObj.value);
-
-            try {
-                await generateAssociationsFromResults(workspaceId, validResults);
-            }
-            catch (err) {
-                Sentry.captureException(err);
-                throw err;
             }
 
 
@@ -360,6 +404,9 @@ const scanRepositories = async () => {
                 repositoryListCommits = await updateRepositoryLastProcessedCommits(unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList, session);
             }
             catch (err) {
+                
+                console.log(err);
+
                 Sentry.setContext("scan-repositories", {
                     message: `scanRepositories failed to update Repository lastProcessedCommits`,
                     unscannedRepositoryIdList: unscannedRepositoryIdList,
@@ -371,136 +418,27 @@ const scanRepositories = async () => {
 
 
 
-             // Get Tree Objects for each Repository
-            var repositoryTreeResponseList;
-
-            // Get tree sha's for latest commit on default branch for each Repository
-            // Set to undefined if empty Repository or operation failed
-            repositoryListCommits.forEach((repositoryCommitResponse, idx) => {
-                var treeShaValue;
-                var isEmptyValue = false;
-
-                if (repositoryCommitResponse.isEmptyRepository == true) {
-                    isEmptyValue = true;
-                    treeShaValue = undefined;
-                }
-
-                if (repositoryCommitResponse.failed) {
-                    treeShaValue = undefined;
-                }
-
-                else if (!repositoryCommitResponse.failed && !repositoryCommitResponse.isEmptyRepository) {
-                    treeShaValue = repositoryCommitResponse.value.data.commit.tree.sha;
-                }
-
-                unscannedRepositories[idx].treeSha = treeShaValue;
-                unscannedRepositories[idx].isEmpty = isEmptyValue;
-            });
-
+            /*
+            // Fetch, filter and insert References for Repository
             try {
-                // Return undefined for repositoryObj whose treeSha cannot be accessed
-                urlList = unscannedRepositories.map(repositoryObj => {
-                    if (!repositoryObj.treeSha) {
-                        return undefined;
-                    }
-                    return { url: `/repos/${repositoryObj.fullName}/git/trees/${repositoryObj.treeSha}?recursive=true`, repositoryId: repositoryObj._id.toString()};
-                });
-
-                // Set return value to undefined for invalid Repositories
-                var requestPromiseList = urlList.map( async (urlObj) => {
-                    if (!urlObj) {
-                        return undefined;
-                    }
-
-                    // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
-
-                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
-                    return await installationClientList[currentInstallationId].get(urlObj.url);
-                });
-                repositoryTreeResponseList = await Promise.all(requestPromiseList);
+                await generateRepositoryReferences(repositoryListCommits, unscannedRepositories, unscannedRepositoryIdList,
+                                                    installationIdLookup, installationClientList, session);
             }
             catch (err) {
+                console.log(err);
 
                 Sentry.setContext("scan-repositories", {
-                    message: `scanRepositories failed fetching repository tree from Github API: "/repos/:owner/:name/git/trees/:tree_sha?recursive=true"`,
-                    urlList: urlList,
-                });
-
-                Sentry.captureException(err);
-
-                throw new Error(`Error getting repository tree urlList: ${JSON.stringify(urlList)}`);
-            }
-
-            var treeReferences = [];
-            var validPaths = [];
-            // Extract References from trees
-            for (i = 0; i < repositoryTreeResponseList.length; i++) {
-
-                // Don't try to add tree References for invalid Repositories
-                if (!repositoryTreeResponseList[i]) {
-                    continue;
-                }
-                
-                var currentTree = repositoryTreeResponseList[i].data.tree;
-                for (k = 0; k < currentTree.length; k++) {
-                    let item = currentTree[k];
-
-                    let pathSplit = item.path.split('/')
-
-                    let name = pathSplit.slice(pathSplit.length - 1)[0]
-                    let path = pathSplit.join('/');
-                    let kind = item.type == 'blob' ? 'file' : 'dir'
-
-                    // Add trailing slashes for vendor filtering
-                    if (kind == 'dir') {
-                        path = path.endsWith('/') ? path : path + '/'
-                    }
-
-                    validPaths.push(path);
-                    treeReferences.push({ name, path, kind, repository: ObjectId(unscannedRepositories[i]._id), parseProvider: 'create' });
-                }
-            }
-
-            // TODO: Add a log message comparing validPaths.length before & after
-            validPaths = filterVendorFiles(validPaths);
-
-
-            // Remove invalid paths (vendor paths) from treeReferences
-            treeReferences = treeReferences.filter(treeRefObj => validPaths.includes(treeRefObj.path));
-
-            // Remove trailing slashes from directories
-            treeReferences = treeReferences.map(treeRefObj => {
-                var temp = treeRefObj.path;
-                if (treeRefObj.kind == 'dir') {
-                    // directories are not stored with a trailing slash
-                    temp = temp.endsWith('/') ? temp.slice(0,-1) : temp
-                    // Strip out './' from start of paths
-                    temp = temp.startsWith('./') ? temp.slice(2, temp.length) : temp;
-                    return Object.assign({}, treeRefObj, {path: temp});
-                }
-                return treeRefObj;
-            });
-
-
-            // Bulk insert tree references
-            var insertedReferences;
-            try {
-                insertedReferences = await Reference.insertMany(treeReferences, { session });
-            }
-            catch (err) {
-
-                Sentry.setContext("scan-repositories", {
-                    message: `scanRepositories failed inserting tree 'References' from repositories`,
+                    message: `scanRepositories failed to generate unscanned Repository References`,
                     unscannedRepositoryIdList: unscannedRepositoryIdList,
                 });
 
                 Sentry.captureException(err);
-
                 throw err;
             }
+            */
 
-            await worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', message: `inserted ${insertedReferences.length} tree references`,
-                                                        function: 'scanRepositories'}});
+
+
 
 
             // Update 'scanned' to true, 'currentlyScanning' to false
@@ -552,6 +490,7 @@ const scanRepositories = async () => {
                 }
             }
 
+            
             // Set workspace 'setupComplete' to true
             // Remove failed Repositories from the workspace 'repositories' array
             var repositoriestoRemove = unscannedRepositories.filter(repositoryObj => !repositoryObj.treeSha && !repositoryObj.isEmpty)
@@ -560,7 +499,7 @@ const scanRepositories = async () => {
                 await Workspace.findByIdAndUpdate(workspaceId,
                                                             {
                                                                 $set: {setupComplete: true},
-                                                                $pull: {repositories: { $in: repositoriestoRemove.map(id => ObjectId(id))}}
+                                                                // $pull: {repositories: { $in: repositoriestoRemove.map(id => ObjectId(id))}}
                                                             },
                                                             { session })
                                                             .exec();
@@ -576,6 +515,7 @@ const scanRepositories = async () => {
 
                 throw err;
             }
+            
 
             await worker.send({action: 'log', info: {level: 'info', message: `Completed scanning repositories: ${unscannedRepositoryIdList}`,
                                                         source: 'worker-instance', function: 'scanRepositories'}});
@@ -617,13 +557,20 @@ const scanRepositories = async () => {
             });
     
             Sentry.captureException(err);
-
+            // Don't throw Erorr here, want to make sure Repository delete runs
             throw err;
         }
+
+        await deleteClonedRepositories(clonedRepositoryDiskPaths);
+        deletedLocalRepos = true;
 
     }
 
     session.endSession();
+
+    if (!deletedLocalRepos) {
+        await deleteClonedRepositories(clonedRepositoryDiskPaths);
+    }
 
 }
 
