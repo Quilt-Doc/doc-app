@@ -1,12 +1,10 @@
-
-
-require('dotenv').config();
+require("dotenv").config();
 const fs = require("fs");
 
-var mongoose = require('mongoose')
+var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const IntegrationTicket = require('../../models/integrations/integration_objects/IntegrationTicket');
+const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
 
 /*
 const fetchAllJiraIssues = async (repositoryId) => {
@@ -26,7 +24,6 @@ const fetchAllJiraIssues = async (repositoryId) => {
 */
 
 describe("Github Issue Bulk Scrape", () => {
-
     test("dummy test", () => {
         expect(1).toEqual(1);
     });
@@ -50,5 +47,4 @@ describe("Github Issue Bulk Scrape", () => {
 
     });
     */
-
 });

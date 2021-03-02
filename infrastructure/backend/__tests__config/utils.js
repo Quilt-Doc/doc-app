@@ -72,13 +72,12 @@ const deleteRepositories = async (createdWorkspaceId, createdRepositoryIds) => {
 };
 
 const createWorkspace = async (fullNameList) => {
-
     var backendClient = api.requestTestingUserBackendClient();
 
     var createdRepositories = await fetchRepositories(fullNameList);
 
-    var createdRepositoryIds = createdRepositories.map(repositoryObj => {
-        console.log('repositoryObj._id')
+    var createdRepositoryIds = createdRepositories.map((repositoryObj) => {
+        console.log("repositoryObj._id");
         console.log(repositoryObj._id);
         return repositoryObj._id;
     });
@@ -105,7 +104,10 @@ const createWorkspace = async (fullNameList) => {
     console.log(createWorkspaceResponse.data);
 
     // createdWorkspaceId
-    return { createdWorkspaceId: createWorkspaceResponse.data.result._id, repositoryIds: createdRepositoryIds};
+    return {
+        createdWorkspaceId: createWorkspaceResponse.data.result._id,
+        repositoryIds: createdRepositoryIds,
+    };
 };
 
 const deleteWorkspace = async (createdWorkspaceId) => {
@@ -121,7 +123,7 @@ const deleteWorkspace = async (createdWorkspaceId) => {
             throw Error(`Workspace Delete failed on backend`);
         }
     } catch (err) {
-        console.log("Error deleting workspace");
+        console.log("Error deleting workspace", err);
         throw err;
     }
 };

@@ -162,7 +162,9 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         process.env.TEST_TRELLO_CONTEXT = JSON.stringify(context);*/
 
-        let repositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
+        let repositories = await Repository.find({
+            _id: { $in: JSON.parse(process.env.TEST_CREATED_REPOSITORIES) },
+        });
 
         repositories = repositories.filter(
             (repository) =>
@@ -494,41 +496,6 @@ describe("Test Trello Bulk Scrape Basic", () => {
         process.env.TEST_TRELLO_CARDS = JSON.stringify(cards);
     });
 
-    /*
-    test("trelloControllerHelpers.extractTrelloEvent: expect event to match", async () => {
-        const { extractTrelloEvent } = trelloControllerHelpers;
-
-        const context = JSON.parse(process.env.TEST_TRELLO_CONTEXT);
-
-        const { event } = context;
-
-        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
-
-        const lists = JSON.parse(process.env.TEST_TRELLO_LISTS);
-
-        const extractedEvent = await extractTrelloEvent(board, lists, event);
-
-        let receivedEvent = extractedEvent.toJSON();
-
-        receivedEvent.board = receivedEvent.board.toString();
-
-        receivedEvent.beginList = receivedEvent.beginList.toString();
-
-        receivedEvent.endList = receivedEvent.endList.toString();
-
-        const expectedEvent = {
-            board: board._id,
-            beginList: lists[event.beginListId]._id,
-            endList: lists[event.endListId]._id,
-            source: "trello",
-            action: "movement",
-        };
-
-        expect(receivedEvent).toMatchObject(expectedEvent);
-
-        process.env.TEST_TRELLO_EVENT = JSON.stringify(extractedEvent);
-    });*/
-
     test("trelloControllerHelpers.extractTrelloIntervals: expect intervals to match", async () => {
         const { extractTrelloIntervals } = trelloControllerHelpers;
 
@@ -615,18 +582,6 @@ describe("Test Trello Bulk Scrape Basic", () => {
     });
 
     test("bulkScrape: expect cards to match", async () => {
-        /*
-        console.log(
-            "TEST CARDS UP TO NOW",
-            JSON.parse(process.env.TEST_TRELLO_CARDS)
-        );
-
-        
-        console.log(
-            "TYPE OF TEST CARDS",
-            typeof JSON.parse(process.env.TEST_TRELLO_CARDS)
-        );*/
-
         const helpers = {
             acquireTrelloData: {
                 data: process.env.TEST_TRELLO_BOARD_DATA,
@@ -753,6 +708,7 @@ const DirectAssociationGenerator = require("../controllers/associations/helpers/
 let directGenerator;
 
 const testDataAssoc = require("../__tests__data/03_direct_association_creation_data");
+const Repository = require("../models/Repository");
 
 describe("Test Direct Association Creation Basic", () => {
     beforeAll(() => {
@@ -810,19 +766,6 @@ describe("Test Direct Association Creation Basic", () => {
             expect(new Set(intervalIds)).toEqual(new Set(match.intervals));
         });
     });
-
-    /*
-    test("DirectAssociationGenerator.identifyScrapedRepositories: scrapedRepositories is empty", async () => {
-        await directGenerator.identifyScrapedRepositories();
-
-        const boardId = directGenerator.boardIds[0];
-
-        expect(directGenerator.scrapedRepositories[boardId]).toEqual(new Set());
-    });
-
-    test("DirectAssociationGenerator.updateScrapedAssociations: expect update associations to resolve", async () => {
-        await directGenerator.updateScrapedAssociations();
-    });*/
 
     test("DirectAssociationGenerator.queryDirectAttachments: expect code objects to have been queried correctly", async () => {
         const queries = await directGenerator.queryDirectAttachments();
@@ -886,16 +829,6 @@ describe("Test Direct Association Creation Basic", () => {
                 const expectedCO = expectedTicketCO[name];
 
                 const receivedCO = ticketCO[ticketId];
-
-                if (receivedCO.length !== expectedCO.length) {
-                    console.log("MODEL NAME", key);
-
-                    console.log("NAME OF TICKET", name);
-
-                    console.log("EXPECTED CO", expectedCO);
-
-                    console.log("RECEIVED CO", receivedCO);
-                }
 
                 // compare lengths of associated code object for this specific ticket
                 expect(receivedCO.length).toEqual(expectedCO.length);

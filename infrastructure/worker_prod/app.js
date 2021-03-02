@@ -11,6 +11,17 @@ const constants = require('./constants/index');
 var express = require('express');
 var bodyParser = require('body-parser');
 
+const Sentry = require("@sentry/node");
+const Tracing = require("@sentry/tracing");
+
+Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+  
+    // We recommend adjusting this value in production, or using tracesSampler
+    // for finer control
+    tracesSampleRate: 1.0,
+});
+
 
 var worker = require('cluster').worker;
 
@@ -27,6 +38,8 @@ checkValid = (item) => {
     }
     return false
 }
+
+console.log(`process.env.RUNNING_LOCALLY: ${process.env.RUNNING_LOCALLY}`);
 
 app.post('/job', async function(req, res) {
 
@@ -84,6 +97,7 @@ app.post('/job', async function(req, res) {
             // res.status(400).end();
         }
 
+        /*
         // DEPRECATED
         if (!checkValid(installationId))  {
             await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No installationId provided for scanRepositories job`)),
@@ -92,6 +106,7 @@ app.post('/job', async function(req, res) {
             res.status(200).end();
             // res.status(400).end();
         }
+        */
 
         worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', function: 'app.js',
                                             message: `Running Scan Repositories Job workspaceId, installationId, repositoryIdList: ${workspaceId}, ${installationId}, ${repositoryIdList}`}});
@@ -327,14 +342,28 @@ app.post('/job', async function(req, res) {
 
     // Import Jira Issues Job
     else if (jobType == constants.jobs.JOB_IMPORT_JIRA_ISSUES) {
-        const { jiraSiteId } = req.body;
+        const { jiraSiteId, jiraProjects } = req.body;
 
         if (!checkValid(jiraSiteId))  {
-            await worker.send({action: 'log', info: {level: 'error', message: serializeError(Error(`No jiraSiteId provided for importJiraIssues job'`)),
-                                errorDescription: 'No jiraSiteId provided for importJiraIssues job',
-                                source: 'worker-instance', function: 'app.js'}});
+
+            Sentry.setContext("import_jira_issues", {
+                message: `No jiraSiteId provided`,
+            });
+    
+            Sentry.captureException(Error("No jiraSiteId provided"));
+            
             res.status(200).end();
             // res.status(400).end();
+        }
+
+        if (!checkValid(jiraProjects)) {
+            Sentry.setContext("import_jira_issues", {
+                message: `No jiraProjects provided`,
+            });
+    
+            Sentry.captureException(Error("No jiraProjects provided"));
+
+            res.status(200).end();
         }
 
         worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', function: 'app.js',
@@ -342,6 +371,7 @@ app.post('/job', async function(req, res) {
 
 
         process.env.jiraSiteId = jiraSiteId;
+        process.env.jiraProjects = JSON.stringify(jiraProjects);
 
         try {
             await importJiraIssues.importJiraIssues();

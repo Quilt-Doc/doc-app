@@ -5,9 +5,23 @@ const logger = require('../logging/index').logger;
 
 const queueUrl = process.env.JOB_QUEUE_URL;
 
+const LOCAL_WORKER = process.env.IS_PRODUCTION ? false : true;
+
 const dispatchScanRepositoriesJob = async (jobData) => {
 
-    var timestamp = Date.now().toString();
+    if (LOCAL_WORKER) {
+        var workerClient = apis.requestLocalWorkerClient();
+
+        var workerResponse;
+        try {
+            workerResponse = await workerClient.post('/job', jobData);
+        }
+        catch (err) {
+            console.log(`dispatchScanRepositoriesJob - Error dispatching scan_repositories job - jobData ${JSON.stringify(jobData)}`);
+            throw err;
+        }
+        return;
+    }
 
     var sqsScanData = {
         MessageAttributes: {},
@@ -33,8 +47,6 @@ const dispatchScanRepositoriesJob = async (jobData) => {
   
 const dispatchUpdateReferencesJob = async (jobData) => {
 
-    var timestamp = Date.now().toString();
-
     var sqsReferenceData = {
         MessageAttributes: {},
         MessageBody: JSON.stringify(jobData),
@@ -56,8 +68,6 @@ const dispatchUpdateReferencesJob = async (jobData) => {
 }
 
 const dispatchUpdateChecksJob = async (jobData) => {
-
-    var timestamp = Date.now().toString();
 
     var sqsCheckData = {
         MessageAttributes: {},
@@ -82,7 +92,6 @@ const dispatchUpdateChecksJob = async (jobData) => {
 
 
 const dispatchTrelloScrapeJob = async (jobData) => {
-    var timestamp = Date.now().toString();
 
     //  const { trelloIntegrationId, requiredBoardIdList, relevantLists } = req.body;
     var sqsTrelloData = {
@@ -108,7 +117,20 @@ const dispatchTrelloScrapeJob = async (jobData) => {
 
 
 const dispatchImportJiraIssuesJob = async (jobData) => {
-    var timestamp = Date.now().toString();
+
+    if (LOCAL_WORKER) {
+        var workerClient = apis.requestLocalWorkerClient();
+
+        var workerResponse;
+        try {
+            workerResponse = await workerClient.post('/job', jobData)
+        }
+        catch (err) {
+            console.log(`dispatchImportJiraIssuesJob - Error dispatching scan_repositories job - jobData ${JSON.stringify(jobData)}`);
+            throw err;
+        }
+        return;
+    }
 
     var sqsJiraData = {
         MessageAttributes: {},

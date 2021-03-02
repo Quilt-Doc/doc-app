@@ -108,8 +108,6 @@ const getScanRepositoriesData = async (repositoryIds, workspace, session, logger
     scanRepositoriesData["workspaceId"] = workspace._id.toString();
     scanRepositoriesData["jobType"] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
 
-    // DEPRECATED
-    // scanRepositoriesData["installationId"] = installationId;
 
     return scanRepositoriesData;
 
@@ -203,6 +201,46 @@ createWorkspace = async (req, res) => {
                 };
                 throw Error(
                     `Error updating User workspaces array - creatorId, workspaceId: ${creatorId} ${workspace._id.toString()}`
+                );
+            }
+
+
+            // Create Root Document
+            var document = new Document({
+                author: ObjectId(creatorId),
+                workspace: ObjectId(workspace._id.toString()),
+                title: "",
+                path: "",
+                status: "valid",
+            });
+
+            document.root = true;
+
+            // save document
+            try {
+                document = await document.save({ session });
+            } catch (err) {
+                await logger.error({
+                    source: "backend-api",
+                    error: err,
+                    errorDescription: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(
+                        repositories
+                    )}`,
+                    function: "createWorkspace",
+                });
+
+                output = {
+                    success: false,
+                    error: `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(
+                        repositories
+                    )}`,
+                    trace: err,
+                };
+
+                throw new Error(
+                    `Create Workspace Error document.save() failed - workspaceId, creatorId, repositories: ${workspace._id.toString()}, ${creatorId}, ${JSON.stringify(
+                        repositories
+                    )}`
                 );
             }
 

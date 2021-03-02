@@ -95,7 +95,7 @@ const nonAuthPaths = [
     "/pusher/vscode/auth",
     "/auth/login/success",
     "/auth/login/failed",
-    "/auth/jira",
+    "/integrations/connect/jira/callback",
     "/auth/github",
     "/api/auth/github",
     "/auth/github/redirect",
@@ -154,11 +154,9 @@ app.use(function (req, res, next) {
     }
 
     var publicKey = fs.readFileSync("docapp-test-public.pem", "utf8");
-    console.log("JWT TOKEN", token);
+    //console.log("JWT TOKEN", token);
     try {
-
-        console.log('Attempting to verify token: ');
-        console.log(token);
+        console.log("Attempting to verify token");
         var decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 
         req.tokenPayload = decoded;
@@ -167,7 +165,7 @@ app.use(function (req, res, next) {
         console.log(err);
         return res.status(403);
     }
-
+    console.log("Successfully verified token");
     next();
 });
 
