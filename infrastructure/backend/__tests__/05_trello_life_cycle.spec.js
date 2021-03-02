@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-const api = require("../../apis/api");
+const api = require("../apis/api");
 
 const _ = require("lodash");
 
@@ -11,27 +11,27 @@ const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../../__tests__config/utils");
+} = require("../__tests__config/utils");
 
 //trello helpers
 const {
     acquireTrelloConnectProfile,
     acquireExternalTrelloBoards,
-} = require("../../controllers/integrations/trello/TrelloControllerHelpers");
+} = require("../controllers/integrations/trello/TrelloControllerHelpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 // useful models
-const IntegrationUser = require("../../../models/integrations/integration_objects/IntegrationUser");
-const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
-const IntegrationColumn = require("../../../models/integrations/integration_objects/IntegrationColumn");
-const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
-const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
-const IntegrationInterval = require("../../../models/integrations/integration_objects/IntegrationInterval");
-const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
-const Association = require("../../../models/integrations/integration_objects/Association");
-const Workspace = require("../../models/Workspace");
+const IntegrationUser = require("../models/integrations/integration_objects/IntegrationUser");
+const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationColumn = require("../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationLabel = require("../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationAttachment = require("../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
+const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
+const Association = require("../models/associations/Association");
+const Workspace = require("../models/Workspace");
 
 beforeAll(async () => {
     const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
@@ -162,7 +162,11 @@ describe("Test Trello Integration Removal", () => {
             process.env.TEST_TRELLOLC_WORKSPACE_1
         );
 
-        let externalBoards = process.env.TEST_TRELLO_EXTERNAL_BOARDS;
+        console.log("TEST BOARDS", process.env.TEST_TRELLO_EXTERNAL_BOARDS);
+
+        let externalBoards = JSON.parse(
+            process.env.TEST_TRELLO_EXTERNAL_BOARDS
+        );
 
         let testBoard = externalBoards.filter(
             (board) => board.name === "Quilt Test Trello Board"
@@ -171,6 +175,10 @@ describe("Test Trello Integration Removal", () => {
         const { sourceId } = testBoard;
 
         testBoard = { sourceId, repositoryIds };
+
+        console.log("TEST 1 BOARD", testBoard);
+
+        console.log("WORKSPACEID", workspaceId);
 
         const response = await backendClient.post(
             `/integrations/${workspaceId}/${TEST_USER_ID}/trello/trigger_scrape`,
@@ -181,6 +189,7 @@ describe("Test Trello Integration Removal", () => {
 
         expect(success).toEqual(true);
 
+        /*
         const { workspace, boards } = result;
 
         expect(workspace.boards.length).toEqual(1);
@@ -205,10 +214,11 @@ describe("Test Trello Integration Removal", () => {
             .exec();
 
         expect(workspaceAfter.boards.length).toEqual(0);
-
+        */
         //deleteWorkspace(workspaceId);
     });
 
+    /*
     test("removeTrelloIntegration: Remove Board -- Multiple Workspace", async () => {
         let externalBoards = process.env.TEST_TRELLO_EXTERNAL_BOARDS;
 
@@ -257,12 +267,12 @@ describe("Test Trello Integration Removal", () => {
 
         const { workspaceId: workspace2Id } = createdWorkspace2;
 
-        const response = await backendClient.post(
+        const response2 = await backendClient.post(
             `/integrations/${workspace2Id}/${TEST_USER_ID}/trello/trigger_scrape`,
             { boards: [testBoard] }
         );
 
-        const { success: success2, result: result2 } = response.data;
+        const { success: success2, result: result2 } = response2.data;
 
         expect(success2).toEqual(true);
 
@@ -291,9 +301,10 @@ describe("Test Trello Integration Removal", () => {
         const counts4 = await acquireTrelloCounts(createdBoard);
 
         checkCountZero(counts4);
-    });
+    });*/
 });
 
+/*
 // Need to delete all resources
 describe("Test Trello Integration Reintegration", () => {
     let backendClient;
@@ -572,3 +583,4 @@ describe("Test Trello Integration General", () => {
         expect(associationCount).toEqual(15);
     });
 });
+*/

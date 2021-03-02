@@ -161,6 +161,8 @@ extractTrelloBoard = async (
 ) => {
     const boardCreator = members[boardCreatorSourceId];
 
+    console.log("REPO IDS ABOUT TO BE SAVED", repositoryIds);
+
     let board = new IntegrationBoard({
         creator: boardCreator._id,
         name,
@@ -170,6 +172,8 @@ extractTrelloBoard = async (
         repositories: repositoryIds,
         integrationCreator: userId,
     });
+
+    console.log("THE ACTUAL BOARD BEING SAVED", board);
 
     board = await board.save();
 
@@ -523,11 +527,21 @@ handleTrelloReintegration = async (boards) => {
 
     query.where("sourceId").in(boardSourceIds);
 
-    let reintegratedBoards = await query.lean().exec();
+    let reintegratedBoards;
+
+    try {
+        reintegratedBoards = await query.exec();
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    console.log("REINTEGRATED BOARDS", reintegratedBoards);
+
+    const updateBoardRequests = [];
 
     // map through existing boards and replace repositories with those
     // that need to be integrated
-    reintegratedBoards.map((board) => {
+    const copyBoards = reintegratedBoards.map((board) => {
         const { sourceId, repositories } = board;
 
         // get already integrated repos
@@ -535,14 +549,31 @@ handleTrelloReintegration = async (boards) => {
             repositories.map((repoId) => repoId.toString())
         );
 
+        const copyBoard = { ...board };
+
         // replace repositories field with requested repositories that don't include already integrated repos
-        board.repositories = boardsObj[sourceId].repositoryIds.map(
+        copyBoard.repositories = boardsObj[sourceId].repositoryIds.map(
             (repoId) => !integratedRepos.has(repoId)
         );
+
+        board.repositories = [...board.repositories, ...copyBoard.repositories];
+
+        const updateRequest = board.save();
+
+        updateBoardRequests.push(updateRequest);
+
+        return copyBoard;
     });
 
+    // insert repository updates
+    try {
+        await Promise.all(updateBoardRequests);
+    } catch (e) {
+        throw new Error(e);
+    }
+
     let integratedSourceIds = new Set(
-        reintegratedBoards.map((board) => board.sourceId)
+        copyBoards.map((board) => board.sourceId)
     );
 
     // new boards only

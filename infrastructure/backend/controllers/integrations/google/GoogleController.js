@@ -1,14 +1,23 @@
 const { google } = require("googleapis");
+
 const url = require("url");
+
 const axios = require("axios");
 
 const mongoose = require("mongoose");
+
 const { ObjectId } = mongoose.Types;
+
+//sentry
+const Sentry = require("@sentry/node");
+
+//models
 const GoogleDriveIntegration = require("../../models/integrations/GoogleDriveIntegration");
 const ExternalDocument = require("../../models/integrations/ExternalDocument");
 const Workspace = require("../../../models/Workspace");
 
 const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
+
 const REDIRECT_URL =
     "http://localhost:3001/api/integrations/connect/google/callback";
 
@@ -26,15 +35,18 @@ const googleAPI = axios.create({
 
 // INITIAL CALL FROM FRONTEND -> OPENS UP GOOGLE AUTH
 
-beginGoogleConnect = (req, res, next) => {
+beginGoogleConnect = (req, res) => {
     const { workspace_id, user_id } = req.query;
+
     const workspaceId = workspace_id;
+
     const userId = user_id;
 
     let state = {};
 
     //if (userId) state.userId = userId;
     if (workspaceId) state.workspaceId = workspaceId;
+
     if (userId) state.userId = userId;
 
     state = Buffer.from(JSON.stringify(state)).toString("base64");
@@ -64,7 +76,17 @@ handleGoogleConnectCallback = async (req, res) => {
     //console.log("QUERY", query);
 
     const { code, state } = query;
-    const { tokens } = await oauth2Client.getToken(code);
+
+    let extraction;
+
+    try {
+        extraction = await oauth2Client.getToken(code);
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
+    const { tokens } = extraction;
+    8;
 
     //console.log("TOKENS", tokens);
 
@@ -89,8 +111,8 @@ handleGoogleConnectCallback = async (req, res) => {
 
     try {
         response = await oauth2.userinfo.get({ auth: oauth2Client });
-    } catch (err) {
-        console.log("ERROR", err);
+    } catch (e) {
+        Sentry.captureException(e);
     }
 
     const googleUser = response.data;
@@ -109,11 +131,12 @@ handleGoogleConnectCallback = async (req, res) => {
 
     try {
         googleDriveIntegration = await googleDriveIntegration.save();
-    } catch (err) {
-        console.log("ERROR", err);
+    } catch (e) {
+        Sentry.captureException(e);
     }
+};
 
-    // this would be the allocated job to bulk scrape
+/*   // this would be the allocated job to bulk scrape
     await bulkScrapeGoogleDrive(googleDriveIntegration);
 
     // this would be the allocated job to make associations
@@ -122,8 +145,7 @@ handleGoogleConnectCallback = async (req, res) => {
 
     res.redirect(
         "http://localhost:3000/workspaces/5f9949ddc89f9adeeaf173bf/google_test"
-    );
-};
+    );*/
 
 // BULK SCRAPING PROCEDURE
 

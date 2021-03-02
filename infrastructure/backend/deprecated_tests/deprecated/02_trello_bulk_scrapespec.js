@@ -1,14 +1,14 @@
 require("dotenv").config();
 
-const api = require("../apis/api");
+const api = require("../../apis/api");
 
 const mongoose = require("mongoose");
 
 const _ = require("lodash");
 
-const trelloControllerHelpers = require("../controllers/integrations/trello/TrelloControllerHelpers");
+const trelloControllerHelpers = require("../../controllers/integrations/trello/TrelloControllerHelpers");
 
-const testData = require("../__tests__data/02_trello_bulk_scrape_data");
+const testData = require("../../__tests__data/02_trello_bulk_scrape_data");
 
 const {
     TEST_USER_ID,
@@ -652,7 +652,7 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const {
             bulkScrapeTrello,
-        } = require("../controllers/integrations/trello/TrelloController");
+        } = require("../../controllers/integrations/trello/TrelloController");
 
         const result = await bulkScrapeTrello(
             profile,
@@ -703,12 +703,12 @@ describe("Test Trello Bulk Scrape Basic", () => {
     });
 });
 
-const DirectAssociationGenerator = require("../controllers/associations/helpers/directAssociationGenerator");
+const DirectAssociationGenerator = require("../../controllers/associations/helpers/directAssociationGenerator");
 
 let directGenerator;
 
-const testDataAssoc = require("../__tests__data/03_direct_association_creation_data");
-const Repository = require("../models/Repository");
+const testDataAssoc = require("../../__tests__data/03_direct_association_creation_data");
+const Repository = require("../../models/Repository");
 
 describe("Test Direct Association Creation Basic", () => {
     beforeAll(() => {

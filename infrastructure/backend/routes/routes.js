@@ -747,6 +747,17 @@ router.post(
     associationController.createGithubIssueBoard
 );
 
+//GOOGLE INTEGRATION ROUTES
+
+const googleController = require("../controllers/integrations/google/GoogleController");
+
+router.get("/integrations/connect/google", googleController.beginGoogleConnect);
+
+router.get(
+    "/integrations/connect/google/callback",
+    googleController.handleGoogleConnectCallback
+);
+
 //TRELLO INTEGRATION ROUTES
 const trelloController = require("../controllers/integrations/trello/TrelloController");
 
@@ -780,13 +791,6 @@ router.post(
 
 // GithubIssue Routes
 const githubIssueIntegrationController = require("../controllers/integrations/github/GithubIssueController");
-
-//GOOGLE INTEGRATION ROUTES
-/*
-const googleIntegrationController = require('../controllers/integrations/GoogleIntegrationController');
-router.get('/integrations/connect/google', googleIntegrationController.beginGoogleConnect);
-router.get('/integrations/connect/google/callback', googleIntegrationController.handleGoogleConnectCallback);
-*/
 
 const jiraController = require("../controllers/integrations/jira/JiraController");
 

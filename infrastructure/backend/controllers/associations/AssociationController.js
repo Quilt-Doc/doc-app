@@ -38,7 +38,7 @@ const createGithubIssueBoard = async (req, res) => {
 generateAssociations = async (req, res) => {
     const { workspaceId } = req.params;
 
-    console.log("Generating Associations");
+    //console.log("Generating Associations");
 
     // boards must be provided with unique repositories
     // in format: [ { _id, repositories }]

@@ -123,7 +123,7 @@ const deleteWorkspace = async (createdWorkspaceId) => {
             throw Error(`Workspace Delete failed on backend`);
         }
     } catch (err) {
-        console.log("Error deleting workspace", err);
+        console.log("Error deleting workspace");
         throw err;
     }
 };

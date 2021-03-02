@@ -142,6 +142,8 @@ triggerTrelloScrape = async (req, res) => {
     } catch (e) {
         Sentry.captureException(e);
 
+        console.log("FAILURE 1", e);
+
         return res.json({ success: false, error: e });
     }
 
@@ -156,6 +158,8 @@ triggerTrelloScrape = async (req, res) => {
     } catch (e) {
         Sentry.captureException(e);
 
+        console.log("FAILURE 2", e);
+
         return res.json({ success: false, error: e });
     }
 
@@ -165,6 +169,8 @@ triggerTrelloScrape = async (req, res) => {
         result = await bulkScrapeTrello(profile, boards, workspaceId);
     } catch (e) {
         Sentry.captureException(e);
+
+        console.log("FAILURE 3", e);
 
         return res.json({ success: false, error: e });
     }
@@ -182,12 +188,16 @@ triggerTrelloScrape = async (req, res) => {
     } catch (e) {
         Sentry.captureException(e);
 
+        console.log("FAILURE 4", e);
+
         return res.json({ success: false, error: e });
     }
 
     boardIds = result.map((board) => board._id);
 
     reintegratedBoardIds = reintegratedBoards.map((board) => board._id);
+
+    console.log("WORKSPACE BOARDS", works);
 
     workspace.boards = [
         ...workspace.boards,
@@ -198,6 +208,8 @@ triggerTrelloScrape = async (req, res) => {
     try {
         workspace = workspace.save();
     } catch (e) {
+        console.log("FAILURE 5", e);
+
         Sentry.captureException(e);
     }
 
@@ -232,6 +244,10 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
         members = await extractTrelloMembers(workspaceId, members, profile);
 
         // create IntegrationBoard
+        console.log(
+            "REPO IDS ABOUT TO BE EXTRACTED IN THE BOARD",
+            repositoryIds
+        );
         let board = await extractTrelloBoard(
             members,
             boardSourceId,
