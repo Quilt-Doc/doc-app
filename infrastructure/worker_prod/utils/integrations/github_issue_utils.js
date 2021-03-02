@@ -485,9 +485,24 @@ const fetchIntegrationAttachments = async (attachmentsToCreate, repositoryId, mo
         return [];
     }
 
+    /*
+    console.log('Fetching Integration Attachments - attachmentsToCreate: ');
+    console.log(attachmentsToCreate);
+
+    console.log("Before toString(): ");
+    console.log(attachmentsToCreate[0].nonCodeId.toString())
+
+    console.log("After toString(): ");
+    console.log(attachmentsToCreate[0].nonCodeId.toString());
+    */
+
     return await IntegrationAttachment.find({ repository: repositoryId,
                                               modelType: modelType,
-                                              sourceId: { $in: attachmentsToCreate.map(obj => obj.sourceId) } }, '_id nonCodeId' ).lean().exec();
+                                              sourceId: { $in: attachmentsToCreate.map(obj => obj.sourceId) },
+                                              nonCodeId: { $in: attachmentsToCreate.map(obj => ObjectId(obj.nonCodeId.toString())) },
+                                            }
+                                            , '_id nonCodeId' )
+                                            .lean().exec();
 }
 
 const addAttachmentsToIntegrationTickets = async (insertedAttachments) => {
@@ -639,6 +654,7 @@ const generateDirectAttachmentsFromPRs = async (issueLinkages, scrapedIssues, re
                 link: `${repositoryObj.htmlUrl}/pull/${currentPRLinkages[k]}`,
                 nonCodeId: scrapedIssues[scrapedIssueIdx]._id,
             });
+            console.log(`Setting nonCodeId to: ${scrapedIssues[scrapedIssueIdx]._id}`);
         }
     }
 
@@ -674,6 +690,7 @@ const generateDirectAttachmentsFromPRs = async (issueLinkages, scrapedIssues, re
             await IntegrationAttachment.bulkWrite(bulkUpdateAttachmentsOps);
         }
         catch (err) {
+            console.log('IntegrationAttachment.bulkWrite failed');
             console.log(err);
             Sentry.captureException(err);
             throw err;
@@ -686,6 +703,7 @@ const generateDirectAttachmentsFromPRs = async (issueLinkages, scrapedIssues, re
             insertedAttachments = await fetchIntegrationAttachments(attachmentsToCreate, repositoryObj._id.toString(), 'pullRequest');
         }
         catch (err) {
+            console.log('fetchIntegrationAttachments failed');
             Sentry.captureException(err);
             throw err;
         }
@@ -913,6 +931,7 @@ const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssue
     //      issueLinkages[x].commitLinkages
     //      issueLinkages[x].markdownLinkages
 
+    
     // Handle issueLinkages[x].issueLinkages
     try {
         await generateDirectAttachmentsFromIssues(issueLinkages, scrapedIssues, repositoryObj);
@@ -922,7 +941,7 @@ const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssue
         throw err;
     }
 
-
+    
     // Handle issueLinkages[x].prLinkages
     try {
         await generateDirectAttachmentsFromPRs(issueLinkages, scrapedIssues, repositoryObj);
@@ -932,6 +951,8 @@ const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssue
         throw err;
     }
 
+    
+    /*
     // Handle issueLinkages[x].commitLinkages
     try {
         await generateDirectAttachmentsFromCommits(issueLinkages, scrapedIssues, repositoryObj);
@@ -941,6 +962,7 @@ const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssue
         throw err;
     }
 
+    
     // Handle issueLinkages[x].markdownLinkages
     try {
         await generateDirectAttachmentsFromMarkdown(issueLinkages, scrapedIssues, repositoryObj);
@@ -949,6 +971,8 @@ const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssue
         Sentry.captureException(err);
         throw err;
     }
+    */
+    
 
 }
 

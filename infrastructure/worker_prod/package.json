@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node cluster.js",
     "local": "node cluster.js -l",
+    "local-fast": "node cluster.js -l -i -p",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

@@ -40,6 +40,8 @@ checkValid = (item) => {
 }
 
 console.log(`process.env.RUNNING_LOCALLY: ${process.env.RUNNING_LOCALLY}`);
+console.log(`process.env.NO_GITHUB_ISSUES: ${process.env.NO_GITHUB_ISSUES}`);
+console.log(`process.env.NO_GITHUB_PROJECTS: ${process.env.NO_GITHUB_PROJECTS}`);
 
 app.post('/job', async function(req, res) {
 
