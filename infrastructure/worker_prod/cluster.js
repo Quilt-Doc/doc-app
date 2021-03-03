@@ -44,9 +44,19 @@ function fork(options) {
       var envClone = _.clone(process.env);
 
       envClone.WORKER_PORT = parseInt(process.env.PORT)+i;
+      
       if (options.local && options.local != null) {
         envClone.RUNNING_LOCALLY = options.local;
       }
+
+      if (options.noGhIssues && options.noGhIssues != null) {
+        envClone.NO_GITHUB_ISSUES = options.noGhIssues;
+      }
+
+      if (options.noGhProjects && options.noGhProjects != null) {
+        envClone.NO_GITHUB_PROJECTS = options.noGhProjects;
+      }
+
 
       var worker = cluster.fork(envClone);
       CLUSTER_ENV_VARS[worker.id] = envClone;
@@ -64,6 +74,8 @@ if (cluster.isMaster) {
 
   const optionDefinitions = [
     { name: 'local', alias: 'l', type: Boolean, defaultOption: false },
+    { name: 'noGhIssues', alias: 'i', type: Boolean },
+    { name: 'noGhProjects', alias: 'p', type: Boolean },
   ];
 
   const commandLineArgs = require('command-line-args')

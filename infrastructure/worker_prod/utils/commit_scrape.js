@@ -236,7 +236,7 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
     */
 }
 
-const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, worker) => {
+const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, repoDiskPath, worker) => {
 
 
     // Fetch all branches and PRs from Github
@@ -360,25 +360,6 @@ const scrapeGithubRepoCommitsMixed = async (installationId, repositoryId, instal
 
             throw Error(`Error updating Branch Objects to have PullRequest ids- prToBranchMapping.length, installationId, repositoryId: ${prToBranchMapping.length}, ${installationId}, ${repositoryId}`);
         }
-    }
-
-
-
-    // Clone Repository
-    var repoDiskPath;
-
-    try {
-        repoDiskPath = await cloneInstallationRepo(installationId, repositoryObj.cloneUrl, false, '', worker);
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scrapeGithubRepoCommitsMixed'}
-        });
-
-        throw Error(`Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
     }
 
 
