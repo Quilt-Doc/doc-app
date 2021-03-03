@@ -1,27 +1,16 @@
-const { google } = require("googleapis");
-
-const url = require("url");
-
-const axios = require("axios");
-
-const mongoose = require("mongoose");
-
-const { ObjectId } = mongoose.Types;
-
 //sentry
 const Sentry = require("@sentry/node");
 
 //models
-const GoogleDriveIntegration = require("../../models/integrations/GoogleDriveIntegration");
-const ExternalDocument = require("../../models/integrations/ExternalDocument");
 const Workspace = require("../../../models/Workspace");
+
+// google api
+const { google } = require("googleapis");
 
 const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
 
 const REDIRECT_URL =
     "http://localhost:3001/api/integrations/connect/google/callback";
-
-const oauth2 = google.oauth2("v2");
 
 const oauth2Client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
@@ -29,300 +18,163 @@ const oauth2Client = new google.auth.OAuth2(
     REDIRECT_URL
 );
 
-const googleAPI = axios.create({
-    baseURL: "https://www.googleapis.com",
-});
+// helpers
+const {
+    beginGoogleConnect,
+    handleGoogleConnectCallback,
+} = require("./GoogleAuthorizationController");
 
-// INITIAL CALL FROM FRONTEND -> OPENS UP GOOGLE AUTH
+const {
+    acquireGoogleConnectProfile,
+    acquireExternalGoogleDrives,
+    extractSharedDriveUsers,
+    extractGoogleDrive,
+    extractGoogleRawDocuments,
+    extractPersonalDriveUsers,
+    storeGoogleDocuments,
+} = require("./GoogleControllerHelpers");
 
-beginGoogleConnect = (req, res) => {
-    const { workspace_id, user_id } = req.query;
+getExternalGoogleDrives = async (req, res) => {
+    const { userId, workspaceId } = req.params;
 
-    const workspaceId = workspace_id;
+    let profile;
 
-    const userId = user_id;
+    try {
+        profile = await acquireGoogleConnectProfile(userId);
+    } catch (e) {
+        Sentry.captureException(e);
 
-    let state = {};
+        return res.json({ success: false, error: e });
+    }
 
-    //if (userId) state.userId = userId;
-    if (workspaceId) state.workspaceId = workspaceId;
+    if (!profile) return res.json({ success: true, result: null });
 
-    if (userId) state.userId = userId;
+    let drives;
 
-    state = Buffer.from(JSON.stringify(state)).toString("base64");
+    try {
+        drives = await acquireExternalGoogleDrives(profile);
+    } catch (e) {
+        Sentry.captureException(e);
 
-    scope = [
-        "https://www.googleapis.com/auth/drive.file",
-        "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/documents",
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/userinfo.email",
+        return res.json({ success: true, error: e });
+    }
+
+    let workspace;
+
+    try {
+        workspace = await Workspace.findById(workspaceId)
+            .lean()
+            .select("drives")
+            .populate("drives")
+            .exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: true, error: e });
+    }
+
+    let integratedDriveSourceIds = workspace.drives
+        ? workspace.drives.map((drive) => drive.sourceId)
+        : [];
+
+    integratedDriveSourceIds = new Set(integratedDriveSourceIds);
+
+    drives = drives.filter((drive) => {
+        const { id } = drive;
+
+        return !integratedDriveSourceIds.has(id);
+    });
+
+    return res.json({ success: true, result: drives });
+};
+
+triggerGoogleScrape = async (req, res) => {
+    const { userId, workspaceId } = req.params;
+
+    // drives is [{ sourceId, repositoryIds }]
+    let { drives } = req.body;
+
+    let profile;
+
+    try {
+        profile = await acquireGoogleConnectProfile(userId);
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    /* CAN DO REINTEGRATION LATER
+    let reintegratedDrives;
+
+    try {
+        const output = await handleTrelloReintegration(drives);
+
+        drives = output.drives;
+
+        reintegratedDrives = output.reintegratedDrives;
+    } catch (e) {
+        Sentry.captureException(e);
+
+        console.log("FAILURE 2", e);
+
+        return res.json({ success: false, error: e });
+    }*/
+
+    let result;
+
+    try {
+        result = await bulkScrapeGoogle(profile, drives, workspaceId);
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    // set up webhooks
+    //await setupTrelloWebhook(profile, result, userId);
+
+    // need to finally mutate workspace to add boards
+
+    let workspace;
+
+    try {
+        workspace = Workspace.findById(workspaceId).select("drives").exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    driveIds = result.map((drive) => drive._id);
+
+    //reintegratedDriveIds = reintegratedDrives.map((drive) => drive._id);
+
+    workspace.drives = [
+        ...workspace.drives,
+        ...driveIds,
+        //...reintegratedDriveIds,
     ];
 
-    const URL = oauth2Client.generateAuthUrl({
-        access_type: "offline",
-        prompt: "consent",
-        scope,
-        state,
-    });
+    try {
+        workspace = workspace.save();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
 
-    res.redirect(URL);
+    return res.json({
+        success: true,
+        result: { workspace, drives: [...result] },
+    });
 };
 
-// OAUTH CALLBACK USING REDIRECT URI
+// NEED TO EXTRACT IntegrationAttachment, IntegrationDocument, IntegrationInterval,
+bulkScrapeGoogle = async (profile, drives, workspaceId) => {
+    const { accessToken, refreshToken, scope, idToken } = profile;
 
-handleGoogleConnectCallback = async (req, res) => {
-    const query = url.parse(req.url, true).query;
-    //console.log("QUERY", query);
-
-    const { code, state } = query;
-
-    let extraction;
-
-    try {
-        extraction = await oauth2Client.getToken(code);
-    } catch (e) {
-        Sentry.captureException(e);
-    }
-
-    const { tokens } = extraction;
-    8;
-
-    //console.log("TOKENS", tokens);
-
-    const { access_token, refresh_token, scope, id_token } = tokens;
-
-    const { workspaceId, userId } = JSON.parse(
-        Buffer.from(state, "base64").toString()
-    );
-
-    //console.log("ACCESS TOKEN", access_token);
-
-    /* Can use this for axios calls to google api
-    const config = {
-        headers: {
-            Authorization: `Bearer ${access_token}`
-        }
-    }*/
-
-    oauth2Client.setCredentials(tokens);
-
-    let response;
-
-    try {
-        response = await oauth2.userinfo.get({ auth: oauth2Client });
-    } catch (e) {
-        Sentry.captureException(e);
-    }
-
-    const googleUser = response.data;
-
-    //TODO: NEED TO DEAL WITH REPOSITORIES
-    let googleDriveIntegration = new GoogleDriveIntegration({
-        accessToken: access_token,
-        refreshToken: refresh_token,
-        idToken: id_token,
-        scope,
-        profileId: googleUser.id,
-        user: ObjectId(userId),
-        workspace: ObjectId(workspaceId),
-        repositories: [],
-    });
-
-    try {
-        googleDriveIntegration = await googleDriveIntegration.save();
-    } catch (e) {
-        Sentry.captureException(e);
-    }
-};
-
-/*   // this would be the allocated job to bulk scrape
-    await bulkScrapeGoogleDrive(googleDriveIntegration);
-
-    // this would be the allocated job to make associations
-    // --- only consists of extraction right now
-    await makeGoogleDriveAssociations(googleDriveIntegration);
-
-    res.redirect(
-        "http://localhost:3000/workspaces/5f9949ddc89f9adeeaf173bf/google_test"
-    );*/
-
-// BULK SCRAPING PROCEDURE
-
-bulkScrapeGoogleDrive = async (googleDriveIntegration) => {
-    const {
-        accessToken,
-        refreshToken,
-        scope,
-        idToken,
-        workspace,
-        user,
-        repositories,
-    } = googleDriveIntegration;
-
-    console.log("GOOGLE DRIVE INTEGRATION", googleDriveIntegration);
-
-    const tokens = {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        scope,
-        id_token: idToken,
-    };
-
-    oauth2Client.setCredentials(tokens);
-
-    const drive = google.drive({ version: "v3", auth: oauth2Client });
-
-    let completedScrape = false;
-    //TODO: Possibly need to have the user choose which drive is relevant, not sure what drive allocation is relevant
-
-    let pages = [];
-
-    while (!completedScrape) {
-        let response;
-
-        try {
-            response = await drive.files.list({
-                pageSize: 1000,
-                fields: `files(webViewLink), files(id), files(mimeType), files(createdTime), files(modifiedTime), files(owners), files(lastModifyingUser)`,
-            });
-        } catch (err) {
-            console.log("ERROR", err);
-        }
-
-        const { files, nextPageToken } = response.data;
-
-        pages.push(files);
-
-        if (!nextPageToken) completedScrape = true;
-    }
-
-    // Save google docs
-    let insertItems = [];
-
-    const currentWorkspace = await Workspace.findById(workspace)
+    const workspace = Workspace.findById(workspaceId)
         .lean()
-        .select("memberUsers")
         .populate("memberUsers");
-    const { memberUsers } = currentWorkspace;
-
-    const memberUserFullNames = memberUsers.map(
-        (user) => `${user.firstName} ${user.lastName}`
-    );
-    const memberUserEmails = memberUsers.map((user) => user.email);
-
-    pages.map((page) => {
-        page.map((file) => {
-            const {
-                webViewLink,
-                id,
-                mimeType,
-                createdTime,
-                modifiedTime,
-                lastModifyingUser,
-            } = file;
-
-            let { owners } = file;
-
-            owners = owners.filter(
-                (owner) => owner.permissionId !== lastModifyingUser.permissionId
-            );
-
-            owners.push(lastModifyingUser);
-
-            let googleDriveMembers = [];
-            let googleDriveMemberEmails = [];
-
-            let googleDriveMemberUsers = [];
-
-            owners.map((owner) => {
-                const { displayName, emailAddress } = owner;
-
-                googleDriveMembers.push(displayName);
-
-                googleDriveMemberEmails.push(emailAddress);
-
-                for (let i = 0; i < memberUsers.length; i++) {
-                    const memberUser = memberUsers[i];
-
-                    if (
-                        `${memberUser.firstName} ${memberUser.lastName}` ===
-                            displayName ||
-                        memberUser.email === emailAddress
-                    ) {
-                        googleDriveMemberUsers.push(memberUser._id);
-                    }
-                }
-
-                return;
-            });
-
-            insertItems.push({
-                googleDriveIntegration: ObjectId(googleDriveIntegration._id),
-                googleDriveLink: webViewLink,
-                googleDriveId: id,
-                googleDriveMimeType: mimeType,
-                googleDriveCreated: new Date(createdTime),
-                googleDriveLastModified: new Date(modifiedTime),
-                googleDriveMembers,
-                googleDriveMemberEmails,
-                memberUsers: googleDriveMemberUsers,
-                type: "google-drive",
-                workspace,
-                repositories,
-            });
-            // TODO: REPOSITORY ISN'T INITIALIZED
-        });
-    });
-
-    //console.log("INSERT ITEMS", insertItems);
-
-    try {
-        const result = await ExternalDocument.insertMany(insertItems);
-        console.log("RESULT", result);
-    } catch (err) {
-        console.log("ERROR", err);
-    }
-};
-
-// ASSOCIATION PIPELINE
-
-makeGoogleDriveAssociations = async (googleDriveIntegration) => {
-    let googleDriveFiles;
-
-    try {
-        googleDriveFiles = await ExternalDocument.find({
-            googleDriveIntegration: ObjectId(googleDriveIntegration._id),
-        })
-            .lean()
-            .exec();
-    } catch (err) {
-        console.log("ERROR", err);
-    }
-
-    const googleDriveDocs = [];
-    const googleDriveMisc = [];
-
-    googleDriveFiles.map((file) => {
-        if (
-            file.googleDriveMimeType === "application/vnd.google-apps.document"
-        ) {
-            googleDriveDocs.push(file);
-        } else {
-            googleDriveMisc.push(file);
-        }
-    });
-
-    await makeGoogleDocAssociations(googleDriveDocs, googleDriveIntegration);
-};
-
-makeGoogleDocAssociations = async (googleDriveDocs, googleDriveIntegration) => {
-    const {
-        accessToken,
-        refreshToken,
-        scope,
-        idToken,
-    } = googleDriveIntegration;
 
     const tokens = {
         access_token: accessToken,
@@ -333,154 +185,51 @@ makeGoogleDocAssociations = async (googleDriveDocs, googleDriveIntegration) => {
 
     oauth2Client.setCredentials(tokens);
 
-    const docs = google.docs({ version: "v1", auth: oauth2Client });
+    const driveAPI = google.drive({ version: "v3", auth: oauth2Client });
 
-    /*
-    const config = {
-        headers: {
-            Authorization: `Bearer ${access_token}`
+    const docsAPI = google.docs({ version: "v1", auth: oauth2Client });
+
+    let result = [];
+
+    for (let i = 0; i < drives.length; i++) {
+        const { isPersonal, sourceId: driveId, repositoryIds } = drives[i];
+
+        let members;
+
+        if (!isPersonal) {
+            members = await extractSharedDriveUsers(
+                driveAPI,
+                driveId,
+                workspace
+            );
         }
-    }*/
 
-    const requests = googleDriveDocs.map((driveDoc) => {
-        const { googleDriveId } = driveDoc;
-        return docs.documents.get({ documentId: googleDriveId });
-    });
+        let drive = await extractGoogleDrive(
+            driveAPI,
+            driveId,
+            repositoryIds,
+            userId,
+            isPersonal
+        );
 
-    let responses;
+        let documents = await extractGoogleRawDocuments(driveAPI, driveId);
 
-    try {
-        responses = await Promise.all(requests);
-    } catch (err) {
-        console.log("ERROR", err);
-    }
-
-    const googleDocsData = responses.map((response) => response.data);
-
-    googleDocsData.map((docData, i) => {
-        const {
-            body,
-            title,
-            headers,
-            footers,
-            list,
-            revisionId,
-            documentId,
-        } = docData;
-
-        extraction = decipher(body.content, title);
-
-        googleDriveDocs[i].extraction = extraction;
-    });
-
-    //console.log("GOOGLE DOCS DATA", googleDriveDocs);
-};
-
-// BELOW HAS TO DO WITH ACQUIRING TEXTUAL DATA FROM DOCUMENTS
-
-insertExtraction = (type, content, extraction) => {
-    if (type in extraction) {
-        extraction[type].push(content);
-    } else {
-        extraction[type] = [content];
-    }
-};
-
-getContentType = (namedStyleType, textStyle) => {
-    let type = namedStyleType ? namedStyleType : "NORMAL_TEXT";
-
-    if (!textStyle) return type;
-
-    if ("link" in textStyle) {
-        type = "LINK";
-    } else if (type === "NORMAL_TEXT" && "fontSize" in textStyle) {
-        const { fontSize } = textStyle;
-        type =
-            fontSize > 20
-                ? "HEADING_1"
-                : fontSize > 16
-                ? "HEADING_2"
-                : fontSize > 14
-                ? "HEADING_3"
-                : type;
-    }
-
-    return type;
-};
-
-decipher = (bodyContent, title) => {
-    //HEADING_1, HEADING_2, HEADING_3, NORMAL_TEXT, LINKS
-
-    const extraction = {};
-
-    bodyContent.map((item) => {
-        const { paragraph } = item;
-
-        if (paragraph) {
-            const { paragraphStyle, elements } = paragraph;
-
-            let namedStyleType;
-
-            if (paragraphStyle) namedStyleType = paragraphStyle.namedStyleType;
-
-            if (elements) {
-                elements.map((elem) => {
-                    const { textRun } = elem;
-
-                    if (!textRun) return;
-
-                    let { content, textStyle } = textRun;
-
-                    let type = getContentType(namedStyleType, textStyle);
-                    if (type === "LINK") {
-                        const {
-                            link: { url },
-                        } = textStyle;
-                        content = url;
-                    }
-
-                    insertExtraction(type, content, extraction);
-                });
-            }
+        // populate members if personal
+        if (isPersonal) {
+            members = await extractPersonalDriveUsers(workspace, documents);
         }
-    });
 
-    extraction["TITLE"] = title;
-    //console.log("EXTRACTION", extraction);
-    return extraction;
+        documents = await storeGoogleDocuments(
+            docsAPI,
+            drive,
+            members,
+            documents
+        );
+
+        result.push(drive);
+    }
+
+    return drives;
 };
 
 module.exports = { beginGoogleConnect, handleGoogleConnectCallback };
-
-// POSSIBLY USEFUL
-/*
-    const docs = google.docs({version: 'v1', auth: oauth2Client});
-
-    //TODO: There may not be any docs...
-    response = await docs.documents.get({documentId: file.id})
-
-    console.log("DOCUMENT", response.data);
-
-    const { body, title, headers, footers, list, revisionId, documentId } = response.data;
-    */
-/*
-    const fileFields = `fields=webViewLink,createdTime,modifiedTime,owners,lastModifyingUser`
-    response = await googleAPI.get(
-        `/drive/v3/files/${documentId}/revisions`,
-        config
-    )
-
-    console.log("LAST REVISION", response.data);
-    */
-
-/*
-    const extraction = decipher(body.content, title);
-
-    console.log("EXTRACTION", extraction);
-    //console.log("TITLE", title);
-    //console.log("HEADERS", headers);
-    //console.log("FOOTERS", footers);
-    //console.log("LIST", list);
-
-    //response = await drive.files.export({fileId: file.id, mimeType: 'text/html'});
-    */
