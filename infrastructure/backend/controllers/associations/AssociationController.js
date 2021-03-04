@@ -9,6 +9,11 @@ const PullRequest = require("../../models/PullRequest");
 const Branch = require("../../models/Branch");
 const Commit = require("../../models/Commit");
 
+// Workspace
+const Workspace = require("../../models/Workspace");
+const mongoose = require("mongoose")
+const { ObjectId } = mongoose.Types;
+
 //utils
 const { checkValid } = require("../../utils/utils");
 
@@ -21,7 +26,7 @@ const IntegrationBoard = require("../../models/integrations/integration_objects/
 
 const createGithubIssueBoard = async (req, res) => {
 
-    const { repositoryId } = req.body;
+    const { repositoryId, workspaceId } = req.body;
 
     var createdBoard;
     try {
@@ -31,8 +36,6 @@ const createGithubIssueBoard = async (req, res) => {
         Sentry.captureException(err);
         return res.json({success: false, error: err, result: null});
     }
-
-
 
     return res.json({success: true, result: createdBoard._id.toString()});
 }
@@ -47,8 +50,8 @@ generateAssociations = async (req, res) => {
     // in format: [ { _id, repositories }]
     const { boards, boardId } = req.body;
 
-    console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
-    console.log(await IntegrationBoard.findById(boardId).lean().exec());
+    // console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
+    // console.log(await IntegrationBoard.findById(boardId).lean().exec());
 
 
 

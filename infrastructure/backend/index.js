@@ -154,7 +154,7 @@ app.use(function (req, res, next) {
     var publicKey = fs.readFileSync("docapp-test-public.pem", "utf8");
     try {
 
-        console.log('Attempting to verify token');
+        // console.log('Attempting to verify token');
         var decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 
         req.tokenPayload = decoded;
