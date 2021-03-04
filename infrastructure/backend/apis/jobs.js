@@ -9,6 +9,9 @@ const LOCAL_WORKER = process.env.IS_PRODUCTION ? false : true;
 
 const dispatchScanRepositoriesJob = async (jobData) => {
 
+    console.log(`Dispatching 'scan_repositories' Job with jobData: `);
+    console.log(jobData);
+
     if (LOCAL_WORKER) {
         var workerClient = apis.requestLocalWorkerClient();
 

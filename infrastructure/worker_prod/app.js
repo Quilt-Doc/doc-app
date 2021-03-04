@@ -122,6 +122,7 @@ app.post('/job', async function(req, res) {
         process.env.installationId = installationId;
 
         try {
+            console.log("Calling scanRepositories");
             await scanRepositories.scanRepositories();
         }
         catch(err) {

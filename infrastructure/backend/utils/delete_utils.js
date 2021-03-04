@@ -1,660 +1,708 @@
+const User = require("../models/authentication/User");
+const Workspace = require("../models/Workspace");
+const Repository = require("../models/Repository");
 
-/*
-deleteWorkspace = async (req, res) => {
-    const workspaceId = req.workspaceObj._id.toString();
+const Commit = require("../models/Commit");
+const PullRequest = require("../models/PullRequest");
+const Branch = require("../models/Branch");
+
+const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
+const Association = require("../models/associations/Association");
+
+const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
+
+const IntegrationAttachment = require("../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationLabel = require("../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationColumn = require("../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationComment = require("../models/integrations/integration_objects/IntegrationComment");
+const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
+
+
+
+var mongoose = require("mongoose");
+const { ObjectId } = mongoose.Types;
+
+const Sentry = require("@sentry/node");
+
+const detachWorkspaceFromMembers = async (workspaceId, session) => {
+
+    // Remove Workspace from User.workspaces for every user in the workspace
+    var removeWorkspaceResponse;
+    var usersInWorkspace;
+    try {
+        usersInWorkspace = await User.find({
+            workspaces: { $in: [ObjectId(workspaceId)] },
+        })
+            .select("_id")
+            .lean()
+            .exec();
+        usersInWorkspace = usersInWorkspace.map((userObj) =>
+            userObj._id.toString()
+        );
+
+        removeWorkspaceResponse = await User.updateMany(
+            { workspaces: { $in: [ObjectId(workspaceId)] } },
+            { $pull: { workspaces: { $in: [ObjectId(workspaceId)] } } },
+            { session }
+        ).exec();
+    } catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to remove Workspace from User.workspaces`,
+            workspaceId: workspaceId,
+            numMembers: usersInWorkspace.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to remove Workspace from User.workspaces`
+        );
+    }
+}
+
+
+const deleteWorkspaceObject = async (workspaceId, session) => {
 
     var deletedWorkspace;
-    const session = await db.startSession();
 
-    let output = {};
-
-    await logger.info({
-        source: "backend-api",
-        message: `Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`,
-        function: "deleteWorkspace",
-    });
+    // Delete Workspace
     try {
-        await session.withTransaction(async () => {
-            // Delete All Documents
-            var deleteDocumentResponse;
-            try {
-                deleteDocumentResponse = await Document.deleteMany(
-                    { workspace: ObjectId(workspaceId) },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: Document deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Delete All Snippets
-            var deleteSnippetResponse;
-            try {
-                deleteSnippetResponse = await Snippet.deleteMany(
-                    { workspace: ObjectId(workspaceId) },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: Snippet deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Delete All Tags
-            var deleteTagResponse;
-            try {
-                deleteTagResponse = await Tag.deleteMany(
-                    { workspace: ObjectId(workspaceId) },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: Tag deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Delete All WorkspaceInvites
-            var deleteWorkspaceInviteResponse;
-            try {
-                deleteWorkspaceInviteResponse = await WorkspaceInvite.deleteMany(
-                    { workspace: ObjectId(workspaceId) },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: WorkspaceInvite deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Delete All UserStats
-            var deleteUserStatsResponse;
-            try {
-                deleteUserStatsResponse = await UserStats.deleteMany(
-                    { workspace: ObjectId(workspaceId) },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: UserStats deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Delete All ActivityFeedItem
-            var deleteActivityFeedItemResponse;
-            try {
-                deleteActivityFeedItemResponse = await ActivityFeedItem.deleteMany(
-                    { workspace: ObjectId(workspaceId) },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: ActivityFeedItem deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Remove Workspace from User.workspaces for every user in the workspace
-            var removeWorkspaceResponse;
-            var usersInWorkspace;
-            try {
-                usersInWorkspace = await User.find({
-                    workspaces: { $in: [ObjectId(workspaceId)] },
-                })
-                    .select("_id")
-                    .lean()
-                    .exec();
-                usersInWorkspace = usersInWorkspace.map((userObj) =>
-                    userObj._id.toString()
-                );
-
-                removeWorkspaceResponse = await User.updateMany(
-                    { workspaces: { $in: [ObjectId(workspaceId)] } },
-                    { $pull: { workspaces: { $in: [ObjectId(workspaceId)] } } },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: User remove Workspace updateMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Create 'removed_workspace Notifications'
-            var notificationData = usersInWorkspace.map((id) => {
-                return {
-                    type: "removed_workspace",
-                    user: id.toString(),
-                    workspace: workspaceId,
-                };
-            });
-
-            // Create 'removed_workspace' Notifications
-            try {
-                await NotificationController.createRemovedNotifications(
-                    notificationData
-                );
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(
-                        usersInWorkspace
-                    )}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(
-                        usersInWorkspace
-                    )}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: createdRemovedNotifications failed - workspaceId, usersInWorkspace: ${workspaceId}, ${JSON.stringify(
-                        usersInWorkspace
-                    )}`
-                );
-            }
-
-            // Delete Workspace
-            try {
-                deletedWorkspace = await Workspace.findByIdAndRemove(
-                    workspaceId,
-                    { session }
-                )
-                    .select("_id repositories")
-                    .lean()
-                    .exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: workspace findByIdAndRemove query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // INTEGRATION DELETION SECTION START --------------------------------------------------------
-
-            var workspaceRepositories = deletedWorkspace.repositories;
-
-            // Commit -- delete all Commits that have 'repository' ids from repos on workspace
-            var deleteCommitsResponse;
-            try {
-                deleteCommitsResponse = await Commit.deleteMany(
-                    {
-                        repository: {
-                            $in: workspaceRepositories.map((id) =>
-                                ObjectId(id.toString())
-                            ),
-                        },
-                    },
-                    { session }
-                ).exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteCommits error: Commits deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteCommits error: Commits deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteCommits error: Commits deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // PullRequest -- delete all PullRequests that have 'repository' ids from repos on workspace
-            var deletePullRequestsResponse;
-            try {
-                deletePullRequestsResponse = await PullRequest.deleteMany(
-                    {
-                        repository: {
-                            $in: workspaceRepositories.map((id) =>
-                                ObjectId(id.toString())
-                            ),
-                        },
-                    },
-                    { session }
-                ).exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deletePullRequests error: PullRequests deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deletePullRequests error: PullRequests deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deletePullRequests error: PullRequests deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // Branch -- delete all Branches that have 'repository' ids from repos on workspace
-            var deleteBranchesResponse;
-            try {
-                deleteBranchesResponse = await Branch.deleteMany(
-                    {
-                        repository: {
-                            $in: workspaceRepositories.map((id) =>
-                                ObjectId(id.toString())
-                            ),
-                        },
-                    },
-                    { session }
-                ).exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteBranches error: Branch deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteBranches error: Branch deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteBranches error: Branch deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // IntegrationBoards(source = "github") -- delete all github projects from Repositories on the Workspace
-            // Delete All github projects
-            var deleteGithubProjectsResponse;
-            try {
-                deleteGithubProjectsResponse = await IntegrationBoard.deleteMany(
-                    {
-                        repositoryId: {
-                            $in: workspaceRepositories.map((id) =>
-                                ObjectId(id.toString())
-                            ),
-                        },
-                    },
-                    { session }
-                ).exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteGithubProjects error: IntegrationBoards deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteGithubProjects error: IntegrationBoards deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteGithubProjects error: IntegrationBoards deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-
-            // IntegrationTicket -- delete all Github Issues from Repositories on the Workspace
-            // Delete All IntegrationTickets(github issues)
-            var deleteGithubIssuesResponse;
-            try {
-                deleteGithubIssuesResponse = await IntegrationTicket.deleteMany(
-                    {
-                        source: "github",
-                        repositoryId: {
-                            $in: workspaceRepositories.map((id) =>
-                                ObjectId(id.toString())
-                            ),
-                        },
-                    },
-                    { session }
-                ).exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteGithubIssues error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteGithubIssues error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteGithubIssues error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // JiraSite -- has a workspaceId attached
-            // Delete All JiraSites
-            var deletedJiraSites;
-
-            var jiraSitesToDelete;
-
-            try {
-                jiraSitesToDelete = await JiraSite.find(
-                    { workspace: ObjectId(workspaceId.toString()) },
-                    "_id",
-                    { session }
-                )
-                    .lean()
-                    .exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: JiraSites find query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            try {
-                // deletedWorkspace = await Workspace.findByIdAndRemove(workspaceId, { session }).select('_id repositories').lean().exec();
-                deletedJiraSites = await JiraSite.deleteMany(
-                    {
-                        _id: {
-                            $in: jiraSitesToDelete.map((jiraSiteObj) =>
-                                ObjectId(jiraSiteObj._id.toString())
-                            ),
-                        },
-                    },
-                    { session }
-                ).exec();
-            } catch (err) {
-                console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteJiraSites error: JiraSites deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // IntegrationBoard -- Use the Ids of all the JiraSites found to be deleted in the prior step
-            // Delete All IntegrationBoards from Jira (jira projects)
-            var deleteJiraProjectsResponse;
-            try {
-                deleteJiraProjectsResponse = await IntegrationBoard.deleteMany(
-                    {
-                        source: "jira",
-                        jiraSiteId: {
-                            $in: jiraSitesToDelete.map((jiraSiteObj) =>
-                                ObjectId(jiraSiteObj._id.toString())
-                            ),
-                        },
-                    },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteJiraProjects error: IntegrationBoard(source = "jira") deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteJiraProjects error: IntegrationBoard(source = "jira") deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteJiraProjects error: IntegrationBoard(source = "jira") deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // IntegrationTicket -- has a workspaceId attached
-            // Delete All IntegrationTickets
-            var deleteTicketResponse;
-            try {
-                deleteTicketResponse = await IntegrationTicket.deleteMany(
-                    { workspace: ObjectId(workspaceId) },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteTicket error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteTicket error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteTicket error: IntegrationTicket deleteMany query failed - workspaceId: ${workspaceId}`
-                );
-            }
-
-            // INTEGRATION DELETION SECTION END --------------------------------------------------------
-
-            // Set all Repositories in deletedWorkspace.repositories back to 'initRepository state'
-            // scanned: false,
-            // currentlyScanning: false
-
-            console.log("DELETED WORKPSACE: ");
-            console.log(deletedWorkspace);
-
-            var initRepositories = deletedWorkspace.repositories.map(
-                (repositoryObj) => ObjectId(repositoryObj._id.toString())
-            );
-            var repositoryInitResponse;
-            try {
-                repositoryInitResponse = await Repository.updateMany(
-                    { _id: { $in: initRepositories } },
-                    { $set: { scanned: false, currentlyScanning: false } },
-                    { session }
-                ).exec();
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(
-                        initRepositories
-                    )}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(
-                        initRepositories
-                    )}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: Repository updateMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(
-                        initRepositories
-                    )}`
-                );
-            }
-
-            // Delete all References matched by - { repository: { $in: initRepositories.map(id => ObjectId(id.toString())) }, root: false }
-            var deleteReferenceResponse;
-            try {
-                deleteReferenceResponse = await Reference.deleteMany(
-                    { repository: { $in: initRepositories }, root: false },
-                    { session }
-                );
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    error: err,
-                    errorDescription: `deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(
-                        initRepositories
-                    )}`,
-                    function: "deleteWorkspace",
-                });
-
-                output = {
-                    success: false,
-                    error: `deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(
-                        initRepositories
-                    )}`,
-                    trace: err,
-                };
-                throw new Error(
-                    `deleteWorkspace error: Reference deleteMany query failed - workspaceId, initRepositories: ${workspaceId}, ${JSON.stringify(
-                        initRepositories
-                    )}`
-                );
-            }
-
-            await logger.info({
-                source: "backend-api",
-                message: `Successfully deleted Workspace ${workspaceId} - userId, repositoryIds: ${
-                    req.tokenPayload.userId
-                }, ${JSON.stringify(initRepositories)}`,
-                function: "deleteWorkspace",
-            });
-
-            output = { success: true, result: deletedWorkspace };
-            return;
-        });
+        deletedWorkspace = await Workspace.findByIdAndRemove(
+            workspaceId,
+            { session }
+        )
+            .select("_id repositories boards")
+            .lean()
+            .exec();
     } catch (err) {
-        session.endSession();
-        return res.json(output);
+
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete Workspace object`,
+            workspaceId: workspaceId,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete Workspace object`
+        );
     }
 
-    session.endSession();
+    return deletedWorkspace;
 
-    return res.json(output);
+}
 
-    // return res.json({success: true, result: deletedWorkspace});
+const acquireRepositoriesToReset = async (deletedWorkspace, session) => {
+
+    var repositoryWorkspaces;
+    var repositoriesToReset = [];
+
+    var workspaceRepositories = deletedWorkspace.repositories;
+
+    var foundRepositories = new Set();
+
+    try {
+        // Get all Workspaces of Repositories in deletedWorkspaces
+        repositoryWorkspaces = await Workspace.find({repositories: { $in: workspaceRepositories.map(id => ObjectId(id.toString())) }}, 'repositories', { session })
+                                                .lean()
+                                                .exec();
+
+        // All Repositories from deletedWorkspace will have to be reset
+        if (!repositoryWorkspaces) {
+            repositoryWorkspaces = [];
+        }
+    }
+
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed find Workspaces related to Deleted Workspace Repositories`,
+            workspaceId: workspaceId,
+            workspaceRepositories: workspaceRepositories,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed find Workspaces related to Deleted Workspace Repositories`
+        );
+    }
+
+    // Create a Set of all distinct Repositories from fetched Workspaces
+    var i = 0;
+    var currentWorkspace;
+    for (i = 0; i < repositoryWorkspaces.length; i++) {
+        currentWorkspace = repositoryWorkspaces[i];
+        var k = 0;
+
+        if (!currentWorkspace.repositories) {
+            continue;
+        }
+
+        for (k = 0; k < currentWorkspace.repositories; k++) {
+            foundRepositories.add(currentWorkspace.repositories[k]);
+        }
+    }
+
+    // Identify which repositories of deletedWorkspace were not found in any other Workspace
+    for (i = 0; i < workspaceRepositories.length; i++) {
+        if (!foundRepositories.has(workspaceRepositories[i])) {
+            repositoriesToReset.push(workspaceRepositories[i]);
+        }
+    }
+
+    return repositoriesToReset;
+
+}
+
+const deleteCommits = async (repositoriesToReset, session) => {
+
+    if (repositoriesToReset.length < 1) {
+        return;
+    }
+
+    // Delete Repository Commits
+    try {
+        await Commit.deleteMany( { repository: { $in: repositoriesToReset.map(id => ObjectId(id.toString())) } }, { session })
+                    .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete Commits`,
+            workspaceId: workspaceId,
+            repositoriesToReset: repositoriesToReset,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete Commits`
+        );
+    }
+}
+
+const deletePullRequests = async (repositoriesToReset, session) => {
+
+    if (repositoriesToReset.length < 1) {
+        return;
+    }
+
+    // Delete Repository Commits
+    try {
+        await PullRequest.deleteMany( { repository: { $in: repositoriesToReset.map(id => ObjectId(id.toString())) } }, { session })
+        .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete PullRequests`,
+            workspaceId: workspaceId,
+            repositoriesToReset: repositoriesToReset,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete PullRequests`
+        );
+    }
+}
+
+const deleteBranches = async (repositoriesToReset, session) => {
+    if (repositoriesToReset.length < 1) {
+        return;
+    }
+
+    // Delete Repository Commits
+    try {
+        await Branch.deleteMany( { repository: { $in: repositoriesToReset.map(id => ObjectId(id.toString())) } }, { session })
+        .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete Branches`,
+            workspaceId: workspaceId,
+            repositoriesToReset: repositoriesToReset,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete Branches`
+        );
+    }
+}
+
+const resetRepositories = async (repositoriesToReset, session) => {
+
+    try {
+        // Reset Repositories 
+        await Repository.updateMany( { _id: { $in: repositoriesToReset } },
+                                     { $set: { scanned: false, currentlyScanning: false } },
+                                     { session })
+                         .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to reset Repositories`,
+            workspaceId: workspaceId,
+            repositoriesToReset: repositoriesToReset,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to reset Repositories`
+        );
+    }
+
+}
+
+const acquireBoardsToDelete = async (deletedWorkspace, session) => {
+
+    var boardWorkspaces;
+    var boardsToDelete = [];
+
+    var workspaceBoards = deletedWorkspace.boards;
+
+    var foundBoards = new Set();
+
+    try {
+        // Get all Workspaces of Boards in deletedWorkspaces
+        boardWorkspaces = await Workspace.find({boards: { $in: workspaceBoards.map(id => ObjectId(id.toString())) }}, '_id boards', { session })
+                                                .lean()
+                                                .exec();
+
+        // All Boards from deletedWorkspace will have to be reset
+        if (!boardWorkspaces) {
+            boardWorkspaces = [];
+        }
+    }
+
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed find Workspaces related to Deleted Workspace Boards`,
+            workspaceId: workspaceId,
+            workspaceBoards: workspaceBoards,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed find Workspaces related to Deleted Workspace Boards`
+        );
+    }
+
+    // Create a Set of all distinct Boards from fetched Workspaces
+    var i = 0;
+    var currentWorkspace;
+    for (i = 0; i < boardWorkspaces.length; i++) {
+        currentWorkspace = boardWorkspaces[i];
+        var k = 0;
+
+        if (!currentWorkspace.boards) {
+            continue;
+        }
+
+        for (k = 0; k < currentWorkspace.boards; k++) {
+            foundBoards.add(currentWorkspace.boards[k]);
+        }
+    }
+
+    // Identify which repositories of deletedWorkspace were not found in any other Workspace
+    for (i = 0; i < workspaceBoards.length; i++) {
+        if (!foundBoards.has(workspaceBoards[i])) {
+            boardsToDelete.push(workspaceBoards[i]);
+        }
+    }
+
+
+    return boardsToDelete;
+    
+}
+
+const deleteIntegrationBoards = async (boardsToDelete, session) => {
+
+    console.log('deleteIntegrationBoards received boardsToDelete: ');
+    console.log(boardsToDelete);
+
+    if (boardsToDelete.length < 1) {
+        return;
+    }
+
+    var boardIds = boardsToDelete.map( boardObj => ObjectId(boardObj._id.toString()));
+
+    try {
+        await IntegrationBoard.deleteMany( { _id: { $in: boardIds } },
+                                            { session })
+                                        .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete IntegrationBoards`,
+            boardIds: boardIds,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete IntegrationBoards`
+        );
+    }
+
+}
+
+const deleteAssociations = async (boardsToDelete, session) => {
+    if (boardsToDelete.length < 1) {
+        return;
+    }
+
+    var boardIds = boardsToDelete.map( boardObj => ObjectId(boardObj._id.toString()));
+
+    try {
+        await Association.deleteMany({ board: { $in: boardIds } },
+                                     { session })
+                         .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete Associations`,
+            boardIds: boardIds,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete Associations`
+        );
+    }
+}
+
+const detachWorkspaceFromAssociations = async (workspaceId, session) => {
+
+    try {
+        await Association.updateMany(
+            { workspaces: { $in: [ObjectId(workspaceId.toString())] } },
+            { $pull: { workspaces: { $in: [ObjectId(workspaceId.toString())] } } },
+            { session }
+        ).exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to remove Workspace from Association.workspaces`,
+            workspaceId: workspaceId,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to remove Workspace from Association.workspaces`
+        );
+    }
 };
 
-*/
 
+const acquireIntegrationTicketsToDelete = async (boardsToDelete, session) => {
+
+    var ticketsToDelete;
+
+    try {
+        ticketsToDelete = await IntegrationTicket.find({board: { $in: boardsToDelete.map(id => ObjectId(id.toString())) }},
+                                    'creator assignees members labels column comments attachments intervals',
+                                    { session })
+                                    .lean()
+                                    .exec();
+        if (!ticketsToDelete) {
+            return [];
+        }
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed find IntegrationTickets related to Deleted Workspace Boards`,
+            workspaceId: workspaceId,
+            boardsToDelete: boardsToDelete,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed find IntegrationTickets related to Deleted Workspace Boards`
+        );
+    }
+
+    return ticketsToDelete;
+
+}
+
+const deleteIntegrationTickets = async (ticketsToDelete, session) => {
+
+    if (ticketsToDelete.length < 1) {
+        return;
+    }
+
+    var ticketIds = ticketsToDelete.map( ticketObj => ObjectId(ticketObj._id.toString()));
+
+    try {
+        await IntegrationTicket.deleteMany( { _id: { $in: ticketIds } },
+                                            { session })
+                                        .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete IntegrationTickets`,
+            ticketIds: ticketIds,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete IntegrationTickets`
+        );
+    }
+}
+
+const deleteIntegrationAttachments = async (ticketsToDelete, session) => {
+    if (ticketsToDelete.length < 1) {
+        return;
+    }
+
+    var attachmentsToDelete = ticketsToDelete.map( ticketObj => ticketObj.attachments).filter(attachmentList => (attachmentList));
+    
+    attachmentsToDelete = attachmentsToDelete.flat().map(attachmentId => ObjectId(attachmentId.toString()));
+
+    attachmentsToDelete = [...new Set(attachmentsToDelete)];
+
+    if (attachmentsToDelete.length < 1) {
+        return;
+    }
+
+    try {
+        await IntegrationAttachment.deleteMany({ _id: { $in: attachmentsToDelete } }, { session })
+                                    .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete IntegrationAttachments`,
+            workspaceId: workspaceId,
+            numAttachments: attachmentsToDelete.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete IntegrationAttachments`
+        );
+    }
+
+}
+
+
+const deleteIntegrationLabels = async (ticketsToDelete, session) => {
+    if (ticketsToDelete.length < 1) {
+        return;
+    }
+
+
+    var labelsToDelete = ticketsToDelete.map( ticketObj => ticketObj.labels).filter(labelList => (labelList));
+    
+    labelsToDelete = labelsToDelete.flat().map(labelId => ObjectId(labelId.toString()));
+
+    labelsToDelete = [...new Set(labelsToDelete)];
+
+    if (labelsToDelete.length < 1) {
+        return;
+    }
+
+
+    try {
+        await IntegrationLabel.deleteMany({ _id: { $in: labelsToDelete } }, { session })
+                                    .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete IntegrationLabels`,
+            workspaceId: workspaceId,
+            numLabels: labelsToDelete.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete IntegrationLabels`
+        );
+    }
+
+}
+
+const deleteIntegrationColumns = async (ticketsToDelete, session) => {
+    if (ticketsToDelete.length < 1) {
+        return;
+    }
+    
+
+    var columnsToDelete = ticketsToDelete.map( ticketObj => ticketObj.columns).filter(columnList => (columnList));
+    
+    columnsToDelete = columnsToDelete.flat().map(columnId => ObjectId(columnId.toString()));
+
+    columnsToDelete = [...new Set(columnsToDelete)];
+
+    if (columnsToDelete.length < 1) {
+        return;
+    }
+
+    try {
+        await IntegrationColumn.deleteMany({ _id: { $in: columnsToDelete } }, { session })
+                                    .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete IntegrationColumns`,
+            workspaceId: workspaceId,
+            numColumns: columnsToDelete.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete IntegrationColumns`
+        );
+    }
+
+}
+
+const deleteIntegrationComments = async (ticketsToDelete, session) => {
+    if (ticketsToDelete.length < 1) {
+        return;
+    }
+
+
+    var commentsToDelete = ticketsToDelete.map( ticketObj => ticketObj.comments).filter(commentList => (commentList));
+    
+    commentsToDelete = commentsToDelete.flat().map(commentId => ObjectId(commentId.toString()));
+
+    commentsToDelete = [...new Set(commentsToDelete)];
+
+    if (commentsToDelete.length < 1) {
+        return;
+    }
+
+
+    try {
+        await IntegrationComment.deleteMany({ _id: { $in: commentsToDelete } }, { session })
+                                    .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete IntegrationComments`,
+            workspaceId: workspaceId,
+            numComments: commentsToDelete.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete IntegrationComments`
+        );
+    }
+
+}
+
+
+const deleteIntegrationIntervals = async (ticketsToDelete, session) => {
+    if (ticketsToDelete.length < 1) {
+        return;
+    }
+
+    var intervalsToDelete = ticketsToDelete.map( ticketObj => ticketObj.intervals).filter(intervalList => (intervalList));
+    
+    intervalsToDelete = intervalsToDelete.flat().map(intervalId => ObjectId(intervalId.toString()));
+
+    intervalsToDelete = [...new Set(intervalsToDelete)];
+
+    if (intervalsToDelete.length < 1) {
+        return;
+    }
+
+
+    try {
+        await IntegrationInterval.deleteMany({ _id: { $in: intervalsToDelete } }, { session })
+                                    .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete IntegrationIntervals`,
+            workspaceId: workspaceId,
+            numIntervals: intervalsToDelete.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete IntegrationIntervals`
+        );
+    }
+
+}
+
+
+
+module.exports = {
+    detachWorkspaceFromMembers,
+    deleteWorkspaceObject,
+
+    acquireRepositoriesToReset,
+    deleteCommits,
+    deletePullRequests,
+    deleteBranches,
+    resetRepositories,
+
+    acquireBoardsToDelete,
+    deleteIntegrationBoards,
+
+    deleteAssociations,
+    detachWorkspaceFromAssociations,
+
+    acquireIntegrationTicketsToDelete,
+    deleteIntegrationTickets,
+
+    deleteIntegrationAttachments,
+    deleteIntegrationLabels,
+    deleteIntegrationColumns,
+    deleteIntegrationComments,
+    deleteIntegrationIntervals,
+
+}

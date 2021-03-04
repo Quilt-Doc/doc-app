@@ -366,8 +366,8 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, w
     console.log(`Github Issue Number: ${issueObj.githubIssueNumber}`);
 
 
-    console.log("prismaQuery: ");
-    console.log(prismaQuery);
+    // console.log("prismaQuery: ");
+    // console.log(prismaQuery);
 
     queryResponse.resource.timelineItems.nodes.map(node => {
         if (node.hasOwnProperty('commit')) {

@@ -188,7 +188,7 @@ const scanRepositories = async () => {
                 repositoryListObjects = await Promise.all(requestPromiseList);
             }
             catch (err) {
-
+                console.log("Github API - Can't get Repository Objects");
                 Sentry.setContext("scan-repositories", {
                     message: `scanRepositories failed fetching Repository objects from Github API - GET "/repos/:owner/:name/"`,
                     urlList: urlList,
@@ -345,8 +345,8 @@ const scanRepositories = async () => {
                 var repositoryIssuesRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
                     var integrationBoardId;
                     try {
-
-                        integrationBoardId = await generateGithubIssueBoardAPI(repositoryObj._id.toString());
+                        console.log(`Scraping Github Issues from Repository: ${repositoryObj.htmlUrl}`);
+                        integrationBoardId = await generateGithubIssueBoardAPI(workspaceId, repositoryObj._id.toString());
 
                         await scrapeGithubRepoIssues(repositoryObj.installationId,
                             repositoryObj._id.toString(),
@@ -501,7 +501,7 @@ const scanRepositories = async () => {
                                                                 $set: {setupComplete: true},
                                                                 // $pull: {repositories: { $in: repositoriestoRemove.map(id => ObjectId(id))}}
                                                             },
-                                                            { session })
+                                                            /*{ session }*/)
                                                             .exec();
             }
             catch (err) {

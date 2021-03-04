@@ -2,6 +2,7 @@ const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
 const IntegrationBoard = require('../../models/integrations/integration_objects/IntegrationColumn');
+const Workspace = require("../../models/Workspace");
 
 const apis = require('../../apis/api');
 const Sentry = require("@sentry/node");
@@ -23,13 +24,13 @@ const generateGithubIssueBoard = async (repositoryId) => {
 }
 
 // Return created boardId
-const generateGithubIssueBoardAPI = async (repositoryId) => {
+const generateGithubIssueBoardAPI = async (workspaceId, repositoryId) => {
 
     var backendClient = apis.requestBackendClient();
     var createdBoardId;
 
     try {
-        createdBoardId = await backendClient.post("/associations/create_board", { "repositoryId": repositoryId });
+        createdBoardId = await backendClient.post("/associations/create_board", { "repositoryId": repositoryId, "workspaceId": workspaceId, });
         if (createdBoardId.success == false) {
             throw Error("API Call failed");
         }
@@ -44,9 +45,24 @@ const generateGithubIssueBoardAPI = async (repositoryId) => {
 
     createdBoardId = createdBoardId.data.result;
 
+    await addBoardToWorkspace(workspaceId, createdBoardId);
+
     await findBoard(createdBoardId);
     
     return createdBoardId;
+}
+
+const addBoardToWorkspace = async (workspaceId, boardId) => {
+        // Attach Board to Workspace.boards
+        console.log(`Adding Board ${boardId} to Workspace ${workspaceId}`);
+        try {
+            await Workspace.updateOne({ _id: ObjectId(workspaceId.toString()) }, { $push: { boards: ObjectId(boardId) } }).exec();
+        }
+        catch (err) {
+            console.log(err);
+            Sentry.captureException(err);
+            throw err;
+        }    
 }
 
 const findBoard = async (boardId) => {

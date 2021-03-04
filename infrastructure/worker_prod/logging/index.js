@@ -26,6 +26,7 @@ if (process.env.IS_PRODUCTION) {
   logger = winston.createLogger({
       levels: winston.config.syslog.levels,
       transports: [
+        /*
         new ElasticSearchTransport({
           level: 'info',
           format: winston.format.combine(
@@ -34,6 +35,7 @@ if (process.env.IS_PRODUCTION) {
             winston.format.json()
           )
         }),
+        */
         new winston.transports.Console({
           level: 'debug',
           format: winston.format.combine(
