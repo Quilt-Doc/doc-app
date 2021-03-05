@@ -124,8 +124,7 @@ const scanRepositories = async () => {
                     Sentry.captureException(err);
                     throw err;
                 }
-                await worker.send({action: 'log', info: {level: 'info', message: `No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`,
-                                                            source: 'worker-instance', function: 'scanRepositories'}});
+                console.log(`No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`);
                 return true;
                 // throw new Error(`No repositories to scan for repositoryIdList: ${JSON.stringify(repositoryIdList)}`);
             }
@@ -221,8 +220,7 @@ const scanRepositories = async () => {
             if (bulkFieldUpdateOps.length > 0) {
                 try {
                     const bulkResult = await Repository.collection.bulkWrite(bulkFieldUpdateOps, { session });
-                    await worker.send({action: 'log', info: {level: 'info', message: `bulk Repository 'html_url', 'clone_url', 'default_branch' update results: ${JSON.stringify(bulkResult)}`,
-                                                        source: 'worker-instance', function: 'scanRepositories'}});
+                    console.log(`bulk Repository 'html_url', 'clone_url', 'default_branch' update results: ${JSON.stringify(bulkResult)}`);
                 }
                 catch(err) {
 
@@ -452,10 +450,12 @@ const scanRepositories = async () => {
                 if (repositoryObj.isEmpty) {
                     scannedValue = true;
                 }
+                /*
                 // If it's a failed repository and not empty repository
                 else if (!repositoryObj.treeSha) {
                     scannedValue = false;
                 }
+                */
                 // If it's a successful repository
                 else {
                     scannedValue = true;
@@ -474,8 +474,7 @@ const scanRepositories = async () => {
             if (bulkStatusUpdateOps.length > 0) {
                 try {
                     const bulkResult = await Repository.collection.bulkWrite(bulkStatusUpdateOps, { session });
-                    await worker.send({action: 'log', info: {level: 'info', message: `bulk Repository status update results: ${JSON.stringify(bulkResult)}`,
-                                                        source: 'worker-instance', function: 'scanRepositories'}});
+                    console.log(`bulk Repository status update results: ${JSON.stringify(bulkResult)}`);
                 }
                 catch(err) {
 
@@ -517,8 +516,7 @@ const scanRepositories = async () => {
             }
             
 
-            await worker.send({action: 'log', info: {level: 'info', message: `Completed scanning repositories: ${unscannedRepositoryIdList}`,
-                                                        source: 'worker-instance', function: 'scanRepositories'}});
+            console.log(`Completed scanning repositories: ${unscannedRepositoryIdList}`);
             
 
             // throw new Error(`FAIL DOG RAT`);
