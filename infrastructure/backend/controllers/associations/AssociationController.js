@@ -9,6 +9,11 @@ const PullRequest = require("../../models/PullRequest");
 const Branch = require("../../models/Branch");
 const Commit = require("../../models/Commit");
 
+// Workspace
+const Workspace = require("../../models/Workspace");
+const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Types;
+
 //utils
 const { checkValid } = require("../../utils/utils");
 
@@ -19,7 +24,7 @@ const IntegrationTicket = require("../../models/integrations/integration_objects
 const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
 
 const createGithubIssueBoard = async (req, res) => {
-    const { repositoryId } = req.body;
+    const { repositoryId, workspaceId } = req.body;
 
     var createdBoard;
     try {
@@ -44,8 +49,8 @@ generateAssociations = async (req, res) => {
     // in format: [ { _id, repositories }]
     const { boards, boardId } = req.body;
 
-    //console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
-    //console.log(await IntegrationBoard.findById(boardId).lean().exec());
+    // console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
+    // console.log(await IntegrationBoard.findById(boardId).lean().exec());
 
     console.log("BOARDS", boards);
 
