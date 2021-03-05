@@ -190,6 +190,8 @@ class DirectAssociationGenerator extends AssociationGenerator {
             });
         });
 
+        console.log("ASSOCIATIONS", associations);
+
         associations = await Association.insertMany(associations);
 
         this.associations = associations;

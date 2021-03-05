@@ -530,18 +530,18 @@ handleTrelloReintegration = async (boards) => {
     let reintegratedBoards;
 
     try {
-        reintegratedBoards = await query.exec();
+        reintegratedBoards = await query.lean().exec();
     } catch (e) {
         throw new Error(e);
     }
 
-    console.log("REINTEGRATED BOARDS", reintegratedBoards);
+    console.log("REINTEGRATED BOARD", reintegratedBoards);
 
     const updateBoardRequests = [];
 
     // map through existing boards and replace repositories with those
     // that need to be integrated
-    const copyBoards = reintegratedBoards.map((board) => {
+    reintegratedBoards = reintegratedBoards.map((board) => {
         const { sourceId, repositories } = board;
 
         // get already integrated repos
@@ -549,35 +549,52 @@ handleTrelloReintegration = async (boards) => {
             repositories.map((repoId) => repoId.toString())
         );
 
-        const copyBoard = { ...board };
+        console.log("INTEGRATED REPOS", integratedRepos);
+
+        console.log(
+            "CHECKING REPOS OF INPUT",
+            boardsObj[sourceId].repositoryIds
+        );
 
         // replace repositories field with requested repositories that don't include already integrated repos
-        copyBoard.repositories = boardsObj[sourceId].repositoryIds.map(
+        board.repositories = boardsObj[sourceId].repositoryIds.filter(
             (repoId) => !integratedRepos.has(repoId)
         );
 
-        board.repositories = [...board.repositories, ...copyBoard.repositories];
+        if (board.repositories.length > 0) {
+            console.log("BOARD BEFORE", board);
 
-        const updateRequest = board.save();
+            board.repositories = [...repositories, ...board.repositories];
 
-        updateBoardRequests.push(updateRequest);
+            console.log("BOARD ABOUT TO BE UPDATED", board);
 
-        return copyBoard;
+            const updateRequest = board.save();
+
+            updateBoardRequests.push(updateRequest);
+        }
+
+        return board;
     });
 
     // insert repository updates
     try {
-        await Promise.all(updateBoardRequests);
+        const updateResponse = await Promise.all(updateBoardRequests);
+
+        console.log("UPDATE RESPONSE", updateResponse);
     } catch (e) {
         throw new Error(e);
     }
 
     let integratedSourceIds = new Set(
-        copyBoards.map((board) => board.sourceId)
+        reintegratedBoards.map((board) => board.sourceId)
     );
 
     // new boards only
     boards = boards.filter((board) => !integratedSourceIds.has(board.sourceId));
+
+    console.log("BOARDS", boards);
+
+    console.log("REINTEGRATED BOARDS", reintegratedBoards);
 
     return { boards, reintegratedBoards };
 };

@@ -733,7 +733,7 @@ handleWebhookAddAttachment = async (boardId, data) => {
 
     const { url } = externalAttachment;
 
-    if (!url.includes("https://github.com")) return;
+    if (!url || !url.includes("https://github.com")) return;
 
     let attachment;
 
@@ -773,6 +773,38 @@ handleWebhookAddAttachment = async (boardId, data) => {
 
 handleWebhookDeleteCard = async (data) => {
     const { id } = data["card"];
+
+    let ticket;
+
+    try {
+         ticket = await IntegrationTicket.findOne({ sourceId: id});
+    } catch (e) {
+         throw new Error(e);
+    }
+    
+    const modelMap = {
+        attachments: IntegrationAttachment,
+        intervals: IntegrationInterval,
+    }
+
+    try {
+        await Promise.all(Object.keys(modelMap).map((key) => {
+        
+            const model = modelMap[key];
+
+            const modelIds = ticket[key];
+
+            return model.deleteMany({ _id: { $in: modelIds }});
+        }));
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    try {
+        Association.deleteMany({ firstElement: ticket._id });
+    } catch (e) {
+        throw new Error(e);
+    }
 
     try {
         await IntegrationTicket.findOneAndDelete({ sourceId: id });

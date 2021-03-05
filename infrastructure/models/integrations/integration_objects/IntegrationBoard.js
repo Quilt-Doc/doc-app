@@ -11,6 +11,7 @@ let integrationBoardSchema = new Schema({
     link: String,
     repositories: [{ type: ObjectId, ref: "Repository" }],
     integrationCreator: { type: ObjectId, ref: "User" },
+    isDeauthorized: Boolean,
 
     // Jira Projec t fields
     self: { type: String },

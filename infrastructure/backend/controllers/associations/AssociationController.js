@@ -47,6 +47,8 @@ generateAssociations = async (req, res) => {
     //console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
     //console.log(await IntegrationBoard.findById(boardId).lean().exec());
 
+    console.log("BOARDS", boards);
+
     const directGenerator = new DirectAssociationGenerator(workspaceId, boards);
 
     try {

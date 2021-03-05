@@ -58,24 +58,32 @@ beforeAll(async () => {
         "kgodara-testing/brodal_queue",
     ]);
 
+    console.log("WORKSPACE PARAMS", { createdWorkspaceId, repositoryIds });
+
     const workspace = { workspaceId: createdWorkspaceId, repositoryIds };
+
+    console.log("REPO IDS", repositoryIds);
 
     process.env.TEST_TRELLOLC_WORKSPACE_1 = JSON.stringify(workspace);
 
+    /*
     const workspace2 = await createWorkspace(["kgodara-testing/brodal_queue"]);
 
     workspace2.workspaceId = workspace2.createdWorkspaceId;
 
     process.env.TEST_TRELLOLC_WORKSPACE_2 = JSON.stringify(workspace2);
-
+    */
+    /*
     const workspace3 = await createWorkspace([
         "kgodara-testing/doc-app",
         "kgodara-testing/brodal_queue",
     ]);
 
+    
     workspace3.workspaceId = workspace3.createdWorkspaceId;
 
     process.env.TEST_TRELLOLC_WORKSPACE_3 = JSON.stringify(workspace3);
+    */
 });
 
 afterAll(async () => {
@@ -85,14 +93,15 @@ afterAll(async () => {
         "TEST_TRELLOLC_WORKSPACE_3",
     ];
 
-    const workspaceIds = storeVars.map(
-        (storeVar) => JSON.parse(process.env[storeVar])._id
-    );
+    let workspaceId = JSON.parse(process.env.TEST_TRELLOLC_WORKSPACE_1)
+        .workspaceId;
 
-    await removeWorkspaces(workspaceIds);
+    console.log("FINAL WORKSPACE IDS", workspaceId);
+
+    //await deleteWorkspace(workspaceId);
 });
 
-acquireTrelloCounts = async (createdBoard) => {
+acquireTrelloCounts = async (createdBoard, repositoryIds) => {
     const boardCount = await IntegrationBoard.count({
         _id: createdBoard._id,
     });
@@ -119,6 +128,7 @@ acquireTrelloCounts = async (createdBoard) => {
 
     const associationCount = await Association.count({
         board: createdBoard._id,
+        repository: { $in: repositoryIds },
     });
 
     return {
@@ -133,13 +143,25 @@ acquireTrelloCounts = async (createdBoard) => {
 };
 
 checkCountGreater = (counts) => {
-    Object.values(counts).map((count) => {
+    Object.keys(counts).map((key) => {
+        const count = counts[key];
+
+        //console.log("KEY", key);
+
+        //console.log("COUNT", count);
+
         expect(count).toBeGreaterThan(0);
     });
 };
 
 checkCountZero = (counts) => {
-    Object.values(counts).map((count) => {
+    Object.keys(counts).map((key) => {
+        const count = counts[key];
+
+        //console.log("KEY", key);
+
+        //console.log("COUNT", count);
+
         expect(count).toEqual(0);
     });
 };
@@ -162,7 +184,7 @@ describe("Test Trello Integration Removal", () => {
             process.env.TEST_TRELLOLC_WORKSPACE_1
         );
 
-        console.log("TEST BOARDS", process.env.TEST_TRELLO_EXTERNAL_BOARDS);
+        console.log("REPO IDS", repositoryIds);
 
         let externalBoards = JSON.parse(
             process.env.TEST_TRELLO_EXTERNAL_BOARDS
@@ -176,10 +198,6 @@ describe("Test Trello Integration Removal", () => {
 
         testBoard = { sourceId, repositoryIds };
 
-        console.log("TEST 1 BOARD", testBoard);
-
-        console.log("WORKSPACEID", workspaceId);
-
         const response = await backendClient.post(
             `/integrations/${workspaceId}/${TEST_USER_ID}/trello/trigger_scrape`,
             { boards: [testBoard] }
@@ -189,7 +207,6 @@ describe("Test Trello Integration Removal", () => {
 
         expect(success).toEqual(true);
 
-        /*
         const { workspace, boards } = result;
 
         expect(workspace.boards.length).toEqual(1);
@@ -198,13 +215,31 @@ describe("Test Trello Integration Removal", () => {
 
         const createdBoard = boards[0];
 
-        const counts = await acquireTrelloCounts(createdBoard);
+        console.log("BOARDS", boards);
+
+        const assocResponse = await backendClient.post(
+            `/associations/${workspaceId}/generate_associations`,
+            {
+                boards,
+            }
+        );
+
+        expect(assocResponse.data.success).toEqual(true);
+
+        let counts = await acquireTrelloCounts(createdBoard, repositoryIds);
+
+        console.log("COUNTS", counts);
 
         checkCountGreater(counts);
 
-        await backendClient.delete(
+        /*
+        const deleteResponse = await backendClient.delete(
             `/integrations/${workspaceId}/${TEST_USER_ID}/trello/remove_integration/${createdBoard._id}`
         );
+
+        expect(deleteResponse.data.success).toEqual(true);
+
+        counts = await acquireTrelloCounts(createdBoard);
 
         checkCountZero(counts);
 
@@ -220,7 +255,9 @@ describe("Test Trello Integration Removal", () => {
 
     /*
     test("removeTrelloIntegration: Remove Board -- Multiple Workspace", async () => {
-        let externalBoards = process.env.TEST_TRELLO_EXTERNAL_BOARDS;
+        let externalBoards = JSON.parse(
+            process.env.TEST_TRELLO_EXTERNAL_BOARDS
+        );
 
         let testBoard = externalBoards.filter(
             (board) => board.name === "Quilt Test Trello Board"
@@ -233,6 +270,8 @@ describe("Test Trello Integration Removal", () => {
             //{ workspaceId, repositoryIds }
             process.env.TEST_TRELLOLC_WORKSPACE_1
         );
+
+        const { workspaceId, repositoryIds } = createdWorkspace1;
 
         testBoard = {
             sourceId,
@@ -255,6 +294,15 @@ describe("Test Trello Integration Removal", () => {
         expect(boards.length).toEqual(1);
 
         const createdBoard = boards[0];
+
+        const assocResponse = await backendClient.post(
+            `/associations/${workspaceId}/generate_associations`,
+            {
+                boards,
+            }
+        );
+
+        expect(assocResponse.data.success).toEqual(true);
 
         const counts1 = await acquireTrelloCounts(createdBoard);
 
@@ -280,10 +328,24 @@ describe("Test Trello Integration Removal", () => {
 
         expect(boards2[0]._id).toEqual(createdBoard._id);
 
+        const assocResponse2 = await backendClient.post(
+            `/associations/${workspaceId}/generate_associations`,
+            {
+                boards,
+            }
+        );
+
+        expect(assocResponse2.data.success).toEqual(true);
+
         const counts2 = await acquireTrelloCounts(boards2[0]);
+
+        console.log("COUNTS1", counts1);
+
+        console.log("COUNTS2", counts2);
 
         checkCountsEqual(counts1, counts2);
 
+        
         // REMOVE FIRST INTEGRATION
         await backendClient.delete(
             `/integrations/${workspaceId}/${TEST_USER_ID}/trello/remove_integration/${createdBoard._id}`

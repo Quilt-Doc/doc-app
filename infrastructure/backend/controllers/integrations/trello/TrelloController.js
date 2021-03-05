@@ -13,6 +13,7 @@ const IntegrationBoard = require("../../../models/integrations/integration_objec
 const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
 const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
 const IntegrationInterval = require("../../../models/integrations/integration_objects/IntegrationInterval");
+const Association = require("../../../models/associations/Association");
 const Workspace = require("../../../models/Workspace");
 
 // helper methods
@@ -53,82 +54,6 @@ const {
 } = require("./TrelloWebhookHelpers");
 */
 
-removeTrelloIntegration = async (req, res) => {
-    const { boardId, workspaceId } = req.params;
-
-    // remove board from workspace's boards
-    let workspace;
-
-    try {
-        workspace = await Workspace.findById(workspaceId).exec();
-    } catch (e) {
-        Sentry.captureException(e);
-
-        return res.json({ success: false, error: e });
-    }
-
-    workspace.boards = workspace.boards.filter((id) => id != boardId);
-
-    try {
-        await workspace.save();
-    } catch (e) {
-        Sentry.captureException(e);
-
-        return res.json({ success: false, error: e });
-    }
-
-    // if board doesn't exist else where..
-    let shouldDelete;
-
-    try {
-        shouldDelete = !(await Workspace.exists({
-            boards: { $in: [boardId] },
-        }));
-    } catch (e) {
-        Sentry.captureException(e);
-
-        return res.json({ success: false, error: e });
-    }
-
-    /*
-    // delete board webhook
-    try {
-        await deleteTrelloWebhook(boardId);
-    } catch (e) {
-        Sentry.captureException(e);
-    }*/
-
-    // delete all integrations associated with board and finally board
-    if (shouldDelete) {
-        const nonBoardsModels = [
-            IntegrationAttachment,
-            IntegrationColumn,
-            IntegrationInterval,
-            IntegrationLabel,
-            IntegrationTicket,
-            Association,
-        ];
-
-        const requests = nonBoardsModels.map((model) => {
-            model.deleteMany({ board: boardId });
-        });
-
-        requests.push(IntegrationBoard.findOneAndDelete({ _id: boardId }));
-
-        try {
-            await Promise.all(requests);
-        } catch (e) {
-            Sentry.captureException(e);
-
-            return res.json({ success: false, error: e });
-        }
-    }
-
-    return res.json({
-        success: true,
-    });
-};
-
 triggerTrelloScrape = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
@@ -163,6 +88,8 @@ triggerTrelloScrape = async (req, res) => {
         return res.json({ success: false, error: e });
     }
 
+    console.log("ACTUAL BOARDS TO BE SCRAPED", boards);
+
     let result;
 
     try {
@@ -184,7 +111,9 @@ triggerTrelloScrape = async (req, res) => {
     let workspace;
 
     try {
-        workspace = Workspace.findById(workspaceId).select("boards").exec();
+        workspace = await Workspace.findById(workspaceId)
+            .select("boards")
+            .exec();
     } catch (e) {
         Sentry.captureException(e);
 
@@ -197,7 +126,7 @@ triggerTrelloScrape = async (req, res) => {
 
     reintegratedBoardIds = reintegratedBoards.map((board) => board._id);
 
-    console.log("WORKSPACE BOARDS", works);
+    console.log("WORKSPACE BOARDS", workspace.boards);
 
     workspace.boards = [
         ...workspace.boards,
@@ -206,12 +135,14 @@ triggerTrelloScrape = async (req, res) => {
     ];
 
     try {
-        workspace = workspace.save();
+        workspace = await workspace.save();
     } catch (e) {
         console.log("FAILURE 5", e);
 
         Sentry.captureException(e);
     }
+
+    console.log("WORKSPACE", workspace);
 
     return res.json({
         success: true,
@@ -403,6 +334,96 @@ getExternalTrelloBoards = async (req, res) => {
     return res.json({ success: true, result: boards });
 };
 
+removeTrelloIntegration = async (req, res) => {
+    const { boardId, workspaceId } = req.params;
+
+    // remove board from workspace's boards
+    let workspace;
+
+    try {
+        workspace = await Workspace.findById(workspaceId).exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    workspace.boards = workspace.boards.filter((id) => id != boardId);
+
+    try {
+        await workspace.save();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    // if board doesn't exist else where..
+    let shouldDelete;
+
+    try {
+        shouldDelete = !(await Workspace.exists({
+            boards: { $in: [boardId] },
+        }));
+
+        console.log("SHOULD DELETE", shouldDelete);
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    /*
+    // delete board webhook
+    try {
+        await deleteTrelloWebhook(boardId);
+    } catch (e) {
+        Sentry.captureException(e);
+    }*/
+
+    // delete all integrations associated with board and finally board
+    if (shouldDelete) {
+        const nonBoardsModels = [
+            IntegrationAttachment,
+            IntegrationColumn,
+            IntegrationInterval,
+            IntegrationLabel,
+            IntegrationTicket,
+            Association,
+        ];
+
+        console.log("BOARDID", boardId);
+
+        const requests = nonBoardsModels.map((model) =>
+            model.deleteMany({ board: boardId })
+        );
+
+        requests.push(IntegrationBoard.findOneAndDelete({ _id: boardId }));
+
+        try {
+            const responses = await Promise.all(requests);
+
+            console.log("RESPONSES", responses);
+
+            const columnCount = await IntegrationColumn.count({
+                board: boardId,
+            });
+
+            console.log("COLUMN COUNT", columnCount);
+        } catch (e) {
+            Sentry.captureException(e);
+
+            console.log("ERROR OCCURRED?", e);
+
+            return res.json({ success: false, error: e });
+        }
+    }
+
+    return res.json({
+        success: true,
+    });
+};
+
 /*
 handleTrelloWebhook = async (req, res) => {
     const { userId, boardId } = req.params;
@@ -423,45 +444,58 @@ handleTrelloWebhook = async (req, res) => {
 
     const { type, data, member } = action;
 
-    const actionMethods = {
+    const actionMethods = { 
         // board
         updateBoard: async () =>
             await handleWebhookUpdateBoard(boardId, profile, data),
 
         // lists
         createList: async () => await handleWebhookCreateList(boardId, data),
+
         moveListToBoard: async () =>
             await handleWebhookCreateList(boardId, data),
+
         moveListFromBoard: async () => await handleWebhookDeleteList(data),
+
         updateList: async () => await handleWebhookUpdateList(data),
 
         // labels
         createLabel: async () =>
             await handleWebhookCreateLabel(boardId, profile, data),
+
         deleteLabel: async () => await handleWebhookDeleteLabel(data),
+
         updateLabel: async () => await handleWebhookUpdateLabel(data),
 
         // users
         addMemberToBoard: async () => await handleWebhookCreateMember(member),
+
         updateMember: async () => await handleWebhookUpdateMember(member),
+
         // need to handle removeMemberToBoard: async () =>
 
         createCard: async () =>
             await handleWebhookCreateCard(boardId, profile, data),
+
         moveCardToBoard: async () =>
             await handleWebhookCreateCard(boardId, profile, data),
+
         updateCard: async () =>
             await handleWebhookUpdateCard(boardId, profile, data),
+
         deleteCard: async () => await handleWebhookDeleteCard(data),
+
         moveCardFromBoard: async () => await handleWebhookDeleteCard(data),
 
         addAttachmentToCard: async () =>
             await handleWebhookAddAttachment(boardId, data),
 
         addLabelToCard: async () => await handleWebhookAddLabel(data),
+
         removeLabelFromCard: async () => await handleWebhookRemoveLabel(data),
 
         addMemberToCard: async () => await handleWebhookAddMember(data),
+        
         removeMemberFromCard: async () => await handleWebhookRemoveMember(data),
 
         //deleteAttachmentFromCard: async () =>

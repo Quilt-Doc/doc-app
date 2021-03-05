@@ -143,6 +143,28 @@ handleTrelloConnectCallback = async (req, res) => {
     );
 };
 
+handleTrelloDeauthorization = async (boardId) => {
+    let board;
+
+    try {
+        board = await IntegrationBoard.findById(boardId);
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    board.isDeauthorized = true;
+
+    try {
+        await boad.save();
+    } catch (e) {
+        throw new Error(e);
+    }
+};
+
+handleTrelloReauthorization = async (boardId) => {
+    console.log("BOO");
+};
+
 module.exports = {
     beginTrelloConnect,
     handleTrelloConnectCallback,
