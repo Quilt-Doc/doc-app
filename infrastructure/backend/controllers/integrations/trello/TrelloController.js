@@ -366,7 +366,7 @@ removeTrelloIntegration = async (req, res) => {
             boards: { $in: [boardId] },
         }));
 
-        console.log("SHOULD DELETE", shouldDelete);
+        console.log("\nSHOULD DELETE", shouldDelete);
     } catch (e) {
         Sentry.captureException(e);
 
@@ -401,19 +401,9 @@ removeTrelloIntegration = async (req, res) => {
         requests.push(IntegrationBoard.findOneAndDelete({ _id: boardId }));
 
         try {
-            const responses = await Promise.all(requests);
-
-            console.log("RESPONSES", responses);
-
-            const columnCount = await IntegrationColumn.count({
-                board: boardId,
-            });
-
-            console.log("COLUMN COUNT", columnCount);
+            await Promise.all(requests);
         } catch (e) {
             Sentry.captureException(e);
-
-            console.log("ERROR OCCURRED?", e);
 
             return res.json({ success: false, error: e });
         }

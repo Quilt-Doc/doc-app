@@ -7,7 +7,7 @@
         "test": "jest -i"
     },
     "jest": {
-        "testTimeout": 20000
+        "testTimeout": 100000
     },
     "author": "",
     "license": "ISC",

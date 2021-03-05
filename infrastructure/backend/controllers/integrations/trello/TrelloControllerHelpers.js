@@ -20,6 +20,7 @@ const BoardWorkspaceContext = require("../../../models/integrations/context/Boar
 const Workspace = require("../../../models/Workspace");
 const User = require("../../../models/authentication/User");
 const Repository = require("../../../models/Repository");
+const { update } = require("lodash");
 
 const { TRELLO_API_KEY } = process.env;
 
@@ -530,7 +531,7 @@ handleTrelloReintegration = async (boards) => {
     let reintegratedBoards;
 
     try {
-        reintegratedBoards = await query.lean().exec();
+        reintegratedBoards = await query.exec();
     } catch (e) {
         throw new Error(e);
     }
@@ -542,7 +543,7 @@ handleTrelloReintegration = async (boards) => {
     // map through existing boards and replace repositories with those
     // that need to be integrated
     reintegratedBoards = reintegratedBoards.map((board) => {
-        const { sourceId, repositories } = board;
+        let { sourceId, repositories } = board;
 
         // get already integrated repos
         const integratedRepos = new Set(
@@ -551,12 +552,15 @@ handleTrelloReintegration = async (boards) => {
 
         console.log("INTEGRATED REPOS", integratedRepos);
 
+        console.log("BOARD ITEM", boardsObj[sourceId].repositoryIds);
+
         console.log(
             "CHECKING REPOS OF INPUT",
             boardsObj[sourceId].repositoryIds
         );
 
         // replace repositories field with requested repositories that don't include already integrated repos
+
         board.repositories = boardsObj[sourceId].repositoryIds.filter(
             (repoId) => !integratedRepos.has(repoId)
         );
@@ -564,9 +568,13 @@ handleTrelloReintegration = async (boards) => {
         if (board.repositories.length > 0) {
             console.log("BOARD BEFORE", board);
 
+            repositories = repositories.map((repo) => repo.toString());
+
             board.repositories = [...repositories, ...board.repositories];
 
             console.log("BOARD ABOUT TO BE UPDATED", board);
+
+            console.log(typeof board);
 
             const updateRequest = board.save();
 
@@ -578,6 +586,8 @@ handleTrelloReintegration = async (boards) => {
 
     // insert repository updates
     try {
+        console.log("UPDATE BOARD REQUESTS", updateBoardRequests);
+
         const updateResponse = await Promise.all(updateBoardRequests);
 
         console.log("UPDATE RESPONSE", updateResponse);
