@@ -1,21 +1,22 @@
 require("dotenv").config();
 
-const api = require("../apis/api");
+const api = require("../../apis/api");
 
 const mongoose = require("mongoose");
 
 const _ = require("lodash");
 
-const trelloControllerHelpers = require("../controllers/integrations/trello/TrelloControllerHelpers");
+const trelloControllerHelpers = require("../../controllers/integrations/trello/TrelloControllerHelpers");
 
-const testData = require("../__tests__data/02_trello_bulk_scrape_data");
+const testData = require("../../__tests__data/02_trello_bulk_scrape_data");
 
 const {
-    TEST_USER_ID,
-    TEST_CREATED_WORKSPACE_ID,
-    EXTERNAL_DB_PASS,
-    EXTERNAL_DB_USER,
-} = process.env;
+    createWorkspace,
+    deleteWorkspace,
+    removeWorkspaces,
+} = require("../../__tests__config/utils");
+
+const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 addDays = (date, days) => {
     let result = new Date(date);
@@ -35,6 +36,12 @@ beforeAll(async () => {
     db.once("open", () => console.log("connected to the database"));
 
     db.on("error", console.error.bind(console, "MongoDB connection error:"));
+
+    const { createdWorkspaceId, repositoryIds } = await createWorkspace([
+        "kgodara-testing/brodal_queue",
+    ]);
+
+    process.env.TEST_CREATED_WORKSPACE_ID = createdWorkspaceId;
 });
 
 afterAll(async () => {
@@ -62,11 +69,9 @@ afterAll(async () => {
         associations: extractArray(process.env.TEST_TRELLO_ASSOCIATIONS),
     };
 
-    try {
-        await deleteTrelloBoardComplete(deleteParams);
-    } catch (e) {
-        console.log(e);
-    }
+    await deleteTrelloBoardComplete(deleteParams);
+
+    await deleteWorkspace(process.env.TEST_CREATED_WORKSPACE_ID);
 
     delete process.env.TEST_TRELLO_MEMBERS;
 
@@ -89,6 +94,7 @@ afterAll(async () => {
     delete process.env.TEST_TRELLO_ASSOCIATIONS;
 });
 
+// NEED TO ADD BOARD TO SOME INTEGRATION METHODS AND EQUALITY CHECKS
 describe("Test Trello Bulk Scrape Basic", () => {
     let backendUserClient;
 
@@ -161,7 +167,9 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         process.env.TEST_TRELLO_CONTEXT = JSON.stringify(context);*/
 
-        let repositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
+        let repositories = await Repository.find({
+            _id: { $in: JSON.parse(process.env.TEST_CREATED_REPOSITORIES) },
+        });
 
         repositories = repositories.filter(
             (repository) =>
@@ -412,9 +420,12 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const boardData = JSON.parse(process.env.TEST_TRELLO_BOARD_DATA);
 
+        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
+
         const { cards, attachments } = await extractTrelloDirectAttachments(
             boardData.cards,
-            repositoryIds
+            repositoryIds,
+            board
         );
 
         process.env.TEST_TRELLO_ATTACHMENTS = JSON.stringify(attachments);
@@ -490,47 +501,17 @@ describe("Test Trello Bulk Scrape Basic", () => {
         process.env.TEST_TRELLO_CARDS = JSON.stringify(cards);
     });
 
-    /*
-    test("trelloControllerHelpers.extractTrelloEvent: expect event to match", async () => {
-        const { extractTrelloEvent } = trelloControllerHelpers;
-
-        const context = JSON.parse(process.env.TEST_TRELLO_CONTEXT);
-
-        const { event } = context;
-
-        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
-
-        const lists = JSON.parse(process.env.TEST_TRELLO_LISTS);
-
-        const extractedEvent = await extractTrelloEvent(board, lists, event);
-
-        let receivedEvent = extractedEvent.toJSON();
-
-        receivedEvent.board = receivedEvent.board.toString();
-
-        receivedEvent.beginList = receivedEvent.beginList.toString();
-
-        receivedEvent.endList = receivedEvent.endList.toString();
-
-        const expectedEvent = {
-            board: board._id,
-            beginList: lists[event.beginListId]._id,
-            endList: lists[event.endListId]._id,
-            source: "trello",
-            action: "movement",
-        };
-
-        expect(receivedEvent).toMatchObject(expectedEvent);
-
-        process.env.TEST_TRELLO_EVENT = JSON.stringify(extractedEvent);
-    });*/
-
     test("trelloControllerHelpers.extractTrelloIntervals: expect intervals to match", async () => {
         const { extractTrelloIntervals } = trelloControllerHelpers;
 
         const prevCards = JSON.parse(process.env.TEST_TRELLO_CARDS);
 
-        const { cards, intervals } = await extractTrelloIntervals(prevCards);
+        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
+
+        const { cards, intervals } = await extractTrelloIntervals(
+            prevCards,
+            board
+        );
 
         const intervalCardNames = Object.values(cards)
             .filter(
@@ -588,7 +569,9 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const { labels } = boardData;
 
-        const createdLabelsObj = await extractTrelloLabels(labels);
+        const board = JSON.parse(process.env.TEST_TRELLO_BOARD);
+
+        const createdLabelsObj = await extractTrelloLabels(labels, board);
 
         const createdLabels = Object.values(createdLabelsObj);
 
@@ -604,18 +587,6 @@ describe("Test Trello Bulk Scrape Basic", () => {
     });
 
     test("bulkScrape: expect cards to match", async () => {
-        /*
-        console.log(
-            "TEST CARDS UP TO NOW",
-            JSON.parse(process.env.TEST_TRELLO_CARDS)
-        );
-
-        
-        console.log(
-            "TYPE OF TEST CARDS",
-            typeof JSON.parse(process.env.TEST_TRELLO_CARDS)
-        );*/
-
         const helpers = {
             acquireTrelloData: {
                 data: process.env.TEST_TRELLO_BOARD_DATA,
@@ -686,7 +657,7 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const {
             bulkScrapeTrello,
-        } = require("../controllers/integrations/trello/TrelloController");
+        } = require("../../controllers/integrations/trello/TrelloController");
 
         const result = await bulkScrapeTrello(
             profile,
@@ -737,11 +708,12 @@ describe("Test Trello Bulk Scrape Basic", () => {
     });
 });
 
-const DirectAssociationGenerator = require("../controllers/associations/helpers/directAssociationGenerator");
+const DirectAssociationGenerator = require("../../controllers/associations/helpers/directAssociationGenerator");
 
 let directGenerator;
 
-const testDataAssoc = require("../__tests__data/03_direct_association_creation_data");
+const testDataAssoc = require("../../__tests__data/03_direct_association_creation_data");
+const Repository = require("../../models/Repository");
 
 describe("Test Direct Association Creation Basic", () => {
     beforeAll(() => {
@@ -800,19 +772,6 @@ describe("Test Direct Association Creation Basic", () => {
         });
     });
 
-    /*
-    test("DirectAssociationGenerator.identifyScrapedRepositories: scrapedRepositories is empty", async () => {
-        await directGenerator.identifyScrapedRepositories();
-
-        const boardId = directGenerator.boardIds[0];
-
-        expect(directGenerator.scrapedRepositories[boardId]).toEqual(new Set());
-    });
-
-    test("DirectAssociationGenerator.updateScrapedAssociations: expect update associations to resolve", async () => {
-        await directGenerator.updateScrapedAssociations();
-    });*/
-
     test("DirectAssociationGenerator.queryDirectAttachments: expect code objects to have been queried correctly", async () => {
         const queries = await directGenerator.queryDirectAttachments();
 
@@ -820,14 +779,21 @@ describe("Test Direct Association Creation Basic", () => {
 
         cards = _.mapKeys(cards, "_id");
 
+        // from storage file to compare if queries were produced correctly
         const { expectedCardQueries } = testDataAssoc;
 
+        // map through each model type
         Object.keys(queries).map((modelType) => {
+            // set of seen ticket names
             let seen = new Set();
 
+            // map through queries of that model
             Object.keys(queries[modelType]).map((ticketId) => {
+                // extract name of ticketId
                 const { name } = cards[ticketId];
 
+                // expect the number of or clauses for that model
+                // match actual number of code objects connected to ticket
                 expect(
                     queries[modelType][ticketId][0]["$match"]["$or"].length
                 ).toEqual(expectedCardQueries[name][modelType]);
@@ -836,20 +802,31 @@ describe("Test Direct Association Creation Basic", () => {
             });
 
             Object.keys(expectedCardQueries).map((key) => {
+                // for each ticket not seen
                 if (!seen.has(key)) {
+                    // expect the # of related code objects to equal 0
                     expect(expectedCardQueries[key][modelType]).toEqual(0);
                 }
             });
         });
 
+        // data that has, for each model, for each ticket by name,
+        // the associated code objects with sourceId
         const { expectedTicketToCO } = testDataAssoc;
 
+        // modelTicketMap takes form
+        // Map of Model Type -> Map of Ticket Ids -> Array of Code Objects
+        // -> { "PullRequest" : { "1": [co1, co2] } }
         Object.keys(directGenerator.modelTicketMap).map((key) => {
+            // extract for a model, the expected tickets to code objects
             const expectedTicketCO = expectedTicketToCO[key];
 
+            // extract for a model, the expected tickets to code objects
             const ticketCO = directGenerator.modelTicketMap[key];
 
+            // map through tickets
             Object.keys(ticketCO).map((ticketId) => {
+                // get ticket
                 const card = cards[ticketId];
 
                 const { name } = card;
@@ -858,6 +835,7 @@ describe("Test Direct Association Creation Basic", () => {
 
                 const receivedCO = ticketCO[ticketId];
 
+                // compare lengths of associated code object for this specific ticket
                 expect(receivedCO.length).toEqual(expectedCO.length);
 
                 expect(receivedCO.map((co) => co.sourceId).sort()).toEqual(

@@ -6,6 +6,8 @@ const { ObjectId } = mongoose.Types;
 const { checkValid } = require("../../../utils/utils");
 
 retrieveContexts = async (req, res) => {
+    console.log("RETRIEVING CONTEXTS");
+
     const { workspaceId } = req.params;
 
     if (!checkValid(workspaceId)) {
@@ -24,7 +26,7 @@ retrieveContexts = async (req, res) => {
         console.log("ERROR: err");
     }
 
-    console.log("CONTEXTS", contexts);
+    //console.log("CONTEXTS", contexts);
 
     return res.json({ success: true, result: contexts });
 };

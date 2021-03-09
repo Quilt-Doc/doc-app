@@ -56,9 +56,11 @@ editUser = async (req, res) => {
 
     let update = {};
     if (checkValid(username)) update.username = username;
+
     if (checkValid(email)) {
         // Check that another User with email doesn't exist
         var emailUsed = false;
+
         try {
             emailUsed = await User.exists({
                 _id: { $ne: ObjectId(userId) },
@@ -90,9 +92,16 @@ editUser = async (req, res) => {
         update.email = email;
         update.verified = false;
     }
+
     if (checkValid(firstName)) update.firstName = firstName;
+
     if (checkValid(lastName)) update.lastName = lastName;
+
     if (checkValid(onboarded)) update.onboarded = onboarded;
+
+    if (checkValid(organization)) update.organization = organization;
+
+    if (checkValid(position)) update.position = position;
 
     if (checkValid(isOnboarded)) update.isOnboarded = isOnboarded;
 

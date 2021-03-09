@@ -1,7 +1,7 @@
-require('dotenv').config();
-const api = require('../apis/api');
+require("dotenv").config();
+const api = require("../../apis/api");
 
-const utils = require('../__tests__config/utils');
+const utils = require("../../__tests__config/utils");
 const fs = require("fs");
 
 // var createdWorkspaceId;
@@ -13,16 +13,15 @@ const fs = require("fs");
     "globalTeardown": "<rootDir>/__tests__config/teardown.js",
 */
 
-
 const MAX_WORKSPACE_POLL_RETRIES = 20;
 
 var MAGIC_VALUE = -1;
 
 afterAll(() => {
-    console.log('WRITING process.env.MAGIC_VALUE: ');
+    console.log("WRITING process.env.MAGIC_VALUE: ");
     process.env.MAGIC_VALUE = MAGIC_VALUE;
-    fs.writeFileSync('./test_env.json', JSON.stringify(process.env));
-})
+    fs.writeFileSync("./test_env.json", JSON.stringify(process.env));
+});
 
 function delay(t, val) {
     return new Promise(function (resolve) {
@@ -32,11 +31,8 @@ function delay(t, val) {
     });
 }
 
-
-
 describe("Create Workspace", () => {
-
-    MAGIC_VALUE=1;
+    MAGIC_VALUE = 1;
 
     var createdWorkspaceId = process.env.TEST_CREATED_WORKSPACE_ID;
 
@@ -92,6 +88,7 @@ describe("Create Workspace", () => {
     });
 
     // router.post('/reporting/:workspaceId/retrieve_user_stats', authorizationMiddleware.reportingMiddleware, reportingController.retrieveUserStats);
+
     test("UserStats should be created for test User <-> Workspace", async () => {
         // var backendUserClient = await api.requestTestingUserBackendClient();
 

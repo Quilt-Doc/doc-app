@@ -8,7 +8,7 @@ const User = require("../models/authentication/User");
 const JiraSite = require("../models/integrations/jira/JiraSite");
 const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
 const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
-const BoardWorkspaceContext = require('../models/integrations/context/BoardWorkspaceContext');
+const BoardWorkspaceContext = require("../models/integrations/context/BoardWorkspaceContext");
 
 const Commit = require("../models/Commit");
 const PullRequest = require("../models/PullRequest");
@@ -19,7 +19,7 @@ const apis = require("../apis/api");
 const UserStatsController = require("./reporting/UserStatsController");
 const NotificationController = require("./reporting/NotificationController");
 
-const createDocument = require("../controllers/DocumentController")
+const createDocument = require("../controllers/DocumentController");
 
 var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
@@ -33,6 +33,9 @@ const jobConstants = require("../constants/index").jobs;
 
 const logger = require("../logging/index").logger;
 
+//sentry
+const Sentry = require("@sentry/node");
+
 // grab the Mixpanel factory
 const Mixpanel = require("mixpanel");
 
@@ -43,17 +46,18 @@ let db = mongoose.connection;
 
 const { checkValid } = require("../utils/utils");
 
-
-const deleteUtils = require('../utils/delete_utils');
-
-
-
+const deleteUtils = require("../utils/delete_utils");
 
 escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 };
 
-const getScanRepositoriesData = async (repositoryIds, workspace, session, logger ) => {
+const getScanRepositoriesData = async (
+    repositoryIds,
+    workspace,
+    session,
+    logger
+) => {
     // Get the list of installationIds for all Repositories
     var repositoryInstallationIds;
     try {
@@ -74,7 +78,9 @@ const getScanRepositoriesData = async (repositoryIds, workspace, session, logger
             function: "getScanRepositoriesData",
         });
         throw Error(
-            `error getting workspace repositories - repositoryIds: ${JSON.stringify(repositoryIds)}`
+            `error getting workspace repositories - repositoryIds: ${JSON.stringify(
+                repositoryIds
+            )}`
         );
     }
 
@@ -87,35 +93,34 @@ const getScanRepositoriesData = async (repositoryIds, workspace, session, logger
 
     repositoryInstallationIds = [
         ...new Set(
-            repositoryInstallationIds.map(
-                (repoObj) => repoObj.installationId
-            )
+            repositoryInstallationIds.map((repoObj) => repoObj.installationId)
         ),
     ];
 
+    /*
     await logger.info({
         source: "backend-api",
         message: `Scan Repository Job - installationIdLookup, repositoryInstallationIds: ${JSON.stringify(installationIdLookup)}, ${JSON.stringify(repositoryInstallationIds)}`,
         function: `getScanRepositoriesData`,
-    });
+    });*/
 
     // Kick off Scan Repositories Job
 
     var scanRepositoriesData = {};
 
     scanRepositoriesData["installationIdLookup"] = installationIdLookup;
-    scanRepositoriesData["repositoryInstallationIds"] = repositoryInstallationIds;
+    scanRepositoriesData[
+        "repositoryInstallationIds"
+    ] = repositoryInstallationIds;
 
     scanRepositoriesData["repositoryIdList"] = repositoryIds;
     scanRepositoriesData["workspaceId"] = workspace._id.toString();
-    scanRepositoriesData["jobType"] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
-
+    scanRepositoriesData[
+        "jobType"
+    ] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
 
     return scanRepositoriesData;
-
-}
-
-
+};
 
 createWorkspace = async (req, res) => {
     const { name, creatorId, installationId, repositoryIds } = req.body;
@@ -141,12 +146,11 @@ createWorkspace = async (req, res) => {
     const session = await db.startSession();
     let output = {};
 
-    console.log('Beginning to create workspace');
+    //console.log('Beginning to create workspace');
 
     var scanRepositoriesData = {};
     try {
         await session.withTransaction(async () => {
-
             let workspace = new Workspace({
                 name: name,
                 creator: ObjectId(creatorId),
@@ -206,7 +210,6 @@ createWorkspace = async (req, res) => {
                 );
             }
 
-
             // Create Root Document
             var document = new Document({
                 author: ObjectId(creatorId),
@@ -246,29 +249,37 @@ createWorkspace = async (req, res) => {
                 );
             }
 
-
             // Get data necessary for Job
             try {
-                scanRepositoriesData = await getScanRepositoriesData(repositoryIds, workspace, session, logger);
-            }
-            catch (err) {
+                scanRepositoriesData = await getScanRepositoriesData(
+                    repositoryIds,
+                    workspace,
+                    session,
+                    logger
+                );
+            } catch (err) {
                 await logger.error({
                     source: "backend-api",
                     message: err,
-                    errorDescription: `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(repositoryIds)}`,
+                    errorDescription: `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(
+                        repositoryIds
+                    )}`,
                     function: "createWorkspace",
                 });
 
                 output = {
                     success: false,
-                    error: `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(repositoryIds)}`,
+                    error: `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(
+                        repositoryIds
+                    )}`,
                     trace: err,
                 };
                 throw Error(
-                    `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(repositoryIds)}`
+                    `Error getScanRepositoriesData failed - repositoryIds: ${JSON.stringify(
+                        repositoryIds
+                    )}`
                 );
             }
-
 
             // Returning workspace
             // populate workspace
@@ -297,7 +308,6 @@ createWorkspace = async (req, res) => {
                 );
             }
 
-
             output = { success: true, result: workspace };
         });
     } catch (err) {
@@ -308,7 +318,6 @@ createWorkspace = async (req, res) => {
 
         // End Session to remove locking
         await session.endSession();
-
 
         console.log(err);
         return res.json(output);
@@ -377,29 +386,36 @@ getWorkspace = async (req, res) => {
 
 // IntegrationTicket -- has a workspaceId attached
 
-
-
 deleteWorkspace = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
 
     const session = await db.startSession();
 
-    console.log(`deleteWorkspace - Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`);
+    console.log(
+        `deleteWorkspace - Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`
+    );
 
     try {
         await session.withTransaction(async () => {
-
-            console.log("deleteWorkspace - Removing Workspace from User.workspaces");
+            console.log(
+                "deleteWorkspace - Removing Workspace from User.workspaces"
+            );
             // Remove Workspace from User.workspaces
             await deleteUtils.detachWorkspaceFromMembers(workspaceId, session);
 
             // Delete Workspace Object
-            var deletedWorkspace = await deleteUtils.deleteWorkspaceObject(workspaceId, session);
+            var deletedWorkspace = await deleteUtils.deleteWorkspaceObject(
+                workspaceId,
+                session
+            );
 
             console.log("deleteWorkspace - Beginning to delete CodeObjects");
 
             // Get Repositories that need to be reset
-            var repositoriesToReset = await deleteUtils.acquireRepositoriesToReset(deletedWorkspace, session);
+            var repositoriesToReset = await deleteUtils.acquireRepositoriesToReset(
+                deletedWorkspace,
+                session
+            );
 
             // Delete Repository Commits
             await deleteUtils.deleteCommits(repositoriesToReset, session);
@@ -410,15 +426,18 @@ deleteWorkspace = async (req, res) => {
             // Delete Repository Branches
             await deleteUtils.deleteBranches(repositoriesToReset, session);
 
-
             // Reset Repositories (set scanned = false, currentlyScanning = false)
             await deleteUtils.resetRepositories(repositoriesToReset, session);
 
-            
-            console.log("deleteWorkspace Beginning to delete Integration Objects");
+            console.log(
+                "deleteWorkspace Beginning to delete Integration Objects"
+            );
 
             // Acquire Boards to delete (All Boards not attached to another Workspace)
-            var boardsToDelete = await deleteUtils.acquireBoardsToDelete(deletedWorkspace, session);
+            var boardsToDelete = await deleteUtils.acquireBoardsToDelete(
+                deletedWorkspace,
+                session
+            );
 
             // Delete boardsToDelete
             await deleteUtils.deleteIntegrationBoards(boardsToDelete, session);
@@ -427,36 +446,57 @@ deleteWorkspace = async (req, res) => {
             await deleteUtils.deleteAssociations(boardsToDelete, session);
 
             // Remove Workspace from Association.workspaces
-            await deleteUtils.detachWorkspaceFromAssociations(workspaceId, session);
+            await deleteUtils.detachWorkspaceFromAssociations(
+                workspaceId,
+                session
+            );
 
             // Acquire IntegrationBoard IntegrationTickets to delete
-            var ticketsToDelete = await deleteUtils.acquireIntegrationTicketsToDelete(boardsToDelete, session);
+            var ticketsToDelete = await deleteUtils.acquireIntegrationTicketsToDelete(
+                boardsToDelete,
+                session
+            );
 
             // Delete ticketsToDelete
-            await deleteUtils.deleteIntegrationTickets(ticketsToDelete, session);
+            await deleteUtils.deleteIntegrationTickets(
+                ticketsToDelete,
+                session
+            );
 
-            console.log("deleteWorkspace Beginning to delete IntegrationTicket fields");
+            console.log(
+                "deleteWorkspace Beginning to delete IntegrationTicket fields"
+            );
 
             // Delete all ticketsToDelete IntegrationAttachments
-            await deleteUtils.deleteIntegrationAttachments(ticketsToDelete, session);
+            await deleteUtils.deleteIntegrationAttachments(
+                ticketsToDelete,
+                session
+            );
 
             // Delete all ticketsToDelete IntegrationLabels
             await deleteUtils.deleteIntegrationLabels(ticketsToDelete, session);
 
             // Delete all ticketsToDelete IntegrationColumns
-            await deleteUtils.deleteIntegrationColumns(ticketsToDelete, session);
+            await deleteUtils.deleteIntegrationColumns(
+                ticketsToDelete,
+                session
+            );
 
             // Delete all ticketsToDelete IntegrationComments
-            await deleteUtils.deleteIntegrationComments(ticketsToDelete, session);
+            await deleteUtils.deleteIntegrationComments(
+                ticketsToDelete,
+                session
+            );
 
             // Delete all ticketsToDelete IntegrationIntervals
-            await deleteUtils.deleteIntegrationIntervals(ticketsToDelete, session);
+            await deleteUtils.deleteIntegrationIntervals(
+                ticketsToDelete,
+                session
+            );
 
             console.log("deleteWorkspace Finished successfully");
-
         });
-    }
-    catch (err) {
+    } catch (err) {
         session.endSession();
         return res.json({ success: false });
     }
@@ -464,9 +504,7 @@ deleteWorkspace = async (req, res) => {
     session.endSession();
 
     return res.json({ success: true });
-
 };
-
 
 /*
 // Put request
@@ -965,6 +1003,54 @@ searchWorkspace = async (req, res) => {
     return res.json({ success: true, result: finalResult });
 };
 
+editWorkspace = async (req, res) => {
+    const { workspaceId } = req.params;
+
+    const { name } = req.body;
+
+    console.log("ENTERED TO EDIT WORKSPACE");
+
+    const update = {};
+
+    if (checkValid(name) && name != "") {
+        if (name == "") {
+            return res.json({
+                success: false,
+                message: "Workspace name cannot be empty.",
+            });
+        }
+
+        update.name = name;
+    }
+
+    let returnedWorkspace;
+
+    try {
+        returnedWorkspace = await Workspace.findByIdAndUpdate(
+            workspaceId,
+            { $set: update },
+            { new: true }
+        )
+            .select("name _id")
+            .lean()
+            .exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({
+            success: false,
+            error:
+                "editWorkspace: Failed to update workspace during Mongo Query",
+            trace: e,
+        });
+    }
+
+    return res.json({
+        success: true,
+        result: returnedWorkspace,
+    });
+};
+
 module.exports = {
     createWorkspace,
     searchWorkspace,
@@ -972,4 +1058,5 @@ module.exports = {
     deleteWorkspace,
     removeWorkspaceUser,
     retrieveWorkspaces,
+    editWorkspace,
 };

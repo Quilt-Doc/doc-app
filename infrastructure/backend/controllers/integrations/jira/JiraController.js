@@ -1,5 +1,7 @@
 var mongoose = require("mongoose");
+
 const { ObjectId } = mongoose.Types;
+
 const logger = require("../../../logging/index").logger;
 
 const apis = require("../../../apis/api");
@@ -13,6 +15,32 @@ const axios = require("axios");
 
 const Sentry = require("@sentry/node");
 
+const { JIRA_CLIENT_ID } = process.env;
+
+beginJiraConnect = async (req, res) => {
+    const { user_id, workspace_id } = req.query;
+
+    const workspaceId = workspace_id.toString();
+
+    const userId = user_id.toString();
+
+    console.log(`Entered beginJiraConnect, Params: ${workspaceId} ${userId}`);
+
+    const jiraBaseURL = `https://auth.atlassian.com/authorize?audience=api.atlassian.com`;
+
+    const jiraBaseParams = `&client_id=${JIRA_CLIENT_ID}&scope=read%3Ajira-user%20read%3Ajira-work%20offline_access`;
+
+    const jiraCallbackUrl =
+        "http://localhost:3001/api/integrations/connect/jira/callback";
+
+    const jiraSpecParams = `&redirect_uri=${encodeURIComponent(
+        jiraCallbackUrl
+    )}&state=${workspaceId}-${userId}&response_type=code&prompt=consent`;
+
+    const jiraAuthURL = `${jiraBaseURL}${jiraBaseParams}${jiraSpecParams}`;
+
+    return res.redirect(jiraAuthURL);
+};
 
 getWorkspaceJiraSites = async (req, res) => {
     const workspaceId = req.workspaceObj._id.toString();
@@ -110,7 +138,6 @@ getJiraSiteIssues = async (req, res) => {
 
     return res.json({ success: true, result: jiraIssueResponse.data.issues });
 };
-
 
 handleJiraCallback = async (req, res) => {
     const readJiraIssueScope = "read:jira-work";
@@ -290,7 +317,6 @@ handleJiraCallback = async (req, res) => {
 };
 
 triggerJiraScrape = async (req, res) => {
-
     const workspaceId = req.workspaceObj._id.toString();
     const userId = req.tokenPayload.userId.toString();
 
@@ -301,9 +327,10 @@ triggerJiraScrape = async (req, res) => {
 
     var jiraSite;
     try {
-        jiraSite = await JiraSite.findOne({userId: ObjectId(userId)}).lean().exec();
-    }
-    catch (err) {
+        jiraSite = await JiraSite.findOne({ userId: ObjectId(userId) })
+            .lean()
+            .exec();
+    } catch (err) {
         Sentry.setContext("JiraController::triggerJiraScrape", {
             message: `Could not find JiraSite`,
             userId: userId,
@@ -311,10 +338,11 @@ triggerJiraScrape = async (req, res) => {
 
         Sentry.captureException(err);
 
-        return res.json({success: false, error: `Could not find JiraSite for userId - ${userId.toString()}`});
+        return res.json({
+            success: false,
+            error: `Could not find JiraSite for userId - ${userId.toString()}`,
+        });
     }
-
-
 
     var runImportJiraIssuesData = {};
     runImportJiraIssuesData["jiraSiteId"] = jiraSite._id.toString();
@@ -326,7 +354,6 @@ triggerJiraScrape = async (req, res) => {
     try {
         await jobs.dispatchImportJiraIssuesJob(runImportJiraIssuesData);
     } catch (err) {
-
         Sentry.setContext("JiraController::triggerJiraScrape", {
             message: `Error dispatching import Jira Issues job`,
             jiraSiteId: jiraSiteId.toString(),
@@ -334,7 +361,7 @@ triggerJiraScrape = async (req, res) => {
         });
 
         Sentry.captureException(err);
- 
+
         return res.json({
             success: false,
             error: `Error dispatching update import Jira Issues job - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
@@ -349,21 +376,20 @@ triggerJiraScrape = async (req, res) => {
         function: "jiraAuthResponse",
     });
     */
-}
+};
 
 getExternalJiraProjects = async (req, res) => {
-
-    console.log('Getting Jira Projects');
+    console.log("Getting Jira Projects");
 
     const workspaceId = req.workspaceObj._id.toString();
     const userId = req.tokenPayload.userId.toString();
 
-    
-
     var userJiraSite;
 
     try {
-        userJiraSite = await JiraSite.findOne({userId: ObjectId(userId)}).lean().exec();
+        userJiraSite = await JiraSite.findOne({ userId: ObjectId(userId) })
+            .lean()
+            .exec();
     } catch (e) {
         Sentry.setContext("JiraController::getExternalJiraProjects", {
             message: `Error finding JiraSites`,
@@ -372,7 +398,10 @@ getExternalJiraProjects = async (req, res) => {
         });
         Sentry.captureException(e);
 
-        return res.json({ success: false, error: `Error finding JiraSites - userId, workspaceId: ${userId}, ${workspaceId}` });
+        return res.json({
+            success: false,
+            error: `Error finding JiraSites - userId, workspaceId: ${userId}, ${workspaceId}`,
+        });
     }
 
     if (!userJiraSite) return res.json({ success: true, result: null });
@@ -381,16 +410,16 @@ getExternalJiraProjects = async (req, res) => {
         baseURL: "https://api.atlassian.com/ex/jira",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${userJiraSite.accessToken}`
+            Authorization: `Bearer ${userJiraSite.accessToken}`,
         },
     });
 
     var jiraProjects;
     try {
-        jiraProjects = await jiraAuthClient.get(`/${userJiraSite.cloudIds[0]}/rest/api/3/project/search`);
-    }
-    catch (err) {
-
+        jiraProjects = await jiraAuthClient.get(
+            `/${userJiraSite.cloudIds[0]}/rest/api/3/project/search`
+        );
+    } catch (err) {
         Sentry.setContext("JiraController::getExternalJiraProjects", {
             message: `Error getting Jira Projects from Jira API`,
             cloudId: userJiraSite.cloudIds[0],
@@ -398,18 +427,18 @@ getExternalJiraProjects = async (req, res) => {
         });
         Sentry.captureException(e);
 
-        return res.json({ success: false, error: `Error getting Jira Projects from Jira API - userId, workspaceId: ${userId}, ${workspaceId}` });
-
+        return res.json({
+            success: false,
+            error: `Error getting Jira Projects from Jira API - userId, workspaceId: ${userId}, ${workspaceId}`,
+        });
     }
 
-    console.log('Jira API Response: ');
+    console.log("Jira API Response: ");
     console.log(jiraProjects.data);
 
     jiraProjects = jiraProjects.data.values;
 
-    jiraProjects = jiraProjects.map(projectObj => projectObj.id);
-
-
+    jiraProjects = jiraProjects.map((projectObj) => projectObj.id);
 
     let workspace;
 
@@ -422,7 +451,6 @@ getExternalJiraProjects = async (req, res) => {
             .populate("boards")
             .exec();
     } catch (e) {
-
         Sentry.setContext("JiraController::getExternalJiraProjects", {
             message: `Error finding Workspace`,
             workspaceId: workspaceId.toString(),
@@ -439,7 +467,7 @@ getExternalJiraProjects = async (req, res) => {
     );
     */
 
-   const integratedBoardSourceIds = jiraProjects;
+    const integratedBoardSourceIds = jiraProjects;
 
     jiraProjects = jiraProjects.filter((board) => {
         const { id } = board;
@@ -448,26 +476,21 @@ getExternalJiraProjects = async (req, res) => {
     });
 
     return res.json({ success: true, result: boards });
-}
-
+};
 
 const createPersonalToken = async (req, res) => {
-
     const userId = req.tokenPayload.userId.toString();
 
     const { tokenValue } = req.body;
 
-    let peronalToken = new JiraPersonalAccessToken(
-        {
-            userId: userId,
-            value: tokenValue,
-        },
-    );
+    let peronalToken = new JiraPersonalAccessToken({
+        userId: userId,
+        value: tokenValue,
+    });
 
     try {
         personalToken = await personalToken.save();
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("JiraController::createPersonalToken", {
             message: `Error finding saving personalToken`,
             userId: userId,
@@ -475,15 +498,20 @@ const createPersonalToken = async (req, res) => {
         });
         Sentry.captureException(e);
 
-        return res.json({success: false, error: `Error saving personalToken - userId, value: ${userId}, ${tokenValue}`});
+        return res.json({
+            success: false,
+            error: `Error saving personalToken - userId, value: ${userId}, ${tokenValue}`,
+        });
     }
 
-    return res.json({success: true, result: personalToken});
+    return res.json({ success: true, result: personalToken });
+};
 
-}
-
-
-
-module.exports = { getWorkspaceJiraSites, getJiraSiteIssues,
-                    handleJiraCallback, getExternalJiraProjects,
-                    createPersonalToken };
+module.exports = {
+    getWorkspaceJiraSites,
+    getJiraSiteIssues,
+    beginJiraConnect,
+    handleJiraCallback,
+    getExternalJiraProjects,
+    createPersonalToken,
+};

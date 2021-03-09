@@ -3,51 +3,52 @@ const { ObjectId } = mongoose.Types;
 
 const { serializeError, deserializeError } = require("serialize-error");
 
-var LinkHeader = require( 'http-link-header' );
+var LinkHeader = require("http-link-header");
 const parseUrl = require("parse-url");
-const queryString = require('query-string');
+const queryString = require("query-string");
 
 // const getUrls = require('get-urls');
 const _ = require("lodash");
 
 const Sentry = require("@sentry/node");
 
-
-
-
 const GithubIssue = require("../../models/integrations/github/GithubIssue");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
-const IntegrationInterval = require('../../models/integrations/integration_objects/IntegrationInterval');
+const IntegrationInterval = require("../../models/integrations/integration_objects/IntegrationInterval");
 const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
 const PullRequest = require("../../models/PullRequest");
 
-const api = require('../../apis/api');
+const api = require("../../apis/api");
 
-
-const { gql, rawRequest, request } = require('graphql-request');
+const { gql, rawRequest, request } = require("graphql-request");
 
 // const { GraphQLClient } = require('../../mod-graphql-request/dist');
-
 
 const fetchScrapedIssues = async (insertedIssueIds) => {
     // Fetch Github Issue IntegrationTickets
     var scrapedIssues;
     try {
-        scrapedIssues = await IntegrationTicket.find({ _id: { $in: insertedIssueIds.map(id => ObjectId(id.toString())) } },
-                                                        '_id githubIssueNumber githubIssueBody githubIssueClosedAt githubIssueCreatedAt githubIssueUpdatedAt')
-                                                    .lean()
-                                                    .exec();
-    }
-    catch (err) {
+        scrapedIssues = await IntegrationTicket.find(
+            {
+                _id: {
+                    $in: insertedIssueIds.map((id) => ObjectId(id.toString())),
+                },
+            },
+            "_id githubIssueNumber githubIssueBody githubIssueClosedAt githubIssueCreatedAt githubIssueUpdatedAt"
+        )
+            .lean()
+            .exec();
+    } catch (err) {
         console.log(err);
-        throw new Error(`Error finding scraped Github Issue Integration Tickets - insertedIssueIds.length - ${insertedIssueIds.length}`);
+        throw new Error(
+            `Error finding scraped Github Issue Integration Tickets - insertedIssueIds.length - ${insertedIssueIds.length}`
+        );
     }
 
     return scrapedIssues;
-}
+};
 
 const createGithubIssueIntervals = async (scrapedIssues) => {
-
     var integrationIntervalsToCreate = [];
 
     var currentIssue;
@@ -55,7 +56,11 @@ const createGithubIssueIntervals = async (scrapedIssues) => {
     for (i = 0; i < scrapedIssues.length; i++) {
         currentIssue = scrapedIssues[i];
         // Create IntegrationInterval using githubIssueCreatedAt & githubIssueClosedAt
-        if (currentIssue.githubIssueClosedAt && currentIssue.githubIssueClosedAt != null && currentIssue.githubIssueClosedAt != 'null' ) {
+        if (
+            currentIssue.githubIssueClosedAt &&
+            currentIssue.githubIssueClosedAt != null &&
+            currentIssue.githubIssueClosedAt != "null"
+        ) {
             integrationIntervalsToCreate.push({
                 integrationTicket: currentIssue._id,
                 start: currentIssue.githubIssueCreatedAt,
@@ -65,14 +70,16 @@ const createGithubIssueIntervals = async (scrapedIssues) => {
 
         // Check if githubIssueCreatedAt and githubIssueUpdateAt dates are different, if so make an interval, otherwise continue
         else {
-            if (currentIssue.githubIssueCreatedAt.toString() != currentIssue.githubIssueUpdatedAt.toString()) {
+            if (
+                currentIssue.githubIssueCreatedAt.toString() !=
+                currentIssue.githubIssueUpdatedAt.toString()
+            ) {
                 integrationIntervalsToCreate.push({
                     integrationTicket: currentIssue._id,
                     start: currentIssue.githubIssueCreatedAt,
                     end: currentIssue.githubIssueUpdatedAt,
-                }); 
-            }
-            else {
+                });
+            } else {
                 continue;
             }
         }
@@ -84,57 +91,83 @@ const createGithubIssueIntervals = async (scrapedIssues) => {
 
         // Create IntegrationIntervals
         try {
-            insertResults = await IntegrationInterval.insertMany(integrationIntervalsToCreate, { rawResult: true });
+            insertResults = await IntegrationInterval.insertMany(
+                integrationIntervalsToCreate,
+                { rawResult: true }
+            );
 
-            console.log('IntegrationInterval.insertMany.insertResults.insertedIds');
+            console.log(
+                "IntegrationInterval.insertMany.insertResults.insertedIds"
+            );
             console.log(insertResults.insertedIds);
 
-            insertedIntervalIds = Object.values(insertResults.insertedIds).map(id => id.toString());
-        }
-        catch (err) {
+            insertedIntervalIds = Object.values(
+                insertResults.insertedIds
+            ).map((id) => id.toString());
+        } catch (err) {
             console.log(err);
-            throw new Error(`Error could not insert IntegrationIntervals - integrationIntervalsToCreate.length: ${integrationIntervalsToCreate.length}`);
+            throw new Error(
+                `Error could not insert IntegrationIntervals - integrationIntervalsToCreate.length: ${integrationIntervalsToCreate.length}`
+            );
         }
 
         // Fetch new IntegrationIntervals
 
         var insertedIntervals;
         try {
-            insertedIntervals = await IntegrationInterval.find({ _id: { $in: insertedIntervalIds.map(id => ObjectId(id.toString())) } }, '_id integrationTicket')
-                                        .lean()
-                                        .exec();
-        }
-        catch (err) {
+            insertedIntervals = await IntegrationInterval.find(
+                {
+                    _id: {
+                        $in: insertedIntervalIds.map((id) =>
+                            ObjectId(id.toString())
+                        ),
+                    },
+                },
+                "_id integrationTicket"
+            )
+                .lean()
+                .exec();
+        } catch (err) {
             console.log(err);
-            throw new Error(`Error finding inserted IntegrationIntervals - insertedIntervalIds.length - ${insertedIntervalIds.length}`);
+            throw new Error(
+                `Error finding inserted IntegrationIntervals - insertedIntervalIds.length - ${insertedIntervalIds.length}`
+            );
         }
 
         // Update IntegrationTickets with IntegrationIntervals
 
-        let bulkUpdateIntegrationTicketsOps = insertedIntervals.map((intervalObj) => {
-            return ({
-                updateOne: {
-                    filter: { _id: ObjectId(intervalObj.integrationTicket.toString()) },
-                    // Where field is the field you want to update
-                    update: { $push: { intervals: ObjectId(intervalObj._id.toString()) } },
-                    upsert: false
-                }
-            })
-        })
+        let bulkUpdateIntegrationTicketsOps = insertedIntervals.map(
+            (intervalObj) => {
+                return {
+                    updateOne: {
+                        filter: {
+                            _id: ObjectId(
+                                intervalObj.integrationTicket.toString()
+                            ),
+                        },
+                        // Where field is the field you want to update
+                        update: {
+                            $push: {
+                                intervals: ObjectId(intervalObj._id.toString()),
+                            },
+                        },
+                        upsert: false,
+                    },
+                };
+            }
+        );
 
         // mongoose bulkwrite for one many update db call
         try {
             await IntegrationTicket.bulkWrite(bulkUpdateIntegrationTicketsOps);
-        } 
-        catch (err) {
+        } catch (err) {
             console.log(err);
-            throw new Error("createGithubIssueIntervals Error: bulk update of IntegrationTickets failed");
+            throw new Error(
+                "createGithubIssueIntervals Error: bulk update of IntegrationTickets failed"
+            );
         }
-
     }
-
-}
-
+};
 
 /*
 parseBodyAttachments = (issueList) => {
@@ -260,13 +293,9 @@ const enrichGithubIssueDirectAttachments = async (issueList) => {
 }
 */
 
-
 // const generatePR
 
-
-
 const generateIssueQuery = (repositoryObj, issueNumber) => {
-
     return gql`
     {
         resource(url: "${repositoryObj.htmlUrl}/issues/${issueNumber}") {
@@ -306,22 +335,26 @@ const generateIssueQuery = (repositoryObj, issueNumber) => {
         }
       }
     `;
-}
+};
 
-
-
-
-const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, worker) => {
-
-    var prismaQuery = generateIssueQuery(repositoryObj, issueObj.githubIssueNumber);
+const getGithubIssueLinkages = async (
+    installationId,
+    issueObj,
+    repositoryObj,
+    worker
+) => {
+    var prismaQuery = generateIssueQuery(
+        repositoryObj,
+        issueObj.githubIssueNumber
+    );
 
     var prismaClient;
-    
-    try {
-        prismaClient = await api.requestInstallationGraphQLClient(installationId);
-    }
-    catch (err) {
 
+    try {
+        prismaClient = await api.requestInstallationGraphQLClient(
+            installationId
+        );
+    } catch (err) {
         Sentry.setContext("getGithubIssueLinkages", {
             message: `Failed to get installation GraphQL client`,
             installationId: installationId,
@@ -335,9 +368,7 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, w
     var queryResponse;
     try {
         queryResponse = await prismaClient.request(prismaQuery);
-    }
-    catch (err) {
-
+    } catch (err) {
         Sentry.setContext("getGithubIssueLinkages", {
             message: `GraphQL query failed for Issue`,
             issueNumber: issueObj.githubIssueNumber,
@@ -355,31 +386,27 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, w
     const issues = {};
     const prs = {};
 
-
     var issueEvents = [];
     var prEvents = [];
-
 
     // Get all Commits that Reference this Issue
     var linkedCommits = [];
 
     console.log(`Github Issue Number: ${issueObj.githubIssueNumber}`);
 
-
     // console.log("prismaQuery: ");
     // console.log(prismaQuery);
 
-    queryResponse.resource.timelineItems.nodes.map(node => {
-        if (node.hasOwnProperty('commit')) {
+    queryResponse.resource.timelineItems.nodes.map((node) => {
+        if (node.hasOwnProperty("commit")) {
             console.log("FOUND COMMIT LINKAGE");
             linkedCommits.push(node.commit.oid);
         }
     });
 
     // Separate issue events into PR events and Non-issue PR events
-    queryResponse.resource.timelineItems.nodes.map(node => {
-        if (node.hasOwnProperty('subject')) {
-
+    queryResponse.resource.timelineItems.nodes.map((node) => {
+        if (node.hasOwnProperty("subject")) {
             // The event is related to a PR
             if (node.subject.hasOwnProperty("id")) {
                 prEvents.push(node.subject);
@@ -393,32 +420,27 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, w
     });
 
     // Filter to PRs still linked
-    prEvents.map(subject => {
+    prEvents.map((subject) => {
         if (prs.hasOwnProperty(subject.number)) {
             prs[subject.number]++;
-        }
-        else {
+        } else {
             prs[subject.number] = 1;
         }
     });
 
-
     // Filter to issues still linked
-    issueEvents.map(subject => {
+    issueEvents.map((subject) => {
         if (issues.hasOwnProperty(subject.number)) {
             issues[subject.number]++;
-        }
-        else {
+        } else {
             issues[subject.number] = 1;
         }
     });
-
 
     console.log(`\nLinkages found for Issue #${issueObj.githubIssueNumber}: `);
 
     console.log("queryResponse.resource.timelineItems.nodes");
     console.log(queryResponse.resource.timelineItems.nodes);
-
 
     // Create final lists of currently-linked issues and PRs
 
@@ -441,7 +463,7 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, w
             linkedPRs.push(pr);
         }
     }
-    
+
     console.log("linkedIssues: ");
     console.log(linkedIssues);
 
@@ -450,24 +472,22 @@ const getGithubIssueLinkages = async (installationId, issueObj, repositoryObj, w
 
     console.log("linkedCommits: ");
     console.log(linkedCommits);
-    
-
-
 
     // End Result is a list of commits and issue & pr numbers indicating linkages
-    return { issueNumber: issueObj.githubIssueNumber,
-                issueLinkages: linkedIssues,
-                prLinkages: linkedPRs,
-                commitLinkages: linkedCommits, 
-            };
-}
+    return {
+        issueNumber: issueObj.githubIssueNumber,
+        issueLinkages: linkedIssues,
+        prLinkages: linkedPRs,
+        commitLinkages: linkedCommits,
+    };
+};
 
-
-
-
-const getGithubIssueLinkagesFromMarkdown = (installationId, issueObj, repositoryObj) => {
-
-    const regex = /[#][0-9]+/g
+const getGithubIssueLinkagesFromMarkdown = (
+    installationId,
+    issueObj,
+    repositoryObj
+) => {
+    const regex = /[#][0-9]+/g;
 
     var foundMatches = issueObj.githubIssueBody.match(regex);
 
@@ -475,12 +495,17 @@ const getGithubIssueLinkagesFromMarkdown = (installationId, issueObj, repository
         foundMatches = [];
     }
 
-    return { issueNumber: issueObj.githubIssueNumber, linkages: foundMatches.map(e => e.replace(/\D/g,'')) };
-}
+    return {
+        issueNumber: issueObj.githubIssueNumber,
+        linkages: foundMatches.map((e) => e.replace(/\D/g, "")),
+    };
+};
 
-
-const fetchIntegrationAttachments = async (attachmentsToCreate, repositoryId, modelType) => {
-
+const fetchIntegrationAttachments = async (
+    attachmentsToCreate,
+    repositoryId,
+    modelType
+) => {
     if (attachmentsToCreate.length < 1) {
         return [];
     }
@@ -496,63 +521,81 @@ const fetchIntegrationAttachments = async (attachmentsToCreate, repositoryId, mo
     console.log(attachmentsToCreate[0].nonCodeId.toString());
     */
 
-    return await IntegrationAttachment.find({ repository: repositoryId,
-                                              modelType: modelType,
-                                              sourceId: { $in: attachmentsToCreate.map(obj => obj.sourceId) },
-                                              nonCodeId: { $in: attachmentsToCreate.map(obj => ObjectId(obj.nonCodeId.toString())) },
-                                            }
-                                            , '_id nonCodeId' )
-                                            .lean().exec();
-}
+    return await IntegrationAttachment.find(
+        {
+            repository: repositoryId,
+            modelType: modelType,
+            sourceId: { $in: attachmentsToCreate.map((obj) => obj.sourceId) },
+            nonCodeId: {
+                $in: attachmentsToCreate.map((obj) =>
+                    ObjectId(obj.nonCodeId.toString())
+                ),
+            },
+        },
+        "_id nonCodeId"
+    )
+        .lean()
+        .exec();
+};
 
 const addAttachmentsToIntegrationTickets = async (insertedAttachments) => {
     // Add to `attachments` field of IntegrationTicket
 
-    let bulkUpdateIntegrationTickets = insertedAttachments.map((attachmentObj) => {
-        return ({
-            updateOne: {
-                filter: { _id: ObjectId(attachmentObj.nonCodeId.toString()) },
-                // Where field is the field you want to update
-                update: { $push: { attachments: ObjectId(attachmentObj._id.toString()) } },
-                upsert: false
-            }
-        })
-    });
+    let bulkUpdateIntegrationTickets = insertedAttachments.map(
+        (attachmentObj) => {
+            return {
+                updateOne: {
+                    filter: {
+                        _id: ObjectId(attachmentObj.nonCodeId.toString()),
+                    },
+                    // Where field is the field you want to update
+                    update: {
+                        $push: {
+                            attachments: ObjectId(attachmentObj._id.toString()),
+                        },
+                    },
+                    upsert: false,
+                },
+            };
+        }
+    );
 
     // mongoose bulkwrite for one many update db call
     try {
         await IntegrationTicket.bulkWrite(bulkUpdateIntegrationTickets);
-    } 
-    catch (err) {
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
-}
-
+};
 
 // KARAN TODO: add to `attachments` field of IntegrationTicket
-const generateDirectAttachmentsFromIssues = async (issueLinkages, scrapedIssues, repositoryObj) => {
-
+const generateDirectAttachmentsFromIssues = async (
+    issueLinkages,
+    scrapedIssues,
+    repositoryObj
+) => {
     var attachmentsToCreate = [];
 
     var currentIssueLinkages = [];
     var i = 0;
 
-    for ( i = 0; i < issueLinkages.length; i++) {
-
+    for (i = 0; i < issueLinkages.length; i++) {
         currentIssueLinkages = issueLinkages[i].issueLinkages;
 
         var k = 0;
-        for ( k = 0; k < currentIssueLinkages.length; k++ ) {
-
-            var scrapedIssueIdx = scrapedIssues.findIndex(issueObj => issueObj.githubIssueNumber == issueLinkages[i].issueNumber);
+        for (k = 0; k < currentIssueLinkages.length; k++) {
+            var scrapedIssueIdx = scrapedIssues.findIndex(
+                (issueObj) =>
+                    issueObj.githubIssueNumber == issueLinkages[i].issueNumber
+            );
 
             if (scrapedIssueIdx < 0) {
                 continue;
             }
 
             attachmentsToCreate.push({
-                modelType: 'issue',
+                modelType: "issue",
                 sourceId: currentIssueLinkages[k],
                 repository: repositoryObj._id.toString(),
                 link: `${repositoryObj.htmlUrl}/issues/${currentIssueLinkages[k]}`,
@@ -568,9 +611,7 @@ const generateDirectAttachmentsFromIssues = async (issueLinkages, scrapedIssues,
                 return {
                     updateOne: {
                         filter: {
-                            repository: ObjectId(
-                                attachmentObj.repository
-                            ),
+                            repository: ObjectId(attachmentObj.repository),
                             modelType: attachmentObj.modelType,
                             sourceId: attachmentObj.sourceId,
                             link: attachmentObj.link,
@@ -579,7 +620,7 @@ const generateDirectAttachmentsFromIssues = async (issueLinkages, scrapedIssues,
                         // Where field is the field you want to update
                         update: {
                             $set: {
-                                attachmentObj
+                                attachmentObj,
                             },
                         },
                         upsert: true,
@@ -587,88 +628,90 @@ const generateDirectAttachmentsFromIssues = async (issueLinkages, scrapedIssues,
                 };
             }
         );
-        
+
         try {
             await IntegrationAttachment.bulkWrite(bulkUpdateAttachmentsOps);
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
             Sentry.captureException(err);
             throw err;
         }
 
-
         // Fetch inserted IntegrationAttachments
         var insertedAttachments = [];
         try {
-            insertedAttachments = await fetchIntegrationAttachments(attachmentsToCreate, repositoryObj._id.toString(), 'issue');
-        }
-        catch (err) {
+            insertedAttachments = await fetchIntegrationAttachments(
+                attachmentsToCreate,
+                repositoryObj._id.toString(),
+                "issue"
+            );
+        } catch (err) {
             Sentry.captureException(err);
             throw err;
         }
 
-        console.log('generateDirectAttachmentsFromIssues - insertedAttachments: ');
+        console.log(
+            "generateDirectAttachmentsFromIssues - insertedAttachments: "
+        );
         console.log(insertedAttachments);
 
         // Add to `attachments` field of IntegrationTicket
 
         try {
             await addAttachmentsToIntegrationTickets(insertedAttachments);
-        } 
-        catch (err) {
+        } catch (err) {
             Sentry.captureException(err);
             throw err;
         }
     }
-    
-
-}
+};
 
 // KARAN TODO: add to `attachments` field of IntegrationTicket
-const generateDirectAttachmentsFromPRs = async (issueLinkages, scrapedIssues, repositoryObj) => {
-
+const generateDirectAttachmentsFromPRs = async (
+    issueLinkages,
+    scrapedIssues,
+    repositoryObj
+) => {
     var attachmentsToCreate = [];
 
     var currentPRLinkages = [];
     var i = 0;
 
-    for ( i = 0; i < issueLinkages.length; i++) {
-        
+    for (i = 0; i < issueLinkages.length; i++) {
         currentPRLinkages = issueLinkages[i].prLinkages;
 
         var k = 0;
-        for ( k = 0; k < currentPRLinkages.length; k++ ) {
-
-            var scrapedIssueIdx = scrapedIssues.findIndex(issueObj => issueObj.githubIssueNumber == issueLinkages[i].issueNumber);
+        for (k = 0; k < currentPRLinkages.length; k++) {
+            var scrapedIssueIdx = scrapedIssues.findIndex(
+                (issueObj) =>
+                    issueObj.githubIssueNumber == issueLinkages[i].issueNumber
+            );
 
             if (scrapedIssueIdx < 0) {
                 continue;
             }
 
-
             attachmentsToCreate.push({
-                modelType: 'pullRequest',
+                modelType: "pullRequest",
                 sourceId: currentPRLinkages[k],
                 repository: repositoryObj._id.toString(),
                 link: `${repositoryObj.htmlUrl}/pull/${currentPRLinkages[k]}`,
                 nonCodeId: scrapedIssues[scrapedIssueIdx]._id,
             });
-            console.log(`Setting nonCodeId to: ${scrapedIssues[scrapedIssueIdx]._id}`);
+            console.log(
+                `Setting nonCodeId to: ${scrapedIssues[scrapedIssueIdx]._id}`
+            );
         }
     }
 
     // Create/Insert IntegrationAttachments
     if (attachmentsToCreate.length > 0) {
-
         let bulkUpdateAttachmentsOps = attachmentsToCreate.map(
             (attachmentObj) => {
                 return {
                     updateOne: {
                         filter: {
-                            repository: ObjectId(
-                                attachmentObj.repository
-                            ),
+                            repository: ObjectId(attachmentObj.repository),
                             modelType: attachmentObj.modelType,
                             sourceId: attachmentObj.sourceId,
                             link: attachmentObj.link,
@@ -677,7 +720,7 @@ const generateDirectAttachmentsFromPRs = async (issueLinkages, scrapedIssues, re
                         // Where field is the field you want to update
                         update: {
                             $set: {
-                                attachmentObj
+                                attachmentObj,
                             },
                         },
                         upsert: true,
@@ -685,69 +728,70 @@ const generateDirectAttachmentsFromPRs = async (issueLinkages, scrapedIssues, re
                 };
             }
         );
-        
+
         try {
             await IntegrationAttachment.bulkWrite(bulkUpdateAttachmentsOps);
-        }
-        catch (err) {
-            console.log('IntegrationAttachment.bulkWrite failed');
+        } catch (err) {
+            console.log("IntegrationAttachment.bulkWrite failed");
             console.log(err);
             Sentry.captureException(err);
             throw err;
         }
 
-
         // Fetch inserted IntegrationAttachments
         var insertedAttachments = [];
         try {
-            insertedAttachments = await fetchIntegrationAttachments(attachmentsToCreate, repositoryObj._id.toString(), 'pullRequest');
-        }
-        catch (err) {
-            console.log('fetchIntegrationAttachments failed');
+            insertedAttachments = await fetchIntegrationAttachments(
+                attachmentsToCreate,
+                repositoryObj._id.toString(),
+                "pullRequest"
+            );
+        } catch (err) {
+            console.log("fetchIntegrationAttachments failed");
             Sentry.captureException(err);
             throw err;
         }
 
-        console.log('generateDirectAttachmentsFromPRs - insertedAttachments: ');
+        console.log("generateDirectAttachmentsFromPRs - insertedAttachments: ");
         console.log(insertedAttachments);
 
         // Add to `attachments` field of IntegrationTicket
 
         try {
             await addAttachmentsToIntegrationTickets(insertedAttachments);
-        } 
-        catch (err) {
+        } catch (err) {
             Sentry.captureException(err);
             throw err;
         }
     }
-    
+};
 
-}
-
-const generateDirectAttachmentsFromCommits = async (issueLinkages, scrapedIssues, repositoryObj) => {
-
+const generateDirectAttachmentsFromCommits = async (
+    issueLinkages,
+    scrapedIssues,
+    repositoryObj
+) => {
     var attachmentsToCreate = [];
 
     var currentCommitLinkages = [];
     var i = 0;
 
-    for ( i = 0; i < issueLinkages.length; i++) {
-        
+    for (i = 0; i < issueLinkages.length; i++) {
         currentCommitLinkages = issueLinkages[i].commitLinkages;
 
         var k = 0;
-        for ( k = 0; k < currentCommitLinkages.length; k++ ) {
-
-            var scrapedIssueIdx = scrapedIssues.findIndex(issueObj => issueObj.githubIssueNumber == issueLinkages[i].issueNumber);
+        for (k = 0; k < currentCommitLinkages.length; k++) {
+            var scrapedIssueIdx = scrapedIssues.findIndex(
+                (issueObj) =>
+                    issueObj.githubIssueNumber == issueLinkages[i].issueNumber
+            );
 
             if (scrapedIssueIdx < 0) {
                 continue;
             }
 
-
             attachmentsToCreate.push({
-                modelType: 'commit',
+                modelType: "commit",
                 sourceId: currentCommitLinkages[k],
                 repository: repositoryObj._id.toString(),
                 link: `${repositoryObj.htmlUrl}/commit/${currentCommitLinkages[k]}`,
@@ -763,9 +807,7 @@ const generateDirectAttachmentsFromCommits = async (issueLinkages, scrapedIssues
                 return {
                     updateOne: {
                         filter: {
-                            repository: ObjectId(
-                                attachmentObj.repository
-                            ),
+                            repository: ObjectId(attachmentObj.repository),
                             modelType: attachmentObj.modelType,
                             sourceId: attachmentObj.sourceId,
                             link: attachmentObj.link,
@@ -774,7 +816,7 @@ const generateDirectAttachmentsFromCommits = async (issueLinkages, scrapedIssues
                         // Where field is the field you want to update
                         update: {
                             $set: {
-                                attachmentObj
+                                attachmentObj,
                             },
                         },
                         upsert: true,
@@ -782,48 +824,49 @@ const generateDirectAttachmentsFromCommits = async (issueLinkages, scrapedIssues
                 };
             }
         );
-        
+
         try {
             await IntegrationAttachment.bulkWrite(bulkUpdateAttachmentsOps);
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
             Sentry.captureException(err);
             throw err;
         }
 
-
         // Fetch inserted IntegrationAttachments
         var insertedAttachments = [];
         try {
-            insertedAttachments = await fetchIntegrationAttachments(attachmentsToCreate, repositoryObj._id.toString(), 'commit');
-        }
-        catch (err) {
+            insertedAttachments = await fetchIntegrationAttachments(
+                attachmentsToCreate,
+                repositoryObj._id.toString(),
+                "commit"
+            );
+        } catch (err) {
             Sentry.captureException(err);
             throw err;
         }
 
-        console.log('generateDirectAttachmentsFromCommits - insertedAttachments: ');
+        console.log(
+            "generateDirectAttachmentsFromCommits - insertedAttachments: "
+        );
         console.log(insertedAttachments);
 
         // Add to `attachments` field of IntegrationTicket
 
         try {
             await addAttachmentsToIntegrationTickets(insertedAttachments);
-        } 
-        catch (err) {
+        } catch (err) {
             Sentry.captureException(err);
             throw err;
         }
     }
+};
 
-}
-
-
-
-const generateDirectAttachmentsFromMarkdown = async (issueLinkages, scrapedIssues, repositoryObj) => {
-
-
+const generateDirectAttachmentsFromMarkdown = async (
+    issueLinkages,
+    scrapedIssues,
+    repositoryObj
+) => {
     // Fetch All PRs from Set of numbers in linkages arrays
 
     var linkedIssueNumbers = new Set();
@@ -832,7 +875,6 @@ const generateDirectAttachmentsFromMarkdown = async (issueLinkages, scrapedIssue
     var i = 0;
 
     for (i = 0; i < issueLinkages.length; i++) {
-
         currentMarkdownLinkages = issueLinkages[i].markdownLinkages;
         var k = 0;
 
@@ -849,14 +891,18 @@ const generateDirectAttachmentsFromMarkdown = async (issueLinkages, scrapedIssue
         return;
     }
 
-    // Fetch all possible Pull Requests 
+    // Fetch all possible Pull Requests
 
     var linkedPRs = [];
-    
+
     try {
-        linkedPRs = await PullRequest.find({ number: { $in: Array.from(linkedIssueNumbers) }, repository: repositoryObj._id }).lean().exec();
-    }
-    catch (err) {
+        linkedPRs = await PullRequest.find({
+            number: { $in: Array.from(linkedIssueNumbers) },
+            repository: repositoryObj._id,
+        })
+            .lean()
+            .exec();
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
@@ -866,7 +912,6 @@ const generateDirectAttachmentsFromMarkdown = async (issueLinkages, scrapedIssue
 
     // Match onto PR, and split into two lists of linked PRs and linked Issues
     for (i = 0; i < issueLinkages.length; i++) {
-
         var currentMarkdownPRLinkages = [];
         var currentMarkdownIssueLinkages = [];
 
@@ -874,22 +919,30 @@ const generateDirectAttachmentsFromMarkdown = async (issueLinkages, scrapedIssue
         var k = 0;
 
         for (k = 0; k < currentMarkdownLinkages.linkages.length; k++) {
-
-            var linkedPRsIdx = linkedPRs.findIndex(prObj => prObj.number == currentMarkdownLinkages.linkages[k]);
+            var linkedPRsIdx = linkedPRs.findIndex(
+                (prObj) => prObj.number == currentMarkdownLinkages.linkages[k]
+            );
 
             // If no matching PR, add to markdownIssueLinkages
             if (linkedPRsIdx < 0) {
-                currentMarkdownIssueLinkages.push(currentMarkdownLinkages.linkages[k]);
+                currentMarkdownIssueLinkages.push(
+                    currentMarkdownLinkages.linkages[k]
+                );
+            } else {
+                currentMarkdownPRLinkages.push(
+                    currentMarkdownLinkages.linkages[k]
+                );
             }
-            else {
-                currentMarkdownPRLinkages.push(currentMarkdownLinkages.linkages[k]);
-            }
-
         }
 
-        markdownIssueLinkages.push({ issueNumber: issueLinkages[i].issueNumber, issueLinkages: currentMarkdownIssueLinkages });
-        markdownPRLinkages.push({ issueNumber: issueLinkages[i].issueNumber, prLinkages: currentMarkdownPRLinkages });
-
+        markdownIssueLinkages.push({
+            issueNumber: issueLinkages[i].issueNumber,
+            issueLinkages: currentMarkdownIssueLinkages,
+        });
+        markdownPRLinkages.push({
+            issueNumber: issueLinkages[i].issueNumber,
+            prLinkages: currentMarkdownPRLinkages,
+        });
     }
 
     console.log("markdownPRLinkages: ");
@@ -899,28 +952,33 @@ const generateDirectAttachmentsFromMarkdown = async (issueLinkages, scrapedIssue
     console.log(markdownIssueLinkages);
 
     try {
-        await generateDirectAttachmentsFromIssues(markdownIssueLinkages, scrapedIssues, repositoryObj);
-    }
-    catch (err) {
+        await generateDirectAttachmentsFromIssues(
+            markdownIssueLinkages,
+            scrapedIssues,
+            repositoryObj
+        );
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
 
     try {
-        await generateDirectAttachmentsFromPRs(markdownPRLinkages, scrapedIssues, repositoryObj);
-    }
-    catch (err) {
+        await generateDirectAttachmentsFromPRs(
+            markdownPRLinkages,
+            scrapedIssues,
+            repositoryObj
+        );
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
+};
 
-
-
-}
-
-
-const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssues, repositoryObj) => {
-
+const generateDirectAttachmentsFromLinkages = async (
+    issueLinkages,
+    scrapedIssues,
+    repositoryObj
+) => {
     if (issueLinkages.length < 1) {
         return;
     }
@@ -931,33 +989,39 @@ const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssue
     //      issueLinkages[x].commitLinkages
     //      issueLinkages[x].markdownLinkages
 
-    
     // Handle issueLinkages[x].issueLinkages
     try {
-        await generateDirectAttachmentsFromIssues(issueLinkages, scrapedIssues, repositoryObj);
-    }
-    catch (err) {
+        await generateDirectAttachmentsFromIssues(
+            issueLinkages,
+            scrapedIssues,
+            repositoryObj
+        );
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
 
-    
     // Handle issueLinkages[x].prLinkages
     try {
-        await generateDirectAttachmentsFromPRs(issueLinkages, scrapedIssues, repositoryObj);
-    }
-    catch (err) {
+        await generateDirectAttachmentsFromPRs(
+            issueLinkages,
+            scrapedIssues,
+            repositoryObj
+        );
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
 
-    
     /*
     // Handle issueLinkages[x].commitLinkages
     try {
-        await generateDirectAttachmentsFromCommits(issueLinkages, scrapedIssues, repositoryObj);
-    }
-    catch (err) {
+        await generateDirectAttachmentsFromCommits(
+            issueLinkages,
+            scrapedIssues,
+            repositoryObj
+        );
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
@@ -965,21 +1029,17 @@ const generateDirectAttachmentsFromLinkages = async (issueLinkages, scrapedIssue
     
     // Handle issueLinkages[x].markdownLinkages
     try {
-        await generateDirectAttachmentsFromMarkdown(issueLinkages, scrapedIssues, repositoryObj);
-    }
-    catch (err) {
+        await generateDirectAttachmentsFromMarkdown(
+            issueLinkages,
+            scrapedIssues,
+            repositoryObj
+        );
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
     */
-    
-
-}
-
-
-
-
-
+};
 
 scrapeGithubRepoIssues = async (
     installationId,
@@ -1007,9 +1067,7 @@ scrapeGithubRepoIssues = async (
 
     var issueListPageResponse;
 
-
     while (pageNum <= lastPageNum) {
-
         try {
             issueListPageResponse = await installationClient.get(
                 `/repos/${repositoryObj.fullName}/issues?state=all&per_page=${pageSize}&page=${pageNum}`
@@ -1033,15 +1091,16 @@ scrapeGithubRepoIssues = async (
 
         if (!issueListPageResponse.headers.link) {
             pageNum = lastPageNum;
-        }
-        else {
+        } else {
             var link;
             try {
                 link = LinkHeader.parse(issueListPageResponse.headers.link);
             } catch (err) {
                 console.log(`failed to parse link header`);
                 console.log(err);
-                throw new Error(`scrapeGithubRepoIssues - Failed to parse link header - issueListPageResponse.headers.link - ${issueListPageResponse.headers.link}`);
+                throw new Error(
+                    `scrapeGithubRepoIssues - Failed to parse link header - issueListPageResponse.headers.link - ${issueListPageResponse.headers.link}`
+                );
             }
 
             var i;
@@ -1071,7 +1130,9 @@ scrapeGithubRepoIssues = async (
     // Bulk create IntegrationTicket models for all Objects found
 
     // Filter Out Issues that are PullRequests
-    repositoryIssueList = repositoryIssueList.filter(issueObj => !issueObj.pull_request);
+    repositoryIssueList = repositoryIssueList.filter(
+        (issueObj) => !issueObj.pull_request
+    );
 
     /*
         // Github Issue specific fields
@@ -1093,47 +1154,54 @@ scrapeGithubRepoIssues = async (
 
     */
 
-    var bulkGithubIssueInsertList = repositoryIssueList.map((repositoryIssueObj, idx) => {
-        /*
+    var bulkGithubIssueInsertList = repositoryIssueList.map(
+        (repositoryIssueObj, idx) => {
+            /*
         if ( idx < 2) {
             console.log(`Mapping Issue ${idx}`);
             console.log(repositoryIssueObj);
         }
         */
 
-        return {
-            repositoryId: repositoryId,
-            board: integrationBoardId,
+            return {
+                repositoryId: repositoryId,
+                board: integrationBoardId,
 
-            name: repositoryIssueObj.title,
-            sourceId: repositoryIssueObj.id,
-            description: repositoryIssueObj.body,
-            sourceCreationDate: repositoryIssueObj.created_at,
-            sourceUpdateDate: repositoryIssueObj.updated_at,
-            sourceCloseDate: (repositoryIssueObj.closed_at == null || repositoryIssueObj.closed_at == 'null') ? undefined : repositoryIssueObj.closed_at,
+                name: repositoryIssueObj.title,
+                sourceId: repositoryIssueObj.id,
+                description: repositoryIssueObj.body,
+                sourceCreationDate: repositoryIssueObj.created_at,
+                sourceUpdateDate: repositoryIssueObj.updated_at,
+                sourceCloseDate:
+                    repositoryIssueObj.closed_at == null ||
+                    repositoryIssueObj.closed_at == "null"
+                        ? undefined
+                        : repositoryIssueObj.closed_at,
 
-            source: 'github',
-            githubIssueHtmlUrl: repositoryIssueObj.html_url,
-            githubIssueNumber: repositoryIssueObj.number,
-            githubIssueState: repositoryIssueObj.state,
-            githubIssueTitle: repositoryIssueObj.title,
-            githubIssueBody: repositoryIssueObj.body,
-            // githubIssueUserId: repositoryIssueObj.user.id,
-            githubIssueLabels: repositoryIssueObj.labels.map(labelObj => labelObj.name),
-            githubIssueLocked: repositoryIssueObj.locked,
-            githubIssueCommentNumber: repositoryIssueObj.comments,
-            githubIssueClosedAt: (repositoryIssueObj.closed_at == null || repositoryIssueObj.closed_at == 'null') ? undefined : repositoryIssueObj.closed_at,
-            githubIssueCreatedAt: repositoryIssueObj.created_at,
-            githubIssueUpdatedAt: repositoryIssueObj.updated_at,
-            githubIssueAuthorAssociation: repositoryIssueObj.author_association,
-        };
-   });
-
-
-
-
-
-
+                source: "github",
+                githubIssueHtmlUrl: repositoryIssueObj.html_url,
+                githubIssueNumber: repositoryIssueObj.number,
+                githubIssueState: repositoryIssueObj.state,
+                githubIssueTitle: repositoryIssueObj.title,
+                githubIssueBody: repositoryIssueObj.body,
+                // githubIssueUserId: repositoryIssueObj.user.id,
+                githubIssueLabels: repositoryIssueObj.labels.map(
+                    (labelObj) => labelObj.name
+                ),
+                githubIssueLocked: repositoryIssueObj.locked,
+                githubIssueCommentNumber: repositoryIssueObj.comments,
+                githubIssueClosedAt:
+                    repositoryIssueObj.closed_at == null ||
+                    repositoryIssueObj.closed_at == "null"
+                        ? undefined
+                        : repositoryIssueObj.closed_at,
+                githubIssueCreatedAt: repositoryIssueObj.created_at,
+                githubIssueUpdatedAt: repositoryIssueObj.updated_at,
+                githubIssueAuthorAssociation:
+                    repositoryIssueObj.author_association,
+            };
+        }
+    );
 
     if (bulkGithubIssueInsertList.length > 0) {
         var bulkInsertResult;
@@ -1155,19 +1223,18 @@ scrapeGithubRepoIssues = async (
                 { rawResult: true }
             );
 
-            newTicketIds = Object.values(bulkInsertResult.insertedIds).map(id => id.toString());
+            newTicketIds = Object.values(
+                bulkInsertResult.insertedIds
+            ).map((id) => id.toString());
             /*
             await worker.send({action: 'log', info: {level: 'info',
                                                         message: `GithubIssue insertMany success - bulkInsertResult: ${JSON.stringify(bulkInsertResult)}`,
                                                         source: 'worker-instance',
                                                         function: 'scrapeGithubRepoIssues'}});
             */
-            
+
             // Create IntegrationIntervals for Issues
             // We only create integration intervals for Issues which at least have two different dates attached
-            
-
-
         } catch (err) {
             await worker.send({
                 action: "log",
@@ -1192,8 +1259,7 @@ scrapeGithubRepoIssues = async (
         var scrapedIssues;
         try {
             scrapedIssues = await fetchScrapedIssues(newTicketIds);
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
             throw Error(`Error fetching Scraped GithubIssues`);
         }
@@ -1201,38 +1267,40 @@ scrapeGithubRepoIssues = async (
         // Create IntegrationIntervals for scraped Issues
         try {
             await createGithubIssueIntervals(scrapedIssues);
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
             throw new Error(`GithubIssue create IntegrationIntervals failed`);
         }
 
-
         // console.log("scrapedIssues: ");
         // console.log(scrapedIssues);
 
-
         // Create IntegrationAttachments for Issue Timeline Connections
-        var getIssueLinkageRequestList = scrapedIssues.map( async (issueObj) => {
+        var getIssueLinkageRequestList = scrapedIssues.map(async (issueObj) => {
             var issueLinkageResponse;
             try {
-                issueLinkageResponse = await getGithubIssueLinkages(installationId, issueObj, repositoryObj, worker);
-            }
-            catch (err) {
+                issueLinkageResponse = await getGithubIssueLinkages(
+                    installationId,
+                    issueObj,
+                    repositoryObj,
+                    worker
+                );
+            } catch (err) {
                 console.log(err);
-                return {error: 'Error', issueNumber: issueObj.githubIssueNumber};
+                return {
+                    error: "Error",
+                    issueNumber: issueObj.githubIssueNumber,
+                };
             }
 
             return issueLinkageResponse;
-
         });
 
         // Execute all requests
         var results;
         try {
             results = await Promise.allSettled(getIssueLinkageRequestList);
-        }
-        catch (err) {
+        } catch (err) {
             await worker.send({
                 action: "log",
                 info: {
@@ -1244,43 +1312,55 @@ scrapeGithubRepoIssues = async (
                 },
             });
 
-            throw new Error(`GithubIssue getLinkages failed - getIssueLinkageRequestList.length: ${getIssueLinkageRequestList.length}`);
+            throw new Error(
+                `GithubIssue getLinkages failed - getIssueLinkageRequestList.length: ${getIssueLinkageRequestList.length}`
+            );
         }
 
         // Non-error responses
-        validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
+        validResults = results.filter(
+            (resultObj) => resultObj.value && !resultObj.value.error
+        );
 
         // Error responses
-        invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
+        invalidResults = results.filter(
+            (resultObj) => resultObj.value && resultObj.value.error
+        );
 
+        var issueLinkages = validResults.map((resultObj) => resultObj.value);
 
-        var issueLinkages = validResults.map(resultObj => resultObj.value);
-
-        
         // Get any linkages from markdown
-        scrapedIssues.map(issueObj => {
+        scrapedIssues.map((issueObj) => {
+            var issueLinkagesIdx = issueLinkages.findIndex(
+                (linkageObj) =>
+                    linkageObj.issueNumber == issueObj.githubIssueNumber
+            );
 
-            var issueLinkagesIdx = issueLinkages.findIndex(linkageObj => linkageObj.issueNumber == issueObj.githubIssueNumber);
+            issueLinkages[
+                issueLinkagesIdx
+            ].markdownLinkages = getGithubIssueLinkagesFromMarkdown(
+                installationId,
+                issueObj,
+                repositoryObj
+            );
 
-            issueLinkages[issueLinkagesIdx].markdownLinkages = getGithubIssueLinkagesFromMarkdown(installationId, issueObj, repositoryObj);
-            
             // markdownLinkages.push(getGithubIssueLinkagesFromMarkdown(installationId, issueObj, repositoryObj));
         });
 
-        console.log('FINAL ISSUE LINKAGES: ');
+        console.log("FINAL ISSUE LINKAGES: ");
         console.log(issueLinkages);
 
-
         try {
-            await generateDirectAttachmentsFromLinkages(issueLinkages, scrapedIssues, repositoryObj);
-        }
-        catch (err) {    
+            await generateDirectAttachmentsFromLinkages(
+                issueLinkages,
+                scrapedIssues,
+                repositoryObj
+            );
+        } catch (err) {
             Sentry.captureException(err);
             throw err;
         }
-
     }
-
 };
 
 module.exports = {

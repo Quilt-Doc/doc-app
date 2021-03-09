@@ -7,6 +7,8 @@ var integrationLabelSchema = new Schema({
     color: String,
     name: String,
     source: String,
+    sourceId: String,
+    board: { type: ObjectId, ref: "IntegrationBoard" },
 });
 
 var IntegrationLabel = mongoose.model(

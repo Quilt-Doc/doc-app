@@ -44,7 +44,9 @@ passport.use(
             let currentUser = await User.findOne({
                 domain: "github",
                 profileId: profile.id,
-            });
+            }).populate("workspaces");
+
+            console.log("THIS IS THE CURRENT USER", currentUser);
 
             const currentMillis = new Date().getTime();
             // Access Tokens expire in 8 hours

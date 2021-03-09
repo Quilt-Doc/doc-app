@@ -11,7 +11,7 @@ const Commit = require("../../models/Commit");
 
 // Workspace
 const Workspace = require("../../models/Workspace");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
 //utils
@@ -23,28 +23,28 @@ const IntegrationTicket = require("../../models/integrations/integration_objects
 
 const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
 
-
 const createGithubIssueBoard = async (req, res) => {
-
     const { repositoryId, workspaceId } = req.body;
 
     var createdBoard;
     try {
-        createdBoard = await IntegrationBoard.create({ source: "github", repositories: [repositoryId] });
-    }
-    catch (err) {
+        createdBoard = await IntegrationBoard.create({
+            source: "github",
+            repositories: [repositoryId],
+        });
+    } catch (err) {
         Sentry.captureException(err);
-        return res.json({success: false, error: err, result: null});
+        return res.json({ success: false, error: err, result: null });
     }
 
-    return res.json({success: true, result: createdBoard._id.toString()});
-}
-
+    return res.json({ success: true, result: createdBoard._id.toString() });
+};
 
 generateAssociations = async (req, res) => {
     const { workspaceId } = req.params;
 
-    console.log("Generating Associations");
+    console.log("ENTERED IN GENERATE ASSOCS", workspaceId);
+    //console.log("Generating Associations");
 
     // boards must be provided with unique repositories
     // in format: [ { _id, repositories }]
@@ -53,7 +53,7 @@ generateAssociations = async (req, res) => {
     // console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
     // console.log(await IntegrationBoard.findById(boardId).lean().exec());
 
-
+    console.log("BOARDS", boards);
 
     const directGenerator = new DirectAssociationGenerator(workspaceId, boards);
 
@@ -207,25 +207,24 @@ const getFileContext = async (req, res) => {
 
     const { filePath } = req.body;
 
-    if (!checkValid(workspaceId))
+    if (!checkValid(workspaceId)) {
         return res.json({
             success: false,
             error: "no association workspaceId provided",
         });
+    }
 
-    if (!checkValid(filePath))
+    if (!checkValid(filePath)) {
         return res.json({
             success: false,
             error: "no association filePath provided",
         });
+    }
 
     let result = {
-        github: {
-            //actionType: "POPULATE_GITHUB",
-        },
-        trello: {
-            //actionType: "POPULATE_TRELLO",
-        },
+        github: {},
+        trello: {},
+        jira: {},
     };
 
     // Fetch PRs
@@ -234,7 +233,7 @@ const getFileContext = async (req, res) => {
 
         query.where("repository").equals(repositoryId);
 
-        //query.where("fileList").in([filePath]);
+        query.where("fileList").in([filePath]);
 
         result["github"].pullRequests = await query.limit(20).lean().exec();
     } catch (err) {
@@ -251,7 +250,7 @@ const getFileContext = async (req, res) => {
 
         query.where("repository").equals(repositoryId);
 
-        //query.where("fileList").in([filePath]);
+        query.where("fileList").in([filePath]);
 
         result["github"].commits = await query.limit(20).lean().exec();
     } catch (err) {
@@ -262,33 +261,7 @@ const getFileContext = async (req, res) => {
         });
     }
 
-    console.log("RESULT", result);
-
-    let sources;
-
-    try {
-        const contexts = await BoardWorkspaceContext.find({
-            workspace: workspaceId,
-        })
-            .select("source")
-            .lean()
-            .exec();
-
-        console.log("CONTEXTS", contexts);
-
-        sources = Array.from(
-            new Set(contexts.map((context) => context.source))
-        );
-    } catch (e) {
-        return res.json({
-            success: false,
-            error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            trace: e,
-        });
-    }
-
-    console.log("HERE");
-
+    // Get all Code Object Ids
     let codeObjectIds = [];
 
     Object.keys(result["github"]).map((modelType) => {
@@ -298,8 +271,7 @@ const getFileContext = async (req, res) => {
         ];
     });
 
-    console.log("CODE OBJECT IDS", codeObjectIds);
-
+    // Get all Associations of Code Objects
     let associations;
 
     try {
@@ -320,13 +292,9 @@ const getFileContext = async (req, res) => {
         });
     }
 
-    console.log("ASSOCIATIONS LENGTH", associations.length);
-
     const ticketIds = Array.from(
         new Set(
             associations.map((association) => {
-                console.log("ASSOCIATION", association);
-
                 const { firstElement: ticketId } = association;
 
                 return ticketId;
@@ -334,13 +302,24 @@ const getFileContext = async (req, res) => {
         )
     );
 
-    let tickets;
+    const ticketSources = ["trello", "github", "jira"];
+
+    let ticketsBySource;
 
     try {
-        tickets = await IntegrationTicket.find({ _id: { $in: ticketIds } })
-            .lean()
-            .exec();
+        ticketsBySource = await Promise.all(
+            ticketSources.map((source) => {
+                return IntegrationTicket.find({
+                    _id: { $in: ticketIds },
+                    source,
+                })
+                    .lean()
+                    .exec();
+            })
+        );
     } catch (e) {
+        Sentry.captureException(e);
+
         return res.json({
             success: false,
             error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
@@ -348,9 +327,10 @@ const getFileContext = async (req, res) => {
         });
     }
 
-    result["trello"].tickets = tickets;
+    ticketsBySource.map((tickets, i) => {
+        result[ticketSources[i]].tickets = tickets;
+    });
 
-    console.log("RESULT", result);
     //IntegrationTicket.populate(tickets, {path: "author references workspace repository tags snippets"});
 
     return res.json({ success: true, result });

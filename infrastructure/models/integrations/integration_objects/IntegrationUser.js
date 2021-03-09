@@ -1,21 +1,20 @@
-const mongoose = require.main.require("mongoose")
+const mongoose = require.main.require("mongoose");
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 var integrationUserSchema = new Schema({
     sourceId: String,
-    source: { type: String, enum: ['github', 'jira', 'trello'] },
+    source: { type: String, enum: ["github", "jira", "trello", "google"] },
     userName: String,
     name: String,
     email: String,
-    user: { type: ObjectId, ref: 'User'},
-	created: {type: Date, default: Date.now},
+    user: { type: ObjectId, ref: "User" },
+    created: { type: Date, default: Date.now },
 });
 
 var IntegrationUser = mongoose.model("IntegrationUser", integrationUserSchema);
 
 module.exports = IntegrationUser;
-
 
 // Final mapping from source --> IntegrationUser
 /*
@@ -80,5 +79,3 @@ module.exports = IntegrationUser;
 
 
 */
-
-

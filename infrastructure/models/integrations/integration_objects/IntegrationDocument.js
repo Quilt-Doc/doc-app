@@ -1,29 +1,28 @@
-const mongoose = require.main.require("mongoose")
+const mongoose = require.main.require("mongoose");
 const Schema = mongoose.Schema;
-const { ObjectId} = Schema.Types;
+const { ObjectId } = Schema.Types;
 
-const externalDocumentSchema = new Schema({
-    type: String,
-    repository: {type: ObjectId, ref: 'Repository'},
-    workspace: {type: ObjectId, ref: 'Workspace'},
-    memberUsers: [{type: ObjectId, ref: 'User'}],
-    //members
-    associations: {type: String},
-    relevant: {type: String},
-    created: {type: Date, default: Date.now},
-
-    //GDRIVE SPECIFIC
-    googleDriveIntegration: {type:ObjectId, ref: 'GoogleDriveIntegration'},
-    googleDriveLink: String,
-    googleDriveId: String, //TODO: NEED TO DISCUSS WORDING, this refers to the Id of the object in GDRIVE
-    //BUT WORDING MAY BE CONFUSING
-    googleDriveMimeType: String,
-    googleDriveCreated: Date,
-    googleDriveLastModified: Date,
-    googleDriveMembers: [{type: String}],
-    googleDriveMemberEmails: [{type: String}]
+const integrationDocumentSchema = new Schema({
+    created: { type: Date, default: Date.now },
+    source: {
+        type: String,
+        enum: ["google"],
+        required: true,
+    },
+    members: [{ type: ObjectId, ref: "IntegrationUser" }],
+    attachments: [{ type: ObjectId, ref: "IntegrationAttachment" }],
+    intervals: [{ type: ObjectId, ref: "IntegrationInterval" }],
+    link: String,
+    sourceId: { type: String, index: true },
+    mimeType: String,
+    sourceCreationDate: Date,
+    sourceUpdateDate: Date,
+    drive: { type: ObjectId, ref: "IntegrationDrive" },
 });
 
-const ExternalDocument = mongoose.model("ExternalDocument", externalDocumentSchema);
+const IntegrationDocument = mongoose.model(
+    "IntegrationDocument",
+    integrationDocumentSchema
+);
 
-module.exports = ExternalDocument;
+module.exports = IntegrationDocument;

@@ -40,7 +40,6 @@ class DirectAssociationGenerator extends AssociationGenerator {
 
         const modelTypes = Object.keys(queries);
 
-
         // map through tickets
         this.tickets.map((ticket) => {
             const { attachments, board } = ticket;
@@ -116,7 +115,9 @@ class DirectAssociationGenerator extends AssociationGenerator {
                     },
                 };
 
-                const project = { $project: { _id: 1, sourceId: 1 } };
+                const project = {
+                    $project: { _id: 1, sourceId: 1, repository: 1 },
+                };
 
                 // store query for specific model for specific ticket in higher level queries
                 queries[modelType][ticket._id] = [match, project];
@@ -192,6 +193,8 @@ class DirectAssociationGenerator extends AssociationGenerator {
                 });
             });
         });
+
+        console.log("\nASSOCIATIONS LENGTH: ", associations.length);
 
         associations = await Association.insertMany(associations);
 

@@ -9,6 +9,7 @@ var workspaceSchema = new Schema({
     creator: { type: ObjectId, ref: "User" },
     repositories: [{ type: ObjectId, ref: "Repository" }],
     boards: [{ type: ObjectId, ref: "IntegrationBoard" }],
+    drives: [{ type: ObjectId, ref: "IntegrationDrive" }],
     memberUsers: [{ type: ObjectId, ref: "User" }],
 });
 

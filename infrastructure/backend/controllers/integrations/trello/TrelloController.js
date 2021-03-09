@@ -6,8 +6,17 @@ const logger = require("../../../logging/index").logger;
 const jobs = require("../../../apis/jobs");
 const jobConstants = require("../../../constants/index").jobs;
 
+// models
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationColumn = require("../../../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationLabel = require("../../../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationInterval = require("../../../models/integrations/integration_objects/IntegrationInterval");
+const Association = require("../../../models/associations/Association");
+const Workspace = require("../../../models/Workspace");
 
+// helper methods
 const {
     acquireTrelloConnectProfile,
     acquireExternalTrelloBoards,
@@ -19,6 +28,7 @@ const {
     extractTrelloLabels,
     modifyTrelloActions,
     extractTrelloIntervals,
+    handleTrelloReintegration,
 } = require("./TrelloControllerHelpers");
 
 const {
@@ -26,37 +36,138 @@ const {
     handleTrelloConnectCallback,
 } = require("./TrelloAuthorizationController");
 
+const {
+    setupTrelloWebhook,
+    deleteTrelloWebhook,
+    verifyTrelloWebhookRequest,
+    handleWebhookUpdateBoard,
+    handleWebhookCreateList,
+    handleWebhookDeleteList,
+    handleWebhookUpdateList,
+    handleWebhookCreateLabel,
+    handleWebhookDeleteLabel,
+    handleWebhookUpdateLabel,
+    handleWebhookCreateMember,
+    handleWebhookUpdateMember,
+    handleWebhookCreateCard,
+    handleWebhookUpdateCard,
+    handleWebhookDeleteCard,
+    handleWebhookAddAttachment,
+    handleWebhookAddLabel,
+    handleWebhookRemoveLabel,
+    handleWebhookAddMember,
+    handleWebhookRemoveMember,
+} = require("./TrelloWebhookHelpers");
+
 triggerTrelloScrape = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
     // boards is [{ sourceId, repositoryIds }]
-    const { boards } = req.body;
+    let { boards } = req.body;
 
     let profile;
 
     try {
         profile = await acquireTrelloConnectProfile(userId);
     } catch (e) {
+        console.log("FAILURE 1", e);
+
         Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
     }
+
+    let reintegratedBoards;
+
+    try {
+        const output = await handleTrelloReintegration(boards);
+
+        boards = output.boards;
+
+        reintegratedBoards = output.reintegratedBoards;
+    } catch (e) {
+        console.log("FAILURE 2", e);
+
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    /*
+    console.log(
+        "\ntriggerScrape: already Integrated Boards: ",
+        reintegratedBoards
+    );
+
+    console.log("\ntriggerScrape: new Boards: ", boards);
+    */
 
     let result;
 
     try {
         result = await bulkScrapeTrello(profile, boards, workspaceId);
     } catch (e) {
+        console.log("FAILURE 3", e);
+
         Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
     }
 
-    return res.json({ success: true, result });
+    result = result.map((board) => _.omit(board, ["tickets"]));
+
+    // set up webhooks
+    if (result.length > 0) {
+        try {
+            await setupTrelloWebhook(profile, result, userId);
+        } catch (e) {
+            console.log("FAILURE WEBHOOK", e);
+
+            Sentry.captureException(e);
+
+            return res.json({ success: false, error: e });
+        }
+    }
+
+    // need to finally mutate workspace to add boards
+    let workspace;
+
+    try {
+        workspace = await Workspace.findById(workspaceId)
+            .select("boards")
+            .exec();
+    } catch (e) {
+        console.log("FAILURE 4", e);
+
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    boardIds = result.map((board) => board._id);
+
+    reintegratedBoardIds = reintegratedBoards.map((board) => board._id);
+
+    workspace.boards = [
+        ...workspace.boards,
+        ...boardIds,
+        ...reintegratedBoardIds,
+    ];
+
+    try {
+        workspace = await workspace.save();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
+    return res.json({
+        success: true,
+        result: { workspace, boards: [...result, ...reintegratedBoards] },
+    });
 };
 
 bulkScrapeTrello = async (profile, boards, workspaceId) => {
-    const { accessToken } = profile;
+    const { accessToken, user: userId } = profile;
 
     const result = [];
 
@@ -80,20 +191,22 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
         members = await extractTrelloMembers(workspaceId, members, profile);
 
         // create IntegrationBoard
-        const board = await extractTrelloBoard(
+        let board = await extractTrelloBoard(
             members,
             boardSourceId,
             name,
             boardCreatorSourceId,
             url,
-            repositoryIds
+            repositoryIds,
+            userId
         );
 
         lists = await extractTrelloLists(lists, board);
 
         const attachmentResponse = await extractTrelloDirectAttachments(
             cards,
-            repositoryIds
+            repositoryIds,
+            board
         );
 
         cards = attachmentResponse.cards;
@@ -102,11 +215,11 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
 
         cards = await modifyTrelloActions(actions, cards);
 
-        const intervalResponse = await extractTrelloIntervals(cards);
+        const intervalResponse = await extractTrelloIntervals(cards, board);
 
         cards = intervalResponse.cards;
 
-        labels = await extractTrelloLabels(labels);
+        labels = await extractTrelloLabels(labels, board);
 
         let insertOps = [];
 
@@ -179,93 +292,6 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
     return result;
 };
 
-/*
-handleExistingBoards = async (accessToken, userId, boardWorkspaceContexts) => {
-    const boardIds = boardWorkspaceContexts.map((context) => context.boardId);
-
-    let query = IntegrationBoard.find({});
-
-    query.where("sourceId").in(boardIds);
-
-    const existingBoards = await query.select("_id sourceId").lean().exec();
-
-    const contexts = _.mapKeys(boardWorkspaceContexts, "boardId");
-
-    existingBoards.map(async (board) => {
-        const tickets = IntegrationTicket.find({
-            board: board._id,
-        }).exec();
-
-        const lists = IntegrationList.find({
-            board: board._id,
-        })
-            .lean()
-            .exec();
-
-        const relevantContext = contexts[board._id];
-
-        await Promise.all(
-            tickets.map((ticket) => {
-                const { attachments } = ticket;
-
-                return populateExistingTrelloDirectAttachments(
-                    relevantContext,
-                    attachments
-                );
-            })
-        );
-
-        const mappedTickets = _.mapKeys(tickets, "sourceId");
-
-        const boardData = await acquireTrelloData(board._id, accessToken, true);
-
-        const { actions } = boardData;
-
-        const events = await extractTrelloEvent(
-            board,
-            lists,
-            relevantContext.event
-        );
-
-        modifyTrelloActions(actions, mappedTickets);
-
-        await Promise.all(
-            tickets.map(async (ticket) => {
-                const { sourceId } = ticket;
-
-                const { actions } = mappedTickets[sourceId];
-
-                const { intervals: existingIntervals } = ticket;
-
-                const newIntervals = await extractTrelloIntervals(
-                    actions,
-                    events,
-                    lists
-                );
-
-                ticket.intervals = [...newIntervals, ...existingIntervals];
-
-                delete ticket.actions;
-
-                return ticket.save();
-            })
-        );
-
-        const boardWorkspaceContext = new BoardWorkspaceContext({
-            board: board._id,
-            events: events.map((event) => event._id),
-            workspace: relevantContext.workspaceId,
-            repositories: relevantContext.repositoryIds,
-            creator: userId,
-        });
-
-        await boardWorkspaceContext.save();
-    });
-
-    return new Set(existingBoards.map((board) => board._id));
-};
-*/
-
 getExternalTrelloBoards = async (req, res) => {
     const { userId, workspaceId } = req.params;
 
@@ -294,9 +320,7 @@ getExternalTrelloBoards = async (req, res) => {
     let workspace;
 
     try {
-        workspace = await Workspace.find({
-            workspace: workspaceId,
-        })
+        workspace = await Workspace.findById(workspaceId)
             .lean()
             .select("boards")
             .populate("boards")
@@ -307,9 +331,11 @@ getExternalTrelloBoards = async (req, res) => {
         return res.json({ success: true, error: e });
     }
 
-    const integratedBoardSourceIds = new Set(
-        workspace.boards.map((board) => board.sourceId)
-    );
+    const workspaceBoardSourceIds = workspace.boards
+        ? workspace.boards.map((board) => board.sourceId)
+        : [];
+
+    const integratedBoardSourceIds = new Set(workspaceBoardSourceIds);
 
     boards = boards.filter((board) => {
         const { id } = board;
@@ -320,165 +346,213 @@ getExternalTrelloBoards = async (req, res) => {
     return res.json({ success: true, result: boards });
 };
 
+removeTrelloIntegration = async (req, res) => {
+    //console.log("\nremoveTrelloIntegration: Entered removeTrelloIntegration");
+
+    const { boardId, workspaceId } = req.params;
+
+    /*
+    console.log(
+        `\nremoveTrelloIntegration: req.params -- boardId: ${boardId} workspaceId: ${workspaceId}`
+    );*/
+    // remove board from workspace's boards
+    let workspace;
+
+    try {
+        workspace = await Workspace.findById(workspaceId).exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    workspace.boards = workspace.boards.filter((id) => id != boardId);
+
+    try {
+        await workspace.save();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    // if board doesn't exist else where..
+    let shouldDelete;
+
+    try {
+        shouldDelete = !(await Workspace.exists({
+            boards: { $in: [boardId] },
+        }));
+    } catch (e) {
+        Sentry.captureException(e);
+
+        return res.json({ success: false, error: e });
+    }
+
+    //console.log("\nremoveTrelloIntegration: shouldDelete: ", shouldDelete);
+
+    // delete all integrations associated with board and finally board
+    if (shouldDelete) {
+        // delete board webhook
+        try {
+            /*
+            console.log(
+                "\nremoveTrelloIntegration: deleteTrelloWebhook will be called"
+            );*/
+
+            await deleteTrelloWebhook(boardId);
+        } catch (e) {
+            /*
+            console.log(
+                "\nremoveTrelloIntegration: deleteTrelloWebhook Failed: ",
+                e
+            );*/
+
+            Sentry.captureException(e);
+
+            return res.json({ success: false, error: e });
+        }
+
+        const nonBoardsModels = [
+            IntegrationAttachment,
+            IntegrationColumn,
+            IntegrationInterval,
+            IntegrationLabel,
+            IntegrationTicket,
+            Association,
+        ];
+
+        const requests = nonBoardsModels.map((model) =>
+            model.deleteMany({ board: boardId })
+        );
+
+        requests.push(IntegrationBoard.findOneAndDelete({ _id: boardId }));
+
+        try {
+            await Promise.all(requests);
+        } catch (e) {
+            Sentry.captureException(e);
+
+            return res.json({ success: false, error: e });
+        }
+    }
+
+    return res.json({
+        success: true,
+    });
+};
+
+affirmTrelloWebhook = async (req, res) => {
+    return res.sendStatus(200);
+};
+
+handleTrelloWebhook = async (req, res) => {
+    //console.log("\nhandleTrelloWebhook: Entered in handleTrelloWebhook");
+
+    const { userId, boardId } = req.params;
+
+    const isVerified = verifyTrelloWebhookRequest(req);
+
+    //console.log("\nhandleTrelloWebhook: Verification of Webhook: ", isVerified);
+
+    if (!isVerified) return;
+
+    let profile;
+
+    try {
+        profile = await acquireTrelloConnectProfile(userId);
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
+    const { action } = req.body;
+
+    if (action["type"] == "removeLabelFromCard") {
+        console.log("\nhandleTrelloWebhook: Webhook Action: ", action["type"]);
+    }
+
+    const { type, data, member } = action;
+
+    const actionMethods = {
+        // board
+        updateBoard: async () =>
+            await handleWebhookUpdateBoard(boardId, profile, data),
+
+        // lists
+        createList: async () => await handleWebhookCreateList(boardId, data),
+
+        moveListToBoard: async () =>
+            await handleWebhookCreateList(boardId, data),
+
+        moveListFromBoard: async () => await handleWebhookDeleteList(data),
+
+        updateList: async () => await handleWebhookUpdateList(data),
+
+        // labels
+        createLabel: async () =>
+            await handleWebhookCreateLabel(boardId, profile, data),
+
+        deleteLabel: async () => await handleWebhookDeleteLabel(data),
+
+        updateLabel: async () => await handleWebhookUpdateLabel(data),
+
+        // users
+        addMemberToBoard: async () => await handleWebhookCreateMember(member),
+
+        updateMember: async () => await handleWebhookUpdateMember(member),
+
+        // need to handle removeMemberToBoard: async () =>
+
+        createCard: async () =>
+            await handleWebhookCreateCard(boardId, profile, data),
+
+        moveCardToBoard: async () =>
+            await handleWebhookCreateCard(boardId, profile, data),
+
+        updateCard: async () =>
+            await handleWebhookUpdateCard(boardId, profile, data),
+
+        deleteCard: async () => await handleWebhookDeleteCard(data),
+
+        moveCardFromBoard: async () => await handleWebhookDeleteCard(data),
+
+        addAttachmentToCard: async () =>
+            await handleWebhookAddAttachment(boardId, data),
+
+        addLabelToCard: async () => await handleWebhookAddLabel(data),
+
+        removeLabelFromCard: async () => await handleWebhookRemoveLabel(data),
+
+        addMemberToCard: async () => await handleWebhookAddMember(data),
+
+        removeMemberFromCard: async () => await handleWebhookRemoveMember(data),
+
+        //deleteAttachmentFromCard: async () =>
+        //   await handleWebhookDeleteAttachment(boardId, data),
+    };
+
+    //console.log(`\nhandleTrelloWebhook: data: `, data);
+
+    try {
+        if (actionMethods[type]) {
+            await actionMethods[type]();
+        }
+    } catch (e) {
+        console.log("handleTrelloWebhook: error occurred: ", e);
+
+        Sentry.captureException(e);
+    }
+
+    res.sendStatus(200);
+};
+
 module.exports = {
     beginTrelloConnect,
     handleTrelloConnectCallback,
     getExternalTrelloBoards,
     triggerTrelloScrape,
     bulkScrapeTrello,
+    removeTrelloIntegration,
+    handleTrelloWebhook,
+    affirmTrelloWebhook,
 };
-
-/*
-/*
-            let boardsReponse;
-
-            try {
-                boardsReponse = await trelloAPI.get(
-                    `/1/members/${memberId}/boards?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name`
-                );
-            } catch (err) {
-                return res.json({
-                    success: false,
-                    error:
-                        "handleTrelloConnectCallback Error: trello board API request failed",
-                    trace: err,
-                });
-            }
-
-            let boards = boardsReponse.data;
-
-            return { success: true, result: boards };*/
-/*
-            let trelloIntegration = new TrelloIntegration({
-                boardIds: idBoards,
-                profileId: id,
-                user: ObjectId(userId),
-                workspace: ObjectId(workspaceId),
-                repositories: [],
-                trelloConnectProfile: ObjectId(trelloConnectProfile._id),
-            });
-
-            try {
-                trelloIntegration = await trelloIntegration.save();
-            } catch (err) {
-                console.log("ERROR", err);
-            }
-
-            console.log("TRELLO INTEGRATION", trelloIntegration);
-
-            const boardRequests = idBoards.map((boardId) =>
-                trelloAPI.get(
-                    `/1/boards/${boardId}?key=${TRELLO_API_KEY}&token=${accessToken}`
-                )
-            );
-
-            const boardResponses = await Promise.all(boardRequests);
-
-            const boards = boardResponses.map((boardResponse) => {
-                return boardResponse.data;
-            });
-
-            quiltProductBoard = boards.filter(
-                (board) => board.name === "Quilt Product"
-            )[0];
-
-            // trelloIntegrationId, requiredBoardIdList, relevantLists
-            var runTrelloScrapeData = {};
-            runTrelloScrapeData[
-                "trelloIntegrationId"
-            ] = trelloIntegration._id.toString();
-            runTrelloScrapeData["requiredBoardIdList"] = [quiltProductBoard.id];
-            runTrelloScrapeData["relevantLists"] = [
-                { type: "start", name: "In-Progress" },
-                { type: "end", name: "Done" },
-            ];
-            runTrelloScrapeData["jobType"] = jobConstants.JOB_SCRAPE_TRELLO;
-
-            try {
-                await jobs.dispatchTrelloScrapeJob(runTrelloScrapeData);
-            } catch (err) {
-                await logger.error({
-                    source: "backend-api",
-                    message: err,
-                    errorDescription: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(
-                        requiredBoardIdList
-                    )}, ${JSON.stringify(relevantLists)}`,
-                    function: "handleTrelloConnectCallback",
-                });
-
-                return res.json({
-                    success: false,
-                    error: `Error dispatching scrape trello job - trelloIntegrationId, requiredBoardIdList, relevantLists: ${trelloIntegrationId}, ${JSON.stringify(
-                        requiredBoardIdList
-                    )}, ${JSON.stringify(relevantLists)}`,
-                });
-            }
-
-            /*
-            await bulkScrapeTrello(trelloIntegration, [quiltProductBoard.id], 
-                [{type: "start", name: "In-Progress", id}, {type: "end", name: "Done", id}]);
-
-            
-
-           res.redirect(LOCALHOST_HOME_PAGE_URL);
-           
-           
-           
-           
-           
-    if (attachments) {
-        attachments = await Promise.all(
-            attachments
-                .map((attachment) => {
-                    const { date, url, name } = attachment;
-
-                    if (!url || !url.includes("https://github.com"))
-                        return null;
-
-                    const splitURL = url.split("/");
-
-                    try {
-                        let type = splitURL.slice(
-                            splitURL.length - 2,
-                            splitURL.length - 1
-                        )[0];
-
-                        const modelType =
-                            type === "tree"
-                                ? "branch"
-                                : type === "issues"
-                                ? "issue"
-                                : type === "pull"
-                                ? "pullRequest"
-                                : type;
-
-                        const sourceId = splitURL.slice(splitURL.length - 1)[0];
-
-                        const fullName = splitURL
-                            .slice(splitURL.length - 4, splitURL.length - 2)
-                            .join("/");
-
-                        attachment = new IntegrationAttachment({
-                            sourceCreationDate: new Date(date),
-                            modelType,
-                            link: url,
-                            sourceId,
-                        });
-
-                        if (!currentRepositories[fullName])
-                            return attachment.save();
-
-                        attachment.repository =
-                            currentRepositories[fullName]._id;
-
-                        return attachment.save();
-                    } catch (err) {
-                        return null;
-                    }
-                })
-                .filter((request) => request != null)
-        );
-    } else {
-        attachments = [];
-    }
-           */

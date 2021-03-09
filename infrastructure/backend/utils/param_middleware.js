@@ -1,16 +1,14 @@
-const Workspace = require('../models/Workspace');
-const Reference = require('../models/Reference');
-const Document = require('../models/Document');
-const Tag = require('../models/Tag');
-const Snippet = require('../models/Snippet');
-const Repository = require('../models/Repository');
-const User = require('../models/authentication/User');
-var mongoose = require('mongoose')
+const Workspace = require("../models/Workspace");
+const Reference = require("../models/Reference");
+const Document = require("../models/Document");
+const Tag = require("../models/Tag");
+const Snippet = require("../models/Snippet");
+const Repository = require("../models/Repository");
+const User = require("../models/authentication/User");
+var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-
 const workspaceIdParam = async (req, res, next, workspaceId) => {
-
     // console.log('workspaceParamMiddleware called!');
 
     if (req.workspaceObj) {
@@ -19,18 +17,23 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
     // try to get the workspace object and attach it to the request object
 
     try {
-        var foundWorkspace = await Workspace.findById(workspaceId).lean().exec();
+        var foundWorkspace = await Workspace.findById(workspaceId)
+            .lean()
+            .exec();
         if (!foundWorkspace || foundWorkspace == null) {
-            next(new Error(`workspaceIdParam, workspace with workspaceId doesn't exist - workspaceId: ${workspaceId}`));
+            next(
+                new Error(
+                    `workspaceIdParam, workspace with workspaceId doesn't exist - workspaceId: ${workspaceId}`
+                )
+            );
         }
         req.workspaceObj = foundWorkspace;
         // console.log(`workspaceParamMiddleware setting workspaceObj to foundWorkspace: ${JSON.stringify(foundWorkspace)}`);
-    }
-    catch(err) {
+    } catch (err) {
         next(err);
     }
     next();
-}
+};
 
 const referenceIdParam = async (req, res, next, referenceId) => {
     if (req.referenceObj) {
@@ -38,17 +41,18 @@ const referenceIdParam = async (req, res, next, referenceId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundReference = await Reference.findById(referenceId).lean().exec();
+        var foundReference = await Reference.findById(referenceId)
+            .lean()
+            .exec();
         if (!foundReference) {
             next(new Error("referenceIdParam: referenceId doesn't exist"));
         }
         req.referenceObj = foundReference;
-    }
-    catch(err) {
+    } catch (err) {
         next(err);
     }
     next();
-}
+};
 
 const documentIdParam = async (req, res, next, documentId) => {
     if (req.documentObj) {
@@ -64,12 +68,11 @@ const documentIdParam = async (req, res, next, documentId) => {
             next(new Error("documentIdParam: documentId doesn't exist"));
         }
         req.documentObj = foundDocument;
-    }
-    catch(err) {
+    } catch (err) {
         next(err);
     }
     next();
-}
+};
 
 const tagIdParam = async (req, res, next, tagId) => {
     if (req.tagObj) {
@@ -82,12 +85,11 @@ const tagIdParam = async (req, res, next, tagId) => {
             next(new Error("tagIdParam: tagId doesn't exist"));
         }
         req.tagObj = foundTag;
-    }
-    catch(err) {
+    } catch (err) {
         next(err);
     }
     next();
-}
+};
 
 const snippetIdParam = async (req, res, next, snippetId) => {
     if (req.snippetObj) {
@@ -100,13 +102,11 @@ const snippetIdParam = async (req, res, next, snippetId) => {
             next(new Error("snippetIdParam: snippetId doesn't exist"));
         }
         req.snippetObj = foundSnippet;
-    }
-    catch(err) {
+    } catch (err) {
         next(err);
     }
     next();
-}
-
+};
 
 const repositoryIdParam = async (req, res, next, repositoryId) => {
     if (req.repositoryObj) {
@@ -114,18 +114,18 @@ const repositoryIdParam = async (req, res, next, repositoryId) => {
     }
     // try to get the reference object and attach it to the request object
     try {
-        var foundRepository = await Repository.findById(repositoryId).lean().exec();
+        var foundRepository = await Repository.findById(repositoryId)
+            .lean()
+            .exec();
         if (!foundRepository) {
             next(new Error("repositoryIdParam: repositoryId doesn't exist"));
         }
         req.repositoryObj = foundRepository;
-    }
-    catch(err) {
+    } catch (err) {
         next(err);
     }
     next();
-}
-
+};
 
 const userIdParam = async (req, res, next, userId) => {
     if (req.userObj) {
@@ -138,17 +138,11 @@ const userIdParam = async (req, res, next, userId) => {
             next(new Error("userIdParam: userId doesn't exist"));
         }
         req.userObj = foundUser;
-    }
-    catch(err) {
+    } catch (err) {
         next(err);
     }
     next();
-}
-
-
-
-
-
+};
 
 module.exports = {
     workspaceIdParam,
@@ -157,5 +151,5 @@ module.exports = {
     tagIdParam,
     snippetIdParam,
     repositoryIdParam,
-    userIdParam
-}
+    userIdParam,
+};

@@ -32,6 +32,7 @@ Sentry.init({
 app.use(Sentry.Handlers.requestHandler());
 
 const logger = require("./logging/index").logger;
+
 const setupESConnection = require("./logging/index").setupESConnection;
 
 const { format } = require("logform");
@@ -107,6 +108,9 @@ const nonAuthPaths = [
     "/api/pusher/webhook",
     "/api/integrations/create",
     "/integrations/connect/trello",
+    "/integrations/connect/jira",
+    "/trello/handle_webhook",
+    "/auth/encrypt_ide_token",
 ];
 
 app.use(function (req, res, next) {
@@ -145,6 +149,7 @@ app.use(function (req, res, next) {
     } else if (req.cookies["user-jwt"]) {
         token = req.cookies["user-jwt"];
     } else {
+        console.log("index.js: Request was not authenticated.");
         return res.status(401).json({
             authenticated: false,
             message: "user has not been authenticated",
@@ -152,8 +157,8 @@ app.use(function (req, res, next) {
     }
 
     var publicKey = fs.readFileSync("docapp-test-public.pem", "utf8");
+    //console.log("JWT TOKEN", token);
     try {
-
         // console.log('Attempting to verify token');
         var decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 
@@ -163,7 +168,8 @@ app.use(function (req, res, next) {
         console.log(err);
         return res.status(403);
     }
-    console.log('Successfully verified token');
+
+    //console.log("Successfully verified token");
     next();
 });
 
@@ -206,11 +212,11 @@ if (process.env.IS_PRODUCTION) {
         );
     });
 } else {
-    app.listen(API_PORT, "0.0.0.0", () =>
+    app.listen(API_PORT, "0.0.0.0", () => {
         logger.debug({
             source: "backend-api",
             message: `Listening on port ${API_PORT}`,
             function: "index.js",
-        })
-    );
+        });
+    });
 }
