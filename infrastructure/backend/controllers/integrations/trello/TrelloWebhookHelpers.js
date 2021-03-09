@@ -1,4 +1,3 @@
-/*
 const axios = require("axios");
 
 const _ = require("lodash");
@@ -16,10 +15,20 @@ const IntegrationInterval = require("../../../models/integrations/integration_ob
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
 const Repository = require("../../../models/Repository");
 const Association = require("../../../models/associations/Association");
+const Branch = require("../../../models/Branch");
+const Commit = require("../../../models/Commit");
+const PullRequest = require("../../../models/PullRequest");
 
 const { acquireTrelloConnectProfile } = require("./TrelloControllerHelpers");
 
-const { TRELLO_API_KEY, LOCALHOST_API_URL, TRELLO_SECRET } = process.env;
+const { logger } = require("../../../fs_logging");
+
+const {
+    TRELLO_API_KEY,
+    LOCALHOST_API_URL,
+    TRELLO_SECRET,
+    NGROK_URL,
+} = process.env;
 
 const trelloAPI = axios.create({
     baseURL: "https://api.trello.com",
@@ -28,40 +37,112 @@ const trelloAPI = axios.create({
 const { checkValid } = require("../../../utils/utils");
 
 setupTrelloWebhook = async (profile, boards, userId) => {
+    logger.info("Entered with params.", {
+        func: "setupTrelloWebhook",
+        obj: {
+            profile,
+            boards,
+            userId,
+        },
+    });
+
     const { accessToken } = profile;
+
+    logger.info("Using accessToken.", {
+        func: "setupTrelloWebhook",
+        obj: accessToken,
+    });
 
     for (let i = 0; i < boards.length; i++) {
         const board = boards[i];
 
         const { sourceId, _id: boardId } = board;
 
-        const description = `Webhook for board with trello sourceId: ${sourceId}`;
+        const description = encodeURIComponent(
+            `Webhook for board with trello sourceId: ${sourceId}`
+        );
 
-        const callbackURL = `${LOCALHOST_API_URL}/integrations/${boardId}/${userId}/trello/handle_webhook`;
+        const callbackURL = `${NGROK_URL}/api/integrations/${boardId}/${userId}/trello/handle_webhook`;
 
         const idModel = sourceId;
 
+        logger.info("Creating webhook with description.", {
+            func: "setupTrelloWebhook",
+            obj: description,
+        });
+
+        logger.info(`Creating webhook with callbackURL.`, {
+            func: "setupTrelloWebhook",
+            obj: callbackURL,
+        });
+
+        logger.info(`Creating webhook with idModel.`, {
+            func: "setupTrelloWebhook",
+            obj: idModel,
+        });
+
+        const route = `/1/webhooks/?key=${TRELLO_API_KEY}&token=${accessToken}&callbackURL=${encodeURIComponent(
+            callbackURL
+        )}&idModel=${idModel}&description=${description}`;
+
+        logger.info(`Using webhook route.`, {
+            func: "setupTrelloWebhook",
+            obj: route,
+        });
+
         try {
-            await trelloAPI.post(
-                `/1/tokens/${accessToken}/webhooks/?key=${TRELLO_API_KEY}&token=${accessToken}&callbackURL=${callbackURL}&idModel=${idModel}&description=${description}`
+            const response = await trelloAPI.post(
+                route,
+                {},
+                {
+                    headers: {
+                        Accept: "application/json",
+                    },
+                }
             );
         } catch (e) {
+            logger.error(`Error sending response.`, {
+                func: "setupTrelloWebhook",
+                obj: e,
+            });
+
             throw new Error(e);
         }
     }
 };
 
 deleteTrelloWebhook = async (boardId) => {
+    logger.info(`Entered with boardId.`, {
+        func: "deleteTrelloWebhook",
+        obj: boardId,
+    });
+
     let userId;
 
+    let board;
+
     try {
-        const board = await IntegrationBoard.findById(boardId)
-            .select("integrationCreator")
+        logger.info(`Entered board request.`, {
+            func: "deleteTrelloWebhook",
+        });
+
+        board = await IntegrationBoard.findById(boardId)
+            .select("integrationCreator sourceId")
             .lean()
             .exec();
 
+        logger.info(`Acquired board with creator.`, {
+            func: "deleteTrelloWebhook",
+            obj: board.integrationCreator,
+        });
+
         userId = board.integrationCreator;
     } catch (e) {
+        logger.error(`Error during board query.`, {
+            func: "deleteTrelloWebhook",
+            obj: e,
+        });
+
         throw new Error(e);
     }
 
@@ -73,24 +154,44 @@ deleteTrelloWebhook = async (boardId) => {
         throw new Error(e);
     }
 
+    logger.info(`Acquired profile.`, {
+        func: "deleteTrelloWebhook",
+        obj: profile,
+    });
+
     const { accessToken } = profile;
 
     let webhooks;
 
     try {
-        webhooks = await trelloAPI.get(`/1/tokens/${accessToken}/webhooks`);
+        const response = await trelloAPI.get(
+            `/1/tokens/${accessToken}/webhooks?key=${TRELLO_API_KEY}&token=${accessToken}`
+        );
+
+        webhooks = response.data;
     } catch (e) {
         throw new Error(e);
     }
 
-    // Should be only 1
-    webhooks = webhooks.filter((hook) => hook.idModel == boardId);
+    logger.info(`Acquired all token webhooks.`, {
+        func: "deleteTrelloWebhook",
+        obj: webhooks,
+    });
+
+    webhooks = webhooks.filter((hook) => hook.idModel == board.sourceId);
+
+    logger.info(`Acquired all board webhooks.`, {
+        func: "deleteTrelloWebhook",
+        obj: webhooks,
+    });
 
     for (let i = 0; i < webhooks.length; i++) {
         const { id } = webhooks[i];
 
         try {
-            await trelloAPI.delete(`/1/webhooks/${id}`);
+            await trelloAPI.delete(
+                `/1/webhooks/${id}?key=${TRELLO_API_KEY}&token=${accessToken}`
+            );
         } catch (e) {
             throw new Error(e);
         }
@@ -105,9 +206,14 @@ verifyTrelloWebhookRequest = (request) => {
             .digest("base64");
     };
 
-    const callbackURL = `${request.protocol}://${request.get("host")}${
+    const callbackURL = `${request.protocol}s://${request.get("host")}${
         request.originalUrl
     }`;
+
+    logger.info(`Created callbackURL.`, {
+        func: "verifyTrelloWebhookRequest",
+        obj: callbackURL,
+    });
 
     const content = JSON.stringify(request.body) + callbackURL;
 
@@ -119,6 +225,15 @@ verifyTrelloWebhookRequest = (request) => {
 };
 
 handleWebhookUpdateBoard = async (boardId, profile, data) => {
+    logger.info(`Entered with params.`, {
+        func: "handleWebhookUpdateBoard",
+        obj: {
+            boardId,
+            profile,
+            data,
+        },
+    });
+
     const { id } = data["board"];
 
     const { accessToken } = profile;
@@ -126,12 +241,19 @@ handleWebhookUpdateBoard = async (boardId, profile, data) => {
     let externalBoard;
 
     try {
-        externalBoard = await trelloAPI.get(
-            `/1/cards/${id}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=name,url`
+        const response = await trelloAPI.get(
+            `/1/boards/${id}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=name,url`
         );
+
+        externalBoard = response.data;
     } catch (e) {
         throw new Error(e);
     }
+
+    logger.info(`Queried externalBoard.`, {
+        func: "handleWebhookUpdateBoard",
+        obj: externalBoard,
+    });
 
     const { url: externalLink, name: externalName } = externalBoard;
 
@@ -161,9 +283,19 @@ handleWebhookUpdateBoard = async (boardId, profile, data) => {
         save = true;
     }
 
+    logger.info(`Should we save?`, {
+        func: "handleWebhookUpdateBoard",
+        obj: save,
+    });
+
     if (save) {
         try {
             board = await board.save();
+
+            logger.info(`Updated Board Successfully`, {
+                func: "handleWebhookUpdateBoard",
+                obj: board,
+            });
         } catch (e) {
             throw new Error(e);
         }
@@ -172,6 +304,14 @@ handleWebhookUpdateBoard = async (boardId, profile, data) => {
 
 handleWebhookCreateList = async (boardId, data) => {
     const { id, name } = data["list"];
+
+    logger.info(`Entered with params.`, {
+        func: "handleWebhookCreateList",
+        obj: {
+            id,
+            name,
+        },
+    });
 
     let list = new IntegrationColumn({
         name,
@@ -182,7 +322,17 @@ handleWebhookCreateList = async (boardId, data) => {
 
     try {
         list = await list.save();
+
+        logger.info(`Created list succesfully.`, {
+            func: "handleWebhookCreateList",
+            obj: list,
+        });
     } catch (e) {
+        logger.error(`Error during saving list.`, {
+            func: "handleWebhookCreateList",
+            obj: e,
+        });
+
         throw new Error(e);
     }
 };
@@ -190,16 +340,35 @@ handleWebhookCreateList = async (boardId, data) => {
 handleWebhookDeleteList = async (data) => {
     const { id } = data["list"];
 
+    logger.info(`Entered with params.`, {
+        func: "handleWebhookDeleteList",
+        obj: {
+            id,
+        },
+    });
+
     try {
         await IntegrationColumn.findOneAndDelete({ sourceId: id });
     } catch (e) {
         throw new Error(e);
     }
+
+    logger.info(`Completed deletion successfully.`, {
+        func: "handleWebhookDeleteList",
+    });
 };
 
 // may need to handle archiving list
 handleWebhookUpdateList = async (data) => {
     const { id, name: externalName } = data["list"];
+
+    logger.info(`Entered with params.`, {
+        func: "handleWebhookUpdateList",
+        obj: {
+            id,
+            externalName,
+        },
+    });
 
     let list;
 
@@ -208,6 +377,11 @@ handleWebhookUpdateList = async (data) => {
             .select("name")
             .exec();
     } catch (e) {
+        logger.error(`List query failed.`, {
+            func: "handleWebhookUpdateList",
+            obj: e,
+        });
+
         throw new Error(e);
     }
 
@@ -218,7 +392,17 @@ handleWebhookUpdateList = async (data) => {
 
         try {
             list = await list.save();
+
+            logger.info(`Updated list successfully.`, {
+                func: "handleWebhookUpdateList",
+                obj: list,
+            });
         } catch (e) {
+            logger.error(`List update failed.`, {
+                func: "handleWebhookUpdateList",
+                obj: e,
+            });
+
             throw new Error(e);
         }
     }
@@ -227,14 +411,31 @@ handleWebhookUpdateList = async (data) => {
 handleWebhookCreateLabel = async (boardId, profile, data) => {
     const { id } = data["label"];
 
+    logger.info(`Entered with id.`, {
+        func: "handleWebhookCreateLabel",
+        obj: id,
+    });
+
     const { accessToken } = profile;
 
     let externalLabel;
 
     try {
-        externalLabel = await trelloAPI.get(
+        const response = await trelloAPI.get(
             `/1/labels/${id}?key=${TRELLO_API_KEY}&token=${accessToken}`
         );
+
+        externalLabel = response.data;
+
+        logger.info(`externalLabel was queried.`, {
+            func: "handleWebhookCreateLabel",
+            obj: externalLabel,
+        });
+
+        logger.info(`externalLabel was queried.`, {
+            func: "handleWebhookCreateLabel",
+            obj: externalLabel,
+        });
     } catch (e) {
         throw new Error(e);
     }
@@ -251,6 +452,11 @@ handleWebhookCreateLabel = async (boardId, profile, data) => {
 
     try {
         label = await label.save();
+
+        logger.info(`Label was created successfully.`, {
+            func: "handleWebhookCreateLabel",
+            obj: label,
+        });
     } catch (e) {
         throw new Error(e);
     }
@@ -259,9 +465,18 @@ handleWebhookCreateLabel = async (boardId, profile, data) => {
 handleWebhookDeleteLabel = async (data) => {
     const { id } = data["label"];
 
+    logger.info(`Entered with labelSourceId`, {
+        func: "handleWebhookDeleteLabel",
+        obj: id,
+    });
+
     try {
         await IntegrationLabel.findOneAndDelete({
             sourceId: id,
+        });
+
+        logger.info(`Deleted label successfully`, {
+            func: "handleWebhookDeleteLabel",
         });
     } catch (e) {
         throw new Error(e);
@@ -270,6 +485,11 @@ handleWebhookDeleteLabel = async (data) => {
 
 handleWebhookUpdateLabel = async (data) => {
     const { id, name: externalName, color: externalColor } = data["label"];
+
+    logger.info(`Entered with id`, {
+        func: "handleWebhookUpdateLabel",
+        obj: id,
+    });
 
     let label;
 
@@ -300,6 +520,11 @@ handleWebhookUpdateLabel = async (data) => {
     if (save) {
         try {
             label = await label.save();
+
+            logger.info(`Updated label successfully.`, {
+                func: "handleWebhookUpdateLabel",
+                obj: label,
+            });
         } catch (e) {
             throw new Error(e);
         }
@@ -307,13 +532,26 @@ handleWebhookUpdateLabel = async (data) => {
 };
 
 // at same level as data
-handleWebhookCreateMember = (externalMember) => {
+handleWebhookCreateMember = async (externalMember) => {
     const { id, username, fullName } = externalMember;
+
+    logger.info(`Entered with params.`, {
+        func: "handleWebhookCreateMember",
+        obj: {
+            id,
+            username,
+            fullName,
+        },
+    });
 
     let memberExists;
 
     try {
-        memberExists = IntegrationUser.exists({ sourceId: id });
+        memberExists = await IntegrationUser.exists({ sourceId: id });
+
+        logger.info(`memberExists: ${memberExists}`, {
+            func: "handleWebhookCreateMember",
+        });
     } catch (e) {
         throw new Error(e);
     }
@@ -327,7 +565,12 @@ handleWebhookCreateMember = (externalMember) => {
         });
 
         try {
-            member = member.save();
+            member = await member.save();
+
+            logger.info(`Member was saved succesfully`, {
+                func: "handleWebhookCreateMember",
+                obj: member,
+            });
         } catch (e) {
             throw new Error(e);
         }
@@ -380,8 +623,19 @@ addDays = (date, days) => {
     return result;
 };
 
+// TODO: NEED TO UPDATE
 parseDescriptionAttachments = (desc) => {
-    let tokens = desc.split(" ");
+    console.log(
+        "parseDescriptionAttachments: Entered parseDescriptionAttachments with desc: ",
+        desc
+    );
+
+    if (!desc || desc.length == 0) return [];
+
+    let tokens = desc
+        .split("\n")
+        .map((token) => token.split(" "))
+        .flat();
 
     tokens = tokens
         .filter((token) => isUrl(token))
@@ -398,20 +652,29 @@ parseDescriptionAttachments = (desc) => {
 handleWebhookCreateCard = async (boardId, profile, data) => {
     const { accessToken } = profile;
 
-    const { id, name } = data["card"];
+    const { id } = data["card"];
+
+    /*
+    console.log(
+        `\nhandleWebhookCreateCard: Entered with boardId: ${boardId} id: ${id}`
+    );*/
 
     let externalCard;
 
     try {
-        externalCard = await trelloAPI.get(
+        const response = await trelloAPI.get(
             `/1/cards/${id}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=all&actions=updateCard:idList&actions_limit=1000&action_member=false`
         );
+
+        externalCard = response.data;
+
+        //console.log(`\nhandleWebhookCreateCard: externalCard: `, externalCard);
     } catch (e) {
         throw new Error(e);
     }
 
     const {
-        closed,
+        dueComplete,
         dateLastActivity,
         desc,
         due,
@@ -424,12 +687,15 @@ handleWebhookCreateCard = async (boardId, profile, data) => {
     } = externalCard;
 
     let card = new IntegrationTicket({
+        sourceId: id,
         name,
         link: url,
+        board: boardId,
+        source: "trello",
     });
 
-    if (checkValid(closed)) {
-        card.trelloCardDueComplete = closed;
+    if (checkValid(dueComplete)) {
+        card.trelloCardDueComplete = dueComplete;
     }
 
     if (checkValid(dateLastActivity)) {
@@ -440,6 +706,12 @@ handleWebhookCreateCard = async (boardId, profile, data) => {
         card.description = desc;
 
         const attachmentUrls = parseDescriptionAttachments(desc);
+
+        /*
+        console.log(
+            "\nhandleWebhookCreateCard: attachmentUrls: ",
+            attachmentUrls
+        );*/
 
         try {
             newAttachments = await Promise.all(
@@ -487,7 +759,7 @@ handleWebhookCreateCard = async (boardId, profile, data) => {
                 .lean()
                 .exec();
 
-            card.column = column;
+            card.column = column._id;
         } catch (e) {
             throw new Error(e);
         }
@@ -519,7 +791,7 @@ handleWebhookCreateCard = async (boardId, profile, data) => {
 
         const relevantActions = actions.slice(0, 2);
 
-        const intervals = relevantActions.map((action) => {
+        let intervals = relevantActions.map((action) => {
             return new IntegrationInterval({
                 start: addDays(new Date(action.date), -10),
                 end: new Date(action.date),
@@ -527,7 +799,7 @@ handleWebhookCreateCard = async (boardId, profile, data) => {
             });
         });
 
-        const intervals = await Promise.all(
+        intervals = await Promise.all(
             intervals.map((interval) => interval.save())
         );
 
@@ -536,11 +808,16 @@ handleWebhookCreateCard = async (boardId, profile, data) => {
 
     try {
         card = await card.save();
+
+        console.log(
+            `\nhandleWebhookCreateCard: Card was saved successfully: `,
+            card
+        );
     } catch (e) {
         throw new Error(e);
     }
 
-    await generateAttachmentAssociations(card.attachments, card, boardId);
+    await generateAttachmentAssociations(newAttachments, card, boardId);
 };
 
 handleWebhookUpdateCard = async (boardId, profile, data) => {
@@ -548,12 +825,18 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
 
     const { id } = data["card"];
 
+    console.log(`\nhandleWebhookUpdateCard: Entered with cardSourceId: ${id}`);
+
     let externalCard;
 
     try {
-        externalCard = await trelloAPI.get(
+        const response = await trelloAPI.get(
             `/1/cards/${id}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=all&actions=updateCard:idList&actions_limit=1000&action_member=false`
         );
+
+        externalCard = response.data;
+
+        console.log(`\nhandleWebhookUpdateCard: externalCard: `, externalCard);
     } catch (e) {
         throw new Error(e);
     }
@@ -562,12 +845,13 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
         idList,
         dateLastActivity,
         desc,
-        actions,
         name: externalName,
         due,
         dueComplete,
         url,
     } = externalCard;
+
+    let { actions } = externalCard;
 
     let card;
 
@@ -580,6 +864,10 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
     } catch (e) {
         throw new Error(e);
     }
+
+    console.log(`\nhandleWebhookUpdateCard: Does card exist?: `, card);
+
+    if (!card) return;
 
     const {
         column: { sourceId: listSourceId, _id: listId },
@@ -603,24 +891,30 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
                 sourceId: idList,
             })
                 .select("_id")
-                .lean()
-                .exec();
+                .lean();
 
             card.column = column._id;
+
+            console.log("\nhandleWebhookUpdateCard: card.column: ", column._id);
         } catch (e) {
             throw new Error(e);
         }
 
-        if (actions.length > 0) {
-            actions = actions.map(
-                (action) => (action.date = new Date(action.date))
-            );
+        console.log(
+            `\nhandleWebhookUpdateCard: list movement actions: `,
+            actions
+        );
+
+        if (data["listAfter"] && actions.length > 0) {
+            actions.map((action) => {
+                action.date = new Date(action.date);
+            });
 
             actions.sort((a, b) => {
                 return a.date.getTime() > b.date.getTime() ? -1 : 1;
             });
 
-            const { date } = action.slice(0, 1)[0];
+            const { date } = actions.slice(0, 1)[0];
 
             interval = new IntegrationInterval({
                 start: addDays(new Date(date), -10),
@@ -630,6 +924,11 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
 
             try {
                 interval = await interval.save();
+
+                console.log(
+                    `\nhandleWebhookUpdateCard: Created interval successfully : `,
+                    interval
+                );
             } catch (e) {
                 throw new Error(e);
             }
@@ -662,9 +961,7 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
         try {
             newAttachments = await Promise.all(
                 attachmentUrls
-                    .filter((attUrl) => {
-                        !alreadyAttached.includes(attUrl);
-                    })
+                    .filter((attUrl) => !alreadyAttached.has(attUrl))
                     .map((attUrl) => {
                         const newAttachment = new IntegrationAttachment({
                             link: attUrl,
@@ -673,6 +970,11 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
 
                         return newAttachment.save();
                     })
+            );
+
+            console.log(
+                `\nhandleWebhookUpdateCard: Created attachments successfully : `,
+                newAttachments
             );
         } catch (e) {
             throw new Error(e);
@@ -717,7 +1019,14 @@ handleWebhookUpdateCard = async (boardId, profile, data) => {
 
     if (save) {
         try {
-            card = card.save();
+            console.log(`\nhandleWebhookUpdateCard: Before Save: `, card);
+
+            card = await card.save();
+
+            console.log(
+                `\nhandleWebhookUpdateCard: Updated card successfully : `,
+                card
+            );
         } catch (e) {
             throw new Error(e);
         }
@@ -733,7 +1042,72 @@ handleWebhookAddAttachment = async (boardId, data) => {
 
     const { url } = externalAttachment;
 
+    console.log(
+        `\nhandleWebhookAddAttachment: Entered with cardSourceId: ${cardSourceId} url: ${url}`
+    );
+
     if (!url || !url.includes("https://github.com")) return;
+
+    let card;
+
+    try {
+        console.log(await IntegrationTicket.count({ sourceId: cardSourceId }));
+
+        card = await IntegrationTicket.findOne({
+            sourceId: cardSourceId,
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    console.log(
+        `\nhandleWebhookAddAttachment: Does card have property?: ${card.hasOwnProperty(
+            "attachments"
+        )}`
+    );
+
+    Object.keys(card).map((key) => console.log("\n KEY:", key));
+
+    console.log(
+        `\nhandleWebhookAddAttachment: card.attachments before: `,
+        card["attachments"]
+    );
+
+    console.log(`\nhandleWebhookAddAttachment: Does card exist?: ${card}`);
+
+    if (!card) return;
+
+    let seenURLs;
+
+    try {
+        console.log(
+            `\nhandleWebhookAddAttachment: card.attachments before: `,
+            card.attachments
+        );
+
+        seenURLs = await IntegrationAttachment.find({
+            _id: { $in: card.attachments },
+        });
+
+        console.log(
+            `\nhandleWebhookAddAttachment: attachments before: `,
+            seenURLs
+        );
+
+        seenURLs = seenURLs.map((att) => att.link);
+
+        console.log(`\nhandleWebhookAddAttachment: SeenURLs : ${seenURLs}`);
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    console.log(
+        `\nhandleWebhookAddAttachment: Does SeenURLs include url?: ${seenURLs.includes(
+            url
+        )}`
+    );
+
+    if (seenURLs.includes(url)) return;
 
     let attachment;
 
@@ -752,18 +1126,22 @@ handleWebhookAddAttachment = async (boardId, data) => {
         throw new Error(e);
     }
 
-    let card;
+    console.log(
+        `\nhandleWebhookAddAttachment:  card.attachments : `,
+        card.attachments
+    );
 
     try {
-        card = await IntegrationTicket.find({ sourceId: cardSourceId });
-    } catch (e) {
-        throw new Error(e);
-    }
+        card = await IntegrationTicket.findOneAndUpdate(
+            { _id: card._id },
+            { $push: { attachments: attachment._id } },
+            { new: true }
+        ).lean();
 
-    card.attachments.push(attachment._id);
-
-    try {
-        card = await card.save();
+        console.log(
+            `\nhandleWebhookAddAttachment: Card updated successfully: `,
+            card
+        );
     } catch (e) {
         throw new Error(e);
     }
@@ -774,34 +1152,46 @@ handleWebhookAddAttachment = async (boardId, data) => {
 handleWebhookDeleteCard = async (data) => {
     const { id } = data["card"];
 
+    console.log(`\nhandleWebhookDeleteCard: Entered with cardSourceId: ${id}`);
+
     let ticket;
 
     try {
-         ticket = await IntegrationTicket.findOne({ sourceId: id});
+        ticket = await IntegrationTicket.findOne({ sourceId: id });
     } catch (e) {
-         throw new Error(e);
+        throw new Error(e);
     }
-    
+
+    console.log(`\nhandleWebhookDeleteCard: Queried Card :`, ticket);
+
     const modelMap = {
         attachments: IntegrationAttachment,
         intervals: IntegrationInterval,
-    }
+    };
 
     try {
-        await Promise.all(Object.keys(modelMap).map((key) => {
-        
-            const model = modelMap[key];
+        await Promise.all(
+            Object.keys(modelMap).map((key) => {
+                const model = modelMap[key];
 
-            const modelIds = ticket[key];
+                const modelIds = ticket[key];
 
-            return model.deleteMany({ _id: { $in: modelIds }});
-        }));
+                return model.deleteMany({ _id: { $in: modelIds } });
+            })
+        );
     } catch (e) {
         throw new Error(e);
     }
 
     try {
-        Association.deleteMany({ firstElement: ticket._id });
+        const associations = await Association.deleteMany({
+            firstElement: ticket._id,
+        });
+
+        console.log(
+            `\nhandleWebhookDeleteCard: Deleted associations: `,
+            associations
+        );
     } catch (e) {
         throw new Error(e);
     }
@@ -811,6 +1201,8 @@ handleWebhookDeleteCard = async (data) => {
     } catch (e) {
         throw new Error(e);
     }
+
+    console.log(`\nhandleWebhookDeleteCard: Deleted card successfully.`);
 };
 
 handleWebhookAddLabel = async (data) => {
@@ -818,6 +1210,11 @@ handleWebhookAddLabel = async (data) => {
         card: { id: cardSourceId },
         label: { id: labelSourceId },
     } = data;
+
+    /*
+    console.log(
+        `\nhandleWebhookAddLabel: Entered with labelSourceId: ${labelSourceId} cardSourceId: ${cardSourceId}`
+    );*/
 
     let label;
 
@@ -828,6 +1225,8 @@ handleWebhookAddLabel = async (data) => {
     } catch (e) {
         throw new Error(e);
     }
+
+    //console.log(`\nhandleWebhookAddLabel: Queried label: `, label);
 
     if (label) {
         let card;
@@ -840,10 +1239,37 @@ handleWebhookAddLabel = async (data) => {
             throw new Error(e);
         }
 
-        card.labels.push(label._id);
+        //console.log(`\nhandleWebhookAddLabel: Does card exist? `, card);
+
+        if (!card) return;
+
+        /*   console.log(
+            `\nhandleWebhookAddLabel: Labels already integrated in card: `,
+            card.labels
+        ); */
+
+        const convLabels = card.labels.map((label) => label.toString());
+
+        /*    console.log(
+            `\nhandleWebhookAddLabel: Is queried label already included: `,
+            convLabels.includes(label._id.toString())
+        );
+ */
+        if (convLabels.includes(label._id.toString())) return;
+
+        //card.labels.push(label._id);
 
         try {
-            card = await card.save();
+            card = await IntegrationTicket.findOneAndUpdate(
+                { _id: card._id },
+                { $push: { labels: label._id } },
+                { new: true }
+            ).lean();
+
+            /*    console.log(
+                `\nhandleWebhookAddLabel: Updated card successfully: `,
+                card
+            ); */
         } catch (e) {
             throw new Error(e);
         }
@@ -856,6 +1282,10 @@ handleWebhookRemoveLabel = async (data) => {
         label: { id: labelSourceId },
     } = data;
 
+    console.log(
+        `\nhandleWebhookRemoveLabel: Entered with labelSourceId: ${labelSourceId} cardSourceId: ${cardSourceId}`
+    );
+
     let label;
 
     try {
@@ -865,6 +1295,8 @@ handleWebhookRemoveLabel = async (data) => {
     } catch (e) {
         throw new Error(e);
     }
+
+    console.log(`\nhandleWebhookRemoveLabel: Queried Label: `, label);
 
     if (label) {
         let card;
@@ -877,10 +1309,26 @@ handleWebhookRemoveLabel = async (data) => {
             throw new Error(e);
         }
 
-        card.labels = card.labels.filter((labelId) => labelId != label._id);
+        if (!card) return;
+
+        /*
+        card.labels = card.labels.filter(
+            (labelId) => labelId.toString() != label._id.toString()
+        );*/
 
         try {
-            card = await card.save();
+            //card = await card.save();
+
+            card = await IntegrationTicket.findOneAndUpdate(
+                { _id: card._id },
+                { $pull: { labels: label._id } },
+                { new: true }
+            ).lean();
+
+            console.log(
+                `\nhandleWebhookRemoveLabel: Updated card successfully: `,
+                card
+            );
         } catch (e) {
             throw new Error(e);
         }
@@ -893,16 +1341,22 @@ handleWebhookAddMember = async (data) => {
         idMember: memberSourceId,
     } = data;
 
+    /*    console.log(
+        `\nhandleWebhookAddMember: Entered with cardSourceId: ${cardSourceId} memberSourceId: ${memberSourceId}`
+    ); */
+
     let member;
 
     try {
-        member = await IntegrationMember.findOne({
+        member = await IntegrationUser.findOne({
             sourceId: memberSourceId,
         });
     } catch (e) {
         throw new Error(e);
     }
-
+    /* 
+    console.log("\nhandleWebhookAddMember: Member that was queried: ", member);
+ */
     if (member) {
         let card;
 
@@ -913,11 +1367,39 @@ handleWebhookAddMember = async (data) => {
         } catch (e) {
             throw new Error(e);
         }
+        /* 
+        console.log("\nhandleWebhookAddMember: Does card exist?: ", card);
+ */
+        if (!card) {
+            return;
+        }
 
-        card.members.push(member._id);
+        const convMembers = card.members.map((member) => member.toString());
+        /* 
+        console.log(
+            "\nhandleWebhookAddMember: Does members include?: ",
+            convMembers.includes(member._id.toString())
+        ); */
+
+        if (convMembers.includes(member._id.toString())) {
+            return;
+        }
+
+        //card.members.push(member._id);
 
         try {
-            card = await card.save();
+            card = await IntegrationTicket.findOneAndUpdate(
+                { _id: card._id },
+                { $push: { members: member._id } },
+                { new: true }
+            ).lean();
+
+            //card = await card.save();
+
+            /*             console.log(
+                "\nhandleWebhookAddMember: Updated card successfully : ",
+                card
+            ); */
         } catch (e) {
             throw new Error(e);
         }
@@ -930,15 +1412,24 @@ handleWebhookRemoveMember = async (data) => {
         idMember: memberSourceId,
     } = data;
 
+    console.log(
+        `\nhandleWebhookRemoveMember: Entered with cardSourceId: ${cardSourceId} memberSourceId: ${memberSourceId}`
+    );
+
     let member;
 
     try {
-        member = await IntegrationMember.findOne({
+        member = await IntegrationUser.findOne({
             sourceId: memberSourceId,
         });
     } catch (e) {
         throw new Error(e);
     }
+
+    console.log(
+        "\nhandleWebhookRemoveMember: Member that was queried: ",
+        member
+    );
 
     if (member) {
         let card;
@@ -951,12 +1442,28 @@ handleWebhookRemoveMember = async (data) => {
             throw new Error(e);
         }
 
+        console.log("\nhandleWebhookRemoveMember: Does card exist?: ", card);
+
+        if (!card) return;
+
+        /*
         card.members = card.members.filter(
-            (memberId) => memberId != member._id
-        );
+            (memberId) => memberId.toString() != member._id.toString()
+        );*/
 
         try {
-            card = await card.save();
+            card = await IntegrationTicket.findOneAndUpdate(
+                { _id: card._id },
+                { $pull: { members: member._id } },
+                { new: true }
+            ).lean();
+
+            //card = await card.save();
+
+            console.log(
+                "\nhandleWebhookRemoveMember: Updated card successfully: ",
+                card
+            );
         } catch (e) {
             throw new Error(e);
         }
@@ -964,6 +1471,12 @@ handleWebhookRemoveMember = async (data) => {
 };
 
 generateAttachmentAssociations = async (attachments, card, boardId) => {
+    /*  console.log("\ngenerateAttachmentAssociations: attachments: ", attachments);
+
+    console.log("\ngenerateAttachmentAssociations: card: ", card);
+
+    console.log("\ngenerateAttachmentAssociations: boardId: ", boardId); */
+
     const modelTypeMap = {
         tree: "branch",
         issues: "issue",
@@ -979,6 +1492,8 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
         const { link: url } = att;
 
         const splitURL = url.split("/");
+
+        //console.log("SPLIT URL", splitURL);
 
         try {
             if (splitURL.length < 2) return null;
@@ -998,23 +1513,25 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
                 .slice(splitURL.length - 4, splitURL.length - 2)
                 .join("/");
 
-            attachment.modelType = modelType;
+            att.modelType = modelType;
 
-            attachment.sourceId = sourceId;
+            att.sourceId = sourceId;
 
             let repository;
 
             try {
                 repository = await Repository.findOne({ fullName: fullName });
             } catch (e) {
+                console.log("Error", e);
+
                 throw new Error(e);
             }
 
             if (repository) {
-                attachment.repository = repository._id;
+                att.repository = repository._id;
             }
 
-            attReqs.push(attachment.save());
+            attReqs.push(att.save());
         } catch (e) {
             continue;
         }
@@ -1022,6 +1539,10 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
 
     try {
         attachments = await Promise.all(attReqs);
+        /*  console.log(
+            `\ngenerateAttachmentAssociations: Attachments were updated with appropriate data: `,
+            attachments
+        ); */
     } catch (e) {
         throw new Error(e);
     }
@@ -1031,6 +1552,13 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
         issue: IntegrationTicket,
         pullRequest: PullRequest,
         commit: Commit,
+    };
+
+    const mongModelMapping = {
+        branch: "Branch",
+        issue: "IntegrationTicket",
+        pullRequest: "PullRequest",
+        commit: "Commit",
     };
 
     let assocInsertOps = [];
@@ -1043,6 +1571,7 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
         if (modelType == "issue") {
             codeObject = await IntegrationTicket.findOne({
                 sourceId,
+                source: "github",
                 repositoryId: repository,
             });
         } else {
@@ -1052,7 +1581,15 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
             });
         }
 
-        if (codeObject) {
+        const alreadyExists = await Association.exists({
+            firstElement: card._id,
+            firstElementModelType: "IntegrationTicket",
+            secondElement: codeObject._id,
+            secondElementModelType: mongModelMapping[modelType],
+            repository: codeObject.repository,
+        });
+
+        if (codeObject && !alreadyExists) {
             assocInsertOps.push({
                 firstElement: card._id,
                 firstElementModelType: "IntegrationTicket",
@@ -1066,7 +1603,12 @@ generateAttachmentAssociations = async (attachments, card, boardId) => {
     }
 
     try {
-        Association.insertMany(assocInsertOps);
+        const associations = await Association.insertMany(assocInsertOps);
+
+        /*  console.log(
+            `\ngenerateAttachmentAssociations: Associations were made: `,
+            associations
+        ); */
     } catch (e) {
         throw new Error(e);
     }
@@ -1094,4 +1636,3 @@ module.exports = {
     handleWebhookAddMember,
     handleWebhookRemoveMember,
 };
-*/

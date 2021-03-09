@@ -36,7 +36,6 @@ const {
     handleTrelloConnectCallback,
 } = require("./TrelloAuthorizationController");
 
-/*
 const {
     setupTrelloWebhook,
     deleteTrelloWebhook,
@@ -50,9 +49,15 @@ const {
     handleWebhookUpdateLabel,
     handleWebhookCreateMember,
     handleWebhookUpdateMember,
+    handleWebhookCreateCard,
+    handleWebhookUpdateCard,
+    handleWebhookDeleteCard,
     handleWebhookAddAttachment,
+    handleWebhookAddLabel,
+    handleWebhookRemoveLabel,
+    handleWebhookAddMember,
+    handleWebhookRemoveMember,
 } = require("./TrelloWebhookHelpers");
-*/
 
 triggerTrelloScrape = async (req, res) => {
     const { userId, workspaceId } = req.params;
@@ -65,9 +70,9 @@ triggerTrelloScrape = async (req, res) => {
     try {
         profile = await acquireTrelloConnectProfile(userId);
     } catch (e) {
-        Sentry.captureException(e);
-
         console.log("FAILURE 1", e);
+
+        Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
     }
@@ -81,23 +86,30 @@ triggerTrelloScrape = async (req, res) => {
 
         reintegratedBoards = output.reintegratedBoards;
     } catch (e) {
-        Sentry.captureException(e);
-
         console.log("FAILURE 2", e);
+
+        Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
     }
 
-    console.log("ACTUAL BOARDS TO BE SCRAPED", boards);
+    /*
+    console.log(
+        "\ntriggerScrape: already Integrated Boards: ",
+        reintegratedBoards
+    );
+
+    console.log("\ntriggerScrape: new Boards: ", boards);
+    */
 
     let result;
 
     try {
         result = await bulkScrapeTrello(profile, boards, workspaceId);
     } catch (e) {
-        Sentry.captureException(e);
-
         console.log("FAILURE 3", e);
+
+        Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
     }
@@ -105,7 +117,17 @@ triggerTrelloScrape = async (req, res) => {
     result = result.map((board) => _.omit(board, ["tickets"]));
 
     // set up webhooks
-    //await setupTrelloWebhook(profile, result, userId);
+    if (result.length > 0) {
+        try {
+            await setupTrelloWebhook(profile, result, userId);
+        } catch (e) {
+            console.log("FAILURE WEBHOOK", e);
+
+            Sentry.captureException(e);
+
+            return res.json({ success: false, error: e });
+        }
+    }
 
     // need to finally mutate workspace to add boards
     let workspace;
@@ -115,9 +137,9 @@ triggerTrelloScrape = async (req, res) => {
             .select("boards")
             .exec();
     } catch (e) {
-        Sentry.captureException(e);
-
         console.log("FAILURE 4", e);
+
+        Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
     }
@@ -125,8 +147,6 @@ triggerTrelloScrape = async (req, res) => {
     boardIds = result.map((board) => board._id);
 
     reintegratedBoardIds = reintegratedBoards.map((board) => board._id);
-
-    console.log("WORKSPACE BOARDS", workspace.boards);
 
     workspace.boards = [
         ...workspace.boards,
@@ -137,12 +157,8 @@ triggerTrelloScrape = async (req, res) => {
     try {
         workspace = await workspace.save();
     } catch (e) {
-        console.log("FAILURE 5", e);
-
         Sentry.captureException(e);
     }
-
-    console.log("WORKSPACE", workspace);
 
     return res.json({
         success: true,
@@ -175,10 +191,6 @@ bulkScrapeTrello = async (profile, boards, workspaceId) => {
         members = await extractTrelloMembers(workspaceId, members, profile);
 
         // create IntegrationBoard
-        console.log(
-            "REPO IDS ABOUT TO BE EXTRACTED IN THE BOARD",
-            repositoryIds
-        );
         let board = await extractTrelloBoard(
             members,
             boardSourceId,
@@ -335,8 +347,14 @@ getExternalTrelloBoards = async (req, res) => {
 };
 
 removeTrelloIntegration = async (req, res) => {
+    //console.log("\nremoveTrelloIntegration: Entered removeTrelloIntegration");
+
     const { boardId, workspaceId } = req.params;
 
+    /*
+    console.log(
+        `\nremoveTrelloIntegration: req.params -- boardId: ${boardId} workspaceId: ${workspaceId}`
+    );*/
     // remove board from workspace's boards
     let workspace;
 
@@ -365,24 +383,36 @@ removeTrelloIntegration = async (req, res) => {
         shouldDelete = !(await Workspace.exists({
             boards: { $in: [boardId] },
         }));
-
-        console.log("\nSHOULD DELETE", shouldDelete);
     } catch (e) {
         Sentry.captureException(e);
 
         return res.json({ success: false, error: e });
     }
 
-    /*
-    // delete board webhook
-    try {
-        await deleteTrelloWebhook(boardId);
-    } catch (e) {
-        Sentry.captureException(e);
-    }*/
+    //console.log("\nremoveTrelloIntegration: shouldDelete: ", shouldDelete);
 
     // delete all integrations associated with board and finally board
     if (shouldDelete) {
+        // delete board webhook
+        try {
+            /*
+            console.log(
+                "\nremoveTrelloIntegration: deleteTrelloWebhook will be called"
+            );*/
+
+            await deleteTrelloWebhook(boardId);
+        } catch (e) {
+            /*
+            console.log(
+                "\nremoveTrelloIntegration: deleteTrelloWebhook Failed: ",
+                e
+            );*/
+
+            Sentry.captureException(e);
+
+            return res.json({ success: false, error: e });
+        }
+
         const nonBoardsModels = [
             IntegrationAttachment,
             IntegrationColumn,
@@ -391,8 +421,6 @@ removeTrelloIntegration = async (req, res) => {
             IntegrationTicket,
             Association,
         ];
-
-        console.log("BOARDID", boardId);
 
         const requests = nonBoardsModels.map((model) =>
             model.deleteMany({ board: boardId })
@@ -414,11 +442,18 @@ removeTrelloIntegration = async (req, res) => {
     });
 };
 
-/*
+affirmTrelloWebhook = async (req, res) => {
+    return res.sendStatus(200);
+};
+
 handleTrelloWebhook = async (req, res) => {
+    //console.log("\nhandleTrelloWebhook: Entered in handleTrelloWebhook");
+
     const { userId, boardId } = req.params;
 
     const isVerified = verifyTrelloWebhookRequest(req);
+
+    //console.log("\nhandleTrelloWebhook: Verification of Webhook: ", isVerified);
 
     if (!isVerified) return;
 
@@ -432,9 +467,13 @@ handleTrelloWebhook = async (req, res) => {
 
     const { action } = req.body;
 
+    if (action["type"] == "removeLabelFromCard") {
+        console.log("\nhandleTrelloWebhook: Webhook Action: ", action["type"]);
+    }
+
     const { type, data, member } = action;
 
-    const actionMethods = { 
+    const actionMethods = {
         // board
         updateBoard: async () =>
             await handleWebhookUpdateBoard(boardId, profile, data),
@@ -485,20 +524,27 @@ handleTrelloWebhook = async (req, res) => {
         removeLabelFromCard: async () => await handleWebhookRemoveLabel(data),
 
         addMemberToCard: async () => await handleWebhookAddMember(data),
-        
+
         removeMemberFromCard: async () => await handleWebhookRemoveMember(data),
 
         //deleteAttachmentFromCard: async () =>
         //   await handleWebhookDeleteAttachment(boardId, data),
     };
 
+    //console.log(`\nhandleTrelloWebhook: data: `, data);
+
     try {
-        await actionMethods[type]();
+        if (actionMethods[type]) {
+            await actionMethods[type]();
+        }
     } catch (e) {
+        console.log("handleTrelloWebhook: error occurred: ", e);
+
         Sentry.captureException(e);
     }
+
+    res.sendStatus(200);
 };
-*/
 
 module.exports = {
     beginTrelloConnect,
@@ -507,5 +553,6 @@ module.exports = {
     triggerTrelloScrape,
     bulkScrapeTrello,
     removeTrelloIntegration,
-    //handleTrelloWebhook,
+    handleTrelloWebhook,
+    affirmTrelloWebhook,
 };

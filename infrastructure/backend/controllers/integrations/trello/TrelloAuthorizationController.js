@@ -15,7 +15,7 @@ const requestURL = "https://trello.com/1/OAuthGetRequestToken";
 const accessURL = "https://trello.com/1/OAuthGetAccessToken";
 const authorizeURL = "https://trello.com/1/OAuthAuthorizeToken";
 const appName = "Quilt";
-const scope = "read";
+const scope = "read,write";
 const expiration = "never";
 
 const key = TRELLO_API_KEY;
@@ -51,6 +51,8 @@ beginTrelloConnect = async (req, res) => {
                 try {
                     // user has only one connect profile for now
                     await TrelloConnectProfile.deleteMany({ user: userId });
+
+                    console.log("\nbeginTrelloConnect: Deleted profiles.");
                 } catch (e) {
                     Sentry.captureException(e);
                 }
@@ -63,12 +65,14 @@ beginTrelloConnect = async (req, res) => {
 
                 try {
                     trelloConnectProfile = await trelloConnectProfile.save();
+
+                    console.log("\nbeginTrelloConnect: Created new profiles.");
                 } catch (e) {
                     Sentry.captureException(e);
                 }
 
                 console.log(
-                    "SAVED TRELLO CONNECT PROFILE?",
+                    "\nbeginTrelloConnect: Saved trelloConnectProfile: ",
                     trelloConnectProfile
                 );
 
@@ -134,7 +138,7 @@ handleTrelloConnectCallback = async (req, res) => {
             }
 
             console.log(
-                "FINISHED TRELLO CONNECT PROFILE",
+                "\nhandleTrelloConnectCallback: trelloConnectProfile is updated successfully: ",
                 trelloConnectProfile
             );
 

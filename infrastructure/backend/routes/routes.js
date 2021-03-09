@@ -485,6 +485,7 @@ router.get(
 
             if (ideToken) {
                 authController.authorizeIDEClient(ideToken, req.user);
+
                 return res.redirect("/login");
             }
         } catch (err) {
@@ -783,11 +784,15 @@ router.post(
     trelloController.triggerTrelloScrape
 );
 
-/*
 router.post(
     "/integrations/:boardId/:userId/trello/handle_webhook",
     trelloController.handleTrelloWebhook
-);*/
+);
+
+router.head(
+    "/integrations/:boardId/:userId/trello/handle_webhook",
+    trelloController.affirmTrelloWebhook
+);
 
 // GithubIssue Routes
 const githubIssueIntegrationController = require("../controllers/integrations/github/GithubIssueController");

@@ -20,7 +20,6 @@ const BoardWorkspaceContext = require("../../../models/integrations/context/Boar
 const Workspace = require("../../../models/Workspace");
 const User = require("../../../models/authentication/User");
 const Repository = require("../../../models/Repository");
-const { update } = require("lodash");
 
 const { TRELLO_API_KEY } = process.env;
 
@@ -162,7 +161,7 @@ extractTrelloBoard = async (
 ) => {
     const boardCreator = members[boardCreatorSourceId];
 
-    console.log("REPO IDS ABOUT TO BE SAVED", repositoryIds);
+    //console.log("REPO IDS ABOUT TO BE SAVED", repositoryIds);
 
     let board = new IntegrationBoard({
         creator: boardCreator._id,
@@ -174,7 +173,7 @@ extractTrelloBoard = async (
         integrationCreator: userId,
     });
 
-    console.log("THE ACTUAL BOARD BEING SAVED", board);
+    //console.log("THE ACTUAL BOARD BEING SAVED", board);
 
     board = await board.save();
 
@@ -214,14 +213,37 @@ getRepositories = async (repositoryIds) => {
     return currentRepositories;
 };
 
+parseDescriptionAttachments2 = (cards) => {
+    cards.map((card) => {
+        const { desc, attachments } = card;
+
+        let tokens = desc
+            .split("\n")
+            .map((token) => token.split(" "))
+            .flat();
+
+        tokens = tokens.filter((token) => isUrl(token));
+
+        tokens = tokens.map((token) => {
+            return { url: token };
+        });
+
+        card.attachments = [...attachments, ...tokens];
+    });
+
+    return cards;
+};
+
 extractTrelloDirectAttachments = async (cards, repositoryIds, board) => {
     const currentRepositories = await getRepositories(repositoryIds);
 
-    cards = parseDescriptionAttachments(cards);
+    cards = parseDescriptionAttachments2(cards);
 
     let insertOps = [];
 
     let seenUrls = new Set();
+
+    let repoFullNames = [];
 
     cards.map((card) => {
         const { attachments } = card;
@@ -268,12 +290,15 @@ extractTrelloDirectAttachments = async (cards, repositoryIds, board) => {
                     link: url,
                     sourceId,
                     board: board._id,
+                    fullName,
                 };
 
                 if (date) attachment.sourceCreationDate = new Date(date);
 
                 if (currentRepositories[fullName]) {
                     attachment.repository = currentRepositories[fullName]._id;
+                } else {
+                    repoFullNames.push(fullName);
                 }
 
                 insertOps.push(attachment);
@@ -285,9 +310,29 @@ extractTrelloDirectAttachments = async (cards, repositoryIds, board) => {
         });
     });
 
+    let otherRepositories;
+
+    try {
+        otherRepositories = await Repository.find({
+            fullName: { $in: repoFullNames },
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+
+    otherRepositories = _.mapKeys(otherRepositories, "fullName");
+
+    insertOps.map((att) => {
+        if (otherRepositories[att.fullName]) {
+            att.repository = otherRepositories[att.fullName]._id;
+        }
+    });
+
     let attachments = await IntegrationAttachment.insertMany(insertOps);
 
     attachments = _.mapKeys(attachments, "link");
+
+    //console.log("\nIntegration Attachments Created: ", attachments);
 
     cards.map((card) => {
         card.attachmentIds = card.attachments
@@ -304,24 +349,6 @@ extractTrelloDirectAttachments = async (cards, repositoryIds, board) => {
     });
 
     return { attachments, cards };
-};
-
-parseDescriptionAttachments = (cards) => {
-    cards.map((card) => {
-        const { desc, attachments } = card;
-
-        let tokens = desc.split(" ");
-
-        tokens = tokens.filter((token) => isUrl(token));
-
-        tokens = tokens.map((token) => {
-            return { url: token };
-        });
-
-        card.attachments = [...attachments, ...tokens];
-    });
-
-    return cards;
 };
 
 modifyTrelloActions = (actions, cards) => {
@@ -536,7 +563,7 @@ handleTrelloReintegration = async (boards) => {
         throw new Error(e);
     }
 
-    console.log("REINTEGRATED BOARD", reintegratedBoards);
+    //console.log("\nREINTEGRATED BOARD QUERY OUTPUT", reintegratedBoards);
 
     const updateBoardRequests = [];
 
@@ -550,47 +577,52 @@ handleTrelloReintegration = async (boards) => {
             repositories.map((repoId) => repoId.toString())
         );
 
-        console.log("INTEGRATED REPOS", integratedRepos);
+        //console.log("\nINTEGRATED REPOS", integratedRepos);
 
-        console.log("BOARD ITEM", boardsObj[sourceId].repositoryIds);
+        //console.log("\nBOARD ITEM", boardsObj[sourceId].repositoryIds);
 
-        console.log(
-            "CHECKING REPOS OF INPUT",
-            boardsObj[sourceId].repositoryIds
-        );
+        //console.log("\nCHECKING REPOS OF INPUT",boardsObj[sourceId].repositoryIds);
 
         // replace repositories field with requested repositories that don't include already integrated repos
 
-        board.repositories = boardsObj[sourceId].repositoryIds.filter(
+        const newRepositories = boardsObj[sourceId].repositoryIds.filter(
             (repoId) => !integratedRepos.has(repoId)
         );
 
         if (board.repositories.length > 0) {
-            console.log("BOARD BEFORE", board);
+            //console.log("\nBOARD BEFORE", board);
 
             repositories = repositories.map((repo) => repo.toString());
 
-            board.repositories = [...repositories, ...board.repositories];
+            board.repositories = [...repositories, ...newRepositories];
 
-            console.log("BOARD ABOUT TO BE UPDATED", board);
+            //console.log("\nBOARD ABOUT TO BE UPDATED", board);
 
-            console.log(typeof board);
+            //console.log(typeof board);
 
             const updateRequest = board.save();
 
             updateBoardRequests.push(updateRequest);
         }
 
-        return board;
+        const copyBoard = { ...board.toObject() };
+
+        copyBoard.repositories = newRepositories;
+
+        return copyBoard;
     });
+
+    /*
+    console.log(
+        "\nREINTEGRATED BOARDS BEFORE UPDATE RESPONSE",
+        reintegratedBoards
+    );*/
 
     // insert repository updates
     try {
-        console.log("UPDATE BOARD REQUESTS", updateBoardRequests);
-
         const updateResponse = await Promise.all(updateBoardRequests);
 
-        console.log("UPDATE RESPONSE", updateResponse);
+        //console.log("\nUPDATE RESPONSE", updateResponse);
     } catch (e) {
         throw new Error(e);
     }
@@ -602,9 +634,9 @@ handleTrelloReintegration = async (boards) => {
     // new boards only
     boards = boards.filter((board) => !integratedSourceIds.has(board.sourceId));
 
-    console.log("BOARDS", boards);
+    //console.log("\nNEW BOARDS", boards);
 
-    console.log("REINTEGRATED BOARDS", reintegratedBoards);
+    //console.log("\nREINTEGRATED BOARDS", reintegratedBoards);
 
     return { boards, reintegratedBoards };
 };

@@ -11,11 +11,12 @@ const trelloControllerHelpers = require("../../controllers/integrations/trello/T
 const testData = require("../../__tests__data/02_trello_bulk_scrape_data");
 
 const {
-    TEST_USER_ID,
-    TEST_CREATED_WORKSPACE_ID,
-    EXTERNAL_DB_PASS,
-    EXTERNAL_DB_USER,
-} = process.env;
+    createWorkspace,
+    deleteWorkspace,
+    removeWorkspaces,
+} = require("../../__tests__config/utils");
+
+const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 addDays = (date, days) => {
     let result = new Date(date);
@@ -35,6 +36,12 @@ beforeAll(async () => {
     db.once("open", () => console.log("connected to the database"));
 
     db.on("error", console.error.bind(console, "MongoDB connection error:"));
+
+    const { createdWorkspaceId, repositoryIds } = await createWorkspace([
+        "kgodara-testing/brodal_queue",
+    ]);
+
+    process.env.TEST_CREATED_WORKSPACE_ID = createdWorkspaceId;
 });
 
 afterAll(async () => {
@@ -62,11 +69,9 @@ afterAll(async () => {
         associations: extractArray(process.env.TEST_TRELLO_ASSOCIATIONS),
     };
 
-    try {
-        await deleteTrelloBoardComplete(deleteParams);
-    } catch (e) {
-        console.log(e);
-    }
+    await deleteTrelloBoardComplete(deleteParams);
+
+    await deleteWorkspace(process.env.TEST_CREATED_WORKSPACE_ID);
 
     delete process.env.TEST_TRELLO_MEMBERS;
 

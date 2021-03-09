@@ -32,6 +32,7 @@ Sentry.init({
 app.use(Sentry.Handlers.requestHandler());
 
 const logger = require("./logging/index").logger;
+
 const setupESConnection = require("./logging/index").setupESConnection;
 
 const { format } = require("logform");
@@ -108,6 +109,7 @@ const nonAuthPaths = [
     "/api/integrations/create",
     "/integrations/connect/trello",
     "/integrations/connect/jira",
+    "/trello/handle_webhook",
     "/auth/encrypt_ide_token",
 ];
 
@@ -147,6 +149,7 @@ app.use(function (req, res, next) {
     } else if (req.cookies["user-jwt"]) {
         token = req.cookies["user-jwt"];
     } else {
+        console.log("index.js: Request was not authenticated.");
         return res.status(401).json({
             authenticated: false,
             message: "user has not been authenticated",
@@ -209,11 +212,11 @@ if (process.env.IS_PRODUCTION) {
         );
     });
 } else {
-    app.listen(API_PORT, "0.0.0.0", () =>
+    app.listen(API_PORT, "0.0.0.0", () => {
         logger.debug({
             source: "backend-api",
             message: `Listening on port ${API_PORT}`,
             function: "index.js",
-        })
-    );
+        });
+    });
 }

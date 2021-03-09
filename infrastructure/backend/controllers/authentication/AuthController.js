@@ -233,10 +233,15 @@ encryptIDEToken = (req, res) => {
         process.env.IDE_AUTHENTICATION_SECRET
     ).toString();
 
-    return res.json({ success: true, result: { encryptedToken, ideToken } });
+    return res.json({
+        success: true,
+        result: { encryptedToken: encryptedToken, ideToken },
+    });
 };
 
 authorizeIDEClient = (initialIDEToken, user) => {
+    console.log("\nauthorizeIDEClient: initialIDEToken: ", initialIDEToken);
+
     initialIDEToken = decodeURIComponent(initialIDEToken);
 
     let ideToken = initialIDEToken.replace(" ", "+");
@@ -246,6 +251,7 @@ authorizeIDEClient = (initialIDEToken, user) => {
     const jwtToken = createUserJWTToken(userId, role);
 
     // Decrypt
+
     const bytes = CryptoJS.AES.decrypt(
         ideToken,
         process.env.IDE_AUTHENTICATION_SECRET
@@ -253,11 +259,12 @@ authorizeIDEClient = (initialIDEToken, user) => {
 
     console.log("USER", user);
 
-    console.log("IDE TOKEN", ideToken);
-
     ideToken = bytes.toString(CryptoJS.enc.Utf8);
 
-    console.log("IDE TOKEN", ideToken);
+    console.log("\nauthorizeIDEClient: ideToken: ", ideToken);
+
+    console.log("\nauthorizeIDEClient: user: ", user);
+
     pusher.trigger(`private-${ideToken}`, "vscode-user-authorized", {
         jwt: jwtToken,
         user: user,
