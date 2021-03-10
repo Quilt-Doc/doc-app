@@ -341,7 +341,7 @@ extractGoogleRawDocuments = async (driveAPI, driveId, isPersonal) => {
 
         let queryParameters = {
             pageSize: 1000,
-            fields: `files(webViewLink), files(id), files(mimeType), files(createdTime), files(modifiedTime), files(owners), files(lastModifyingUser)`,
+            fields: `files(webViewLink), files(id), files(mimeType), files(createdTime), files(modifiedTime), files(owners), files(lastModifyingUser), files(permissions)`,
         };
 
         if (checkValid(pageToken)) {
@@ -421,7 +421,9 @@ extractPersonalDriveUsers = async (workspace, documents) => {
     let users = {};
 
     documents.map((doc) => {
-        let { owners, lastModifyingUser } = doc;
+        let { owners, lastModifyingUser, permissions } = doc;
+
+        owners = [...owners, ...permissions];
 
         owners.push(lastModifyingUser);
 
@@ -505,7 +507,7 @@ extractPersonalDriveUsers = async (workspace, documents) => {
 
     let existingEmails = new Set(existingUsers.map((user) => user.email));
 
-    users = users.filter((user) => !existingEmails.has(user.email));
+    users = users.filter((user) => !existingEmails.has(user.emailAddress));
 
     logger.debug(
         `Filtered users based on whether they have an email that exists in db`,
@@ -561,7 +563,7 @@ extractPersonalDriveUsers = async (workspace, documents) => {
         }
     );
 
-    return _.mapKeys(user, "email");
+    return _.mapKeys(users, "email");
 };
 
 storeGoogleDocuments = async (docsAPI, drive, members, documents) => {

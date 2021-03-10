@@ -33,6 +33,7 @@ const IntegrationDrive = require("../../models/integrations/integration_objects/
 const IntegrationInterval = require("../../models/integrations/integration_objects/IntegrationInterval");
 const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
 const IntegrationDocument = require("../../models/integrations/integration_objects/IntegrationDocument");
+const IntegrationUser = require("../../models/integrations/integration_objects/IntegrationUser");
 const User = require("../../models/authentication/User");
 
 const token = TEST_USER_GOOGLE_ACCESS_TOKEN;
@@ -59,6 +60,8 @@ resetAll = async () => {
     await IntegrationAttachment.deleteMany();
 
     await IntegrationInterval.deleteMany();
+
+    await IntegrationUser.deleteMany({ source: "google" });
 };
 
 beforeAll(async () => {
@@ -216,5 +219,27 @@ describe("Test Google Drive Scrape", () => {
         const documents = Object.values(documentsObj);
 
         expect(documents.length).toEqual(8);
+
+        process.env.TEST_DOCS = JSON.stringify(documents);
+    });
+
+    test("extractPersonalDriveUsers extracts all users correctly,", async () => {
+        console.log("Entered Test: extractPersonalDriveUsers");
+
+        const documents = JSON.parse(process.env.TEST_DOCS);
+
+        const workspace = JSON.parse(process.env.TEST_WORKSPACE);
+
+        workspace.memberUsers = [JSON.parse(process.env.TEST_USER)];
+
+        console.log("THIS IS THE WORKSPACE", workspace);
+
+        const usersObj = await extractPersonalDriveUsers(workspace, documents);
+
+        const users = Object.values(usersObj);
+
+        expect(users.length).toEqual(4);
+
+        console.log(users.map((user) => user.name).sort());
     });
 });
