@@ -21,7 +21,7 @@ const integrationDocumentSchema = new Schema({
     drive: { type: ObjectId, ref: "IntegrationDrive" },
 });
 
-const IntegrationDocument = mongoose.model(
+let IntegrationDocument = mongoose.model(
     "IntegrationDocument",
     integrationDocumentSchema
 );

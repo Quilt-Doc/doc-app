@@ -51,6 +51,7 @@ const castASpell = printf(({ level, message, func, obj, e, timestamp }) => {
 });
 
 const logger = winston.createLogger({
+    level: "debug",
     format: combine(
         colorize(),
         timestamp(),

@@ -4,7 +4,7 @@ const axios = require("axios");
 
 const mongoose = require("mongoose");
 
-const api = require("../apis/api");
+const api = require("../../apis/api");
 
 const _ = require("lodash");
 
@@ -13,27 +13,27 @@ const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../__tests__config/utils");
+} = require("../../__tests__config/utils");
 
 // trello helpers
 const {
     acquireTrelloConnectProfile,
     acquireExternalTrelloBoards,
-} = require("../controllers/integrations/trello/TrelloControllerHelpers");
+} = require("../../controllers/integrations/trello/TrelloControllerHelpers");
 
 //models
-const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
-const IntegrationColumn = require("../models/integrations/integration_objects/IntegrationColumn");
-const IntegrationLabel = require("../models/integrations/integration_objects/IntegrationLabel");
-const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
-const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
-const IntegrationAttachment = require("../models/integrations/integration_objects/IntegrationAttachment");
-const IntegrationUser = require("../models/integrations/integration_objects/IntegrationUser");
-const Workspace = require("../models/Workspace");
-const Repository = require("../models/Repository");
-const PullRequest = require("../models/PullRequest");
-const Commit = require("../models/Commit");
-const Association = require("../models/associations/Association");
+const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationColumn = require("../../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationLabel = require("../../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
+const IntegrationInterval = require("../../models/integrations/integration_objects/IntegrationInterval");
+const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationUser = require("../../models/integrations/integration_objects/IntegrationUser");
+const Workspace = require("../../models/Workspace");
+const Repository = require("../../models/Repository");
+const PullRequest = require("../../models/PullRequest");
+const Commit = require("../../models/Commit");
+const Association = require("../../models/associations/Association");
 
 // env variables
 const {

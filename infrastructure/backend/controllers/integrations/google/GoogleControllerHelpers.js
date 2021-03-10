@@ -14,7 +14,7 @@ const { checkValid } = require("../../../utils/utils");
 const GoogleConnectProfile = require("../../../models/integrations/google/GoogleConnectProfile");
 const IntegrationUser = require("../../../models/integrations/integration_objects/IntegrationUser");
 const IntegrationDrive = require("../../../models/integrations/integration_objects/IntegrationDrive");
-const IntegrationDocument = require("../../../../models/integrations/integration_objects/IntegrationDocument");
+const IntegrationDocument = require("../../../models/integrations/integration_objects/IntegrationDocument");
 const IntegrationAttachment = require("../../../models/integrations/integration_objects/IntegrationAttachment");
 const IntegrationInterval = require("../../../models/integrations/integration_objects/IntegrationInterval");
 const Repository = require("../../../models/Repository");
@@ -47,6 +47,10 @@ acquireGoogleConnectProfile = async (userId) => {
     let googleConnectProfile;
 
     try {
+        logger.debug(`About to query googleConnectProfile`, {
+            func: "acquireGoogleConnectProfile",
+        });
+
         googleConnectProfile = await GoogleConnectProfile.findOne({
             user: userId,
             isReady: true,
@@ -137,7 +141,7 @@ acquireExternalGoogleDrives = async (profile) => {
             throw new Error(e);
         }
 
-        const { drives: retrievedDrives, nextPageToken } = response;
+        const { drives: retrievedDrives, nextPageToken } = response.data;
 
         retrievedDrives.map((drive) => _.pick(drive, ["id", "name"]));
 
@@ -260,18 +264,30 @@ extractSharedDriveUsers = async (driveAPI, driveId, workspace) => {
 
 extractGoogleDrive = async (
     driveAPI,
-    driveId,
+    drive,
     repositoryIds,
     userId,
     isPersonal
 ) => {
-    let drive;
+    const func = "extractGoogleDrive";
 
-    try {
-        drive = driveAPI.drives.get({ driveId });
-    } catch (e) {
-        throw new Error(e);
+    if (!isPersonal) {
+        try {
+            const { id: driveId } = drive;
+
+            const response = await driveAPI.drives.get({ driveId });
+
+            drive = response.data;
+        } catch (e) {
+            Sentry.captureException(e);
+
+            logger.error(`Could not extract drive using driveId.`, { e, func });
+
+            throw new Error(e);
+        }
     }
+
+    logger.info(`Drive that will be saved.`, { func, obj: drive });
 
     const { id, name, createdTime } = drive;
 
@@ -283,18 +299,37 @@ extractGoogleDrive = async (
             repositories: repositoryIds,
             integrationCreator: userId,
             isPersonal,
-            sourceCreationDate: new Date(createdTime),
         });
 
+        if (createdTime) drive.sourceCreationDate = new Date(createdTime);
+
         drive = await drive.save();
+
+        logger.info(`Drive was saved successfully to db.`, {
+            func,
+            obj: drive,
+        });
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(`Could not save drive to database.`, { e, func });
+
         throw new Error(e);
     }
 
     return drive;
 };
 
-extractGoogleRawDocuments = async (driveAPI, driveId) => {
+extractGoogleRawDocuments = async (driveAPI, driveId, isPersonal) => {
+    const func = "extractGoogleRawDocuments";
+
+    logger.info(
+        `Entered with parameters driveId: ${driveId} isPersonal: ${isPersonal}`,
+        {
+            func,
+        }
+    );
+
     let isScrapeCompleted = false;
 
     let pageToken;
@@ -313,15 +348,32 @@ extractGoogleRawDocuments = async (driveAPI, driveId) => {
             queryParameters.pageToken = pageToken;
         }
 
-        if (checkValid(driveId)) {
+        if (checkValid(driveId) && !isPersonal) {
             queryParameters.driveId = driveId;
         }
+
+        logger.debug(`Drive API File Query Parameters:`, {
+            func,
+            obj: queryParameters,
+        });
 
         try {
             response = await driveAPI.files.list(queryParameters);
         } catch (e) {
+            Sentry.captureException(e);
+
+            logger.error(`Query to extract files using driveAPI failed..`, {
+                func,
+                e,
+            });
+
             throw new Error(e);
         }
+
+        logger.debug(`Drive API File Response Data:`, {
+            func,
+            obj: response.data,
+        });
 
         const { files, nextPageToken } = response.data;
 
@@ -332,11 +384,39 @@ extractGoogleRawDocuments = async (driveAPI, driveId) => {
         if (!pageToken) isScrapeCompleted = true;
     }
 
-    return _.mapKeys(documents, "id");
+    documents = _.mapKeys(documents, "id");
+
+    logger.info(`Extracted raw documents:`, {
+        func,
+        obj: documents,
+    });
+
+    return documents;
 };
 
 extractPersonalDriveUsers = async (workspace, documents) => {
+    const func = "extractPersonalDriveUsers";
+
+    logger.info(
+        `Entered with parameters workspace and documents with -- ${documents.length} documents`,
+        {
+            func,
+            obj: {
+                workspace,
+                documents,
+            },
+        }
+    );
+
     const { memberUsers } = workspace;
+
+    logger.info(
+        `There are ${memberUsers.length} memberUsers of this workspace:`,
+        {
+            func,
+            obj: memberUsers,
+        }
+    );
 
     let users = {};
 
@@ -354,7 +434,16 @@ extractPersonalDriveUsers = async (workspace, documents) => {
         });
     });
 
+    logger.info(`Created user map of all involved in drive:`, {
+        func,
+        obj: users,
+    });
+
     users = Object.values(users);
+
+    logger.info(`There are ${users.length} users involved in this drive.`, {
+        func,
+    });
 
     users.map((externalUser) => {
         const { displayName, emailAddress } = externalUser;
@@ -375,6 +464,14 @@ extractPersonalDriveUsers = async (workspace, documents) => {
         externalUser.userId = foundUserId;
     });
 
+    logger.info(
+        `externalUser data was modified to hold pointers to actual memberUsers:`,
+        {
+            func,
+            obj: users,
+        }
+    );
+
     let existingUsers;
 
     try {
@@ -387,36 +484,82 @@ extractPersonalDriveUsers = async (workspace, documents) => {
         query.where("email").in(emails);
 
         existingUsers = await query.lean().exec();
+
+        logger.info(`Existing IntegrationUsers from this drive:`, {
+            func,
+            obj: existingUsers,
+        });
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(
+            `Was not able to execute query to find existing IntegrationUsers`,
+            {
+                func,
+                e,
+            }
+        );
+
         throw new Error(e);
     }
 
     let existingEmails = new Set(existingUsers.map((user) => user.email));
 
-    users.filter((user) => !existingEmails.has(user.email));
+    users = users.filter((user) => !existingEmails.has(user.email));
+
+    logger.debug(
+        `Filtered users based on whether they have an email that exists in db`,
+        {
+            func,
+            obj: {
+                filteredUsers: users,
+                existingEmails,
+            },
+        }
+    );
 
     try {
-        users = await Promise.all(
+        users = await IntegrationUser.insertMany(
             users.map((user) => {
                 const { id, userId, emailAddress, displayName } = user;
 
-                user = new IntegrationUser({
+                return {
                     sourceId: id,
                     source: "google",
                     name: displayName,
                     email: emailAddress,
                     user: userId,
-                    created: { type: Date, default: Date.now },
-                });
-
-                return user.save();
+                };
             })
         );
+
+        logger.info(
+            `${users.length} IntegrationUsers were inserted into the database`,
+            {
+                func,
+                obj: users,
+            }
+        );
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(`Insertion of new IntegrationUsers failed..`, {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
     users = [...users, ...existingUsers];
+
+    logger.info(
+        `Finally, ${users.length} users were outputted by this method.`,
+        {
+            func,
+            obj: users,
+        }
+    );
 
     return _.mapKeys(user, "email");
 };

@@ -269,13 +269,17 @@ bulkScrapeGoogle = async (profile, drives, workspaceId) => {
 
         let drive = await extractGoogleDrive(
             driveAPI,
-            driveId,
+            drives[i],
             repositoryIds,
             userId,
             isPersonal
         );
 
-        let documents = await extractGoogleRawDocuments(driveAPI, driveId);
+        let documents = await extractGoogleRawDocuments(
+            driveAPI,
+            driveId,
+            isPersonal
+        );
 
         // populate members if personal
         if (isPersonal) {
