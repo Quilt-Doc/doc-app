@@ -1,3 +1,6 @@
+//sentry
+const Sentry = require("@sentry/node");
+
 // axios
 const axios = require("axios");
 
@@ -34,19 +37,45 @@ const googleAPI = axios.create({
     baseURL: "https://www.googleapis.com",
 });
 
+const { logger } = require("../../../fs_logging");
+
 acquireGoogleConnectProfile = async (userId) => {
-    const googleConnectProfile = await GoogleConnectProfile.findOne({
-        user: userId,
-        isReady: true,
-    })
-        .populate("user")
-        .lean()
-        .exec();
+    logger.info(`Entered with userId: ${userId}.`, {
+        func: "acquireGoogleConnectProfile",
+    });
+
+    let googleConnectProfile;
+
+    try {
+        googleConnectProfile = await GoogleConnectProfile.findOne({
+            user: userId,
+            isReady: true,
+        })
+            .populate("user")
+            .lean()
+            .exec();
+    } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error("googleConnectProfile query failed.", {
+            func: "acquireGoogleConnectProfile",
+            e,
+        });
+
+        throw new Error(e);
+    }
+
+    logger.info("googleConnectProfile query succeeded.", {
+        func: "acquireGoogleConnectProfile",
+        obj: googleConnectProfile,
+    });
 
     return googleConnectProfile;
 };
 
 acquireExternalGoogleDrives = async (profile) => {
+    let func = "acquireExternalGoogleDrives";
+
     const {
         accessToken,
         refreshToken,
@@ -54,6 +83,13 @@ acquireExternalGoogleDrives = async (profile) => {
         idToken,
         user: { _id: userId, firstName, lastName },
     } = profile;
+
+    logger.info(
+        `Entered with profile parameters, userId: ${userId} accessToken: ${accessToken} refreshToken: ${refreshToken}.`,
+        {
+            func,
+        }
+    );
 
     const tokens = {
         access_token: accessToken,
@@ -91,6 +127,13 @@ acquireExternalGoogleDrives = async (profile) => {
         try {
             response = await driveAPI.drives.list(queryParameters);
         } catch (e) {
+            Sentry.captureException(e);
+
+            logger.error(`Querying google api for drives failed.`, {
+                func,
+                e,
+            });
+
             throw new Error(e);
         }
 
@@ -104,6 +147,10 @@ acquireExternalGoogleDrives = async (profile) => {
 
         pageToken = nextPageToken;
     }
+
+    logger.info(`Retrieved ${drives.length} drives successfully.`, {
+        func: "acquireGoogleConnectProfile",
+    });
 
     return drives;
 };

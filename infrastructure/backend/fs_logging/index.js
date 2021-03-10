@@ -17,7 +17,7 @@ const filterFunctions = format((info, opts) => {
     if (!info.func) {
         return info;
     }
-    const includedFunctions = new Set(["handleWebhookDeleteList"]);
+    const includedFunctions = new Set([]);
 
     if (includedFunctions.size == 0) return info;
 
@@ -51,7 +51,6 @@ const castASpell = printf(({ level, message, func, obj, e, timestamp }) => {
 });
 
 const logger = winston.createLogger({
-    level: "debug",
     format: combine(
         colorize(),
         timestamp(),

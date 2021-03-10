@@ -27,6 +27,8 @@ const oauth2Client = new google.auth.OAuth2(
     REDIRECT_URL
 );
 
+const { logger } = require("../../../fs_logging");
+
 beginGoogleConnect = (req, res) => {
     const { workspace_id, user_id } = req.query;
 
@@ -34,8 +36,16 @@ beginGoogleConnect = (req, res) => {
 
     const userId = user_id;
 
+    logger.info(`Entered with userId: ${userId} workspaceId: ${workspaceId}`, {
+        func: "beginGoogleConnect",
+    });
+
     if (!userId || !workspaceId) {
-        Sentry.captureMessage("UserId and WorkspaceId not provided.");
+        Sentry.captureMessage("userId and/or workspaceId not provided.");
+
+        logger.error(`userId and/or workspaceId not provided.`, {
+            func: "beginGoogleConnect",
+        });
 
         return;
     }
@@ -64,6 +74,11 @@ beginGoogleConnect = (req, res) => {
         state,
     });
 
+    logger.info(`Generated authorization URL.`, {
+        func: "beginGoogleConnect",
+        obj: URL,
+    });
+
     res.redirect(URL);
 };
 
@@ -80,20 +95,35 @@ handleGoogleConnectCallback = async (req, res) => {
     try {
         extraction = await oauth2Client.getToken(code);
     } catch (e) {
+        logger.error(`Was not able to extract parameters from query code.`, {
+            func: "handleGoogleConnectCallback",
+            e,
+        });
+
         Sentry.captureException(e);
     }
 
     const { tokens } = extraction;
 
-    //console.log("TOKENS", tokens);
-
     const { access_token, refresh_token, scope, id_token } = tokens;
+
+    logger.info(
+        `Extracted tokens access_token: ${access_token}, refresh_token: ${refresh_token}, scope: ${scope}, id_token: ${id_token}.`,
+        {
+            func: "handleGoogleConnectCallback",
+        }
+    );
 
     const { workspaceId, userId } = JSON.parse(
         Buffer.from(state, "base64").toString()
     );
 
-    //console.log("ACCESS TOKEN", access_token);
+    logger.info(
+        `Retrieved workspaceId: ${workspaceId} and userId: ${userId} from state.`,
+        {
+            func: "handleGoogleConnectCallback",
+        }
+    );
 
     /* Can use this for axios calls to google api
     const config = {
@@ -109,6 +139,11 @@ handleGoogleConnectCallback = async (req, res) => {
     try {
         response = await oauth2.userinfo.get({ auth: oauth2Client });
     } catch (e) {
+        logger.error(`Failed to extract user.`, {
+            func: "handleGoogleConnectCallback",
+            e,
+        });
+
         Sentry.captureException(e);
     }
 
@@ -127,8 +162,20 @@ handleGoogleConnectCallback = async (req, res) => {
     try {
         googleConnectProfile = await googleConnectProfile.save();
     } catch (e) {
+        logger.error(`Failed to save googleConnectProfile.`, {
+            func: "handleGoogleConnectCallback",
+            e,
+        });
+
         Sentry.captureException(e);
     }
+
+    logger.info(`Saved googleConnectProfile.`, {
+        func: "handleGoogleConnectCallback",
+        obj: googleConnectProfile,
+    });
+
+    return res.redirect("http://getquilt.app");
 };
 
 module.exports = {

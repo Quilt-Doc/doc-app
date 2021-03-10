@@ -759,6 +759,11 @@ router.get(
     googleController.handleGoogleConnectCallback
 );
 
+router.get(
+    "/integrations/:workspaceId/:userId/google/get_external_drives",
+    googleController.getExternalGoogleDrives
+);
+
 //TRELLO INTEGRATION ROUTES
 const trelloController = require("../controllers/integrations/trello/TrelloController");
 

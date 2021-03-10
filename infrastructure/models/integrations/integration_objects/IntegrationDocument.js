@@ -4,6 +4,7 @@ const { ObjectId } = Schema.Types;
 
 const integrationDocumentSchema = new Schema({
     created: { type: Date, default: Date.now },
+    name: String,
     source: {
         type: String,
         enum: ["google"],

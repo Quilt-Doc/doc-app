@@ -109,6 +109,7 @@ const nonAuthPaths = [
     "/api/integrations/create",
     "/integrations/connect/trello",
     "/integrations/connect/jira",
+    "integrations/connect/google",
     "/trello/handle_webhook",
     "/auth/encrypt_ide_token",
 ];
