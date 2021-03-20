@@ -415,6 +415,8 @@ router.get("/auth/github", function (req, res, next) {
     if (email) {
         state.email = email;
     } else if (ide_token) {
+        console.log("\nAuthorization IDE Token", ide_token);
+
         state.ideToken = ide_token;
     }
 
@@ -733,6 +735,7 @@ app.post('/profile', function (req, res) {
 */
 //ASSOCIATION ROUTES ("TEST");
 const associationController = require("../controllers/associations/AssociationController");
+
 router.post(
     "/associations/:workspaceId/:repositoryId/get_file_context",
     associationController.getFileContext

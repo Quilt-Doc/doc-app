@@ -17,7 +17,10 @@ const filterFunctions = format((info, opts) => {
     if (!info.func) {
         return info;
     }
-    const includedFunctions = new Set([]);
+    const includedFunctions = new Set([
+        "extractGoogleDocAttachments",
+        "storeGoogleDocuments",
+    ]);
 
     if (includedFunctions.size == 0) return info;
 
@@ -36,15 +39,15 @@ const castASpell = printf(({ level, message, func, obj, e, timestamp }) => {
         plain = `${`\x1b[35m[ ${func} ]\x1b[0m `}${plain}`;
 
     if ((obj != null) & (obj != undefined) && process.env.LOG_OBJECTS == 1) {
-        obj = util.inspect(obj, { colors: true, depth: 4 });
+        obj = util.inspect(obj, { colors: true, depth: 1 });
 
         plain = `${plain}${`\n${obj}\n`}`;
     }
 
     if ((e != null) & (e != undefined)) {
-        obj = util.inspect(obj, { colors: true, depth: 4 });
+        e = util.inspect(e, { colors: true, depth: 4 });
 
-        plain = `${plain}${`\n${obj}\n`}`;
+        plain = `${plain}${`\n${e}\n`}`;
     }
 
     return plain;

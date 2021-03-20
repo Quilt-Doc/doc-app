@@ -46,6 +46,8 @@ const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
 const REDIRECT_URL =
     "http://localhost:3001/api/integrations/connect/google/callback";
 
+let areCredentialsSet = false;
+
 const oauth2Client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
@@ -103,11 +105,38 @@ generateDriveAPI = (profile) => {
         id_token: idToken,
     };
 
-    oauth2Client.setCredentials(tokens);
+    if (!areCredentialsSet) {
+        oauth2Client.setCredentials(tokens);
+
+        areCredentialsSet = true;
+    }
 
     const driveAPI = google.drive({ version: "v3", auth: oauth2Client });
 
     return driveAPI;
+};
+
+generateDocsAPI = (profile) => {
+    const { accessToken, refreshToken, scope, idToken } = profile;
+
+    const tokens = {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        scope,
+        id_token: idToken,
+    };
+
+    if (!areCredentialsSet) {
+        oauth2Client.setCredentials(tokens);
+
+        areCredentialsSet = true;
+    }
+
+    console.log("tokens", tokens);
+
+    const docsAPI = google.docs({ version: "v1", auth: oauth2Client });
+
+    return docsAPI;
 };
 
 describe("Test Google Drive Scrape", () => {
@@ -232,14 +261,83 @@ describe("Test Google Drive Scrape", () => {
 
         workspace.memberUsers = [JSON.parse(process.env.TEST_USER)];
 
-        console.log("THIS IS THE WORKSPACE", workspace);
-
         const usersObj = await extractPersonalDriveUsers(workspace, documents);
 
         const users = Object.values(usersObj);
 
         expect(users.length).toEqual(4);
 
-        console.log(users.map((user) => user.name).sort());
+        process.env.TEST_MEMBERS = JSON.stringify(usersObj);
+    });
+
+    test("storeGoogleDocuments populates attachments, intervals, and general fields correctly.", async () => {
+        console.log("Entered Test: storeGoogleDocuments");
+
+        const profile = JSON.parse(process.env.TEST_PROFILE);
+
+        const docsAPI = generateDocsAPI(profile);
+
+        const drive = JSON.parse(process.env.TEST_DRIVE);
+
+        const members = JSON.parse(process.env.TEST_MEMBERS);
+
+        let documents = JSON.parse(process.env.TEST_DOCS);
+
+        console.log("MEMBERS", members);
+
+        documents = await storeGoogleDocuments(
+            docsAPI,
+            drive,
+            members,
+            documents
+        );
+
+        expect(documents.length).toEqual(8);
+
+        const documentAttachments = {
+            "Test Document": new Set(),
+
+            "Test Document 2": new Set([
+                "https://github.com/kgodara-testing/brodal_queue/commit/927ae95ce8a7c7625755ea13b7702be84bc4a321",
+                "https://github.com/kgodara-testing/brodal_queue/pull/2",
+            ]),
+            "Test Document 3": new Set([
+                "https://github.com/kgodara-testing/brodal_queue/commit/e55f56aed2809f92938c79f25c754697e9c50260",
+
+                "https://github.com/kgodara-testing/brodal_queue/commit/fb470b2368cf79a1e1cc95803418a9350f1e65fc",
+            ]),
+
+            "Test Document 4": new Set([
+                "https://github.com/kgodara-testing/issue-scrape/commit/5c50b758ed393466dca02bc8f865ae21e9b71447",
+            ]),
+
+            "Test Document 5": new Set(),
+        };
+
+        for (let i = 0; i < documents.length; i++) {
+            const doc = documents[i];
+
+            let { name, attachments, intervals } = doc;
+
+            const expectedAtts = documentAttachments[name];
+
+            expect(intervals.length).toEqual(3);
+
+            if (!expectedAtts) {
+                expect(attachments.length).toEqual(0);
+
+                continue;
+            }
+
+            expect(attachments.length).toEqual(Array.from(expectedAtts).length);
+
+            attachments = IntegrationAttachment.find({
+                _id: { $in: attachments },
+            });
+
+            attachments.map((att) => {
+                expect(expectedAtts.has(att.link)).toBe(true);
+            });
+        }
     });
 });

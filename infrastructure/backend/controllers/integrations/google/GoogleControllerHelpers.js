@@ -136,6 +136,7 @@ acquireExternalGoogleDrives = async (profile) => {
             logger.error(`Querying google api for drives failed.`, {
                 func,
                 e,
+                obj: queryParameters,
             });
 
             throw new Error(e);
@@ -160,6 +161,16 @@ acquireExternalGoogleDrives = async (profile) => {
 };
 
 extractSharedDriveUsers = async (driveAPI, driveId, workspace) => {
+    const func = "extractSharedDriveUsers";
+
+    logger.info(`Entered with params:`, {
+        func,
+        obj: {
+            driveId,
+            workspace,
+        },
+    });
+
     const { memberUsers } = workspace;
 
     let pageToken;
@@ -271,6 +282,16 @@ extractGoogleDrive = async (
 ) => {
     const func = "extractGoogleDrive";
 
+    logger.info(`Entered with params:`, {
+        func,
+        obj: {
+            drive,
+            repositoryIds,
+            userId,
+            isPersonal,
+        },
+    });
+
     if (!isPersonal) {
         try {
             const { id: driveId } = drive;
@@ -341,7 +362,7 @@ extractGoogleRawDocuments = async (driveAPI, driveId, isPersonal) => {
 
         let queryParameters = {
             pageSize: 1000,
-            fields: `files(webViewLink), files(id), files(mimeType), files(createdTime), files(modifiedTime), files(owners), files(lastModifyingUser), files(permissions)`,
+            fields: `files(name), files(webViewLink), files(id), files(mimeType), files(createdTime), files(modifiedTime), files(owners), files(lastModifyingUser), files(permissions)`,
         };
 
         if (checkValid(pageToken)) {
@@ -567,10 +588,26 @@ extractPersonalDriveUsers = async (workspace, documents) => {
 };
 
 storeGoogleDocuments = async (docsAPI, drive, members, documents) => {
+    const func = "storeGoogleDocuments";
+
+    logger.info(`Entered with params:`, {
+        func,
+        obj: {
+            drive,
+            members,
+            documents,
+        },
+    });
+
     let docs = documents.filter((doc) => {
         const { mimeType } = doc;
 
         return mimeType == "application/vnd.google-apps.document";
+    });
+
+    logger.info(`There are ${docs.length} docs among the drive files.`, {
+        func,
+        obj: docs,
     });
 
     let docsToAttachments;
@@ -581,17 +618,44 @@ storeGoogleDocuments = async (docsAPI, drive, members, documents) => {
             drive._id,
             docs
         );
+
+        logger.info(
+            `IntegrationAttachmment were extracted and allocated on docs with links.`,
+            {
+                func,
+                obj: docsToAttachments,
+            }
+        );
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(`IntegrationAttachmment creation and allocation failed.`, {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
     docsToAttachments = _.mapKeys(docsToAttachments, "id");
+
+    logger.debug(`docsToAttachments were mapped correctly:`, {
+        func,
+        obj: docsToAttachments,
+    });
 
     let docsToIntervals;
 
     try {
         docsToIntervals = await extractGoogleDocIntervals(documents, drive._id);
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(`Interval extraction from documents failed...`, {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
@@ -600,6 +664,7 @@ storeGoogleDocuments = async (docsAPI, drive, members, documents) => {
     let insertOps = documents.map((doc) => {
         const {
             webViewLink,
+            name,
             id,
             mimeType,
             createdTime,
@@ -618,17 +683,17 @@ storeGoogleDocuments = async (docsAPI, drive, members, documents) => {
 
         let memberIds = docMemberEmails.map((email) => members[email]._id);
 
-        let attachmentIds = docsToAttachments[id].attachments.map(
-            (att) => att._id
-        );
+        let attachmentIds = docsToAttachments[id]
+            ? docsToAttachments[id].attachments
+            : [];
 
         let intervalIds = docsToIntervals[id].intervals.map(
             (interval) => interval._id
         );
 
         return {
-            created: { type: Date, default: Date.now },
             source: "google",
+            name,
             members: memberIds,
             attachments: attachmentIds,
             intervals: intervalIds,
@@ -643,7 +708,22 @@ storeGoogleDocuments = async (docsAPI, drive, members, documents) => {
 
     try {
         documents = await IntegrationDocument.insertMany(insertOps);
+
+        logger.info(
+            `${documents.length} documents were created successfully.`,
+            {
+                func,
+                obj: documents,
+            }
+        );
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(`IntegrationDocument final insertion failed.`, {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
@@ -651,6 +731,16 @@ storeGoogleDocuments = async (docsAPI, drive, members, documents) => {
 };
 
 extractGoogleDocAttachments = async (docsAPI, driveId, docs) => {
+    const func = "extractGoogleDocAttachments";
+
+    logger.info(`Entered with params:`, {
+        func,
+        obj: {
+            driveId,
+            docs,
+        },
+    });
+
     const requests = docs.map((doc) => {
         const { id } = doc;
 
@@ -662,10 +752,23 @@ extractGoogleDocAttachments = async (docsAPI, driveId, docs) => {
     try {
         responses = await Promise.all(requests);
     } catch (e) {
+        logger.error(`Unable to retrieve document data from Google Docs API`, {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
     const docsData = responses.map((response) => response.data);
+
+    logger.info(
+        `Retrieved document data successfully for ${docsData.length} docs`,
+        {
+            func,
+            obj: docsData,
+        }
+    );
 
     let allLinks = [];
 
@@ -682,35 +785,95 @@ extractGoogleDocAttachments = async (docsAPI, driveId, docs) => {
 
         extraction = decipher(body.content, title);
 
-        const links = extraction["LINKS"];
+        logger.debug(`Content Extraction Object:`, {
+            func,
+            obj: extraction,
+        });
 
-        allLinks = [...allLinks, ...links];
+        const links = extraction["LINK"];
 
-        docs[i].attachmentLinks = links;
+        //links ? links.length : 0
+        logger.debug(
+            `Extracted ${
+                links ? links.length : 0
+            } links from document "${title}"'s content`,
+            {
+                func,
+                obj: links,
+            }
+        );
+
+        if (links) {
+            allLinks = [...allLinks, ...links];
+
+            logger.debug(`Size of allLinks to be saved: ${allLinks.length}`, {
+                func,
+            });
+
+            logger.debug(
+                `Size of links extracted for document "${title}" equals ${links.length}`,
+                {
+                    func,
+                    obj: links,
+                }
+            );
+
+            docs[i].attachmentLinks = links;
+        } else {
+            logger.debug(
+                `No new links to be saved -- allLinks length: ${allLinks.length}`,
+                {
+                    func,
+                }
+            );
+        }
     });
 
     let attachments;
 
     try {
         attachments = await createAttachments(allLinks, driveId);
+
+        logger.info("Attachment were created using the links:", {
+            func,
+            obj: attachments,
+        });
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error("Attachment creation using extracted links failed", {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
     docs.map((doc) => {
         const { attachmentLinks } = doc;
 
-        doc.attachments = [];
+        if (attachmentLinks) {
+            doc.attachments = [];
 
-        attachmentLinks.map((link) => {
-            doc.attachments.push(attachments[link]._id);
-        });
+            attachmentLinks.map((link) => {
+                if (attachments[link]) {
+                    doc.attachments.push(attachments[link]._id);
+                }
+            });
+        }
+    });
+
+    logger.info("Final docs output:", {
+        func,
+        obj: docs,
     });
 
     return docs;
 };
 
 createAttachments = async (links, driveId) => {
+    const func = "createAttachments";
+
     const modelTypeMap = {
         tree: "branch",
         issues: "issue",
@@ -766,6 +929,14 @@ createAttachments = async (links, driveId) => {
         })
         .filter((attachment) => checkValid(attachment));
 
+    logger.info(
+        `There were ${attachments.length} unique attachments extracted from the links provided:`,
+        {
+            func,
+            obj: attachments,
+        }
+    );
+
     let repositories;
 
     try {
@@ -773,6 +944,16 @@ createAttachments = async (links, driveId) => {
             fullName: { $in: Array.from(seenRepositoryFullNames) },
         });
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(
+            `Querying repositories with attachment repos fullNames failed.`,
+            {
+                func,
+                e,
+            }
+        );
+
         throw new Error(e);
     }
 
@@ -786,9 +967,29 @@ createAttachments = async (links, driveId) => {
         }
     });
 
+    logger.info(`Repository field is populated on attachments.`, {
+        func,
+        obj: attachments,
+    });
+
     try {
-        attachments = IntegrationAttachment.insertMany(attachments);
+        attachments = await IntegrationAttachment.insertMany(attachments);
+
+        logger.info(`Attachments were saved successfully`, {
+            func,
+            obj: attachments,
+        });
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(
+            `Error occurred during insertion of Integration Attachment`,
+            {
+                func,
+                e,
+            }
+        );
+
         throw new Error(e);
     }
 
@@ -877,10 +1078,30 @@ addDays = (date, days) => {
 };
 
 extractGoogleDocIntervals = async (documents, driveId) => {
+    const func = "extractGoogleDocIntervals";
+
+    logger.info(
+        `Entered with ${documents.length} documents and driveId: ${driveId}.`,
+        {
+            func,
+        }
+    );
+
     let intervalsOps = [];
 
     documents.map((doc) => {
         const { createdTime, modifiedTime } = doc;
+
+        logger.debug(
+            `Created and last modified time for documentId: ${doc._id} name: ${doc.name}.`,
+            {
+                func,
+                obj: {
+                    createdTime,
+                    modifiedTime,
+                },
+            }
+        );
 
         const selectTime = (time) => {
             let currentTime = new Date();
@@ -924,8 +1145,20 @@ extractGoogleDocIntervals = async (documents, driveId) => {
     let intervals;
 
     try {
-        intervals = await IntegrationInterval.insertMany(intervalOps);
+        intervals = await IntegrationInterval.insertMany(intervalsOps);
+
+        logger.info(`Successfully created ${intervals.length} intervals.`, {
+            func,
+            obj: intervals,
+        });
     } catch (e) {
+        Sentry.captureException(e);
+
+        logger.error(`Interval insertion into database failed..`, {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
@@ -944,6 +1177,11 @@ extractGoogleDocIntervals = async (documents, driveId) => {
         intervalIdentifiers.map((identifier) => {
             doc.intervals.push(intervals[identifier]);
         });
+    });
+
+    logger.info(`Add intervals to documents.`, {
+        func,
+        obj: documents,
     });
 
     return documents;
