@@ -34,8 +34,21 @@ const {
     storeGoogleDocuments,
 } = require("./GoogleControllerHelpers");
 
+const { logger } = require("../../../fs_logging");
+
+checkValid = (item) => {
+    if (item !== undefined && item !== null) {
+        return true;
+    }
+    return false;
+};
+
 getExternalGoogleDrives = async (req, res) => {
     const { userId, workspaceId } = req.params;
+
+    logger.info(`Entered with userId: ${userId} workspaceId: ${workspaceId}`, {
+        func: "getExternalGoogleDrives",
+    });
 
     let profile;
 
@@ -44,10 +57,25 @@ getExternalGoogleDrives = async (req, res) => {
     } catch (e) {
         Sentry.captureException(e);
 
+        logger.info(`Error during acquireGoogleConnectProfile.`, {
+            func: "getExternalGoogleDrives",
+            e: e,
+        });
+
         return res.json({ success: false, error: e });
     }
 
+    logger.info(`Does profile exist: ${checkValid(profile)}`, {
+        func: "getExternalGoogleDrives",
+        obj: profile,
+    });
+
     if (!profile) return res.json({ success: true, result: null });
+
+    logger.info(`Acquired profile with accessToken: ${profile.accessToken}.`, {
+        func: "getExternalGoogleDrives",
+        obj: profile,
+    });
 
     let drives;
 
@@ -56,8 +84,18 @@ getExternalGoogleDrives = async (req, res) => {
     } catch (e) {
         Sentry.captureException(e);
 
+        logger.info(`Could not extract external drives with profile.`, {
+            func: "getExternalGoogleDrives",
+            e: e,
+        });
+
         return res.json({ success: true, error: e });
     }
+
+    logger.info(`Acquired number of drives: ${drives.length}.`, {
+        func: "getExternalGoogleDrives",
+        obj: drives,
+    });
 
     let workspace;
 
@@ -70,12 +108,33 @@ getExternalGoogleDrives = async (req, res) => {
     } catch (e) {
         Sentry.captureException(e);
 
+        logger.info(
+            `Could not query workspace with workspaceId: ${workspaceId}.`,
+            {
+                func: "getExternalGoogleDrives",
+                e: e,
+            }
+        );
+
         return res.json({ success: true, error: e });
     }
+
+    logger.info(`Acquired workspace successfully.`, {
+        func: "getExternalGoogleDrives",
+        obj: workspace,
+    });
 
     let integratedDriveSourceIds = workspace.drives
         ? workspace.drives.map((drive) => drive.sourceId)
         : [];
+
+    logger.info(
+        `Currently integrated drives length: ${integratedDriveSourceIds.length}.`,
+        {
+            func: "getExternalGoogleDrives",
+            obj: workspace.drives,
+        }
+    );
 
     integratedDriveSourceIds = new Set(integratedDriveSourceIds);
 
@@ -83,6 +142,11 @@ getExternalGoogleDrives = async (req, res) => {
         const { id } = drive;
 
         return !integratedDriveSourceIds.has(id);
+    });
+
+    logger.info(`Filtered drives length: ${drives.length}.`, {
+        func: "getExternalGoogleDrives",
+        obj: drives,
     });
 
     return res.json({ success: true, result: drives });
@@ -168,7 +232,6 @@ triggerGoogleScrape = async (req, res) => {
     });
 };
 
-// NEED TO EXTRACT IntegrationAttachment, IntegrationDocument, IntegrationInterval,
 bulkScrapeGoogle = async (profile, drives, workspaceId) => {
     const { accessToken, refreshToken, scope, idToken } = profile;
 
@@ -206,13 +269,17 @@ bulkScrapeGoogle = async (profile, drives, workspaceId) => {
 
         let drive = await extractGoogleDrive(
             driveAPI,
-            driveId,
+            drives[i],
             repositoryIds,
             userId,
             isPersonal
         );
 
-        let documents = await extractGoogleRawDocuments(driveAPI, driveId);
+        let documents = await extractGoogleRawDocuments(
+            driveAPI,
+            driveId,
+            isPersonal
+        );
 
         // populate members if personal
         if (isPersonal) {
@@ -232,4 +299,8 @@ bulkScrapeGoogle = async (profile, drives, workspaceId) => {
     return drives;
 };
 
-module.exports = { beginGoogleConnect, handleGoogleConnectCallback };
+module.exports = {
+    beginGoogleConnect,
+    handleGoogleConnectCallback,
+    getExternalGoogleDrives,
+};

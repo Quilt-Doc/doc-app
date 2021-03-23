@@ -109,6 +109,7 @@ const nonAuthPaths = [
     "/api/integrations/create",
     "/integrations/connect/trello",
     "/integrations/connect/jira",
+    "integrations/connect/google",
     "/trello/handle_webhook",
     "/auth/encrypt_ide_token",
 ];
@@ -149,7 +150,7 @@ app.use(function (req, res, next) {
     } else if (req.cookies["user-jwt"]) {
         token = req.cookies["user-jwt"];
     } else {
-        console.log("index.js: Request was not authenticated.");
+        console.log("index.js: Request was not authenticated.", req.path);
         return res.status(401).json({
             authenticated: false,
             message: "user has not been authenticated",

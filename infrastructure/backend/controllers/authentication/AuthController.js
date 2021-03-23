@@ -233,6 +233,8 @@ encryptIDEToken = (req, res) => {
         process.env.IDE_AUTHENTICATION_SECRET
     ).toString();
 
+    console.log("\nSending encrypted token:", encryptedToken);
+
     return res.json({
         success: true,
         result: { encryptedToken: encryptedToken, ideToken },
@@ -244,6 +246,8 @@ authorizeIDEClient = (initialIDEToken, user) => {
 
     initialIDEToken = decodeURIComponent(initialIDEToken);
 
+    console.log("\nauthorizeIDEClient: initialIDEToken: ", initialIDEToken);
+
     let ideToken = initialIDEToken.replace(" ", "+");
 
     const { _id: userId, role } = user;
@@ -251,7 +255,6 @@ authorizeIDEClient = (initialIDEToken, user) => {
     const jwtToken = createUserJWTToken(userId, role);
 
     // Decrypt
-
     const bytes = CryptoJS.AES.decrypt(
         ideToken,
         process.env.IDE_AUTHENTICATION_SECRET
