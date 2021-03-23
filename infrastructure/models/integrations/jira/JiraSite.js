@@ -7,6 +7,8 @@ let jiraSiteSchema = new Schema({
     userId: {type: ObjectId, ref: 'User', required: true},
     workspace: {type: ObjectId, ref: 'Workspace', required: true},
     accessToken: {type: String, required: true},
+    personalAccessToken: { type: String },
+    jiraEmailAddress: { type: String },
     created: {type: Date, default: Date.now, required: true}
 });
 

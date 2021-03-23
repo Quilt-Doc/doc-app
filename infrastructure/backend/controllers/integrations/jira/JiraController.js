@@ -6,8 +6,12 @@ const logger = require("../../../logging/index").logger;
 
 const apis = require("../../../apis/api");
 
+const jobs = require("../../../apis/jobs");
+const constants = require("../../../constants/index");
+
+const Workspace = require("../../../models/Workspace");
+
 const JiraSite = require("../../../models/integrations/jira/JiraSite");
-const JiraPersonalAccessToken = require("../../../models/integrations/jira/JiraPersonalAccessToken");
 
 const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
 
@@ -17,12 +21,15 @@ const Sentry = require("@sentry/node");
 
 const { JIRA_CLIENT_ID } = process.env;
 
+const { checkValid } = require("../../../utils/utils");
+
 beginJiraConnect = async (req, res) => {
-    const { user_id, workspace_id } = req.query;
 
-    const workspaceId = workspace_id.toString();
+    const userId = req.tokenPayload.userId.toString();
 
-    const userId = user_id.toString();
+    // const { workspace_id } = req.query;
+
+    const workspaceId = req.workspaceObj._id.toString();
 
     console.log(`Entered beginJiraConnect, Params: ${workspaceId} ${userId}`);
 
@@ -39,7 +46,9 @@ beginJiraConnect = async (req, res) => {
 
     const jiraAuthURL = `${jiraBaseURL}${jiraBaseParams}${jiraSpecParams}`;
 
-    return res.redirect(jiraAuthURL);
+    return res.json({success: true, result: jiraAuthURL});
+
+    // return res.redirect(jiraAuthURL);
 };
 
 getWorkspaceJiraSites = async (req, res) => {
@@ -163,6 +172,9 @@ handleJiraCallback = async (req, res) => {
     var jiraClientId = process.env.JIRA_CLIENT_ID;
     var jiraClientSecret = process.env.JIRA_CLIENT_SECRET;
     var jiraRedirectURI = process.env.JIRA_CALLBACK_URL;
+    if (!process.env.IS_PRODUCTION) {
+        jiraRedirectURI = process.env.LOCAL_JIRA_CALLBACK_URL;
+    }
 
     var jiraAuthClient = axios.create({
         baseURL: "https://auth.atlassian.com",
@@ -276,6 +288,7 @@ handleJiraCallback = async (req, res) => {
         return res.json({ success: false, error: "error creating JiraSite" });
     }
 
+    /*
     var runImportJiraIssuesData = {};
     runImportJiraIssuesData["jiraSiteId"] = jiraSite._id.toString();
     runImportJiraIssuesData[
@@ -302,6 +315,7 @@ handleJiraCallback = async (req, res) => {
         message: `Successfully began importing Jira issues - jiraSiteId, jobType: ${jiraSite._id.toString()}, ${constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString()}`,
         function: "jiraAuthResponse",
     });
+    */
 
     // https://api.atlassian.com/ex/jira/11223344-a1b2-3b33-c444-def123456789/rest/api/2/project
 
@@ -327,7 +341,7 @@ triggerJiraScrape = async (req, res) => {
 
     var jiraSite;
     try {
-        jiraSite = await JiraSite.findOne({ userId: ObjectId(userId) })
+        jiraSite = await JiraSite.findOne({ userId: ObjectId(userId), workspace: ObjectId(workspaceId) })
             .lean()
             .exec();
     } catch (err) {
@@ -347,6 +361,8 @@ triggerJiraScrape = async (req, res) => {
     var runImportJiraIssuesData = {};
     runImportJiraIssuesData["jiraSiteId"] = jiraSite._id.toString();
     runImportJiraIssuesData["jiraProjects"] = projects;
+    runImportJiraIssuesData["workspaceId"] = workspaceId;
+
     runImportJiraIssuesData[
         "jobType"
     ] = constants.jobs.JOB_IMPORT_JIRA_ISSUES.toString();
@@ -354,10 +370,13 @@ triggerJiraScrape = async (req, res) => {
     try {
         await jobs.dispatchImportJiraIssuesJob(runImportJiraIssuesData);
     } catch (err) {
+
+        console.log(err);
+
         Sentry.setContext("JiraController::triggerJiraScrape", {
             message: `Error dispatching import Jira Issues job`,
-            jiraSiteId: jiraSiteId.toString(),
-            jobType: jobType,
+            jiraSiteId: jiraSite._id.toString(),
+            jobType: runImportJiraIssuesData["jobType"],
         });
 
         Sentry.captureException(err);
@@ -387,7 +406,7 @@ getExternalJiraProjects = async (req, res) => {
     var userJiraSite;
 
     try {
-        userJiraSite = await JiraSite.findOne({ userId: ObjectId(userId) })
+        userJiraSite = await JiraSite.findOne({ userId: ObjectId(userId), workspace: ObjectId(workspaceId) })
             .lean()
             .exec();
     } catch (e) {
@@ -420,12 +439,15 @@ getExternalJiraProjects = async (req, res) => {
             `/${userJiraSite.cloudIds[0]}/rest/api/3/project/search`
         );
     } catch (err) {
+
+        console.log(err);
+
         Sentry.setContext("JiraController::getExternalJiraProjects", {
             message: `Error getting Jira Projects from Jira API`,
             cloudId: userJiraSite.cloudIds[0],
             accessToken: userJiraSite.accessToken,
         });
-        Sentry.captureException(e);
+        Sentry.captureException(err);
 
         return res.json({
             success: false,
@@ -438,7 +460,6 @@ getExternalJiraProjects = async (req, res) => {
 
     jiraProjects = jiraProjects.data.values;
 
-    jiraProjects = jiraProjects.map((projectObj) => projectObj.id);
 
     let workspace;
 
@@ -450,15 +471,18 @@ getExternalJiraProjects = async (req, res) => {
             .select("boards")
             .populate("boards")
             .exec();
-    } catch (e) {
+    } catch (err) {
+
+        console.log(err);
+
         Sentry.setContext("JiraController::getExternalJiraProjects", {
             message: `Error finding Workspace`,
             workspaceId: workspaceId.toString(),
         });
 
-        Sentry.captureException(e);
+        Sentry.captureException(err);
 
-        return res.json({ success: true, error: e });
+        return res.json({ success: true, error: err });
     }
 
     /*
@@ -467,6 +491,9 @@ getExternalJiraProjects = async (req, res) => {
     );
     */
 
+    /*
+    jiraProjects = jiraProjects.map((projectObj) => projectObj.id);
+
     const integratedBoardSourceIds = jiraProjects;
 
     jiraProjects = jiraProjects.filter((board) => {
@@ -474,37 +501,45 @@ getExternalJiraProjects = async (req, res) => {
 
         return !integratedBoardSourceIds.has(id);
     });
+    */
 
-    return res.json({ success: true, result: boards });
+    return res.json({ success: true, result: jiraProjects });
 };
 
 const createPersonalToken = async (req, res) => {
     const userId = req.tokenPayload.userId.toString();
+    const workspaceId = req.workspaceObj._id.toString();
 
-    const { tokenValue } = req.body;
+    const { tokenValue, emailAddress } = req.body;
 
-    let peronalToken = new JiraPersonalAccessToken({
-        userId: userId,
-        value: tokenValue,
-    });
+    if (!checkValid(tokenValue)) return res.json({success: false, error: "No tokenValue provided."});
+    if (!checkValid(emailAddress)) return res.json({success: false, error: "No emailAddress provided."});
+
+
+    
+
+    var userJiraSite;
 
     try {
-        personalToken = await personalToken.save();
-    } catch (err) {
+        userJiraSite = await JiraSite.findOneAndUpdate({ userId: ObjectId(userId), workspace: ObjectId(workspaceId) }, { personalAccessToken: tokenValue, jiraEmailAddress: emailAddress })
+            .lean()
+            .exec();
+    } catch (e) {
         Sentry.setContext("JiraController::createPersonalToken", {
-            message: `Error finding saving personalToken`,
+            message: `Error JiraSite findOneAndUpdate failed`,
             userId: userId,
-            value: tokenValue,
+            workspaceId: workspaceId,
+            tokenValue: tokenValue,
         });
         Sentry.captureException(e);
 
         return res.json({
             success: false,
-            error: `Error saving personalToken - userId, value: ${userId}, ${tokenValue}`,
+            error: `Error findOneAndUpdate JiraSite failed - userId, workspaceId, tokenValue: ${userId}, ${workspaceId}, ${tokenValue}`,
         });
     }
 
-    return res.json({ success: true, result: personalToken });
+    return res.json({ success: true, result: userJiraSite });
 };
 
 module.exports = {
@@ -512,6 +547,7 @@ module.exports = {
     getJiraSiteIssues,
     beginJiraConnect,
     handleJiraCallback,
+    triggerJiraScrape,
     getExternalJiraProjects,
     createPersonalToken,
 };
