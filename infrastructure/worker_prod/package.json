@@ -33,6 +33,7 @@
     "logform": "^2.2.0",
     "lower-case": "^2.0.1",
     "mongoose": "^5.9.19",
+    "n-readlines": "^1.0.1",
     "parse-url": "^5.0.2",
     "query-string": "^6.13.7",
     "request": "^2.88.2",

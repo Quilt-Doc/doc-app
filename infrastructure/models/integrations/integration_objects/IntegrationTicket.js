@@ -49,6 +49,7 @@ const integrationTicketSchema = new Schema({
     jiraIssueResolutionDate: { type: Date },
     jiraIssueCreationDate: { type: Date },
     jiraIssueUpdatedDate: { type: Date },
+    cloudId: { type: String },
 
 
 

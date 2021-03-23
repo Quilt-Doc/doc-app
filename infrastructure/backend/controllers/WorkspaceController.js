@@ -392,13 +392,13 @@ deleteWorkspace = async (req, res) => {
     const session = await db.startSession();
 
     console.log(
-        `deleteWorkspace - Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`
+        `deleteWorkspace Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`
     );
 
     try {
         await session.withTransaction(async () => {
             console.log(
-                "deleteWorkspace - Removing Workspace from User.workspaces"
+                "deleteWorkspace Removing Workspace from User.workspaces"
             );
             // Remove Workspace from User.workspaces
             await deleteUtils.detachWorkspaceFromMembers(workspaceId, session);
@@ -409,7 +409,7 @@ deleteWorkspace = async (req, res) => {
                 session
             );
 
-            console.log("deleteWorkspace - Beginning to delete CodeObjects");
+            console.log("deleteWorkspace Beginning to delete CodeObjects");
 
             // Get Repositories that need to be reset
             var repositoriesToReset = await deleteUtils.acquireRepositoriesToReset(
@@ -426,18 +426,20 @@ deleteWorkspace = async (req, res) => {
             // Delete Repository Branches
             await deleteUtils.deleteBranches(repositoriesToReset, session);
 
+
+            console.log("deleteWorkspace Beginning to delete Context Objects");
+
+            // Delete Repository InsertHunks
+            await deleteUtils.deleteInsertHunks(repositoriesToReset, session);
+            
+
             // Reset Repositories (set scanned = false, currentlyScanning = false)
             await deleteUtils.resetRepositories(repositoriesToReset, session);
 
-            console.log(
-                "deleteWorkspace Beginning to delete Integration Objects"
-            );
+            console.log("deleteWorkspace Beginning to delete Integration Objects");
 
             // Acquire Boards to delete (All Boards not attached to another Workspace)
-            var boardsToDelete = await deleteUtils.acquireBoardsToDelete(
-                deletedWorkspace,
-                session
-            );
+            var boardsToDelete = await deleteUtils.acquireBoardsToDelete(deletedWorkspace, session);
 
             // Delete boardsToDelete
             await deleteUtils.deleteIntegrationBoards(boardsToDelete, session);

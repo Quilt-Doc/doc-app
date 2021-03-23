@@ -13,7 +13,7 @@ let integrationBoardSchema = new Schema({
     integrationCreator: { type: ObjectId, ref: "User" },
     isDeauthorized: Boolean,
 
-    // Jira Projec t fields
+    // Jira Project fields
     self: { type: String },
     jiraId: { type: String },
     key: { type: String },

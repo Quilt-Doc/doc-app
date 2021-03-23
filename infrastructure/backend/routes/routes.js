@@ -807,7 +807,7 @@ const githubIssueIntegrationController = require("../controllers/integrations/gi
 
 const jiraController = require("../controllers/integrations/jira/JiraController");
 
-router.get("/integrations/connect/jira", jiraController.beginJiraConnect);
+router.get("/integrations/connect/:workspaceId/jira", jiraController.beginJiraConnect);
 
 router.get(
     "/integrations/:workspaceId/jira",
@@ -824,9 +824,17 @@ router.get(
 );
 
 router.get(
-    "/integrations/:workspaceId/:userId/jira/get_external_boards",
+    "/integrations/:workspaceId/jira/get_external_boards",
     jiraController.getExternalJiraProjects
 );
+
+router.post(
+    "/integrations/:workspaceId/jira/trigger_scrape",
+    jiraController.triggerJiraScrape,
+);
+
+router.post("/integrations/:workspaceId/jira/create_personal_token", jiraController.createPersonalToken);
+
 
 const branchController = require("../controllers/BranchController");
 
@@ -854,10 +862,15 @@ router.post("/example_route", (req, res) => {
 });
 
 //CONTEXT ROUTES
+/*
 const contextController = require("../controllers/integrations/context/BoardWorkspaceContextController");
 router.post(
     "/contexts/:workspaceId/retrieve",
     contextController.retrieveContexts
 );
+*/
+
+const contextController = require("../controllers/contexts/ContextController");
+router.post("/contexts/:repositoryId/get_blames", contextController.getBlamesForFile);
 
 module.exports = router;

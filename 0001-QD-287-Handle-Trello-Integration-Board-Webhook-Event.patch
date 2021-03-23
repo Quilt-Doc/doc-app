@@ -1,0 +1,116 @@
+From f79a6afed36e6ee334016fcdd7626e04e64e8609 Mon Sep 17 00:00:00 2001
+From: fsanal <fsanal@sas.upenn.edu>
+Date: Sun, 28 Feb 2021 14:05:45 -0800
+Subject: [PATCH] [QD-287] Handle Trello Integration Board Webhook Events
+
+---
+ .../integrations/trello/TrelloController.js        | 25 ++++++++++++-
+ .../integrations/trello/TrelloWebhookHelpers.js    | 43 ++++++++++++++++++++++
+ 2 files changed, 67 insertions(+), 1 deletion(-)
+
+diff --git a/infrastructure/backend/controllers/integrations/trello/TrelloController.js b/infrastructure/backend/controllers/integrations/trello/TrelloController.js
+index 30ba9bd..1b690ef 100644
+--- a/infrastructure/backend/controllers/integrations/trello/TrelloController.js
++++ b/infrastructure/backend/controllers/integrations/trello/TrelloController.js
+@@ -38,6 +38,7 @@ const {
+ const {
+     setupTrelloWebhook,
+     verifyTrelloWebhookRequest,
++    handleWebhookUpdateBoard,
+ } = require("./TrelloWebhookHelpers");
+ 
+ removeTrelloIntegration = async (req, res) => {
+@@ -365,12 +366,34 @@ getExternalTrelloBoards = async (req, res) => {
+     return res.json({ success: true, result: boards });
+ };
+ 
+-handleTrelloWebhook = (req, res) => {
++handleTrelloWebhook = async (req, res) => {
+     const { workspaceId, userId, boardId } = req.params;
+ 
+     const isVerified = verifyTrelloWebhookRequest(req);
+ 
+     if (!isVerified) return;
++
++    let profile;
++
++    try {
++        profile = await acquireTrelloConnectProfile(userId);
++    } catch (e) {
++        Sentry.captureException(e);
++    }
++
++    const { action } = req.body;
++
++    const { type } = action;
++
++    const actionMethods = {
++        updateBoard: handleWebhookUpdateBoard,
++    };
++
++    try {
++        await actionMethods[type]();
++    } catch (e) {
++        Sentry.captureException(e);
++    }
+ };
+ 
+ module.exports = {
+diff --git a/infrastructure/backend/controllers/integrations/trello/TrelloWebhookHelpers.js b/infrastructure/backend/controllers/integrations/trello/TrelloWebhookHelpers.js
+index 0242957..d4b0b31 100644
+--- a/infrastructure/backend/controllers/integrations/trello/TrelloWebhookHelpers.js
++++ b/infrastructure/backend/controllers/integrations/trello/TrelloWebhookHelpers.js
+@@ -75,7 +75,50 @@ verifyTrelloWebhookRequest = (request) => {
+     return doubleHash == headerHash;
+ };
+ 
++handleWebhookUpdateBoard = async (boardId, profile) => {
++    const { accessToken } = profile;
++
++    let board;
++
++    try {
++        board = await IntegrationBoard.findById(boardId)
++            .select("name sourceId link")
++            .exec();
++    } catch (e) {
++        throw new Error(e);
++    }
++
++    let externalBoard;
++
++    try {
++        externalBoard = await trelloAPI.get(
++            `/1/boards/${sourceId}?key=${TRELLO_API_KEY}&token=${accessToken}&fields=id,name,url`
++        );
++    } catch (e) {
++        throw new Error(e);
++    }
++
++    const { url: externalLink, name: externalName } = externalBoard;
++
++    const { link, name } = board;
++
++    if (link != externalLink) {
++        board.link = externalLink;
++    }
++
++    if (name != externalName) {
++        board.name = externalName;
++    }
++
++    try {
++        board = await board.save();
++    } catch (e) {
++        throw new Error(e);
++    }
++};
++
+ module.exports = {
+     setupTrelloWebhook,
+     verifyTrelloWebhookRequest,
++    handleWebhookUpdateBoard,
+ };
+-- 
+2.8.1
+

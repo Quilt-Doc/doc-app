@@ -17,7 +17,7 @@ const { ObjectId } = mongoose.Types;
 
 // const { filterVendorFiles } = require('../utils/validate_utils');
 
-const { scrapeGithubRepoCommitsAPI, scrapeGithubRepoCommitsMixed } = require('../utils/commit_scrape');
+const { scrapeGithubRepoCodeObjects } = require('../utils/commit_scrape');
 const { updateRepositoryLastProcessedCommits } = require('../utils/github/commit_utils');
 const { generateRepositoryReferences } = require('../utils/references/index');
 
@@ -26,6 +26,8 @@ const { scrapeGithubRepoProjects } = require('../utils/integrations/github_proje
 const { scrapeGithubRepoIssues } = require('../utils/integrations/github_issue_utils');
 
 const { cloneInstallationRepo } = require('../utils/github/cli_utils');
+
+const { createInsertHunksForRepository, createPRInsertHunksForRepository } = require('../utils/diffs/index');
 
 const { spawnSync } = require('child_process');
 
@@ -67,6 +69,8 @@ const scanRepositories = async () => {
 
     var clonedRepositoryDiskPaths = [];
 
+    var repositoryIdToDiskPathMap = {};
+
     var transactionAborted = false;
     var transactionError = {message: ''};
     try {
@@ -87,6 +91,8 @@ const scanRepositories = async () => {
                 repositoryObjList = await Repository.find({_id: { $in: repositoryIdList}, installationId: { $in: repositoryInstallationIds }}, null, { session });
             }
             catch (err) {
+
+                console.log(err);
 
                 Sentry.setContext("scan-repositories", {
                     message: `scanRepositories could not get Repository Objects from MongoDB`,
@@ -280,20 +286,70 @@ const scanRepositories = async () => {
             }
 
 
+            // Clone all unscannedRepositories and add repoDiskPaths to dictionary
+
+            // Ensure that all timestamps are distinct, just in case duplicate timestamps are generated across Promises
+            var initialTimestamp = Date.now();
+            var timestampList = unscannedRepositories.map((obj, idx) => {
+                return initialTimestamp + idx;
+            });
+
+            var repositoryCloneRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+                var repoDiskPath;
+                try {
+                    repoDiskPath = await cloneInstallationRepo(repositoryObj.installationId, repositoryObj.cloneUrl, false, '', timestampList[idx]);
+
+                    clonedRepositoryDiskPaths.push(repoDiskPath);
+                    repositoryIdToDiskPathMap[repositoryObj._id.toString()] = repoDiskPath;
+                }
+                catch (err) {
+
+                    repositoryIdToDiskPathMap[repositoryObj._id.toString()] = false;
+
+                    console.log(err);
+
+                    Sentry.setContext("scan-repositories", {
+                        message: `cloneInstallationRepo failed`,
+                        installationId: repositoryObj.installationId,
+                        cloneUrl: repositoryObj.cloneUrl,
+                    });
+
+                    Sentry.captureException(err);
+                    // Throw err here so that Promise.all will fail if all of the Repositories couldn't be cloned
+                    throw err;
+                }
+                return { success: true };
+            });
+
+            // Execute all requests, don't care about results since will throw err if errors are thrown
+            var cloneRepositoryResults;
+            try {
+                cloneRepositoryResults = await Promise.all(repositoryCloneRequestList);
+            }
+            catch (err) {
+                
+                Sentry.setContext("scan-repositories", {
+                    message: `cloneInstallationRepo failed cloning unscanned Repositories`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+                
+                throw err;
+            }
+
+
+
 
 
 
 
             var repositoryCommitsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
                 try {
-                    // Clone Repository
-                    var repoDiskPath;
+                    // Get cloned Repository's path
+                    var repoDiskPath = repositoryIdToDiskPathMap[repositoryObj._id.toString()];
 
-                    repoDiskPath = await cloneInstallationRepo(repositoryObj.installationId, repositoryObj.cloneUrl, false, '', worker);
-
-                    clonedRepositoryDiskPaths.push(repoDiskPath);
-
-                    await scrapeGithubRepoCommitsMixed(repositoryObj.installationId,
+                    await scrapeGithubRepoCodeObjects(repositoryObj.installationId,
                         repositoryObj._id.toString(),
                         installationClientList[unscannedRepositories[idx].installationId],
                         repositoryObj,
@@ -353,7 +409,6 @@ const scanRepositories = async () => {
                             workspaceId,
                             integrationBoardId,
                             worker);
-                    
                     }
                     catch (err) {
                         Sentry.captureException(err);
@@ -391,6 +446,86 @@ const scanRepositories = async () => {
                     Sentry.captureException(err);
                     throw err;
                 }
+
+            }
+
+
+            // Generate InsertHunks for each Commit from each unscanned Repository
+            var repositoryInsertHunksRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
+                var integrationBoardId;
+                try {
+                    var repoDiskPath = repositoryIdToDiskPathMap[repositoryObj._id.toString()];
+                    await createInsertHunksForRepository(repoDiskPath, repositoryObj._id.toString());
+                }
+                catch (err) {
+
+                    Sentry.setContext("scan-repositories", {
+                        message: `Failed creating InsertHunks`,
+                        repoDiskPath: repoDiskPath,
+                        repositoryId: repositoryObj._id.toString(),
+                    });
+
+                    Sentry.captureException(err);
+                    console.log(err);
+                    return {error: 'Error'};
+                }
+                return { success: true };
+            });
+            
+            // Execute all requests
+            var insertHunkCreateResults;
+            try {
+                insertHunkCreateResults = await Promise.allSettled(repositoryInsertHunksRequestList);
+            }
+            catch (err) {
+                Sentry.setContext("scan-repositories", {
+                    message: `Failed creating InsertHunks`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+                throw err;
+            }
+
+
+
+            // Generate InsertHunks for each PullRequest from each unscanned Repository
+            var repositoryPRInsertHunksRequestList = unscannedRepositories.map( async (repositoryObj) => {
+                var currentInstallationId = installationIdLookup[repositoryObj._id.toString()];
+                var currentInstallationClient =  installationClientList[currentInstallationId];
+
+                try {
+                    await createPRInsertHunksForRepository(repositoryObj._id.toString(), repositoryObj.fullName, currentInstallationClient);
+                }
+                catch (err) {
+
+                    Sentry.setContext("scan-repositories", {
+                        message: `createPRInsertHunksForRepository failed`,
+                        repositoryId: repositoryObj._id.toString(),
+                        repositoryFullName: repositoryObj.fullName,
+                    });
+
+                    Sentry.captureException(err);
+                    console.log(err);
+                    return {error: 'Error'};
+                }
+                return { success: true };
+            });
+
+
+            // Execute all PR InsertHunk requests
+            var prInsertHunkCreateResults;
+            try {
+                prInsertHunkCreateResults = await Promise.allSettled(repositoryPRInsertHunksRequestList);
+            }
+            catch (err) {
+                Sentry.setContext("scan-repositories", {
+                    message: `Failed creating PR InsertHunks`,
+                    unscannedRepositoryIdList: unscannedRepositoryIdList,
+                });
+
+                Sentry.captureException(err);
+                throw err;
             }
 
 

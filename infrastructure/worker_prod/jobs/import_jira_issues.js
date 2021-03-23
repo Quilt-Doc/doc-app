@@ -12,13 +12,66 @@ const IntegrationTicket = require("../models/integrations/integration_objects/In
 const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
 const IntegrationAttachment = require("../models/integrations/integration_objects/IntegrationAttachment");
 
+const Workspace = require("../models/Workspace");
+const Repository = require("../models/Repository");
+
+const axios = require("axios");
+
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 const _ = require("lodash");
 
+const Sentry = require("@sentry/node");
+
 const { serializeError, deserializeError } = require("serialize-error");
 
 let db = mongoose.connection;
+
+const fetchRepositoriesFromIdList = async (repositoryIdList, selectionString) => {
+    
+    var repositoryObjList;
+
+    try {
+        repositoryObjList = await Repository.find({_id: { $in: repositoryIdList}}, selectionString).lean().exec();
+    }
+    catch (err) {
+
+        console.log(err);
+
+        Sentry.setContext("import-jira-issues", {
+            message: `fetchRepositoriesFromIdList - Repository.find() failed`,
+            repositoryIdList: repositoryIdList,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
+    }
+
+    return repositoryObjList;
+}
+
+const fetchJiraIssuesFromIdList = async (jiraIssueIdList) => {
+    var jiraIssueObjList;
+
+    try {
+        jiraIssueObjList = await IntegrationTicket.find({_id: { $in: jiraIssueIdList}}).lean().exec();
+    }
+    catch (err) {
+
+        console.log(err);
+
+        Sentry.setContext("import-jira-issues", {
+            message: `fetchJiraIssuesFromIdList - IntegrationTicket.find() failed`,
+            numJiraIssues: jiraIssueIdList.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
+    }
+    return jiraIssueObjList;
+}
 
 const createJiraIssueIntervals = async (insertedIssueIds) => {
     // Fetch Jira Issue IntegrationTickets
@@ -169,6 +222,380 @@ function flatten(items) {
       delete item.content
     });
     return flat;
+}
+
+const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccessToken, jiraEmailAddress, repositoryObjList) => {
+
+    // var base64Credentials = btoa(`${jiraEmailAddress}:${personalAccessToken}`);
+
+    // axios.get(`https://api.atlassian.com/ex/jira/${cloudId}/rest/dev-status/latest/issue/detail?issueId=10010&applicationType=GitHub&dataType=repository`)
+    // { headers: { Authorization: `Bearer ${personalAccessToken}` } }
+
+    var attachmentsToCreate = [];
+
+    var issueDevelopmentInfoRequests = scrapedIssues.map( async (issueObj) => {
+
+        var foundAttachments = [];
+
+        // Get Issue Commits
+        var issueCommitInfoResponse;
+        try {
+            issueCommitInfoResponse = await axios.get(`https://api.atlassian.com/ex/jira/${issueObj.cloudId}/rest/dev-status/latest/issue/detail?issueId=${issueObj.sourceId}&applicationType=GitHub&dataType=repository`,
+                                                            // { headers: { Authorization: `Basic ${base64Credentials}` } }
+                                                            { auth: { username: jiraEmailAddress, password: personalAccessToken } }
+
+                                                            );
+        }
+        catch (err) {
+
+            console.log(err);
+            Sentry.setContext("generateDirectAttachmentsFromIssues", {
+                message: `Jira API Get Issue Github Repository dataType=repository Info failed`,
+                issueId: issueObj.sourceId,
+                personalAccessToken: personalAccessToken,
+                cloudId: issueObj.cloudId,
+            });
+    
+            Sentry.captureException(err);
+
+            return {
+                error: "Error",
+                cloudId: issueObj.cloudId,
+                personalAccessToken: personalAccessToken,
+                issueId: issueObj.sourceId,
+            };
+        }
+
+        issueCommitInfoResponse = issueCommitInfoResponse.data;
+
+
+        if (issueCommitInfoResponse.detail) {
+
+            var currentDetailObj;
+            var k;
+            for (k = 0; k < issueCommitInfoResponse.detail.length; k++) {
+                currentDetailObj = issueCommitInfoResponse.detail[k];
+
+                if (currentDetailObj.repositories) {
+                    if (currentDetailObj.repositories.length > 0) {
+                        var currentResponseRepository;
+                        var i;
+                        for (i = 0; i < currentDetailObj.repositories.length; i++) {
+                            currentResponseRepository = currentDetailObj.repositories[i];
+
+
+                            var currentRepositoryUrl = currentResponseRepository.url;
+
+                            repositoryObjIndex = repositoryObjList.findIndex(obj => obj.htmlUrl == currentRepositoryUrl);
+
+
+                            var currentCommitObj;
+                            var k;
+                            for (k = 0; k < currentResponseRepository.commits.length; k++) {
+                                currentCommitObj = currentResponseRepository.commits[k];
+
+                                foundAttachments.push({
+                                    modelType: "commit",
+                                    sourceId: currentCommitObj.id,
+                                    repository: repositoryObjIndex >= 0 ? repositoryObjList[repositoryObjIndex]._id.toString() : undefined,
+                                    board: issueObj.board,
+                                    nonCodeId: issueObj._id.toString(),
+                                    link: currentCommitObj.url,
+                                });
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        // Get Issue Branches and PullRequests
+        var issueBranchInfoResponse;
+        try {
+            issueBranchInfoResponse = await axios.get(`https://api.atlassian.com/ex/jira/${issueObj.cloudId}/rest/dev-status/latest/issue/detail?issueId=${issueObj.sourceId}&applicationType=GitHub&dataType=branch`,
+                                                            // { headers: { Authorization: `Bearer ${personalAccessToken}` } }
+                                                            { auth: { username: jiraEmailAddress, password: personalAccessToken } }
+                                                            );
+        }
+        catch (err) {
+
+            console.log(err);
+            Sentry.setContext("generateDirectAttachmentsFromIssues", {
+                message: `Jira API Get Issue Github Repository dataType=branch Info failed`,
+                issueId: issueObj.sourceId,
+                personalAccessToken: personalAccessToken,
+                cloudId: issueObj.cloudId,
+            });
+    
+            Sentry.captureException(err);
+
+            return {
+                error: "Error",
+                cloudId: issueObj.cloudId,
+                personalAccessToken: personalAccessToken,
+                issueId: issueObj.sourceId,
+            };
+        }
+
+
+        // Find any object in ["data"]["detail"]["branches"]["repository"]["url"] is in repositoryObjList{x.htmlUrl}
+        /*
+        // For any found instance: return: {
+            modelType: "branch",
+            sourceId: ["data"]["detail"]["branches"][x]["name"],
+            repository: repositoryObjList[x]._id.toString(),
+            board: issueObj.board,
+            nonCodeId: issueObj._id,
+            link: ["data"]["detail"]["branches"][x]["url"]
+        }
+        */
+
+        issueBranchInfoResponse = issueBranchInfoResponse.data;
+        // console.log("issueBranchInfoResponse: ");
+        // console.log(issueBranchInfoResponse);
+        
+        if (issueBranchInfoResponse.detail) {
+            // Add Branch Attachments
+            var currentDetailObj;
+            var k;
+            for (k = 0; k < issueBranchInfoResponse.detail.length; k++) {
+                currentDetailObj = issueBranchInfoResponse.detail[k];
+                if (currentDetailObj.branches) {
+                    // console.log("branch 2 deep");
+                    if (currentDetailObj.branches.length > 0) {
+                        // console.log("Iterating Over Issue Branches");
+                        var i = 0;
+                        var currentBranchObj;
+                        var currentRepositoryUrl;
+                        var repositoryObjIndex;
+                        for (i = 0; i < currentDetailObj.branches.length; i++) {
+                            currentBranchObj = currentDetailObj.branches[i];
+                            if (!currentBranchObj.repository) {
+                                continue;
+                            }
+                            currentRepositoryUrl = currentBranchObj.repository.url;
+                            repositoryObjIndex = repositoryObjList.findIndex(obj => obj.htmlUrl == currentRepositoryUrl);
+                            foundAttachments.push({
+                                modelType: "branch",
+                                sourceId: currentBranchObj.name,
+                                repository: repositoryObjIndex >= 0 ? repositoryObjList[repositoryObjIndex]._id.toString() : undefined,
+                                board: issueObj.board,
+                                nonCodeId: issueObj._id.toString(),
+                                link: currentBranchObj.url,
+                            });
+                        }
+                    }
+                }
+            }
+
+            
+
+            // Add PullRequest Attachments
+            if (issueBranchInfoResponse.detail) {
+                var currentDetailObj;
+                var k;
+
+                for (k = 0; k < issueBranchInfoResponse.detail.length; k++) {
+                    currentDetailObj = issueBranchInfoResponse.detail[k];
+                    // console.log("PR currentDetailObj: ");
+                    // console.log(currentDetailObj);
+
+                    if (currentDetailObj.pullRequests) {
+
+                        if (currentDetailObj.pullRequests.length > 0) {
+                            var i = 0;
+                            var currentPRObj;
+                            var currentRepositoryUrl;
+                            var repositoryObjIndex;
+                            for (i = 0; i < currentDetailObj.pullRequests.length; i++) {
+                                currentPRObj = currentDetailObj.pullRequests[i];
+
+                                if (!currentPRObj.url) {
+                                    continue;
+                                }
+
+                                if (!currentPRObj.url.includes("/pull")) {
+                                    continue;
+                                }
+   
+
+                                currentRepositoryUrl = currentPRObj.url.substring(0, currentPRObj.url.indexOf("/pull"));
+                                repositoryObjIndex = repositoryObjList.findIndex(obj => obj.htmlUrl == currentRepositoryUrl);
+
+                                foundAttachments.push({
+                                    modelType: "pullRequest",
+                                    sourceId: currentPRObj.id.replace("#", ""),
+                                    repository: repositoryObjIndex >= 0 ? repositoryObjList[repositoryObjIndex]._id.toString() : undefined,
+                                    board: issueObj.board,
+                                    nonCodeId: issueObj._id.toString(),
+                                    link: currentPRObj.url,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return { success: true, foundAttachments: foundAttachments };
+
+    });
+
+    // Execute all requests
+    var issueAttachmentRequestResults;
+    try {
+        issueAttachmentRequestResults = await Promise.allSettled(issueDevelopmentInfoRequests);
+    } catch (err) {
+
+
+        console.log(err);
+
+        Sentry.setContext("generateDirectAttachmentsFromIssues", {
+            message: `JIRA API Issue Development Info Query failed`,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
+    }
+
+    // Non-error responses
+    var validResults = issueAttachmentRequestResults.filter(
+        (resultObj) => resultObj.value && !resultObj.value.error
+    );
+
+    // Error responses
+    var invalidResults = issueAttachmentRequestResults.filter(
+        (resultObj) => resultObj.value && resultObj.value.error
+    );
+
+    validResults = validResults.map(obj => obj.value.foundAttachments);
+    validResults = validResults.flat();
+    return validResults;
+
+}
+
+const insertIntegrationAttachments = async (attachmentsToCreate) => {
+    // Create/Insert IntegrationAttachments
+    if (attachmentsToCreate.length > 0) {
+        let bulkUpdateAttachmentsOps = attachmentsToCreate.map(
+            (attachmentObj) => {
+                return {
+                    updateOne: {
+                        filter: {
+                            repository: (attachmentObj.repository) ? ObjectId(attachmentObj.repository) : undefined,
+                            modelType: attachmentObj.modelType,
+                            sourceId: attachmentObj.sourceId,
+                            board: attachmentObj.board,
+                            link: attachmentObj.link,
+                            nonCodeId: attachmentObj.nonCodeId,
+                        },
+                        // Where field is the field you want to update
+                        update: {
+                            $set: {
+                                attachmentObj,
+                            },
+                        },
+                        upsert: true,
+                    },
+                };
+            }
+        );
+
+        try {
+            await IntegrationAttachment.bulkWrite(bulkUpdateAttachmentsOps);
+        } catch (err) {
+            console.log(err);
+            Sentry.captureException(err);
+            throw err;
+        }
+    }
+}
+
+
+
+const addAttachmentsToIntegrationTickets = async (insertedAttachments) => {
+    // Add to `attachments` field of IntegrationTicket
+
+    let bulkUpdateIntegrationTickets = insertedAttachments.map(
+        (attachmentObj) => {
+            return {
+                updateOne: {
+                    filter: {
+                        _id: ObjectId(attachmentObj.nonCodeId.toString()),
+                    },
+                    // Where field is the field you want to update
+                    update: {
+                        $push: {
+                            attachments: ObjectId(attachmentObj._id.toString()),
+                        },
+                    },
+                    upsert: false,
+                },
+            };
+        }
+    );
+
+    // mongoose bulkwrite for one many update db call
+    try {
+        await IntegrationTicket.bulkWrite(bulkUpdateIntegrationTickets);
+    } catch (err) {
+        Sentry.captureException(err);
+        throw err;
+    }
+};
+
+
+const fetchIntegrationAttachments = async (
+    attachmentsToCreate,
+) => {
+    if (attachmentsToCreate.length < 1) {
+        return [];
+    }
+
+    var repositoryIdList = attachmentsToCreate.filter(attachmentObj => attachmentObj.hasOwnProperty("repository"));
+    if (repositoryIdList.length > 0) {
+        repositoryIdList = [ ...new Set(repositoryIdList.map(obj => obj.repository)) ];
+    }
+
+    console.log("fetchIntegrationAttachments - repositoryIdList: ");
+    console.log(repositoryIdList);
+
+    return await IntegrationAttachment.find(
+        {
+            repository: (repositoryIdList.length > 0) ? { $in: repositoryIdList.map(id => ObjectId(id)) } : undefined,
+            sourceId: { $in: attachmentsToCreate.map((obj) => obj.sourceId) },
+            nonCodeId: {
+                $in: attachmentsToCreate.map((obj) =>
+                    ObjectId(obj.nonCodeId.toString())
+                ),
+            },
+        },
+        "_id nonCodeId"
+    )
+        .lean()
+        .exec();
+};
+
+const generateAssociations = async (workspaceId, boards) => {
+
+
+    var backendClient = apis.requestBackendClient();
+
+    console.log(`Calling 'generateAssociations' - workspaceId: ${workspaceId}`);
+    console.log("boards: ");
+    console.log(boards);
+
+    try {
+        await backendClient.post(`/associations/${workspaceId}/generate_associations`, { boards: boards });
+    }
+    catch (err) {
+        Sentry.captureException(err);
+        throw err;
+    }
 }
 
 
@@ -331,17 +758,7 @@ const getJiraSiteObj = async (jiraSiteId) => {
             .lean()
             .exec();
     } catch (err) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "error",
-                source: "worker-instance",
-                message: serializeError(err),
-                errorDescription: `Error fetching JiraSite - jiraSiteId: ${jiraSiteId}`,
-                function: "getJiraSiteObj",
-            },
-        });
-
+        console.log(err);
         throw Error(`Error fetching JiraSite - jiraSiteId: ${jiraSiteId}`);
     }
     return jiraSiteObj;
@@ -351,7 +768,7 @@ const getJiraSiteProjects = async (
     jiraCloudIds,
     jiraApiClientList,
     jiraSiteId,
-    worker
+    jiraProjects,
 ) => {
     // Get the projects associated with each cloudId
 
@@ -369,15 +786,7 @@ const getJiraSiteProjects = async (
             return { error: "Error", cloudId };
         }
         if (idx == 0) {
-            await worker.send({
-                action: "log",
-                info: {
-                    level: "info",
-                    message: `projectListResponse.data.length: ${projectListResponse.data.length}`,
-                    source: "worker-instance",
-                    function: "importJiraIssues",
-                },
-            });
+            console.log(`projectListResponse.data.length: ${projectListResponse.data.length}`);
         }
         return { projectData: projectListResponse.data, cloudId };
     });
@@ -387,18 +796,17 @@ const getJiraSiteProjects = async (
     try {
         projectListResults = await Promise.allSettled(projectSearchRequestList);
     } catch (err) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "error",
-                source: "worker-instance",
-                message: serializeError(err),
-                errorDescription: `Error fetching project list - cloudIds: ${JSON.stringify(
-                    cloudIds
-                )}`,
-                function: "importJiraIssues",
-            },
+
+
+        console.log(err);
+
+        Sentry.setContext("import-jira-issues", {
+            message: `JIRA API Project Search Query failed`,
+            jiraCloudIds: jiraCloudIds,
         });
+
+        Sentry.captureException(err);
+
         throw err;
     }
 
@@ -412,15 +820,7 @@ const getJiraSiteProjects = async (
         (resultObj) => resultObj.value && resultObj.value.error
     );
 
-    await worker.send({
-        action: "log",
-        info: {
-            level: "info",
-            message: `projectListResults validResults.length: ${validResults.length}`,
-            source: "worker-instance",
-            function: "importJiraIssues",
-        },
-    });
+    console.log(`projectListResults validResults.length: ${validResults.length}`);
 
     var jiraProjectsToCreate = [];
     var currentResult;
@@ -437,6 +837,14 @@ const getJiraSiteProjects = async (
         // Get all Projects from cloudId
         for (k = 0; k < currentValue.projectData.values.length; k++) {
             currentProject = currentValue.projectData.values[k];
+
+            // Filter out projects where currentProject.id is not in jiraProjects[ {sourceId, repositoryIds} ]
+            var sourceIdMatches = jiraProjects.filter(idPair => idPair.sourceId == currentProject.id);
+            if (sourceIdMatches.length < 1) {
+                continue;
+            }
+
+
             /*
             "self": "https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/rest/api/3/project/10001",
             "id": "10001",
@@ -490,27 +898,59 @@ const getJiraSiteProjects = async (
         insertedJiraProjects = await IntegrationBoard.insertMany(jiraProjectsToCreate);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    source: 'worker-instance',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error inserting IntegrationBoards(source = "jira") - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`,
-                                                    function: 'importJiraIssues'}});
 
-        throw new Error(`Error inserting IntegrationBoards(source = "jira") - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`);
+        console.log(err);
+
+        Sentry.setContext("import-jira-issues", {
+            message: `Error inserting IntegrationBoards(source = "jira")`,
+            numJiraProjects: jiraProjectsToCreate.length,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
     }
 
     return insertedJiraProjects;
 };
 
+
+const generateAssociationsFromResults = async (workspaceId, projectIdList, successResults) => {
+
+    var createAssociationData = [];
+
+    var i = 0;
+    for (i = 0; i < successResults.length; i++) {
+        createAssociationData.push({ _id: successResults[i].integrationBoardId, repositories: [ successResults[i].repositoryId ] });
+    }
+
+    var backendClient = apis.requestBackendClient();
+
+    console.log(`Calling 'generate_associations' - workspaceId: ${workspaceId}`);
+    console.log(createAssociationData);
+
+    await findBoard(createAssociationData[0]._id);
+
+    try {
+        await backendClient.post(`/associations/${workspaceId}/generate_associations`, { boardId: createAssociationData[0]._id, boards: createAssociationData });
+    }
+    catch (err) {
+        Sentry.captureException(err);
+        throw err;
+    }
+}
+
 const importJiraIssues = async () => {
     var worker = require("cluster").worker;
 
     var jiraSiteId = process.env.jiraSiteId;
-    var jiraProjects = process.env.jiraProjects;
+    var jiraProjects = JSON.parse(process.env.jiraProjects);
 
     var jiraSite = await getJiraSiteObj(jiraSiteId);
+    var personalAccessToken = jiraSite.personalAccessToken;
+    var jiraEmailAddress = jiraSite.jiraEmailAddress;
 
-    var workspaceId = jiraSite.workspace.toString();
+    var workspaceId = process.env.workspaceId.toString();
 
     var jiraCloudIds = jiraSite.cloudIds;
 
@@ -524,7 +964,7 @@ const importJiraIssues = async () => {
             jiraCloudIds,
             jiraApiClientList,
             jiraSiteId,
-            worker
+            jiraProjects,
         );
     } catch (err) {
         console.log(err);
@@ -540,17 +980,7 @@ const importJiraIssues = async () => {
             // Get appropriate client by matching cloudId
             var jiraIssueApiClient;
 
-            await worker.send({
-                action: "log",
-                info: {
-                    level: "info",
-                    message: `jiraApiClientList[0].defaults.baseURL: ${JSON.stringify(
-                        jiraApiClientList[0].defaults.baseURL
-                    )}`,
-                    source: "worker-instance",
-                    function: "importJiraIssues",
-                },
-            });
+            console.log(`jiraApiClientList[0].defaults.baseURL: ${JSON.stringify(jiraApiClientList[0].defaults.baseURL)}`);
 
             for (i = 0; i < jiraApiClientList.length; i++) {
                 if (
@@ -571,6 +1001,7 @@ const importJiraIssues = async () => {
                 console.log(err);
                 return { error: "Error", cloudId: jiraProjectObj.cloudId };
             }
+            /*
             if (idx < 1) {
                 await worker.send({
                     action: "log",
@@ -584,6 +1015,7 @@ const importJiraIssues = async () => {
                     },
                 });
             }
+            */
             return {
                 issueData: issueListResponse.data.issues,
                 siteId: jiraProjectObj.jiraSiteId,
@@ -623,15 +1055,7 @@ const importJiraIssues = async () => {
         (resultObj) => resultObj.value && resultObj.value.error
     );
 
-    await worker.send({
-        action: "log",
-        info: {
-            level: "info",
-            message: `issueListResults issueValidResults.length: ${issueValidResults.length}`,
-            source: "worker-instance",
-            function: "importJiraIssues",
-        },
-    });
+    console.log(`issueListResults issueValidResults.length: ${issueValidResults.length}`);
 
     var jiraTicketList = issueValidResults.map((promiseObj) => {
         var newTickets = promiseObj.value.issueData.map((issueObj) => {
@@ -643,19 +1067,22 @@ const importJiraIssues = async () => {
                     : false;
             return {
                 source: "jira",
+                sourceId: issueObj.id,
                 workspace: ObjectId(workspaceId.toString()),
+                board: promiseObj.value.projectId,
                 jiraSiteId: promiseObj.value.siteId,
                 jiraProjectId: promiseObj.value.projectId,
                 jiraIssueId: issueObj.id,
                 jiraIssueKey: issueObj.key,
                 jiraIssueSummary: issueObj.fields.summary,
-                jiraIssueDescription: issueObj.fields.description,
+                // jiraIssueDescription: issueObj.fields.description,
                 jiraIssueResolutionStatus: isResolved,
                 jiraIssueResolutionDate: isResolved
                     ? issueObj.fields.resolutiondate
                     : undefined,
                 jiraIssueCreationDate: issueObj.fields.created,
                 jiraIssueUpdatedDate: issueObj.fields.updated,
+                cloudId: promiseObj.value.cloudId,
             };
         });
         return newTickets;
@@ -667,17 +1094,7 @@ const importJiraIssues = async () => {
     // await enrichJiraIssueDirectAttachments(jiraTicketList);
 
     if (jiraTicketList.length > 0) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "info",
-                message: `jiraTicketList[0]: ${JSON.stringify(
-                    jiraTicketList[0]
-                )}`,
-                source: "worker-instance",
-                function: "importJiraIssues",
-            },
-        });
+        console.log(`jiraTicketList[0]: ${JSON.stringify(jiraTicketList[0])}`);
 
         var bulkInsertResult;
         var newIssueIds;
@@ -710,6 +1127,224 @@ const importJiraIssues = async () => {
             );
         }
 
+        // Fetch inserted Issues
+        var scrapedIssues;
+        try {
+            scrapedIssues = await fetchJiraIssuesFromIdList(newIssueIds);
+        }
+        catch (err) {
+            console.log(err);
+
+            Sentry.setContext("import-jira-issues", {
+                message: `fetchJiraIssuesFromIdList failed`,
+                numIssueIds: newIssueIds.length,
+            });
+    
+            Sentry.captureException(err);
+    
+            throw err;
+        }
+
+
+
+        // Personal Access Token -> ${personalAccessToken}
+
+        // Fetch all Repository Objects
+        var repositoryIdList = jiraProjects.map(idPair => idPair.repositoryIds);
+        repositoryIdList = repositoryIdList.flat();
+        repositoryIdList = repositoryIdList.map(id => id.toString());
+        repositoryIdList = [ ...new Set(repositoryIdList) ];
+
+
+        var repositoryObjList;
+        try {
+            repositoryObjList = await fetchRepositoriesFromIdList(repositoryIdList, "_id htmlUrl");
+        }
+        catch (err) {
+            console.log(err);
+
+            Sentry.setContext("import-jira-issues", {
+                message: `fetchRepositoriesFromIdList failed`,
+                repositoryIdList: repositoryIdList,
+            });
+    
+            Sentry.captureException(err);
+    
+            throw err;
+        }
+
+        console.log("repositoryObjList: ");
+        console.log(repositoryObjList);
+
+        console.log("scrapedIssues.length: ");
+        console.log(scrapedIssues.length);
+
+        console.log("personalAccessToken: ", personalAccessToken);
+
+        
+        if (personalAccessToken && jiraEmailAddress) {
+            // Create Attachments
+            var attachmentsToCreate;
+            try {
+                attachmentsToCreate = await generateDirectAttachmentsFromIssues(scrapedIssues, personalAccessToken, jiraEmailAddress, repositoryObjList );
+            }
+            catch (err) {
+                console.log(err);
+
+                Sentry.setContext("import-jira-issues", {
+                    message: `generateDirectAttachmentsFromIssues failed`,
+                    numScrapedIssue: scrapedIssues.length,
+                    numRepositories: repositoryObjList.length,
+                    personalAccessToken: personalAccessToken,
+                });
+        
+                Sentry.captureException(err);
+        
+                throw err;
+            }
+        }
+
+        console.log("generateDirectAttachmentsFromIssues - attachmentsToCreate: ");
+        console.log(attachmentsToCreate);
+
+        // insertIntegrationAttachments
+        try {
+            await insertIntegrationAttachments( attachmentsToCreate );
+        }
+        catch (err) {
+            console.log(err);
+
+            Sentry.setContext("import-jira-issues", {
+                message: `insertIntegrationAttachments failed`,
+                numAttachments: attachmentsToCreate.length,
+            });
+    
+            Sentry.captureException(err);
+    
+            throw err;
+        }
+
+        // fetchIntegrationAttachments
+        var insertedAttachments;
+        try {
+            insertedAttachments = await fetchIntegrationAttachments( attachmentsToCreate );
+        }
+        catch (err) {
+            console.log(err);
+
+            Sentry.setContext("import-jira-issues", {
+                message: `fetchIntegrationAttachments failed`,
+                numAttachments: attachmentsToCreate.length,
+            });
+    
+            Sentry.captureException(err);
+    
+            throw err;
+        }
+
+        
+        // addAttachmentsToIntegrationTickets
+        var insertedAttachments;
+        try {
+            insertedAttachments = await addAttachmentsToIntegrationTickets( insertedAttachments );
+        }
+        catch (err) {
+            console.log(err);
+
+            Sentry.setContext("import-jira-issues", {
+                message: `addAttachmentsToIntegrationTickets failed`,
+                numAttachments: insertedAttachments.length,
+            });
+    
+            Sentry.captureException(err);
+    
+            throw err;
+        }
+
+        // Map jiraProjects[{sourceId, repositoryIds}] to [{ |insertedJiraProjects.sourceId == sourceId|._id, repositoryIds  }]
+        var finalProjectRepositoryMapping = jiraProjects.map( idPair => {
+            var insertedProjectIdx = insertedJiraProjects.findIndex(projectObj => projectObj.sourceId == idPair.sourceId);
+            if (insertedProjectIdx < 0) {
+                return undefined;
+            }
+            return { _id: insertedJiraProjects[insertedProjectIdx]._id.toString(), repositories: idPair.repositoryIds };
+
+        });
+
+        finalProjectRepositoryMapping = finalProjectRepositoryMapping.filter(obj => (obj));
+
+        console.log("finalProjectRepositoryMapping: ");
+        console.log(finalProjectRepositoryMapping)
+
+        // Update IntegrationBoard{source = "jira"}.repositories with repositoryIds
+        if (finalProjectRepositoryMapping.length > 0) {
+
+            let bulkUpdateIntegrationBoardOps = finalProjectRepositoryMapping.map(
+                (idObj) => {
+                    return {
+                        updateOne: {
+                            filter: {
+                                _id: ObjectId(
+                                    idObj._id.toString()
+                                ),
+                            },
+                            // Where field is the field you want to update
+                            update: {
+                                $push: {
+                                    repositories: idObj.repositories.map(id => ObjectId(id.toString())),
+                                },
+                            },
+                            upsert: false,
+                        },
+                    };
+                }
+            );
+    
+            // mongoose bulkwrite for one many update db call
+            try {
+                await IntegrationBoard.bulkWrite(bulkUpdateIntegrationBoardOps);
+            } catch (err) {
+                console.log(err);
+                Sentry.captureException(err);
+
+                throw err;
+            }
+        }
+
+        // Call Association Pipeline
+        if (finalProjectRepositoryMapping.length > 0) {
+            try {
+                await generateAssociations(workspaceId, finalProjectRepositoryMapping);
+            }
+            catch (err) {
+                console.log(err);
+                Sentry.captureException(err);
+
+                throw err;
+            }
+        }
+
+        // Attach board to Workspace
+        if (finalProjectRepositoryMapping.length > 0) {
+            var boardsToAdd = finalProjectRepositoryMapping.map(obj => obj._id.toString());
+            try {
+                await Workspace.findOneAndUpdate({ _id: workspaceId }, { $push: { boards: boardsToAdd.map( boardId => ObjectId(boardId.toString()) ) } });
+            }
+            catch (err) {
+                console.log(err);
+                Sentry.captureException(err);
+
+                throw err;
+            }
+        }
+
+    }
+
+}
+
+
+
+        /*
         // Create Integration Intervals for Issues
         try {
             await createJiraIssueIntervals(newIssueIds);
@@ -717,8 +1352,8 @@ const importJiraIssues = async () => {
             console.log(err);
             throw Error(`Error creating Jira Issue IntegrationIntervals`);
         }
-    }
-};
+        */
+
 
 module.exports = {
     importJiraIssues,

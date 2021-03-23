@@ -106,19 +106,7 @@ createIntegration = async (
     return createdBoard;
 };
 
-resetAll = async () => {
-    await IntegrationBoard.deleteMany();
 
-    await IntegrationAttachment.deleteMany();
-
-    await IntegrationColumn.deleteMany();
-
-    await IntegrationInterval.deleteMany();
-
-    await IntegrationLabel.deleteMany();
-
-    await IntegrationTicket.deleteMany();
-};
 
 beforeAll(async () => {
     const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
@@ -130,8 +118,6 @@ beforeAll(async () => {
     db.once("open", () => console.log("connected to the database"));
 
     db.on("error", console.error.bind(console, "MongoDB connection error:"));
-
-    await resetAll();
 
     const profile = await acquireTrelloConnectProfile(TEST_USER_ID);
 

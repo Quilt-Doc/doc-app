@@ -5,6 +5,7 @@ const Repository = require("../models/Repository");
 const Commit = require("../models/Commit");
 const PullRequest = require("../models/PullRequest");
 const Branch = require("../models/Branch");
+const InsertHunk = require("../models/InsertHunk");
 
 const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
 const Association = require("../models/associations/Association");
@@ -122,7 +123,7 @@ const acquireRepositoriesToReset = async (deletedWorkspace, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed find Workspaces related to Deleted Workspace Repositories`,
-            workspaceId: workspaceId,
+            workspaceId: deletedWorkspace._id.toString(),
             workspaceRepositories: workspaceRepositories,
         });
 
@@ -176,7 +177,6 @@ const deleteCommits = async (repositoriesToReset, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete Commits`,
-            workspaceId: workspaceId,
             repositoriesToReset: repositoriesToReset,
         });
 
@@ -204,7 +204,6 @@ const deletePullRequests = async (repositoriesToReset, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete PullRequests`,
-            workspaceId: workspaceId,
             repositoriesToReset: repositoriesToReset,
         });
 
@@ -231,7 +230,6 @@ const deleteBranches = async (repositoriesToReset, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete Branches`,
-            workspaceId: workspaceId,
             repositoriesToReset: repositoriesToReset,
         });
 
@@ -239,6 +237,32 @@ const deleteBranches = async (repositoriesToReset, session) => {
 
         throw new Error(
             `Failed to delete Branches`
+        );
+    }
+}
+
+const deleteInsertHunks = async (repositoriesToReset, session) => {
+    if (repositoriesToReset.length < 1) {
+        return;
+    }
+
+    // Delete Repository InsertHunks
+    try {
+        await InsertHunk.deleteMany( { repository: { $in: repositoriesToReset.map(id => ObjectId(id.toString())) } }, { session } )
+                        .exec();
+    }
+    catch (err) {
+        console.log(err);
+
+        Sentry.setContext("Delete Workspace", {
+            message: `Failed to delete InsertHunks`,
+            repositoriesToReset: repositoriesToReset,
+        });
+
+        Sentry.captureException(err);
+
+        throw new Error(
+            `Failed to delete InsertHunks`
         );
     }
 }
@@ -257,7 +281,6 @@ const resetRepositories = async (repositoriesToReset, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to reset Repositories`,
-            workspaceId: workspaceId,
             repositoriesToReset: repositoriesToReset,
         });
 
@@ -296,7 +319,6 @@ const acquireBoardsToDelete = async (deletedWorkspace, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed find Workspaces related to Deleted Workspace Boards`,
-            workspaceId: workspaceId,
             workspaceBoards: workspaceBoards,
         });
 
@@ -441,7 +463,6 @@ const acquireIntegrationTicketsToDelete = async (boardsToDelete, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed find IntegrationTickets related to Deleted Workspace Boards`,
-            workspaceId: workspaceId,
             boardsToDelete: boardsToDelete,
         });
 
@@ -509,7 +530,6 @@ const deleteIntegrationAttachments = async (ticketsToDelete, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete IntegrationAttachments`,
-            workspaceId: workspaceId,
             numAttachments: attachmentsToDelete.length,
         });
 
@@ -549,7 +569,6 @@ const deleteIntegrationLabels = async (ticketsToDelete, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete IntegrationLabels`,
-            workspaceId: workspaceId,
             numLabels: labelsToDelete.length,
         });
 
@@ -587,7 +606,6 @@ const deleteIntegrationColumns = async (ticketsToDelete, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete IntegrationColumns`,
-            workspaceId: workspaceId,
             numColumns: columnsToDelete.length,
         });
 
@@ -626,7 +644,6 @@ const deleteIntegrationComments = async (ticketsToDelete, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete IntegrationComments`,
-            workspaceId: workspaceId,
             numComments: commentsToDelete.length,
         });
 
@@ -665,7 +682,6 @@ const deleteIntegrationIntervals = async (ticketsToDelete, session) => {
 
         Sentry.setContext("Delete Workspace", {
             message: `Failed to delete IntegrationIntervals`,
-            workspaceId: workspaceId,
             numIntervals: intervalsToDelete.length,
         });
 
@@ -688,6 +704,9 @@ module.exports = {
     deleteCommits,
     deletePullRequests,
     deleteBranches,
+
+    deleteInsertHunks,
+
     resetRepositories,
 
     acquireBoardsToDelete,

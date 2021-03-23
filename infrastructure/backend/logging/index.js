@@ -9,7 +9,7 @@ const errorsFormat = errors({ stack: true })
 var ElasticSearchTransport = require('./es_transport').ElasticSearchTransport;
 var setupESConnection = require('./es_transport').setupESConnection;
 
-var logger = undefined; 
+var logger = undefined;
 
 
 
