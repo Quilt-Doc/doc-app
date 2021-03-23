@@ -393,8 +393,30 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
     return createdPRObjects;
 }
 
+const fetchAllPRsFromDB = async (repositoryId, selectionString) => {
+
+    var foundPRs;
+
+    try {
+        foundPRs = await PullRequest.find({ repository: repositoryId }, selectionString).lean().exec();
+    }
+    catch (err) {
+        Sentry.setContext("fetchAllPRsFromDB", {
+            message: `Failed to fetch PullRequest Models`,
+            repositoryId: repositoryId,
+            selectionString: selectionString,
+        });
+
+        Sentry.captureException(err);
+        throw err;
+    }
+
+    return foundPRs;
+} 
+
 module.exports = {
     fetchAllRepoPRsAPI,
     enrichPRsWithFileList,
     insertPRsFromAPI,
+    fetchAllPRsFromDB,
 }

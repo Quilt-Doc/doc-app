@@ -4,26 +4,32 @@ const { spawnSync } = require('child_process');
 
 const tokenUtils = require('../token_utils');
 
+const Sentry = require("@sentry/node");
 
-const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBranch, defaultBranch, worker) => {
+
+const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBranch, defaultBranch, timestamp=Date.now().toString()) => {
 
 
     // Clone the Repository
-    var timestamp = Date.now().toString();
+    // var timestamp = Date.now().toString();
     var repoDiskPath = 'git_repos/' + timestamp +'/';
 
     var installToken;
     try {
-        installToken = await tokenUtils.getInstallToken(installationId, worker);
+        installToken = await tokenUtils.getInstallToken(installationId);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching Install Token for installationId: ${process.env.installationId}`,
-                                                    source: 'worker-instance',
-                                                    function: 'cloneInstallationRepo'}});
 
-        throw new Error(`Error fetching Install Token for installationId: ${process.env.installationId}`);
+        Sentry.setContext("cloneInstallationRepo", {
+            message: `Failed to get installToken`,
+            installationId: installationId,
+        });
+
+        Sentry.captureException(err);
+        
+        console.log(err);
+
+        throw err;
     }
 
 
@@ -57,13 +63,17 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
         const gitClone = spawnSync('git', optionsList);
     }
     catch(err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error Cloning Git Repository - installToken, cloneUrl, cloneSingleBranch, defaultBranch, repoDiskPath: ${installToken}, ${cloneUrl}, ${cloneSingleBranch}, ${defaultBranch}, ${repoDiskPath}`,
-                                                    source: 'worker-instance',
-                                                    function: `cloneInstallationRepo`}});
+        Sentry.setContext("cloneInstallationRepo", {
+            message: `Failed to clone git Repository`,
+            cloneUrl: cloneUrl,
+            optionsList: JSON.stringify(optionsList),
+        });
 
-        throw new Error(`Error Cloning Git Repository - installToken, cloneUrl, cloneSingleBranch, defaultBranch, repoDiskPath: ${installToken}, ${cloneUrl}, ${cloneSingleBranch}, ${defaultBranch}, ${repoDiskPath}`);
+        Sentry.captureException(err);
+        
+        console.log(err);
+
+        throw err;
     }
 
     return repoDiskPath;

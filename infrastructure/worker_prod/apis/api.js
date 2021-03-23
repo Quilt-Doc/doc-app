@@ -14,6 +14,9 @@ AWS.config.update({region: 'us-east-1'});
 const requestJiraClient = ( cloudId, accessToken ) => {
     const axios = require('axios');
     return axios.create({
+        // https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/rest/api/3
+        // https://api.atlassian.com/ex/jira/8791c16c-d2d6-483a-bad9-ff96a96f7d16/rest/dev-status/latest/issue/detail?issueId=10010&applicationType=GitHub&dataType=repository
+        // https://quilt-testing.atlassian.net/rest/dev-status/latest/issue/detail?issueId=10010&applicationType=GitHub&dataType=repository
         baseURL: `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3`,
         headers: {
             "Authorization": `Bearer ${accessToken}`,

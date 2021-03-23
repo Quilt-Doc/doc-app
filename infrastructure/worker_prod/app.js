@@ -119,7 +119,7 @@ app.post('/job', async function(req, res) {
         process.env.repositoryInstallationIds = JSON.stringify(repositoryInstallationIds);
 
         // DEPRECATED
-        process.env.installationId = installationId;
+        // process.env.installationId = installationId;
 
         try {
             console.log("Calling scanRepositories");
@@ -345,7 +345,7 @@ app.post('/job', async function(req, res) {
 
     // Import Jira Issues Job
     else if (jobType == constants.jobs.JOB_IMPORT_JIRA_ISSUES) {
-        const { jiraSiteId, jiraProjects } = req.body;
+        const { jiraSiteId, jiraProjects, workspaceId } = req.body;
 
         if (!checkValid(jiraSiteId))  {
 
@@ -369,12 +369,23 @@ app.post('/job', async function(req, res) {
             res.status(200).end();
         }
 
+        if (!checkValid(workspaceId)) {
+            Sentry.setContext("import_jira_issues", {
+                message: `No workspaceId provided`,
+            });
+    
+            Sentry.captureException(Error("No workspaceId provided"));
+
+            res.status(200).end();
+        }
+
         worker.send({action: 'log', info: {level: 'info', source: 'worker-instance', function: 'app.js',
                                             message: `Running Import Jira Issues Job - jiraSiteId: ${jiraSiteId}`}});
 
 
         process.env.jiraSiteId = jiraSiteId;
         process.env.jiraProjects = JSON.stringify(jiraProjects);
+        process.env.workspaceId = workspaceId;
 
         try {
             await importJiraIssues.importJiraIssues();

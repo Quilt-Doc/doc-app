@@ -4,7 +4,8 @@
     "description": "backend of DocApp",
     "main": "index.js",
     "scripts": {
-        "test": "jest -i"
+        "test": "jest -i",
+        "test-watch": "jest --watch"
     },
     "jest": {
         "testTimeout": 100000
