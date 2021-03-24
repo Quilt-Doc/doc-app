@@ -104,6 +104,7 @@ const getCommitToHunkMapping = (hunkList, commitList) => {
 
 }
 
+
 // Fetch all Associations from Code Objects return [{ associationObjectId, codeObjectId }]
 const getAllAssociationsFromCodeObjects = async (repositoryId, codeObjectIdList) => {
 
@@ -138,9 +139,10 @@ const getAllAssociationsFromCodeObjects = async (repositoryId, codeObjectIdList)
 
 }
 
-const sort = async () => {
-
+const sortHunksByStartingLine = (hunkList) => {
+    
 }
+
 // associationCodeObjectIdPairs - { associationObjectId: , codeObjectId:  }
 const mapAssociationObjectsToRanges = (associationCodeObjectIdPairs, idToAllHunkRangeMapping) => {
 

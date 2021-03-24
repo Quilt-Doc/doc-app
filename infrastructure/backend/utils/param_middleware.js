@@ -17,7 +17,8 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
     // try to get the workspace object and attach it to the request object
 
     try {
-        var foundWorkspace = await Workspace.findById(workspaceId)
+        // console.log(`Trying to find Workspace - workspaceId: ${workspaceId}`);
+        var foundWorkspace = await Workspace.findById(ObjectId(workspaceId))
             .lean()
             .exec();
         if (!foundWorkspace || foundWorkspace == null) {
@@ -27,6 +28,9 @@ const workspaceIdParam = async (req, res, next, workspaceId) => {
                 )
             );
         }
+
+        // console.log("Found Workspace: ");
+        // console.log(foundWorkspace);
         req.workspaceObj = foundWorkspace;
         // console.log(`workspaceParamMiddleware setting workspaceObj to foundWorkspace: ${JSON.stringify(foundWorkspace)}`);
     } catch (err) {
