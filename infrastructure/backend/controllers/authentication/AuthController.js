@@ -233,6 +233,9 @@ encryptIDEToken = (req, res) => {
         process.env.IDE_AUTHENTICATION_SECRET
     ).toString();
 
+    console.log("Encrypted TOken: ");
+    console.log({ encryptedToken: encryptedToken, ideToken });
+
     return res.json({
         success: true,
         result: { encryptedToken: encryptedToken, ideToken },
