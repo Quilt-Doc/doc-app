@@ -165,9 +165,7 @@ handleTrelloDeauthorization = async (boardId) => {
     }
 };
 
-handleTrelloReauthorization = async (boardId) => {
-    console.log("BOO");
-};
+handleTrelloReauthorization = async (boardId) => {};
 
 module.exports = {
     beginTrelloConnect,

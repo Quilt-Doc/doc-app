@@ -4,6 +4,7 @@ const { ObjectId } = Schema.Types;
 
 const integrationDocumentSchema = new Schema({
     created: { type: Date, default: Date.now },
+    name: String,
     source: {
         type: String,
         enum: ["google"],
@@ -20,7 +21,7 @@ const integrationDocumentSchema = new Schema({
     drive: { type: ObjectId, ref: "IntegrationDrive" },
 });
 
-const IntegrationDocument = mongoose.model(
+let IntegrationDocument = mongoose.model(
     "IntegrationDocument",
     integrationDocumentSchema
 );
