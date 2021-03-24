@@ -807,7 +807,7 @@ const githubIssueIntegrationController = require("../controllers/integrations/gi
 
 const jiraController = require("../controllers/integrations/jira/JiraController");
 
-router.get("/integrations/connect/:workspaceId/jira", jiraController.beginJiraConnect);
+router.get("/integrations/connect/:userId/:workspaceId/jira", jiraController.beginJiraConnect);
 
 router.get(
     "/integrations/:workspaceId/jira",

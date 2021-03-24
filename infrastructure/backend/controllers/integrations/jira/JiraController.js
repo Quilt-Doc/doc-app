@@ -25,7 +25,7 @@ const { checkValid } = require("../../../utils/utils");
 
 beginJiraConnect = async (req, res) => {
 
-    const userId = req.tokenPayload.userId.toString();
+    const userId = req.userObj._id.toString(); // req.tokenPayload.userId.toString();
 
     // const { workspace_id } = req.query;
 
@@ -46,9 +46,9 @@ beginJiraConnect = async (req, res) => {
 
     const jiraAuthURL = `${jiraBaseURL}${jiraBaseParams}${jiraSpecParams}`;
 
-    return res.json({success: true, result: jiraAuthURL});
+    // return res.json({success: true, result: jiraAuthURL});
 
-    // return res.redirect(jiraAuthURL);
+    return res.redirect(jiraAuthURL);
 };
 
 getWorkspaceJiraSites = async (req, res) => {
