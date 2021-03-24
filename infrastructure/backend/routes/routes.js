@@ -807,15 +807,9 @@ const githubIssueIntegrationController = require("../controllers/integrations/gi
 
 const jiraController = require("../controllers/integrations/jira/JiraController");
 
-router.get("/integrations/connect/:workspaceId/jira", jiraController.beginJiraConnect);
-
 router.get(
-    "/integrations/:workspaceId/jira",
-    jiraController.getWorkspaceJiraSites
-);
-router.post(
-    "/integrations/:workspaceId/jira/get",
-    jiraController.getJiraSiteIssues
+    "/integrations/connect/:userId/:workspaceId/jira",
+    jiraController.beginJiraConnect
 );
 
 router.get(
@@ -830,11 +824,13 @@ router.get(
 
 router.post(
     "/integrations/:workspaceId/jira/trigger_scrape",
-    jiraController.triggerJiraScrape,
+    jiraController.triggerJiraScrape
 );
 
-router.post("/integrations/:workspaceId/jira/create_personal_token", jiraController.createPersonalToken);
-
+router.post(
+    "/integrations/:workspaceId/jira/create_personal_token",
+    jiraController.createPersonalToken
+);
 
 const branchController = require("../controllers/BranchController");
 
@@ -871,6 +867,9 @@ router.post(
 */
 
 const contextController = require("../controllers/contexts/ContextController");
-router.post("/contexts/:repositoryId/get_blames", contextController.getBlamesForFile);
+router.post(
+    "/contexts/:repositoryId/get_blames",
+    contextController.getBlamesForFile
+);
 
 module.exports = router;

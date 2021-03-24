@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-const api = require("../../apis/api");
+const api = require("../apis/api");
 
 const _ = require("lodash");
 
@@ -11,7 +11,7 @@ const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../../__tests__config/utils");
+} = require("../__tests__config/utils");
 
 //google helpers
 
@@ -19,7 +19,7 @@ const {
     acquireGoogleConnectProfile,
     acquireExternalGoogleDrives,
     extractGoogleDrive,
-} = require("../../controllers/integrations/google/GoogleControllerHelpers");
+} = require("../controllers/integrations/google/GoogleControllerHelpers");
 
 const {
     TEST_USER_ID,
@@ -29,12 +29,12 @@ const {
 } = process.env;
 
 //models
-const IntegrationDrive = require("../../models/integrations/integration_objects/IntegrationDrive");
-const IntegrationInterval = require("../../models/integrations/integration_objects/IntegrationInterval");
-const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
-const IntegrationDocument = require("../../models/integrations/integration_objects/IntegrationDocument");
-const IntegrationUser = require("../../models/integrations/integration_objects/IntegrationUser");
-const User = require("../../models/authentication/User");
+const IntegrationDrive = require("../models/integrations/integration_objects/IntegrationDrive");
+const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
+const IntegrationAttachment = require("../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationDocument = require("../models/integrations/integration_objects/IntegrationDocument");
+const IntegrationUser = require("../models/integrations/integration_objects/IntegrationUser");
+const User = require("../models/authentication/User");
 
 const token = TEST_USER_GOOGLE_ACCESS_TOKEN;
 
