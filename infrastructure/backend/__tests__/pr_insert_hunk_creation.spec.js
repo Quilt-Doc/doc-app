@@ -11,9 +11,9 @@ const InsertHunk = require('../models/InsertHunk');
 const api = require("../apis/api");
 
 // test data
-const { prInsertHunkLookup: hamechaPRHunkData } = require("../__tests__data/insert_hunk_creation_data/hamecha");
-const { prInsertHunkLookup: brodalPRHunkData } = require("../__tests__data/insert_hunk_creation_data/brodal_queue");
-const { prInsertHunkLookup: issueScrapePRHunkData } = require("../__tests__data/insert_hunk_creation_data/issue-scrape");
+const { prInsertHunkLookup: hamechaPRHunkData } = require("../__tests__data/repository_data/hamecha");
+const { prInsertHunkLookup: brodalPRHunkData } = require("../__tests__data/repository_data/brodal_queue");
+const { prInsertHunkLookup: issueScrapePRHunkData } = require("../__tests__data/repository_data/issue-scrape");
 
 // util helpers
 const {
