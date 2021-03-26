@@ -24,7 +24,7 @@ const { JIRA_CLIENT_ID } = process.env;
 const { checkValid } = require("../../../utils/utils");
 
 beginJiraConnect = async (req, res) => {
-    const { userId } = req.params;
+    const userId = req.userObj._id.toString(); // req.tokenPayload.userId.toString();
 
     // const { workspace_id } = req.query;
 
@@ -44,6 +44,8 @@ beginJiraConnect = async (req, res) => {
     )}&state=${workspaceId}-${userId}&response_type=code&prompt=consent`;
 
     const jiraAuthURL = `${jiraBaseURL}${jiraBaseParams}${jiraSpecParams}`;
+
+    // return res.json({success: true, result: jiraAuthURL});
 
     return res.redirect(jiraAuthURL);
 };
