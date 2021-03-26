@@ -260,6 +260,14 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
         }
     }
 
+    if (currentCommitObj) {
+        currentCommitObj.repository = repositoryId;
+        currentCommitObj.installationId = installationId;
+
+        currentCommitObj.fileList = currentFileList;
+        commitObjects.push(currentCommitObj)
+    }
+
     return commitObjects;
 }
 
@@ -319,7 +327,7 @@ const fetchAllInsertedRepositoryCommits = async (repositoryId, selectionString) 
 
 
 
-const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList, session) => {
+const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList) => {
     // Get Repository commits for all unscanned Repositories
     // Handle 409 Responses
     var repositoryListCommits;
@@ -428,7 +436,7 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
     if (bulkLastCommitOps.length > 0 && bulkLastCommitOps.filter(op => op).length > 0) {
         try {
             // Filter out undefined operations (these are operations on repositories whose '/commits/' API calls have failed)
-            const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps.filter(op => op), { session });
+            const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps.filter(op => op));
             console.log(`bulk Repository 'lastProcessCommit' update results: ${JSON.stringify(bulkResult)}`);
         }
         catch (err) {
