@@ -496,6 +496,8 @@ queryObjects = async (commitHunks, pullRequestHunks, repositoryId) => {
     });
 
     if (check) {
+        console.log("NOT FOUND COMMIT");
+
         const commit = await Commit.findOne({
             sourceId: "055150c6d1f2809a738d8a9cc5519c9c8d011b9e",
         });
