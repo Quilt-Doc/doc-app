@@ -7,7 +7,7 @@ const { ObjectId } = mongoose.Types;
 
 const { fetchAllPRsFromDB } = require("../github/pr_utils");
 
-const InsertHunk = require("../../../models/InsertHunk");
+const InsertHunk = require("../../models/InsertHunk");
 
 const Sentry = require("@sentry/node");
 
@@ -21,9 +21,9 @@ const generateAllCommitsDiffFile = (repoDiskPath, repositoryId) => {
     var timestamp = Date.now().toString();
 
     try {
-        const diffGenerate = spawnSync('../../generate_all_commit_diffs.sh', [`../${timestamp}-${repositoryId}.patch`], {cwd: repoDiskPath});
+        const diffGenerate = spawnSync('../../generate_all_commit_diffs.sh', [`../${timestamp}-${repositoryId}.patch`], { cwd: repoDiskPath });
     }
-    catch(err) {
+    catch (err) {
 
         Sentry.setContext("scanRepositories", {
             message: `generateAllCommitDiffs error occurred trying to run '../generate_all_commit_diffs.sh'`,
@@ -32,7 +32,7 @@ const generateAllCommitsDiffFile = (repoDiskPath, repositoryId) => {
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
@@ -45,7 +45,7 @@ const deleteRepositoryDiffFile = (diffFilePath) => {
     try {
         const diffGenerate = spawnSync('rm', [`${diffFilePath}`]);
     }
-    catch(err) {
+    catch (err) {
 
         Sentry.setContext("scanRepositories", {
             message: `generateAllCommitDiffs error occurred trying to delete diff file`,
@@ -53,7 +53,7 @@ const deleteRepositoryDiffFile = (diffFilePath) => {
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
@@ -67,7 +67,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
     const liner = new lineByLine(patchFilePath);
 
     var allRegions = [];
- 
+
     let line;
 
     // Ordered by hierarchy, broadest to most specific
@@ -92,20 +92,22 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
 
             // Handle end of any regions being built until this point
             if (currentNewRegion.length > 0) {
-                allRegions.push({   commitSha: currentCommitSha,
-                        filePath: currentFilePath,
-                        lineStart: currentNewRegionLineStart,
-                        lines: currentNewRegion
-                    });
+                allRegions.push({
+                    commitSha: currentCommitSha,
+                    filePath: currentFilePath,
+                    lineStart: currentNewRegionLineStart,
+                    lines: currentNewRegion
+                });
                 currentNewRegion = [];
             }
 
             currentCommitSha = line.replace("New Commit: ", "");
-            if (print_idx % 10 == 0) {
-                console.log("currentCommitSha: ", currentCommitSha);
+            if (print_idx % 100 == 0) {
+                console.log(`Commit #${print_idx} sha: ${currentCommitSha}`);
             }
 
             currentLineNumber = -1;
+            print_idx += 1;
         }
 
         // If we are on the line where the full 'diff' command is displayed
@@ -113,11 +115,12 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
 
             // Handle end of any regions being built until this point
             if (currentNewRegion.length > 0) {
-                allRegions.push({   commitSha: currentCommitSha,
-                        filePath: currentFilePath,
-                        lineStart: currentNewRegionLineStart,
-                        lines: currentNewRegion
-                    });
+                allRegions.push({
+                    commitSha: currentCommitSha,
+                    filePath: currentFilePath,
+                    lineStart: currentNewRegionLineStart,
+                    lines: currentNewRegion
+                });
                 currentNewRegion = [];
             }
             continue;
@@ -127,7 +130,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
             currentFilePath = line.split(" ")[1].replace("b/", "");
 
             // Commit that updated arby_log_handler.py
-            
+
             if (currentCommitSha == "f29d074c5919dcf1768fcea3215b2af6463158dd") {
                 console.log("currentFilePath: ", currentFilePath);
             }
@@ -139,17 +142,18 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
 
             // Handle end of any regions being built until this point
             if (currentNewRegion.length > 0) {
-                allRegions.push({   commitSha: currentCommitSha,
-                        filePath: currentFilePath,
-                        lineStart: currentNewRegionLineStart,
-                        lines: currentNewRegion
-                    });
+                allRegions.push({
+                    commitSha: currentCommitSha,
+                    filePath: currentFilePath,
+                    lineStart: currentNewRegionLineStart,
+                    lines: currentNewRegion
+                });
                 currentNewRegion = [];
             }
 
 
             // Get hunk header without any suffixes "@@ -1,13 +3,34 @@"
-            var endIndex = line.substring(2,line.length).indexOf("@@") + 2;
+            var endIndex = line.substring(2, line.length).indexOf("@@") + 2;
             var hunkHeader = line.substring(0, endIndex + 2);
 
             var startingLineNum = hunkHeader.split(" ")[2].split(",")[0].replace("+", "");
@@ -168,14 +172,15 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
 
         // Line that is same between both file versions
         else if (line[0] == " ") {
-            
+
             // Handle end of any regions being built until this point
             if (currentNewRegion.length > 0) {
-                allRegions.push({   commitSha: currentCommitSha,
-                        filePath: currentFilePath,
-                        lineStart: currentNewRegionLineStart,
-                        lines: currentNewRegion
-                    });
+                allRegions.push({
+                    commitSha: currentCommitSha,
+                    filePath: currentFilePath,
+                    lineStart: currentNewRegionLineStart,
+                    lines: currentNewRegion
+                });
                 currentNewRegion = [];
             }
 
@@ -194,7 +199,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
                 currentNewRegionLineStart = currentLineNumber;
             }
             // if (line.replace("+", "").length > 0) {
-                currentNewRegion.push(line.replace("+", ""));
+            currentNewRegion.push(line.replace("+", ""));
             // }
             currentLineNumber += 1;
         }
@@ -203,22 +208,25 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
             console.log("currentNewRegion.length: ", currentNewRegion.length);
         }
         */
-        print_idx += 1;
     }
 
     // Handle end of any regions being built until this point
     if (currentNewRegion.length > 0) {
-        allRegions.push({   commitSha: currentCommitSha,
-                filePath: currentFilePath,
-                lineStart: currentNewRegionLineStart,
-                lines: currentNewRegion
-            });
+        allRegions.push({
+            commitSha: currentCommitSha,
+            filePath: currentFilePath,
+            lineStart: currentNewRegionLineStart,
+            lines: currentNewRegion
+        });
         currentNewRegion = [];
     }
 
     allRegions = allRegions.map(regionObj => {
         return Object.assign({}, { repository: repositoryId.toString() }, regionObj)
     });
+
+    console.log("createBlamesFromPatchFile completed successfully");
+    console.log(`Found #${allRegions.length} regions`);
 
     return allRegions;
 
@@ -230,10 +238,13 @@ const getPRDiffContent = async (installationClient, repositoryFullName, prNumber
     var prDiffResponse;
     try {
         prDiffResponse = await installationClient.get(`/repos/${repositoryFullName}/pulls/${prNumber}`,
-                                                        { headers: {"Content-Type": "application/vnd.github.v3.diff",
-                                                                    accept: "application/vnd.github.v3.diff",} 
-                                                        }
-                                                    );
+            {
+                headers: {
+                    "Content-Type": "application/vnd.github.v3.diff",
+                    accept: "application/vnd.github.v3.diff",
+                }
+            }
+        );
     }
     catch (err) {
         console.log(err);
@@ -272,7 +283,7 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
     var line;
     var i = 0;
 
-    for ( i = 0; i < prPatchLines.length; i++ ) {
+    for (i = 0; i < prPatchLines.length; i++) {
 
         line = prPatchLines[i];
 
@@ -283,10 +294,11 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
 
             // Handle end of any regions being built until this point
             if (currentNewRegion.length > 0) {
-                allRegions.push({   filePath: currentFilePath,
-                        lineStart: currentNewRegionLineStart,
-                        lines: currentNewRegion
-                    });
+                allRegions.push({
+                    filePath: currentFilePath,
+                    lineStart: currentNewRegionLineStart,
+                    lines: currentNewRegion
+                });
                 currentNewRegion = [];
             }
             continue;
@@ -303,16 +315,17 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
 
             // Handle end of any regions being built until this point
             if (currentNewRegion.length > 0) {
-                allRegions.push({   filePath: currentFilePath,
-                        lineStart: currentNewRegionLineStart,
-                        lines: currentNewRegion
-                    });
+                allRegions.push({
+                    filePath: currentFilePath,
+                    lineStart: currentNewRegionLineStart,
+                    lines: currentNewRegion
+                });
                 currentNewRegion = [];
             }
 
 
             // Get hunk header without any suffixes "@@ -1,13 +3,34 @@"
-            var endIndex = line.substring(2,line.length).indexOf("@@") + 2;
+            var endIndex = line.substring(2, line.length).indexOf("@@") + 2;
             var hunkHeader = line.substring(0, endIndex + 2);
 
             var startingLineNum = hunkHeader.split(" ")[2].split(",")[0].replace("+", "");
@@ -328,13 +341,14 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
 
         // Line that is same between both file versions
         else if (line[0] == " ") {
-            
+
             // Handle end of any regions being built until this point
             if (currentNewRegion.length > 0) {
-                allRegions.push({   filePath: currentFilePath,
-                        lineStart: currentNewRegionLineStart,
-                        lines: currentNewRegion
-                    });
+                allRegions.push({
+                    filePath: currentFilePath,
+                    lineStart: currentNewRegionLineStart,
+                    lines: currentNewRegion
+                });
                 currentNewRegion = [];
             }
 
@@ -353,7 +367,7 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
                 currentNewRegionLineStart = currentLineNumber;
             }
             // if (line.replace("+", "").length > 0) {
-                currentNewRegion.push(line.replace("+", ""));
+            currentNewRegion.push(line.replace("+", ""));
             // }
             currentLineNumber += 1;
         }
@@ -361,10 +375,11 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
 
     // Handle end of any regions being built until this point
     if (currentNewRegion.length > 0) {
-        allRegions.push({   filePath: currentFilePath,
-                lineStart: currentNewRegionLineStart,
-                lines: currentNewRegion
-            });
+        allRegions.push({
+            filePath: currentFilePath,
+            lineStart: currentNewRegionLineStart,
+            lines: currentNewRegion
+        });
         currentNewRegion = [];
     }
 
@@ -376,6 +391,7 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
 }
 
 const createInsertHunks = async (insertHunks) => {
+    console.log(`createInsertHunks: Attempting to create #${insertHunks.length} InsertHunks`);
     var bulkInsertResult;
     try {
         bulkInsertResult = await InsertHunk.insertMany(insertHunks);
@@ -388,18 +404,24 @@ const createInsertHunks = async (insertHunks) => {
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
 
     }
+
+    console.log(`createInsertHunks: Successfully created #${insertHunks.length}InsertHunks`);
 }
 
 
 const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
 
     // Generate diff file for all commits on Repository
+    var hrstart = process.hrtime();
+
+    console.log(`Attempting to generate Commits Diff File for repositoryId ( ${repositoryId} )`);
+
     var diffFilePath;
     try {
         diffFilePath = generateAllCommitsDiffFile(repoDiskPath);
@@ -411,17 +433,23 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
     }
+
+    hrend = process.hrtime(hrstart)
+    console.info(`Generate Commit Diffs File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
 
     // Parse Diff file
     var allInsertHunks;
 
     var parseDiffFileFailed = false;
     var parseDiffFileError;
+
+    hrstart = process.hrtime();
+    console.log(`Attempting to create Blames from Patch File - Repository ( ${repositoryId} )`);
 
     try {
         allInsertHunks = createBlamesFromPatchFile(diffFilePath, repositoryId);
@@ -434,7 +462,7 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         parseDiffFileError = err;
@@ -442,6 +470,12 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         // throw err;
     }
 
+    hrend = process.hrtime(hrstart);
+    console.info(`Create Blames from Patch File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+
+
+    hrstart = process.hrtime();
+    console.log(`Attempting to create delete Repository Diff File - Repository ( ${repositoryId} )`);
 
     // If the parsing operation failed or not, still need to attempt to delete the patch file
     try {
@@ -455,11 +489,15 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
     }
+
+    hrend = process.hrtime(hrstart);
+    console.info(`Delete Repository Diff File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+
 
     // If the parse operation failed, throw an error here
     if (parseDiffFileFailed) {
@@ -468,6 +506,10 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
 
 
     // create InsertHunks
+
+    hrstart = process.hrtime();
+    console.log(`Attempting to create ${allInsertHunks.length} InsertHunks - Repository ( ${repositoryId} )`);
+
     try {
         await createInsertHunks(allInsertHunks);
     }
@@ -480,11 +522,14 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
     }
+
+    hrend = process.hrtime(hrstart)
+    console.info(`Create ${allInsertHunks.length} InsertHunks for Repository ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
 
 }
 
@@ -501,16 +546,16 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
     }
 
-    var allPRNumbers = repositoryPRs.map( prObj => prObj.number );
+    var allPRNumbers = repositoryPRs.map(prObj => prObj.number);
 
     // Execute Requests to get PR diff content for all PR numbers
-    var prDiffRequestList = allPRNumbers.map( async (number) => {
+    var prDiffRequestList = allPRNumbers.map(async (number) => {
 
         var diffContent;
         try {
@@ -525,10 +570,10 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
 
             Sentry.captureException(err);
             console.log(err);
-            return {error: 'Error'};
+            return { error: 'Error' };
         }
 
-        return {  diff: diffContent, prNumber: number };
+        return { diff: diffContent, prNumber: number };
     });
 
     // Execute all requests

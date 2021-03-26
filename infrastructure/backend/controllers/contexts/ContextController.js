@@ -221,6 +221,7 @@ const getBlamesForFile = async (req, res) => {
     console.log(findNewSnippetResults);
 
     // For all InsertHunks for which new regions have been found, fetch associated Commits and PullRequests
+    // { insertHunkId: insertHunkId, newRegionFound: Bool, regionStartLine: Number, regionLength: Number }
     var relevantHunks = findNewSnippetResults.filter(result => result.newRegionFound == true);
 
     var idToAllHunkRangeMapping = {};

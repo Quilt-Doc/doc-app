@@ -50,6 +50,10 @@ infrastructure/worker_prod/constants*
 infrastructure/backend/models*
 infrastructure/backend/constants*
 
+# Ignore script build artifacts
+infrastructure/scripts/models*
+infrastructure/scripts/constants*
+
 # Ignore Windows service executables
 **/daemon*
 

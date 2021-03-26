@@ -2,13 +2,12 @@
 
 const fs = require('fs');
 
-const logger = require('./logging/index').logger;
 require('dotenv').config();
 
 
 const apis = require('./apis/api');
 const backendClient = apis.requestBackendClient();
- 
+
 const crypto = require('crypto');
 
 const pushEvents = require('./events/pushEvents');
@@ -17,6 +16,9 @@ const pullRequestEvents = require('./events/pullRequestEvents');
 const projectEvents = require('./events/projectEvents');
 const issueEvents = require('./event/issueEvents');
 const refEvents = require('./events/refEvents');
+
+const Sentry = require("@sentry/serverless");
+
 
 
 exports.handler = async (event) => {
@@ -31,11 +33,11 @@ exports.handler = async (event) => {
 
     // Modify
 
-    if ( !(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) ) {
+    if (!(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)))) {
         let response = {
             statusCode: 401,
             headers: {
-                "x-error-desc" : "Invalid Request Source"
+                "x-error-desc": "Invalid Request Source"
             },
             body: JSON.stringify({})
         };
@@ -43,27 +45,26 @@ exports.handler = async (event) => {
         return response;
     }
 
-    if (process.env.IS_PRODUCTION) {
-        try {
-            await require('./logging/index').setupESConnection();
-        }
-        catch (err) {
-            console.error("Couldn't setup ES connection");
-            console.error(err);
-        }
-    }
+    Sentry.init({
+        dsn: "https://9dc09a0acca94a8b9e08bb7066763b2c@o504090.ingest.sentry.io/5694501",
+
+        // Set tracesSampleRate to 1.0 to capture 100%
+        // of transactions for performance monitoring.
+        // We recommend adjusting this value in production
+        tracesSampleRate: 1.0,
+    });
 
 
     event.body = JSON.parse(event.body);
 
     var githubEvent = event.headers['x-github-event'];
 
-    await logger.info({source: 'github-lambda', message: `Github action received - githubEvent: ${githubEvent}`, function: 'handler'});
+    console.log(`Github action received - githubEvent: ${githubEvent}`);
 
     try {
         switch (githubEvent) {
             case 'error':
-                await logger.info({source: 'github-lambda', message: `Github 'error' action received`, function: 'handler'});
+                console.log(`Github 'error' action received`);
                 break;
             case 'push':
                 await pushEvents.handlePushEvent(backendClient, event, githubEvent, logger);
@@ -90,10 +91,12 @@ exports.handler = async (event) => {
         }
     }
     catch (err) {
-        await logger.error({source: 'github-lambda',
-                            message: err,
-                            errorDescription: `Error handling "${githubEvent}" event`,
-                            function: 'handler'});
+        await logger.error({
+            source: 'github-lambda',
+            message: err,
+            errorDescription: `Error handling "${githubEvent}" event`,
+            function: 'handler'
+        });
 
         let response = {
             statusCode: 200,
@@ -116,9 +119,9 @@ exports.handler = async (event) => {
     let response = {
         statusCode: responseCode,
         headers: {
-            "x-custom-header" : "my custom header value"
+            "x-custom-header": "my custom header value"
         },
-        body: JSON.stringify({ message: "200 OK"})
+        body: JSON.stringify({ message: "200 OK" })
     };
     return response;
 };

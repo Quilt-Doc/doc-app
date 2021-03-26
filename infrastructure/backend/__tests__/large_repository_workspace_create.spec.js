@@ -5,14 +5,10 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 
 // models
-const InsertHunk = require('../models/InsertHunk');
 
 
 const api = require("../apis/api");
 
-// test data
-const { insertHunkFilePathLookup: hamechaHunkData } = require("../__tests__data/repository_data/hamecha");
-const { insertHunkFilePathLookup: brodalHunkData } = require("../__tests__data/repository_data/brodal_queue");
 
 // util helpers
 const {
@@ -45,52 +41,36 @@ beforeAll(async () => {
         const {
             createdWorkspaceId: workspaceId,
             repositoryIds,
-        } = await createWorkspace(["kgodara-testing/brodal_queue", "kgodara-testing/hamecha"]);
+        } = await createWorkspace(["kgodara-testing/doc-app"]);
 
         const workspace = { workspaceId, repositoryIds };
 
         console.log("Saving Workspace: ");
         console.log(JSON.stringify(workspace));
 
-        process.env.TEST_INSERT_HUNK_CREATE_WORKSPACE = JSON.stringify(workspace);
+        process.env.TEST_LARGE_REPOSITORY_WORKSPACE = JSON.stringify(workspace);
     }
     catch (err) {
         console.log(err);
     }
 });
 
-describe ("Test InsertHunk Creation", () => {
+describe("Test Workspace Large Repository Creation", () => {
     let backendClient;
 
     beforeEach(() => {
         backendClient = api.requestTestingUserBackendClient();
     });
-    
-    test("createInsertHunksForRepository: correct number of InsertHunks created for each file path in Repositories ", async () => {
 
-        const workspace = JSON.parse(process.env.TEST_INSERT_HUNK_CREATE_WORKSPACE);
-
-        var foundDocumentNum;
-
-        for (const [key, value] of Object.entries(hamechaHunkData)) {
-            foundDocumentNum = await InsertHunk.countDocuments({repository: workspace.repositoryIds[1],filePath: key});
-            expect(foundDocumentNum).toEqual(value.count);
-        }
-
-        for (const [key, value] of Object.entries(brodalHunkData)) {
-            foundDocumentNum = await InsertHunk.countDocuments({repository: workspace.repositoryIds[0], filePath: key});
-            expect(foundDocumentNum).toEqual(value.count);
-        }
-
+    test("beforeAll worked", async () => {
+        expect(1).toEqual(1);
     });
-
-
 
 });
 
 
 afterAll(async () => {
-    const workspace = JSON.parse(process.env.TEST_INSERT_HUNK_CREATE_WORKSPACE);
+    const workspace = JSON.parse(process.env.TEST_LARGE_REPOSITORY_WORKSPACE);
 
     await deleteWorkspace(workspace.workspaceId);
 

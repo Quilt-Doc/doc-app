@@ -3,9 +3,9 @@
 const mongoose = require("mongoose")
 const { ObjectId } = mongoose.Types;
 
-const {serializeError, deserializeError} = require('serialize-error');
+const { serializeError, deserializeError } = require('serialize-error');
 
-var LinkHeader = require( 'http-link-header' );
+var LinkHeader = require('http-link-header');
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
@@ -13,42 +13,54 @@ const { fetchAllRepoBranchesAPI, enrichBranchesAndPRs, enhanceBranchesWithPRMong
 const { fetchAllRepoPRsAPI, enrichPRsWithFileList, insertPRsFromAPI } = require('./github/pr_utils');
 const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github/commit_utils');
 
+const Sentry = require("@sentry/node");
+
 const { at } = require("lodash");
 
 const { cloneInstallationRepo } = require('./github/cli_utils');
 
 
 
-const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, repoDiskPath, worker) => {
+const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, repoDiskPath) => {
 
 
     // Fetch all branches and PRs from Github
     var foundPRList;
     try {
-        foundPRList = await fetchAllRepoPRsAPI(installationClient, installationId, repositoryObj.fullName, worker);
+        foundPRList = await fetchAllRepoPRsAPI(installationClient, installationId, repositoryObj.fullName);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching all repo PRs - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scrapeGithubRepoCommitsMixed'}
-                            });
-        throw Error(`Error fetching all repo PRs - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
+
+        console.log(err);
+
+        Sentry.setContext("scrapeGithubRepoCodeObjects", {
+            message: `Error fetching all repo PRs`,
+            installationId: installationId,
+            repositoryFullName: repositoryObj.fullName,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
     }
 
     var foundBranchList;
     try {
-        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryObj.fullName, worker);
+        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryObj.fullName);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scrapeGithubRepoCommitsMixed'}
-                            });
-        throw Error(`Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
+
+        console.log(err);
+
+        Sentry.setContext("scrapeGithubRepoCodeObjects", {
+            message: `Error fetching all repo branches`,
+            installationId: installationId,
+            repositoryFullName: repositoryObj.fullName,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
     }
 
 
@@ -56,16 +68,23 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     if (foundBranchList.length > 0) {
         // Enrich Branches and PRs (attach their identifiers to each other, e.g. attach prObjIds to branches) based on each respective list
         try {
-            [foundBranchList, foundPRList] = await enrichBranchesAndPRs(foundBranchList, foundPRList, installationId, repositoryId, worker);
+            [foundBranchList, foundPRList] = await enrichBranchesAndPRs(foundBranchList, foundPRList, installationId, repositoryId);
         }
         catch (err) {
-            await worker.send({action: 'log', info: {level: 'error',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error enrichingBranchesAndPRs - installationId, repositoryId, foundBranchList.length, foundPRList.length: ${installationId}, ${repositoryId}, ${foundBranchList.length}, ${foundPRList.length}`,
-                                                        source: 'worker-instance',
-                                                        function: 'scrapeGithubRepoCommitsMixed'}
-                                });
-            throw Error(`Error enrichingBranchesAndPRs - installationId, repositoryId, foundBranchList.length, foundPRList.length: ${installationId}, ${repositoryId}, ${foundBranchList.length}, ${foundPRList.length}`);
+
+            console.log(err);
+
+            Sentry.setContext("scrapeGithubRepoCodeObjects", {
+                message: `Error enrichingBranchesAndPRs`,
+                installationId: installationId,
+                repositoryId: repositoryId,
+                foundBranchListLength: foundBranchList.length,
+                foundPRListLength: foundPRList.length,
+            });
+
+            Sentry.captureException(err);
+
+            throw err;
         }
     }
 
@@ -73,16 +92,22 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     if (foundPRList.length > 0) {
         // Query from Github & set fileList field on PRs
         try {
-            foundPRList = await enrichPRsWithFileList(foundPRList, installationClient, installationId, repositoryObj.fullName, worker);
+            foundPRList = await enrichPRsWithFileList(foundPRList, installationClient, installationId, repositoryObj.fullName);
         }
         catch (err) {
-            await worker.send({action: 'log', info: {level: 'error',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error enrichPRsWithFileList - installationId, repositoryObj.fullName, foundPRList.length: ${installationId}, ${repositoryObj.fullName}, ${foundPRList.length}`,
-                                                        source: 'worker-instance',
-                                                        function: 'scrapeGithubRepoCommitsMixed'}
-                                });
-            throw Error(`Error enrichPRsWithFileList - installationId, repositoryObj.fullName, foundPRList.length: ${installationId}, ${repositoryObj.fullName}, ${foundPRList.length}`);
+
+            console.log(err);
+
+            Sentry.setContext("scrapeGithubRepoCodeObjects", {
+                message: `Error enrichPRsWithFileList failed`,
+                installationId: installationId,
+                repositoryFullName: repositoryObj.fullName,
+                foundPRListLength: foundPRList.length,
+            });
+
+            Sentry.captureException(err);
+
+            throw err;
         }
     }
 
@@ -93,17 +118,22 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     if (foundBranchList.length > 0) {
 
         try {
-            branchToPRMappingList = await insertBranchesFromAPI(foundBranchList, installationId, repositoryId, worker);
+            branchToPRMappingList = await insertBranchesFromAPI(foundBranchList, installationId, repositoryId);
         }
         catch (err) {
-            await worker.send({action: 'log', info: {level: 'error',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error inserting Branches from API - foundBranchList.length, installationId, repositoryId: ${foundBranchList.length}, ${installationId}, ${repositoryId}`,
-                                                        source: 'worker-instance',
-                                                        function: 'scrapeGithubRepoCommitsMixed'}
+
+            console.log(err);
+
+            Sentry.setContext("scrapeGithubRepoCodeObjects", {
+                message: `Error inserting Branches from API`,
+                installationId: installationId,
+                repositoryId: repositoryId,
+                foundBranchListLength: foundBranchList.length,
             });
 
-            throw Error(`Error inserting Branches from API - foundBranchList.length, installationId, repositoryId: ${foundBranchList.length}, ${installationId}, ${repositoryId}`);
+            Sentry.captureException(err);
+
+            throw err;
         }
     }
 
@@ -113,17 +143,22 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         // Insert PRs with Branch ObjectsIds
 
         try {
-            prToBranchMapping = await insertPRsFromAPI(foundPRList, branchToPRMappingList, installationId, repositoryId, worker);
+            prToBranchMapping = await insertPRsFromAPI(foundPRList, branchToPRMappingList, installationId, repositoryId);
         }
         catch (err) {
-            await worker.send({action: 'log', info: {level: 'error',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error inserting PRs from API - foundPRList.length, installationId, repositoryId: ${foundPRList.length}, ${installationId}, ${repositoryId}`,
-                                                        source: 'worker-instance',
-                                                        function: 'scrapeGithubRepoCommitsMixed'}
+
+            console.log(err);
+
+            Sentry.setContext("scrapeGithubRepoCodeObjects", {
+                message: `Error inserting PRs from API`,
+                installationId: installationId,
+                repositoryId: repositoryId,
+                foundPRListLength: foundPRList.length,
             });
 
-            throw Error(`Error inserting PRs from API - foundPRList.length, installationId, repositoryId: ${foundPRList.length}, ${installationId}, ${repositoryId}`);
+            Sentry.captureException(err);
+
+            throw err;
         }
     }
 
@@ -131,17 +166,22 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     if (prToBranchMapping.length > 0) {
         // Add PullRequest ObjectIds to Branch Objects
         try {
-            await enhanceBranchesWithPRMongoIds(prToBranchMapping, installationId, repositoryId, worker);
+            await enhanceBranchesWithPRMongoIds(prToBranchMapping, installationId, repositoryId);
         }
         catch (err) {
-            await worker.send({action: 'log', info: {level: 'error',
-                                                        message: serializeError(err),
-                                                        errorDescription: `Error updating Branch Objects to have PullRequest ids- prToBranchMapping.length, installationId, repositoryId: ${prToBranchMapping.length}, ${installationId}, ${repositoryId}`,
-                                                        source: 'worker-instance',
-                                                        function: 'scrapeGithubRepoCommitsMixed'}
+
+            console.log(err);
+
+            Sentry.setContext("scrapeGithubRepoCodeObjects", {
+                message: `Error updating Branch Objects to have PullRequest ids`,
+                installationId: installationId,
+                repositoryId: repositoryId,
+                prToBranchMappingLength: prToBranchMapping.length,
             });
 
-            throw Error(`Error updating Branch Objects to have PullRequest ids- prToBranchMapping.length, installationId, repositoryId: ${prToBranchMapping.length}, ${installationId}, ${repositoryId}`);
+            Sentry.captureException(err);
+
+            throw err;
         }
     }
 
@@ -151,19 +191,26 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching all repo commits - installationId, repositoryId, repoDiskPath: ${installationId}, ${repositoryObj._id.toString()}, ${repoDiskPath}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scrapeGithubRepoCommitsMixed'}
-                            });
-        throw Error(`Error fetching all repo commits - installationId, repositoryId, repoDiskPath: ${installationId}, ${repositoryObj._id.toString()}, ${repoDiskPath}`);
+
+        console.log(err);
+
+        Sentry.setContext("scrapeGithubRepoCodeObjects", {
+            message: `Error fetching all repo commits`,
+            installationId: installationId,
+            repositoryId: repositoryId,
+            repoDiskPath: repoDiskPath,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
+
     }
 
 
 
     // Associate Commits with PullRequests and Branches
-    
+
 
 
     var insertedCommitsCLI;
@@ -171,20 +218,26 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error inserting Commits from CLI - foundCommitList.length, installationId, repositoryId: ${foundBrafoundCommitListnchList.length}, ${installationId}, ${repositoryId}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scrapeGithubRepoCommitsMixed'}
+
+        console.log(err);
+
+        Sentry.setContext("scrapeGithubRepoCodeObjects", {
+            message: `Error inserting Commits from CLI`,
+            installationId: installationId,
+            repositoryId: repositoryId,
+            foundCommitListLength: foundCommitList.length,
         });
 
-        throw Error(`Error inserting Branches from API - foundCommitList.length, installationId, repositoryId: ${foundCommitList.length}, ${installationId}, ${repositoryId}`);
+        Sentry.captureException(err);
+
+        throw err;
+
     }
 
 
     // git rev-list --all --min-parents=2 --date=iso --format=%H%n%cd%n%T%n%an%n%cn%n%ce%n%s$n%P$%n%D%n
-    
-    
+
+
 
 }
 

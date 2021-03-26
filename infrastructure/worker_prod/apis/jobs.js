@@ -1,85 +1,78 @@
-const apis = require('./api');
+const apis = require("./api");
 const sqs = apis.requestSQSServiceObject();
-
-const logger = require('../logging/index').logger;
 
 const queueUrl = process.env.JOB_QUEUE_URL;
 
-const dispatchScanRepositoriesJob = async (jobData) => {
+const dispatchScanRepositoriesJob = async jobData => {
+  var timestamp = Date.now().toString();
 
-    var timestamp = Date.now().toString();
+  var sqsScanData = {
+    MessageAttributes: {},
+    MessageBody: JSON.stringify(jobData),
+    // MessageDeduplicationId: timestamp,
+    MessageGroupId: jobData.repositoryIdList.toString(),
+    QueueUrl: queueUrl
+  };
 
-    var sqsScanData = {
-        MessageAttributes: {},
-        MessageBody: JSON.stringify(jobData),
-        // MessageDeduplicationId: timestamp,
-        MessageGroupId: jobData.repositoryIdList.toString(),
-        QueueUrl: queueUrl
-    };
+  // Send the scan data to the SQS queue
+  try {
+    await sqs.sendMessage(sqsScanData).promise();
+  } catch (err) {
+    console.log(
+      `Error sending SQS message to scan repositories jobData: ${JSON.stringify(
+        jobData
+      )}`
+    );
+    throw err;
+  }
+};
 
-    // Send the scan data to the SQS queue
-    try {
-        await sqs.sendMessage(sqsScanData).promise();
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error sending SQS message to scan repositories jobData: ${JSON.stringify(jobData)}`,
-                                function: 'dispatchScanRepositoriesJob'});
-        throw err;
-    }
-}
+const dispatchUpdateReferencesJob = async jobData => {
+  var timestamp = Date.now().toString();
 
-  
-const dispatchUpdateReferencesJob = async (jobData) => {
+  var sqsReferenceData = {
+    MessageAttributes: {},
+    MessageBody: JSON.stringify(jobData),
+    // MessageDeduplicationId: timestamp,
+    MessageGroupId: jobData.fullName.toString(),
+    QueueUrl: queueUrl
+  };
 
-    var timestamp = Date.now().toString();
+  // Send the update data to the SQS queue
+  try {
+    await sqs.sendMessage(sqsReferenceData).promise();
+  } catch (err) {
+    console.log(
+      `Error sending SQS message to update references jobData: ${JSON.stringify(
+        jobData
+      )}`
+    );
+    throw err;
+  }
+};
 
-    var sqsReferenceData = {
-        MessageAttributes: {},
-        MessageBody: JSON.stringify(jobData),
-        // MessageDeduplicationId: timestamp,
-        MessageGroupId: jobData.fullName.toString(),
-        QueueUrl: queueUrl
-    };
+const dispatchUpdateChecksJob = async jobData => {
+  var timestamp = Date.now().toString();
 
-    // Send the update data to the SQS queue
-    try {
-        await sqs.sendMessage(sqsReferenceData).promise();
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error sending SQS message to update references jobData: ${JSON.stringify(jobData)}`,
-                                function: 'dispatchUpdateReferencesJob'});
-        throw err;
-    }
-}
+  var sqsCheckData = {
+    MessageAttributes: {},
+    MessageBody: JSON.stringify(jobData),
+    // MessageDeduplicationId: timestamp,
+    MessageGroupId: jobData.repositoryId.toString(),
+    QueueUrl: queueUrl
+  };
 
-const dispatchUpdateChecksJob = async (jobData) => {
-
-    var timestamp = Date.now().toString();
-
-    var sqsCheckData = {
-        MessageAttributes: {},
-        MessageBody: JSON.stringify(jobData),
-        // MessageDeduplicationId: timestamp,
-        MessageGroupId: jobData.repositoryId.toString(),
-        QueueUrl: queueUrl
-    };
-
-    // Send the update data to the SQS queue
-    try {
-        await sqs.sendMessage(sqsCheckData).promise();
-    }
-    catch (err) {
-        await logger.error({source: 'backend-api', message: err,
-                                errorDescription: `Error sending SQS message to update Checks jobData: ${JSON.stringify(jobData)}`,
-                                function: 'dispatchUpdateChecksJob'});
-        throw err;
-    }
-}
+  // Send the update data to the SQS queue
+  try {
+    await sqs.sendMessage(sqsCheckData).promise();
+  } catch (err) {
+    console.log(`Error sending SQS message to update Checks jobData: ${JSON.stringify(jobData)}`);
+    throw err;
+  }
+};
 
 module.exports = {
-    dispatchScanRepositoriesJob,
-    dispatchUpdateReferencesJob,
-    dispatchUpdateChecksJob
-}
+  dispatchScanRepositoriesJob,
+  dispatchUpdateReferencesJob,
+  dispatchUpdateChecksJob
+};
