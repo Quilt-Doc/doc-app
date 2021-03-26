@@ -9,11 +9,11 @@ const errorsFormat = errors({ stack: true })
 var ElasticSearchTransport = require('./es_transport').ElasticSearchTransport;
 var setupESConnection = require('./es_transport').setupESConnection;
 
-var logger = undefined; 
+var logger = undefined;
 
 
 
-const validKeys = [ 'date', 'level', 'message', 'stack', 'source', 'function', 'errorDescription'];
+const validKeys = ['date', 'level', 'message', 'stack', 'source', 'function', 'errorDescription'];
 
 const objectKeyRemover = logform.format(info => {
 
@@ -24,28 +24,28 @@ const objectKeyRemover = logform.format(info => {
 
 if (process.env.IS_PRODUCTION) {
   logger = winston.createLogger({
-      levels: winston.config.syslog.levels,
-      transports: [
-        /*
-        new ElasticSearchTransport({
-          level: 'info',
-          format: winston.format.combine(
-            errors({ stack: true }),
-            objectKeyRemover(),
-            winston.format.json()
-          )
-        }),
-        */
-        new winston.transports.Console({
-          level: 'debug',
-          format: winston.format.combine(
-            errors({ stack: true }),
-            objectKeyRemover(),
-            winston.format.colorize(),
-            winston.format.simple()
-          )
-        })
-      ]
+    levels: winston.config.syslog.levels,
+    transports: [
+      /*
+      new ElasticSearchTransport({
+        level: 'info',
+        format: winston.format.combine(
+          errors({ stack: true }),
+          objectKeyRemover(),
+          winston.format.json()
+        )
+      }),
+      */
+      new winston.transports.Console({
+        level: 'debug',
+        format: winston.format.combine(
+          errors({ stack: true }),
+          objectKeyRemover(),
+          winston.format.colorize(),
+          winston.format.simple()
+        )
+      })
+    ]
   });
 }
 
@@ -67,6 +67,6 @@ else {
 }
 
 module.exports = {
-    logger,
-    setupESConnection
+  logger,
+  setupESConnection
 }

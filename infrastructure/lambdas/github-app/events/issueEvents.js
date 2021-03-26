@@ -71,9 +71,11 @@ const handleIssueEvent = async (backendClient, event, githubEvent, logger) => {
             }
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error creating Github Issue - createIssueData: ${JSON.stringify(createIssueData)}`,
-                                function: 'handler'});
+            await logger.error({
+                source: 'github-lambda', message: err,
+                errorDescription: `error creating Github Issue - createIssueData: ${JSON.stringify(createIssueData)}`,
+                function: 'handler'
+            });
 
             throw err;
         }
@@ -91,9 +93,11 @@ const handleIssueEvent = async (backendClient, event, githubEvent, logger) => {
             }
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error closing Github Issue - sourceId: ${sourceId}`,
-                                function: 'handler'});
+            await logger.error({
+                source: 'github-lambda', message: err,
+                errorDescription: `error closing Github Issue - sourceId: ${sourceId}`,
+                function: 'handler'
+            });
 
             throw err;
         }
@@ -110,9 +114,11 @@ const handleIssueEvent = async (backendClient, event, githubEvent, logger) => {
             }
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error deleting Github Issue - sourceId: ${sourceId}`,
-                                function: 'handler'});
+            await logger.error({
+                source: 'github-lambda', message: err,
+                errorDescription: `error deleting Github Issue - sourceId: ${sourceId}`,
+                function: 'handler'
+            });
 
             throw err;
         }
@@ -156,7 +162,7 @@ const handleProjectCardEvent = async (backendClient, event, githubEvent, logger)
         cardContentUrl = '';
     }
 
-    await 
+    // await 
 
 }
 

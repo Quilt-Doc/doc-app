@@ -28,11 +28,11 @@ const { serializeError, deserializeError } = require("serialize-error");
 let db = mongoose.connection;
 
 const fetchRepositoriesFromIdList = async (repositoryIdList, selectionString) => {
-    
+
     var repositoryObjList;
 
     try {
-        repositoryObjList = await Repository.find({_id: { $in: repositoryIdList}}, selectionString).lean().exec();
+        repositoryObjList = await Repository.find({ _id: { $in: repositoryIdList } }, selectionString).lean().exec();
     }
     catch (err) {
 
@@ -55,7 +55,7 @@ const fetchJiraIssuesFromIdList = async (jiraIssueIdList) => {
     var jiraIssueObjList;
 
     try {
-        jiraIssueObjList = await IntegrationTicket.find({_id: { $in: jiraIssueIdList}}).lean().exec();
+        jiraIssueObjList = await IntegrationTicket.find({ _id: { $in: jiraIssueIdList } }).lean().exec();
     }
     catch (err) {
 
@@ -214,12 +214,12 @@ const createJiraIssueIntervals = async (insertedIssueIds) => {
 function flatten(items) {
     const flat = [];
     items.map(item => {
-      flat.push(item)
-      if (Array.isArray(item.content) && item.content.length > 0) {
-        flat.push(...flatten(item.content));
+        flat.push(item)
+        if (Array.isArray(item.content) && item.content.length > 0) {
+            flat.push(...flatten(item.content));
+            delete item.content
+        }
         delete item.content
-      }
-      delete item.content
     });
     return flat;
 }
@@ -233,7 +233,7 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
 
     var attachmentsToCreate = [];
 
-    var issueDevelopmentInfoRequests = scrapedIssues.map( async (issueObj) => {
+    var issueDevelopmentInfoRequests = scrapedIssues.map(async (issueObj) => {
 
         var foundAttachments = [];
 
@@ -241,10 +241,10 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
         var issueCommitInfoResponse;
         try {
             issueCommitInfoResponse = await axios.get(`https://api.atlassian.com/ex/jira/${issueObj.cloudId}/rest/dev-status/latest/issue/detail?issueId=${issueObj.sourceId}&applicationType=GitHub&dataType=repository`,
-                                                            // { headers: { Authorization: `Basic ${base64Credentials}` } }
-                                                            { auth: { username: jiraEmailAddress, password: personalAccessToken } }
+                // { headers: { Authorization: `Basic ${base64Credentials}` } }
+                { auth: { username: jiraEmailAddress, password: personalAccessToken } }
 
-                                                            );
+            );
         }
         catch (err) {
 
@@ -255,7 +255,7 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
                 personalAccessToken: personalAccessToken,
                 cloudId: issueObj.cloudId,
             });
-    
+
             Sentry.captureException(err);
 
             return {
@@ -316,9 +316,9 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
         var issueBranchInfoResponse;
         try {
             issueBranchInfoResponse = await axios.get(`https://api.atlassian.com/ex/jira/${issueObj.cloudId}/rest/dev-status/latest/issue/detail?issueId=${issueObj.sourceId}&applicationType=GitHub&dataType=branch`,
-                                                            // { headers: { Authorization: `Bearer ${personalAccessToken}` } }
-                                                            { auth: { username: jiraEmailAddress, password: personalAccessToken } }
-                                                            );
+                // { headers: { Authorization: `Bearer ${personalAccessToken}` } }
+                { auth: { username: jiraEmailAddress, password: personalAccessToken } }
+            );
         }
         catch (err) {
 
@@ -329,7 +329,7 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
                 personalAccessToken: personalAccessToken,
                 cloudId: issueObj.cloudId,
             });
-    
+
             Sentry.captureException(err);
 
             return {
@@ -356,7 +356,7 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
         issueBranchInfoResponse = issueBranchInfoResponse.data;
         // console.log("issueBranchInfoResponse: ");
         // console.log(issueBranchInfoResponse);
-        
+
         if (issueBranchInfoResponse.detail) {
             // Add Branch Attachments
             var currentDetailObj;
@@ -391,7 +391,7 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
                 }
             }
 
-            
+
 
             // Add PullRequest Attachments
             if (issueBranchInfoResponse.detail) {
@@ -420,7 +420,7 @@ const generateDirectAttachmentsFromIssues = async (scrapedIssues, personalAccess
                                 if (!currentPRObj.url.includes("/pull")) {
                                     continue;
                                 }
-   
+
 
                                 currentRepositoryUrl = currentPRObj.url.substring(0, currentPRObj.url.indexOf("/pull"));
                                 repositoryObjIndex = repositoryObjList.findIndex(obj => obj.htmlUrl == currentRepositoryUrl);
@@ -558,7 +558,7 @@ const fetchIntegrationAttachments = async (
 
     var repositoryIdList = attachmentsToCreate.filter(attachmentObj => attachmentObj.hasOwnProperty("repository"));
     if (repositoryIdList.length > 0) {
-        repositoryIdList = [ ...new Set(repositoryIdList.map(obj => obj.repository)) ];
+        repositoryIdList = [...new Set(repositoryIdList.map(obj => obj.repository))];
     }
 
     console.log("fetchIntegrationAttachments - repositoryIdList: ");
@@ -921,7 +921,7 @@ const generateAssociationsFromResults = async (workspaceId, projectIdList, succe
 
     var i = 0;
     for (i = 0; i < successResults.length; i++) {
-        createAssociationData.push({ _id: successResults[i].integrationBoardId, repositories: [ successResults[i].repositoryId ] });
+        createAssociationData.push({ _id: successResults[i].integrationBoardId, repositories: [successResults[i].repositoryId] });
     }
 
     var backendClient = apis.requestBackendClient();
@@ -1003,17 +1003,7 @@ const importJiraIssues = async () => {
             }
             /*
             if (idx < 1) {
-                await worker.send({
-                    action: "log",
-                    info: {
-                        level: "info",
-                        message: `issueListResponse.data.issues: ${JSON.stringify(
-                            issueListResponse.data.issues
-                        )}`,
-                        source: "worker-instance",
-                        function: "importJiraIssues",
-                    },
-                });
+                console.log(`issueListResponse.data.issues: ${JSON.stringify(issueListResponse.data.issues)}`);
             }
             */
             return {
@@ -1030,18 +1020,7 @@ const importJiraIssues = async () => {
     try {
         issueListResults = await Promise.allSettled(issueSearchRequestList);
     } catch (err) {
-        await worker.send({
-            action: "log",
-            info: {
-                level: "error",
-                source: "worker-instance",
-                message: serializeError(err),
-                errorDescription: `Error fetching issue list - insertedJiraProjects: ${JSON.stringify(
-                    insertedJiraProjects
-                )}`,
-                function: "importJiraIssues",
-            },
-        });
+        console.log(`Error fetching issue list - insertedJiraProjects: ${JSON.stringify(insertedJiraProjects)}`);
         throw err;
     }
 
@@ -1061,8 +1040,8 @@ const importJiraIssues = async () => {
         var newTickets = promiseObj.value.issueData.map((issueObj) => {
             var isResolved =
                 issueObj.fields.resolution &&
-                issueObj.fields.resolution != null &&
-                issueObj.fields.resolution != "null"
+                    issueObj.fields.resolution != null &&
+                    issueObj.fields.resolution != "null"
                     ? true
                     : false;
             return {
@@ -1107,18 +1086,7 @@ const importJiraIssues = async () => {
                 bulkInsertResult.insertedIds
             ).map((id) => id.toString());
         } catch (err) {
-            await worker.send({
-                action: "log",
-                info: {
-                    level: "error",
-                    source: "worker-instance",
-                    message: serializeError(err),
-                    errorDescription: `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
-                        jiraTicketList
-                    )}`,
-                    function: "importJiraIssues",
-                },
-            });
+            console.log(`Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(jiraTicketList)}`);
 
             throw new Error(
                 `Error bulk inserting Jira Tickets - jiraTicketList: ${JSON.stringify(
@@ -1139,9 +1107,9 @@ const importJiraIssues = async () => {
                 message: `fetchJiraIssuesFromIdList failed`,
                 numIssueIds: newIssueIds.length,
             });
-    
+
             Sentry.captureException(err);
-    
+
             throw err;
         }
 
@@ -1153,7 +1121,7 @@ const importJiraIssues = async () => {
         var repositoryIdList = jiraProjects.map(idPair => idPair.repositoryIds);
         repositoryIdList = repositoryIdList.flat();
         repositoryIdList = repositoryIdList.map(id => id.toString());
-        repositoryIdList = [ ...new Set(repositoryIdList) ];
+        repositoryIdList = [...new Set(repositoryIdList)];
 
 
         var repositoryObjList;
@@ -1167,9 +1135,9 @@ const importJiraIssues = async () => {
                 message: `fetchRepositoriesFromIdList failed`,
                 repositoryIdList: repositoryIdList,
             });
-    
+
             Sentry.captureException(err);
-    
+
             throw err;
         }
 
@@ -1181,12 +1149,12 @@ const importJiraIssues = async () => {
 
         console.log("personalAccessToken: ", personalAccessToken);
 
-        
+
         if (personalAccessToken && jiraEmailAddress) {
             // Create Attachments
             var attachmentsToCreate;
             try {
-                attachmentsToCreate = await generateDirectAttachmentsFromIssues(scrapedIssues, personalAccessToken, jiraEmailAddress, repositoryObjList );
+                attachmentsToCreate = await generateDirectAttachmentsFromIssues(scrapedIssues, personalAccessToken, jiraEmailAddress, repositoryObjList);
             }
             catch (err) {
                 console.log(err);
@@ -1197,9 +1165,9 @@ const importJiraIssues = async () => {
                     numRepositories: repositoryObjList.length,
                     personalAccessToken: personalAccessToken,
                 });
-        
+
                 Sentry.captureException(err);
-        
+
                 throw err;
             }
         }
@@ -1209,7 +1177,7 @@ const importJiraIssues = async () => {
 
         // insertIntegrationAttachments
         try {
-            await insertIntegrationAttachments( attachmentsToCreate );
+            await insertIntegrationAttachments(attachmentsToCreate);
         }
         catch (err) {
             console.log(err);
@@ -1218,16 +1186,16 @@ const importJiraIssues = async () => {
                 message: `insertIntegrationAttachments failed`,
                 numAttachments: attachmentsToCreate.length,
             });
-    
+
             Sentry.captureException(err);
-    
+
             throw err;
         }
 
         // fetchIntegrationAttachments
         var insertedAttachments;
         try {
-            insertedAttachments = await fetchIntegrationAttachments( attachmentsToCreate );
+            insertedAttachments = await fetchIntegrationAttachments(attachmentsToCreate);
         }
         catch (err) {
             console.log(err);
@@ -1236,17 +1204,17 @@ const importJiraIssues = async () => {
                 message: `fetchIntegrationAttachments failed`,
                 numAttachments: attachmentsToCreate.length,
             });
-    
+
             Sentry.captureException(err);
-    
+
             throw err;
         }
 
-        
+
         // addAttachmentsToIntegrationTickets
         var insertedAttachments;
         try {
-            insertedAttachments = await addAttachmentsToIntegrationTickets( insertedAttachments );
+            insertedAttachments = await addAttachmentsToIntegrationTickets(insertedAttachments);
         }
         catch (err) {
             console.log(err);
@@ -1255,14 +1223,14 @@ const importJiraIssues = async () => {
                 message: `addAttachmentsToIntegrationTickets failed`,
                 numAttachments: insertedAttachments.length,
             });
-    
+
             Sentry.captureException(err);
-    
+
             throw err;
         }
 
         // Map jiraProjects[{sourceId, repositoryIds}] to [{ |insertedJiraProjects.sourceId == sourceId|._id, repositoryIds  }]
-        var finalProjectRepositoryMapping = jiraProjects.map( idPair => {
+        var finalProjectRepositoryMapping = jiraProjects.map(idPair => {
             var insertedProjectIdx = insertedJiraProjects.findIndex(projectObj => projectObj.sourceId == idPair.sourceId);
             if (insertedProjectIdx < 0) {
                 return undefined;
@@ -1299,7 +1267,7 @@ const importJiraIssues = async () => {
                     };
                 }
             );
-    
+
             // mongoose bulkwrite for one many update db call
             try {
                 await IntegrationBoard.bulkWrite(bulkUpdateIntegrationBoardOps);
@@ -1328,7 +1296,7 @@ const importJiraIssues = async () => {
         if (finalProjectRepositoryMapping.length > 0) {
             var boardsToAdd = finalProjectRepositoryMapping.map(obj => obj._id.toString());
             try {
-                await Workspace.findOneAndUpdate({ _id: workspaceId }, { $push: { boards: boardsToAdd.map( boardId => ObjectId(boardId.toString()) ) } });
+                await Workspace.findOneAndUpdate({ _id: workspaceId }, { $push: { boards: boardsToAdd.map(boardId => ObjectId(boardId.toString())) } });
             }
             catch (err) {
                 console.log(err);
@@ -1344,15 +1312,15 @@ const importJiraIssues = async () => {
 
 
 
-        /*
-        // Create Integration Intervals for Issues
-        try {
-            await createJiraIssueIntervals(newIssueIds);
-        } catch (err) {
-            console.log(err);
-            throw Error(`Error creating Jira Issue IntegrationIntervals`);
-        }
-        */
+/*
+// Create Integration Intervals for Issues
+try {
+    await createJiraIssueIntervals(newIssueIds);
+} catch (err) {
+    console.log(err);
+    throw Error(`Error creating Jira Issue IntegrationIntervals`);
+}
+*/
 
 
 module.exports = {

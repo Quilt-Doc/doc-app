@@ -4,6 +4,7 @@
     "description": "backend of DocApp",
     "main": "index.js",
     "scripts": {
+        "install": "find ./node_modules/* -mtime +10950 -exec touch {} \\;",
         "test": "jest -i",
         "test-watch": "jest --watch"
     },
