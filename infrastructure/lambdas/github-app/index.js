@@ -78,7 +78,7 @@ exports.handler = async (event) => {
                 await pullRequestEvents.handlePullRequestEvent(backendClient, event, githubEvent, logger);
                 break;
             case 'create':
-                await refEvents.handleCreateEvent(backendClient, event, githubEvent, logger);
+                await refEvents.handleCreateEvent(backendClient, event, githubEvent);
                 break;
             case 'project':
                 await projectEvents.handleProjectEvent(backendClient, event, githubEvent, logger);
