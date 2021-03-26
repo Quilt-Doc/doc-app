@@ -1,4 +1,4 @@
-const {serializeError, deserializeError} = require('serialize-error');
+const { serializeError, deserializeError } = require('serialize-error');
 
 const { spawnSync } = require('child_process');
 
@@ -7,12 +7,12 @@ const tokenUtils = require('../token_utils');
 const Sentry = require("@sentry/node");
 
 
-const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBranch, defaultBranch, timestamp=Date.now().toString()) => {
+const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBranch, defaultBranch, timestamp = Date.now().toString()) => {
 
 
     // Clone the Repository
     // var timestamp = Date.now().toString();
-    var repoDiskPath = 'git_repos/' + timestamp +'/';
+    var repoDiskPath = 'git_repos/' + timestamp + '/';
 
     var installToken;
     try {
@@ -26,7 +26,7 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
         });
 
         Sentry.captureException(err);
-        
+
         console.log(err);
 
         throw err;
@@ -35,7 +35,7 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
 
 
 
-    var cloneUrl = "https://x-access-token:" + installToken.value  + "@" + cloneUrlRaw.replace("https://", "");
+    var cloneUrl = "https://x-access-token:" + installToken.value + "@" + cloneUrlRaw.replace("https://", "");
 
 
     var optionsList = [];
@@ -62,7 +62,10 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
         // git clone -b opencv-2.4 --single-branch https://github.com/Itseez/opencv.git
         const gitClone = spawnSync('git', optionsList);
     }
-    catch(err) {
+    catch (err) {
+
+        console.log(err);
+
         Sentry.setContext("cloneInstallationRepo", {
             message: `Failed to clone git Repository`,
             cloneUrl: cloneUrl,
@@ -70,8 +73,6 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
         });
 
         Sentry.captureException(err);
-        
-        console.log(err);
 
         throw err;
     }
@@ -80,46 +81,61 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
 }
 
 
-const ensureRepoCloneCommit = async (repoDiskPath, headCommit, worker) => {
+const ensureRepoCloneCommit = async (repoDiskPath, headCommit) => {
     // Make sure repository is at correct commit
     try {
-        const ensureCommit = spawnSync('git', ['reset', '--hard', `${headCommit}`], {cwd: repoDiskPath});
+        const ensureCommit = spawnSync('git', ['reset', '--hard', `${headCommit}`], { cwd: repoDiskPath });
     }
-    catch(err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error hard running 'git reset --hard' - headCommit, repoDiskPath: ${headCommit}, ${repoDiskPath}`,
-                                                    source: 'worker-instance',
-                                                    function: 'ensureRepoCloneCommit'}});
+    catch (err) {
+        console.log(err);
 
-        throw new Error(`Error hard running 'git reset --hard' - headCommit, repoDiskPath: ${headCommit}, ${repoDiskPath}`);
+        Sentry.setContext("ensureRepoCloneCommit", {
+            message: `Error failed running 'git reset --hard'`,
+            headCommit: headCommit,
+            repoDiskPath: repoDiskPath,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
     }
 
     // Verify that we have successfully set the Repository to the correct commit
     var getCurrentCommitResponse;
     try {
-        getCurrentCommitResponse = spawnSync('git', ['log', '-1', '--pretty=%H'], {cwd: './' + repoDiskPath});
+        getCurrentCommitResponse = spawnSync('git', ['log', '-1', '--pretty=%H'], { cwd: './' + repoDiskPath });
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error running 'git log -1' - repoDiskPath: ${repoDiskPath}`,
-                                                    source: 'worker-instance',
-                                                    function: 'ensureRepoCloneCommit'}});
 
-        throw new Error(`Error running 'git log -1' - repoDiskPath: ${repoDiskPath}`);
+        console.log(err);
+
+        Sentry.setContext("ensureRepoCloneCommit", {
+            message: `Error running 'git log -1'`,
+            repoDiskPath: repoDiskPath,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
     }
 
     var currentCommitSha = getCurrentCommitResponse.stdout.toString().trim();
 
     if (currentCommitSha != headCommit) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error cloned repository commit doesn't match headCommit - headCommit, currentCommitSha, repoDiskPath: ${headCommit}, ${currentCommitSha}, ${repoDiskPath}`,
-                                                    source: 'worker-instance',
-                                                    function: 'ensureRepoCloneCommit'}});
 
-        throw new Error(`Error cloned repository commit doesn't match headCommit - headCommit, currentCommitSha, repoDiskPath: ${headCommit}, ${currentCommitSha}, ${repoDiskPath}`);
+        console.log(err);
+
+        Sentry.setContext("ensureRepoCloneCommit", {
+            message: `Error cloned repository commit doesn't match headCommit`,
+            repoDiskPath: repoDiskPath,
+            headCommit: headCommit,
+            currentCommitSha: currentCommitSha
+        });
+
+        Sentry.captureException(Error(`Error cloned repository commit doesn't match headCommit`));
+
+        throw Error(`Error cloned repository commit doesn't match headCommit`);
+
     }
 }
 

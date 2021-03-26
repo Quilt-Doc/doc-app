@@ -1,5 +1,5 @@
 
-const {serializeError, deserializeError} = require('serialize-error');
+const { serializeError, deserializeError } = require('serialize-error');
 
 const Commit = require('../../models/Commit');
 const Repository = require('../../models/Repository');
@@ -15,21 +15,26 @@ const Sentry = require("@sentry/node");
 
 // KARAN TODO: Why doesn't the Branch listing endpoint return a Link header or a meta object in the response?
 // ISSUE: Each branch contains a complete history of all of the commits which causes lots of issues
-const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, worker) => {
+const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId) => {
 
     // var timestamp = new Date().toISOString();
 
     var foundBranchList;
     try {
-        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, repositoryObj.fullName, worker);
+        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, repositoryObj.fullName);
     }
     catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Error fetching all repo branches - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scrapeGithubRepoCommitsAPI'}
-                            });
+
+        console.log(err);
+
+        Sentry.setContext("scrapeGithubRepoCommitsAPI", {
+            message: `Error fetching all repo branches`,
+            installationId: installationId,
+            repositoryFullName: repositoryObj.fullName,
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
 
@@ -38,7 +43,7 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
     perPage = 100;
 
     // GET /repos/{owner}/{repo}/commits
-    var listCommitRequestList = foundBranchList.map( async (branchObj) => {
+    var listCommitRequestList = foundBranchList.map(async (branchObj) => {
 
         var commitPageNum = 0;
         var commitsPerPage = 100;
@@ -54,60 +59,26 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
                 commitListResponse = await installationClient.get(`/repos/${repositoryObj.fullName}/commits?sha=${branchObj.name}&page=${commitPageNum}&per_page=${commitsPerPage}`);
             }
             catch (err) {
-                await worker.send({action: 'log', info: {level: 'error',
-                                                            message: serializeError(err),
-                                                            errorDescription: `Github API List Commits failed - installationId, repositoryObj.fullName, branchName: ${installationId}, ${repositoryObj.fullName}, ${foundBranchList[0].name}`,
-                                                            source: 'worker-instance',
-                                                            function: 'scrapeGithubRepoCommitsAPI'}});
-                                                            console.log(err);
-                return {error: 'Error', branchName: branchObj.name};
+
+                console.log(err);
+                return { error: 'Error', branchName: branchObj.name };
                 // throw new Error(`Github API List Commits failed - installationId, repositoryObj.fullName, branchName: ${installationId}, ${repositoryObj.fullName}, ${foundBranchList[0].name}`);
             }
 
             if (!commitListResponse.headers.link) {
                 pageNum = lastPageNum;
             }
-            
+
             else {
                 var link = LinkHeader.parse(commitListResponse.headers.link);
 
-                await worker.send({action: 'log', info: {
-                    level: 'info',
-                    message: `commitListResponse.headers.link: ${JSON.stringify(link)}`,
-                    source: 'worker-instance',
-                    function: 'scrapeGithubRepoCommitsAPI',
-                }});
+                console.log(`commitListResponse.headers.link: ${JSON.stringify(link)}`);
 
 
                 var i;
                 for (i = 0; i < link.refs.length; i++) {
                     if (link.refs[i].rel == 'last') {
-                        /*
-                        await worker.send({action: 'log', info: {
-                            level: 'info',
-                            message: `found last ref - link.refs[i]: ${JSON.stringify(link.refs[i])}`,
-                            source: 'worker-instance',
-                            function: 'scrapeGithubRepoCommits',
-                        }});
-                        */
-
                         searchString = parseUrl(link.refs[i].uri).search;
-
-                        /*
-                        await worker.send({action: 'log', info: {
-                            level: 'info',
-                            message: `last ref searchString - searchString: ${searchString}`,
-                            source: 'worker-instance',
-                            function: 'scrapeGithubRepoCommits',
-                        }});
-                        
-                        await worker.send({action: 'log', info: {
-                            level: 'info',
-                            message: `parsed searchString - queryString.parse(searchString): ${JSON.stringify(queryString.parse(searchString))}`,
-                            source: 'worker-instance',
-                            function: 'scrapeGithubRepoCommits',
-                        }});
-                        */
 
                         lastPageNum = queryString.parse(searchString).page;
                         break;
@@ -115,12 +86,7 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
                 }
             }
 
-            await worker.send({action: 'log', info: {
-                level: 'info',
-                message: `commitListResponse - lastPageNum, searchString: ${lastPageNum}, ${searchString}`,
-                source: 'worker-instance',
-                function: 'scrapeGithubRepoCommitsAPI',
-            }});
+            console.log(`commitListResponse - lastPageNum, searchString: ${lastPageNum}, ${searchString}`);
 
             if (commitListResponse.data.length < 1) {
                 break;
@@ -128,13 +94,7 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
 
             commitPageNum += 1;
 
-
-            await worker.send({action: 'log', info: {
-                level: 'info',
-                message: `commitListResponse.data.length: ${commitListResponse.data.length}`,
-                source: 'worker-instance',
-                function: 'scrapeGithubRepoCommitsAPI',
-            }});
+            console.log(`commitListResponse.data.length: ${commitListResponse.data.length}`);
 
             foundCommitList.push(commitListResponse.data);
         }
@@ -149,14 +109,9 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
         results = await Promise.allSettled(listCommitRequestList);
     }
     catch (err) {
-        await logger.error({source: 'worker-instance',
-                            message: serializeError(err),
-                            errorDescription: `Error Promise.allSettled listing commits failed`,
-                            function: 'scrapeGithubRepoCommitsAPI'});
+        console.log(`Error Promise.allSettled listing commits failed`);
         throw err;
     }
-
-
 
     // Non-error responses
     validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
@@ -164,67 +119,11 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
     // Error responses
     invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
 
+    console.log(`listCommitRequestList validResults.length: ${validResults.length}`);
 
-    await worker.send({action: 'log', info: {
-        level: 'info',
-        message: `listCommitRequestList validResults.length: ${validResults.length}`,
-        source: 'worker-instance',
-        function: 'scrapeGithubRepoCommitsAPI',
-    }});
-
-    validResults.map( async (promiseObj) => {
-        await worker.send({action: 'log', info: {
-            level: 'info',
-            message: `commitList length - promiseObj.value.length: ${promiseObj.value.length}`,
-            source: 'worker-instance',
-            function: 'scrapeGithubRepoCommitsAPI',
-        }});
+    validResults.map(async (promiseObj) => {
+        console.log(`commitList length - promiseObj.value.length: ${promiseObj.value.length}`);
     });
-
-
-    /*
-    await worker.send({action: 'log', info: {
-        level: 'info',
-        message: `commitListResponse.headers: ${JSON.stringify(commitListResponse.headers)}`,
-        source: 'worker-instance',
-        function: 'scrapeGithubRepoCommits',
-    }});
-
-    await worker.send({action: 'log', info: {
-        level: 'info',
-        message: `commitListResponse.data.slice(0,2): ${JSON.stringify(commitListResponse.data.slice(0,2))}`,
-        source: 'worker-instance',
-        function: 'scrapeGithubRepoCommits',
-    }});
-    */
-
-
-    // /repos/{owner}/{repo}/commits
-    /*
-    var listCommitRequests = foundBranchList.map(branchObj => {
-        var reachedCommitListEnd = false;
-
-    });
-    */
-
-
-
-    /*
-    var listCommitResponse;
-    try {
-        listCommitResponse = await installationClient.get(`/repos/${repositoryObj.fullName}/commits`);
-    }
-    catch (err) {
-        await worker.send({action: 'log', info: {level: 'error',
-                                                    message: serializeError(err),
-                                                    errorDescription: `Github API List Commits failed - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`,
-                                                    source: 'worker-instance',
-                                                    function: 'scrapeGithubRepoCommits'}});
-
-        throw new Error(`Github API List Commits failed - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
-
-    }
-    */
 }
 
 
@@ -236,9 +135,9 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
         // var repoDiskPath = 'git_repos/' + timestamp +'/';
         // ../ = git_repos/*
         // ../../ = worker_prod/*
-        gitShowResponse = spawnSync('../../test.sh', [], {cwd: repoDiskPath});
+        gitShowResponse = spawnSync('../../test.sh', [], { cwd: repoDiskPath });
     }
-    catch(err) {
+    catch (err) {
         console.log(err);
 
         Sentry.setContext("fetchAllRepoCommitsCLI", {
@@ -284,7 +183,7 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
 
     var reachedCommitObjStart = true;
 
-    for( i = 0; i < lines.length; i++) {
+    for (i = 0; i < lines.length; i++) {
         currentLine = lines[i];
 
         // Skip whitespace
@@ -299,7 +198,7 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
             }
             currentCommitObj.repository = repositoryId;
             currentCommitObj.installationId = installationId;
-            
+
             currentCommitObj.fileList = currentFileList;
             currentFileList = [];
 
@@ -365,12 +264,12 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
 }
 
 const insertAllCommitsFromCLI = async (foundCommitsList, installationId, repositoryId) => {
-    
+
 
     foundCommitsList = foundCommitsList.map(commitObj => {
-        return Object.assign({}, commitObj, { name: commitObj.commitMessage, sourceId: commitObj.sha, sourceCreationDate: commitObj.committerDate});
+        return Object.assign({}, commitObj, { name: commitObj.commitMessage, sourceId: commitObj.sha, sourceCreationDate: commitObj.committerDate });
     });
-    
+
     var bulkInsertResult;
     try {
         bulkInsertResult = await Commit.insertMany(foundCommitsList);
@@ -379,7 +278,7 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
 
         console.log(err);
 
-        Sentry.setContext("fetchAllRepoCommitsCLI", {
+        Sentry.setContext("insertAllCommitsFromCLI", {
             message: `Error bulk inserting Commits`,
             repositoryId: repositoryId,
             installationId: installationId,
@@ -397,9 +296,9 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
 const fetchAllInsertedRepositoryCommits = async (repositoryId, selectionString) => {
     var insertedCommits;
     try {
-        insertedCommits = await Commit.find({repository: repositoryId}, selectionString)
-                                      .lean()
-                                      .exec();
+        insertedCommits = await Commit.find({ repository: repositoryId }, selectionString)
+            .lean()
+            .exec();
     }
     catch (err) {
         console.log(err);
@@ -426,10 +325,10 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
     var repositoryListCommits;
     try {
         urlList = unscannedRepositories.map(repositoryObj => {
-            return { url: `/repos/${repositoryObj.fullName}/commits/${repositoryObj.defaultBranch}`, repositoryId: repositoryObj._id.toString()};
+            return { url: `/repos/${repositoryObj.fullName}/commits/${repositoryObj.defaultBranch}`, repositoryId: repositoryObj._id.toString() };
         });
 
-        var requestPromiseList = urlList.map( async (urlObj) => {
+        var requestPromiseList = urlList.map(async (urlObj) => {
             var response;
             var currentInstallationId = installationIdLookup[urlObj.repositoryId];
             try {
@@ -445,7 +344,7 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
 
                 Sentry.captureException(err);
 
-                return {error: 'Error', statusCode: err.response.status};
+                return { error: 'Error', statusCode: err.response.status };
             }
             return response;
         });
@@ -513,12 +412,14 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
             return undefined;
         }
 
-        return {updateOne: {
+        return {
+            updateOne: {
                 filter: { _id: unscannedRepositories[idx]._id },
                 // Where field is the field you want to update
                 update: { $set: { lastProcessedCommit: commitFieldValue } },
                 upsert: false
-        }}
+            }
+        }
     });
 
     console.log('BULK LAST COMMIT OPS: ');
@@ -530,7 +431,7 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
             const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps.filter(op => op), { session });
             console.log(`bulk Repository 'lastProcessCommit' update results: ${JSON.stringify(bulkResult)}`);
         }
-        catch(err) {
+        catch (err) {
 
             Sentry.setContext("scan-repositories", {
                 message: `scanRepositories failed bulk updating lastProcessedCommit on repositories`,
