@@ -1,20 +1,23 @@
 require("dotenv").config();
 
-const api = require("../../apis/api");
+const api = require("../apis/api");
 
 const mongoose = require("mongoose");
 
 const _ = require("lodash");
 
-const trelloControllerHelpers = require("../../controllers/integrations/trello/TrelloControllerHelpers");
+const trelloControllerHelpers = require("../controllers/integrations/trello/TrelloControllerHelpers");
 
-const testData = require("../../__tests__data/02_trello_bulk_scrape_data");
+const testData = require("../__tests__data/02_trello_bulk_scrape_data");
+
+//models
+const Repository = require("../models/Repository");
 
 const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../../__tests__config/utils");
+} = require("../__tests__config/utils");
 
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
@@ -53,6 +56,14 @@ afterAll(async () => {
         return null;
     };
 
+    const backendClient = api.requestTestingUserBackendClient();
+
+    const createdBoard = JSON.parse(process.env.TEST_TRELLO_BOARD);
+
+    await backendClient.delete(
+        `/integrations/${process.env.TEST_CREATED_WORKSPACE_ID}/${TEST_USER_ID}/trello/remove_integration/${createdBoard._id}`
+    );
+
     const deleteParams = {
         members: extractArray(process.env.TEST_TRELLO_MEMBERS),
         board: process.env.TEST_TRELLO_BOARD
@@ -69,7 +80,7 @@ afterAll(async () => {
         associations: extractArray(process.env.TEST_TRELLO_ASSOCIATIONS),
     };
 
-    await deleteTrelloBoardComplete(deleteParams);
+    //await deleteTrelloBoardComplete(deleteParams);
 
     await deleteWorkspace(process.env.TEST_CREATED_WORKSPACE_ID);
 
@@ -103,17 +114,29 @@ describe("Test Trello Bulk Scrape Basic", () => {
     });
 
     test("trelloControllerHelpers.acquireTrelloConnectProfile: Trello access token should match", async () => {
+        console.log("ENTERED HERE");
+
         const { acquireTrelloConnectProfile } = trelloControllerHelpers;
+
+        console.log("ENTERED HERE");
 
         const profile = await acquireTrelloConnectProfile(TEST_USER_ID);
 
+        console.log("ENTERED HERE");
+
         const { accessToken } = profile;
 
+        console.log("ENTERED HERE");
+
         expect(accessToken).toEqual(
-            "a4157b7d13a520947b353b46d9b0df390ab9d27a4277639810587c6b143316b1"
+            "41be7274106907c3e057108d2b59b1ba0d338b5d3b9e86f87ee5c6f4674eea69"
         );
 
+        console.log("ENTERED HERE", accessToken);
+
         process.env.TEST_TRELLO_CONNECT_PROFILE = JSON.stringify(profile);
+
+        console.log("ENTERED HERE");
     });
 
     test("trelloControllerHelpers.acquireExternalTrelloBoards: Trello boards \
@@ -126,7 +149,7 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         expect(externalBoards).not.toBeNull();
 
-        expect(externalBoards.length).toEqual(3);
+        expect(externalBoards.length).toEqual(5);
 
         const boardNames = externalBoards.map((board) => board.name);
 
@@ -140,41 +163,9 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         expect(lists.length).toEqual(4);
 
-        /*
-        const beginListId = lists.filter(
-            (list) => list.name === "In Progress"
-        )[0].id;
-
-        const endListId = lists.filter((list) => list.name === "Done")[0].id;
-
-        let repositories = JSON.parse(process.env.TEST_CREATED_REPOSITORIES);
-
-        repositories = repositories
-            .filter(
-                (repository) =>
-                    repository.fullName == "kgodara-testing/brodal_queue"
-            )
-            .map((repo) => repo._id);
-
-        const context = {
-            board: testBoard.id,
-            repositories,
-            event: {
-                beginListId,
-                endListId,
-            },
-        };
-
-        process.env.TEST_TRELLO_CONTEXT = JSON.stringify(context);*/
-
         let repositories = await Repository.find({
-            _id: { $in: JSON.parse(process.env.TEST_CREATED_REPOSITORIES) },
+            fullName: "kgodara-testing/brodal_queue",
         });
-
-        repositories = repositories.filter(
-            (repository) =>
-                repository.fullName == "kgodara-testing/brodal_queue"
-        );
 
         process.env.TEST_TRELLO_REPOSITORIES = JSON.stringify(repositories);
 
@@ -242,7 +233,7 @@ describe("Test Trello Bulk Scrape Basic", () => {
         const { members } = boardData;
 
         const createdMembersObj = await extractTrelloMembers(
-            TEST_CREATED_WORKSPACE_ID,
+            process.env.TEST_CREATED_WORKSPACE_ID,
             members,
             profile
         );
@@ -657,12 +648,12 @@ describe("Test Trello Bulk Scrape Basic", () => {
 
         const {
             bulkScrapeTrello,
-        } = require("../../controllers/integrations/trello/TrelloController");
+        } = require("../controllers/integrations/trello/TrelloController");
 
         const result = await bulkScrapeTrello(
             profile,
             boards,
-            TEST_CREATED_WORKSPACE_ID
+            process.env.TEST_CREATED_WORKSPACE_ID
         );
 
         Object.keys(helpers).map((helper) => {
@@ -708,12 +699,11 @@ describe("Test Trello Bulk Scrape Basic", () => {
     });
 });
 
-const DirectAssociationGenerator = require("../../controllers/associations/helpers/directAssociationGenerator");
+const DirectAssociationGenerator = require("../controllers/associations/helpers/directAssociationGenerator");
 
 let directGenerator;
 
-const testDataAssoc = require("../../__tests__data/03_direct_association_creation_data");
-const Repository = require("../../models/Repository");
+const testDataAssoc = require("../__tests__data/03_direct_association_creation_data");
 
 describe("Test Direct Association Creation Basic", () => {
     beforeAll(() => {

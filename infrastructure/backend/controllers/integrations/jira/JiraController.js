@@ -24,7 +24,6 @@ const { JIRA_CLIENT_ID } = process.env;
 const { checkValid } = require("../../../utils/utils");
 
 beginJiraConnect = async (req, res) => {
-
     const userId = req.userObj._id.toString(); // req.tokenPayload.userId.toString();
 
     // const { workspace_id } = req.query;
@@ -52,6 +51,7 @@ beginJiraConnect = async (req, res) => {
 };
 
 getWorkspaceJiraSites = async (req, res) => {
+    console.log(req.params);
     const workspaceId = req.workspaceObj._id.toString();
 
     console.log("Getting workspace Jira Sites");
@@ -341,7 +341,10 @@ triggerJiraScrape = async (req, res) => {
 
     var jiraSite;
     try {
-        jiraSite = await JiraSite.findOne({ userId: ObjectId(userId), workspace: ObjectId(workspaceId) })
+        jiraSite = await JiraSite.findOne({
+            userId: ObjectId(userId),
+            workspace: ObjectId(workspaceId),
+        })
             .lean()
             .exec();
     } catch (err) {
@@ -370,7 +373,6 @@ triggerJiraScrape = async (req, res) => {
     try {
         await jobs.dispatchImportJiraIssuesJob(runImportJiraIssuesData);
     } catch (err) {
-
         console.log(err);
 
         Sentry.setContext("JiraController::triggerJiraScrape", {
@@ -399,14 +401,17 @@ triggerJiraScrape = async (req, res) => {
 
 getExternalJiraProjects = async (req, res) => {
     console.log("Getting Jira Projects");
-
+    console.log(req.params);
     const workspaceId = req.workspaceObj._id.toString();
     const userId = req.tokenPayload.userId.toString();
 
     var userJiraSite;
 
     try {
-        userJiraSite = await JiraSite.findOne({ userId: ObjectId(userId), workspace: ObjectId(workspaceId) })
+        userJiraSite = await JiraSite.findOne({
+            userId: ObjectId(userId),
+            workspace: ObjectId(workspaceId),
+        })
             .lean()
             .exec();
     } catch (e) {
@@ -439,7 +444,6 @@ getExternalJiraProjects = async (req, res) => {
             `/${userJiraSite.cloudIds[0]}/rest/api/3/project/search`
         );
     } catch (err) {
-
         console.log(err);
 
         Sentry.setContext("JiraController::getExternalJiraProjects", {
@@ -460,7 +464,6 @@ getExternalJiraProjects = async (req, res) => {
 
     jiraProjects = jiraProjects.data.values;
 
-
     let workspace;
 
     try {
@@ -472,7 +475,6 @@ getExternalJiraProjects = async (req, res) => {
             .populate("boards")
             .exec();
     } catch (err) {
-
         console.log(err);
 
         Sentry.setContext("JiraController::getExternalJiraProjects", {
@@ -512,16 +514,18 @@ const createPersonalToken = async (req, res) => {
 
     const { tokenValue, emailAddress } = req.body;
 
-    if (!checkValid(tokenValue)) return res.json({success: false, error: "No tokenValue provided."});
-    if (!checkValid(emailAddress)) return res.json({success: false, error: "No emailAddress provided."});
-
-
-    
+    if (!checkValid(tokenValue))
+        return res.json({ success: false, error: "No tokenValue provided." });
+    if (!checkValid(emailAddress))
+        return res.json({ success: false, error: "No emailAddress provided." });
 
     var userJiraSite;
 
     try {
-        userJiraSite = await JiraSite.findOneAndUpdate({ userId: ObjectId(userId), workspace: ObjectId(workspaceId) }, { personalAccessToken: tokenValue, jiraEmailAddress: emailAddress })
+        userJiraSite = await JiraSite.findOneAndUpdate(
+            { userId: ObjectId(userId), workspace: ObjectId(workspaceId) },
+            { personalAccessToken: tokenValue, jiraEmailAddress: emailAddress }
+        )
             .lean()
             .exec();
     } catch (e) {

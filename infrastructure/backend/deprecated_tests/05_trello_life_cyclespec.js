@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-const api = require("../../apis/api");
+const api = require("../apis/api");
 
 const _ = require("lodash");
 
@@ -11,30 +11,30 @@ const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../../__tests__config/utils");
+} = require("../__tests__config/utils");
 
 //trello helpers
 const {
     acquireTrelloConnectProfile,
     acquireExternalTrelloBoards,
-} = require("../../controllers/integrations/trello/TrelloControllerHelpers");
+} = require("../controllers/integrations/trello/TrelloControllerHelpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 // useful models
-const IntegrationUser = require("../../models/integrations/integration_objects/IntegrationUser");
-const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
-const IntegrationColumn = require("../../models/integrations/integration_objects/IntegrationColumn");
-const IntegrationLabel = require("../../models/integrations/integration_objects/IntegrationLabel");
-const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
-const IntegrationInterval = require("../../models/integrations/integration_objects/IntegrationInterval");
-const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
-const Association = require("../../models/associations/Association");
-const Workspace = require("../../models/Workspace");
-const Branch = require("../../models/Branch");
-const Commit = require("../../models/Commit");
-const PullRequest = require("../../models/PullRequest");
+const IntegrationUser = require("../models/integrations/integration_objects/IntegrationUser");
+const IntegrationBoard = require("../models/integrations/integration_objects/IntegrationBoard");
+const IntegrationColumn = require("../models/integrations/integration_objects/IntegrationColumn");
+const IntegrationLabel = require("../models/integrations/integration_objects/IntegrationLabel");
+const IntegrationAttachment = require("../models/integrations/integration_objects/IntegrationAttachment");
+const IntegrationInterval = require("../models/integrations/integration_objects/IntegrationInterval");
+const IntegrationTicket = require("../models/integrations/integration_objects/IntegrationTicket");
+const Association = require("../models/associations/Association");
+const Workspace = require("../models/Workspace");
+const Branch = require("../models/Branch");
+const Commit = require("../models/Commit");
+const PullRequest = require("../models/PullRequest");
 
 beforeAll(async () => {
     const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
@@ -578,6 +578,7 @@ describe("Test Trello Integration Reintegration", () => {
         );
     });
 
+    /*
     test("handleTrelloReintegration: Board integrated with different repositories across two workspaces", async () => {
         let externalBoards = JSON.parse(
             process.env.TEST_TRELLO_EXTERNAL_BOARDS
@@ -679,9 +680,10 @@ describe("Test Trello Integration Reintegration", () => {
         await backendClient.delete(
             `/integrations/${workspace2.workspaceId}/${TEST_USER_ID}/trello/remove_integration/${createdBoard2._id}`
         );
-    });
+    });*/
 });
 
+/*
 // Need to delete all resources
 describe("Test Trello Integration General", () => {
     let backendClient;
@@ -810,3 +812,4 @@ describe("Test Trello Integration General", () => {
         );
     });
 });
+*/

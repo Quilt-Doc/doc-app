@@ -36,7 +36,7 @@
         "express": "^4.17.1",
         "express-session": "^1.17.0",
         "fs-path": "0.0.24",
-        "fuse.js": "^6.4.3",
+        "fuse.js": "^6.4.6",
         "googleapis": "^66.0.0",
         "http": "0.0.1-security",
         "immutable": "^4.0.0-rc.12",
