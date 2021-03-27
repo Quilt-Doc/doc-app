@@ -1,8 +1,8 @@
 
 
-const handlePushEvent = async (backendClient, event, githubEvent, logger) => {
+const handlePushEvent = async (backendClient, event, githubEvent) => {
     
-    await logger.info({source: 'github-lambda', message: 'Push Event Received', function: 'handler'});
+    console.log('Push Event Received');
 
     // var branch = event.payload.ref.split('/').pop();
     var ref = event.body.ref;
@@ -36,9 +36,7 @@ const handlePushEvent = async (backendClient, event, githubEvent, logger) => {
     if (!message && message != '') {
         message = '';
     }
-    await logger.info({source: 'github-lambda',
-                        message: `updating Repository - ref, headCommit, fullName, cloneUrl, installationId, message, pusher: ${ref}, ${headCommit}, ${repositoryFullName}, ${cloneUrl}, ${installationId}, ${message}, ${pusher}`,
-                        function: 'handler'});
+    console.log(`updating Repository - ref, headCommit, fullName, cloneUrl, installationId, message, pusher: ${ref}, ${headCommit}, ${repositoryFullName}, ${cloneUrl}, ${installationId}, ${message}, ${pusher}`);
 
     
     try {
@@ -48,13 +46,21 @@ const handlePushEvent = async (backendClient, event, githubEvent, logger) => {
         }
     }
     catch (err) {
-        await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error calling update repository route - repositoryFullName, installationId: ${repositoryFullName}, ${installationId}`,
-                                function: 'handler'});
+
+        console.log(err);
+
+        Sentry.setContext("handlePushEvents", {
+            message: `Error calling update repository route`,
+            installationId: installationId,
+            repositoryFullName: repositoryFullName,
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
 
-    await logger.info({source: 'github-lambda', message: 'Successfully handled Push Event', function: 'handler'});
+    console.log('Successfully handled Push Event');
 }
 
 module.exports = {

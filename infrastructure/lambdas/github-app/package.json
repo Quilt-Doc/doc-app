@@ -11,6 +11,7 @@
   "dependencies": {
     "@acuris/aws-es-connection": "^1.1.1",
     "@elastic/elasticsearch": "^7.9.1",
+    "@sentry/serverless": "^6.2.3",
     "aws-sdk": "^2.702.0",
     "axios": "^0.19.2",
     "dotenv": "^8.2.0",

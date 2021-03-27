@@ -1,7 +1,7 @@
 
 
-const handlePullRequestEvent = async (backendClient, event, githubEvent, logger) => {
-    await logger.info({source: 'github-lambda', message: `Pull Request '${event.body.action}' Event Received`, function: 'handler'});
+const handlePullRequestEvent = async (backendClient, event, githubEvent) => {
+    console.log(`Pull Request '${event.body.action}' Event Received`);
     
     //  const {installationId, status, headRef, baseRef, checks, pullRequestObjId, pullRequestNumber} = req.body;
     var installationId = event.installation.id;

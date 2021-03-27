@@ -13,8 +13,7 @@ const crypto = require('crypto');
 const pushEvents = require('./events/pushEvents');
 const installationEvents = require('./events/installationEvents');
 const pullRequestEvents = require('./events/pullRequestEvents');
-const projectEvents = require('./events/projectEvents');
-const issueEvents = require('./event/issueEvents');
+const issueEvents = require('./events/issueEvents');
 const refEvents = require('./events/refEvents');
 
 const Sentry = require("@sentry/serverless");
@@ -46,7 +45,7 @@ exports.handler = async (event) => {
     }
 
     Sentry.init({
-        dsn: "https://9dc09a0acca94a8b9e08bb7066763b2c@o504090.ingest.sentry.io/5694501",
+        dsn: process.env.SENTRY_DSN,
 
         // Set tracesSampleRate to 1.0 to capture 100%
         // of transactions for performance monitoring.
@@ -67,36 +66,32 @@ exports.handler = async (event) => {
                 console.log(`Github 'error' action received`);
                 break;
             case 'push':
-                await pushEvents.handlePushEvent(backendClient, event, githubEvent, logger);
+                await pushEvents.handlePushEvent(backendClient, event, githubEvent);
                 break;
             case 'installation':
-                await installationEvents.handleInstallationEvent(backendClient, event, githubEvent, logger);
+                await installationEvents.handleInstallationEvent(backendClient, event, githubEvent);
                 break;
             case 'installation_repositories':
-                await installationEvents.handleInstallationRepositoriesEvent(backendClient, event, githubEvent, logger);
+                await installationEvents.handleInstallationRepositoriesEvent(backendClient, event, githubEvent);
                 break;
             case 'pull_request':
-                await pullRequestEvents.handlePullRequestEvent(backendClient, event, githubEvent, logger);
+                await pullRequestEvents.handlePullRequestEvent(backendClient, event, githubEvent);
                 break;
             case 'create':
                 await refEvents.handleCreateEvent(backendClient, event, githubEvent);
                 break;
-            case 'project':
-                await projectEvents.handleProjectEvent(backendClient, event, githubEvent, logger);
-            case 'project_card':
-                await projectEvents.handleProjectCardEvent(backendClient, event, githubEvent, logger);
-                break;
             case 'issues':
-                await issueEvents.handleIssueEvent(backendClient, event, githubEvent, logger);
+                await issueEvents.handleIssueEvent(backendClient, event, githubEvent);
         }
     }
     catch (err) {
-        await logger.error({
-            source: 'github-lambda',
-            message: err,
-            errorDescription: `Error handling "${githubEvent}" event`,
-            function: 'handler'
+        console.log(err);
+
+        Sentry.setContext("github-app-lambda", {
+            message: `Event handling failed`,
         });
+
+        Sentry.captureException(err);
 
         let response = {
             statusCode: 200,

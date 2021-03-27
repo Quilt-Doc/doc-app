@@ -13,9 +13,7 @@ sender	        object	The user that triggered the event.
 
 const handleCreateEvent = async (backendClient, event, githubEvent) => {
     
-    await logger.info({source: 'github-lambda',
-                        message: `Branch '${event.body.action}' Event Received`,
-                        function: 'handler'});
+    console.log(`Branch '${event.body.action}' Event Received`);
 
     var refType = event.body.ref_type;
 
@@ -41,12 +39,19 @@ const handleCreateEvent = async (backendClient, event, githubEvent) => {
             createBranchResponse = await backendClient.post("/branch/create", branchCreateData);
         }
         catch (err) {
-            await logger.error({source: 'github-lambda',
-                    message: err,
-                    errorDescription: `Error creating branch - branchCreateData: ${JSON.stringify(branchCreateData)}`,
-                    function: 'handler'});
 
+            console.log(err);
+
+            Sentry.setContext("handleCreateEvent", {
+                message: `Error creating branch`,
+                branchCreateData: branchCreateData,
+            });
+    
+            Sentry.captureException(err);
+    
             throw err;
+
+
         }
     }
 }

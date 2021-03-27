@@ -1,7 +1,7 @@
 
 // "issue" event
 
-const handleIssueEvent = async (backendClient, event, githubEvent, logger) => {
+const handleIssueEvent = async (backendClient, event, githubEvent) => {
 
     var issueAction = event.body.action;
 
@@ -71,11 +71,15 @@ const handleIssueEvent = async (backendClient, event, githubEvent, logger) => {
             }
         }
         catch (err) {
-            await logger.error({
-                source: 'github-lambda', message: err,
-                errorDescription: `error creating Github Issue - createIssueData: ${JSON.stringify(createIssueData)}`,
-                function: 'handler'
+
+            console.log(err);
+
+            Sentry.setContext("handleIssueEvent", {
+                message: `Error creating Github Issue`,
+                createIssueData: createIssueData,
             });
+
+            Sentry.captureException(err);
 
             throw err;
         }
@@ -93,13 +97,18 @@ const handleIssueEvent = async (backendClient, event, githubEvent, logger) => {
             }
         }
         catch (err) {
-            await logger.error({
-                source: 'github-lambda', message: err,
-                errorDescription: `error closing Github Issue - sourceId: ${sourceId}`,
-                function: 'handler'
+
+            console.log(err);
+
+            Sentry.setContext("handleIssueEvent", {
+                message: `Error closing Github Issue`,
+                sourceId: sourceId,
             });
 
+            Sentry.captureException(err);
+
             throw err;
+
         }
     }
 
@@ -114,60 +123,23 @@ const handleIssueEvent = async (backendClient, event, githubEvent, logger) => {
             }
         }
         catch (err) {
-            await logger.error({
-                source: 'github-lambda', message: err,
-                errorDescription: `error deleting Github Issue - sourceId: ${sourceId}`,
-                function: 'handler'
+
+
+            console.log(err);
+
+            Sentry.setContext("handleIssueEvent", {
+                message: `Error deleting Github Issue`,
+                sourceId: sourceId,
             });
 
+            Sentry.captureException(err);
+
             throw err;
+
         }
     }
 }
 
-
-// "project_card" event
-
-/* fields for API call
-    repositoryFullName
-    cardId
-    cardNote
-    cardColumnId
-    cardCreatedAt
-    cardUpdatedAt
-    cardContentUrl -- optional
-*/
-const handleProjectCardEvent = async (backendClient, event, githubEvent, logger) => {
-
-    /*
-    await logger.info({source: 'github-lambda',
-                        message: `Received event.body: ${JSON.stringify(event.body)}`,
-                        function: 'handleProjectCardEvent'});
-    */
-    var installationId = undefined;
-
-    if (event.body.installation) {
-        installationId = event.body.installation.id;
-    }
-
-    var cardId = event.body.project_card.id;
-    var cardNote = evnet.body.project_card.note;
-    var cardColumnId = event.body.project_card.column_id;
-    var cardCreatedAt = event.body.project_card.created_at;
-    var cardUpdatedAt = event.body.project_card.updated_at;
-    var cardContentUrl = event.body.project_card.content_url;
-
-    // cardContentUrl is undefined if the project card wasn't created from a issue/pr
-    if (!cardContentUrl) {
-        cardContentUrl = '';
-    }
-
-    // await 
-
-}
-
-
 module.exports = {
-    handleProjectEvent,
-    handleProjectCardEvent
+    handleIssueEvent
 }

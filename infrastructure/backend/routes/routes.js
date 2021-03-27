@@ -23,6 +23,7 @@ const router = express.Router({ mergeParams: true });
 const paramMiddleware = require("../utils/param_middleware");
 
 const authorizationMiddleware = require("../utils/authorization_middleware");
+const permissionsMiddleware = require("../utils/permissions_middleware");
 
 const { createUserJWTToken } = require("../utils/jwt");
 
@@ -58,48 +59,7 @@ router.param("userId", paramMiddleware.userIdParam);
 // Need to be checking that if :referenceId then :referenceId repositoryId in workspace `repositories`
 // Need to be checking if :tagId then `workspace` in Tag matches :workspaceId
 
-const referenceController = require("../controllers/ReferenceController");
 
-router.post(
-    "/references/create",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.createReferences
-);
-router.get(
-    "/references/:workspaceId/get/:referenceId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.getReference
-);
-router.put(
-    "/references/:workspaceId/edit/:referenceId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.editReference
-);
-router.delete(
-    "/references/:workspaceId/delete/:referenceId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.deleteReference
-);
-router.put(
-    "/references/:workspaceId/:referenceId/attach_tag/:tagId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.attachReferenceTag
-);
-router.put(
-    "/references/:workspaceId/:referenceId/remove_tag/:tagId",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.removeReferenceTag
-);
-router.post(
-    "/references/:workspaceId/retrieve",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.retrieveReferences
-);
-router.post(
-    "/references/:workspaceId/search",
-    authorizationMiddleware.referenceMiddleware,
-    referenceController.searchReferences
-);
 
 // Validate workspace membership for calling user; all methods
 const documentController = require("../controllers/DocumentController");
@@ -205,33 +165,6 @@ router.put('/documents/:workspaceId/add_canread/:id', authorizationMiddleware.do
 router.put('/documents/:workspaceId/remove_canread/:id', authorizationMiddleware.documentMiddleware, documentController.removeCanRead);
 */
 
-// Validate workspace membership for calling user; all methods
-const snippetController = require("../controllers/SnippetController");
-router.post(
-    "/snippets/:workspaceId/:referenceId/create",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.createSnippet
-);
-router.get(
-    "/snippets/:workspaceId/get/:snippetId",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.getSnippet
-);
-router.put(
-    "/snippets/:workspaceId/edit/:snippetId",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.editSnippet
-);
-router.delete(
-    "/snippets/:workspaceId/delete/:snippetId",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.deleteSnippet
-);
-router.post(
-    "/snippets/:workspaceId/retrieve",
-    authorizationMiddleware.snippetMiddleware,
-    snippetController.retrieveSnippets
-);
 
 const repositoryController = require("../controllers/RepositoryController");
 
@@ -274,7 +207,7 @@ router.post(
 // delete - verify user is in a workspace with this repository added
 router.post(
     "/repositories/:userId/retrieve_creation",
-    authorizationMiddleware.repositoryMiddleware,
+    permissionsMiddleware.verifyUserIdMatchesRequester,
     repositoryController.retrieveCreationRepositories
 );
 router.post(
@@ -329,12 +262,12 @@ router.post(
 );
 router.get(
     "/workspaces/get/:workspaceId",
-    authorizationMiddleware.workspaceMiddleware,
+    permissionsMiddleware.verifyUserInWorkspace,
     workspaceController.getWorkspace
 );
 router.delete(
     "/workspaces/delete/:workspaceId",
-    authorizationMiddleware.workspaceMiddleware,
+    permissionsMiddleware.verifyUserInWorkspace,
     workspaceController.deleteWorkspace
 );
 router.put(
@@ -345,7 +278,7 @@ router.put(
 
 router.put(
     "/workspaces/edit/:workspaceId",
-    authorizationMiddleware.workspaceMiddleware,
+    permissionsMiddleware.verifyUserInWorkspace,
     workspaceController.editWorkspace
 );
 
@@ -560,12 +493,12 @@ const userController = require("../controllers/authentication/UserController");
 
 router.get(
     "/users/get/:userId",
-    authorizationMiddleware.userMiddleware,
+    permissionsMiddleware.verifyUserIdMatchesRequester,
     userController.getUser
 );
 router.put(
     "/users/edit/:userId",
-    authorizationMiddleware.userMiddleware,
+    permissionsMiddleware.verifyUserIdMatchesRequester,
     userController.editUser
 );
 router.put(
@@ -616,10 +549,11 @@ router.post("/verify/add_contact", emailVerifyController.addContact);
 
 const workspaceInviteController = require("../controllers/authentication/WorkspaceInviteController");
 
-router.post("/invites/:workspaceId", workspaceInviteController.sendInvite);
+router.post("/invites/:workspaceId", permissionsMiddleware.verifyUserInWorkspace, workspaceInviteController.sendInvite);
 
 router.post(
     "/invites/:workspaceId/retrieve",
+    permissionsMiddleware.verifyUserInWorkspace,
     workspaceInviteController.retrieveInvites
 );
 
@@ -738,6 +672,7 @@ const associationController = require("../controllers/associations/AssociationCo
 
 router.post(
     "/associations/:workspaceId/:repositoryId/get_file_context",
+    permissionsMiddleware.verifyUserAndRepositoryInWorkspace,
     associationController.getFileContext
 );
 

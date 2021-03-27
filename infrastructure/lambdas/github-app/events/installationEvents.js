@@ -1,6 +1,6 @@
 
 
-const handleInstallationEvent = async (backendClient, event, githubEvent, logger) => {
+const handleInstallationEvent = async (backendClient, event, githubEvent) => {
 
     var installationId = event.body.installation.id;
     var action = event.body.action;
@@ -8,7 +8,7 @@ const handleInstallationEvent = async (backendClient, event, githubEvent, logger
 
     var defaultIcon = 1;
 
-    await logger.info({source: 'github-lambda', message: `Installation '${action}' Event Received`, function: 'handler'});
+    console.log(`Installation '${action}' Event Received`);
 
 
     if (action == 'created') {
@@ -21,9 +21,15 @@ const handleInstallationEvent = async (backendClient, event, githubEvent, logger
             }
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error creating install token installationId: ${installationId}`,
-                                function: 'handler'});
+            
+            console.log(err);
+
+            Sentry.setContext("handleInstallationEvent", {
+                message: `Error creating install token`,
+                installationId: installationId,
+            });
+
+            Sentry.captureException(err);
 
             throw err;
         }
@@ -36,13 +42,19 @@ const handleInstallationEvent = async (backendClient, event, githubEvent, logger
             await Promise.all(requestPromiseList);
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error initializing repositories: ${postDataList}`,
-                                function: 'handler'});
+
+            console.log(err);
+
+            Sentry.setContext("handleInstallationEvent", {
+                message: `Error initializing repositories`,
+                postDataList: postDataList,
+            });
+
+            Sentry.captureException(err);
 
             throw err;
         }
-        await logger.info({source: 'github-lambda', message: `Successfully created Repositories installationId: ${installationId}`, function: 'handler'});
+        console.log(`Successfully created Repositories installationId: ${installationId}`);
 
     }
 
@@ -56,9 +68,15 @@ const handleInstallationEvent = async (backendClient, event, githubEvent, logger
             removeInstallResponse = await backendClient.post("/repositories/remove_installation", {installationId, repositories: repositoryDataList});
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `Error Removing Installation - repositoryDataList: ${JSON.stringify(repositoryDataList)}`,
-                                function: 'handler'});
+
+            console.log(err);
+
+            Sentry.setContext("handleInstallationEvent", {
+                message: `Error Removing Installation`,
+                repositoryDataList: repositoryDataList,
+            });
+
+            Sentry.captureException(err);
 
             throw err;
         }
@@ -72,22 +90,28 @@ const handleInstallationEvent = async (backendClient, event, githubEvent, logger
             }
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error deleting install token installationId: ${installationId}`,
-                                function: 'handler'});
-                    
+
+            console.log(err);
+
+            Sentry.setContext("handleInstallationEvent", {
+                message: `Error deleting install token`,
+                installationId: installationId,
+            });
+
+            Sentry.captureException(err);
+
             throw err;
         }
-        await logger.info({source: 'github-lambda', message: `Succesfully deleted 'INSTALL' token and removed installation installationId: ${installationId}`, function: 'handler'});
+        console.log(`Succesfully deleted 'INSTALL' token and removed installation installationId: ${installationId}`);
     }
 }
 
 
-const handleInstallationRepositoriesEvent = async (backendClient, event, githubEvent, logger) => {
+const handleInstallationRepositoriesEvent = async (backendClient, event, githubEvent) => {
     var action = event.body.action;
     var installationId = event.body.installation.id;
 
-    await logger.info({source: 'github-lambda', message: `Installation Repositories '${action}' Event Received`, function: 'handler'});
+    console.log(`Installation Repositories '${action}' Event Received`,);
 
     if (action == 'added') {
         
@@ -101,9 +125,15 @@ const handleInstallationRepositoriesEvent = async (backendClient, event, githubE
             await Promise.all(requestPromiseList);
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `error initializing repositories: ${postDataList}`,
-                                function: 'handler'});
+
+            console.log(err);
+
+            Sentry.setContext("handleInstallationRepositoriesEvent", {
+                message: `Error initializing repositories`,
+                postDataList: postDataList,
+            });
+
+            Sentry.captureException(err);
 
             throw err;
         }
@@ -120,9 +150,15 @@ const handleInstallationRepositoriesEvent = async (backendClient, event, githubE
             removeInstallResponse = await backendClient.post("/repositories/remove_installation", {installationId, repositories: repositoryDataList});
         }
         catch (err) {
-            await logger.error({source: 'github-lambda', message: err,
-                                errorDescription: `Error Removing Installation - repositoryDataList: ${JSON.stringify(repositoryDataList)}`,
-                                function: 'handler'});
+
+            console.log(err);
+
+            Sentry.setContext("handleInstallationRepositoriesEvent", {
+                message: `Error Removing Installation`,
+                repositoryDataList: repositoryDataList,
+            });
+
+            Sentry.captureException(err);
 
             throw err;
         }
