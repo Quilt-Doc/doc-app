@@ -872,4 +872,7 @@ router.post(
     contextController.getBlamesForFile
 );
 
+const blameController = require("../controllers/blame/BlameController");
+router.post("/blames/:repositoryId/retrieve", blameController.retrieveBlame);
+
 module.exports = router;

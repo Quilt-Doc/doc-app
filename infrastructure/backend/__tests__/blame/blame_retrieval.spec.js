@@ -4,7 +4,10 @@ const mongoose = require("mongoose");
 
 const api = require("../../apis/api");
 
+const { logger } = require("../../fs_logging");
+
 const InsertHunk = require("../../models/InsertHunk");
+const Workspace = require("../../models/Workspace");
 
 const _ = require("lodash");
 
@@ -23,8 +26,7 @@ const {
     insertHunksIntoBounds,
     populateBoundaries,
     queryObjects,
-    retrieveBlame,
-} = require("../../controllers/contexts/BlameHelpers");
+} = require("../../controllers/blame/BlameHelpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -44,6 +46,8 @@ beforeAll(async () => {
         "kgodara-testing/brodal_queue",
     ]);
 
+    console.log("REPOSITORY ID", repositoryIds);
+
     process.env.TEST_REPOSITORY_ID = repositoryIds[0];
 
     process.env.WORKSPACE_ID = createdWorkspaceId;
@@ -51,8 +55,27 @@ beforeAll(async () => {
     process.env.isTesting = true;
 });
 
-describe("Test Blame Chunk and Contextual Blame Retrieval ", () => {
+afterAll(async () => {
     /*
+    let workspaces;
+
+    try {
+        workspaces = await Workspace.find({
+            memberUsers: { $in: [TEST_USER_ID] },
+        });
+    } catch (e) {
+        console.log("ERROR", e);
+    }
+
+    console.log("WORKSPACES", workspaces);
+
+    for (let i = 0; i < workspaces.length; i++) {
+        await deleteWorkspace(workspaces[i]._id);
+    }*/
+    console.log("BOO");
+});
+
+describe("Test Blame Chunk and Contextual Blame Retrieval ", () => {
     test("encodeText: Text is encoded as expected", async () => {
         let encoder = {
             textEncoding: {},
@@ -704,257 +727,25 @@ describe("Test Blame Chunk and Contextual Blame Retrieval ", () => {
             prTicketAssocs,
             prDocAssocs
         );
-    });*/
+    });
 
-    test("retrieveBlame: Ensure base case testing", async () => {
-        //const hunks = await InsertHunk.find({ filePath: "BinomialQueue.py" });
+    test("retrieveBlame: Test API CALL", async () => {
+        const backendClient = api.requestTestingUserBackendClient();
 
-        const fileText = `from heap_lib import node
-        from heap_lib import print_queue
-
-        class binomial_queue:
-
-            def __init__(self, rank, children):
-                self.rank = rank
-                self.children = children
-                map((lambda x: x.set_parent(self)), self.children)
-                self.children.sort(key=lambda x: x.rank)
-
-            def get_root(self):
-                return self.val
-
-            def get_rank(self):
-                return self.rank
-
-            def link(self, tree1, tree2):
-
-                if tree1.rank == tree2.rank:
-
-                    if tree1.val <= tree2.val:
-
-                        tree1.children.append(tree2)
-                        tree1.rank += 1
-
-                        index = 0
-
-                        iter_list = None
-                        if tree2.parent is not None:
-                            iter_list = tree2.parent
-                        else:
-                            iter_list = self
-
-                        for idx, child in enumerate(iter_list.children):
-                            if id(child) == id(tree2):
-                                index = idx
-
-                        del iter_list.children[index]
-
-                        tree2.parent = tree1
-                        return 0
-
-                    else:
-                        tree2.children.append(tree1)
-                        tree2.rank += 1
-
-                        index = -1
-
-                        iter_list = None
-                        if tree1.parent is not None:
-                            iter_list = tree1.parent
-                        else:
-                            iter_list = self
-
-                        for idx, child in enumerate(iter_list.children):
-                            if id(child) == id(tree1):
-                                index = idx
-
-                        del iter_list.children[index]
-
-                        tree1.parent = tree2
-                        return 1
-                return -1
-
-            def insert(self, val):
-                insert_tree = node(0, val, [])
-                sameRank = False
-                self.children.append(insert_tree)
-                self.children.sort(key=lambda x: x.rank)
-                insert_tree.parent = None
-
-                self.insert_helper(insert_tree)
-
-            def insert_helper(self, insert_tree):
-
-                iter_list = None
-                if insert_tree.parent is not None:
-                    iter_list = insert_tree.parent
-                else:
-                    iter_list = self
-
-                for sibling in iter_list.children:
-
-                    sibling_list = None
-                    if sibling.parent is not None:
-                        sibling_list = sibling.parent
-                    else:
-                        sibling_list = self
-
-                    if sibling.rank == insert_tree.rank:
-
-                        if(id(sibling) != id(insert_tree)):
-                            elevated_rank = self.link(sibling, insert_tree)
-                            if elevated_rank == 0:
-                                children = sibling_list.children
-                                elevated_rank = sibling.rank
-                            else:
-                                children = iter_list.children
-                                elevated_rank = insert_tree.rank
-
-                            for tree in children:
-                                if tree.rank == elevated_rank:
-                                    self.insert_helper(tree)
-                                    break
-
-            def meld_queue(self, new_queue):
-                self.children.extend(new_queue.children)
-                self.children.sort(key=lambda x: x.rank)
-
-                i = 0
-                while i < (len(self.children) - 1):
-
-                    if self.children[i].rank == self.children[i+1].rank:
-                        result = self.link(self.children[i], self.children[i+1])
-                        # Prevents us from looping to -1, which ruins the whole meld
-                        if i > 0:
-                            i -= 1
-                    else:
-                        i += 1
-
-            def get_min(self):
-                smallest = node(0, float("inf"), [])
-                for tree in self.children:
-                    if tree.val < smallest.val:
-                        smallest = tree
-                return smallest
-
-            def extract_min(self):
-                smallest = self.get_min()
-                meld_queue = binomial_queue(smallest.rank, smallest.children)
-                self.children.remove(smallest)
-                self.meld_queue(meld_queue)
-
-
-        # TEST / DEMO SECTION
-        tree0 = node(0, 4, [])
-        tree1 = node(1, 5, [node(0, 6, [])])
-        tree2 = node(2, 8, [node(1, 10, [node(0, 11, [])]), node(0, 9, [])])
-
-        queue0 = binomial_queue(3, [tree0, tree1, tree2])
-
-        print('QUEUE 1:')
-        print_queue(queue0)
-        print()
-
-        print('TRYING INSERT BELOW: ')
-        queue0.insert(12)
-        print_queue(queue0)
-        print()
-
-        tree3 = node(0, 7, [])
-        tree4 = node(1, 13, [node(0, 17, [])])
-        queue1 = binomial_queue(2, [tree3, tree4])
-        print('QUEUE 2:')
-        print_queue(queue1)
-        print()
-
-        queue0.meld_queue(queue1)
-        print('MELDED QUEUE:')
-        print_queue(queue0)
-        print()
-
-        print('EXTRACT MIN:')
-        queue0.extract_min()
-        print_queue(queue0)
-        print()
-
-
-        print("RAW 1")
-        print("RAW 2")
-        print("RAW 3")`;
+        const {
+            fileText,
+        } = require("../../__tests__data/blame/blame_retrieval_data");
 
         const filePath = "BinomialQueue.py";
 
-        await retrieveBlame({
-            params: {
-                repositoryId: process.env.TEST_REPOSITORY_ID,
-            },
-            body: {
+        const response = await backendClient.post(
+            `/blames/${process.env.TEST_REPOSITORY_ID}/retrieve`,
+            {
                 filePath,
                 fileText,
-            },
-        });
+            }
+        );
+
+        console.log("RESPONSE", response.data);
     });
 });
-
-/*
-        const boundaries = [
-            [0, 3],
-            [4, 8],
-            [9, 12],
-            [13, 21],
-            [22, 28],
-            [29, 45],
-            [46, 48],
-            [49, 57],
-        ];
-
-        const hunks = [
-            [0, 4],
-            [4, 9],
-            [22, 29, 46],
-            [29],
-            [29, 46],
-            [46, 49],
-            [49],
-        ];
-
-        const commits = [
-            [0, 3, 5],
-            [1, 2],
-            [0, 1, 2],
-            [4, 6],
-            [3, 6],
-            [1, 6],
-            [2, 5],
-        ];
-
-        const pullRequests = [
-            [0, 1, 2, 3, 4, 5],
-            [1, 3, 4],
-            [2, 1, 4],
-            [1],
-            [],
-            [6],
-            [1, 3, 5],
-        ];
-
-        //ticket is index
-        const commitTicketAssocs = [
-            [0, 2, 3],
-            [1, 4, 3],
-            [2, 5, 6],
-            [1, 3],
-            [4, 3],
-            [1, 2, 3, 4, 5, 6],
-        ];
-
-        const commitDocAssocs = [[0, 1], [2], [], [3, 4], [5, 6]];
-
-        const prTicketAssocs = [
-            [5, 6],
-            [0, 1],
-            [2, 3],
-        ];
-
-        const prDocAssocs = [[1, 2], [3, 4], [5]];
-*/

@@ -17,10 +17,7 @@ const filterFunctions = format((info, opts) => {
     if (!info.func) {
         return info;
     }
-    const includedFunctions = new Set([
-        "extractGoogleDocAttachments",
-        "storeGoogleDocuments",
-    ]);
+    const includedFunctions = new Set([]);
 
     if (includedFunctions.size == 0) return info;
 
