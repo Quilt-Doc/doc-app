@@ -808,6 +808,6 @@ router.post(
 );
 
 const blameController = require("../controllers/blame/BlameController");
-router.post("/blames/:repositoryId/retrieve", blameController.retrieveBlame);
+router.post("/blames/:workspaceId/:repositoryId/retrieve", permissionsMiddleware.verifyUserAndRepositoryInWorkspace, blameController.retrieveBlame);
 
 module.exports = router;
