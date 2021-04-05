@@ -39,6 +39,10 @@ beforeAll(async () => {
     ]);
 
     process.env.TEST_REPOSITORY_ID = repositoryIds[0];
+    console.log(
+        "🚀 ~ file: issue_scrape_basic.spec.js ~ line 42 ~ beforeAll ~ process.env.TEST_REPOSITORY_ID",
+        process.env.TEST_REPOSITORY_ID
+    );
 
     process.env.WORKSPACE_ID = createdWorkspaceId;
 
@@ -52,15 +56,12 @@ afterAll(async () => {
         memberUsers: { $in: [TEST_USER_ID] },
     });
 
-    console.log("WORKSPACES", workspaces);
-
+    /*
     for (let i = 0; i < workspaces.length; i++) {
         console.log(workspaces[i]._id);
 
         await deleteWorkspace(workspaces[i]._id);
-    }
-
-    console.log("Finished");
+    }*/
 });
 
 describe("Issue Scraping Tests", () => {
@@ -89,7 +90,7 @@ describe("Issue Scraping Tests", () => {
     test("Issue referenced in commit", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            githubIssueNumber: 1,
+            sourceId: 1,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
 
@@ -116,7 +117,7 @@ describe("Issue Scraping Tests", () => {
     test("Issue referenced in multiple commits", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            githubIssueNumber: 2,
+            sourceId: 2,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
 
@@ -173,12 +174,12 @@ describe("Issue Scraping Tests", () => {
     test("Issue containing a linked then unlinked PR", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            githubIssueNumber: 5,
+            sourceId: 5,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
 
         const pullRequest = await PullRequest.findOne({
-            number: 3,
+            sourceId: 3,
             repository: process.env.TEST_REPOSITORY_ID,
         });
 
@@ -199,12 +200,12 @@ describe("Issue Scraping Tests", () => {
     test("Test Issue containing a linked then unliked PR then a new linked PR", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            githubIssueNumber: 6,
+            sourceId: 6,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
 
         const pullRequest = await PullRequest.findOne({
-            number: 4,
+            sourceId: 4,
             repository: process.env.TEST_REPOSITORY_ID,
         });
 
@@ -220,21 +221,72 @@ describe("Issue Scraping Tests", () => {
     test("Test Issue containing 2 Issues linked via markdown", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            githubIssueNumber: 7,
+            sourceId: 7,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         }).populate("attachments");
-        console.log(
-            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 229 ~ test ~ issue attachments",
-            issue.attachments
-        );
 
+        expect(issue.attachments.length).toEqual(2);
+
+        const seenIds = new Set(["2", "5"]);
+
+        for (let att of issue.attachments) {
+            expect(att.repository.toString()).toEqual(
+                process.env.TEST_REPOSITORY_ID
+            );
+
+            expect(seenIds.has(att.sourceId)).toEqual(true);
+
+            seenIds.delete(att.sourceId);
+        }
+
+        /*
         const associations = await Association.find({
             firstElement: issue._id,
         });
 
-        console.log(
-            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 238 ~ test ~ associations",
-            associations
-        );
+        expect(associations.length).toEqual(2);
+        */
+    });
+
+    test("Test Issue containing 2 Issues and a PR linked via markdown", async () => {
+        const issue = await IntegrationTicket.findOne({
+            source: "github",
+            sourceId: 8,
+            repositoryId: process.env.TEST_REPOSITORY_ID,
+        }).populate("attachments");
+
+        expect(issue.attachments.length).toEqual(3);
+
+        const seenIds = new Set(["2", "5", "4"]);
+
+        for (let att of issue.attachments) {
+            expect(att.repository.toString()).toEqual(
+                process.env.TEST_REPOSITORY_ID
+            );
+
+            expect(seenIds.has(att.sourceId)).toEqual(true);
+
+            seenIds.delete(att.sourceId);
+        }
+
+        const pullRequest = await PullRequest.findOne({
+            sourceId: 4,
+            repository: process.env.TEST_REPOSITORY_ID,
+        });
+
+        const associations = await Association.find({
+            firstElement: issue._id,
+            secondElement: pullRequest._id,
+        });
+
+        expect(associations.length).toEqual(1);
+
+        /*
+        const associationsAll = await Association.find({
+            firstElement: issue._id,
+        });
+
+        expect(associationsAll.length).toEqual(3);
+        */
     });
 });
