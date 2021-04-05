@@ -9,6 +9,7 @@ const Commit = require("../../models/Commit");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 const Repository = require("../../models/Repository");
 const Association = require("../../models/associations/Association");
+const PullRequest = require("../../models/PullRequest");
 
 const _ = require("lodash");
 
@@ -38,16 +39,8 @@ beforeAll(async () => {
     ]);
 
     process.env.TEST_REPOSITORY_ID = repositoryIds[0];
-    console.log(
-        "🚀 ~ file: issue_scrape_basic.spec.js ~ line 36 ~ beforeAll ~ process.env.TEST_REPOSITORY_ID",
-        process.env.TEST_REPOSITORY_ID
-    );
 
     process.env.WORKSPACE_ID = createdWorkspaceId;
-    console.log(
-        "🚀 ~ file: issue_scrape_basic.spec.js ~ line 39 ~ beforeAll ~  process.env.WORKSPACE_ID",
-        process.env.WORKSPACE_ID
-    );
 
     process.env.isTesting = true;
 });
@@ -126,9 +119,13 @@ describe("Issue Scraping Tests", () => {
     test("Issue referenced in multiple commits", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            githubIssueNumber: 2,
+            sourceId: 2,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
+        console.log(
+            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 125 ~ test ~ issue",
+            issue
+        );
 
         const commit1 = await Commit.findOne({
             sourceId: "6989da1c3c71f0c8d8db0dd57f5508419df9aaec",
@@ -178,5 +175,34 @@ describe("Issue Scraping Tests", () => {
         });
 
         expect(associations.length).toEqual(3);
+    });
+
+    test("Issue containing a linked then unlinked PR", async () => {
+        const issue = await IntegrationTicket.findOne({
+            source: "github",
+            sourceId: 3,
+            repositoryId: process.env.TEST_REPOSITORY_ID,
+        });
+
+        const pullRequest = await PullRequest.findOne({
+            source: "github",
+            sourceId: "3",
+            repositoryId: process.env.TEST_REPOSITORY_ID,
+        });
+
+        const associations = Association.find({
+            firstElement: issue._id,
+        });
+        console.log(
+            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 199 ~ test ~ associations",
+            associations
+        );
+
+        const association = await Association.findOne({
+            firstElement: issue._id,
+            secondElement: pullRequest._id,
+        });
+
+        expect(association).toBeUndefined();
     });
 });
