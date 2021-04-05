@@ -5,7 +5,6 @@ const _ = require("lodash");
 const PullRequest = require("../../../models/PullRequest");
 const Branch = require("../../../models/Branch");
 const Commit = require("../../../models/Commit");
-const GithubIssue = require("../../../models/integrations/github/GithubIssue");
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
 
 class AssociationGenerator {
@@ -16,7 +15,7 @@ class AssociationGenerator {
     workspaceId = null;
 
     codeObjectModelMapping = {
-        issue: GithubIssue,
+        issue: IntegrationTicket,
         pullRequest: PullRequest,
         commit: Commit,
         branch: Branch,

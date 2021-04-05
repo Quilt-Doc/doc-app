@@ -44,14 +44,6 @@ class DirectAssociationGenerator extends AssociationGenerator {
         this.tickets.map((ticket) => {
             const { attachments, board } = ticket;
 
-            /*
-            console.log("ticket.board: ");
-            console.log(ticket.board);
-
-            console.log("ticket: ");
-            console.log(ticket);
-            */
-
             // if no attachments skip
             if (!attachments || attachments.length === 0) return;
 

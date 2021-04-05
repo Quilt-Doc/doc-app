@@ -15,7 +15,7 @@ const _ = require("lodash");
 
 const {
     createWorkspace,
-    removeWorkspace,
+    removeWorkspaces,
     deleteWorkspace,
 } = require("../../__tests__config/utils");
 const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
@@ -46,22 +46,19 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    /*
     let workspaces;
 
-    try {
-        workspaces = await Workspace.find({
-            memberUsers: { $in: [TEST_USER_ID] },
-        });
-    } catch (e) {
-        console.log("ERROR", e);
-    }
+    workspaces = await Workspace.find({
+        memberUsers: { $in: [TEST_USER_ID] },
+    });
 
     console.log("WORKSPACES", workspaces);
 
     for (let i = 0; i < workspaces.length; i++) {
+        console.log(workspaces[i]._id);
+
         await deleteWorkspace(workspaces[i]._id);
-    }*/
+    }
 
     console.log("Finished");
 });
@@ -189,7 +186,7 @@ describe("Issue Scraping Tests", () => {
             firstElement: issue._id,
         });
 
-        expect(associations.length).toEqual(1);
+        expect(associations.length).toEqual(0);
 
         const association = await Association.findOne({
             firstElement: issue._id,
@@ -205,10 +202,6 @@ describe("Issue Scraping Tests", () => {
             githubIssueNumber: 6,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
-        console.log(
-            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 208 ~ test ~ issue",
-            issue
-        );
 
         const pullRequest = await PullRequest.findOne({
             number: 4,
@@ -222,5 +215,26 @@ describe("Issue Scraping Tests", () => {
         expect(associations.length).toEqual(1);
 
         expect(associations[0].secondElement).toEqual(pullRequest._id);
+    });
+
+    test("Test Issue containing 2 Issues linked via markdown", async () => {
+        const issue = await IntegrationTicket.findOne({
+            source: "github",
+            githubIssueNumber: 7,
+            repositoryId: process.env.TEST_REPOSITORY_ID,
+        }).populate("attachments");
+        console.log(
+            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 229 ~ test ~ issue attachments",
+            issue.attachments
+        );
+
+        const associations = await Association.find({
+            firstElement: issue._id,
+        });
+
+        console.log(
+            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 238 ~ test ~ associations",
+            associations
+        );
     });
 });
