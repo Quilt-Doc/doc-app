@@ -94,8 +94,6 @@ describe("Issue Scraping Tests", () => {
         });
 
         expect(issues.length).toEqual(6);
-
-        console.log(issues);
     });
 
     test("Issue referenced in commit", async () => {
@@ -125,31 +123,60 @@ describe("Issue Scraping Tests", () => {
         );
     });
 
-    /*
     test("Issue referenced in multiple commits", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            githubIssueNumber: 1,
+            githubIssueNumber: 2,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
 
-        const commit = await Commit.findOne({
-            sourceId: "8b4ef5f68177a5334317a6ffd72f9ff97c287051",
+        const commit1 = await Commit.findOne({
+            sourceId: "6989da1c3c71f0c8d8db0dd57f5508419df9aaec",
         });
+
+        const commit2 = await Commit.findOne({
+            sourceId: "e8e23f44ddf2746c964dbfb75257ee6cd8d7c950",
+        });
+
+        const commit3 = await Commit.findOne({
+            sourceId: "5c50b758ed393466dca02bc8f865ae21e9b71447",
+        });
+
+        const associations1 = await Association.find({
+            firstElement: issue._id,
+            secondElement: commit1._id,
+        });
+
+        const associations2 = await Association.find({
+            firstElement: issue._id,
+            secondElement: commit2._id,
+        });
+
+        const associations3 = await Association.find({
+            firstElement: issue._id,
+            secondElement: commit3._id,
+        });
+
+        for (let associations of [
+            associations1,
+            associations2,
+            associations3,
+        ]) {
+            expect(associations.length).toEqual(1);
+
+            const association = associations[0];
+
+            expect(association).toBeDefined();
+
+            expect(association.repository.toString()).toEqual(
+                process.env.TEST_REPOSITORY_ID
+            );
+        }
 
         const associations = await Association.find({
             firstElement: issue._id,
-            secondElement: commit._id,
         });
 
-        expect(associations.length).toEqual(1);
-
-        const association = associations[0];
-
-        expect(association).toBeDefined();
-
-        expect(association.repository.toString()).toEqual(
-            process.env.TEST_REPOSITORY_ID
-        );
-    });*/
+        expect(associations.length).toEqual(3);
+    });
 });
