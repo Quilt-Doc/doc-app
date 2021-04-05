@@ -1238,7 +1238,7 @@ scrapeGithubRepoIssues = async (
                 board: integrationBoardId,
 
                 name: repositoryIssueObj.title,
-                sourceId: repositoryIssueObj.id,
+                sourceId: repositoryIssueObj.number,
                 description: repositoryIssueObj.body,
                 sourceCreationDate: repositoryIssueObj.created_at,
                 sourceUpdateDate: repositoryIssueObj.updated_at,
