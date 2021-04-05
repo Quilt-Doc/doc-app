@@ -65,7 +65,6 @@ let pullRequestSchema = new Schema({
     closedAt: { type: Date },
     mergedAt: { type: Date },
     mergeCommitSha: { type: String },
-    labels: [{ type: String }],
 
     headRef: { type: String, required: true },
     headLabel: { type: String, required: true },

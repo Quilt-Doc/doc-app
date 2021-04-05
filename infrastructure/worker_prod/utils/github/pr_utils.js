@@ -283,7 +283,6 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
             branchLabelList: prObj.branchLabelList,
             branches: branchIdList,
 
-
             pullRequestId: prObj.id,
             number: prObj.number,
 

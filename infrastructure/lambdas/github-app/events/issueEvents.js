@@ -1,3 +1,4 @@
+const Sentry = require("@sentry/node");
 
 // "issue" event
 

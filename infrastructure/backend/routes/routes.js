@@ -810,4 +810,7 @@ router.post(
 const blameController = require("../controllers/blame/BlameController");
 router.post("/blames/:workspaceId/:repositoryId/retrieve", permissionsMiddleware.verifyUserAndRepositoryInWorkspace, blameController.retrieveBlame);
 
+const pullRequestController = require("../controllers/PullRequestController");
+router.post("/pull_requests/create", permissionsMiddleware.verifyUserIsDev, pullRequestController.createPullRequest);
+
 module.exports = router;
