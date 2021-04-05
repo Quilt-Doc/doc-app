@@ -15,9 +15,10 @@ const verifyUserInWorkspace = async (req, res, next) => {
     const { workspaceId } = req.params;
     var workspaceFound = false;
     try {
+        console.log(`verifyUserInWorkspace - workspaceId, requesterId: ${workspaceId}, ${requesterId}`);
         workspaceFound = await Workspace.exists({    _id: ObjectId(workspaceId.toString()),
-                                    members: { $in: [ObjectId(requesterId.toString())] }
-                                });
+                                                    memberUsers: { $in: [ObjectId(requesterId.toString())] }
+                                                });
     }
     catch (err) {
         return next(new Error(`Error: invalid workspaceId: ${workspaceId}`));
@@ -40,7 +41,7 @@ const verifyUserAndRepositoryInWorkspace = async (req, res, next) => {
     var workspaceFound = false;
     try {
         workspaceFound = await Workspace.exists({   _id: ObjectId(workspaceId.toString()),
-                                                    members: { $in: [ObjectId(requesterId.toString())] },
+                                                    memberUsers: { $in: [ObjectId(requesterId.toString())] },
                                                     repositories: { $in: [ObjectId(repositoryId.toString())] },
                                                 });
     }
