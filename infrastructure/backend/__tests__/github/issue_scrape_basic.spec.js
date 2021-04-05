@@ -205,6 +205,10 @@ describe("Issue Scraping Tests", () => {
             githubIssueNumber: 6,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
+        console.log(
+            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 208 ~ test ~ issue",
+            issue
+        );
 
         const pullRequest = await PullRequest.findOne({
             number: 4,
