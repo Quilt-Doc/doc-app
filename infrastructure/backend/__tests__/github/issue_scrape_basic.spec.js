@@ -119,13 +119,9 @@ describe("Issue Scraping Tests", () => {
     test("Issue referenced in multiple commits", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            sourceId: 2,
+            githubIssueNumber: 2,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
-        console.log(
-            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 125 ~ test ~ issue",
-            issue
-        );
 
         const commit1 = await Commit.findOne({
             sourceId: "6989da1c3c71f0c8d8db0dd57f5508419df9aaec",
@@ -180,29 +176,26 @@ describe("Issue Scraping Tests", () => {
     test("Issue containing a linked then unlinked PR", async () => {
         const issue = await IntegrationTicket.findOne({
             source: "github",
-            sourceId: 3,
+            githubIssueNumber: 5,
             repositoryId: process.env.TEST_REPOSITORY_ID,
         });
 
         const pullRequest = await PullRequest.findOne({
-            source: "github",
-            sourceId: "3",
-            repositoryId: process.env.TEST_REPOSITORY_ID,
+            number: 3,
+            repository: process.env.TEST_REPOSITORY_ID,
         });
 
-        const associations = Association.find({
+        const associations = await Association.find({
             firstElement: issue._id,
         });
-        console.log(
-            "🚀 ~ file: issue_scrape_basic.spec.js ~ line 199 ~ test ~ associations",
-            associations
-        );
+
+        expect(associations.length).toEqual(1);
 
         const association = await Association.findOne({
             firstElement: issue._id,
             secondElement: pullRequest._id,
         });
 
-        expect(association).toBeUndefined();
+        expect(association).toBeNull();
     });
 });
