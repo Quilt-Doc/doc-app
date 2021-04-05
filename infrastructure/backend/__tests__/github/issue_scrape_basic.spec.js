@@ -198,4 +198,25 @@ describe("Issue Scraping Tests", () => {
 
         expect(association).toBeNull();
     });
+
+    test("Test Issue containing a linked then unliked PR then a new linked PR", async () => {
+        const issue = await IntegrationTicket.findOne({
+            source: "github",
+            githubIssueNumber: 6,
+            repositoryId: process.env.TEST_REPOSITORY_ID,
+        });
+
+        const pullRequest = await PullRequest.findOne({
+            number: 4,
+            repository: process.env.TEST_REPOSITORY_ID,
+        });
+
+        const associations = await Association.find({
+            firstElement: issue._id,
+        });
+
+        expect(associations.length).toEqual(1);
+
+        expect(associations[0].secondElement).toEqual(pullRequest._id);
+    });
 });
