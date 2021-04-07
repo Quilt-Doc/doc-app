@@ -52,17 +52,101 @@ traverseGithubThreads = async (
 
     const comments = response.data;
 
-    comments.map((comment) => {
-        const { issue_url: issueUrl, body } = comment;
+    const insertOps = comments
+        .map((comment) => {
+            const { issue_url: issueUrl, body } = comment;
 
-        const issueSourceId = issueUrl.split("/").pop();
+            const issueSourceId = issueUrl.split("/").pop();
 
-        if (issues[issueSourceId]) {
-            const issueAttachments = new Set(issue.attachments);
+            const issue = issues[issueSourceId]
+                ? issues[issueSourceId]
+                : pullRequests[issueSourceId];
 
-            attachments = parseGithubBody(body);
-        }
+            if (!checkValid(issue)) return null;
+
+            const issue = issues[issueSourceId];
+
+            let alreadyAttached = issue.attachments.map((att) => {
+                const { modelType, repository, sourceId } = att;
+
+                return `${modelType}-${repository.toString()}-${sourceId}`;
+            });
+
+            if (issue.commentAttachments) {
+                alreadyAttached = [
+                    ...alreadyAttached,
+                    ...issue.commentAttachments.map((att) => {
+                        const { modelType, repository, sourceId } = att;
+
+                        return `${modelType}-${repository.toString()}-${sourceId}`;
+                    }),
+                ];
+            }
+
+            alreadyAttached = new Set(alreadyAttached);
+
+            let commentAttachments = parseGithubBody(body, repository);
+
+            commentAttachments = commentAttachments.filter(
+                (att) =>
+                    !alreadyAttached.has(
+                        `${att.modelType}-${att.repository.toString()}-${
+                            att.sourceId
+                        }`
+                    )
+            );
+
+            issue.commentAttachments = checkValid(issue.commentAttachments)
+                ? [...issue.commentAttachments, ...commentAttachments]
+                : commentAttachments;
+
+            return commentAttachments;
+        })
+        .filter((arr) => arr != null)
+        .flat();
+
+    let commentAttachments = IntegrationAttachment.insertMany(insertOps);
+
+    commentAttachments = commentAttachments.map(
+        (att) =>
+            (att.key = `${att.modelType}-${att.repository.toString()}-${
+                att.sourceId
+            }`)
+    );
+
+    commentAttachments = _.mapKeys(commentAttachments, "key");
+
+    issues = Object.values(issues).map((issue) => {
+        if (!checkValid(issue.commentAttachments)) return;
+
+        issueCommentAttachments = issue.commentAttachments.map((att) => {
+            const key = `${att.modelType}-${att.repository.toString()}-${
+                att.sourceId
+            }`;
+
+            return commentAttachments[key];
+        });
+
+        issue.attachments = [...issue.attachments, ...issueCommentAttachments];
+
+        return issue;
     });
+
+    pullRequests = Object.values(pullRequests).map((issue) => {
+        if (!checkValid(issue.commentAttachments)) return;
+
+        issueCommentAttachments = issue.commentAttachments.map((att) => {
+            const key = `${att.modelType}-${att.repository.toString()}-${
+                att.sourceId
+            }`;
+
+            return commentAttachments[key];
+        });
+
+        issue.attachments = [...issue.attachments, ...issueCommentAttachments];
+    });
+
+    return [issues, pullRequests];
 };
 
 parseGithubBody = (body, repository) => {
@@ -123,9 +207,7 @@ extractTextualAttachments = async (issues, repository) => {
         .map((issue) => {
             const { body } = issue;
 
-            const attachments = parseGithubBody(body, repository);
-
-            issue.textualAttachments = attachments;
+            let attachments = parseGithubBody(body, repository);
 
             const alreadyAttached = new Set(
                 issue.attachments.map((att) => {
@@ -135,7 +217,7 @@ extractTextualAttachments = async (issues, repository) => {
                 })
             );
 
-            return attachments.filter(
+            attachments = attachments.filter(
                 (att) =>
                     !alreadyAttached.has(
                         `${att.modelType}-${att.repository.toString()}-${
@@ -143,6 +225,10 @@ extractTextualAttachments = async (issues, repository) => {
                         }`
                     )
             );
+
+            issue.textualAttachments = attachments;
+
+            return attachments;
         })
         .flat();
 
