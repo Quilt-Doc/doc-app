@@ -6,6 +6,7 @@ const api = require("../../apis/api");
 
 const {
     extractRepositoryLabels,
+    parseGithubBody,
 } = require("../../../worker_prod/utils/integrations/github_scrape_helpers");
 
 const Workspace = require("../../models/Workspace");
@@ -57,19 +58,21 @@ beforeAll(async () => {
 afterAll(async () => {
     let workspaces;
 
+    /*
     workspaces = await Workspace.find({
         memberUsers: { $in: [TEST_USER_ID] },
     });
 
-    for (let i = 0; i < workspaces.length; i++) {
+    for (let i = 0; i + 1 < workspaces.length; i++) {
         console.log(workspaces[i]._id);
 
         await deleteWorkspace(workspaces[i]._id);
-    }
+    }*/
 });
 
 describe("Issue Scrape Robust Association/Field Testing", () => {
     test("extractRepositoryLabels: should extract labels correctly", async () => {
+        /*
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
 
         const { fullName } = repository;
@@ -83,11 +86,66 @@ describe("Issue Scrape Robust Association/Field Testing", () => {
         console.log(
             issues.filter((issue) => issue.labels.length >= 1)[0].labels
         );
-
+        */
         /*
         await extractRepositoryLabels(
             installationClient,
             process.env.TEST_REPOSITORY_FULL_NAME
         );*/
     });
+
+    test("parseGithubBody: should extract a unique set of attachments", async () => {
+        const repository = JSON.parse(process.env.TEST_REPOSITORY);
+
+        const { fullName } = repository;
+
+        const response = await installationClient.get(
+            `/repos/${fullName}/issues`
+        );
+
+        const issues = response.data;
+
+        let issue = issues.filter((issue) => issue.number == 9)[0];
+
+        let attachments = parseGithubBody(issue.body, repository);
+
+        expect(attachments).toEqual([
+            {
+                sourceId: "3",
+                modelType: "pullRequest",
+                repository: "604133292355880fd17ff5b2",
+            },
+            {
+                sourceId: "ef38c3ffa0b830168f02f34d555a9377c5969208",
+                modelType: "commit",
+                repository: "604133292355880fd17ff5b2",
+            },
+            {
+                sourceId: "6989da1c3c71f0c8d8db0dd57f5508419df9aaec",
+                modelType: "commit",
+                repository: "604133292355880fd17ff5b2",
+            },
+            {
+                sourceId: "62f0a69",
+                modelType: "commit",
+                repository: "604133292355880fd17ff5b2",
+            },
+            {
+                sourceId: "4",
+                modelType: "pullRequest",
+                repository: "604133292355880fd17ff5b2",
+            },
+            {
+                sourceId: "6",
+                modelType: "issue",
+                repository: "604133292355880fd17ff5b2",
+            },
+        ]);
+
+        attachments = parseGithubBody("", repository);
+
+        expect(attachments).toEqual([]);
+    });
+
+    test("", async () => {});
 });

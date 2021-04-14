@@ -3,10 +3,20 @@ const mongoose = require("mongoose");
 const _ = require("lodash");
 
 const isUrl = require("is-url");
+const removeMd = require("remove-markdown");
 
 const IntegrationLabel = require("../../models/integrations/integration_objects/IntegrationLabel");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
+
+const { logger } = require("../../logging");
+
+checkValid = (item) => {
+    if (item !== null && item !== undefined) {
+        return true;
+    }
+    return false;
+};
 
 extractRepositoryLabels = async (installationClient, repository) => {
     const { fullName, _id: repositoryId } = repository;
@@ -34,6 +44,14 @@ extractRepositoryLabels = async (installationClient, repository) => {
     return _.mapKeys(labels, "sourceId");
 };
 
+acquireKey = (att) => {
+    const { modelType, repository, sourceId } = att;
+
+    const suffix = modelType == "commit" ? sourceId.slice(0, 7) : sourceId;
+
+    return `${modelType}-${repository.toString()}-${suffix}`;
+};
+
 traverseGithubThreads = async (
     installationClient,
     repository,
@@ -52,112 +70,152 @@ traverseGithubThreads = async (
 
     const comments = response.data;
 
+    const issueUpdates = {};
+
     const insertOps = comments
         .map((comment) => {
             const { issue_url: issueUrl, body } = comment;
 
             const issueSourceId = issueUrl.split("/").pop();
 
-            const issue = issues[issueSourceId]
-                ? issues[issueSourceId]
-                : pullRequests[issueSourceId];
+            if (checkValid(pullRequests[issueSourceId])) {
+                let commentAttachments = parseGithubBody(body, repository);
 
-            if (!checkValid(issue)) return null;
+                commentAttachments = commentAttachments.filter(
+                    (att) => att.modelType == "issue"
+                );
 
-            const issue = issues[issueSourceId];
+                if (commentAttachments.length == 0) return null;
 
-            let alreadyAttached = issue.attachments.map((att) => {
-                const { modelType, repository, sourceId } = att;
+                commentAttachments.map((att) => {
+                    const { sourceId } = att;
 
-                return `${modelType}-${repository.toString()}-${sourceId}`;
-            });
+                    const issue = issues[sourceId];
 
-            if (issue.commentAttachments) {
-                alreadyAttached = [
-                    ...alreadyAttached,
-                    ...issue.commentAttachments.map((att) => {
-                        const { modelType, repository, sourceId } = att;
+                    const { _id: issueId } = issue;
 
-                        return `${modelType}-${repository.toString()}-${sourceId}`;
-                    }),
-                ];
+                    if (issueId in issueUpdates) {
+                        issueUpdates[issueId].commentAttachments.push(att);
+                    } else {
+                        issueUpdates[issueId].issue = issue;
+
+                        issueUpdates[issueId].commentAttachments = [att];
+                    }
+                });
+            } else if (checkValid(issues[issueSourceId])) {
+                const issue = issues[issueSourceId];
+
+                let commentAttachments = parseGithubBody(body, repository);
+
+                if (commentAttachments.length == 0) return null;
+
+                const { _id: issueId } = issue;
+
+                if (issueId in issueUpdates) {
+                    issueUpdates[issueId].commentAttachments = [
+                        ...issueUpdates[issueId].commentAttachments,
+                        ...commentAttachments,
+                    ];
+                } else {
+                    issueUpdates[issueId].issue = issue;
+
+                    issueUpdates[
+                        issueId
+                    ].commentAttachments = commentAttachments;
+                }
+
+                return commentAttachments;
+            } else {
+                return null;
             }
-
-            alreadyAttached = new Set(alreadyAttached);
-
-            let commentAttachments = parseGithubBody(body, repository);
-
-            commentAttachments = commentAttachments.filter(
-                (att) =>
-                    !alreadyAttached.has(
-                        `${att.modelType}-${att.repository.toString()}-${
-                            att.sourceId
-                        }`
-                    )
-            );
-
-            issue.commentAttachments = checkValid(issue.commentAttachments)
-                ? [...issue.commentAttachments, ...commentAttachments]
-                : commentAttachments;
-
-            return commentAttachments;
         })
         .filter((arr) => arr != null)
         .flat();
 
-    let commentAttachments = IntegrationAttachment.insertMany(insertOps);
+    let insertedAttachments = IntegrationAttachment.insertMany(insertOps);
 
-    commentAttachments = commentAttachments.map(
+    insertedAttachments = insertedAttachments.map(
         (att) =>
             (att.key = `${att.modelType}-${att.repository.toString()}-${
                 att.sourceId
             }`)
     );
 
-    commentAttachments = _.mapKeys(commentAttachments, "key");
+    insertedAttachments = _.mapKeys(insertedAttachments, "key");
 
-    issues = Object.values(issues).map((issue) => {
-        if (!checkValid(issue.commentAttachments)) return;
+    const bulkWriteOps = Object.values(issueUpdates)
+        .map((update) => {
+            let { commentAttachments, issue } = update;
 
-        issueCommentAttachments = issue.commentAttachments.map((att) => {
-            const key = `${att.modelType}-${att.repository.toString()}-${
-                att.sourceId
-            }`;
+            let seen = new Set(
+                issue.attachments.map((att) => {
+                    const { modelType, repository, sourceId } = att;
 
-            return commentAttachments[key];
-        });
+                    return `${modelType}-${repository.toString()}-${sourceId}`;
+                })
+            );
 
-        issue.attachments = [...issue.attachments, ...issueCommentAttachments];
+            commentAttachments = commentAttachments
+                .map((att) => {
+                    const { modelType, repository, sourceId } = att;
 
-        return issue;
-    });
+                    const key = `${modelType}-${repository.toString()}-${sourceId}`;
 
-    pullRequests = Object.values(pullRequests).map((issue) => {
-        if (!checkValid(issue.commentAttachments)) return;
+                    if (seen.has(key)) return null;
 
-        issueCommentAttachments = issue.commentAttachments.map((att) => {
-            const key = `${att.modelType}-${att.repository.toString()}-${
-                att.sourceId
-            }`;
+                    seen.add(key);
 
-            return commentAttachments[key];
-        });
+                    return insertedAttachments[key]._id;
+                })
+                .filter((att) => att != null);
 
-        issue.attachments = [...issue.attachments, ...issueCommentAttachments];
-    });
+            if (commentAttachments.length == 0) return null;
 
-    return [issues, pullRequests];
+            return {
+                updateOne: {
+                    filter: { _id: issue._id },
+                    update: {
+                        $push: {
+                            attachments: {
+                                $each: commentAttachments,
+                            },
+                        },
+                    },
+                    upsert: false,
+                },
+            };
+        })
+        .filter((op) => op != null);
+
+    return bulkWriteOps;
 };
 
 parseGithubBody = (body, repository) => {
+    const func = "parseGithubBody";
+
+    logger.info(`Entered with params.`, {
+        func,
+        obj: { body, repository },
+    });
+
+    body = removeMd(body);
+
+    logger.debug(`Markdown was removed from body.`, {
+        func,
+        obj: body,
+    });
+
     const tokens = body
-        .split("/n")
+        .split("\n")
         .map((phrase) => phrase.split(" "))
         .flat();
 
-    tokens = tokens.filter((token) => isUrl(token));
+    logger.debug(`${tokens.length} tokens were extracted.`, {
+        func,
+        obj: tokens,
+    });
 
-    const shaRegex = new RegExp("\b[0-9a-f]{7,40}\b");
+    const shaRegex = /\b[0-9a-f]{7,40}\b/;
 
     const modelTypes = new Set(["commit", "branch", "pullRequest", "issue"]);
 
@@ -168,94 +226,209 @@ parseGithubBody = (body, repository) => {
         commit: "commit",
     };
 
-    return tokens
-        .map((token) => {
-            let modelType;
+    let seen = new Set();
 
-            let sourceId = token;
+    let extractedAttachments;
 
-            if (isUrl(token)) {
-                const splitToken = token.split("/");
+    try {
+        extractedAttachments = tokens
+            .map((token) => {
+                let modelType;
 
-                const len = splitToken.length;
+                let sourceId = token;
 
-                if (splitToken.length > 2) {
-                    modelType =
-                        modelTypeMap[splitToken.slice(len - 2, len - 1)[0]];
+                if (isUrl(token)) {
+                    const splitToken = token.split("/");
 
-                    sourceId = splitToken.slice(-1)[0];
+                    const len = splitToken.length;
+
+                    if (splitToken.length > 2) {
+                        modelType =
+                            modelTypeMap[splitToken.slice(len - 2, len - 1)[0]];
+
+                        sourceId = splitToken.slice(-1)[0];
+                    }
+                } else if (shaRegex.test(token)) {
+                    modelType = "commit";
                 }
-            } else if (shaRegex.test(token)) {
-                modelType = "commit";
-            }
 
-            if (checkValid(modelType) && modelTypes.has(modelType)) {
-                return {
-                    sourceId,
-                    modelType,
-                    repository: repository._id,
-                };
-            }
+                if (checkValid(modelType) && modelTypes.has(modelType)) {
+                    let att = {
+                        sourceId,
+                        modelType,
+                        repository: repository._id,
+                    };
 
-            return null;
-        })
-        .filter((token) => token != null);
+                    let key = acquireKey(att);
+
+                    if (!seen.has(key)) {
+                        seen.add(key);
+
+                        return att;
+                    }
+                }
+
+                return null;
+            })
+            .filter((token) => token != null);
+    } catch (e) {
+        logger.error("Error parsing tokens..", {
+            func,
+            e,
+        });
+    }
+
+    logger.info(`${extractedAttachments.length} attachments were extracted`, {
+        func,
+        obj: extractedAttachments,
+    });
+
+    return extractedAttachments;
 };
 
 extractTextualAttachments = async (issues, repository) => {
+    const func = "extractTextualAttachments";
+
+    logger.info(`Entered with params.`, {
+        func,
+        obj: { issues, repository },
+    });
+
+    const issueUpdates = {};
+
     const insertOps = issues
         .map((issue) => {
             const { body } = issue;
 
             let attachments = parseGithubBody(body, repository);
 
+            logger.debug(
+                `${attachments.length} body attachments of issue with sourceId ${issue.sourceId} were extracted.`,
+                {
+                    func,
+                    obj: attachments,
+                }
+            );
+
             const alreadyAttached = new Set(
                 issue.attachments.map((att) => {
-                    const { modelType, repository, sourceId } = att;
-
-                    return `${modelType}-${repository.toString()}-${sourceId}`;
+                    return acquireKey(att);
                 })
             );
 
-            attachments = attachments.filter(
-                (att) =>
-                    !alreadyAttached.has(
-                        `${att.modelType}-${att.repository.toString()}-${
-                            att.sourceId
-                        }`
-                    )
+            logger.debug(
+                `${
+                    Array.from(alreadyAttached).length
+                } attachments were already extracted.`,
+                {
+                    func,
+                    obj: alreadyAttached,
+                }
             );
 
-            issue.textualAttachments = attachments;
+            attachments = attachments.filter((att) => {
+                const key = acquireKey(att);
+
+                return !alreadyAttached.has(key);
+            });
+
+            logger.debug(
+                `${attachments.length} body attachments remain after filtering duplicates.`,
+                {
+                    func,
+                    obj: attachments,
+                }
+            );
+
+            if (attachments.length > 0) {
+                issueUpdates[issue._id].textualAttachments = attachments;
+
+                issueUpdates[issue._id].issue = issue;
+            }
 
             return attachments;
         })
         .flat();
 
-    let textualAttachments = await IntegrationAttachment.insertMany(insertOps);
+    let insertedAttachments;
 
-    textualAttachments = textualAttachments.map(
-        (att) =>
-            (att.key = `${att.modelType}-${att.repository.toString()}-${
-                att.sourceId
-            }`)
-    );
+    try {
+        insertedAttachments = await IntegrationAttachment.insertMany(insertOps);
 
-    textualAttachments = _.mapKeys(textualAttachments, "key");
+        logger.info(
+            `${insertedAttachments.length} attachments were inserted into the database`,
+            {
+                func,
+                obj: insertedAttachments,
+            }
+        );
+    } catch (e) {
+        logger.error(
+            "An error occurred during IntegrationAttachment insertion",
+            {
+                func,
+                e,
+            }
+        );
 
-    issues.map((issue) => {
-        issueTextualAttachments = issue.textualAttachments.map((att) => {
-            const key = `${att.modelType}-${att.repository.toString()}-${
-                att.sourceId
-            }`;
+        throw new Error(e);
+    }
 
-            return textualAttachments[key];
-        });
+    insertedAttachments = insertedAttachments.map((att) => {
+        att.key = acquireKey(att);
 
-        issue.attachments = [...issue.attachments, ...issueTextualAttachments];
+        return !alreadyAttached.has(key);
     });
 
-    return issues;
+    insertedAttachments = _.mapKeys(insertedAttachments, "key");
+
+    logger.info(`Mapped attachments.`, {
+        func,
+        obj: insertedAttachments,
+    });
+
+    const bulkWriteOps = Object.values(issueUpdates)
+        .map((update) => {
+            let { textualAttachments, issue } = update;
+
+            let seen = new Set(issue.attachments.map((att) => acquireKey(att)));
+
+            textualAttachments = textualAttachments
+                .map((att) => {
+                    const key = acquireKey(att);
+
+                    if (seen.has(key)) return null;
+
+                    seen.add(key);
+
+                    return insertedAttachments[key]._id;
+                })
+                .filter((att) => att != null);
+
+            if (textualAttachments.length == 0) return null;
+
+            return {
+                updateOne: {
+                    filter: { _id: issue._id },
+                    update: {
+                        $push: {
+                            attachments: {
+                                $each: textualAttachments,
+                            },
+                        },
+                    },
+                    upsert: false,
+                },
+            };
+        })
+        .filter((op) => op != null);
+
+    logger.info(`${bulkWriteOps.length} bulkWriteOps queued.`, {
+        func,
+        obj: bulkWriteOps,
+    });
+
+    return bulkWriteOps;
 };
 
 extractIssueLabels = (issues, labels) => {
@@ -273,4 +446,5 @@ module.exports = {
     traverseGithubThreads,
     extractTextualAttachments,
     extractIssueLabels,
+    parseGithubBody,
 };
