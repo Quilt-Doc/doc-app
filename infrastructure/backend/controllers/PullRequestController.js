@@ -50,13 +50,18 @@ const createPullRequest = async (req, res) => {
     prData.installationId = installationId;
     prData.repository = repositoryObj._id.toString();
 
+    console.log(`Creating PullRequest on Repository: ${prData.repository}`);
+
     let pullRequest = new PullRequest(prData);
     try {
         pullRequest = await pullRequest.save();
     }
     catch(err) {
+        console.log(err);
         return res.json({success: false, error: err});
     }
+
+    console.log("Successfully created Pull Request from Webhook Event");
 
     // Generate InsertHunk for PR Here
     // Pseudocode:
@@ -84,7 +89,7 @@ const createPullRequest = async (req, res) => {
     // Get Raw PR Patch Content
     var prPatchContent;
     try {
-        prPatchContent = diffUtils.getPRDiffContent(installationClient, repositoryFullName, pullRequest.number);
+        prPatchContent = await diffUtils.getPRDiffContent(installationClient, repositoryFullName, pullRequest.number);
     }
     catch (err) {
         Sentry.setContext("createPullRequest", {
@@ -101,6 +106,9 @@ const createPullRequest = async (req, res) => {
                         });
 
     }
+
+    // console.log("PR PATCH CONTENT: ");
+    // console.log(prPatchContent);
 
     // Generate InsertHunks from raw patch content
     var insertHunks;
@@ -140,6 +148,8 @@ const createPullRequest = async (req, res) => {
                             });
         }
     }
+
+    console.log(`Successfully Created ${insertHunks.length} InsertHunks for Repository ${prData.repository} `);
 
 
 

@@ -29,8 +29,8 @@
 **/git_repo*
 
 # Ignore github-app build artifacts
-infrastructure/github-app/models*
-infrastructure/github-app/constants*
+infrastructure/lambdas/github-app/models*
+infrastructure/lambdas/github-app/constants*
 
 # Ignore token-manager build artifacts
 infrastructure/token-manager/models*

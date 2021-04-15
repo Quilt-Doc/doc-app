@@ -56,7 +56,7 @@ const getScanRepositoriesData = async (
     repositoryIds,
     workspace,
     session,
-    logger
+    public,
 ) => {
     // Get the list of installationIds for all Repositories
     var repositoryInstallationIds;
@@ -69,14 +69,16 @@ const getScanRepositoriesData = async (
             .lean()
             .exec();
     } catch (err) {
-        await logger.error({
-            source: "backend-api",
-            message: err,
-            errorDescription: `error getting workspace repositories - repositoryIds: ${JSON.stringify(
-                repositoryIds
-            )}`,
-            function: "getScanRepositoriesData",
+
+        console.log(err);
+
+        Sentry.setContext("getScanRepositoriesData", {
+            message: `Repository.find failed`,
+            repositoryIds: repositoryIds,
         });
+
+        Sentry.captureException(err);
+
         throw Error(
             `error getting workspace repositories - repositoryIds: ${JSON.stringify(
                 repositoryIds
@@ -84,46 +86,42 @@ const getScanRepositoriesData = async (
         );
     }
 
-    var installationIdLookup = {};
-    for (i = 0; i < repositoryInstallationIds.length; i++) {
-        installationIdLookup[
-            repositoryInstallationIds[i]._id.toString()
-        ] = repositoryInstallationIds[i].installationId.toString();
-    }
-
-    repositoryInstallationIds = [
-        ...new Set(
-            repositoryInstallationIds.map((repoObj) => repoObj.installationId)
-        ),
-    ];
-
-    /*
-    await logger.info({
-        source: "backend-api",
-        message: `Scan Repository Job - installationIdLookup, repositoryInstallationIds: ${JSON.stringify(installationIdLookup)}, ${JSON.stringify(repositoryInstallationIds)}`,
-        function: `getScanRepositoriesData`,
-    });*/
-
     // Kick off Scan Repositories Job
 
     var scanRepositoriesData = {};
+    if (!public) {
 
-    scanRepositoriesData["installationIdLookup"] = installationIdLookup;
-    scanRepositoriesData[
-        "repositoryInstallationIds"
-    ] = repositoryInstallationIds;
+        var installationIdLookup = {};
+        for (i = 0; i < repositoryInstallationIds.length; i++) {
+            installationIdLookup[repositoryInstallationIds[i]._id.toString()] 
+                = repositoryInstallationIds[i].installationId.toString();
+        }
+    
+        repositoryInstallationIds = [
+            ...new Set(
+                repositoryInstallationIds.map((repoObj) => repoObj.installationId)
+            ),
+        ];
+        scanRepositoriesData["installationIdLookup"] = installationIdLookup;
+        scanRepositoriesData["repositoryInstallationIds"] = repositoryInstallationIds;
+    }
+
+
+    if (public) {
+        scanRepositoriesData["installationIdLookup"] = {};
+        scanRepositoriesData["repositoryInstallationIds"] = []
+        scanRepositoriesData["public"] = true;
+    }
 
     scanRepositoriesData["repositoryIdList"] = repositoryIds;
     scanRepositoriesData["workspaceId"] = workspace._id.toString();
-    scanRepositoriesData[
-        "jobType"
-    ] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
+    scanRepositoriesData["jobType"] = jobConstants.JOB_SCAN_REPOSITORIES.toString();
 
     return scanRepositoriesData;
 };
 
 createWorkspace = async (req, res) => {
-    const { name, creatorId, installationId, repositoryIds } = req.body;
+    const { name, creatorId, installationId, repositoryIds, public } = req.body;
 
     console.log({ name, creatorId, installationId, repositoryIds });
 
@@ -132,11 +130,13 @@ createWorkspace = async (req, res) => {
             success: false,
             error: "no workspace name provided",
         });
+    /*
     if (!checkValid(installationId))
         return res.json({
             success: false,
             error: "no workspace installationId provided",
         });
+    */
     if (!checkValid(creatorId))
         return res.json({
             success: false,
@@ -163,20 +163,20 @@ createWorkspace = async (req, res) => {
             try {
                 workspace = await workspace.save({ session });
             } catch (err) {
+
                 console.log(err);
-                await logger.error({
-                    source: "backend-api",
-                    message: err,
-                    errorDescription: `error saving workspace - creator, repositories: ${creatorId}, ${JSON.stringify(
-                        repositories
-                    )}`,
-                    function: "createWorkspace",
+
+                Sentry.setContext("createWorkspace", {
+                    message: `Workspace.save() failed`,
+                    creator: creatorId,
+                    repositoryIds: repositoryIds,
                 });
+        
+                Sentry.captureException(err);
 
                 output = {
                     success: false,
-                    error:
-                        "createWorkspace error: save() on new workspace failed",
+                    error: "createWorkspace error: save() on new workspace failed",
                     trace: err,
                 };
                 throw Error(
@@ -255,7 +255,7 @@ createWorkspace = async (req, res) => {
                     repositoryIds,
                     workspace,
                     session,
-                    logger
+                    public,
                 );
             } catch (err) {
                 await logger.error({

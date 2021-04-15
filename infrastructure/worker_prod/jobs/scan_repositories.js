@@ -62,6 +62,9 @@ const scanRepositories = async () => {
     var worker = require('cluster').worker;
 
     var workspaceId = process.env.workspaceId;
+    var public = process.env.public;
+
+    public = ( public === 'true' ) ? true : false;
 
     var deletedLocalRepos = false;
 
@@ -85,7 +88,16 @@ const scanRepositories = async () => {
         var repositoryObjList;
 
         try {
-            repositoryObjList = await Repository.find({ _id: { $in: repositoryIdList }, installationId: { $in: repositoryInstallationIds } }, null);
+            var repoFindFilter = { _id: { $in: repositoryIdList }, 
+                                    installationId: (public == true) ? undefined : { $in: repositoryInstallationIds },
+                                };
+                                
+            // console.log('repoFindFilter: ');
+            // console.log(repoFindFilter);
+
+            repositoryObjList = await Repository.find(repoFindFilter)
+                                                .lean()
+                                                .exec();
         }
         catch (err) {
 
@@ -101,6 +113,9 @@ const scanRepositories = async () => {
 
             throw err;
         }
+
+        console.log("repositoryObjList: ");
+        console.log(repositoryObjList);
 
 
         // Filter out repositories with 'scanned' == true
@@ -152,27 +167,25 @@ const scanRepositories = async () => {
 
         var installationClientList;
 
-        try {
-            installationClientList = await Promise.all(repositoryInstallationIds.map(async (id) => {
-                return { [id]: await apis.requestInstallationClient(id) };
-            }));
+        if (!(public == true)) {
+            try {
+                installationClientList = await Promise.all(repositoryInstallationIds.map(async (id) => {
+                    return { [id]: await apis.requestInstallationClient(id) };
+                }));
 
-            installationClientList = Object.assign({}, ...installationClientList);
+                installationClientList = Object.assign({}, ...installationClientList);
+            }
+            catch (err) {
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories failed fetching installationClientList`,
+                    repositoryInstallationIds: repositoryInstallationIds,
+                });
+
+                Sentry.captureException(err);
+
+                throw err;
+            }
         }
-        catch (err) {
-            Sentry.setContext("scan-repositories", {
-                message: `scanRepositories failed fetching installationClientList`,
-                repositoryInstallationIds: repositoryInstallationIds,
-            });
-
-            Sentry.captureException(err);
-
-            throw err;
-        }
-
-
-
-
 
 
         // Get Repository objects from github for all unscanned Repositories
@@ -183,13 +196,20 @@ const scanRepositories = async () => {
             });
             // fetch the correct installationClient by getting relevant installationId from the repositoryId
             var requestPromiseList = urlList.map(async (urlObj) => {
-                var currentInstallationId = installationIdLookup[urlObj.repositoryId];
-                return await installationClientList[currentInstallationId].get(urlObj.url);
+                if (public == true) {
+                    console.log(`Public Client fetching: ${urlObj.url}`);
+                    return await apis.requestPublicClient().get(urlObj.url);
+                }
+                else {
+                    var currentInstallationId = installationIdLookup[urlObj.repositoryId];
+                    return await installationClientList[currentInstallationId].get(urlObj.url);
+                }
             });
 
             repositoryListObjects = await Promise.all(requestPromiseList);
         }
         catch (err) {
+            console.log(err);
             console.log("Github API - Can't get Repository Objects");
             Sentry.setContext("scan-repositories", {
                 message: `scanRepositories failed fetching Repository objects from Github API - GET "/repos/:owner/:name/"`,
@@ -241,6 +261,7 @@ const scanRepositories = async () => {
                 throw err;
             }
         }
+
 
 
 
@@ -302,7 +323,13 @@ const scanRepositories = async () => {
                 var hrstart = process.hrtime();
 
                 console.log(`Attempting to clone Repository ( ${repositoryObj.fullName} )`);
-                repoDiskPath = await cloneInstallationRepo(repositoryObj.installationId, repositoryObj.cloneUrl, false, '', timestampList[idx]);
+                if (public == true) {
+                    repoDiskPath = await cloneInstallationRepo(null, repositoryObj.cloneUrl, false, '', timestampList[idx], true);
+                }
+                else {
+                    repoDiskPath = await cloneInstallationRepo(repositoryObj.installationId, repositoryObj.cloneUrl, false, '', timestampList[idx]);
+                }
+
                 hrend = process.hrtime(hrstart)
                 console.info(`Repository Clone ( ${repositoryObj.fullName} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
 
@@ -345,23 +372,30 @@ const scanRepositories = async () => {
             throw err;
         }
 
+        console.log("clonedRepositoryDiskPaths: ");
+        console.log(clonedRepositoryDiskPaths);
+
+        console.log("repositoryIdToDiskPathMap: ");
+        console.log(repositoryIdToDiskPathMap);
 
 
-
-
-
+        console.log("unscannedRepositories: ");
+        console.log(unscannedRepositories);
 
         var repositoryCommitsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
             try {
                 // Get cloned Repository's path
                 var repoDiskPath = repositoryIdToDiskPathMap[repositoryObj._id.toString()];
 
+                console.log("scrapeGithubRepoCodeObjects idx: ", idx);
+
                 await scrapeGithubRepoCodeObjects(repositoryObj.installationId,
                     repositoryObj._id.toString(),
-                    installationClientList[unscannedRepositories[idx].installationId],
+                    (public) ? undefined : installationClientList[unscannedRepositories[idx].installationId],
                     repositoryObj,
                     workspaceId,
-                    repoDiskPath);
+                    repoDiskPath,
+                    public);
             }
             catch (err) {
                 console.log(err);
@@ -398,8 +432,6 @@ const scanRepositories = async () => {
 
 
 
-
-
         // Scrape Github Issues depending on ENV variable
         if (!process.env.NO_GITHUB_ISSUES) {
             var repositoryIssuesRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
@@ -410,10 +442,11 @@ const scanRepositories = async () => {
 
                     await scrapeGithubRepoIssues(repositoryObj.installationId,
                         repositoryObj._id.toString(),
-                        installationClientList[unscannedRepositories[idx].installationId],
+                        (public) ? undefined : installationClientList[unscannedRepositories[idx].installationId],
                         repositoryObj,
                         workspaceId,
-                        integrationBoardId);
+                        integrationBoardId,
+                        public);
                 }
                 catch (err) {
                     Sentry.captureException(err);
@@ -496,11 +529,16 @@ const scanRepositories = async () => {
 
         // Generate InsertHunks for each PullRequest from each unscanned Repository
         var repositoryPRInsertHunksRequestList = unscannedRepositories.map(async (repositoryObj) => {
-            var currentInstallationId = installationIdLookup[repositoryObj._id.toString()];
-            var currentInstallationClient = installationClientList[currentInstallationId];
+            var currentInstallationId;
+            var currentInstallationClient;
+
+            if (!public) {
+                currentInstallationId = installationIdLookup[repositoryObj._id.toString()];
+                currentInstallationClient = installationClientList[currentInstallationId];
+            }
 
             try {
-                await createPRInsertHunksForRepository(repositoryObj._id.toString(), repositoryObj.fullName, currentInstallationClient);
+                await createPRInsertHunksForRepository(repositoryObj._id.toString(), repositoryObj.fullName, currentInstallationClient, public);
             }
             catch (err) {
 
@@ -535,7 +573,7 @@ const scanRepositories = async () => {
 
 
 
-
+        /*
         // Update the lastProcessedCommits for all Repositories
         var repositoryListCommits;
         try {
@@ -553,6 +591,7 @@ const scanRepositories = async () => {
             Sentry.captureException(err);
             throw err;
         }
+        */
 
 
 

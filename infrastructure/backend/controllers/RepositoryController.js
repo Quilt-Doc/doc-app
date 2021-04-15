@@ -11,6 +11,9 @@ const jobConstants = require("../constants/index").jobs;
 
 const logger = require("../logging/index").logger;
 
+//sentry
+const Sentry = require("@sentry/node");
+
 const Workspace = require("../models/Workspace");
 const Repository = require("../models/Repository");
 const Reference = require("../models/Reference");
@@ -23,43 +26,154 @@ const { json } = require("body-parser");
 
 const { checkValid } = require("../utils/utils");
 
-initRepository = async (req, res) => {
-    const { fullName, installationId, icon } = req.body;
+/*
+initPublicRepository = async (req) => {
+    var { icon, publicHtmlUrl } = req.body;
 
-    if (!checkValid(fullName))
-        return res.json({
-            success: false,
-            error: "no repository fullName provided",
-        });
-    if (!checkValid(installationId))
-        return res.json({
-            success: false,
-            error: "no repository installationId provided",
-        });
+    var publicUrl;
 
-    await logger.info({
-        source: "backend-api",
-        message: `Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`,
-        function: "initRepository",
-    });
+    if (!checkValid(publicHtmlUrl)) {
+        throw Error(`No public repository html url provided`);
+    }
+    else {
+        publicUrl = publicHtmlUrl;
+    }
 
-    let repository = new Repository({
+
+    var urlWithoutName = publicUrl.substring(0, publicUrl.lastIndexOf("/"));
+    var repoName = publicUrl.substring(publicUrl.lastIndexOf("/")+1, publicUrl.length);
+
+    var repoOwner = urlWithoutName.substring(urlWithoutName.lastIndexOf("/")+1, urlWithoutName.length);
+
+    fullName = `${repoOwner}/${repoName}`
+
+
+    console.log(`Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`);
+
+    var repositoryCreateData = {
         fullName,
-        installationId,
-        icon,
+        public: true,
         scanned: false,
         currentlyScanning: false,
-    });
+    };
+
+    let repository = new Repository(repositoryCreateData);
 
     try {
         repository = await repository.save();
     } catch (err) {
-        await logger.error({
-            source: "backend-api",
-            message: err,
-            errorDescription: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
-            function: "initRepository",
+
+        console.log(err);
+
+        Sentry.setContext("initRepository", {
+            message: `Repository.save() failed`,
+            fullName: fullName,
+            installationId: installationId,
+            publicHtmlUrl: publicHtmlUrl,
         });
+
+        Sentry.captureException(err);
+
+        throw err;
+    }
+
+    try {
+        await Reference.create({
+            repository: repository._id,
+            name: repository.fullName,
+            kind: "dir",
+            path: "",
+            parseProvider: "create",
+            root: true,
+        });
+    } catch (err) {
+
+        console.log(err);
+
+        Sentry.setContext("initRepository", {
+            message: `Reference.create failed`,
+            repositoryId: repository._id,
+            repositoryFullName: repository.fullName,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
+    }
+
+    console.log(`Successfully initialized Repository - fullName: ${fullName}`);
+
+    return repository;
+
+
+}
+*/
+
+initRepository = async (req, res) => {
+    var { fullName, installationId, isPublic, publicHtmlUrl } = req.body;
+
+    var publicRepo = false;
+    var publicUrl = '';
+
+    /*
+    if (!checkValid(fullName)) {
+        return res.json({
+            success: false,
+            error: "no repository fullName provided",
+        });
+    }
+    if (!checkValid(installationId)) {
+        return res.json({
+            success: false,
+            error: "no repository installationId provided",
+        });
+    }
+    */
+
+    if (checkValid(isPublic)) {
+        publicRepo = true;
+        if (!checkValid(publicHtmlUrl)) {
+            return res.json({success: false, error: `No public repository html url provided`});
+        }
+        else {
+            publicUrl = publicHtmlUrl;
+        }
+    }
+
+    if (publicRepo) {
+        var urlWithoutName = publicUrl.substring(0, publicUrl.lastIndexOf("/"));
+        var repoName = publicUrl.substring(publicUrl.lastIndexOf("/")+1, publicUrl.length);
+
+        var repoOwner = urlWithoutName.substring(urlWithoutName.lastIndexOf("/")+1, urlWithoutName.length);
+
+        fullName = `${repoOwner}/${repoName}`
+    }
+
+    console.log(`Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`);
+
+    var repositoryCreateData = {
+        fullName,
+        public: ( publicRepo == true ) ? true : undefined,
+        installationId: ( publicRepo == true ) ? undefined : installationId,
+        scanned: false,
+        currentlyScanning: false,
+    };
+
+    let repository = new Repository(repositoryCreateData);
+
+    try {
+        repository = await repository.save();
+    } catch (err) {
+
+        Sentry.setContext("initRepository", {
+            message: `Repository.save() failed`,
+            fullName: fullName,
+            installationId: installationId,
+            publicHtmlUrl: publicHtmlUrl,
+        });
+
+        Sentry.captureException(err);
+
         return res.json({
             success: false,
             error: `Error saving repository fullName, installationId: ${fullName}, ${installationId}`,
@@ -77,12 +191,15 @@ initRepository = async (req, res) => {
             root: true,
         });
     } catch (err) {
-        await logger.error({
-            source: "backend-api",
-            message: err,
-            errorDescription: `Error saving rootReference - repositoryId: ${repository._id.toString()}`,
-            function: "initRepository",
+
+        Sentry.setContext("initRepository", {
+            message: `Reference.create failed`,
+            repositoryId: repository._id,
+            repositoryFullName: repository.fullName,
         });
+
+        Sentry.captureException(err);
+
         return res.json({
             success: false,
             error: `Error saving rootReference`,
@@ -90,11 +207,7 @@ initRepository = async (req, res) => {
         });
     }
 
-    await logger.info({
-        source: "backend-api",
-        message: `Successfully initialized Repository - fullName, installationId: ${fullName}, ${installationId}`,
-        function: "initRepository",
-    });
+    console.log(`Successfully initialized Repository - fullName, installationId: ${fullName}, ${installationId}`);
 
     return res.json({ success: true, result: repository });
 };

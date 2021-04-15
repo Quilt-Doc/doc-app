@@ -8,12 +8,14 @@ var LinkHeader = require('http-link-header');
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
+const apis = require("../../apis/api");
+
 
 const PullRequest = require('../../models/PullRequest');
 
 // const { fetchAppToken, requestInstallationToken } = require('../../apis/api');
 
-const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName) => {
+const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, public = false) => {
     // Get list of all PRs
     // GET /repos/{owner}/{repo}/pulls
     // per_page	integer	query - Results per page (max 100)
@@ -31,10 +33,12 @@ const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName) 
     var foundPRList = [];
     var searchString;
 
+    var client = (public) ? apis.requestPublicClient() : installationClient;
+
 
     while (pageNum < lastPageNum) {
         try {
-            prListResponse = await installationClient.get(`/repos/${fullName}/pulls?per_page=${perPage}&page=${pageNum}&state=all`);
+            prListResponse = await client.get(`/repos/${fullName}/pulls?per_page=${perPage}&page=${pageNum}&state=all`);
         }
         catch (err) {
             console.log(`Github API List PRs failed - installationId, fullName: ${installationId}, ${fullName}`);
@@ -77,21 +81,21 @@ const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName) 
 
     }
 
-    console.log("foundPRList before flat: ");
-    console.log(foundPRList);
+    // console.log("foundPRList before flat: ");
 
     foundPRList = foundPRList.flat();
+    console.log(`Found ${foundPRList.length} Pull Requests for ${fullName}`);
 
     return foundPRList;
 }
 
 
-const enrichPRsWithFileList = async (foundPRList, installationClient, installationId, fullName) => {
+const enrichPRsWithFileList = async (foundPRList, installationClient, installationId, fullName, public = false) => {
 
     var enrichedPRList = [];
 
     var fileListAPIRequestList = foundPRList.map(async (prObj) => {
-        enrichedPRList.push(await addFileListToPR(prObj, installationClient, installationId, fullName));
+        enrichedPRList.push(await addFileListToPR(prObj, installationClient, installationId, fullName, public));
     });
 
     try {
@@ -120,7 +124,7 @@ const enrichPRsWithFileList = async (foundPRList, installationClient, installati
 }
 
 
-const addFileListToPR = async (foundPR, installationClient, installationId, fullName) => {
+const addFileListToPR = async (foundPR, installationClient, installationId, fullName, public = false) => {
 
     var perPage = 100;
     var pageNum = 0;
@@ -133,9 +137,12 @@ const addFileListToPR = async (foundPR, installationClient, installationId, full
     var foundFileList = [];
     var searchString;
 
+    var client = (public) ? apis.requestPublicClient() : installationClient;
+
+
     while (pageNum < lastPageNum) {
         try {
-            fileListResponse = await installationClient.get(`/repos/${fullName}/pulls/${foundPR.number}/files?per_page=${perPage}&page=${pageNum}`);
+            fileListResponse = await client.get(`/repos/${fullName}/pulls/${foundPR.number}/files?per_page=${perPage}&page=${pageNum}`);
         }
         catch (err) {
 

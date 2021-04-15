@@ -31,7 +31,7 @@ repository
 let pullRequestSchema = new Schema({
     created: { type: Date, default: Date.now },
 
-    installationId: { type: Number, required: true },
+    installationId: { type: Number, required: false },
     checks: [{ type: ObjectId, ref: "Check" }],
     repository: { type: ObjectId, ref: "Repository", required: true },
     fileList: [{ type: String }],

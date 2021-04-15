@@ -58,7 +58,7 @@ const handlePullRequestEvent = async (backendClient, event, githubEvent) => {
 
         };
 
-        var installationId = event.installation.id;
+        var installationId = event.body.installation.id;
         var repositoryFullName = event.body.repository.full_name;
 
         var createPRResponse;

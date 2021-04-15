@@ -1,6 +1,6 @@
 
 const Sentry = require("@sentry/node");
-
+const InsertHunk = require('../../models/InsertHunk');
 
 
 const getPRDiffContent = async (installationClient, repositoryFullName, prNumber) => {
@@ -161,6 +161,21 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
 
 const createInsertHunks = async (insertHunks) => {
     console.log(`createInsertHunks: Attempting to create #${insertHunks.length} InsertHunks`);
+
+    insertHunks = insertHunks.map(hunkObj => {
+        var temp = hunkObj.lines.map(line => {
+            if (line.length < 1) {
+                return '\n';
+            }
+            return line;
+        });
+        return Object.assign({}, hunkObj, { lines: temp });
+    });
+
+    // console.log("insertHunks: ");
+    // console.log(insertHunks);
+
+
     var bulkInsertResult;
     try {
         bulkInsertResult = await InsertHunk.insertMany(insertHunks);
@@ -179,8 +194,6 @@ const createInsertHunks = async (insertHunks) => {
         throw err;
 
     }
-
-    console.log(`createInsertHunks: Successfully created #${insertHunks.length}InsertHunks`);
 }
 
 

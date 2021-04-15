@@ -175,7 +175,7 @@ const repositoryController = require("../controllers/RepositoryController");
 
 router.post(
     "/repositories/init",
-    authorizationMiddleware.repositoryMiddleware,
+    // permissionsMiddleware.verifyUserIsDev,
     repositoryController.initRepository
 );
 router.post(
