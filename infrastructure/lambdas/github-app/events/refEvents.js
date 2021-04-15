@@ -1,3 +1,4 @@
+const Sentry = require("@sentry/node");
 
 /*
 ref	            string	The git ref resource.

@@ -11,6 +11,7 @@ const InsertHunk = require("../../models/InsertHunk");
 
 const Sentry = require("@sentry/node");
 
+const apis = require("../../apis/api");
 
 
 
@@ -233,11 +234,13 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
 }
 
 
-const getPRDiffContent = async (installationClient, repositoryFullName, prNumber) => {
+const getPRDiffContent = async (installationClient, repositoryFullName, prNumber, public = false) => {
+
+    var client = (public) ? apis.requestPublicClient() : installationClient;
 
     var prDiffResponse;
     try {
-        prDiffResponse = await installationClient.get(`/repos/${repositoryFullName}/pulls/${prNumber}`,
+        prDiffResponse = await client.get(`/repos/${repositoryFullName}/pulls/${prNumber}`,
             {
                 headers: {
                     "Content-Type": "application/vnd.github.v3.diff",
@@ -533,7 +536,7 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
 
 }
 
-const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName, installationClient) => {
+const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName, installationClient, public = false) => {
     // Fetch All PRs for Repository from DB
     var repositoryPRs;
     try {
@@ -559,7 +562,7 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
 
         var diffContent;
         try {
-            diffContent = await getPRDiffContent(installationClient, repositoryFullName, number);
+            diffContent = await getPRDiffContent(installationClient, repositoryFullName, number, public);
         }
         catch (err) {
             Sentry.setContext("createPRInsertHunksForRepository", {
@@ -604,8 +607,8 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
 
     allPRInsertHunks = allPRInsertHunks.flat();
 
-    console.log("allPRInsertHunks: ");
-    console.log(allPRInsertHunks);
+    console.log("allPRInsertHunks.length: ", allPRInsertHunks.length);
+    // console.log(allPRInsertHunks);
 
     // Create all InsertHunks
     try {

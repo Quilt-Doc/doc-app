@@ -31,7 +31,7 @@ repository
 let pullRequestSchema = new Schema({
     created: { type: Date, default: Date.now },
 
-    installationId: { type: Number, required: true },
+    installationId: { type: Number, required: false },
     checks: [{ type: ObjectId, ref: "Check" }],
     repository: { type: ObjectId, ref: "Repository", required: true },
     fileList: [{ type: String }],
@@ -65,7 +65,6 @@ let pullRequestSchema = new Schema({
     closedAt: { type: Date },
     mergedAt: { type: Date },
     mergeCommitSha: { type: String },
-    labels: [{ type: String }],
 
     headRef: { type: String, required: true },
     headLabel: { type: String, required: true },

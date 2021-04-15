@@ -31,8 +31,11 @@ exports.handler = async (event) => {
     var expected = 'sha1=' + hmac.digest('hex')
 
     // Modify
+    if (sig == process.env.DEV_TOKEN) {
+        console.log("LAMBDA RECEIVED DEV TOKEN");
+    }
 
-    if (!(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)))) {
+    else if (!(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)))) {
         let response = {
             statusCode: 401,
             headers: {

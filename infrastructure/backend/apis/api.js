@@ -210,6 +210,17 @@ const requestInstallationClient = async (installationId) => {
     return installationApi;
 };
 
+const requestPublicClient = () => {
+    const axios = require("axios");
+    return axios.create({
+        baseURL: process.env.GITHUB_API_URL,
+        auth: {
+            username: process.env.GITHUB_PUBLIC_USER_NAME,
+            password: process.env.GITHUB_PUBLIC_USER_OAUTH,
+        }
+    });
+}
+
 module.exports = {
     requestLocalWorkerClient,
     requestTestingUserBackendClient,
@@ -220,4 +231,5 @@ module.exports = {
     fetchAppToken,
     requestInstallationToken,
     requestInstallationClient,
+    requestPublicClient,
 };

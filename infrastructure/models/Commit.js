@@ -7,7 +7,7 @@ let commitSchema = new Schema({
     created: {type: Date, default: Date.now },
 
     repository: { type: ObjectId, ref: 'Repository', required: true },
-    installationId: { type: Number, required: true },
+    installationId: { type: Number, required: false },
 
     name: { type: String },
     description: { type: String },

@@ -343,6 +343,7 @@ const getGithubIssueLinkages = async (
     installationId,
     issueObj,
     repositoryObj,
+    public = false
 ) => {
     var prismaQuery = generateIssueQuery(
         repositoryObj,
@@ -350,20 +351,24 @@ const getGithubIssueLinkages = async (
     );
 
     var prismaClient;
+    if (public) {
+        prismaClient = api.requestPublicGraphQLClient();
+    }
+    else {
+        try {
+            prismaClient = await api.requestInstallationGraphQLClient(
+                installationId
+            );
+        } catch (err) {
+            Sentry.setContext("getGithubIssueLinkages", {
+                message: `Failed to get installation GraphQL client`,
+                installationId: installationId,
+            });
 
-    try {
-        prismaClient = await api.requestInstallationGraphQLClient(
-            installationId
-        );
-    } catch (err) {
-        Sentry.setContext("getGithubIssueLinkages", {
-            message: `Failed to get installation GraphQL client`,
-            installationId: installationId,
-        });
+            Sentry.captureException(err);
 
-        Sentry.captureException(err);
-
-        throw err;
+            throw err;
+        }
     }
 
     var queryResponse;
@@ -1112,10 +1117,13 @@ scrapeGithubRepoIssues = async (
     repositoryObj,
     workspaceId,
     integrationBoardId,
+    public = false,
 ) => {
     // TEST ISSUE SCRAPING
 
     // GET /repos/{owner}/{repo}/issues
+
+    var client = (public) ? api.requestPublicClient() : installationClient;
 
     var pageNum = 0;
 
@@ -1132,7 +1140,7 @@ scrapeGithubRepoIssues = async (
 
     while (pageNum <= lastPageNum) {
         try {
-            issueListPageResponse = await installationClient.get(
+            issueListPageResponse = await client.get(
                 `/repos/${repositoryObj.fullName}/issues?state=all&per_page=${pageSize}&page=${pageNum}`
             );
         } catch (err) {
@@ -1221,7 +1229,6 @@ scrapeGithubRepoIssues = async (
         githubIssueCreatedAt: { type: Date },
         githubIssueUpdatedAt:{ type: Date },
         githubIssueAuthorAssociation: { type: String },
-
     */
 
     var bulkGithubIssueInsertList = repositoryIssueList.map(
@@ -1351,6 +1358,7 @@ scrapeGithubRepoIssues = async (
                     installationId,
                     issueObj,
                     repositoryObj,
+                    public,
                 );
             } catch (err) {
                 console.log(err);
