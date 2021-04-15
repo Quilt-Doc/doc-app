@@ -1,3 +1,4 @@
+const Sentry = require("@sentry/node");
 
 
 const handleInstallationEvent = async (backendClient, event, githubEvent) => {

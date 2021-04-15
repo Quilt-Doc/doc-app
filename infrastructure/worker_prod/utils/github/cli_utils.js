@@ -7,7 +7,7 @@ const tokenUtils = require('../token_utils');
 const Sentry = require("@sentry/node");
 
 
-const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBranch, defaultBranch, timestamp = Date.now().toString()) => {
+const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBranch, defaultBranch, timestamp = Date.now().toString(), public = false) => {
 
 
     // Clone the Repository
@@ -15,28 +15,35 @@ const cloneInstallationRepo = async (installationId, cloneUrlRaw, cloneSingleBra
     var repoDiskPath = 'git_repos/' + timestamp + '/';
 
     var installToken;
-    try {
-        installToken = await tokenUtils.getInstallToken(installationId);
+    if (!public) {
+        try {
+            installToken = await tokenUtils.getInstallToken(installationId);
+        }
+        catch (err) {
+
+            Sentry.setContext("cloneInstallationRepo", {
+                message: `Failed to get installToken`,
+                installationId: installationId,
+            });
+
+            Sentry.captureException(err);
+
+            console.log(err);
+
+            throw err;
+        }
     }
-    catch (err) {
 
-        Sentry.setContext("cloneInstallationRepo", {
-            message: `Failed to get installToken`,
-            installationId: installationId,
-        });
 
-        Sentry.captureException(err);
 
-        console.log(err);
 
-        throw err;
+    var cloneUrl;
+    if (!public) {
+        cloneUrl = "https://x-access-token:" + installToken.value + "@" + cloneUrlRaw.replace("https://", "");
     }
-
-
-
-
-    var cloneUrl = "https://x-access-token:" + installToken.value + "@" + cloneUrlRaw.replace("https://", "");
-
+    else {
+        cloneUrl = `https://${process.env.GITHUB_PUBLIC_USER_NAME}:${process.env.GITHUB_PUBLIC_USER_OAUTH}@${cloneUrlRaw.replace("https://", "")}`
+    }
 
     var optionsList = [];
 

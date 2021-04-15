@@ -5,6 +5,8 @@ var LinkHeader = require('http-link-header');
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
+const apis = require("../../apis/api");
+
 const Sentry = require("@sentry/node");
 
 
@@ -66,7 +68,7 @@ const fetchAllRepoBranchCommitDates = async (foundBranchList, installationClient
 
 
 
-const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullName) => {
+const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullName, public = false) => {
 
     // Get list of all branches
     // GET /repos/{owner}/{repo}/branches
@@ -85,10 +87,12 @@ const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullN
 
     var searchString;
 
+    var client = (public) ? apis.requestPublicClient() : installationClient;
+
 
     while (pageNum < lastPageNum) {
         try {
-            branchListResponse = await installationClient.get(`/repos/${fullName}/branches?per_page=${perPage}&page=${pageNum}`);
+            branchListResponse = await client.get(`/repos/${fullName}/branches?per_page=${perPage}&page=${pageNum}`);
         }
         catch (err) {
 

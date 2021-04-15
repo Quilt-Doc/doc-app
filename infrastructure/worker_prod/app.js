@@ -86,12 +86,18 @@ app.post('/job', async function (req, res) {
             // res.status(400).end();
         }
 
+        var public = false;
+        if (checkValid(public)) {
+            public = true;
+        }
+
         console.log(`Running Scan Repositories Job workspaceId, installationId, repositoryIdList: ${workspaceId}, ${installationId}, ${repositoryIdList}`);
 
         process.env.workspaceId = workspaceId;
         process.env.repositoryIdList = JSON.stringify(repositoryIdList);
         process.env.installationIdLookup = JSON.stringify(installationIdLookup);
         process.env.repositoryInstallationIds = JSON.stringify(repositoryInstallationIds);
+        process.env.public = public;
 
         // DEPRECATED
         // process.env.installationId = installationId;

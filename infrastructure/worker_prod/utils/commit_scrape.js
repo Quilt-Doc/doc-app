@@ -21,13 +21,13 @@ const { cloneInstallationRepo } = require('./github/cli_utils');
 
 
 
-const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, repoDiskPath) => {
+const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, repoDiskPath, public = false) => {
 
 
     // Fetch all branches and PRs from Github
     var foundPRList;
     try {
-        foundPRList = await fetchAllRepoPRsAPI(installationClient, installationId, repositoryObj.fullName);
+        foundPRList = await fetchAllRepoPRsAPI(installationClient, installationId, repositoryObj.fullName, public);
     }
     catch (err) {
 
@@ -46,7 +46,7 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
     var foundBranchList;
     try {
-        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryObj.fullName);
+        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryObj.fullName, public);
     }
     catch (err) {
 
@@ -92,7 +92,7 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     if (foundPRList.length > 0) {
         // Query from Github & set fileList field on PRs
         try {
-            foundPRList = await enrichPRsWithFileList(foundPRList, installationClient, installationId, repositoryObj.fullName);
+            foundPRList = await enrichPRsWithFileList(foundPRList, installationClient, installationId, repositoryObj.fullName, public);
         }
         catch (err) {
 
@@ -206,12 +206,6 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         throw err;
 
     }
-
-
-
-    // Associate Commits with PullRequests and Branches
-
-
 
     var insertedCommitsCLI;
     try {

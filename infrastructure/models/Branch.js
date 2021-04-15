@@ -21,7 +21,7 @@ const { ObjectId } = Schema.Types;
 
 let branchSchema = new Schema({
     repository: { type: ObjectId, ref: 'Repository' },
-    installationId: { type: Number, required: true },
+    installationId: { type: Number, required: false },
 
     name: { type: String },
     sourceId: { type: String },

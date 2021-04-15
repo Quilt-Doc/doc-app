@@ -156,6 +156,37 @@ const requestInstallationGraphQLClient = async (installationId) => {
     return prismaClient
 }
 
+const requestPublicGraphQLClient = () => {
+
+    const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
+        credentials: 'include',
+        mode: 'cors',
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `token ${process.env.GITHUB_PUBLIC_USER_OAUTH}`,
+        },
+        /*
+        auth: {
+            username: process.env.GITHUB_PUBLIC_USER_NAME,
+            password: process.env.GITHUB_PUBLIC_USER_OAUTH,
+        }
+        */       
+    });
+    return prismaClient
+}
+
+const requestPublicClient = () => {
+    const axios = require("axios");
+    return axios.create({
+        baseURL: process.env.GITHUB_API_URL,
+        auth: {
+            username: process.env.GITHUB_PUBLIC_USER_NAME,
+            password: process.env.GITHUB_PUBLIC_USER_OAUTH,
+        }
+    });
+}
+
 
 
 
@@ -169,4 +200,6 @@ module.exports = {
     requestInstallationToken,
     requestInstallationClient,
     requestInstallationGraphQLClient,
+    requestPublicGraphQLClient,
+    requestPublicClient,
 }

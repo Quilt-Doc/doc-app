@@ -5,6 +5,14 @@ var mongoose = require("mongoose");
 const WorkspaceInvite = require("../models/authentication/WorkspaceInvite");
 const { ObjectId } = mongoose.Types;
 
+const verifyUserIsDev = async (req, res, next) => {
+    var requesterRole = req.tokenPayload.role;
+    if (requesterRole == "dev") {
+        return next();
+    }
+    return next(new Error(`Error: expected dev token`));
+};
+
 const verifyUserInWorkspace = async (req, res, next) => {
     var requestedPath = req.path.trim();
 
@@ -14,9 +22,7 @@ const verifyUserInWorkspace = async (req, res, next) => {
     const { workspaceId } = req.params;
     var workspaceFound = false;
     try {
-        console.log(
-            `verifyUserInWorkspace - workspaceId, requesterId: ${workspaceId}, ${requesterId}`
-        );
+        // console.log(`verifyUserInWorkspace - workspaceId, requesterId: ${workspaceId}, ${requesterId}`);
         workspaceFound = await Workspace.exists({
             _id: ObjectId(workspaceId.toString()),
             memberUsers: { $in: [ObjectId(requesterId.toString())] },
@@ -84,6 +90,7 @@ const verifyUserIdMatchesRequester = async (req, res, next) => {
 };
 
 module.exports = {
+    verifyUserIsDev,
     verifyUserInWorkspace,
     verifyUserAndRepositoryInWorkspace,
     verifyUserIdMatchesRequester,
