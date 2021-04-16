@@ -59,8 +59,6 @@ router.param("userId", paramMiddleware.userIdParam);
 // Need to be checking that if :referenceId then :referenceId repositoryId in workspace `repositories`
 // Need to be checking if :tagId then `workspace` in Tag matches :workspaceId
 
-
-
 // Validate workspace membership for calling user; all methods
 const documentController = require("../controllers/DocumentController");
 router.post(
@@ -165,7 +163,6 @@ router.put('/documents/:workspaceId/add_canread/:id', authorizationMiddleware.do
 router.put('/documents/:workspaceId/remove_canread/:id', authorizationMiddleware.documentMiddleware, documentController.removeCanRead);
 */
 
-
 const repositoryController = require("../controllers/RepositoryController");
 
 // Dev only
@@ -192,6 +189,11 @@ router.post(
     "/repositories/remove_installation",
     authorizationMiddleware.repositoryMiddleware,
     repositoryController.removeInstallation
+);
+
+router.post(
+    "/repositories/search_public_repos",
+    repositoryController.searchPublicGithubRepositories
 );
 
 // User accessible
@@ -549,7 +551,11 @@ router.post("/verify/add_contact", emailVerifyController.addContact);
 
 const workspaceInviteController = require("../controllers/authentication/WorkspaceInviteController");
 
-router.post("/invites/:workspaceId", permissionsMiddleware.verifyUserInWorkspace, workspaceInviteController.sendInvite);
+router.post(
+    "/invites/:workspaceId",
+    permissionsMiddleware.verifyUserInWorkspace,
+    workspaceInviteController.sendInvite
+);
 
 router.post(
     "/invites/:workspaceId/retrieve",
@@ -808,9 +814,17 @@ router.post(
 );
 
 const blameController = require("../controllers/blame/BlameController");
-router.post("/blames/:workspaceId/:repositoryId/retrieve", permissionsMiddleware.verifyUserAndRepositoryInWorkspace, blameController.retrieveBlame);
+router.post(
+    "/blames/:workspaceId/:repositoryId/retrieve",
+    permissionsMiddleware.verifyUserAndRepositoryInWorkspace,
+    blameController.retrieveBlame
+);
 
 const pullRequestController = require("../controllers/PullRequestController");
-router.post("/pull_requests/create", permissionsMiddleware.verifyUserIsDev, pullRequestController.createPullRequest);
+router.post(
+    "/pull_requests/create",
+    permissionsMiddleware.verifyUserIsDev,
+    pullRequestController.createPullRequest
+);
 
 module.exports = router;
