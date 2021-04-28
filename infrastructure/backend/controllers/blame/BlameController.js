@@ -48,11 +48,6 @@ retrieveBlame = async (req, res) => {
         }).lean(),
     ]);
 
-    console.log(
-        "COMMIT HUNKS",
-        commitHunks.map((hunk) => hunk.commitSha)
-    );
-
     logger.info(
         `Retrieved ${commitHunks.length} commitHunks and ${pullRequestHunks.length} pullRequestHunks`,
         {
@@ -115,8 +110,6 @@ retrieveBlame = async (req, res) => {
         }
     );
 
-    const test = new Set([19, 29, 72, 312]);
-
     // insert commits into boundaries
     insertHunksIntoBounds(commitHunks, boundaries, "commits");
 
@@ -126,12 +119,6 @@ retrieveBlame = async (req, res) => {
     logger.info(`Inserted hunks into boundaries`, {
         func,
         obj: boundaries,
-    });
-
-    Object.values(boundaries).map((boundary) => {
-        if (test.has(boundary.start)) {
-            console.log("BEFORE BOUNDARY 0", boundary);
-        }
     });
 
     // query all the objects required for further assoc processing
@@ -144,16 +131,6 @@ retrieveBlame = async (req, res) => {
         rawCommits,
         rawPullRequests,
     } = await queryObjects(commitHunks, pullRequestHunks, repositoryId);
-
-    console.log(
-        "RAW COMMITS SOURCEIDS",
-        rawCommits.map((commit) => commit.sourceId)
-    );
-
-    console.log(
-        "RAW COMMITS _ID",
-        rawCommits.map((commit) => commit._id)
-    );
 
     logger.info(
         `Queried necessary objects to insert tickets and docs into boundaries.`,
@@ -169,12 +146,6 @@ retrieveBlame = async (req, res) => {
 
     pullRequestsMap = _.mapKeys(rawPullRequests, "_id");
 
-    Object.values(boundaries).map((boundary) => {
-        if (test.has(boundary.start)) {
-            console.log("BEFORE BOUNDARY", boundary);
-        }
-    });
-
     // add assocs to boundary objects
     populateBoundaries(
         associations,
@@ -184,12 +155,6 @@ retrieveBlame = async (req, res) => {
         tickets,
         documents
     );
-
-    Object.values(boundaries).map((boundary) => {
-        if (test.has(boundary.start)) {
-            console.log("BOUNDARY", boundary);
-        }
-    });
 
     const itemMap = {
         tickets: tickets, // mapped to _id
@@ -215,14 +180,10 @@ retrieveBlame = async (req, res) => {
                     "documents",
                 ];
 
-                //if (truth) console.log("BOUNDARY", boundary);
-
                 // map through each item field
                 fields.map((field) => {
                     if (field in boundary) {
                         const items = Array.from(boundary[field]);
-
-                        //if (truth) console.log("Items", items);
 
                         boundary[field] = items.map(
                             (item) => itemMap[field][item]
