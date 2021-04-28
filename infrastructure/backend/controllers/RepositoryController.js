@@ -10,7 +10,7 @@ const jobs = require("../apis/jobs");
 const jobConstants = require("../constants/index").jobs;
 
 const logger = require("../logging/index").logger;
-
+const { logger: logger2 } = require("../fs_logging");
 //sentry
 const Sentry = require("@sentry/node");
 
@@ -113,7 +113,7 @@ initRepository = async (req, res) => {
     var { fullName, installationId, isPublic, publicHtmlUrl } = req.body;
 
     var publicRepo = false;
-    var publicUrl = '';
+    var publicUrl = "";
 
     /*
     if (!checkValid(fullName)) {
@@ -133,28 +133,38 @@ initRepository = async (req, res) => {
     if (checkValid(isPublic)) {
         publicRepo = true;
         if (!checkValid(publicHtmlUrl)) {
-            return res.json({success: false, error: `No public repository html url provided`});
-        }
-        else {
+            return res.json({
+                success: false,
+                error: `No public repository html url provided`,
+            });
+        } else {
             publicUrl = publicHtmlUrl;
         }
     }
 
     if (publicRepo) {
         var urlWithoutName = publicUrl.substring(0, publicUrl.lastIndexOf("/"));
-        var repoName = publicUrl.substring(publicUrl.lastIndexOf("/")+1, publicUrl.length);
+        var repoName = publicUrl.substring(
+            publicUrl.lastIndexOf("/") + 1,
+            publicUrl.length
+        );
 
-        var repoOwner = urlWithoutName.substring(urlWithoutName.lastIndexOf("/")+1, urlWithoutName.length);
+        var repoOwner = urlWithoutName.substring(
+            urlWithoutName.lastIndexOf("/") + 1,
+            urlWithoutName.length
+        );
 
-        fullName = `${repoOwner}/${repoName}`
+        fullName = `${repoOwner}/${repoName}`;
     }
 
-    console.log(`Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`);
+    console.log(
+        `Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`
+    );
 
     var repositoryCreateData = {
         fullName,
-        public: ( publicRepo == true ) ? true : undefined,
-        installationId: ( publicRepo == true ) ? undefined : installationId,
+        public: publicRepo == true ? true : undefined,
+        installationId: publicRepo == true ? undefined : installationId,
         scanned: false,
         currentlyScanning: false,
     };
@@ -164,7 +174,6 @@ initRepository = async (req, res) => {
     try {
         repository = await repository.save();
     } catch (err) {
-
         Sentry.setContext("initRepository", {
             message: `Repository.save() failed`,
             fullName: fullName,
@@ -191,7 +200,6 @@ initRepository = async (req, res) => {
             root: true,
         });
     } catch (err) {
-
         Sentry.setContext("initRepository", {
             message: `Reference.create failed`,
             repositoryId: repository._id,
@@ -207,7 +215,9 @@ initRepository = async (req, res) => {
         });
     }
 
-    console.log(`Successfully initialized Repository - fullName, installationId: ${fullName}, ${installationId}`);
+    console.log(
+        `Successfully initialized Repository - fullName, installationId: ${fullName}, ${installationId}`
+    );
 
     return res.json({ success: true, result: repository });
 };
@@ -1036,6 +1046,62 @@ removeInstallation = async (req, res) => {
     return res.json({ success: true, result: deleteIds });
 };
 
+searchPublicGithubRepositories = async (req, res) => {
+    const func = "searchPublicGithubRepositories";
+
+    const publicClient = apis.requestPublicClient();
+
+    const { query } = req.body;
+
+    logger2.info(`Entered with query: ${query}`, { func });
+
+    let requestUrl;
+
+    if (query == "") {
+        q = encodeURIComponent(`a in:full_name`);
+
+        requestUrl = `/search/repositories?q=${q}&sort=stars&per_page=${12}&page=${1}`;
+    } else {
+        q = encodeURIComponent(`${query} in:full_name`);
+
+        requestUrl = `/search/repositories?q=${q}&per_page=${12}&page=${1}`;
+    }
+
+    logger2.info(`Encoded requestUrl: ${requestUrl}`, { func });
+
+    let repositories;
+
+    try {
+        const response = await publicClient.get(requestUrl);
+
+        repositories = response.data.items.map((repo) => {
+            const { html_url, full_name } = repo;
+
+            return {
+                _id: html_url,
+                link: html_url,
+                fullName: full_name,
+            };
+        });
+    } catch (e) {
+        if (e.data) e = e.data.message;
+
+        logger2.error("Error occurred during call of Github API", {
+            func,
+            e,
+        });
+
+        return res.json({ success: false, error: e });
+    }
+
+    logger2.info(`Received ${repositories.length} repositories`, {
+        func,
+        obj: repositories,
+    });
+
+    return res.json({ success: true, result: repositories });
+};
+
 module.exports = {
     initRepository,
     getRepositoryFile,
@@ -1048,4 +1114,5 @@ module.exports = {
     jobRetrieveRepositories,
     retrieveCreationRepositories,
     removeInstallation,
+    searchPublicGithubRepositories,
 };
