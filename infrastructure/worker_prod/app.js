@@ -61,7 +61,7 @@ app.post('/job', async function (req, res) {
     // Scan Repository Job
     if (jobType == constants.jobs.JOB_SCAN_REPOSITORIES) {
 
-        const { workspaceId, repositoryIdList, installationIdLookup, repositoryInstallationIds, installationId } = req.body;
+        const { workspaceId, repositoryIdList, installationIdLookup, repositoryInstallationIds, public, installationId } = req.body;
 
         if (!checkValid(workspaceId)) {
             console.log("Error: No workspaceId provided for scanRepositories job");
@@ -86,18 +86,18 @@ app.post('/job', async function (req, res) {
             // res.status(400).end();
         }
 
-        var public = false;
+        var isPublic = false;
         if (checkValid(public)) {
-            public = true;
+            isPublic = true;
         }
 
-        console.log(`Running Scan Repositories Job workspaceId, installationId, repositoryIdList: ${workspaceId}, ${installationId}, ${repositoryIdList}`);
+        console.log(`Running Scan Repositories Job - workspaceId, isPublic, installationIdLookup, repositoryIdList: ${workspaceId}, ${isPublic}, ${installationIdLookup}, ${repositoryIdList}`);
 
         process.env.workspaceId = workspaceId;
         process.env.repositoryIdList = JSON.stringify(repositoryIdList);
         process.env.installationIdLookup = JSON.stringify(installationIdLookup);
         process.env.repositoryInstallationIds = JSON.stringify(repositoryInstallationIds);
-        process.env.public = public;
+        process.env.public = isPublic;
 
         // DEPRECATED
         // process.env.installationId = installationId;

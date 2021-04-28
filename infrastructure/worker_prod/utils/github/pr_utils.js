@@ -10,6 +10,7 @@ const queryString = require('query-string');
 
 const apis = require("../../apis/api");
 
+const Sentry = require("@sentry/node");
 
 const PullRequest = require('../../models/PullRequest');
 
