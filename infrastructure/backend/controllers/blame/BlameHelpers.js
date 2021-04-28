@@ -47,6 +47,18 @@ computeContextBlames = (text, hunk, windowRatio, lengthThreshold) => {
         ? lengthThreshold
         : SEQ_LEN_THRESHOLD;
 
+    const textSliceStart =
+        hunk.lineStart - hunkText.length >= 0
+            ? hunk.lineStart - hunkText.length
+            : 0;
+
+    const textSliceEnd = hunk.lineStart + 2 * hunkText.length;
+
+    //console.log("SLICE", { textSliceStart, textSliceEnd });
+
+    //console.log("HUNK", hunk);
+    //text = text.slice(textSliceStart, textSliceEnd);
+
     const seqIndices = lcs(text, hunkText);
 
     let sliceStart = 0;
