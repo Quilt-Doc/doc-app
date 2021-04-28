@@ -22,7 +22,9 @@ const verifyUserInWorkspace = async (req, res, next) => {
     const { workspaceId } = req.params;
     var workspaceFound = false;
     try {
-        // console.log(`verifyUserInWorkspace - workspaceId, requesterId: ${workspaceId}, ${requesterId}`);
+        console.log(
+            `verifyUserInWorkspace - workspaceId, requesterId: ${workspaceId}, ${requesterId}`
+        );
         workspaceFound = await Workspace.exists({
             _id: ObjectId(workspaceId.toString()),
             memberUsers: { $in: [ObjectId(requesterId.toString())] },
