@@ -114,6 +114,7 @@ computeBlameChunkBoundaries = (hunks, text) => {
         return [{ start: 0, end: text.length - 1 }];
     }
 
+    // sort the hunks by start line so we can iterate
     hunks.sort((a, b) => {
         if (a.chosenPatch.start < b.chosenPatch.start) {
             return -1;
@@ -122,6 +123,7 @@ computeBlameChunkBoundaries = (hunks, text) => {
         return 1;
     });
 
+    // create an initial placeholder hunk
     if (hunks[0].chosenPatch.start != 0) {
         hunks = [
             {
@@ -142,36 +144,54 @@ computeBlameChunkBoundaries = (hunks, text) => {
 
     let boundaryStart = null;
 
+    // iterate over text encoded lines
     for (let i = 0; i < text.length; i++) {
         let shouldBreak = false;
 
         let isChanged = false;
 
         while (!shouldBreak) {
+            // iterate over hunks
             if (hunksIndex >= hunks.length) {
                 break;
             }
 
+            // extract hunk using index from sorted array of hunks
             const hunk = hunks[hunksIndex];
 
+            // if the patch start is equal to hunks start
             if (hunk.chosenPatch.start == i) {
+                if (i == 110 || i == 111) {
+                    console.log(hunk);
+                }
+                // add the patch end to the density set
+                // needed because we will need to create a new boundary
+                // when we've gone through all of hunks patch
                 densitySet.add(hunk.chosenPatch.end + 1);
 
+                // density has changed due to addition
                 isChanged = true;
 
+                // go to the next patch as it may also start at this index
                 hunksIndex += 1;
             } else {
+                // we can break because start of patch must be greater
+                // than current line
                 shouldBreak = true;
             }
         }
 
+        // other check if an item is removed from boundary
         if (densitySet.has(i)) {
             isChanged = true;
 
             densitySet.delete(i);
         }
 
+        // if density has changed create a boundary
         if (isChanged) {
+            // we dont want to create a finished boundary
+            // after seeing the first item
             if (checkValid(boundaryStart)) {
                 boundaries.push({
                     start: boundaryStart,
@@ -179,10 +199,12 @@ computeBlameChunkBoundaries = (hunks, text) => {
                 });
             }
 
+            // a new boundary has been started
             boundaryStart = i;
         }
     }
 
+    // need to add final boundary
     boundaries.push({
         start: boundaryStart,
         end: text.length - 1,

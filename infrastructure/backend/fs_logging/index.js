@@ -17,7 +17,7 @@ const filterFunctions = format((info, opts) => {
     if (!info.func) {
         return info;
     }
-    const includedFunctions = new Set([]);
+    const includedFunctions = new Set(["nothing"]);
 
     if (includedFunctions.size == 0) return info;
 

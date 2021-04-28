@@ -52,6 +52,10 @@ retrieveBlame = async (req, res) => {
         `Retrieved ${commitHunks.length} commitHunks and ${pullRequestHunks.length} pullRequestHunks`,
         {
             func,
+            obj: {
+                commitHunks,
+                pullRequestHunks,
+            },
         }
     );
 
