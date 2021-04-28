@@ -1039,7 +1039,7 @@ const generateDirectAttachmentsFromPRs = async (
         }
     }
 };
-
+/*
 const generateDirectAttachmentsFromCommits = async (
     issueLinkages,
     scrapedIssues,
@@ -1136,6 +1136,7 @@ const generateDirectAttachmentsFromCommits = async (
         }
     }
 };
+*/
 
 const generateDirectAttachmentsFromMarkdown = async (
     issueLinkages,
@@ -1288,7 +1289,7 @@ const generateDirectAttachmentsFromLinkages = async (
         throw err;
     }
 
-    
+    /*
     // Handle issueLinkages[x].commitLinkages
     try {
         await generateDirectAttachmentsFromCommits(
@@ -1300,6 +1301,7 @@ const generateDirectAttachmentsFromLinkages = async (
         Sentry.captureException(err);
         throw err;
     }
+    */
 
     
     // Handle issueLinkages[x].markdownLinkages
