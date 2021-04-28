@@ -39,10 +39,6 @@ beforeAll(async () => {
     ]);
 
     process.env.TEST_REPOSITORY_ID = repositoryIds[0];
-    console.log(
-        "🚀 ~ file: issue_scrape_basic.spec.js ~ line 42 ~ beforeAll ~ process.env.TEST_REPOSITORY_ID",
-        process.env.TEST_REPOSITORY_ID
-    );
 
     process.env.WORKSPACE_ID = createdWorkspaceId;
 

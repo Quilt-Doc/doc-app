@@ -24,7 +24,10 @@ retrieveBlame = async (req, res) => {
 
     logger.info("Entered in retrieveBlame.", {
         func,
-        obj: filePath,
+        obj: {
+            filePath,
+            repositoryId,
+        },
     });
 
     // get commit and pull request hunks separately
@@ -45,8 +48,15 @@ retrieveBlame = async (req, res) => {
         }).lean(),
     ]);
 
+    logger.info(
+        `Retrieved ${commitHunks.length} commitHunks and ${pullRequestHunks.length} pullRequestHunks`,
+        {
+            func,
+        }
+    );
+
     if (commitHunks.length == 0 && pullRequestHunks.length == 0) {
-        return {};
+        return res.json({ success: true, result: { blameChunks: {} } });
     }
 
     let encoder = {
@@ -74,6 +84,10 @@ retrieveBlame = async (req, res) => {
         computeContextBlames(encodedFileText, hunk);
     });
 
+    logger.info("Successfully computed context blames.", {
+        func,
+    });
+
     // filter hunks without chosenPatch -> no contextual blames were found
     // for these guys
     commitHunks = commitHunks.filter((hunk) => checkValid(hunk.chosenPatch));
@@ -85,11 +99,23 @@ retrieveBlame = async (req, res) => {
     // compute density boundaries to group items into annotations
     let boundaries = computeBlameChunkBoundaries(commitHunks, encodedFileText);
 
+    logger.info(
+        `Successfully computed ${boundaries.length} blame boundaries using density.`,
+        {
+            func,
+        }
+    );
+
     // insert commits into boundaries
     insertHunksIntoBounds(commitHunks, boundaries, "commits");
 
     // insert prs into boundaries
     insertHunksIntoBounds(pullRequestHunks, boundaries, "pullRequests");
+
+    logger.info(`Inserted hunks into boundaries`, {
+        func,
+        obj: boundaries,
+    });
 
     // query all the objects required for further assoc processing
     const {
@@ -101,6 +127,14 @@ retrieveBlame = async (req, res) => {
         rawCommits,
         rawPullRequests,
     } = await queryObjects(commitHunks, pullRequestHunks, repositoryId);
+
+    logger.info(
+        `Queried necessary objects to insert tickets and docs into boundaries.`,
+        {
+            func,
+            obj: boundaries,
+        }
+    );
 
     boundaries = _.mapKeys(boundaries, "start");
 
