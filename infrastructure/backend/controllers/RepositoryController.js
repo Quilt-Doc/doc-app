@@ -147,6 +147,7 @@ initRepository = async (req, res) => {
         var repoOwner = urlWithoutName.substring(urlWithoutName.lastIndexOf("/")+1, urlWithoutName.length);
 
         fullName = `${repoOwner}/${repoName}`
+
     }
 
     console.log(`Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`);
