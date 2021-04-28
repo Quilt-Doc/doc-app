@@ -91,9 +91,10 @@ const scanRepositories = async () => {
             var repoFindFilter = { _id: { $in: repositoryIdList }, 
                                     installationId: (public == true) ? undefined : { $in: repositoryInstallationIds },
                                 };
+
                                 
-            // console.log('repoFindFilter: ');
-            // console.log(repoFindFilter);
+            console.log('repoFindFilter: ');
+            console.log(repoFindFilter);
 
             repositoryObjList = await Repository.find(repoFindFilter)
                                                 .lean()
