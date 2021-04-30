@@ -8,13 +8,12 @@ var LinkHeader = require('http-link-header');
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
-const apis = require("../../apis/api");
+const api = require("../../apis/api");
 
 const Sentry = require("@sentry/node");
 
 const PullRequest = require('../../models/PullRequest');
 
-// const { fetchAppToken, requestInstallationToken } = require('../../apis/api');
 
 const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, public = false) => {
     // Get list of all PRs
@@ -34,7 +33,7 @@ const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, 
     var foundPRList = [];
     var searchString;
 
-    var client = (public) ? apis.requestPublicClient() : installationClient;
+    var client = (public) ? api.requestPublicClient() : installationClient;
 
 
     while (pageNum < lastPageNum) {
@@ -90,6 +89,35 @@ const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, 
     return foundPRList;
 }
 
+const fetchAllRepoPRsAPIGraphQL = async (installationId, fullName, public = false) => {
+    var client;
+
+    if (public) {
+        client = api.requestPublicGraphQLClient();
+    }
+    else {
+        try {
+            client = await api.requestInstallationGraphQLClient(
+                installationId
+            );
+        } catch (err) {
+            Sentry.setContext("getchAllRepoPRsAPIGraphQL", {
+                message: `Failed to get installation GraphQL client`,
+                installationId: installationId,
+            });
+
+            Sentry.captureException(err);
+
+            throw err;
+        }
+    }
+
+    
+
+    
+
+}
+
 
 const enrichPRsWithFileList = async (foundPRList, installationClient, installationId, fullName, public = false) => {
 
@@ -138,7 +166,7 @@ const addFileListToPR = async (foundPR, installationClient, installationId, full
     var foundFileList = [];
     var searchString;
 
-    var client = (public) ? apis.requestPublicClient() : installationClient;
+    var client = (public) ? api.requestPublicClient() : installationClient;
 
 
     while (pageNum < lastPageNum) {
