@@ -52,6 +52,10 @@ retrieveBlame = async (req, res) => {
         `Retrieved ${commitHunks.length} commitHunks and ${pullRequestHunks.length} pullRequestHunks`,
         {
             func,
+            obj: {
+                commitHunks,
+                pullRequestHunks,
+            },
         }
     );
 
@@ -176,6 +180,7 @@ retrieveBlame = async (req, res) => {
                     "documents",
                 ];
 
+                // map through each item field
                 fields.map((field) => {
                     if (field in boundary) {
                         const items = Array.from(boundary[field]);

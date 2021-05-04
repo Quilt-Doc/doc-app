@@ -66,8 +66,14 @@ afterAll(async () => {
         console.log("ERROR", e);
     }
 
+    console.log("Workspaces", workspaces);
+
     for (let i = 0; i < workspaces.length; i++) {
-        await deleteWorkspace(workspaces[i]._id);
+        try {
+            await deleteWorkspace(workspaces[i]._id);
+        } catch (e) {
+            console.log("error", e);
+        }
     }
 
     try {
@@ -78,9 +84,16 @@ afterAll(async () => {
         console.log("ERROR", e);
     }
 
+    console.log("Other Workspaces", workspaces);
+
+    /*
     for (let i = 0; i < workspaces.length; i++) {
-        await deleteWorkspace(workspaces[i]._id);
-    }
+        try {
+            await deleteWorkspace(workspaces[i]._id);
+        } catch (e) {
+            console.log("Error deleting workspace 2", e);
+        }
+    }*/
 });
 
 describe("Test Blame Chunk and Contextual Blame Retrieval", () => {
