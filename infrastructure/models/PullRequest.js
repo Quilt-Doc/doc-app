@@ -167,6 +167,10 @@ let pullRequestSchema = new Schema({
 
 */
 
+pullRequestSchema.index({
+    name: "text",
+});
+
 let PullRequest = mongoose.model("PullRequest", pullRequestSchema);
 
 module.exports = PullRequest;
