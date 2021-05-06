@@ -14,84 +14,86 @@ const Sentry = require("@sentry/node");
 
 const PullRequest = require('../../models/PullRequest');
 
-
-const fetchAllRepoPRsAPI = async (installationClient, installationId, fullName, public = false) => {
-    // Get list of all PRs
-    // GET /repos/{owner}/{repo}/pulls
-    // per_page	integer	query - Results per page (max 100)
-    // page	integer	query - Page number of the results to fetch.
+const { GraphQLClient, gql, rawRequest, request } = require('graphql-request');
 
 
-    var perPage = 100;
-    var pageNum = 0;
+const generatePRQuery = () => {
+    const PR_NUM = 100;
+    const FILE_NUM = 100;
+    const LABEL_NUM = 100;
 
-    var prListResponse;
-
-    // Default value of 10
-    var lastPageNum = 10;
-
-    var foundPRList = [];
-    var searchString;
-
-    var client = (public) ? api.requestPublicClient() : installationClient;
-
-
-    while (pageNum < lastPageNum) {
-        try {
-            prListResponse = await client.get(`/repos/${fullName}/pulls?per_page=${perPage}&page=${pageNum}&state=all`);
-        }
-        catch (err) {
-            console.log(`Github API List PRs failed - installationId, fullName: ${installationId}, ${fullName}`);
-            break;
-
-            // throw new Error(`Github API List Branches failed - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
-        }
-
-        // We've gotten all results
-        if (!prListResponse.headers.link) {
-            pageNum = lastPageNum;
-        }
-
-        else {
-            var link = LinkHeader.parse(prListResponse.headers.link);
-
-            console.log(`prListResponse.headers.link: ${JSON.stringify(link)}`);
-
-
-            var i;
-            for (i = 0; i < link.refs.length; i++) {
-                if (link.refs[i].rel == 'last') {
-                    searchString = parseUrl(link.refs[i].uri).search;
-
-                    lastPageNum = queryString.parse(searchString).page;
-                    break;
-                }
+    return gql`
+    query fetchPRsWithFiles($repoName: String!, $repoOwner: String!, $cursor: String) { 
+      repository(name: $repoName, owner:$repoOwner) { 
+        pullRequests(first: ${PR_NUM}, after: $cursor) {
+          nodes {
+            files(first: ${FILE_NUM}) {
+              totalCount
+              nodes {
+                path
+              }
             }
+            title
+            bodyText
+            number
+            
+            createdAt
+            updatedAt
+            closedAt
+            
+            id
+            
+            url
+            state
+            locked
+            labels(first: ${LABEL_NUM}) {
+              nodes {
+                name
+              }
+            }
+            mergedAt
+            mergeCommit {
+              oid
+            }
+            
+            headRefName
+            headRef {
+              prefix
+            }
+            headRefOid
+            
+            baseRefName
+            baseRef {
+              prefix
+            }
+            baseRefOid
+            
+            isDraft
+            merged
+            comments {
+              totalCount
+            }
+            commits {
+              totalCount
+            }
+            additions
+            deletions        
+            
+          }
+          pageInfo{
+            endCursor
+            hasNextPage
+          }
         }
-
-        if (prListResponse.data.length < 1) {
-            break;
-        }
-
-        console.log(`Adding prListResponse.data.length: ${prListResponse.data.length}`);
-
-        pageNum += 1;
-
-        foundPRList.push(prListResponse.data);
-
+      }
     }
+    `;
+};
 
-    // console.log("foundPRList before flat: ");
 
-    foundPRList = foundPRList.flat();
-    console.log(`Found ${foundPRList.length} Pull Requests for ${fullName}`);
-
-    return foundPRList;
-}
-
-const fetchAllRepoPRsAPIGraphQL = async (installationId, fullName, public = false) => {
+const fetchAllRepoPRsAPIGraphQL = async (installationId, repositoryId, fullName, public = false) => {
+    // Get GraphQL client to use
     var client;
-
     if (public) {
         client = api.requestPublicGraphQLClient();
     }
@@ -101,7 +103,7 @@ const fetchAllRepoPRsAPIGraphQL = async (installationId, fullName, public = fals
                 installationId
             );
         } catch (err) {
-            Sentry.setContext("getchAllRepoPRsAPIGraphQL", {
+            Sentry.setContext("fetchAllRepoPRsAPIGraphQL", {
                 message: `Failed to get installation GraphQL client`,
                 installationId: installationId,
             });
@@ -112,145 +114,103 @@ const fetchAllRepoPRsAPIGraphQL = async (installationId, fullName, public = fals
         }
     }
 
-    
+    var repoName = fullName.split("/")[1];
+    var repoOwner = fullName.split("/")[0];
 
-    
+    var query = generatePRQuery();
 
-}
+    var hasNextPage = true;
+    var queryResponse;
+  
+    var variables = { "repoName": repoName, "repoOwner": repoOwner };
 
+    var cursor = undefined;
 
-const enrichPRsWithFileList = async (foundPRList, installationClient, installationId, fullName, public = false) => {
+    var found_pr_list = [];
+    var total_prs_scraped = 0;
 
-    var enrichedPRList = [];
-
-    var fileListAPIRequestList = foundPRList.map(async (prObj) => {
-        enrichedPRList.push(await addFileListToPR(prObj, installationClient, installationId, fullName, public));
-    });
-
-    try {
-        await Promise.all(fileListAPIRequestList);
-    }
-    catch (err) {
-
-        console.log(err);
-
-        Sentry.setContext("enrichPRsWithFileList", {
-            message: `fileListAPIRequestList, addFileListToPR failed`,
-            installationId: installationId,
-            repositoryFullName: fullName,
-            foundPRListLength: foundPRList.length,
-        });
-
-        Sentry.captureException(err);
-
-        throw err;
-    }
-
-
-
-    return enrichedPRList;
-
-}
-
-
-const addFileListToPR = async (foundPR, installationClient, installationId, fullName, public = false) => {
-
-    var perPage = 100;
-    var pageNum = 0;
-
-    var fileListResponse;
-
-    // Default value of 10
-    var lastPageNum = 10;
-
-    var foundFileList = [];
-    var searchString;
-
-    var client = (public) ? api.requestPublicClient() : installationClient;
-
-
-    while (pageNum < lastPageNum) {
-        try {
-            fileListResponse = await client.get(`/repos/${fullName}/pulls/${foundPR.number}/files?per_page=${perPage}&page=${pageNum}`);
+    while (hasNextPage) {
+        if (cursor) {
+            variables.cursor = cursor;
         }
-        catch (err) {
-
-            console.log(err);
-
-            Sentry.setContext("addFileListToPR", {
-                message: `Github API List PR file list failed`,
-                installationId: installationId,
-                repositoryFullName: fullName,
-                foundPRNumber: foundPR.number,
+        queryResponse = await client.request(query, variables);
+  
+        total_prs_scraped += queryResponse.repository.pullRequests.nodes.length;
+  
+  
+        // Iterate over list of PRs
+        for (i = 0; i < queryResponse.repository.pullRequests.nodes.length; i++) {
+            var pr = queryResponse.repository.pullRequests.nodes[i];
+        
+            found_pr_list.push({
+                    installationId: installationId,
+                    repository: repositoryId,
+                    fileList: pr.files.nodes.map(fileObj => fileObj.path),
+        
+                    name: pr.title,
+                    description: pr.bodyText,
+                    sourceId: pr.number,
+        
+        
+                    sourceCreationDate: pr.createdAt,
+                    sourceUpdateDate: pr.updatedAt,
+                    sourceCloseDate: pr.closedAt,
+        
+                    pullRequestId: pr.id,
+                    number: pr.number,
+        
+                    htmlUrl: pr.url,
+                    state: pr.state,
+                    locked: pr.locked,
+                    title: pr.title,
+                    body: pr.bodyText,
+                    labels: pr.labels.nodes.map(labelObj => labelObj.name),
+                    createdAt: pr.createdAt,
+                    updatedAt: pr.updatedAt,
+                    closedAt: pr.closedAt,
+                    mergedAt: pr.mergedAt,
+                    mergeCommitSha: (pr.mergeCommit != null) ? pr.mergeCommit.oid : null,
+        
+                    headRef: pr.headRefName,
+                    headPrefix: (pr.headRef != null) ? pr.headRef.prefix : null,
+                    headSha: pr.headRefOid,
+        
+                    baseRef: pr.baseRefName,
+                    basePrefix: (pr.baseRef != null) ? pr.baseRef.prefix : null,
+                    baseSha: pr.baseRefOid,
+        
+                    draft: pr.isDraft,
+                    merged: pr.merged,
+                    commentNum: pr.comments.totalCount,
+                    commitNum: pr.commits.totalCount,
+                    additionNum: pr.additions,
+                    deletionNum: pr.deletions,
+                    changedFileNum: pr.files.totalCount,
+                
             });
-
-            Sentry.captureException(Error(`Github API List PR file list failed`));
-
-            break;
-
-            // throw new Error(`Github API List Branches failed - installationId, repositoryObj.fullName: ${installationId}, ${repositoryObj.fullName}`);
         }
-
-        // We've gotten all results
-        if (!fileListResponse.headers.link) {
-            pageNum = lastPageNum;
+  
+        hasNextPage = queryResponse.repository.pullRequests.pageInfo.hasNextPage;
+        if (hasNextPage) {
+            cursor = queryResponse.repository.pullRequests.pageInfo.endCursor;
         }
-
-        else {
-            var link = LinkHeader.parse(fileListResponse.headers.link);
-
-
-            var i;
-            for (i = 0; i < link.refs.length; i++) {
-                if (link.refs[i].rel == 'last') {
-                    searchString = parseUrl(link.refs[i].uri).search;
-
-                    lastPageNum = queryString.parse(searchString).page;
-                    break;
-                }
-            }
-        }
-
-        if (fileListResponse.data.length < 1) {
-            break;
-        }
-
-        console.log(`Adding fileListResponse.data.length: ${fileListResponse.data.length}`);
-
-        pageNum += 1;
-
-        fileListResponse.data = fileListResponse.data.map(fileObj => fileObj.filename);
-
-        foundFileList.push(fileListResponse.data);
+        console.log(`cursor is ${cursor}`);
+        console.log(`total_prs_scraped: ${total_prs_scraped}`);
     }
+  
+  
+    console.log(`Total PRs Scraped: ${total_prs_scraped}`);
 
-    foundFileList = foundFileList.flat();
-    foundFileList = [...new Set(foundFileList)];
+    return found_pr_list;
 
-    return Object.assign({}, foundPR, { fileList: foundFileList });
 }
 
-
-
-const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installationId, repositoryId) => {
+const insertPRsFromAPI = async (foundPRList) => {
 
 
     if (foundPRList.length < 1) {
         return [];
     }
-
-    var prObjectsToInsert = [];
-
-    // Insert the following basic id fields:
-    /*
-        installationId: { type: Number, required: true },
-        checks: [{ type: ObjectId, ref: "Check" }],
-        repository: { type: ObjectId, ref: "Repository", required: true },
-
-        pullRequestId: { type: Number, required: true },
-        number: { type: Number, required: true },
-
-    */
 
     // Insert the following non Mongo Model fields
     /*
@@ -284,82 +244,10 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
     */
 
 
-
-    // Attach the correct Branch Model ObjectId, if applicable
-
-    foundPRList.map(prObj => {
-
-        var labelList = prObj.labels.map(labelObj => labelObj.name);
-
-        // Get all Branch Objects from branchToPRMappingList, who have labels in branchLabelList
-        var branchIdList = [];
-        var i = 0;
-        for (i = 0; i < branchToPRMappingList.length; i++) {
-            if (prObj.branchLabelList.includes(branchToPRMappingList[i].label)) {
-                branchIdList.push(branchToPRMappingList[i]._id.toString());
-            }
-        }
-
-        branchIdList = branchIdList.map(id => ObjectId(id.toString()));
-
-        prObjectsToInsert.push({
-            installationId: installationId,
-            repository: repositoryId,
-            fileList: prObj.fileList,
-
-            name: prObj.title,
-            description: prObj.description,
-            sourceId: prObj.number,
-
-
-            sourceCreationDate: prObj.created_at,
-            sourceUpdateDate: prObj.updated_at,
-            sourceCloseDate: prObj.closed_at,
-
-            branchLabelList: prObj.branchLabelList,
-            branches: branchIdList,
-
-            pullRequestId: prObj.id,
-            number: prObj.number,
-
-            htmlUrl: prObj.html_url,
-            issueUrl: prObj.issue_url,
-            state: prObj.state,
-            locked: prObj.locked,
-            title: prObj.title,
-            body: prObj.body,
-            labels: prObj.labels,
-            createdAt: prObj.created_at,
-            updatedAt: prObj.updated_at,
-            closedAt: prObj.closed_at,
-            mergedAt: prObj.merged_at,
-            mergeCommitSha: prObj.merge_commit_sha,
-            labels: labelList,
-
-            headRef: prObj.head.ref,
-            headLabel: prObj.head.label,
-            headSha: prObj.head.sha,
-
-            baseRef: prObj.base.ref,
-            baseLabel: prObj.base.label,
-            baseSha: prObj.base.sha,
-
-            draft: prObj.draft,
-            merged: prObj.merged,
-            commentNum: prObj.comments,
-            reviewCommentNum: prObj.review_comments,
-            commitNum: prObj.commits,
-            additionNum: prObj.additions,
-            deletionNum: prObj.deletions,
-            changedFileNum: prObj.changed_files,
-
-        });
-    });
-
     var bulkInsertResult;
     var newPRIds;
     try {
-        bulkInsertResult = await PullRequest.insertMany(prObjectsToInsert, { rawResult: true });
+        bulkInsertResult = await PullRequest.insertMany(foundPRList, { rawResult: true });
         newPRIds = Object.values(bulkInsertResult.insertedIds).map(id => id.toString());
     }
     catch (err) {
@@ -368,7 +256,7 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
 
         Sentry.setContext("insertPRsFromAPI", {
             message: `Error bulk inserting PullRequests`,
-            prObjectsToInsertLength: prObjectsToInsert.length,
+            foundPRListLength: foundPRList.length,
         });
 
         Sentry.captureException(err);
@@ -377,29 +265,6 @@ const insertPRsFromAPI = async (foundPRList, branchToPRMappingList, installation
     }
 
     console.log(`InsertPRsFromAPI finding created PR objects - newPRIds.length: ${newPRIds.length}`);
-
-
-    // Need to use the insertedIds of the new PRs to get the full, unified object from the DB
-    var createdPRObjects;
-    try {
-        createdPRObjects = await PullRequest.find({ _id: { $in: newPRIds.map(id => ObjectId(id.toString())) } }, '_id pullRequestId branches').lean().exec();
-    }
-    catch (err) {
-
-        console.log(err);
-
-        Sentry.setContext("insertPRsFromAPI", {
-            message: `Branch find failed`,
-            newBranchIdsLength: newBranchIds.length,
-        });
-
-        Sentry.captureException(err);
-
-        throw err;
-
-    }
-
-    return createdPRObjects;
 }
 
 const fetchAllPRsFromDB = async (repositoryId, selectionString) => {
@@ -424,8 +289,7 @@ const fetchAllPRsFromDB = async (repositoryId, selectionString) => {
 }
 
 module.exports = {
-    fetchAllRepoPRsAPI,
-    enrichPRsWithFileList,
+    fetchAllRepoPRsAPIGraphQL,
     insertPRsFromAPI,
     fetchAllPRsFromDB,
 }

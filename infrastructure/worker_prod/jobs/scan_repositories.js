@@ -264,52 +264,6 @@ const scanRepositories = async () => {
         }
 
 
-
-
-        /*
-        // Import Github Projects for all Repositories in Workspace
- 
-        // unscannedRepositories
- 
-        // installationId, repositoryId, installationClient, repositoryObj, worker
- 
-        if (!process.env.NO_GITHUB_PROJECTS) {
-            var repositoryProjectsRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
-                try {
-                    await scrapeGithubRepoProjects(repositoryObj.installationId,
-                        repositoryObj._id.toString(),
-                        installationClientList[unscannedRepositories[idx].installationId],
-                        repositoryObj,
-                        workspaceId,
-                        worker);
-                }
-                catch (err) {
-                    console.log(err);
-                    return {error: 'Error'};
-                }
-                return { success: true }
-            });
-        
-            // Execute all requests
-            var projectScrapeListResults;
-            try {
-                projectScrapeListResults = await Promise.allSettled(repositoryProjectsRequestList);
-            }
-            catch (err) {
-            
-                Sentry.setContext("scan-repositories", {
-                    message: `scanRepositories failed scraping Repository Projects`,
-                    unscannedRepositoryIdList: unscannedRepositoryIdList,
-                });
- 
-                Sentry.captureException(err);
- 
-                throw err;
-            }
-        }
-        */
-
-
         // Clone all unscannedRepositories and add repoDiskPaths to dictionary
 
         // Ensure that all timestamps are distinct, just in case duplicate timestamps are generated across Promises
@@ -489,6 +443,7 @@ const scanRepositories = async () => {
         }
 
 
+        /*
         // Generate InsertHunks for each Commit from each unscanned Repository
         var repositoryInsertHunksRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
             var integrationBoardId;
@@ -525,9 +480,10 @@ const scanRepositories = async () => {
             Sentry.captureException(err);
             throw err;
         }
+        */
 
 
-
+        /*
         // Generate InsertHunks for each PullRequest from each unscanned Repository
         var repositoryPRInsertHunksRequestList = unscannedRepositories.map(async (repositoryObj) => {
             var currentInstallationId;
@@ -571,49 +527,8 @@ const scanRepositories = async () => {
             Sentry.captureException(err);
             throw err;
         }
-
-
-
-        /*
-        // Update the lastProcessedCommits for all Repositories
-        var repositoryListCommits;
-        try {
-            repositoryListCommits = await updateRepositoryLastProcessedCommits(unscannedRepositories, unscannedRepositoryIdList, installationIdLookup, installationClientList);
-        }
-        catch (err) {
-
-            console.log(err);
-
-            Sentry.setContext("scan-repositories", {
-                message: `scanRepositories failed to update Repository lastProcessedCommits`,
-                unscannedRepositoryIdList: unscannedRepositoryIdList,
-            });
-
-            Sentry.captureException(err);
-            throw err;
-        }
         */
 
-
-
-        /*
-        // Fetch, filter and insert References for Repository
-        try {
-            await generateRepositoryReferences(repositoryListCommits, unscannedRepositories, unscannedRepositoryIdList,
-                                                installationIdLookup, installationClientList, session);
-        }
-        catch (err) {
-            console.log(err);
- 
-            Sentry.setContext("scan-repositories", {
-                message: `scanRepositories failed to generate unscanned Repository References`,
-                unscannedRepositoryIdList: unscannedRepositoryIdList,
-            });
- 
-            Sentry.captureException(err);
-            throw err;
-        }
-        */
 
 
 

@@ -1538,6 +1538,7 @@ scrapeGithubRepoIssues = async (
             throw err;
         }
 
+        /*
         // Create IntegrationIntervals for scraped Issues
         try {
             await createGithubIssueIntervals(scrapedIssues);
@@ -1554,6 +1555,7 @@ scrapeGithubRepoIssues = async (
     
             throw err;
         }
+        */
 
         // console.log("scrapedIssues: ");
         // console.log(scrapedIssues);
