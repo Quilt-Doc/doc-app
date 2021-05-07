@@ -68,7 +68,7 @@ const fetchAllRepoBranchCommitDates = async (foundBranchList, installationClient
 
 
 
-const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullName, public = false) => {
+const fetchAllRepoBranchesAPI = async (installationClient, installationId, repositoryId, fullName, public = false) => {
 
     // Get list of all branches
     // GET /repos/{owner}/{repo}/branches
@@ -146,30 +146,10 @@ const fetchAllRepoBranchesAPI = async (installationClient, installationId, fullN
 
     foundBranchList = foundBranchList.flat();
 
-    return foundBranchList;
-}
 
+    foundBranchList = foundBranchList.map(currentAPIBranch => {
 
-
-const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId, repositoryId) => {
-
-
-    // Note: Currently, we will use branch LABELS ('user-name/branch-name') for distinction,
-    // if there is a duplication in branch naming, then associations will be made to both branches
-
-    var initialBranchNum = foundBranchList.length;
-
-    // Create a list of branch objects using the foundPRList
-
-    var distinctBranchLabels = new Set();
-
-    var branchObjectList = [];
-
-    foundBranchList.map(currentAPIBranch => {
-        // console.log('currentAPIBranch: ');
-        // console.log(currentAPIBranch);
-
-        branchObjectList.push({
+        return Object.assign({}, {
             repository: repositoryId,
             installationId: installationId,
 
@@ -185,89 +165,7 @@ const enrichBranchesAndPRs = async (foundBranchList, foundPRList, installationId
     });
 
 
-    foundBranchList.map(branchAPIObj => {
-        distinctBranchLabels.add(branchAPIObj.name);
-    });
-
-
-    return [branchObjectList, foundPRList];
-
-    // Create Objects from foundBranchesList
-
-    /*
-        repository: { type: ObjectId, ref: 'Repository' },
-        installationId: { type: Number, required: true },
-
-        ref: { type: String, required: true },
-        label: { type: String },
-        lastCommit: { type: ObjectId, ref: 'Commit' },
-        commitUser: { type: ObjectId, ref: 'IntegrationUser' },
-    
-
-    foundBranchList.map(branchObj => {
-        branchObjectsToInsert.push({
-            repository: repositoryId,
-            installationId: installationId,
-            ref: branchObj.name,
-            // label: , doesn't exist here
-            lastCommit: branchObj.commit.sha,
-            // commitUser: ,
-        });
-    });
-    */
-
-}
-
-
-const enhanceBranchesWithPRMongoIds = async (prToBranchMapping, installationId, repositoryId) => {
-
-    console.log(`Adding PR ObjectIds to Branch Objects - prToBranchMapping: ${JSON.stringify(prToBranchMapping)}`);
-
-    var allUpdatePairs = [];
-
-    prToBranchMapping.map(prObj => {
-        var i = 0;
-        for (i = 0; i < prObj.branches.length; i++) {
-            allUpdatePairs.push({ branchId: prObj.branches[i].toString(), pullRequestId: prObj._id.toString() });
-        }
-    });
-
-    console.log(`Adding PR ObjectIds to Branch Objects - allUpdatePairs: ${JSON.stringify(allUpdatePairs)}`);
-
-    // create a list of operations for updating many docs with one db call
-    let bulkWriteAssociateOps = allUpdatePairs.map((idPair) => {
-        return ({
-            updateOne: {
-                filter: { _id: ObjectId(idPair.branchId) },
-                // Where field is the field you want to update
-                update: { $push: { pullRequests: ObjectId(idPair.pullRequestId) } },
-                upsert: false
-            }
-        })
-    })
-
-    // Update only if associations between branches and PRs were actually found
-    if (bulkWriteAssociateOps.length > 0) {
-        // mongoose bulkwrite for one many update db call
-        try {
-            await Branch.bulkWrite(bulkWriteAssociateOps);
-        }
-        catch (err) {
-
-            console.log(err);
-
-            Sentry.setContext("enhanceBranchesWithPRMongoIds", {
-                message: `Failed to bulk add PullRequest Ids to Branch Objects`,
-                installationId: installationId,
-                repositoryId: repositoryId,
-            });
-
-            Sentry.captureException(err);
-
-            throw err;
-
-        }
-    }
+    return foundBranchList;
 }
 
 
@@ -302,42 +200,10 @@ const insertBranchesFromAPI = async (branchObjectsToInsert, installationId, repo
 
         throw err;
     }
-
-    // Fetch Branch Objects with specific fields necessary for mapping
-
-    // Need to use the insertedIds of the new Branches to get the full, unified object from the DB
-    var createdBranchObjects;
-    try {
-        createdBranchObjects = await Branch.find({ _id: { $in: newBranchIds.map(id => ObjectId(id.toString())) } }, '_id label lastCommit').lean().exec();
-    }
-    catch (err) {
-
-        console.log(err);
-
-        Sentry.setContext("insertBranchesFromAPI", {
-            message: `Branch find failed`,
-            installationId: installationId,
-            repositoryId: repositoryId,
-            newBranchIdsLength: newBranchIds.length,
-        });
-
-        Sentry.captureException(err);
-
-        throw err;
-
-    }
-
-    // Filter createdBranchObjects down to Branch Objects that have label fields
-    createdBranchObjects = createdBranchObjects.filter(branchObj => branchObj.label);
-
-    return createdBranchObjects;
-
 }
 
 
 module.exports = {
     fetchAllRepoBranchesAPI,
-    enrichBranchesAndPRs,
-    enhanceBranchesWithPRMongoIds,
     insertBranchesFromAPI
 }
