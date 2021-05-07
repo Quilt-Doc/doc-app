@@ -36,7 +36,7 @@ let pullRequestSchema = new Schema({
     repository: { type: ObjectId, ref: "Repository", required: true },
     fileList: [{ type: String }],
 
-    pullRequestId: { type: Number, required: true },
+    pullRequestId: { type: String, required: true },
     number: { type: Number, required: true },
 
     name: { type: String },
@@ -54,8 +54,7 @@ let pullRequestSchema = new Schema({
     // sourceId: Number —- replaces pullRequestObjId AND pullRequestNumber
 
     htmlUrl: { type: String },
-    issueUrl: { type: String },
-    state: { type: String, enum: ["open", "closed"], required: true },
+    state: { type: String, enum: ["OPEN", "MERGED", "CLOSED"], required: true },
     locked: { type: Boolean },
     title: { type: String },
     body: { type: String },
@@ -67,17 +66,16 @@ let pullRequestSchema = new Schema({
     mergeCommitSha: { type: String },
 
     headRef: { type: String, required: true },
-    headLabel: { type: String, required: true },
+    headPrefix: { type: String },
     headSha: { type: String },
 
     baseRef: { type: String, required: true },
-    baseLabel: { type: String, required: true },
+    basePrefix: { type: String },
     baseSha: { type: String },
 
     draft: { type: Boolean },
     merged: { type: Boolean },
     commentNum: { type: Number },
-    reviewCommentNum: { type: Number },
     commitNum: { type: Number },
     additionNum: { type: Number },
     deletionNum: { type: Number },

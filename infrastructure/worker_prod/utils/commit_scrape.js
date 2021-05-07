@@ -9,8 +9,8 @@ var LinkHeader = require('http-link-header');
 const parseUrl = require("parse-url");
 const queryString = require('query-string');
 
-const { fetchAllRepoBranchesAPI, enrichBranchesAndPRs, enhanceBranchesWithPRMongoIds, insertBranchesFromAPI } = require('./github/branch_utils');
-const { fetchAllRepoPRsAPI, enrichPRsWithFileList, insertPRsFromAPI } = require('./github/pr_utils');
+const { fetchAllRepoBranchesAPI, insertBranchesFromAPI } = require('./github/branch_utils');
+const { fetchAllRepoPRsAPIGraphQL, insertPRsFromAPI } = require('./github/pr_utils');
 const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github/commit_utils');
 
 const Sentry = require("@sentry/node");
@@ -27,7 +27,7 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     // Fetch all branches and PRs from Github
     var foundPRList;
     try {
-        foundPRList = await fetchAllRepoPRsAPI(installationClient, installationId, repositoryObj.fullName, public);
+        foundPRList = await fetchAllRepoPRsAPIGraphQL(installationId, repositoryId, repositoryObj.fullName, public);
     }
     catch (err) {
 
@@ -46,7 +46,7 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
     var foundBranchList;
     try {
-        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryObj.fullName, public);
+        foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryId, repositoryObj.fullName, public);
     }
     catch (err) {
 
@@ -64,61 +64,12 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     }
 
 
-    // Only can enrich these lists if there are both branches and PRs, still call if there are branches just for formatting
-    if (foundBranchList.length > 0) {
-        // Enrich Branches and PRs (attach their identifiers to each other, e.g. attach prObjIds to branches) based on each respective list
-        try {
-            [foundBranchList, foundPRList] = await enrichBranchesAndPRs(foundBranchList, foundPRList, installationId, repositoryId);
-        }
-        catch (err) {
-
-            console.log(err);
-
-            Sentry.setContext("scrapeGithubRepoCodeObjects", {
-                message: `Error enrichingBranchesAndPRs`,
-                installationId: installationId,
-                repositoryId: repositoryId,
-                foundBranchListLength: foundBranchList.length,
-                foundPRListLength: foundPRList.length,
-            });
-
-            Sentry.captureException(err);
-
-            throw err;
-        }
-    }
-
-    // Only can find fileLists for PRs if there are PRs
-    if (foundPRList.length > 0) {
-        // Query from Github & set fileList field on PRs
-        try {
-            foundPRList = await enrichPRsWithFileList(foundPRList, installationClient, installationId, repositoryObj.fullName, public);
-        }
-        catch (err) {
-
-            console.log(err);
-
-            Sentry.setContext("scrapeGithubRepoCodeObjects", {
-                message: `Error enrichPRsWithFileList failed`,
-                installationId: installationId,
-                repositoryFullName: repositoryObj.fullName,
-                foundPRListLength: foundPRList.length,
-            });
-
-            Sentry.captureException(err);
-
-            throw err;
-        }
-    }
-
-
     // Only can insert Branches if branches objects were found
 
-    var branchToPRMappingList = [];
     if (foundBranchList.length > 0) {
 
         try {
-            branchToPRMappingList = await insertBranchesFromAPI(foundBranchList, installationId, repositoryId);
+            await insertBranchesFromAPI(foundBranchList, installationId, repositoryId);
         }
         catch (err) {
 
@@ -137,13 +88,11 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         }
     }
 
-    // Only can insert PRs is PR objects were found
-    var prToBranchMapping = [];
+    // Only can insert PRs if PR objects were found
     if (foundPRList.length > 0) {
-        // Insert PRs with Branch ObjectsIds
 
         try {
-            prToBranchMapping = await insertPRsFromAPI(foundPRList, branchToPRMappingList, installationId, repositoryId);
+            await insertPRsFromAPI(foundPRList);
         }
         catch (err) {
 
@@ -154,29 +103,6 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
                 installationId: installationId,
                 repositoryId: repositoryId,
                 foundPRListLength: foundPRList.length,
-            });
-
-            Sentry.captureException(err);
-
-            throw err;
-        }
-    }
-
-    // Don't do this if there are no PR Objects
-    if (prToBranchMapping.length > 0) {
-        // Add PullRequest ObjectIds to Branch Objects
-        try {
-            await enhanceBranchesWithPRMongoIds(prToBranchMapping, installationId, repositoryId);
-        }
-        catch (err) {
-
-            console.log(err);
-
-            Sentry.setContext("scrapeGithubRepoCodeObjects", {
-                message: `Error updating Branch Objects to have PullRequest ids`,
-                installationId: installationId,
-                repositoryId: repositoryId,
-                prToBranchMappingLength: prToBranchMapping.length,
             });
 
             Sentry.captureException(err);

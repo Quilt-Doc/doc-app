@@ -5,6 +5,8 @@ const { ObjectId } = Schema.Types;
 let insertHunkSchema = new Schema({
     repository: { type: ObjectId, ref: 'Repository' },
 
+    created: { type: Date, default: Date.now },
+
     commitSha: { type: String },
     pullRequestNumber: { type: Number },
 
