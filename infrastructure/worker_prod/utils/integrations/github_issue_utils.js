@@ -303,201 +303,84 @@ const generateIssueQuery = () => {
     const EVENT_NUM = 100;
 
     return gql`
-    query getIssueLinkages($repoName: String!, $repoOwner: String!, $cursor: String)
-    {
-        repository(name: $repoName, owner: $repoOwner) {
-            issues(first: ${ISSUE_NUM}, after: $cursor) {
-              nodes {
-                number
-                timelineItems(itemTypes: [CONNECTED_EVENT, DISCONNECTED_EVENT, REFERENCED_EVENT], first: ${EVENT_NUM}) {
-                    nodes {
-                        ... on ReferencedEvent {
-                          commit {
-                            oid
-                          }
-                        }
-                        ... on ConnectedEvent {
-                          subject {
-                            ... on Issue {
-                              number
-                            }
-                            ... on PullRequest {
-                              id
-                              number
-                            }
-                          }
-                        }
-                        ... on DisconnectedEvent {
-                          subject {
-                            ... on Issue {
-                              number
-                            }
-                            ... on PullRequest {
-                              id
-                              number
-                            }
-                          }
-                        } 
+    query getIssueLinkages($repoName: String!, $repoOwner: String!, $cursor: String) { 
+        repository(name:$repoName, owner: $repoOwner) {
+          issues(first: ${ISSUE_NUM}, after: $cursor) {
+            nodes {
+              number
+              timelineItems(itemTypes: [CONNECTED_EVENT, DISCONNECTED_EVENT, REFERENCED_EVENT, CROSS_REFERENCED_EVENT], first: ${EVENT_NUM}) {
+                nodes {
+                  ... on ReferencedEvent {
+                    commit {
+                      oid
                     }
+                  }
+                  ... on ConnectedEvent {
+                    subject {
+                      ... on Issue {
+                        __typename
+                        id
+                        number
+                      }
+                      ... on PullRequest {
+                        __typename
+                        id
+                        number
+                      }
+                    }
+                  }
+                  ... on DisconnectedEvent {
+                    subject {
+                      ... on Issue {
+                        __typename
+                        id
+                        number
+                      }
+                      ... on PullRequest {
+                        __typename
+                        id
+                        number
+                      }
+                    }
+                  }
+                  ... on CrossReferencedEvent {
+                    isCrossRepository
+                    source {
+                      ... on Issue {
+                        __typename
+                        title
+                        number
+                      }
+                      ... on PullRequest {
+                        __typename
+                        title
+                        number
+                      }
+                    }
+                    target {
+                      ... on Issue {
+                        __typename
+                        title
+                        number
+                      }
+                      ... on PullRequest {
+                        __typename
+                        title
+                        number
+                      }
+                    }
+                  }
                 }
               }
-              pageInfo {
-                endCursor
-                hasNextPage
-              }
+            }
+            pageInfo {
+              endCursor
+              hasNextPage
             }
           }
+        }
       }
     `;
-};
-
-const getGithubIssueLinkages = async (
-    installationId,
-    issueObj,
-    repositoryObj,
-    public = false
-) => {
-    var prismaQuery = generateIssueQuery(
-        repositoryObj,
-        issueObj.githubIssueNumber
-    );
-
-    var prismaClient;
-    if (public) {
-        prismaClient = api.requestPublicGraphQLClient();
-    }
-    else {
-        try {
-            prismaClient = await api.requestInstallationGraphQLClient(
-                installationId
-            );
-        } catch (err) {
-            Sentry.setContext("getGithubIssueLinkages", {
-                message: `Failed to get installation GraphQL client`,
-                installationId: installationId,
-            });
-
-            Sentry.captureException(err);
-
-            throw err;
-        }
-    }
-
-    var queryResponse;
-    try {
-        queryResponse = await prismaClient.request(prismaQuery);
-    } catch (err) {
-        Sentry.setContext("getGithubIssueLinkages", {
-            message: `GraphQL query failed for Issue`,
-            issueNumber: issueObj.githubIssueNumber,
-            repositoryUrl: repositoryObj.htmlUrl,
-        });
-
-        Sentry.captureException(err);
-
-        throw err;
-    }
-
-    // console.log("Issue Timeline GraphQL query Response: ");
-    // console.log(queryResponse);
-
-    const issues = {};
-    const prs = {};
-
-    var issueEvents = [];
-    var prEvents = [];
-
-    // Get all Commits that Reference this Issue
-    var linkedCommits = [];
-
-    console.log(`Github Issue Number: ${issueObj.githubIssueNumber}`);
-
-    // console.log("prismaQuery: ");
-    // console.log(prismaQuery);
-
-    queryResponse.resource.timelineItems.nodes.map((node) => {
-        if (node.hasOwnProperty("commit")) {
-            // console.log("FOUND COMMIT LINKAGE");
-            linkedCommits.push(node.commit.oid);
-        }
-    });
-
-    // Separate issue events into PR events and Non-issue PR events
-    queryResponse.resource.timelineItems.nodes.map((node) => {
-        if (node.hasOwnProperty("subject")) {
-            // The event is related to a PR
-            if (node.subject.hasOwnProperty("id")) {
-                prEvents.push(node.subject);
-            }
-
-            // The event is related to an issue
-            else {
-                issueEvents.push(node.subject);
-            }
-        }
-    });
-
-    // Filter to PRs still linked
-    prEvents.map((subject) => {
-        if (prs.hasOwnProperty(subject.number)) {
-            prs[subject.number]++;
-        } else {
-            prs[subject.number] = 1;
-        }
-    });
-
-    // Filter to issues still linked
-    issueEvents.map((subject) => {
-        if (issues.hasOwnProperty(subject.number)) {
-            issues[subject.number]++;
-        } else {
-            issues[subject.number] = 1;
-        }
-    });
-
-    console.log(`\nLinkages found for Issue #${issueObj.githubIssueNumber}: `);
-
-    console.log("queryResponse.resource.timelineItems.nodes");
-    console.log(queryResponse.resource.timelineItems.nodes);
-
-    // Create final lists of currently-linked issues and PRs
-
-    console.log("issues: ");
-    console.log(issues);
-
-    const linkedIssues = [];
-    for (const [issue, count] of Object.entries(issues)) {
-        if (count % 2 != 0) {
-            linkedIssues.push(issue);
-        }
-    }
-
-    console.log("prs: ");
-    console.log(prs);
-
-    const linkedPRs = [];
-    for (const [pr, count] of Object.entries(prs)) {
-        if (count % 2 != 0) {
-            linkedPRs.push(pr);
-        }
-    }
-
-    console.log("linkedIssues: ");
-    console.log(linkedIssues);
-
-    console.log("linkedPRs: ");
-    console.log(linkedPRs);
-
-    console.log("linkedCommits: ");
-    console.log(linkedCommits);
-
-    // End Result is a list of commits and issue & pr numbers indicating linkages
-    return {
-        issueNumber: issueObj.githubIssueNumber,
-        issueLinkages: linkedIssues,
-        prLinkages: linkedPRs,
-        commitLinkages: linkedCommits,
-    };
 };
 
 const getLinkedObjects = (issueEvents, prEvents) => {
@@ -541,7 +424,7 @@ const getLinkedObjects = (issueEvents, prEvents) => {
     return { linkedIssues, linkedPRs };
 }
 
-const getGithubIssueLinkages2 = async (
+const getGithubIssueLinkages = async (
     installationId,
     repositoryObj,
     public = false
@@ -598,10 +481,15 @@ const getGithubIssueLinkages2 = async (
         for (i = 0; i < queryResponse.repository.issues.nodes.length; i++) {
             var currentIssueObj = queryResponse.repository.issues.nodes[i];
 
-            var currentLinkageObj = { issueNumber: currentIssueObj.number };
+            var currentLinkageObj = { issueNumber: currentIssueObj.number, commitLinkages: [] };
 
+            // Used for Connected/Disconnected Events
             var issueEvents = [];
             var prEvents = [];
+
+            // Used for CrossReferencedEvent
+            var referencingIssues = [];
+            var referencingPrs = [];
 
             // Iterate over list of timelineItems
             for (k = 0; k < currentIssueObj.timelineItems.nodes.length; k++) {
@@ -609,60 +497,49 @@ const getGithubIssueLinkages2 = async (
 
                 // Handle 'ReferencedEvent' (Commit Referencing Issue)
                 if (currentTimelineItem.commit) {
-                    if(currentLinkageObj.commitLinkages) {
-                        currentLinkageObj.commitLinkages.push(currentTimelineItem.commit.oid);
-                    }
-                    else {
-                        currentLinkageObj.commitLinkages = [ currentTimelineItem.commit.oid ];
-                    }
+                    currentLinkageObj.commitLinkages.push(currentTimelineItem.commit.oid);
                 }
 
                 // Handle 'ConnectedEvent' & 'DisconnectedEvent'
                 if (currentTimelineItem.hasOwnProperty("subject")) {
                     // The event is related to a PR
-                    if (currentTimelineItem.subject.hasOwnProperty("id")) {
+                    if (currentTimelineItem.subject.__typename == "PullRequest") {
                         prEvents.push(currentTimelineItem.subject);
                     }
         
                     // The event is related to an issue
-                    else {
+                    else if (currentTimelineItem.subject.__typename == "Issue") {
                         issueEvents.push(currentTimelineItem.subject);
+                    }
+                }
+
+                // Handle 'CrossReferencedEvent'
+                if (currentTimelineItem.hasOwnProperty("isCrossRepository")) {
+                    // console.log("FOUND ");
+                    if (currentTimelineItem.isCrossRepository == false) {
+                        if (currentTimelineItem.source.__typename == "PullRequest") {
+                            referencingPrs.push(currentTimelineItem.source.number);
+                        }
+                        else if (currentTimelineItem.source.__typename == "Issue") {
+                            referencingIssues.push(currentTimelineItem.source.number);
+                        }
                     }
                 }
             }
 
-            const issues = {};
-            const prs = {};
-            
-            // Filter to PRs still linked
-            prEvents.map((subject) => {
-                if (prs.hasOwnProperty(subject.number)) {
-                    prs[subject.number]++;
-                } else {
-                    prs[subject.number] = 1;
-                }
-            });
-
-            // Filter to issues still linked
-            issueEvents.map((subject) => {
-                if (issues.hasOwnProperty(subject.number)) {
-                    issues[subject.number]++;
-                } else {
-                    issues[subject.number] = 1;
-                }
-            });
-
             // Create final lists of currently-linked issues and PRs
 
-            if (issueEvents.length > 0) {
-                console.log(`Found ${issueEvents.length} Issue Connect/Disconnect Events for issue #${currentIssueObj.number}`);
-            }
+            var { linkedIssues, linkedPRs } = getLinkedObjects(issueEvents, prEvents);
 
-            if (prEvents.length > 0) {
-                console.log(`Found ${prEvents.length} PR Connect/Disconnect Events for issue #${currentIssueObj.number}`);
-            }
+            linkedIssues = linkedIssues.map(Number);
+            linkedPRs = linkedPRs.map(Number);
 
-            const { linkedIssues, linkedPRs } = getLinkedObjects(issueEvents, prEvents);
+            // Merge linkedIssues with referencingIssues
+            linkedIssues = [ ...new Set(linkedIssues.concat(referencingIssues)) ];
+
+            // Merge linkedPRs with referencingPrs
+            linkedPRs = [ ...new Set(linkedPRs.concat(referencingPrs)) ];
+
 
             if (linkedIssues.length > 0) {
                 console.log(`Found ${linkedIssues.length} Linked Issues for issue #${currentIssueObj.number}`);
@@ -1563,12 +1440,12 @@ scrapeGithubRepoIssues = async (
 
         var issueLinkages;
         try {
-            issueLinkages = await getGithubIssueLinkages2(installationId, repositoryObj, public);
+            issueLinkages = await getGithubIssueLinkages(installationId, repositoryObj, public);
          }
          catch (err) {
              console.log(err);
              Sentry.setContext("scrapeGithubRepoIssues", {
-                 message: `GithubIssue getGithubIssueLinkages2 failed`,
+                 message: `GithubIssue getGithubIssueLinkages failed`,
                  installationId: installationId,
                  repositoryId: repositoryObj._id.toString(),
              });
