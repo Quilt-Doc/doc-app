@@ -92,7 +92,6 @@ const scanRepositories = async () => {
                                     installationId: (public == true) ? undefined : { $in: repositoryInstallationIds },
                                 };
 
-                                
             console.log('repoFindFilter: ');
             console.log(repoFindFilter);
 
