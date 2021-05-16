@@ -12,15 +12,18 @@ const _ = require("lodash");
 const sw = require("stopword");
 
 queryPipeline = async (req, res) => {
-    const { repositoryId, workspaceId } = req.params;
+    const { repositoryId } = req.params;
 
     let { query } = req.body;
 
     query = extractQueryKeywords(query);
 
-    const [commits, pullRequests] = searchRepositoryContent(query);
+    const [commits, pullRequests] = searchRepositoryContent(
+        query,
+        repositoryId
+    );
 
-    const hunks = acquireHunks([commits, pullRequests]);
+    const hunks = acquireHunks([commits, pullRequests], repositoryId);
 
     console.log("Hunks", hunks);
 };
@@ -69,12 +72,13 @@ searchRepositoryContent = async (query, repositoryId) => {
     return [commits, pullRequests];
 };
 
-acquireHunks = async (repositoryContent) => {
+acquireHunks = async (repositoryContent, repositoryId) => {
     const queries = ["commitSha", "pullRequestNumber"].map((field, i) => {
         InsertHunk.find({
             [field]: {
                 $in: repositoryContent[i].map((item) => item.sourceId),
             },
+            repository: repositoryId,
         });
     });
 

@@ -33,7 +33,9 @@ const castASpell = printf(({ level, message, func, obj, e, timestamp }) => {
     let plain = `${level}: ${message} \n`;
 
     if ((func != null) & (func != undefined))
-        plain = `${`\x1b[35m[ ${func} ]\x1b[0m `}${plain}`;
+        if (func.length > 25) func = `${func.slice(0, 25)}..`;
+
+    plain = `${`\x1b[35m[ ${func} ]\x1b[0m `}${plain}`;
 
     if ((obj != null) & (obj != undefined) && process.env.LOG_OBJECTS == 1) {
         obj = util.inspect(obj, { colors: true, depth: 1 });
