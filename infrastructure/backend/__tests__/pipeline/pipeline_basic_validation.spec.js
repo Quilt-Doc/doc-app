@@ -121,6 +121,9 @@ sampleGithubRepositories = async (queryFilters) => {
         return null;
     }
 
+    // HARDCODED REPOS
+    //repositories = ["https://github.com/t32k/stylestats"];
+
     arr = [];
 
     for (let i = 0; i < repositories.length; i++) {
@@ -152,7 +155,7 @@ acquireRepositoryRawCommits = async (repositories) => {
     for (let i = 0; i < repositories.length; i++) {
         let repo = repositories[i];
 
-        let page = 0;
+        let page = 1;
 
         let commits = [];
 
@@ -170,6 +173,16 @@ acquireRepositoryRawCommits = async (repositories) => {
 
                 newBranches = response.data;
             } catch (e) {
+                if (e.data) e = e.data.message;
+
+                logger.error(
+                    `Error occurred during call of Github API with repository ${repo.fullName}`,
+                    {
+                        func,
+                        e,
+                    }
+                );
+
                 throw new Error(e);
             }
 
@@ -182,7 +195,7 @@ acquireRepositoryRawCommits = async (repositories) => {
             if (count == 0 || count % 100 != 0) break;
         }
 
-        page = 0;
+        page = 1;
 
         branches = branches.flat();
 
@@ -199,23 +212,22 @@ acquireRepositoryRawCommits = async (repositories) => {
 
                 try {
                     const response = await publicClient.get(
-                        `/repos/${
-                            repo.fullName
-                        }/commits?page=${page}&per_page=${100}&sha=${
-                            branch.name
-                        }`
+                        `/repos/${repo.fullName}/commits?page=${page}&per_page=100&sha=${branch.name}`
                     );
 
                     newCommits = response.data;
                 } catch (e) {
                     if (e.data) e = e.data.message;
 
-                    logger.error("Error occurred during call of Github API", {
-                        func,
-                        e,
-                    });
+                    logger.error(
+                        `Error occurred during call of Github API with repository ${repo.fullName}`,
+                        {
+                            func,
+                            e,
+                        }
+                    );
 
-                    return null;
+                    throw new Error(e);
                 }
 
                 const count = newCommits.length;
@@ -268,6 +280,76 @@ acquireRepositoryRawCommits = async (repositories) => {
     return allCommits;
 };
 
+acquireRepositoryRawPullRequests = async (repositories) => {
+    const func = "acquireRepositoryRawPullRequests";
+
+    logger.info(`Received ${repositories.length} repositories`, {
+        func,
+        obj: repositories,
+    });
+
+    const publicClient = apis.requestPublicClient();
+
+    let allPullRequests = [];
+
+    for (let i = 0; i < repositories.length; i++) {
+        const repo = repositories[i];
+
+        let pulls = [];
+
+        let page = 1;
+
+        while (true) {
+            let newPulls;
+
+            try {
+                const response = await publicClient.get(
+                    `/repos/${repo.fullName}/pulls?page=${page}&per_page=100&state=all`
+                );
+
+                newPulls = response.data;
+            } catch (e) {
+                if (e.data) e = e.data.message;
+
+                logger.error(
+                    `Error occurred during call of Github API with repository ${repo.fullName}`,
+                    {
+                        func,
+                        e,
+                    }
+                );
+
+                throw new Error(e);
+            }
+
+            pulls.push(newPulls);
+
+            page += 1;
+
+            if (newPulls.length == 0 || newPulls.length % 100 != 0) break;
+        }
+
+        pulls = pulls.flat();
+
+        logger.info(
+            `Received ${pulls.length} pull requests for repository ${repo.fullName}`,
+            {
+                func,
+                obj: pulls.map((pull) => pull.number),
+            }
+        );
+
+        console.log(
+            "Unique pulls",
+            Array.from(new Set(pulls.map((pull) => pull.number))).length
+        );
+
+        allPullRequests.push(pulls);
+    }
+
+    return allPullRequests;
+};
+
 describe("Pipeline Display Simple Query Validation", () => {
     test("Sample repositories for pipeline display validation", async () => {
         const func = "Sample repositories for pipeline display validation";
@@ -275,7 +357,7 @@ describe("Pipeline Display Simple Query Validation", () => {
         const repos = await sampleGithubRepositories({
             stars: "1000..2000",
             repoSize: "300..500",
-            numRepos: 1,
+            numRepos: 3,
         });
 
         logger.info(`Sampled ${repos.length} repositories`, {
@@ -360,6 +442,7 @@ describe("Pipeline Display Simple Query Validation", () => {
         process.env.TEST_SAMPLE_REPOSITORIES = JSON.stringify(repositories);
     });
 
+    /*
     test("Validate commit scraping", async () => {
         const func = "Validate commit scraping";
 
@@ -377,7 +460,7 @@ describe("Pipeline Display Simple Query Validation", () => {
                 .lean()
                 .exec();
 
-            /* DEBUGGING PURPOSES
+            // DEBUGGING PURPOSES
             if (repoCommits.length != rawCommits.length) {
                 const isRawGreater = repoCommits.length > rawCommits.length;
 
@@ -407,7 +490,6 @@ describe("Pipeline Display Simple Query Validation", () => {
                     );
                 }
             }
-            */
 
             expect(repoCommits.length).toEqual(rawCommits.length);
 
@@ -422,23 +504,73 @@ describe("Pipeline Display Simple Query Validation", () => {
 
                 expect(rawCommit).not.toBeNull();
 
-                /* DEBUGGING PURPOSES
+                // DEBUGGING PURPOSES
                 if (rawCommit["commit"]["message"] != commit.name) {
                     console.log("Raw message", rawCommit["commit"]["message"]);
 
                     console.log("Scraped message", name);
                 }
-                */
 
                 expect(name).toEqual(rawCommit["commit"]["message"]);
             });
 
-            logger.info(`Validated repository ${repo.fullName}`, {
+            logger.info(`Validated repository ${repo.fullName} commits`, {
                 func,
                 obj: repo,
             });
         }
-    });
+    });*/
+
+    /*
+    test("Validate pull requests", async () => {
+        const func = "Validate pull requests";
+
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
+
+        const allPullRequests = await acquireRepositoryRawPullRequests(
+            repositories
+        );
+
+        for (let i = 0; i < repositories.length; i++) {
+            const repo = repositories[i];
+
+            let rawPullRequests = allPullRequests[i];
+
+            const repoPullRequests = await PullRequest.find({
+                repository: repo._id,
+            })
+                .select("_id sourceId name")
+                .lean()
+                .exec();
+
+            expect(repoPullRequests.length).toEqual(rawPullRequests.length);
+
+            rawPullRequests = _.mapKeys(rawPullRequests, "number");
+
+            repoPullRequests.map((pull) => {
+                let { sourceId, name, description } = pull;
+
+                if (name == undefined) name = "";
+
+                if (description == undefined) description = "";
+
+                const rawPull = rawPullRequests[sourceId];
+
+                const { title, number, body } = rawPull;
+
+                expect(name).toEqual(title);
+
+                expect(parseInt(sourceId)).toEqual(number);
+
+                expect(description).toEqual(body);
+            });
+
+            logger.info(`Validated repository ${repo.fullName} pull requests`, {
+                func,
+                obj: repo,
+            });
+        }
+    });*/
 });
 
 /* 
@@ -452,4 +584,12 @@ describe("Pipeline Display Simple Query Validation", () => {
     gawel/pyquery 444 vs 430
 */
 
-// Possible test improvements: pagination on branches
+// Possible test improvements: batching pages for commits
+
+/* 
+    totond/TextPathView 5 vs 0 pulls
+
+    Pull request behavior -- undefined description when it is empty string?
+    totond/TextPathView - Description not populated correctly
+    t32k/stylestats - Description not populated correctly
+*/
