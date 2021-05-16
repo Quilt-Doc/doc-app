@@ -12,6 +12,7 @@ const Commit = require("../../models/Commit");
 const Branch = require("../../models/Branch");
 const PullRequest = require("../../models/PullRequest");
 const Workspace = require("../../models/Workspace");
+const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 
 // api
 const apis = require("../../apis/api");
@@ -26,10 +27,16 @@ const {
     removeWorkspaces,
 } = require("../../__tests__config/utils");
 
+// backend client
 const backendClient = apis.requestTestingUserBackendClient();
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
+
+// constants
+const NUM_STARS = "1000..2000";
+const REPO_SIZE = "300..500";
+const NUM_REPOS = 1;
 
 beforeAll(async () => {
     const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
@@ -350,14 +357,86 @@ acquireRepositoryRawPullRequests = async (repositories) => {
     return allPullRequests;
 };
 
+acquireRepositoryRawIssues = async (repositories, allPullRequests) => {
+    const func = "acquireRepositoryRawIssues";
+
+    logger.info(`Received ${repositories.length} repositories`, {
+        func,
+        obj: repositories,
+    });
+
+    const publicClient = apis.requestPublicClient();
+
+    let allIssues = [];
+
+    for (let i = 0; i < repositories.length; i++) {
+        const repo = repositories[i];
+
+        let issues = [];
+
+        let pulls = allPullRequests[i];
+
+        let page = 1;
+
+        while (true) {
+            let newIssues;
+
+            try {
+                const response = await publicClient.get(
+                    `/repos/${repo.fullName}/issues?page=${page}&per_page=100&state=all`
+                );
+
+                newIssues = response.data;
+            } catch (e) {
+                if (e.data) e = e.data.message;
+
+                logger.error(
+                    `Error occurred during call of Github API with repository ${repo.fullName}`,
+                    {
+                        func,
+                        e,
+                    }
+                );
+
+                throw new Error(e);
+            }
+
+            issues.push(newIssues);
+
+            page += 1;
+
+            if (newIssues.length == 0 || newIssues.length % 100 != 0) break;
+        }
+
+        issues = issues.flat();
+
+        issues = issues.filter(
+            (issue) =>
+                !new Set(pulls.map((pull) => pull.number)).has(issue.number)
+        );
+
+        logger.info(
+            `Received ${issues.length} issues for repository ${repo.fullName}`,
+            {
+                func,
+                obj: issues.map((issue) => issue.number),
+            }
+        );
+
+        allIssues.push(issues);
+    }
+
+    return allIssues;
+};
+
 describe("Pipeline Display Simple Query Validation", () => {
     test("Sample repositories for pipeline display validation", async () => {
         const func = "Sample repositories for pipeline display validation";
 
         const repos = await sampleGithubRepositories({
-            stars: "1000..2000",
-            repoSize: "300..500",
-            numRepos: 3,
+            stars: NUM_STARS,
+            repoSize: REPO_SIZE,
+            numRepos: NUM_REPOS,
         });
 
         logger.info(`Sampled ${repos.length} repositories`, {
@@ -521,9 +600,8 @@ describe("Pipeline Display Simple Query Validation", () => {
         }
     });*/
 
-    /*
-    test("Validate pull requests", async () => {
-        const func = "Validate pull requests";
+    test("Validate pull request scraping", async () => {
+        const func = "Validate pull request scraping";
 
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
@@ -547,6 +625,7 @@ describe("Pipeline Display Simple Query Validation", () => {
 
             rawPullRequests = _.mapKeys(rawPullRequests, "number");
 
+            /*
             repoPullRequests.map((pull) => {
                 let { sourceId, name, description } = pull;
 
@@ -563,14 +642,70 @@ describe("Pipeline Display Simple Query Validation", () => {
                 expect(parseInt(sourceId)).toEqual(number);
 
                 expect(description).toEqual(body);
-            });
+            });*/
 
             logger.info(`Validated repository ${repo.fullName} pull requests`, {
                 func,
                 obj: repo,
             });
         }
-    });*/
+
+        process.env.TEST_PULL_REQUESTS = JSON.stringify(allPullRequests);
+    });
+
+    test("Validate issue scraping", async () => {
+        const func = "Validate issue scraping";
+
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
+
+        const allPullRequests = JSON.parse(process.env.TEST_PULL_REQUESTS);
+
+        const allIssues = await acquireRepositoryRawIssues(
+            repositories,
+            allPullRequests
+        );
+
+        for (let i = 0; i < repositories.length; i++) {
+            const repo = repositories[i];
+
+            let rawIssues = allIssues[i];
+
+            const repoIssues = await IntegrationTicket.find({
+                repositoryId: repo._id,
+                source: "github",
+            })
+                .select("_id sourceId name")
+                .lean()
+                .exec();
+
+            expect(repoIssues.length).toEqual(rawIssues.length);
+
+            rawIssues = _.mapKeys(rawIssues, "number");
+
+            repoIssues.map((issue) => {
+                let { sourceId, name, description } = issue;
+
+                if (name == undefined) name = "";
+
+                if (description == undefined) description = "";
+
+                const rawIssue = rawIssues[sourceId];
+
+                const { title, number, body } = rawIssue;
+
+                expect(name).toEqual(title);
+
+                expect(parseInt(sourceId)).toEqual(number);
+
+                expect(description).toEqual(body);
+            });
+
+            logger.info(`Validated repository ${repo.fullName} issues`, {
+                func,
+                obj: repo,
+            });
+        }
+    });
 });
 
 /* 
