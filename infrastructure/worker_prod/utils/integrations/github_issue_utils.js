@@ -24,6 +24,8 @@ const api = require("../../apis/api");
 
 const { gql, rawRequest, request } = require("graphql-request");
 
+const { printExecTime } = require('../print');
+
 // const { GraphQLClient } = require('../../mod-graphql-request/dist');
 
 const fetchScrapedIssues = async (insertedIssueIds) => {
@@ -468,6 +470,9 @@ const getGithubIssueLinkages = async (
         }
     }
 
+    var issuesWithLinkedPRs = 0;
+    var issuesWithLinkedIssues = 0;
+
     while (hasNextPage) {
         if (cursor) {
             variables.cursor = cursor;
@@ -479,6 +484,9 @@ const getGithubIssueLinkages = async (
 
         // Iterate over list of Issues
         for (i = 0; i < queryResponse.repository.issues.nodes.length; i++) {
+            var hasLinkedPRs = false;
+            var hasLinkedIssues = false;
+
             var currentIssueObj = queryResponse.repository.issues.nodes[i];
 
             var currentLinkageObj = { issueNumber: currentIssueObj.number, commitLinkages: [] };
@@ -490,6 +498,7 @@ const getGithubIssueLinkages = async (
             // Used for CrossReferencedEvent
             var referencingIssues = [];
             var referencingPrs = [];
+
 
             // Iterate over list of timelineItems
             for (k = 0; k < currentIssueObj.timelineItems.nodes.length; k++) {
@@ -541,12 +550,12 @@ const getGithubIssueLinkages = async (
             linkedPRs = [ ...new Set(linkedPRs.concat(referencingPrs)) ];
 
 
-            if (linkedIssues.length > 0) {
-                console.log(`Found ${linkedIssues.length} Linked Issues for issue #${currentIssueObj.number}`);
+            if (linkedIssues.length > 0 && hasLinkedIssues == false) {
+                hasLinkedIssues = true;
             }
 
-            if (linkedPRs.length > 0) {
-                console.log(`Found ${linkedPRs.length} Linked PRs for issue #${currentIssueObj.number}`);
+            if (linkedPRs.length > 0 && hasLinkedPRs == false) {
+                hasLinkedPRs = true;
             }
 
 
@@ -554,6 +563,14 @@ const getGithubIssueLinkages = async (
             currentLinkageObj.prLinkages = linkedPRs;
 
             issueLinkages.push(currentLinkageObj);
+
+            if (hasLinkedIssues == true) {
+                issuesWithLinkedIssues += 1;
+            }
+
+            if (hasLinkedPRs == true) {
+                issuesWithLinkedPRs += 1;
+            }
 
         }
 
@@ -564,6 +581,9 @@ const getGithubIssueLinkages = async (
     }
 
     console.log(`Total issues Scraped: ${total_issues_scraped}`);
+
+    console.log(`${issuesWithLinkedIssues} Issues with linked Issues`);
+    console.log(`${issuesWithLinkedPRs} Issues with linked PRs`);
 
     return issueLinkages;
 
@@ -802,10 +822,7 @@ const generateDirectAttachmentsFromIssues = async (
             throw err;
         }
 
-        console.log(
-            "generateDirectAttachmentsFromIssues - insertedAttachments: "
-        );
-        console.log(insertedAttachments);
+        console.log(`generateDirectAttachmentsFromIssues - insertedAttachments.length: ${insertedAttachments.length}`);
 
         // Add to `attachments` field of IntegrationTicket
 
@@ -849,9 +866,7 @@ const generateDirectAttachmentsFromPRs = async (
                 link: `${repositoryObj.htmlUrl}/pull/${currentPRLinkages[k]}`,
                 nonCodeId: scrapedIssues[scrapedIssueIdx]._id,
             });
-            console.log(
-                `Setting nonCodeId to: ${scrapedIssues[scrapedIssueIdx]._id}`
-            );
+            // console.log(`Setting nonCodeId to: ${scrapedIssues[scrapedIssueIdx]._id}`);
         }
     }
 
@@ -903,8 +918,7 @@ const generateDirectAttachmentsFromPRs = async (
             throw err;
         }
 
-        console.log("generateDirectAttachmentsFromPRs - insertedAttachments: ");
-        console.log(insertedAttachments);
+        console.log(`generateDirectAttachmentsFromPRs - insertedAttachments.length: ${insertedAttachments.length}`);
 
         // Add to `attachments` field of IntegrationTicket
 
@@ -1098,11 +1112,13 @@ const generateDirectAttachmentsFromMarkdown = async (
         });
     }
 
-    console.log("markdownPRLinkages: ");
-    console.log(markdownPRLinkages);
+    /*
+    console.log("markdownPRLinkages.length(0, 5): ");
+    console.log(markdownPRLinkages.slice(0, 5));
 
-    console.log("markdownIssueLinkages: ");
-    console.log(markdownIssueLinkages);
+    console.log("markdownIssueLinkages.slice(0, 5): ");
+    console.log(markdownIssueLinkages.slice(0, 5));
+    */
 
     try {
         await generateDirectAttachmentsFromIssues(
@@ -1208,6 +1224,8 @@ scrapeGithubRepoIssues = async (
 
     // GET /repos/{owner}/{repo}/issues
 
+    var start = process.hrtime();
+
     var client = (public) ? api.requestPublicClient() : installationClient;
 
     var pageNum = 0;
@@ -1285,6 +1303,9 @@ scrapeGithubRepoIssues = async (
 
         foundIssueList.push(issueListPageResponse.data);
     }
+
+    printExecTime(process.hrtime(start), `scrapeAllIssues("${repositoryObj.fullName}")`);
+
 
     foundIssueList = foundIssueList.flat();
 
@@ -1366,6 +1387,8 @@ scrapeGithubRepoIssues = async (
     );
 
     if (bulkGithubIssueInsertList.length > 0) {
+
+        var start = process.hrtime();
         var bulkInsertResult;
         var newTicketIds;
 
@@ -1397,6 +1420,9 @@ scrapeGithubRepoIssues = async (
     
             throw err;
         }
+
+        printExecTime(process.hrtime(start), `insertAllIssues("${repositoryObj.fullName}")`);
+
 
         var scrapedIssues;
         try {
@@ -1437,7 +1463,7 @@ scrapeGithubRepoIssues = async (
         // console.log("scrapedIssues: ");
         // console.log(scrapedIssues);
 
-
+        var start = process.hrtime();
         var issueLinkages;
         try {
             issueLinkages = await getGithubIssueLinkages(installationId, repositoryObj, public);
@@ -1454,6 +1480,9 @@ scrapeGithubRepoIssues = async (
  
              throw err;
          }
+
+        printExecTime(process.hrtime(start), `getGithubIssueLinkages("${repositoryObj.fullName}")`);
+
 
 
         // Get any linkages from markdown
@@ -1524,8 +1553,8 @@ scrapeGithubRepoIssues = async (
 
 
 
-        console.log("FINAL ISSUE LINKAGES: ");
-        console.log(issueLinkages);
+        // console.log("issueLinkages.slice(0, 5): ");
+        // console.log(issueLinkages.slice(0, 5));
 
         try {
             await generateDirectAttachmentsFromLinkages(

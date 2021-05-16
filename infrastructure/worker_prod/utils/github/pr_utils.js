@@ -194,7 +194,7 @@ const fetchAllRepoPRsAPIGraphQL = async (installationId, repositoryId, fullName,
         if (hasNextPage) {
             cursor = queryResponse.repository.pullRequests.pageInfo.endCursor;
         }
-        console.log(`cursor is ${cursor}`);
+        // console.log(`cursor is ${cursor}`);
         console.log(`total_prs_scraped: ${total_prs_scraped}`);
     }
   
