@@ -13,6 +13,8 @@ const { fetchAllRepoBranchesAPI, insertBranchesFromAPI } = require('./github/bra
 const { fetchAllRepoPRsAPIGraphQL, insertPRsFromAPI } = require('./github/pr_utils');
 const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github/commit_utils');
 
+const { printExecTime } = require('./print');
+
 const Sentry = require("@sentry/node");
 
 const { at } = require("lodash");
@@ -25,6 +27,7 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
 
     // Fetch all branches and PRs from Github
+    var start = process.hrtime();
     var foundPRList;
     try {
         foundPRList = await fetchAllRepoPRsAPIGraphQL(installationId, repositoryId, repositoryObj.fullName, public);
@@ -43,7 +46,10 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
         throw err;
     }
+    printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIGraphQL("${repositoryObj.fullName}")`);
 
+
+    var start = process.hrtime();
     var foundBranchList;
     try {
         foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryId, repositoryObj.fullName, public);
@@ -62,12 +68,14 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
         throw err;
     }
+    printExecTime(process.hrtime(start), `fetchAllRepoBranchesAPI("${repositoryObj.fullName}")`);
+
 
 
     // Only can insert Branches if branches objects were found
 
     if (foundBranchList.length > 0) {
-
+        var start = process.hrtime();
         try {
             await insertBranchesFromAPI(foundBranchList, installationId, repositoryId);
         }
@@ -86,11 +94,13 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
             throw err;
         }
+        printExecTime(process.hrtime(start), `insertBranchesFromAPI("${repositoryObj.fullName}")`);
     }
 
     // Only can insert PRs if PR objects were found
     if (foundPRList.length > 0) {
 
+        var start = process.hrtime();
         try {
             await insertPRsFromAPI(foundPRList);
         }
@@ -109,9 +119,11 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
             throw err;
         }
+        printExecTime(process.hrtime(start), `insertPRsFromAPI("${repositoryObj.fullName}")`);
     }
 
 
+    var start = process.hrtime();
     var foundCommitList;
     try {
         foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath);
@@ -132,7 +144,10 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         throw err;
 
     }
+    printExecTime(process.hrtime(start), `fetchAllRepoCommitsCLI("${repositoryObj.fullName}")`);
 
+
+    var start = process.hrtime();
     var insertedCommitsCLI;
     try {
         insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId);
@@ -153,6 +168,7 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         throw err;
 
     }
+    printExecTime(process.hrtime(start), `insertAllCommitsFromCLI("${repositoryObj.fullName}")`);
 
 
     // git rev-list --all --min-parents=2 --date=iso --format=%H%n%cd%n%T%n%an%n%cn%n%ce%n%s$n%P$%n%D%n
