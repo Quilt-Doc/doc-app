@@ -18,13 +18,69 @@ checkValid = (item) => {
     return false;
 };
 
-extractRepositoryLabels = async (installationClient, repository) => {
+paginateResponse = async (client, baseUrl) => {
+    const func = "paginateResponse";
+
+    let objects = [];
+
+    let page = 1;
+
+    // loop through until all objects from each page are retrieved
+    while (true) {
+        const route = `${baseUrl}?page=${page}&per_page=100`;
+
+        try {
+            // extract a page
+            response = await client.get(`${baseUrl}?page=${page}&per_page=100`);
+
+            newObjects = response.data;
+        } catch (e) {
+            if (e.data) e = e.data.message;
+
+            logger.error(
+                `Error occured calling Github API with route: ${route}`,
+                {
+                    e,
+                    func,
+                }
+            );
+
+            throw new Error(e);
+        }
+
+        const count = newObjects.length;
+
+        // push page objects to final array
+        objects.push(newObjects);
+
+        // break if count of page is either 0 or not full
+        if (count == 0 || count != 100) break;
+
+        page += 1;
+    }
+
+    return objects.flat();
+};
+
+extractRepositoryLabels = async (client, repository) => {
+    const func = "extractRepositoryLabels";
+
+    // extract repository identifiers
     const { fullName, _id: repositoryId } = repository;
 
-    const response = await installationClient.get(`/repos/${fullName}/labels`);
+    logger.info(`Entered with repository ${fullName}`, {
+        func,
+    });
 
-    let labels = response.data;
+    // query labels
+    let labels = await paginateResponse(client, `/repos/${fullName}/labels`);
 
+    logger.info(`Received ${labels.length} labels`, {
+        func,
+        obj: labels,
+    });
+
+    // insert labels into database
     const insertOps = labels.map((label) => {
         return {
             name: label.name,
@@ -38,33 +94,41 @@ extractRepositoryLabels = async (installationClient, repository) => {
     try {
         labels = await IntegrationLabel.insertMany(insertOps);
     } catch (e) {
+        logger.error(`Failed to insert labels into database`, {
+            func,
+            e,
+        });
+
         throw new Error(e);
     }
 
+    // create a map with sourceId as key
     return _.mapKeys(labels, "sourceId");
 };
 
+// creates a unique key for an attachment
 acquireKey = (att) => {
+    // extract identifying characteristics of attachment
     const { modelType, repository, sourceId } = att;
 
+    // if commit, key can be sliced sha
     const suffix = modelType == "commit" ? sourceId.slice(0, 7) : sourceId;
 
+    // return keys
     return `${modelType}-${repository.toString()}-${suffix}`;
 };
 
-traverseGithubThreads = async (
-    installationClient,
-    repository,
-    issues,
-    pullRequests
-) => {
+// traverses threads of issues and pull requests
+traverseGithubThreads = async (client, repository, issues, pullRequests) => {
+    // map issues and prs to sourceId
     issues = _.mapKeys(issues, "sourceId");
 
     pullRequests = _.mapKeys(pullRequests, "sourceId");
 
     const { fullName } = repository;
 
-    const response = await installationClient.get(
+    let comments = await paginateResponse(
+        client,
         `/repos/${fullName}/issues/comments`
     );
 
