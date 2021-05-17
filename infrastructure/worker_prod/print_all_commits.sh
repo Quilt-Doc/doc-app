@@ -10,6 +10,4 @@
 # parent hashes
 # ref names without the " (", ")" wrapping.
 
-for f in $(git rev-list --all);
-do git show -M --date=iso --numstat --name-only --format=END%n%H%n%cd%n%T%n%an%n%cn%n%ce%n%s%n%P%n%D $f
-done
+git log --all -M --date=iso --numstat --name-only --format=END%n%H%n%cd%n%T%n%an%n%cn%n%ce%n%s%n%P%n%D
