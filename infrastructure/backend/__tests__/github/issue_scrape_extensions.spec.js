@@ -72,7 +72,6 @@ afterAll(async () => {
 
 describe("Issue Scrape Extended Association/Field Testing", () => {
     test("extractRepositoryLabels: should extract labels correctly", async () => {
-        /*
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
 
         const { fullName } = repository;
@@ -86,14 +85,13 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
         console.log(
             issues.filter((issue) => issue.labels.length >= 1)[0].labels
         );
-        */
-        /*
+
         await extractRepositoryLabels(
             installationClient,
             process.env.TEST_REPOSITORY_FULL_NAME
-        );*/
+        );
     });
-    /*
+
     test("parseGithubBody: should extract a unique set of attachments", async () => {
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
 
@@ -145,7 +143,7 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
         attachments = parseGithubBody("", repository);
 
         expect(attachments).toEqual([]);
-    });*/
+    });
 
     test("traverseGithubThreads: should extract pull request/issue threads attachments", async () => {
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
@@ -191,5 +189,93 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
                 testIssueAttachmentCounts[sourceId]
             );
         }
+    });
+
+    test("extractTextualAttachments: should extract attachments in body correctly", async () => {
+        await deleteWorkspace(process.env.TEST_WORKSPACE_ID);
+
+        const { createdWorkspaceId, repositoryIds } = await createWorkspace([
+            "kgodara-testing/issue-scrape",
+        ]);
+
+        process.env.TEST_WORKSPACE_ID = createdWorkspaceId;
+
+        const repository = await Repository.findById(repositoryIds[0]);
+
+        process.env.TEST_REPOSITORY = JSON.stringify(repository);
+
+        let issues = await IntegrationTicket.find({
+            source: "github",
+            repositoryId: repository._id,
+        }).populate("attachments");
+
+        issues = _.mapKeys(issues, "sourceId");
+
+        expect(issues["9"].attachments.length).toEqual(1);
+
+        issues = Object.values(issues);
+
+        await extractTextualAttachments(issues, repository);
+
+        issues = await IntegrationTicket.find({
+            source: "github",
+            repositoryId: repository._id,
+        }).populate("attachments");
+
+        issues = _.mapKeys(issues, "sourceId");
+
+        expect(issues["9"].attachments.length).toEqual(6);
+    });
+
+    test("extractTextualAttachments + traverseGithubThreads: should extract attachments without redundacy", async () => {
+        await deleteWorkspace(process.env.TEST_WORKSPACE_ID);
+
+        const { createdWorkspaceId, repositoryIds } = await createWorkspace([
+            "kgodara-testing/issue-scrape",
+        ]);
+
+        process.env.TEST_WORKSPACE_ID = createdWorkspaceId;
+
+        const repository = await Repository.findById(repositoryIds[0]);
+
+        process.env.TEST_REPOSITORY = JSON.stringify(repository);
+
+        let issues = await IntegrationTicket.find({
+            source: "github",
+            repositoryId: repository._id,
+        }).populate("attachments");
+
+        const pullRequests = await PullRequest.find({
+            repository: repository._id,
+        });
+
+        await extractTextualAttachments(issues, repository);
+
+        issues = await IntegrationTicket.find({
+            source: "github",
+            repositoryId: repository._id,
+        }).populate("attachments");
+
+        await traverseGithubThreads(
+            installationClient,
+            repository,
+            issues,
+            pullRequests
+        );
+
+        issues = await IntegrationTicket.find({
+            source: "github",
+            repositoryId: repository._id,
+        }).populate("attachments");
+
+        issues = _.mapKeys(issues, "sourceId");
+
+        expect(issues["9"].attachments.length).toEqual(10);
+
+        expect(issues["7"].attachments.length).toEqual(3);
+
+        expect(issues["10"].attachments.length).toEqual(5);
+
+        expect(issues["11"].attachments.length).toEqual(4);
     });
 });
