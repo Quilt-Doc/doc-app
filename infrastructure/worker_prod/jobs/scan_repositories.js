@@ -31,6 +31,8 @@ const { createInsertHunksForRepository, createPRInsertHunksForRepository } = req
 
 const { spawnSync } = require('child_process');
 
+const { printExecTime } = require('../utils/print');
+
 
 
 const { generateGithubIssueBoard, generateGithubIssueBoardAPI, generateAssociationsFromResults } = require("../utils/associations/utils");
@@ -284,8 +286,8 @@ const scanRepositories = async () => {
                     repoDiskPath = await cloneInstallationRepo(repositoryObj.installationId, repositoryObj.cloneUrl, false, '', timestampList[idx]);
                 }
 
-                hrend = process.hrtime(hrstart)
-                console.info(`Repository Clone ( ${repositoryObj.fullName} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+                printExecTime(process.hrtime(hrstart), `Repository Clone ( ${repositoryObj.fullName} )`);
+                // console.info(`Repository Clone ( ${repositoryObj.fullName} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
 
                 clonedRepositoryDiskPaths.push(repoDiskPath);
                 repositoryIdToDiskPathMap[repositoryObj._id.toString()] = repoDiskPath;
@@ -400,7 +402,7 @@ const scanRepositories = async () => {
                         repositoryObj,
                         workspaceId,
                         integrationBoardId,
-                        public);
+                        public);``
                 }
                 catch (err) {
                     Sentry.captureException(err);

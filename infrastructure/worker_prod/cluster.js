@@ -1,4 +1,4 @@
-//TODO: Figure out why we can't do 'mongoose.connect()' in the async function before we run pollQueue
+// TODO: Figure out why we can't do 'mongoose.connect()' in the async function before we run pollQueue
 
 var mongoose = require("mongoose");
 
@@ -95,7 +95,7 @@ if (cluster.isMaster) {
     }
   });
 
-  cluster.on("disconnect", worker => {
+  cluster.on(`disconnect`, worker => {
     console.log(`The worker #${worker.id} has disconnected`);
   });
 } else {

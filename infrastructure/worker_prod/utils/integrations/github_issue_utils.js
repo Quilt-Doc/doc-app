@@ -30,8 +30,8 @@ const { printExecTime } = require('../print');
 
 const fetchScrapedIssues = async (insertedIssueIds) => {
     // Fetch Github Issue IntegrationTickets
-    var scrapedIssues;
-    try {
+ var scrapedIssues;
+ try {
         scrapedIssues = await IntegrationTicket.find(
             {
                 _id: {
