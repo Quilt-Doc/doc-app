@@ -74,24 +74,19 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
     test("extractRepositoryLabels: should extract labels correctly", async () => {
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
 
-        const { fullName } = repository;
-
-        const response = await installationClient.get(
-            `/repos/${fullName}/issues`
-        );
-
-        const issues = response.data;
-
-        console.log(
-            issues.filter((issue) => issue.labels.length >= 1)[0].labels
-        );
-
-        await extractRepositoryLabels(
+        const labelsObj = await extractRepositoryLabels(
             installationClient,
-            process.env.TEST_REPOSITORY_FULL_NAME
+            repository
         );
+
+        const labels = Object.values(labelsObj);
+
+        expect(labels.length).toEqual(10);
+
+        console.log("Labels", labels);
     });
 
+    /*
     test("parseGithubBody: should extract a unique set of attachments", async () => {
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
 
@@ -278,4 +273,5 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
 
         expect(issues["11"].attachments.length).toEqual(4);
     });
+    */
 });

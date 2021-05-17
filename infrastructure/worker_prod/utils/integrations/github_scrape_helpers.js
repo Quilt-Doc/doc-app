@@ -546,9 +546,10 @@ extractTextualAttachments = async (issues, repository) => {
             );
 
             if (attachments.length > 0) {
-                issueUpdates[issue._id].newAttachments = attachments;
-
-                issueUpdates[issue._id].issue = issue;
+                issueUpdates[issue._id] = {
+                    newAttachments: attachments,
+                    issue,
+                };
             }
 
             return attachments;
