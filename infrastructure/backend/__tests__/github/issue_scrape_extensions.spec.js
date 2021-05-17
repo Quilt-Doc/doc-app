@@ -86,7 +86,6 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
         console.log("Labels", labels);
     });
 
-    /*
     test("parseGithubBody: should extract a unique set of attachments", async () => {
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
 
@@ -273,5 +272,4 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
 
         expect(issues["11"].attachments.length).toEqual(4);
     });
-    */
 });
