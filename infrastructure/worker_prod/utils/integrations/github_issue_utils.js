@@ -12,7 +12,7 @@ const _ = require("lodash");
 
 const Sentry = require("@sentry/node");
 
-const GithubIssue = require("../../models/integrations/github/GithubIssue");
+const GithubIssue = require('../../models/integrations/github/GithubIssue');
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 const IntegrationInterval = require("../../models/integrations/integration_objects/IntegrationInterval");
 const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
