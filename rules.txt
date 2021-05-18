@@ -1,9 +1,10 @@
 {
     "env": {
+        "browser": false,
         "node": true,
+        "jest/globals": true,
         "commonjs": true,
-        "es2021": true,
-        "jest": true
+        "es2021": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
@@ -41,7 +42,6 @@
             "skipBlankLines": true,
             "skipComments": true
         }],
-        "newline-per-chained-call": ["error", { "ignoreChainWithDepth": 2 }],
         "linebreak-style": [
             "error",
             "unix"
@@ -53,18 +53,63 @@
         "semi": [
             "error",
             "always"
-        ],
-        "no-tabs": [
+        ]
+    }
+}
+
+
+
+
+
+
+
+
+
+
+/*
+    "rules": {
+        "indent": ["error", 4],
+        "comma-dangle": ["error", {
+            "arrays": "always-multiline",
+            "objects": "always-multiline",
+            "imports": "never",
+            "exports": "never",
+            "functions": "never"
+        }],
+        "block-spacing": ["error", "always"],
+        "array-bracket-spacing": ["error", "never"],
+        "brace-style": ["error", "1tbs"],
+        "function-call-argument-newline": ["error", "consistent"],
+        "function-paren-newline": ["error", "consistent"],
+        "max-len": ["error", {
+            "code": 100,
+            "ignoreComments": true,
+            "ignoreStrings": true,
+            "ignoreUrls": true,
+            "ignoreTemplateLiterals": true,
+            "ignoreRegExpLiterals": true
+        }],
+        "max-lines": ["error", {
+            "max": 700,
+            "skipBlankLines": true,
+            "skipComments": true
+        }],
+        "max-lines-per-function": ["error", {
+            "max": 350,
+            "skipBlankLines": true,
+            "skipComments": true
+        }],
+        "linebreak-style": [
             "error",
-            "always"
+            "unix"
         ],
-        "no-trailing-spaces": [
+        "quotes": [
             "error",
-            "always"
+            "double"
         ],
-        "spaced-comment": [
+        "semi": [
             "error",
             "always"
         ]
     }
-}
+*/

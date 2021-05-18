@@ -35,7 +35,8 @@ const { printExecTime } = require('../utils/print');
 
 
 
-const { generateGithubIssueBoard, generateGithubIssueBoardAPI, generateAssociationsFromResults } = require("../utils/associations/utils");
+const { setupGithubIssueBoard, generateAssociationsFromResults,
+        fetchBoardsFromRepositoryList, addBoardsToWorkspace } = require("../utils/associations/utils");
 
 
 const { serializeError, deserializeError } = require('serialize-error');
@@ -52,9 +53,7 @@ const deleteClonedRepositories = async (clonedRepositoryDiskPaths) => {
 
         spawnSync('rm', ['-rf', `${timestamp}`], { cwd: './' + 'git_repos/' });
     });
-
     await Promise.allSettled(repositoryDeleteProcesses);
-
 }
 
 
@@ -127,6 +126,55 @@ const scanRepositories = async () => {
         // Filter out repositories with 'scanned' == false
         var scannedRepositories = repositoryObjList.filter(repositoryObj => repositoryObj.scanned == true);
         var scannedRepositoryIdList = scannedRepositories.map(repositoryObj => repositoryObj._id);
+
+        // Attach IntegrationBoards for all scannedRepositories to workspaceId
+        if (scannedRepositoryIdList.length > 0) {
+            // Get IntegrationBoards for all Scanned Repositories
+            var foundBoards;
+            try {
+                foundBoards = await fetchBoardsFromRepositoryList(scannedRepositoryIdList);
+            }
+            catch (err) {
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories fetchBoardsFromRepositoryList() failed`,
+                    workspaceId: workspaceId,
+                    scannedRepositoryIdList: JSON.stringify(scannedRepositoryIdList)
+                });
+
+                Sentry.captureException(err);
+                throw err;
+            }
+
+            // Attach fetched IntegrationBoards to Workspace {_id: workspaceId}
+            if (foundBoards.length > 0) {
+                var foundBoards;
+                try {
+                    foundBoards = await addBoardsToWorkspace(workspaceId, foundBoards.map(board => board._id));
+                }
+                catch (err) {
+                    Sentry.setContext("scan-repositories", {
+                        message: `scanRepositories addBoardsToWorkspace() failed`,
+                        workspaceId: workspaceId,
+                        foundBoards: JSON.stringify(foundBoards)
+                    });
+    
+                    Sentry.captureException(err);
+                    throw err;
+                }
+            }
+            // Must be > 0 fetched IntegrationBoards, otherwise data model in inconsistent state
+            else {
+                Sentry.setContext("scan-repositories", {
+                    message: `scanRepositories fetchBoardsFromRepositoryList() returned 0 IntegrationBoards for Scanned Repositories`,
+                    workspaceId: workspaceId,
+                    scannedRepositoryIdList: JSON.stringify(scannedRepositoryIdList)
+                });
+
+                Sentry.captureException(Error(`scanRepositories fetchBoardsFromRepositoryList() returned 0 IntegrationBoards for Scanned Repositories`));
+                throw Error(`scanRepositories fetchBoardsFromRepositoryList() returned 0 IntegrationBoards for Scanned Repositories`);
+
+            }
+        }
 
         // If all repositories within this workspace have already been scanned, nothing to do
         if (unscannedRepositories.length == 0) {
@@ -394,7 +442,7 @@ const scanRepositories = async () => {
                 var integrationBoardId;
                 try {
                     console.log(`Scraping Github Issues from Repository: ${repositoryObj.htmlUrl}`);
-                    integrationBoardId = await generateGithubIssueBoardAPI(workspaceId, repositoryObj._id.toString());
+                    integrationBoardId = await setupGithubIssueBoard(workspaceId, repositoryObj._id.toString());
 
                     await scrapeGithubRepoIssues(repositoryObj.installationId,
                         repositoryObj._id.toString(),

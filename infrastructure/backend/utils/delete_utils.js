@@ -108,12 +108,13 @@ const acquireRepositoriesToReset = async (deletedWorkspace, session) => {
 
     try {
         // Get all Workspaces of Repositories in deletedWorkspaces
-        repositoryWorkspaces = await Workspace.find({repositories: { $in: workspaceRepositories.map(id => ObjectId(id.toString())) }}, 'repositories', { session })
+        repositoryWorkspaces = await Workspace.find({repositories: { $in: workspaceRepositories.map(id => ObjectId(id.toString())) }}, '_id repositories', { session })
                                                 .lean()
                                                 .exec();
 
         // All Repositories from deletedWorkspace will have to be reset
         if (!repositoryWorkspaces) {
+            console.log(`acquireRepositoriesToReset - all repositories in workspace must be reset`);
             repositoryWorkspaces = [];
         }
     }
@@ -134,6 +135,9 @@ const acquireRepositoriesToReset = async (deletedWorkspace, session) => {
         );
     }
 
+    console.log(`acquireRepositoriesToReset - all Workspaces with overlapping repositories: ${JSON.stringify(repositoryWorkspaces)}`);
+
+
     // Create a Set of all distinct Repositories from fetched Workspaces
     var i = 0;
     var currentWorkspace;
@@ -141,18 +145,22 @@ const acquireRepositoriesToReset = async (deletedWorkspace, session) => {
         currentWorkspace = repositoryWorkspaces[i];
         var k = 0;
 
+
         if (!currentWorkspace.repositories) {
+            console.log(`acquireRepositoriesToReset - no repositories for overlapping workspace: ${currentWorkspace._id} - skipping`);
             continue;
         }
 
-        for (k = 0; k < currentWorkspace.repositories; k++) {
-            foundRepositories.add(currentWorkspace.repositories[k]);
+        for (k = 0; k < currentWorkspace.repositories.length; k++) {
+            foundRepositories.add(currentWorkspace.repositories[k].toString());
         }
     }
 
+    console.log(`acquireRepositoriesToReset - all distinct overlapping Repositories from other workspaces: ${JSON.stringify(Array.from(foundRepositories))}`);
+
     // Identify which repositories of deletedWorkspace were not found in any other Workspace
     for (i = 0; i < workspaceRepositories.length; i++) {
-        if (!foundRepositories.has(workspaceRepositories[i])) {
+        if (!foundRepositories.has(workspaceRepositories[i].toString())) {
             repositoriesToReset.push(workspaceRepositories[i]);
         }
     }
@@ -308,8 +316,10 @@ const acquireBoardsToDelete = async (deletedWorkspace, session) => {
                                                 .lean()
                                                 .exec();
 
+        // No Boards in Workspace present in any other Workspace
         // All Boards from deletedWorkspace will have to be reset
         if (!boardWorkspaces) {
+            console.log(`acquireBoardsToDelete - all boards in workspace must be reset`);
             boardWorkspaces = [];
         }
     }
@@ -329,6 +339,8 @@ const acquireBoardsToDelete = async (deletedWorkspace, session) => {
         );
     }
 
+    console.log(`acquireBoardsToDelete - all Workspaces with overlapping boards: ${JSON.stringify(boardWorkspaces)}`);
+
     // Create a Set of all distinct Boards from fetched Workspaces
     var i = 0;
     var currentWorkspace;
@@ -340,27 +352,31 @@ const acquireBoardsToDelete = async (deletedWorkspace, session) => {
             continue;
         }
 
-        for (k = 0; k < currentWorkspace.boards; k++) {
-            foundBoards.add(currentWorkspace.boards[k]);
+        console.log(`acquireBoardsToDelete - currentWorkspace: ${JSON.stringify(currentWorkspace)}`);
+
+        for (k = 0; k < currentWorkspace.boards.length; k++) {
+            // console.log(`acquireBoardsToDelete - adding ${currentWorkspace.boards[k].toString()} to foundBoards`);
+            foundBoards.add(currentWorkspace.boards[k].toString());
         }
     }
 
-    // Identify which repositories of deletedWorkspace were not found in any other Workspace
+    console.log(`acquireBoardsToDelete - all distinct overlapping Boards from other workspaces: ${JSON.stringify(Array.from(foundBoards))}`);
+
+
+    // Identify which boards of deletedWorkspace were not found in any other Workspace
     for (i = 0; i < workspaceBoards.length; i++) {
-        if (!foundBoards.has(workspaceBoards[i])) {
+        if (!foundBoards.has(workspaceBoards[i].toString())) {
             boardsToDelete.push(workspaceBoards[i]);
         }
     }
 
 
     return boardsToDelete;
-    
 }
 
 const deleteIntegrationBoards = async (boardsToDelete, session) => {
 
-    console.log('deleteIntegrationBoards received boardsToDelete: ');
-    console.log(boardsToDelete);
+    console.log(`deleteIntegrationBoards received boardsToDelete: ${JSON.stringify(boardsToDelete)}`);
 
     if (boardsToDelete.length < 1) {
         return;

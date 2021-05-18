@@ -391,15 +391,11 @@ deleteWorkspace = async (req, res) => {
 
     const session = await db.startSession();
 
-    console.log(
-        `deleteWorkspace Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`
-    );
+    console.log(`deleteWorkspace Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`);
 
     try {
         await session.withTransaction(async () => {
-            console.log(
-                "deleteWorkspace Removing Workspace from User.workspaces"
-            );
+            console.log("deleteWorkspace Removing Workspace from User.workspaces");
             // Remove Workspace from User.workspaces
             await deleteUtils.detachWorkspaceFromMembers(workspaceId, session);
 
@@ -412,10 +408,9 @@ deleteWorkspace = async (req, res) => {
             console.log("deleteWorkspace Beginning to delete CodeObjects");
 
             // Get Repositories that need to be reset
-            var repositoriesToReset = await deleteUtils.acquireRepositoriesToReset(
-                deletedWorkspace,
-                session
-            );
+            var repositoriesToReset = await deleteUtils.acquireRepositoriesToReset(deletedWorkspace, session);
+
+            console.log(`acquireRepositoriesToReset - workspaceId: ${workspaceId}, repositoriesToReset: ${JSON.stringify(repositoriesToReset)}`);
 
             // Delete Repository Commits
             await deleteUtils.deleteCommits(repositoriesToReset, session);
