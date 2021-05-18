@@ -5,39 +5,35 @@ const _ = require("lodash");
 
 // mongoose
 const mongoose = require("mongoose");
-const { ObjectId } = mongoose.Types;
 
 // models
 const Commit = require("../../models/Commit");
-const Branch = require("../../models/Branch");
 const PullRequest = require("../../models/PullRequest");
 const Workspace = require("../../models/Workspace");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
-
-// api
-const apis = require("../../apis/api");
 
 // logger
 const { logger } = require("../../fs_logging");
 
 // util helpers
+const { deleteWorkspace } = require("../../__tests__config/utils");
 const {
-    createWorkspace,
-    deleteWorkspace,
-    removeWorkspaces,
-} = require("../../__tests__config/utils");
-
-// backend client
-const backendClient = apis.requestTestingUserBackendClient();
+    sampleGithubRepositories,
+    acquireRepositoryRawCommits,
+    acquireRepositoryRawPullRequests,
+    acquireRepositoryRawIssues,
+    createPublicWorkspace,
+} = require("../../__tests__helpers/github/github_scrape_test_helpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
-// constants
+// constants -- parameters to sampling function
 const NUM_STARS = "1000..2000";
 const REPO_SIZE = "300..500";
 const NUM_REPOS = 1;
 
+// set up mongodb connection
 beforeAll(async () => {
     const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
 
@@ -52,6 +48,7 @@ beforeAll(async () => {
     process.env.isTesting = true;
 });
 
+// remove workspace artifacts
 afterAll(async () => {
     if (process.env.TEST_WORKSPACE) {
         const workspace = JSON.parse(process.env.TEST_WORKSPACE);
@@ -66,373 +63,11 @@ afterAll(async () => {
     }
 });
 
-shuffle = (array) => {
-    var currentIndex = array.length,
-        temporaryValue,
-        randomIndex;
-
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-        // Pick a remaining element...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-
-        // And swap it with the current element.
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
-    }
-
-    return array;
-};
-
-sampleGithubRepositories = async (queryFilters) => {
-    const func = "sampleGithubRepositories";
-
-    const { stars, repoSize, numRepos } = queryFilters;
-
-    logger.info(`Entered with parameters: ${stars} ${repoSize} ${numRepos}`, {
-        func,
-    });
-
-    const publicClient = apis.requestPublicClient();
-
-    const repoSizeFilter = repoSize ? `size:${repoSize}` : "";
-
-    const starsFilter = stars ? `stars:${stars}` : "";
-
-    const q = encodeURIComponent(`${repoSizeFilter} ${starsFilter}`);
-
-    requestUrl = `/search/repositories?q=${q}&per_page=${100}&page=${1}`;
-
-    logger.info(`Encoded requestUrl: ${requestUrl}`, { func });
-
-    let repositories;
-
-    try {
-        const response = await publicClient.get(requestUrl);
-
-        repositories = response.data.items.map((repo) => {
-            const { html_url, full_name } = repo;
-
-            return html_url;
-        });
-    } catch (e) {
-        if (e.data) e = e.data.message;
-
-        logger.error("Error occurred during call of Github API", {
-            func,
-            e,
-        });
-
-        return null;
-    }
-
-    // HARDCODED REPOS
-    //repositories = ["https://github.com/t32k/stylestats"];
-
-    arr = [];
-
-    for (let i = 0; i < repositories.length; i++) {
-        arr.push(i);
-    }
-
-    indices = shuffle(arr).slice(0, numRepos);
-
-    logger.info(`Received ${repositories.length} repositories`, {
-        func,
-        obj: repositories,
-    });
-
-    return indices.map((index) => repositories[index]);
-};
-
-acquireRepositoryRawCommits = async (repositories) => {
-    const func = "acquireRepositoryRawCommits";
-
-    const publicClient = apis.requestPublicClient();
-
-    let allCommits = [];
-
-    logger.info(`Received ${repositories.length} repositories`, {
-        func,
-        obj: repositories,
-    });
-
-    for (let i = 0; i < repositories.length; i++) {
-        let repo = repositories[i];
-
-        let page = 1;
-
-        let commits = [];
-
-        let branches = [];
-
-        while (true) {
-            let newBranches = [];
-
-            try {
-                const response = await publicClient.get(
-                    `/repos/${
-                        repo.fullName
-                    }/branches?page=${page}&per_page=${100}`
-                );
-
-                newBranches = response.data;
-            } catch (e) {
-                if (e.data) e = e.data.message;
-
-                logger.error(
-                    `Error occurred during call of Github API with repository ${repo.fullName}`,
-                    {
-                        func,
-                        e,
-                    }
-                );
-
-                throw new Error(e);
-            }
-
-            let count = newBranches.length;
-
-            branches.push(newBranches);
-
-            page += 1;
-
-            if (count == 0 || count % 100 != 0) break;
-        }
-
-        page = 1;
-
-        branches = branches.flat();
-
-        logger.info(`Found ${branches.length} branches on ${repo.fullName}`, {
-            func,
-            obj: branches,
-        });
-
-        for (let j = 0; j < branches.length; j++) {
-            let branch = branches[j];
-
-            while (true) {
-                let newCommits;
-
-                try {
-                    const response = await publicClient.get(
-                        `/repos/${repo.fullName}/commits?page=${page}&per_page=100&sha=${branch.name}`
-                    );
-
-                    newCommits = response.data;
-                } catch (e) {
-                    if (e.data) e = e.data.message;
-
-                    logger.error(
-                        `Error occurred during call of Github API with repository ${repo.fullName}`,
-                        {
-                            func,
-                            e,
-                        }
-                    );
-
-                    throw new Error(e);
-                }
-
-                const count = newCommits.length;
-
-                logger.debug(`Found ${count} commits on page ${page}`, {
-                    func,
-                    obj: newCommits.map((commit) => commit.sha),
-                });
-
-                commits.push(newCommits);
-
-                page += 1;
-
-                if (count == 0 || count % 100 != 0) break;
-            }
-        }
-
-        commits = commits.flat();
-
-        logger.info(
-            `Found ${commits.flat().length} commits across all branches`,
-            { func }
-        );
-
-        const uniqueShas = Array.from(
-            new Set(commits.flat().map((commit) => commit.sha))
-        );
-
-        logger.info(`Found ${uniqueShas.length} unique commits`, {
-            func,
-        });
-
-        commits = _.mapKeys(commits, "sha");
-
-        commits = uniqueShas.map((sha) => commits[sha]);
-
-        allCommits.push(commits);
-    }
-
-    logger.info(
-        `Pushed all commits for each of ${allCommits.length} repositories`,
-        {
-            func,
-            obj: allCommits.map((commits) =>
-                commits.map((commit) => commit.sha)
-            ),
-        }
-    );
-
-    return allCommits;
-};
-
-acquireRepositoryRawPullRequests = async (repositories) => {
-    const func = "acquireRepositoryRawPullRequests";
-
-    logger.info(`Received ${repositories.length} repositories`, {
-        func,
-        obj: repositories,
-    });
-
-    const publicClient = apis.requestPublicClient();
-
-    let allPullRequests = [];
-
-    for (let i = 0; i < repositories.length; i++) {
-        const repo = repositories[i];
-
-        let pulls = [];
-
-        let page = 1;
-
-        while (true) {
-            let newPulls;
-
-            try {
-                const response = await publicClient.get(
-                    `/repos/${repo.fullName}/pulls?page=${page}&per_page=100&state=all`
-                );
-
-                newPulls = response.data;
-            } catch (e) {
-                if (e.data) e = e.data.message;
-
-                logger.error(
-                    `Error occurred during call of Github API with repository ${repo.fullName}`,
-                    {
-                        func,
-                        e,
-                    }
-                );
-
-                throw new Error(e);
-            }
-
-            pulls.push(newPulls);
-
-            page += 1;
-
-            if (newPulls.length == 0 || newPulls.length % 100 != 0) break;
-        }
-
-        pulls = pulls.flat();
-
-        logger.info(
-            `Received ${pulls.length} pull requests for repository ${repo.fullName}`,
-            {
-                func,
-                obj: pulls.map((pull) => pull.number),
-            }
-        );
-
-        console.log(
-            "Unique pulls",
-            Array.from(new Set(pulls.map((pull) => pull.number))).length
-        );
-
-        allPullRequests.push(pulls);
-    }
-
-    return allPullRequests;
-};
-
-acquireRepositoryRawIssues = async (repositories, allPullRequests) => {
-    const func = "acquireRepositoryRawIssues";
-
-    logger.info(`Received ${repositories.length} repositories`, {
-        func,
-        obj: repositories,
-    });
-
-    const publicClient = apis.requestPublicClient();
-
-    let allIssues = [];
-
-    for (let i = 0; i < repositories.length; i++) {
-        const repo = repositories[i];
-
-        let issues = [];
-
-        let pulls = allPullRequests[i];
-
-        let page = 1;
-
-        while (true) {
-            let newIssues;
-
-            try {
-                const response = await publicClient.get(
-                    `/repos/${repo.fullName}/issues?page=${page}&per_page=100&state=all`
-                );
-
-                newIssues = response.data;
-            } catch (e) {
-                if (e.data) e = e.data.message;
-
-                logger.error(
-                    `Error occurred during call of Github API with repository ${repo.fullName}`,
-                    {
-                        func,
-                        e,
-                    }
-                );
-
-                throw new Error(e);
-            }
-
-            issues.push(newIssues);
-
-            page += 1;
-
-            if (newIssues.length == 0 || newIssues.length % 100 != 0) break;
-        }
-
-        issues = issues.flat();
-
-        issues = issues.filter(
-            (issue) =>
-                !new Set(pulls.map((pull) => pull.number)).has(issue.number)
-        );
-
-        logger.info(
-            `Received ${issues.length} issues for repository ${repo.fullName}`,
-            {
-                func,
-                obj: issues.map((issue) => issue.number),
-            }
-        );
-
-        allIssues.push(issues);
-    }
-
-    return allIssues;
-};
-
-describe("Pipeline Display Simple Query Validation", () => {
-    test("Sample repositories for pipeline display validation", async () => {
+describe("Basic public github scrape validation", () => {
+    test("Sample repositories for validation", async () => {
         const func = "Sample repositories for pipeline display validation";
 
+        // acquire some sample with parameters delineated above
         const repos = await sampleGithubRepositories({
             stars: NUM_STARS,
             repoSize: REPO_SIZE,
@@ -447,86 +82,22 @@ describe("Pipeline Display Simple Query Validation", () => {
         process.env.TEST_SAMPLE_REPOSITORIES = JSON.stringify(repos);
     });
 
-    test("Scraped repositories successfully", async () => {
-        const func = "Scraped repositories successfully";
-
+    test("Scrape sample repositories and create workspace successfully", async () => {
         const repoUrls = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-        const requests = repoUrls.map((url) => {
-            return backendClient.post(`repositories/init`, {
-                isPublic: true,
-                publicHtmlUrl: url,
-            });
-        });
-
-        let responses = await Promise.all(requests);
-
-        const repositories = responses.map((response) => response.data.result);
-
-        logger.info(`Initialized ${repositories.length} repositories`, {
-            func,
-            obj: repositories,
-        });
-
-        logger.info("Parameters to workspace creation set", {
-            func,
-            obj: {
-                repositoryIds: repositories.map((repo) => repo._id),
-                creatorId: TEST_USER_ID,
-                public: true,
-                name: "Bulk Scrape Validation Testing Workspace",
-            },
-        });
-
-        let response = await backendClient.post("/workspaces/create", {
-            repositoryIds: repositories.map((repo) => repo._id),
-            creatorId: TEST_USER_ID,
-            public: true,
-            name: "Bulk Scrape Validation Testing Workspace",
-        });
-
-        let workspace = response.data.result;
-
-        logger.info(`Successfully initialized ${workspace.name}`, {
-            func,
-            obj: workspace,
-        });
-
-        response = await backendClient.get(`/workspaces/get/${workspace._id}`);
-
-        workspace = response.data.result;
-
-        while (workspace.setupComplete == false) {
-            response = await backendClient.get(
-                `/workspaces/get/${workspace._id}`
-            );
-
-            workspace = response.data.result;
-
-            logger.info(`Polling workspace "${workspace.name}"`, {
-                func,
-                obj: workspace,
-            });
-
-            await new Promise((r) => setTimeout(r, 3000));
-        }
-
-        logger.info(`Workspace "${workspace.name}" setup complete`, {
-            func,
-            obj: workspace,
-        });
+        const { workspace, repositories } = await createPublicWorkspace(repoUrls);
 
         process.env.TEST_WORKSPACE = JSON.stringify(workspace);
 
         process.env.TEST_SAMPLE_REPOSITORIES = JSON.stringify(repositories);
     });
 
-    /*
     test("Validate commit scraping", async () => {
         const func = "Validate commit scraping";
 
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
+        // acquire commits for each repositories from github API
         const allCommits = await acquireRepositoryRawCommits(repositories);
 
         for (let i = 0; i < repositories.length; i++) {
@@ -534,41 +105,35 @@ describe("Pipeline Display Simple Query Validation", () => {
 
             let rawCommits = allCommits[i];
 
+            // acquire scraped commits using git cli
             const repoCommits = await Commit.find({ repository: repo._id })
                 .select("_id sourceId name")
                 .lean()
                 .exec();
 
-            // DEBUGGING PURPOSES
+            // DEBUGGING PURPOSES to reveal commit differences
+            /*
             if (repoCommits.length != rawCommits.length) {
                 const isRawGreater = repoCommits.length > rawCommits.length;
 
                 console.log(`isRawGreater: ${isRawGreater}`);
 
                 if (isRawGreater) {
-                    const repoCommitsSet = new Set(
-                        repoCommits.map((commit) => commit.sourceId)
-                    );
+                    const repoCommitsSet = new Set(repoCommits.map((commit) => commit.sourceId));
 
                     console.log(
                         "Not Matching Raw Commits",
-                        rawCommits.filter(
-                            (commit) => !repoCommitsSet.has(commit.sha)
-                        )
+                        rawCommits.filter((commit) => !repoCommitsSet.has(commit.sha))
                     );
                 } else {
-                    const rawCommitsSet = new Set(
-                        rawCommits.map((commit) => commit.sha)
-                    );
+                    const rawCommitsSet = new Set(rawCommits.map((commit) => commit.sha));
 
                     console.log(
                         "Not Matching Repo Commits",
-                        repoCommits.filter(
-                            (commit) => !rawCommitsSet.has(commit.sourceId)
-                        )
+                        repoCommits.filter((commit) => !rawCommitsSet.has(commit.sourceId))
                     );
                 }
-            }
+            }*/
 
             expect(repoCommits.length).toEqual(rawCommits.length);
 
@@ -598,22 +163,22 @@ describe("Pipeline Display Simple Query Validation", () => {
                 obj: repo,
             });
         }
-    });*/
+    });
 
     test("Validate pull request scraping", async () => {
         const func = "Validate pull request scraping";
 
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-        const allPullRequests = await acquireRepositoryRawPullRequests(
-            repositories
-        );
+        // acquire pull requests for every repository
+        const allPullRequests = await acquireRepositoryRawPullRequests(repositories);
 
         for (let i = 0; i < repositories.length; i++) {
             const repo = repositories[i];
 
             let rawPullRequests = allPullRequests[i];
 
+            // acquire scraped pull requests
             const repoPullRequests = await PullRequest.find({
                 repository: repo._id,
             })
@@ -621,11 +186,12 @@ describe("Pipeline Display Simple Query Validation", () => {
                 .lean()
                 .exec();
 
+            // validate length
             expect(repoPullRequests.length).toEqual(rawPullRequests.length);
 
             rawPullRequests = _.mapKeys(rawPullRequests, "number");
 
-            /*
+            // validate simple content
             repoPullRequests.map((pull) => {
                 let { sourceId, name, description } = pull;
 
@@ -642,7 +208,7 @@ describe("Pipeline Display Simple Query Validation", () => {
                 expect(parseInt(sourceId)).toEqual(number);
 
                 expect(description).toEqual(body);
-            });*/
+            });
 
             logger.info(`Validated repository ${repo.fullName} pull requests`, {
                 func,
@@ -660,16 +226,15 @@ describe("Pipeline Display Simple Query Validation", () => {
 
         const allPullRequests = JSON.parse(process.env.TEST_PULL_REQUESTS);
 
-        const allIssues = await acquireRepositoryRawIssues(
-            repositories,
-            allPullRequests
-        );
+        // acquire all issues that are not pull requests from github API
+        const allIssues = await acquireRepositoryRawIssues(repositories, allPullRequests);
 
         for (let i = 0; i < repositories.length; i++) {
             const repo = repositories[i];
 
             let rawIssues = allIssues[i];
 
+            // find scraped issues
             const repoIssues = await IntegrationTicket.find({
                 repositoryId: repo._id,
                 source: "github",
@@ -678,10 +243,12 @@ describe("Pipeline Display Simple Query Validation", () => {
                 .lean()
                 .exec();
 
+            // validate length
             expect(repoIssues.length).toEqual(rawIssues.length);
 
             rawIssues = _.mapKeys(rawIssues, "number");
 
+            // validate fields
             repoIssues.map((issue) => {
                 let { sourceId, name, description } = issue;
 

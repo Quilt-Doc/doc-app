@@ -17,6 +17,10 @@
         "react-textarea-autosize": "^8.0.1"
     },
     "devDependencies": {
+        "eslint": "^7.26.0",
+        "eslint-config-airbnb-base": "^14.2.1",
+        "eslint-config-google": "^0.14.0",
+        "eslint-plugin-import": "^2.23.2",
         "prettier": "2.2.1"
     }
 }
