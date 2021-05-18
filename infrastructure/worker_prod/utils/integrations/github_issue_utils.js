@@ -24,7 +24,7 @@ const api = require("../../apis/api");
 
 const { gql, rawRequest, request } = require("graphql-request");
 
-const { printExecTime } = require('../print');
+const { printExecTime } = require("../print");
 
 // const { GraphQLClient } = require('../../mod-graphql-request/dist');
 
@@ -123,8 +123,7 @@ const createGithubIssueIntervals = async (scrapedIssues) => {
                 {
                     _id: {
                         $in: insertedIntervalIds.map((id) =>
-                            ObjectId(id.toString())
-                        ),
+                            ObjectId(id.toString())),
                     },
                 },
                 "_id integrationTicket"
@@ -424,13 +423,13 @@ const getLinkedObjects = (issueEvents, prEvents) => {
     }
 
     return { linkedIssues, linkedPRs };
-}
+};
 
 const getGithubIssueLinkages = async (
     installationId,
     repositoryObj,
     public = false
-    ) => {
+) => {
 
     var repoOwner = repositoryObj.fullName.split("/")[0];
     var repoName = repositoryObj.fullName.split("/")[1];
@@ -452,15 +451,14 @@ const getGithubIssueLinkages = async (
     var client;
     if (public) {
         client = api.requestPublicGraphQLClient();
-    }
-    else {
+    } else {
         try {
             client = await api.requestInstallationGraphQLClient(
                 installationId
             );
         } catch (err) {
             Sentry.setContext("getGithubIssueLinkages", {
-                message: `Failed to get installation GraphQL client`,
+                message: "Failed to get installation GraphQL client",
                 installationId: installationId,
             });
 
@@ -528,8 +526,7 @@ const getGithubIssueLinkages = async (
                     if (currentTimelineItem.isCrossRepository == false) {
                         if (currentTimelineItem.source.__typename == "PullRequest") {
                             referencingPrs.push(currentTimelineItem.source.number);
-                        }
-                        else if (currentTimelineItem.source.__typename == "Issue") {
+                        } else if (currentTimelineItem.source.__typename == "Issue") {
                             referencingIssues.push(currentTimelineItem.source.number);
                         }
                     }
@@ -544,10 +541,10 @@ const getGithubIssueLinkages = async (
             linkedPRs = linkedPRs.map(Number);
 
             // Merge linkedIssues with referencingIssues
-            linkedIssues = [ ...new Set(linkedIssues.concat(referencingIssues)) ];
+            linkedIssues = [...new Set(linkedIssues.concat(referencingIssues))];
 
             // Merge linkedPRs with referencingPrs
-            linkedPRs = [ ...new Set(linkedPRs.concat(referencingPrs)) ];
+            linkedPRs = [...new Set(linkedPRs.concat(referencingPrs))];
 
 
             if (linkedIssues.length > 0 && hasLinkedIssues == false) {
@@ -587,7 +584,7 @@ const getGithubIssueLinkages = async (
 
     return issueLinkages;
 
-}
+};
 
 
 const getGithubIssueLinkagesFromMarkdown = (issueObj) => {
@@ -642,8 +639,7 @@ const getGithubIssueLinkagesFromCommitMessages = async (scrapedIssues, insertedC
             if (distinctIssueNumbers.has(issueNum)) {
                 if (issueToCommitMap.hasOwnProperty(issueNum)) {
                     issueToCommitMap[issueNum].push(referencesObj.commitSha);
-                }
-                else {
+                } else {
                     issueToCommitMap[issueNum] = [referencesObj.commitSha];
                 }
             }
@@ -660,7 +656,7 @@ const getGithubIssueLinkagesFromCommitMessages = async (scrapedIssues, insertedC
         console.log(`${key} ${value}`);
     });
 
-    issueToCommitMap = Object.fromEntries(Object.entries(issueToCommitMap).map(([k, v]) => [k, [...new Set(v)]]))
+    issueToCommitMap = Object.fromEntries(Object.entries(issueToCommitMap).map(([k, v]) => [k, [...new Set(v)]]));
     /*
     issueToCommitMap = issueToCommitMap.map(shaList => {
         [...new Set(shaList)]
@@ -701,8 +697,7 @@ const fetchIntegrationAttachments = async (
             sourceId: { $in: attachmentsToCreate.map((obj) => obj.sourceId) },
             nonCodeId: {
                 $in: attachmentsToCreate.map((obj) =>
-                    ObjectId(obj.nonCodeId.toString())
-                ),
+                    ObjectId(obj.nonCodeId.toString())),
             },
         },
         "_id nonCodeId"
@@ -747,6 +742,11 @@ const generateDirectAttachmentsFromIssues = async (
     scrapedIssues,
     repositoryObj
 ) => {
+
+    var x;
+
+    x = 5;
+
     var attachmentsToCreate = [];
 
     var currentIssueLinkages = [];
@@ -1218,7 +1218,7 @@ scrapeGithubRepoIssues = async (
     repositoryObj,
     workspaceId,
     integrationBoardId,
-    public = false,
+    public = false
 ) => {
     // TEST ISSUE SCRAPING
 
@@ -1251,7 +1251,7 @@ scrapeGithubRepoIssues = async (
             console.log(err);
 
             Sentry.setContext("scrapeGithubRepoIssues", {
-                message: `GET Github Repository Issues failed`,
+                message: "GET Github Repository Issues failed",
                 fullURL: `/repos/${repositoryObj.fullName}/issues?state=all&per_page=${pageSize}&page=${pageNum}`,
                 installationId: installationId,
                 repositoryId: repositoryObj._id.toString(),
@@ -1272,7 +1272,7 @@ scrapeGithubRepoIssues = async (
                 console.log(err);
 
                 Sentry.setContext("scrapeGithubRepoIssues", {
-                    message: `GET Github Repository Issues - Failed to parse link header`,
+                    message: "GET Github Repository Issues - Failed to parse link header",
                     fullURL: `/repos/${repositoryObj.fullName}/issues?state=all&per_page=${pageSize}&page=${pageNum}`,
                     installationId: installationId,
                     repositoryId: repositoryObj._id.toString(),
@@ -1410,7 +1410,7 @@ scrapeGithubRepoIssues = async (
             console.log(err);
 
             Sentry.setContext("scrapeGithubRepoIssues", {
-                message: `IntegrationTicket{source = "github"} insertMany failed`,
+                message: "IntegrationTicket{source = \"github\"} insertMany failed",
                 installationId: installationId,
                 repositoryId: repositoryObj._id.toString(),
                 attemptedInsertNum: bulkGithubIssueInsertList.length,
@@ -1430,7 +1430,7 @@ scrapeGithubRepoIssues = async (
         } catch (err) {
             console.log(err);
             Sentry.setContext("scrapeGithubRepoIssues", {
-                message: `Error fetching Scraped GithubIssues`,
+                message: "Error fetching Scraped GithubIssues",
                 installationId: installationId,
                 repositoryId: repositoryObj._id.toString(),
                 numToFetch: newTicketIds.length,
@@ -1467,19 +1467,18 @@ scrapeGithubRepoIssues = async (
         var issueLinkages;
         try {
             issueLinkages = await getGithubIssueLinkages(installationId, repositoryObj, public);
-         }
-         catch (err) {
-             console.log(err);
-             Sentry.setContext("scrapeGithubRepoIssues", {
-                 message: `GithubIssue getGithubIssueLinkages failed`,
-                 installationId: installationId,
-                 repositoryId: repositoryObj._id.toString(),
-             });
+        } catch (err) {
+            console.log(err);
+            Sentry.setContext("scrapeGithubRepoIssues", {
+                message: "GithubIssue getGithubIssueLinkages failed",
+                installationId: installationId,
+                repositoryId: repositoryObj._id.toString(),
+            });
      
-             Sentry.captureException(err);
+            Sentry.captureException(err);
  
-             throw err;
-         }
+            throw err;
+        }
 
         printExecTime(process.hrtime(start), `getGithubIssueLinkages("${repositoryObj.fullName}")`);
 
@@ -1488,8 +1487,7 @@ scrapeGithubRepoIssues = async (
         // Get any linkages from markdown
         scrapedIssues.map((issueObj) => {
             var issueLinkagesIdx = issueLinkages.findIndex((linkageObj) =>
-                linkageObj.issueNumber == issueObj.githubIssueNumber
-            );
+                linkageObj.issueNumber == issueObj.githubIssueNumber);
 
             issueLinkages[issueLinkagesIdx].markdownLinkages = getGithubIssueLinkagesFromMarkdown(issueObj);
 
@@ -1504,12 +1502,11 @@ scrapeGithubRepoIssues = async (
         // Fetch all Repository Commits
         var insertedCommits;
         try {
-           insertedCommits =  await fetchAllInsertedRepositoryCommits(repositoryObj._id.toString(), "_id sourceId commitMessage");
-        }
-        catch (err) {
+            insertedCommits =  await fetchAllInsertedRepositoryCommits(repositoryObj._id.toString(), "_id sourceId commitMessage");
+        } catch (err) {
             console.log(err);
             Sentry.setContext("scrapeGithubRepoIssues", {
-                message: `GithubIssue fetchAllInsertedRepositoryCommits failed`,
+                message: "GithubIssue fetchAllInsertedRepositoryCommits failed",
                 installationId: installationId,
                 repositoryId: repositoryObj._id.toString(),
             });
@@ -1523,11 +1520,10 @@ scrapeGithubRepoIssues = async (
         var issueCommitMap;
         try {
             issueCommitMap = getGithubIssueLinkagesFromCommitMessages(scrapedIssues, insertedCommits);
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
             Sentry.setContext("scrapeGithubRepoIssues", {
-                message: `GithubIssue getGithubIssueLinkagesFromCommitMessages failed`,
+                message: "GithubIssue getGithubIssueLinkagesFromCommitMessages failed",
                 installationId: installationId,
                 repositoryId: repositoryObj._id.toString(),
                 numScrapedIssues: scrapedIssues.length,
@@ -1546,7 +1542,7 @@ scrapeGithubRepoIssues = async (
             scrapedIssues.map((issueObj) => {
                 var issueLinkagesIdx = issueLinkages.findIndex((linkageObj) => linkageObj.issueNumber == issueObj.githubIssueNumber);
                 if (issueCommitMap[issueObj.githubIssueNumber]) {
-                    issueLinkages[issueLinkagesIdx].commitLinkages = [ ...new Set(issueLinkages[issueLinkagesIdx].commitLinkages.concat(issueCommitMap[issueObj.githubIssueNumber])) ];
+                    issueLinkages[issueLinkagesIdx].commitLinkages = [...new Set(issueLinkages[issueLinkagesIdx].commitLinkages.concat(issueCommitMap[issueObj.githubIssueNumber]))];
                 }
             });
         }
