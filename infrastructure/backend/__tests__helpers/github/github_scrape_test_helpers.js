@@ -86,10 +86,10 @@ const sampleGithubRepositories = async (queryFilters) => {
 };
 
 const createPublicWorkspace = async (repoUrls, creatorId = process.env.TEST_USER_ID) => {
-    const func = "scrapePublicRepository";
+    const func = "createPublicWorkspace";
 
     const requests = repoUrls.map((url) => {
-        return backendClient.post("repositories/init", {
+        return backendClient.post("/repositories/init", {
             isPublic: true,
             publicHtmlUrl: url,
         });
@@ -102,6 +102,7 @@ const createPublicWorkspace = async (repoUrls, creatorId = process.env.TEST_USER
     } catch (e) {
         logger.error("Error occurred during initialization of public repos", {
             func,
+            e,
         });
     }
 
