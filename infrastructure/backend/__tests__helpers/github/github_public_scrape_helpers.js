@@ -6,6 +6,7 @@ const apis = require("../../apis/api");
 
 // backend client
 const backendClient = apis.requestTestingUserBackendClient();
+const publicClient = apis.requestPublicClient();
 
 // logger
 const { logger } = require("../../fs_logging");
@@ -342,38 +343,66 @@ const acquireRepositoryRawIssues = async (repositories, allPullRequests) => {
 
 const areSetsEqual = (a, b) => a.size === b.size && [...a].every((value) => b.has(value));
 
-const compareSets = (repo, type, raw, scraped) => {
+const compareSets = async (repo, type, raw, scraped) => {
+    const { fullName } = repo;
+
     let currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
     let results = currentResults[fullName][type];
 
     const identifier = type == "commits" ? "sha" : "number";
 
-    const { fullName } = repo;
-
     const scrapedSet = new Set(scraped.map((item) => item.sourceId));
 
     const rawSet = new Set(raw.map((item) => `${item[identifier]}`));
 
-    if (!areSetsEqual(scrapedSet, rawSet)) {
-        results["length"] = {
-            status: "ERROR",
-            data: {
-                rawCount: raw.length,
-                scrapedCount: scraped.length,
-                rawDiff: raw
-                    .filter((item) => !scrapedSet.has(`${item[identifier]}`))
-                    .map((item) => item[identifier]),
-                scrapedDiff: scraped
-                    .filter((item) => !rawSet.has(item.sourceId))
-                    .map((item) => item.sourceId),
-            },
-        };
+    let hasFailed = false;
 
-        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+    if (!areSetsEqual(scrapedSet, rawSet)) {
+        const rawDiff = raw
+            .filter((item) => !scrapedSet.has(`${item[identifier]}`))
+            .map((item) => item[identifier]);
+
+        const scrapedDiff = scraped
+            .filter((item) => !rawSet.has(item.sourceId))
+            .map((item) => item.sourceId);
+
+        hasFailed = true;
+
+        if (type == "commits" && Array.from(rawDiff).length === 0) {
+            hasFailed = false;
+
+            const shas = Array.from(scrapedDiff);
+
+            const commitRequests = shas.map((sha) =>
+                publicClient.get(`/repos/${fullName}/commits/${sha}`)
+            );
+
+            const responses = await Promise.all(commitRequests);
+
+            responses.map((response) => {
+                const commit = response.data;
+
+                if (!commit.sha) hasFailed = true;
+            });
+        }
+
+        if (hasFailed) {
+            results["length"] = {
+                status: "ERROR",
+                data: {
+                    rawCount: raw.length,
+                    scrapedCount: scraped.length,
+                    rawDiff,
+                    scrapedDiff,
+                },
+            };
+
+            process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+        }
     }
 
-    expect(!areSetsEqual(scrapedSet, rawSet)).toBe(true);
+    expect(!hasFailed).toBe(true);
 
     results["length"] = "SUCCESS";
 

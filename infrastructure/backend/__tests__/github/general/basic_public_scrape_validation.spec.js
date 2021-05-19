@@ -25,7 +25,7 @@ const {
     createPublicWorkspace,
     compareFields,
     compareSets,
-} = require("../../../__tests__helpers/github/github_scrape_test_helpers");
+} = require("../../../__tests__helpers/github/github_public_scrape_helpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -38,14 +38,14 @@ const NUM_REPOS = 1;
 
 // 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all
 // or array of specific repoUrls
-const SAMPLE_OPTION = 1;
+const SAMPLE_OPTION = 0;
 
 // paths of stored json
-const PREVIOUS_PATH = "./__tests__output/basic_public_scrape_validation_test/previous_output.json";
-const CURRENT_PATH = "./__tests__output/basic_public_scrape_validation_test/all_output.json";
-const SUCCESS_PATH = "./__tests__output/basic_public_scrape_validation_test/success_output.json";
-const FAIL_PATH = "./__tests__output/basic_public_scrape_validation_test/failed_output.json";
-const RESULTS_PATH = "./__tests__output/basic_public_scrape_validation_test/results_output.json";
+const PREVIOUS_PATH = "./__tests__output/basic_public_scrape_validation/previous_output.json";
+const CURRENT_PATH = "./__tests__output/basic_public_scrape_validation/all_output.json";
+const SUCCESS_PATH = "./__tests__output/basic_public_scrape_validation/success_output.json";
+const FAIL_PATH = "./__tests__output/basic_public_scrape_validation/failed_output.json";
+const RESULTS_PATH = "./__tests__output/basic_public_scrape_validation/results_output.json";
 
 // set up mongodb connection
 beforeAll(async () => {
@@ -62,7 +62,7 @@ beforeAll(async () => {
     process.env.isTesting = true;
 });
 
-// remove workspace artifacts
+// clean up and store results
 afterAll(async () => {
     if (process.env.TEST_WORKSPACE) {
         const workspace = JSON.parse(process.env.TEST_WORKSPACE);
@@ -76,11 +76,11 @@ afterAll(async () => {
         await deleteWorkspace(workspaces[i]._id);
     }
 
-    const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
+    if (process.env.CURRENT_RESULTS && process.env.TEST_SAMPLE_REPOSITORIES) {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-    const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
+        const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
-    if (currentResults) {
         let failedResults = {};
 
         let successResults = {};
@@ -97,7 +97,9 @@ afterAll(async () => {
             let hasFailed = false;
 
             Object.keys(fields).map((field) => {
-                field.map((subfield) => {
+                const subfields = fields[field];
+
+                subfields.map((subfield) => {
                     if (result[field][subfield] != "SUCCESS") hasFailed = true;
                 });
             });
@@ -105,6 +107,8 @@ afterAll(async () => {
             if (hasFailed) {
                 failedResults[repo.fullName] = result;
             } else {
+                result["success"] = true;
+
                 successResults[repo.fullName] = result;
             }
 
@@ -124,6 +128,8 @@ afterAll(async () => {
         if (process.env.CURRENT_RESULTS) {
             fs.writeFile(CURRENT_PATH, process.env.CURRENT_RESULTS, () => {});
         }
+
+        console.log("Test Results", testResults);
     }
 });
 
@@ -133,9 +139,13 @@ describe("Basic public github scrape validation", () => {
 
         const previousResults = JSON.parse(fs.readFileSync(CURRENT_PATH, "utf8"));
 
+        const recentTestResults = JSON.parse(fs.readFileSync(RESULTS_PATH, "utf8"));
+
         process.env.PREVIOUS_RESULTS = JSON.stringify(previousResults);
 
         let repoUrls = [];
+
+        console.log("REPO URLS 1", repoUrls);
 
         if (SAMPLE_OPTION == 0) {
             // acquire some sample with parameters delineated above
@@ -144,9 +154,9 @@ describe("Basic public github scrape validation", () => {
                 repoSize: REPO_SIZE,
                 numRepos: NUM_REPOS,
             });
-        } else if (SAMPLE_OPTION == 1 && "lastTest" in previousResults) {
-            repoUrls = Object.keys(previousResults["lastTest"]).map(
-                (fullName) => previousResults["lastTest"][fullName]["htmlUrl"]
+        } else if (SAMPLE_OPTION == 1 && recentTestResults) {
+            repoUrls = Object.keys(recentTestResults).map(
+                (fullName) => recentTestResults[fullName]["htmlUrl"]
             );
         } else if (SAMPLE_OPTION == 2) {
             repoUrls = Object.keys(previousResults)
@@ -183,8 +193,6 @@ describe("Basic public github scrape validation", () => {
 
         const { workspace, repositories } = await createPublicWorkspace(repoUrls);
 
-        previousResults["lastTest"] = {};
-
         repositories.map((repo, i) => {
             const { fullName } = repo;
 
@@ -197,7 +205,7 @@ describe("Basic public github scrape validation", () => {
                 });
             }
 
-            previousResults[fullName] = previousResults["lastTest"][fullName] = {
+            previousResults[fullName] = {
                 commits: {
                     length: "PENDING",
                     name: "PENDING",
