@@ -395,6 +395,11 @@ deleteWorkspace = async (req, res) => {
 
     try {
         await session.withTransaction(async () => {
+
+            // console.log("deleteWorkspace attempting to break transaction");
+
+            // await deleteUtils.breakDeleteWorkspaceTransaction(workspaceId);
+
             console.log("deleteWorkspace Removing Workspace from User.workspaces");
             // Remove Workspace from User.workspaces
             await deleteUtils.detachWorkspaceFromMembers(workspaceId, session);

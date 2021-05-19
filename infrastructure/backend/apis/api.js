@@ -224,6 +224,28 @@ const requestPublicClient = () => {
     });
 };
 
+
+const requestBackendClient = (token) => {
+	const axios = require('axios');
+
+    if (process.env.IS_PRODUCTION != 1) {
+        return axios.create({
+            baseURL: process.env.LOCALHOST_API_URL,
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    }
+    else {
+        return axios.create({
+            baseURL: process.env.PRODUCTION_API_URL,
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
+    }
+}
+
 module.exports = {
     requestLocalWorkerClient,
     requestTestingUserBackendClient,
@@ -235,4 +257,5 @@ module.exports = {
     requestInstallationToken,
     requestInstallationClient,
     requestPublicClient,
+    requestBackendClient,
 };
