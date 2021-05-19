@@ -145,8 +145,6 @@ describe("Basic public github scrape validation", () => {
 
         let repoUrls = [];
 
-        console.log("REPO URLS 1", repoUrls);
-
         if (SAMPLE_OPTION == 0) {
             // acquire some sample with parameters delineated above
             repoUrls = await sampleGithubRepositories({
@@ -193,7 +191,7 @@ describe("Basic public github scrape validation", () => {
 
         const { workspace, repositories } = await createPublicWorkspace(repoUrls);
 
-        repositories.map((repo, i) => {
+        repositories.map((repo) => {
             const { fullName } = repo;
 
             if (fullName in previousResults) {
@@ -221,7 +219,7 @@ describe("Basic public github scrape validation", () => {
                     description: "PENDING",
                 },
                 success: false,
-                htmlUrl: repoUrls[i],
+                htmlUrl: repo.htmlUrl,
             };
         });
 
