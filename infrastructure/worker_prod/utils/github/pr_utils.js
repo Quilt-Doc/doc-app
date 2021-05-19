@@ -34,7 +34,7 @@ const generatePRQuery = () => {
               }
             }
             title
-            bodyText
+            body
             number
             
             createdAt
@@ -148,7 +148,7 @@ const fetchAllRepoPRsAPIGraphQL = async (installationId, repositoryId, fullName,
                     fileList: pr.files.nodes.map(fileObj => fileObj.path),
         
                     name: pr.title,
-                    description: pr.bodyText,
+                    description: pr.body,
                     sourceId: pr.number,
         
         
@@ -163,7 +163,7 @@ const fetchAllRepoPRsAPIGraphQL = async (installationId, repositoryId, fullName,
                     state: pr.state,
                     locked: pr.locked,
                     title: pr.title,
-                    body: pr.bodyText,
+                    body: pr.body,
                     labels: pr.labels.nodes.map(labelObj => labelObj.name),
                     createdAt: pr.createdAt,
                     updatedAt: pr.updatedAt,
