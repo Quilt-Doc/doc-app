@@ -7,16 +7,16 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 
 // models
-const Commit = require("../../models/Commit");
-const PullRequest = require("../../models/PullRequest");
-const Workspace = require("../../models/Workspace");
-const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
+const Commit = require("../../../models/Commit");
+const PullRequest = require("../../../models/PullRequest");
+const Workspace = require("../../../models/Workspace");
+const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
 
 // logger
-const { logger } = require("../../fs_logging");
+const { logger } = require("../../../fs_logging");
 
 // util helpers
-const { deleteWorkspace } = require("../../__tests__config/utils");
+const { deleteWorkspace } = require("../../../__tests__config/utils");
 const {
     sampleGithubRepositories,
     acquireRepositoryRawCommits,
@@ -25,13 +25,13 @@ const {
     createPublicWorkspace,
     compareFields,
     compareSets,
-} = require("../../__tests__helpers/github/github_scrape_test_helpers");
+} = require("../../../__tests__helpers/github/github_scrape_test_helpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
-// constants
-// -- parameters to sampling function
+// constants:
+// parameters to sampling function
 const NUM_STARS = "10..2000";
 const REPO_SIZE = "100..200";
 const NUM_REPOS = 1;
@@ -41,8 +41,11 @@ const NUM_REPOS = 1;
 const SAMPLE_OPTION = 1;
 
 // paths of stored json
-const PREVIOUS_PATH = "./__tests__output/basic_public_scrape_validation_test_previous_output.json";
-const CURRENT_PATH = "./__tests__output/basic_public_scrape_validation_test_output.json";
+const PREVIOUS_PATH = "./__tests__output/basic_public_scrape_validation_test/previous_output.json";
+const CURRENT_PATH = "./__tests__output/basic_public_scrape_validation_test/all_output.json";
+const SUCCESS_PATH = "./__tests__output/basic_public_scrape_validation_test/success_output.json";
+const FAIL_PATH = "./__tests__output/basic_public_scrape_validation_test/failed_output.json";
+const RESULTS_PATH = "./__tests__output/basic_public_scrape_validation_test/results_output.json";
 
 // set up mongodb connection
 beforeAll(async () => {
@@ -73,12 +76,54 @@ afterAll(async () => {
         await deleteWorkspace(workspaces[i]._id);
     }
 
-    if (process.env.PREVIOUS_RESULTS) {
-        fs.writeFile(PREVIOUS_PATH, process.env.PREVIOUS_RESULTS, () => {});
-    }
+    const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-    if (process.env.CURRENT_RESULTS) {
-        fs.writeFile(CURRENT_PATH, process.env.CURRENT_RESULTS, () => {});
+    const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
+
+    if (currentResults) {
+        let failedResults = {};
+
+        let successResults = {};
+
+        const testResults = repositories.map((repo, i) => {
+            const result = currentResults[repo.fullName];
+
+            const fields = {
+                commits: ["length", "name"],
+                pulls: ["length", "name", "description"],
+                issues: ["length", "name", "description"],
+            };
+
+            let hasFailed = false;
+
+            Object.keys(fields).map((field) => {
+                field.map((subfield) => {
+                    if (result[field][subfield] != "SUCCESS") hasFailed = true;
+                });
+            });
+
+            if (hasFailed) {
+                failedResults[repo.fullName] = result;
+            } else {
+                successResults[repo.fullName] = result;
+            }
+
+            return result;
+        });
+
+        fs.writeFile(SUCCESS_PATH, JSON.stringify(successResults), () => {});
+
+        fs.writeFile(FAIL_PATH, JSON.stringify(failedResults), () => {});
+
+        fs.writeFile(RESULTS_PATH, JSON.stringify(testResults), () => {});
+
+        if (process.env.PREVIOUS_RESULTS) {
+            fs.writeFile(PREVIOUS_PATH, process.env.PREVIOUS_RESULTS, () => {});
+        }
+
+        if (process.env.CURRENT_RESULTS) {
+            fs.writeFile(CURRENT_PATH, process.env.CURRENT_RESULTS, () => {});
+        }
     }
 });
 
@@ -160,6 +205,7 @@ describe("Basic public github scrape validation", () => {
                 pulls: {
                     length: "PENDING",
                     name: "PENDING",
+                    description: "PENDING",
                 },
                 issues: {
                     length: "PENDING",

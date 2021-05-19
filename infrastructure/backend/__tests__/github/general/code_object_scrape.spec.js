@@ -37,11 +37,11 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
 // models
-const Commit = require("../../models/Commit");
-const Branch = require("../../models/Branch");
-const PullRequest = require("../../models/PullRequest");
+const Commit = require("../../../models/Commit");
+const Branch = require("../../../models/Branch");
+const PullRequest = require("../../../models/PullRequest");
 
-const api = require("../../apis/api");
+const api = require("../../../apis/api");
 
 // test data
 
@@ -49,41 +49,41 @@ const {
     prNum: brodalPRNum,
     branchNum: brodalBranchNum,
     commitNum: brodalCommitNum,
-} = require("../../__tests__data/repository_data/brodal_queue");
+} = require("../../../__tests__data/repository_data/brodal_queue");
 const {
     prData: brodalPRData,
     branchData: brodalBranchData,
     commitData: brodalCommitData,
-} = require("../../__tests__data/repository_data/brodal_queue");
+} = require("../../../__tests__data/repository_data/brodal_queue");
 
 const {
     prNum: hamechaPRNum,
     branchNum: hamechaBranchNum,
     commitNum: hamechaCommitNum,
-} = require("../../__tests__data/repository_data/hamecha");
+} = require("../../../__tests__data/repository_data/hamecha");
 const {
     prData: hamechaPRData,
     branchData: hamechaBranchData,
     commitData: hamechaCommitData,
-} = require("../../__tests__data/repository_data/hamecha");
+} = require("../../../__tests__data/repository_data/hamecha");
 
 const {
     prNum: issueScrapePRNum,
     branchNum: issueScrapeBranchNum,
     commitNum: issueScrapeCommitNum,
-} = require("../../__tests__data/repository_data/issue-scrape");
+} = require("../../../__tests__data/repository_data/issue-scrape");
 const {
     prData: issueScrapePRData,
     branchData: issueScrapeBranchData,
     commitData: issueScrapeCommitData,
-} = require("../../__tests__data/repository_data/issue-scrape");
+} = require("../../../__tests__data/repository_data/issue-scrape");
 
 // util helpers
 const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../../__tests__config/utils");
+} = require("../../../__tests__config/utils");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;

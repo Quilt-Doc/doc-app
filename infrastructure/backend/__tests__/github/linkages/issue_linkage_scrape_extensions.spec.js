@@ -2,23 +2,23 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-const api = require("../../apis/api");
+const api = require("../../../apis/api");
 
 const {
     extractRepositoryLabels,
     parseGithubBody,
     extractTextualAttachments,
     traverseGithubThreads,
-} = require("../../../worker_prod/utils/integrations/github_scrape_helpers");
+} = require("../../../../worker_prod/utils/integrations/github_scrape_helpers");
 
-const Workspace = require("../../../worker_prod/models/Workspace");
-const Repository = require("../../../worker_prod/models/Repository");
-const IntegrationTicket = require("../../../worker_prod/models/integrations/integration_objects/IntegrationTicket");
-const PullRequest = require("../../../worker_prod/models/PullRequest");
+const Workspace = require("../../../../worker_prod/models/Workspace");
+const Repository = require("../../../../worker_prod/models/Repository");
+const IntegrationTicket = require("../../../../worker_prod/models/integrations/integration_objects/IntegrationTicket");
+const PullRequest = require("../../../../worker_prod/models/PullRequest");
 
 const _ = require("lodash");
 
-const { createWorkspace, deleteWorkspace } = require("../../__tests__config/utils");
+const { createWorkspace, deleteWorkspace } = require("../../../__tests__config/utils");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;

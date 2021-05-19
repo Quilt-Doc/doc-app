@@ -6,14 +6,14 @@ const mongoose = require("mongoose");
 
 // models
 
-const api = require("../../apis/api");
+const api = require("../../../apis/api");
 
 // util helpers
 const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../../__tests__config/utils");
+} = require("../../../__tests__config/utils");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
