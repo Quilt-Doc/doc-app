@@ -89,6 +89,16 @@ const sampleGithubRepositories = async (queryFilters) => {
 const createPublicWorkspace = async (repoUrls, creatorId = process.env.TEST_USER_ID) => {
     const func = "createPublicWorkspace";
 
+    /*
+    const existingRepositories = await Repository.find({
+        htmlUrl: { $in: repoUrls },
+    });
+
+    const existingUrls = new Set(existingRepositories.map((repo) => repo.htmlUrl));
+
+    repoUrls = repoUrls.filter((url) => !existingUrls.has(url));
+    */
+
     const requests = repoUrls.map((url) => {
         return backendClient.post("/repositories/init", {
             isPublic: true,
@@ -113,6 +123,8 @@ const createPublicWorkspace = async (repoUrls, creatorId = process.env.TEST_USER
         func,
         obj: repositories,
     });
+
+    //repositories = [...repositories, ...existingRepositories];
 
     logger.info("Parameters to workspace creation set", {
         func,
