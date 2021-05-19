@@ -6,25 +6,17 @@ const mongoose = require("mongoose");
 
 // models
 
-
-const api = require("../apis/api");
-
+const api = require("../../apis/api");
 
 // util helpers
 const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../__tests__config/utils");
-
+} = require("../../__tests__config/utils");
 
 // env variables
-const {
-    TEST_USER_ID,
-    EXTERNAL_DB_PASS,
-    EXTERNAL_DB_USER,
-} = process.env;
-
+const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 beforeAll(async () => {
     try {
@@ -38,10 +30,9 @@ beforeAll(async () => {
 
         db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
-        const {
-            createdWorkspaceId: workspaceId,
-            repositoryIds,
-        } = await createWorkspace(["kgodara-testing/doc-app"]);
+        const { createdWorkspaceId: workspaceId, repositoryIds } = await createWorkspace([
+            "kgodara-testing/doc-app",
+        ]);
 
         const workspace = { workspaceId, repositoryIds };
 
@@ -49,8 +40,7 @@ beforeAll(async () => {
         console.log(JSON.stringify(workspace));
 
         process.env.TEST_LARGE_REPOSITORY_WORKSPACE = JSON.stringify(workspace);
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
     }
 });
@@ -65,9 +55,7 @@ describe("Test Workspace Large Repository Creation", () => {
     test("beforeAll worked", async () => {
         expect(1).toEqual(1);
     });
-
 });
-
 
 afterAll(async () => {
     const workspace = JSON.parse(process.env.TEST_LARGE_REPOSITORY_WORKSPACE);
@@ -75,5 +63,4 @@ afterAll(async () => {
     await deleteWorkspace(workspace.workspaceId);
 
     // await expect( () => deleteWorkspace(workspace.workspaceId)).not.toThrow();
-
 });

@@ -340,10 +340,110 @@ const acquireRepositoryRawIssues = async (repositories, allPullRequests) => {
     return allIssues;
 };
 
+const areSetsEqual = (a, b) => a.size === b.size && [...a].every((value) => b.has(value));
+
+const compareSets = (repo, type, raw, scraped) => {
+    let currentResults = JSON.parse(process.env.CURRENT_RESULTS);
+
+    let results = currentResults[fullName][type];
+
+    const identifier = type == "commits" ? "sha" : "number";
+
+    const { fullName } = repo;
+
+    const scrapedSet = new Set(scraped.map((item) => item.sourceId));
+
+    const rawSet = new Set(raw.map((item) => `${item[identifier]}`));
+
+    if (!areSetsEqual(scrapedSet, rawSet)) {
+        results["length"] = {
+            status: "ERROR",
+            data: {
+                rawCount: raw.length,
+                scrapedCount: scraped.length,
+                rawDiff: raw
+                    .filter((item) => !scrapedSet.has(`${item[identifier]}`))
+                    .map((item) => item[identifier]),
+                scrapedDiff: scraped
+                    .filter((item) => !rawSet.has(item.sourceId))
+                    .map((item) => item.sourceId),
+            },
+        };
+
+        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+    }
+
+    expect(!areSetsEqual(scrapedSet, rawSet)).toBe(true);
+
+    results["length"] = "SUCCESS";
+
+    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+
+    logger.info(`Validated repository ${repo.fullName} set equality for ${type}`, {
+        func: "measureLengths",
+        obj: repo,
+    });
+};
+
+const compareFields = (repo, type, raw, scraped, fieldName) => {
+    let currentResults = JSON.parse(process.env.CURRENT_RESULTS);
+
+    const { fullName } = repo;
+
+    const identifier = type == "commits" ? "sha" : "number";
+
+    let results = currentResults[fullName][type];
+
+    raw = _.mapKeys(raw, identifier);
+
+    scraped.map((item) => {
+        const { sourceId } = item;
+
+        const rawItem = raw[sourceId];
+
+        if (!rawItem) return;
+
+        const scrapedField = item[fieldName];
+
+        const rawField =
+            fieldName == "name"
+                ? type == "commits"
+                    ? rawItem["commit"]["message"]
+                    : rawItem["title"]
+                : rawItem["body"];
+
+        if (rawField != scrapedField) {
+            results[fieldName] = {
+                status: "ERROR",
+                data: {
+                    sourceId,
+                    raw: rawField,
+                    scraped: scrapedField,
+                },
+            };
+
+            process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+        }
+
+        expect(rawField).toEqual(scrapedField);
+    });
+
+    results[fieldName] = "SUCCESS";
+
+    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+
+    logger.info(`Validated repository ${repo.fullName} ${fieldName}s for ${type}`, {
+        func: "compareFields",
+        obj: repo,
+    });
+};
+
 module.exports = {
     sampleGithubRepositories,
     createPublicWorkspace,
     acquireRepositoryRawCommits,
     acquireRepositoryRawPullRequests,
     acquireRepositoryRawIssues,
+    compareFields,
+    compareSets,
 };

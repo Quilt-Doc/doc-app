@@ -1,7 +1,6 @@
 require("dotenv").config();
 
 //utility
-const _ = require("lodash");
 const fs = require("fs");
 
 // mongoose
@@ -24,15 +23,19 @@ const {
     acquireRepositoryRawPullRequests,
     acquireRepositoryRawIssues,
     createPublicWorkspace,
+    compareFields,
+    compareSets,
 } = require("../../__tests__helpers/github/github_scrape_test_helpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
-// constants -- parameters to sampling function
+// constants
+// -- parameters to sampling function
 const NUM_STARS = "10..2000";
 const REPO_SIZE = "100..200";
 const NUM_REPOS = 1;
+
 // 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all
 // or array of specific repoUrls
 const SAMPLE_OPTION = 1;
@@ -58,7 +61,6 @@ beforeAll(async () => {
 
 // remove workspace artifacts
 afterAll(async () => {
-    console.log("We will still be deleting");
     if (process.env.TEST_WORKSPACE) {
         const workspace = JSON.parse(process.env.TEST_WORKSPACE);
 
@@ -176,459 +178,172 @@ describe("Basic public github scrape validation", () => {
         process.env.TEST_SAMPLE_REPOSITORIES = JSON.stringify(repositories);
     });
 
-    test("Validate commit scraping", async () => {
-        const func = "Validate commit scraping";
-
+    test("Acquire scraped and raw commits", async () => {
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-        let currentResults = JSON.parse(process.env.CURRENT_RESULTS);
+        // acquire commits for each repository from github API
+        process.env.TEST_ALL_COMMITS = JSON.stringify(
+            await acquireRepositoryRawCommits(repositories)
+        );
 
-        // acquire commits for each repositories from github API
-        const allCommits = await acquireRepositoryRawCommits(repositories);
-
-        for (let i = 0; i < repositories.length; i++) {
-            const repo = repositories[i];
-
-            const { fullName } = repo;
-
-            let rawCommits = allCommits[i];
-
-            // acquire scraped commits using git cli
-            const repoCommits = await Commit.find({ repository: repo._id })
-                .select("_id sourceId name")
-                .lean()
-                .exec();
-
-            // reveal commit differences
-            if (repoCommits.length != rawCommits.length) {
-                const isRawGreater = rawCommits.length > repoCommits.length;
-
-                const repoCommitsSet = new Set(repoCommits.map((commit) => commit.sourceId));
-
-                const rawCommitsSet = new Set(rawCommits.map((commit) => commit.sha));
-
-                if (isRawGreater) {
-                    currentResults[fullName]["commits"]["length"] = currentResults["lastTest"][
-                        fullName
-                    ]["commits"]["length"] = {
-                        status: "ERROR",
-                        data: {
-                            isRawGreater,
-                            rawCount: rawCommits.length,
-                            scrapeCount: repoCommits.length,
-                            diff: rawCommits
-                                .filter((commit) => !repoCommitsSet.has(commit.sha))
-                                .map((commit) => commit.sha),
-                            diff2: repoCommits
-                                .filter((commit) => !rawCommitsSet.has(commit.sourceId))
-                                .map((commit) => commit.sourceId),
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                } else {
-                    currentResults[fullName]["commits"]["length"] = currentResults["lastTest"][
-                        fullName
-                    ]["commits"]["length"] = {
-                        status: "ERROR",
-                        data: {
-                            isRawGreater,
-                            rawCount: rawCommits.length,
-                            scrapeCount: repoCommits.length,
-                            diff: repoCommits
-                                .filter((commit) => !rawCommitsSet.has(commit.sourceId))
-                                .map((commit) => commit.sourceId),
-                            diff2: rawCommits
-                                .filter((commit) => !repoCommitsSet.has(commit.sha))
-                                .map((commit) => commit.sha),
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
-            }
-
-            expect(repoCommits.length).toEqual(rawCommits.length);
-
-            currentResults[fullName]["commits"]["length"] = currentResults["lastTest"][fullName][
-                "commits"
-            ]["length"] = "SUCCESS";
-
-            rawCommits = _.mapKeys(rawCommits, "sha");
-
-            repoCommits.map((commit) => {
-                const { sourceId, name } = commit;
-
-                const rawCommit = rawCommits[sourceId];
-
-                expect(rawCommit).toBeDefined();
-
-                expect(rawCommit).not.toBeNull();
-
-                // DEBUGGING PURPOSES
-                if (rawCommit["commit"]["message"] != commit.name) {
-                    currentResults[fullName]["commits"]["name"] = currentResults["lastTest"][
-                        fullName
-                    ]["commits"]["name"] = {
-                        status: "ERROR",
-                        data: {
-                            sourceId,
-                            rawName: rawCommit["commit"]["message"],
-                            scrapedName: name,
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
-
-                expect(name).toEqual(rawCommit["commit"]["message"]);
-            });
-
-            currentResults[fullName]["commits"]["name"] = currentResults["lastTest"][fullName][
-                "commits"
-            ]["name"] = "SUCCESS";
-
-            logger.info(`Validated repository ${repo.fullName} commits`, {
-                func,
-                obj: repo,
-            });
-        }
-
-        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+        // acquire commits for each repository from database
+        process.env.TEST_ALL_SCRAPED_COMMITS = JSON.stringify(
+            await Promise.all(
+                repositories.map((repo) =>
+                    Commit.find({ repository: repo._id }).select("_id sourceId name").lean().exec()
+                )
+            )
+        );
     });
 
-    /*
-    test("Validate pull request scraping", async () => {
-        const func = "Validate pull request scraping";
-
-        const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
-
+    test("Validate commit scrape and raw set equality", async () => {
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-        // acquire pull requests for every repository
-        const allPullRequests = await acquireRepositoryRawPullRequests(repositories);
+        const allCommits = JSON.parse(process.env.TEST_ALL_COMMITS);
 
-        for (let i = 0; i < repositories.length; i++) {
-            const repo = repositories[i];
+        let allScrapedCommits = JSON.parse(process.env.TEST_ALL_SCRAPED_COMMITS);
 
-            const { fullName } = repo;
+        repositories.map((repo, i) =>
+            compareSets(repo, "commits", allCommits[i], allScrapedCommits[i])
+        );
+    });
 
-            let rawPullRequests = allPullRequests[i];
-
-            // acquire scraped pull requests
-            const repoPullRequests = await PullRequest.find({
-                repository: repo._id,
-            })
-                .select("_id sourceId name")
-                .lean()
-                .exec();
-
-            if (repoPullRequests.length != rawPullRequests.length) {
-                const isRawGreater = repoPullRequests.length < rawPullRequests.length;
-
-                if (isRawGreater) {
-                    const repoPullsSet = new Set(
-                        repoPullRequests.map((pull) => parseInt(pull.sourceId))
-                    );
-
-                    currentResults[fullName]["pulls"]["length"] = currentResults["lastTest"][
-                        fullName
-                    ]["pulls"]["length"] = {
-                        status: "ERROR",
-                        data: {
-                            isRawGreater,
-                            rawCount: rawPullRequests.length,
-                            scrapeCount: repoPullRequests.length,
-                            diff: rawPullRequests
-                                .filter((pull) => !repoPullsSet.has(pull.number))
-                                .map((pull) => pull.number),
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                } else {
-                    const rawPullsSet = new Set(rawPullRequests.map((pull) => pull.number));
-
-                    currentResults[fullName]["pulls"]["length"] = currentResults["lastTest"][
-                        fullName
-                    ]["pulls"]["length"] = {
-                        status: "ERROR",
-                        data: {
-                            isRawGreater,
-                            rawCount: rawPullRequests.length,
-                            scrapeCount: repoPullRequests.length,
-                            diff: rawPullRequests
-                                .filter((pull) => !rawPullsSet.has(parseInt(pull.sourceId)))
-                                .map((pull) => parseInt(pull.sourceId)),
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
-            }
-
-            // validate length
-            expect(repoPullRequests.length).toEqual(rawPullRequests.length);
-
-            currentResults[fullName]["pulls"]["length"] = currentResults["lastTest"][fullName][
-                "pulls"
-            ]["length"] = "SUCCESS";
-
-            rawPullRequests = _.mapKeys(rawPullRequests, "number");
-
-            // validate simple content
-            repoPullRequests.map((pull) => {
-                let { sourceId, name, description } = pull;
-
-                if (name == undefined) name = "";
-
-                if (description == undefined) description = "";
-
-                const rawPull = rawPullRequests[sourceId];
-
-                const { title, number, body } = rawPull;
-
-                if (name != title) {
-                    currentResults[fullName]["pulls"]["name"] = currentResults["lastTest"][
-                        fullName
-                    ]["pulls"]["name"] = {
-                        status: "ERROR",
-                        data: {
-                            sourceId,
-                            rawName: title,
-                            scrapedName: name,
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
-
-                expect(name).toEqual(title);
-
-                if (number != parseInt(sourceId)) {
-                    currentResults[fullName]["pulls"]["sourceId"] = currentResults["lastTest"][
-                        fullName
-                    ]["pulls"]["sourceId"] = {
-                        status: "ERROR",
-                        data: {
-                            sourceId,
-                            rawSourceId: number,
-                            scrapedSourceId: parseInt(sourceId),
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
-
-                expect(parseInt(sourceId)).toEqual(number);
-
-                if (description != body) {
-                    currentResults[fullName]["pulls"]["description"] = currentResults["lastTest"][
-                        fullName
-                    ]["pulls"]["description"] = {
-                        status: "ERROR",
-                        data: {
-                            sourceId,
-                            rawDescription: body,
-                            scrapedDescription: description,
-                        },
-                    };
-
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
-
-                expect(description).toEqual(body);
-            });
-
-            currentResults[fullName]["pulls"]["name"] = currentResults["lastTest"][fullName][
-                "pulls"
-            ]["name"] = "SUCCESS";
-
-            currentResults[fullName]["pulls"]["sourceId"] = currentResults["lastTest"][fullName][
-                "pulls"
-            ]["sourceId"] = "SUCCESS";
-
-            currentResults[fullName]["pulls"]["description"] = currentResults["lastTest"][fullName][
-                "pulls"
-            ]["description"] = "SUCCESS";
-
-            logger.info(`Validated repository ${repo.fullName} pull requests`, {
-                func,
-                obj: repo,
-            });
-        }
-
-        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-
-        process.env.TEST_PULL_REQUESTS = JSON.stringify(allPullRequests);
-    });*/
-
-    /*
-    test("Validate issue scraping", async () => {
-        const func = "Validate issue scraping";
-
-        const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
-
+    test("Validate commit names", async () => {
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-        const allPullRequests = JSON.parse(process.env.TEST_PULL_REQUESTS);
+        const allCommits = JSON.parse(process.env.TEST_ALL_COMMITS);
 
-        // acquire all issues that are not pull requests from github API
-        const allIssues = await acquireRepositoryRawIssues(repositories, allPullRequests);
+        const allScrapedCommits = JSON.parse(process.env.TEST_ALL_SCRAPED_COMMITS);
 
-        for (let i = 0; i < repositories.length; i++) {
-            const repo = repositories[i];
+        repositories.map((repo, i) =>
+            compareFields(repo, "commits", allCommits[i], allScrapedCommits[i], "name")
+        );
+    });
 
-            const { fullName } = repo;
+    test("Acquire scraped and raw pull requests", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-            let rawIssues = allIssues[i];
+        // acquire commits for each repository from github API
+        process.env.TEST_ALL_PULL_REQUESTS = JSON.stringify(
+            await acquireRepositoryRawPullRequests(repositories)
+        );
 
-            // find scraped issues
-            const repoIssues = await IntegrationTicket.find({
-                repositoryId: repo._id,
-                source: "github",
-            })
-                .select("_id sourceId name")
-                .lean()
-                .exec();
+        // acquire commits for each repository from database
+        process.env.TEST_ALL_SCRAPED_PULL_REQUESTS = JSON.stringify(
+            await Promise.all(
+                repositories.map((repo) =>
+                    PullRequest.find({
+                        repository: repo._id,
+                    })
+                        .select("_id sourceId name")
+                        .lean()
+                        .exec()
+                )
+            )
+        );
+    });
 
-            if (repoIssues.length != rawIssues.length) {
-                const isRawGreater = repoIssues.length < rawIssues.length;
+    test("Validate pull request sets", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-                if (isRawGreater) {
-                    const repoIssuesSet = new Set(
-                        repoIssues.map((issue) => parseInt(issue.sourceId))
-                    );
+        const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
 
-                    currentResults[fullName]["issues"]["length"] = currentResults["lastTest"][
-                        fullName
-                    ]["issues"]["length"] = {
-                        status: "ERROR",
-                        data: {
-                            isRawGreater,
-                             rawCount: rawIssues.length,
-                            scrapeCount: repoIssues.length,
-                            diff: rawIssues
-                                .filter((issue) => !repoIssuesSet.has(issue.number))
-                                .map((issue) => issue.number),
-                        },
-                    };
+        const allScrapedPullRequests = JSON.parse(process.env.TEST_ALL_SCRAPED_PULL_REQUESTS);
 
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                } else {
-                    const rawIssuesSet = new Set(rawIssues.map((issue) => issue.number));
+        repositories.map((repo, i) =>
+            compareSets(repo, "pulls", allPullRequests[i], allScrapedPullRequests[i])
+        );
+    });
 
-                    currentResults[fullName]["issues"]["length"] = currentResults["lastTest"][
-                        fullName
-                    ]["issues"]["length"] = {
-                        status: "ERROR",
-                        data: {
-                            isRawGreater,
-                            rawCount: rawIssues.length,
-                            scrapeCount: repoIssues.length,
-                            diff: rawIssues
-                                .filter((issue) => !rawIssuesSet.has(parseInt(issue.sourceId)))
-                                .map((issue) => parseInt(issue.sourceId)),
-                        },
-                    };
+    test("Validate pull request names", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
-            }
+        const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
 
-            // validate length
-            expect(repoIssues.length).toEqual(rawIssues.length);
+        const allScrapedPullRequests = JSON.parse(process.env.TEST_ALL_SCRAPED_PULL_REQUESTS);
 
-            currentResults[fullName]["issues"]["length"] = currentResults["lastTest"][fullName][
-                "issues"
-            ]["length"] = "SUCCESS";
+        repositories.map((repo, i) =>
+            compareFields(repo, "pulls", allPullRequests[i], allScrapedPullRequests[i], "name")
+        );
+    });
 
-            rawIssues = _.mapKeys(rawIssues, "number");
+    test("Validate pull request descriptions", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-            // validate fields
-            repoIssues.map((issue) => {
-                let { sourceId, name, description } = issue;
+        const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
 
-                if (name == undefined) name = "";
+        const allScrapedPullRequests = JSON.parse(process.env.TEST_ALL_SCRAPED_PULL_REQUESTS);
 
-                if (description == undefined) description = "";
+        repositories.map((repo, i) =>
+            compareFields(
+                repo,
+                "pulls",
+                allPullRequests[i],
+                allScrapedPullRequests[i],
+                "description"
+            )
+        );
+    });
 
-                const rawIssue = rawIssues[sourceId];
+    test("Acquire scraped and raw issues", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-                const { title, number, body } = rawIssue;
+        const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
 
-                if (name != title) {
-                    currentResults[fullName]["issues"]["name"] = currentResults["lastTest"][
-                        fullName
-                    ]["issues"]["name"] = {
-                        status: "ERROR",
-                        data: {
-                            sourceId,
-                            rawName: title,
-                            scrapedName: name,
-                        },
-                    };
+        process.env.TEST_ALL_ISSUES = JSON.stringify(
+            await acquireRepositoryRawIssues(repositories, allPullRequests)
+        );
 
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
+        process.env.TEST_ALL_SCRAPED_ISSUES = JSON.stringify(
+            await Promise.all(
+                repositories.map((repo) => {
+                    return IntegrationTicket.find({
+                        repositoryId: repo._id,
+                        source: "github",
+                    })
+                        .select("_id sourceId name")
+                        .lean()
+                        .exec();
+                })
+            )
+        );
+    });
 
-                expect(name).toEqual(title);
+    test("Validate equality of scraped and raw issue sets", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-                if (number != parseInt(sourceId)) {
-                    currentResults[fullName]["issues"]["sourceId"] = currentResults["lastTest"][
-                        fullName
-                    ]["issues"]["sourceId"] = {
-                        status: "ERROR",
-                        data: {
-                            sourceId,
-                            rawSourceId: number,
-                            scrapedSourceId: parseInt(sourceId),
-                        },
-                    };
+        const allIssues = JSON.parse(process.env.TEST_ALL_ISSUES);
 
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
+        const allScrapedIssues = JSON.parse(process.env.TEST_ALL_SCRAPED_ISSUES);
 
-                expect(parseInt(sourceId)).toEqual(number);
+        repositories.map((repo, i) =>
+            compareSets(repo, "issues", allIssues[i], allScrapedIssues[i])
+        );
+    });
 
-                if (description != body) {
-                    currentResults[fullName]["issues"]["description"] = currentResults["lastTest"][
-                        fullName
-                    ]["issues"]["description"] = {
-                        status: "ERROR",
-                        data: {
-                            sourceId,
-                            rawDescription: body,
-                            scrapedDescription: description,
-                        },
-                    };
+    test("Validate issue names", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-                    process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-                }
+        const allIssues = JSON.parse(process.env.TEST_ALL_ISSUES);
 
-                expect(description).toEqual(body);
-            });
+        const allScrapedIssues = JSON.parse(process.env.TEST_ALL_SCRAPED_ISSUES);
 
-            currentResults[fullName]["issues"]["name"] = currentResults["lastTest"][fullName][
-                "issues"
-            ]["name"] = "SUCCESS";
+        repositories.map((repo, i) =>
+            compareFields(repo, "issues", allIssues[i], allScrapedIssues[i], "name")
+        );
+    });
 
-            currentResults[fullName]["issues"]["sourceId"] = currentResults["lastTest"][fullName][
-                "issues"
-            ]["sourceId"] = "SUCCESS";
+    test("Validate issue descriptions", async () => {
+        const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-            currentResults[fullName]["issues"]["description"] = currentResults["lastTest"][
-                fullName
-            ]["issues"]["description"] = "SUCCESS";
+        const allIssues = JSON.parse(process.env.TEST_ALL_ISSUES);
 
-            logger.info(`Validated repository ${repo.fullName} issues`, {
-                func,
-                obj: repo,
-            });
-        }
+        const allScrapedIssues = JSON.parse(process.env.TEST_ALL_SCRAPED_ISSUES);
 
-        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
-    }); */
+        repositories.map((repo, i) =>
+            compareFields(repo, "issues", allIssues[i], allScrapedIssues[i], "description")
+        );
+    });
 });
 
 /* 

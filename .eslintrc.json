@@ -40,10 +40,6 @@
             "error",
             "consistent"
         ],
-        "function-paren-newline": [
-            "error",
-            "consistent"
-        ],
         "max-len": [
             "error",
             {
@@ -53,28 +49,6 @@
                 "ignoreUrls": true,
                 "ignoreTemplateLiterals": true,
                 "ignoreRegExpLiterals": true
-            }
-        ],
-        "max-lines": [
-            "error",
-            {
-                "max": 700,
-                "skipBlankLines": true,
-                "skipComments": true
-            }
-        ],
-        "max-lines-per-function": [
-            "error",
-            {
-                "max": 500,
-                "skipBlankLines": true,
-                "skipComments": true
-            }
-        ],
-        "newline-per-chained-call": [
-            "error",
-            {
-                "ignoreChainWithDepth": 2
             }
         ],
         "linebreak-style": [
