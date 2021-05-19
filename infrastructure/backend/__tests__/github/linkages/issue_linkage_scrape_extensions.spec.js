@@ -2,26 +2,23 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-const api = require("../../apis/api");
+const api = require("../../../apis/api");
 
 const {
     extractRepositoryLabels,
     parseGithubBody,
-} = require("../../../worker_prod/utils/integrations/github_scrape_helpers");
+    extractTextualAttachments,
+    traverseGithubThreads,
+} = require("../../../../worker_prod/utils/integrations/github_scrape_helpers");
 
-const Workspace = require("../../../worker_prod/models/Workspace");
-const Repository = require("../../../worker_prod/models/Repository");
-const IntegrationTicket = require("../../../worker_prod/models/integrations/integration_objects/IntegrationTicket");
-const PullRequest = require("../../../worker_prod/models/PullRequest");
-const Commit = require("../../../worker_prod/models/Commit");
+const Workspace = require("../../../../worker_prod/models/Workspace");
+const Repository = require("../../../../worker_prod/models/Repository");
+const IntegrationTicket = require("../../../../worker_prod/models/integrations/integration_objects/IntegrationTicket");
+const PullRequest = require("../../../../worker_prod/models/PullRequest");
 
 const _ = require("lodash");
 
-const {
-    createWorkspace,
-    removeWorkspaces,
-    deleteWorkspace,
-} = require("../../__tests__config/utils");
+const { createWorkspace, deleteWorkspace } = require("../../../__tests__config/utils");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -32,26 +29,20 @@ beforeAll(async () => {
     const dbRoute = `mongodb+srv://${EXTERNAL_DB_USER}:${EXTERNAL_DB_PASS}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
 
     await mongoose.connect(dbRoute, { useNewUrlParser: true });
-
     let db = mongoose.connection;
-
     db.once("open", () => console.log("connected to the database"));
-
     db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
     const { createdWorkspaceId, repositoryIds } = await createWorkspace([
         "kgodara-testing/issue-scrape",
     ]);
 
-    process.env.TEST_REPOSITORY_ID = repositoryIds[0];
-
     process.env.TEST_WORKSPACE_ID = createdWorkspaceId;
 
+    process.env.TEST_REPOSITORY_ID = repositoryIds[0];
     const repository = await Repository.findById(repositoryIds[0]);
 
-    installationClient = await api.requestInstallationClient(
-        repository.installationId
-    );
+    installationClient = await api.requestInstallationClient(repository.installationId);
 
     process.env.TEST_REPOSITORY = JSON.stringify(repository);
 
@@ -74,31 +65,20 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
     test("extractRepositoryLabels: should extract labels correctly", async () => {
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
 
-        const labelsObj = await extractRepositoryLabels(
-            installationClient,
-            repository
-        );
-
+        const labelsObj = await extractRepositoryLabels(installationClient, repository);
         const labels = Object.values(labelsObj);
 
         expect(labels.length).toEqual(10);
-
-        console.log("Labels", labels);
     });
 
     test("parseGithubBody: should extract a unique set of attachments", async () => {
         const repository = JSON.parse(process.env.TEST_REPOSITORY);
-
         const { fullName } = repository;
 
-        const response = await installationClient.get(
-            `/repos/${fullName}/issues`
-        );
+        const response = await installationClient.get(`/repos/${fullName}/issues`);
 
         const issues = response.data;
-
         let issue = issues.filter((issue) => issue.number == 9)[0];
-
         let attachments = parseGithubBody(issue.body, repository);
 
         expect(attachments).toEqual([
@@ -151,19 +131,13 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
             repository: repository._id,
         });
 
-        await traverseGithubThreads(
-            installationClient,
-            repository,
-            issues,
-            pullRequests
-        );
+        await traverseGithubThreads(installationClient, repository, issues, pullRequests);
 
         const testIssueAttachmentCounts = {
             7: 3,
             9: 8,
             10: 5,
         };
-
         const testIssueNums = [7, 9, 10];
 
         for (let i = 0; i < testIssueNums.length; i++) {
@@ -176,12 +150,8 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
             }).populate("attachments");
 
             expect(issue.attachments).toBeDefined();
-
             expect(issue.attachments).not.toBeNull();
-
-            expect(issue.attachments.length).toEqual(
-                testIssueAttachmentCounts[sourceId]
-            );
+            expect(issue.attachments.length).toEqual(testIssueAttachmentCounts[sourceId]);
         }
     });
 
@@ -195,27 +165,23 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
         process.env.TEST_WORKSPACE_ID = createdWorkspaceId;
 
         const repository = await Repository.findById(repositoryIds[0]);
-
         process.env.TEST_REPOSITORY = JSON.stringify(repository);
 
         let issues = await IntegrationTicket.find({
             source: "github",
             repositoryId: repository._id,
         }).populate("attachments");
-
         issues = _.mapKeys(issues, "sourceId");
 
         expect(issues["9"].attachments.length).toEqual(1);
 
         issues = Object.values(issues);
-
         await extractTextualAttachments(issues, repository);
 
         issues = await IntegrationTicket.find({
             source: "github",
             repositoryId: repository._id,
         }).populate("attachments");
-
         issues = _.mapKeys(issues, "sourceId");
 
         expect(issues["9"].attachments.length).toEqual(6);
@@ -231,7 +197,6 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
         process.env.TEST_WORKSPACE_ID = createdWorkspaceId;
 
         const repository = await Repository.findById(repositoryIds[0]);
-
         process.env.TEST_REPOSITORY = JSON.stringify(repository);
 
         let issues = await IntegrationTicket.find({
@@ -250,26 +215,17 @@ describe("Issue Scrape Extended Association/Field Testing", () => {
             repositoryId: repository._id,
         }).populate("attachments");
 
-        await traverseGithubThreads(
-            installationClient,
-            repository,
-            issues,
-            pullRequests
-        );
+        await traverseGithubThreads(installationClient, repository, issues, pullRequests);
 
         issues = await IntegrationTicket.find({
             source: "github",
             repositoryId: repository._id,
         }).populate("attachments");
-
         issues = _.mapKeys(issues, "sourceId");
 
         expect(issues["9"].attachments.length).toEqual(10);
-
         expect(issues["7"].attachments.length).toEqual(3);
-
         expect(issues["10"].attachments.length).toEqual(5);
-
         expect(issues["11"].attachments.length).toEqual(4);
     });
 });

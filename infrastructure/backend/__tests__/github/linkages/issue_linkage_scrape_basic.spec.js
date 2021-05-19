@@ -2,14 +2,14 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-const api = require("../../apis/api");
+const api = require("../../../apis/api");
 
-const Workspace = require("../../models/Workspace");
-const Commit = require("../../models/Commit");
-const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
-const Repository = require("../../models/Repository");
-const Association = require("../../models/associations/Association");
-const PullRequest = require("../../models/PullRequest");
+const Workspace = require("../../../models/Workspace");
+const Commit = require("../../../models/Commit");
+const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
+const Repository = require("../../../models/Repository");
+const Association = require("../../../models/associations/Association");
+const PullRequest = require("../../../models/PullRequest");
 
 const _ = require("lodash");
 
@@ -17,8 +17,8 @@ const {
     createWorkspace,
     removeWorkspaces,
     deleteWorkspace,
-} = require("../../__tests__config/utils");
-const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
+} = require("../../../__tests__config/utils");
+const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -105,9 +105,7 @@ describe("Issue Scraping Tests", () => {
 
         expect(association).toBeDefined();
 
-        expect(association.repository.toString()).toEqual(
-            process.env.TEST_REPOSITORY_ID
-        );
+        expect(association.repository.toString()).toEqual(process.env.TEST_REPOSITORY_ID);
     });
 
     test("Issue referenced in multiple commits", async () => {
@@ -144,20 +142,14 @@ describe("Issue Scraping Tests", () => {
             secondElement: commit3._id,
         });
 
-        for (let associations of [
-            associations1,
-            associations2,
-            associations3,
-        ]) {
+        for (let associations of [associations1, associations2, associations3]) {
             expect(associations.length).toEqual(1);
 
             const association = associations[0];
 
             expect(association).toBeDefined();
 
-            expect(association.repository.toString()).toEqual(
-                process.env.TEST_REPOSITORY_ID
-            );
+            expect(association.repository.toString()).toEqual(process.env.TEST_REPOSITORY_ID);
         }
 
         const associations = await Association.find({
@@ -226,9 +218,7 @@ describe("Issue Scraping Tests", () => {
         const seenIds = new Set(["2", "5"]);
 
         for (let att of issue.attachments) {
-            expect(att.repository.toString()).toEqual(
-                process.env.TEST_REPOSITORY_ID
-            );
+            expect(att.repository.toString()).toEqual(process.env.TEST_REPOSITORY_ID);
 
             expect(seenIds.has(att.sourceId)).toEqual(true);
 
@@ -256,9 +246,7 @@ describe("Issue Scraping Tests", () => {
         const seenIds = new Set(["2", "5", "4"]);
 
         for (let att of issue.attachments) {
-            expect(att.repository.toString()).toEqual(
-                process.env.TEST_REPOSITORY_ID
-            );
+            expect(att.repository.toString()).toEqual(process.env.TEST_REPOSITORY_ID);
 
             expect(seenIds.has(att.sourceId)).toEqual(true);
 

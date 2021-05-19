@@ -1,18 +1,16 @@
-const mongoose = require("mongoose");
-
 const _ = require("lodash");
 
+// markdown utilities
 const isUrl = require("is-url");
 const removeMd = require("remove-markdown");
 
-const Workspace = require("../../models/Workspace");
 const IntegrationLabel = require("../../models/integrations/integration_objects/IntegrationLabel");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
 
 const { logger } = require("../../logging");
 
-checkValid = (item) => {
+const checkValid = (item) => {
     if (item !== null && item !== undefined) {
         return true;
     }
@@ -20,16 +18,21 @@ checkValid = (item) => {
 };
 
 // helper method to paginate responses
-paginateResponse = async (client, baseUrl) => {
+const paginateResponse = async (client, baseUrl) => {
     const func = "paginateResponse";
 
     let objects = [];
 
     let page = 1;
 
+    let loop = true;
+
     // loop through until all objects from each page are retrieved
-    while (true) {
+    while (loop) {
         const route = `${baseUrl}?page=${page}&per_page=100`;
+
+        let response;
+        let newObjects;
 
         try {
             // extract a page
@@ -37,15 +40,10 @@ paginateResponse = async (client, baseUrl) => {
 
             newObjects = response.data;
         } catch (e) {
-            if (e.data) e = e.data.message;
-
-            logger.error(
-                `Error occured calling Github API with route: ${route}`,
-                {
-                    e,
-                    func,
-                }
-            );
+            logger.error(`Error occured calling Github API with route: ${route}`, {
+                e: e.data ? e.data.message : e,
+                func,
+            });
 
             throw new Error(e);
         }
@@ -56,7 +54,7 @@ paginateResponse = async (client, baseUrl) => {
         objects.push(newObjects);
 
         // break if count of page is either 0 or not full
-        if (count == 0 || count != 100) break;
+        if (count == 0 || count != 100) loop = false;
 
         page += 1;
     }
@@ -65,7 +63,7 @@ paginateResponse = async (client, baseUrl) => {
 };
 
 // extracts and stores all labels in a repo as integration objects
-extractRepositoryLabels = async (client, repository) => {
+const extractRepositoryLabels = async (client, repository) => {
     const func = "extractRepositoryLabels";
 
     // extract repository identifiers
@@ -97,7 +95,7 @@ extractRepositoryLabels = async (client, repository) => {
     try {
         labels = await IntegrationLabel.insertMany(insertOps);
     } catch (e) {
-        logger.error(`Failed to insert labels into database`, {
+        logger.error("Failed to insert labels into database", {
             func,
             e,
         });
@@ -110,7 +108,7 @@ extractRepositoryLabels = async (client, repository) => {
 };
 
 // creates a unique key for an attachment
-acquireKey = (att) => {
+const acquireKey = (att) => {
     // extract identifying characteristics of attachment
     const { modelType, repository, sourceId } = att;
 
@@ -122,7 +120,7 @@ acquireKey = (att) => {
 };
 
 // filters out duplicates
-filterUniqueAttachments = (attachments) => {
+const filterUniqueAttachments = (attachments) => {
     let seen = new Set();
 
     return attachments.filter((att) => {
@@ -137,7 +135,7 @@ filterUniqueAttachments = (attachments) => {
 };
 
 // create update ops to extend issue attachments
-createIssueUpdateBulkWriteOps = async (insertOps, issueUpdates) => {
+const createIssueUpdateBulkWriteOps = async (insertOps, issueUpdates) => {
     const func = "createIssueUpdateBulkWriteOps";
 
     // insert attachments into database
@@ -154,13 +152,10 @@ createIssueUpdateBulkWriteOps = async (insertOps, issueUpdates) => {
             }
         );
     } catch (e) {
-        logger.error(
-            `An error occurred during IntegrationAttachment insertion`,
-            {
-                func,
-                e,
-            }
-        );
+        logger.error("An error occurred during IntegrationAttachment insertion", {
+            func,
+            e,
+        });
 
         throw new Error(e);
     }
@@ -171,7 +166,7 @@ createIssueUpdateBulkWriteOps = async (insertOps, issueUpdates) => {
 
     insertedAttachments = _.mapKeys(insertedAttachments, "key");
 
-    logger.info(`Mapped inserted attachments to generated key.`, {
+    logger.info("Mapped inserted attachments to generated key.", {
         func,
         obj: insertedAttachments,
     });
@@ -182,11 +177,9 @@ createIssueUpdateBulkWriteOps = async (insertOps, issueUpdates) => {
             let { newAttachments, issue } = update;
 
             // acquire inserted attachments for this issue
-            newAttachments = filterUniqueAttachments(newAttachments).map(
-                (att) => {
-                    return insertedAttachments[acquireKey(att)]._id;
-                }
-            );
+            newAttachments = filterUniqueAttachments(newAttachments).map((att) => {
+                return insertedAttachments[acquireKey(att)]._id;
+            });
 
             if (newAttachments.length == 0) return null;
 
@@ -215,10 +208,10 @@ createIssueUpdateBulkWriteOps = async (insertOps, issueUpdates) => {
 };
 
 // parses the body of pull requests and issues to acquire attachments
-parseGithubBody = (body, repository) => {
+const parseGithubBody = (body, repository) => {
     const func = "parseGithubBody";
 
-    logger.info(`Entered with params.`, {
+    logger.info("Entered with params.", {
         func,
         obj: { body, repository },
     });
@@ -226,7 +219,7 @@ parseGithubBody = (body, repository) => {
     // remove markdown
     body = removeMd(body);
 
-    logger.debug(`Markdown was removed from body.`, {
+    logger.debug("Markdown was removed from body.", {
         func,
         obj: body,
     });
@@ -276,8 +269,7 @@ parseGithubBody = (body, repository) => {
 
                     if (splitToken.length > 2) {
                         // can acquire the model
-                        modelType =
-                            modelTypeMap[splitToken.slice(len - 2, len - 1)[0]];
+                        modelType = modelTypeMap[splitToken.slice(len - 2, len - 1)[0]];
 
                         // and id of item from url
                         sourceId = splitToken.slice(-1)[0];
@@ -325,7 +317,7 @@ parseGithubBody = (body, repository) => {
 };
 
 // traverses threads of issues and pull requests
-traverseGithubThreads = async (client, repository, issues, pullRequests) => {
+const traverseGithubThreads = async (client, repository, issues, pullRequests) => {
     const func = "traverseGithubThreads";
 
     logger.info(
@@ -343,10 +335,7 @@ traverseGithubThreads = async (client, repository, issues, pullRequests) => {
     const { fullName, _id: repositoryId } = repository;
 
     // request all comments from github api
-    const comments = await paginateResponse(
-        client,
-        `/repos/${fullName}/issues/comments`
-    );
+    const comments = await paginateResponse(client, `/repos/${fullName}/issues/comments`);
 
     logger.debug(`${comments.length} comments were fetched from github`, {
         func,
@@ -403,19 +392,13 @@ traverseGithubThreads = async (client, repository, issues, pullRequests) => {
                         };
 
                         // if pr att is already on issue skip
-                        if (
-                            existingAttachmentKeys.has(
-                                acquireKey(pullRequestAtt)
-                            )
-                        )
+                        if (existingAttachmentKeys.has(acquireKey(pullRequestAtt)))
                             return null;
 
                         // if we have an update for the issue
                         if (issueId in issueUpdates) {
                             // push the attachment
-                            issueUpdates[issueId].newAttachments.push(
-                                pullRequestAtt
-                            );
+                            issueUpdates[issueId].newAttachments.push(pullRequestAtt);
                         } else {
                             // otherwise create a new item in the map
                             issueUpdates[issueId] = {
@@ -471,7 +454,7 @@ traverseGithubThreads = async (client, repository, issues, pullRequests) => {
         .filter((arr) => arr != null)
         .flat();
 
-    logger.info(`Finished creation of issue update object`, {
+    logger.info("Finished creation of issue update object", {
         func,
         obj: issueUpdates,
     });
@@ -481,19 +464,16 @@ traverseGithubThreads = async (client, repository, issues, pullRequests) => {
     // extract unique attachments
     const insertOps = filterUniqueAttachments(attachments);
 
-    const bulkWriteOps = await createIssueUpdateBulkWriteOps(
-        insertOps,
-        issueUpdates
-    );
+    const bulkWriteOps = await createIssueUpdateBulkWriteOps(insertOps, issueUpdates);
 
     await IntegrationTicket.bulkWrite(bulkWriteOps);
 };
 
 // extracts url and direct sha attachments on issue bodies
-extractTextualAttachments = async (issues, repository) => {
+const extractTextualAttachments = async (issues, repository) => {
     const func = "extractTextualAttachments";
 
-    logger.info(`Entered with params.`, {
+    logger.info("Entered with params.", {
         func,
         obj: { issues, repository },
     });
@@ -556,10 +536,7 @@ extractTextualAttachments = async (issues, repository) => {
         })
         .flat();
 
-    const bulkWriteOps = await createIssueUpdateBulkWriteOps(
-        insertOps,
-        issueUpdates
-    );
+    const bulkWriteOps = await createIssueUpdateBulkWriteOps(insertOps, issueUpdates);
 
     try {
         await IntegrationTicket.bulkWrite(bulkWriteOps);
@@ -569,7 +546,7 @@ extractTextualAttachments = async (issues, repository) => {
 };
 
 // maps labels to issues
-extractIssueLabels = (issues, labels) => {
+const extractIssueLabels = (issues, labels) => {
     issues.map((issue) => {
         issue.labels = issue.labels.map((label) => {
             const { id } = label;

@@ -37,40 +37,56 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
 // models
-const Commit = require('../models/Commit');
-const Branch = require('../models/Branch');
-const PullRequest = require('../models/PullRequest');
+const Commit = require("../../../models/Commit");
+const Branch = require("../../../models/Branch");
+const PullRequest = require("../../../models/PullRequest");
 
-const api = require("../apis/api");
+const api = require("../../../apis/api");
 
 // test data
 
-const { prNum: brodalPRNum, branchNum: brodalBranchNum, commitNum: brodalCommitNum } = require("../__tests__data/repository_data/brodal_queue");
-const { prData: brodalPRData, branchData: brodalBranchData, commitData: brodalCommitData } = require("../__tests__data/repository_data/brodal_queue");
+const {
+    prNum: brodalPRNum,
+    branchNum: brodalBranchNum,
+    commitNum: brodalCommitNum,
+} = require("../../../__tests__data/repository_data/brodal_queue");
+const {
+    prData: brodalPRData,
+    branchData: brodalBranchData,
+    commitData: brodalCommitData,
+} = require("../../../__tests__data/repository_data/brodal_queue");
 
-const { prNum: hamechaPRNum, branchNum: hamechaBranchNum, commitNum: hamechaCommitNum } = require("../__tests__data/repository_data/hamecha");
-const { prData: hamechaPRData, branchData: hamechaBranchData, commitData: hamechaCommitData } = require("../__tests__data/repository_data/hamecha");
+const {
+    prNum: hamechaPRNum,
+    branchNum: hamechaBranchNum,
+    commitNum: hamechaCommitNum,
+} = require("../../../__tests__data/repository_data/hamecha");
+const {
+    prData: hamechaPRData,
+    branchData: hamechaBranchData,
+    commitData: hamechaCommitData,
+} = require("../../../__tests__data/repository_data/hamecha");
 
-
-const { prNum: issueScrapePRNum, branchNum: issueScrapeBranchNum, commitNum: issueScrapeCommitNum } = require("../__tests__data/repository_data/issue-scrape");
-const { prData: issueScrapePRData, branchData: issueScrapeBranchData, commitData: issueScrapeCommitData } = require("../__tests__data/repository_data/issue-scrape");
-
+const {
+    prNum: issueScrapePRNum,
+    branchNum: issueScrapeBranchNum,
+    commitNum: issueScrapeCommitNum,
+} = require("../../../__tests__data/repository_data/issue-scrape");
+const {
+    prData: issueScrapePRData,
+    branchData: issueScrapeBranchData,
+    commitData: issueScrapeCommitData,
+} = require("../../../__tests__data/repository_data/issue-scrape");
 
 // util helpers
 const {
     createWorkspace,
     deleteWorkspace,
     removeWorkspaces,
-} = require("../__tests__config/utils");
-
+} = require("../../../__tests__config/utils");
 
 // env variables
-const {
-    TEST_USER_ID,
-    EXTERNAL_DB_PASS,
-    EXTERNAL_DB_USER,
-} = process.env;
-
+const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 beforeAll(async () => {
     try {
@@ -84,10 +100,11 @@ beforeAll(async () => {
 
         db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
-        const {
-            createdWorkspaceId: workspaceId,
-            repositoryIds,
-        } = await createWorkspace(["kgodara-testing/brodal_queue", "kgodara-testing/hamecha", "kgodara-testing/issue-scrape"]);
+        const { createdWorkspaceId: workspaceId, repositoryIds } = await createWorkspace([
+            "kgodara-testing/brodal_queue",
+            "kgodara-testing/hamecha",
+            "kgodara-testing/issue-scrape",
+        ]);
 
         const workspace = { workspaceId, repositoryIds };
 
@@ -95,31 +112,29 @@ beforeAll(async () => {
         console.log(JSON.stringify(workspace));
 
         process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE = JSON.stringify(workspace);
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
     }
 });
 
-describe ("Test Code Object Scrape", () => {
+describe("Test Code Object Scrape", () => {
     let backendClient;
 
     beforeEach(() => {
         backendClient = api.requestTestingUserBackendClient();
     });
 
-
     // PullRequests
     test("Correct number of PullRequests should be scraped for kgodara-testing/brodal_queue", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundPullRequestNum = await PullRequest.countDocuments({repository: workspace.repositoryIds[0]});
+        var foundPullRequestNum = await PullRequest.countDocuments({
+            repository: workspace.repositoryIds[0],
+        });
         expect(foundPullRequestNum).toEqual(brodalPRNum);
     });
 
     test("PullRequest fields should be correctly scraped for kgodara-testing/brodal_queue", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -153,19 +168,18 @@ describe ("Test Code Object Scrape", () => {
             });
             expect(documentFound).toEqual(true);
         }
-
     });
 
     test("Correct number of PullRequests should be scraped for kgodara-testing/hamecha", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundPullRequestNum = await PullRequest.countDocuments({repository: workspace.repositoryIds[1]});
+        var foundPullRequestNum = await PullRequest.countDocuments({
+            repository: workspace.repositoryIds[1],
+        });
         expect(foundPullRequestNum).toEqual(hamechaPRNum);
     });
 
     test("PullRequest fields should be correctly scraped for kgodara-testing/hamecha", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -199,19 +213,18 @@ describe ("Test Code Object Scrape", () => {
             });
             expect(documentFound).toEqual(true);
         }
-
     });
 
     test("Correct number of PullRequests should be scraped for kgodara-testing/issue-scrape", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundPullRequestNum = await PullRequest.countDocuments({repository: workspace.repositoryIds[2]});
+        var foundPullRequestNum = await PullRequest.countDocuments({
+            repository: workspace.repositoryIds[2],
+        });
         expect(foundPullRequestNum).toEqual(issueScrapePRNum);
     });
 
     test("PullRequest fields should be correctly scraped for kgodara-testing/issue-scrape", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -245,21 +258,19 @@ describe ("Test Code Object Scrape", () => {
             });
             expect(documentFound).toEqual(true);
         }
-
     });
-
 
     //Branches
     test("Correct number of Branches should be scraped for kgodara-testing/brodal_queue", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundBranchNum = await Branch.countDocuments({repository: workspace.repositoryIds[0]});
+        var foundBranchNum = await Branch.countDocuments({
+            repository: workspace.repositoryIds[0],
+        });
         expect(foundBranchNum).toEqual(brodalBranchNum);
     });
 
     test("Branch fields should be correctly scraped for kgodara-testing/brodal_queue", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -270,26 +281,23 @@ describe ("Test Code Object Scrape", () => {
                 name: brodalBranchData[i].name,
                 sourceId: brodalBranchData[i].sourceId,
                 ref: brodalBranchData[i].ref,
-                lastCommit :brodalBranchData[i].lastCommit,
+                lastCommit: brodalBranchData[i].lastCommit,
             });
 
             expect(documentFound).toEqual(true);
         }
-
     });
 
-
-
     test("Correct number of Branches should be scraped for kgodara-testing/hamecha", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundBranchNum = await Branch.countDocuments({repository: workspace.repositoryIds[1]});
+        var foundBranchNum = await Branch.countDocuments({
+            repository: workspace.repositoryIds[1],
+        });
         expect(foundBranchNum).toEqual(hamechaBranchNum);
     });
 
     test("Branch fields should be correctly scraped for kgodara-testing/hamecha", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -300,24 +308,23 @@ describe ("Test Code Object Scrape", () => {
                 name: hamechaBranchData[i].name,
                 sourceId: hamechaBranchData[i].sourceId,
                 ref: hamechaBranchData[i].ref,
-                lastCommit :hamechaBranchData[i].lastCommit,
+                lastCommit: hamechaBranchData[i].lastCommit,
             });
 
             expect(documentFound).toEqual(true);
         }
-
     });
 
     test("Correct number of Branches should be scraped for kgodara-testing/issue-scrape", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundBranchNum = await Branch.countDocuments({repository: workspace.repositoryIds[2]});
+        var foundBranchNum = await Branch.countDocuments({
+            repository: workspace.repositoryIds[2],
+        });
         expect(foundBranchNum).toEqual(issueScrapeBranchNum);
     });
 
     test("Branch fields should be correctly scraped for kgodara-testing/issue-scrape", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -328,26 +335,24 @@ describe ("Test Code Object Scrape", () => {
                 name: issueScrapeBranchData[i].name,
                 sourceId: issueScrapeBranchData[i].sourceId,
                 ref: issueScrapeBranchData[i].ref,
-                lastCommit :issueScrapeBranchData[i].lastCommit,
+                lastCommit: issueScrapeBranchData[i].lastCommit,
             });
 
             expect(documentFound).toEqual(true);
         }
-
     });
-
 
     //Commits
     test("Correct number of Commits should be scraped for kgodara-testing/brodal_queue", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundCommitNum = await Commit.countDocuments({repository: workspace.repositoryIds[0]});
+        var foundCommitNum = await Commit.countDocuments({
+            repository: workspace.repositoryIds[0],
+        });
         expect(foundCommitNum).toEqual(brodalCommitNum);
     });
 
     test("Commits fields should be correctly scraped for kgodara-testing/brodal_queue", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -370,20 +375,18 @@ describe ("Test Code Object Scrape", () => {
 
             expect(documentFound).toEqual(true);
         }
-
     });
 
-
     test("Correct number of Commits should be scraped for kgodara-testing/hamecha", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundCommitNum = await Commit.countDocuments({repository: workspace.repositoryIds[1]});
+        var foundCommitNum = await Commit.countDocuments({
+            repository: workspace.repositoryIds[1],
+        });
         expect(foundCommitNum).toEqual(hamechaCommitNum);
     });
 
     test("Commits fields should be correctly scraped for kgodara-testing/hamecha", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -406,22 +409,18 @@ describe ("Test Code Object Scrape", () => {
 
             expect(documentFound).toEqual(true);
         }
-
     });
 
-
-
     test("Correct number of Commits should be scraped for kgodara-testing/issue-scrape", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
-        var foundCommitNum = await Commit.countDocuments({repository: workspace.repositoryIds[2]});
+        var foundCommitNum = await Commit.countDocuments({
+            repository: workspace.repositoryIds[2],
+        });
         expect(foundCommitNum).toEqual(issueScrapeCommitNum);
     });
 
-
     test("Commits fields should be correctly scraped for kgodara-testing/issue-scrape", async () => {
-
         const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
 
         var i;
@@ -444,13 +443,8 @@ describe ("Test Code Object Scrape", () => {
 
             expect(documentFound).toEqual(true);
         }
-
     });
-
-
-
 });
-
 
 afterAll(async () => {
     const workspace = JSON.parse(process.env.TEST_CODE_OBJECT_CREATE_WORKSPACE);
@@ -458,11 +452,4 @@ afterAll(async () => {
     await deleteWorkspace(workspace.workspaceId);
 
     // await expect( () => deleteWorkspace(workspace.workspaceId)).not.toThrow();
-
 });
-
-
-
-
-
-
