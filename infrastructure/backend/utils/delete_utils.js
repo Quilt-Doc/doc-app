@@ -25,12 +25,21 @@ const { ObjectId } = mongoose.Types;
 
 const Sentry = require("@sentry/node");
 
+const breakDeleteWorkspaceTransaction = async (workspaceId) => {
+    var removeWorkspaceResponse = await User.updateMany(
+                { workspaces: { $in: [ObjectId(workspaceId.toString())] } },
+                { $push: { workspaces: [ObjectId("000000000000000000000000")] } },
+            )
+            .exec();
+}
+
 const detachWorkspaceFromMembers = async (workspaceId, session) => {
 
     // Remove Workspace from User.workspaces for every user in the workspace
     var removeWorkspaceResponse;
     var usersInWorkspace;
     try {
+        /*
         usersInWorkspace = await User.find({
             workspaces: { $in: [ObjectId(workspaceId)] },
         })
@@ -40,6 +49,8 @@ const detachWorkspaceFromMembers = async (workspaceId, session) => {
         usersInWorkspace = usersInWorkspace.map((userObj) =>
             userObj._id.toString()
         );
+        */
+        
 
         removeWorkspaceResponse = await User.updateMany(
             { workspaces: { $in: [ObjectId(workspaceId)] } },
@@ -52,7 +63,6 @@ const detachWorkspaceFromMembers = async (workspaceId, session) => {
         Sentry.setContext("Delete Workspace", {
             message: `Failed to remove Workspace from User.workspaces`,
             workspaceId: workspaceId,
-            numMembers: usersInWorkspace.length,
         });
 
         Sentry.captureException(err);
@@ -713,6 +723,8 @@ const deleteIntegrationIntervals = async (ticketsToDelete, session) => {
 
 
 module.exports = {
+    breakDeleteWorkspaceTransaction,
+
     detachWorkspaceFromMembers,
     deleteWorkspaceObject,
 
