@@ -37,8 +37,6 @@ const SAMPLE_OPTION = 0;
 // paths of stored json
 const PREVIOUS_PATH = "./__tests__output/repo_scrape_lifecycle/previous_output.json";
 const CURRENT_PATH = "./__tests__output/repo_scrape_lifecycle/all_output.json";
-const SUCCESS_PATH = "./__tests__output/repo_scrape_lifecycle/success_output.json";
-const FAIL_PATH = "./__tests__output/repo_scrape_lifecycle/failed_output.json";
 const RESULTS_PATH = "./__tests__output/repo_scrape_lifecycle/results_output.json";
 
 // set up mongodb connection
@@ -89,8 +87,6 @@ afterAll(async () => {
 
 describe("Basic public repository scrape lifecycle validation", () => {
     test("Sample repositories for validation", async () => {
-        const func = "Sample repositories for pipeline display validation";
-
         const previousResults = JSON.parse(fs.readFileSync(CURRENT_PATH, "utf8"));
 
         const testId = new Date().getTime();
@@ -113,7 +109,7 @@ describe("Basic public repository scrape lifecycle validation", () => {
         }
 
         logger.info(`Sampled ${repoUrls.length} repositories`, {
-            func,
+            func: "Sample repositories for validation",
             obj: repoUrls,
         });
 
@@ -202,7 +198,7 @@ describe("Basic public repository scrape lifecycle validation", () => {
         process.env.CURRENT_RESULTS = JSON.stringify(previousResults);
     });
 
-    test("Deleting single shared-repo workspaces does not delete shared resources", async () => {
+    test("Deleting only workspace with repo content deletes content", async () => {
         let previousResults = JSON.parse(process.env.PREVIOUS_RESULTS);
 
         const workspaces = JSON.parse(process.env.TEST_WORKSPACES);
