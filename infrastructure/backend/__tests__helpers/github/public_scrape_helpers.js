@@ -8,9 +8,6 @@ const apis = require("../../apis/api");
 const backendClient = apis.requestTestingUserBackendClient();
 const publicClient = apis.requestPublicClient();
 
-// models
-const Repository = require("../../models/Repository");
-
 // logger
 const { logger } = require("../../fs_logging");
 

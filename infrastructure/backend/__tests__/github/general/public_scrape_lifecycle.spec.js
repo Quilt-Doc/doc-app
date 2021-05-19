@@ -17,10 +17,10 @@ const { deleteWorkspace } = require("../../../__tests__config/utils");
 const {
     sampleGithubRepositories,
     createPublicWorkspace,
-} = require("../../../__tests__helpers/github/github_public_scrape_helpers");
+} = require("../../../__tests__helpers/github/public_scrape_helpers");
 const {
     acquireCounts,
-} = require("../../../__tests_helpers/github/github_scrape_lifecycle_helpers");
+} = require("../../../__tests__helpers/github/public_scrape_lifecycle_helpers");
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
@@ -35,9 +35,9 @@ const NUM_REPOS = 1;
 const SAMPLE_OPTION = 0;
 
 // paths of stored json
-const PREVIOUS_PATH = "./__tests__output/repo_scrape_lifecycle/previous_output.json";
-const CURRENT_PATH = "./__tests__output/repo_scrape_lifecycle/all_output.json";
-const RESULTS_PATH = "./__tests__output/repo_scrape_lifecycle/results_output.json";
+const PREVIOUS_PATH = "./__tests__output/public_scrape_lifecycle/previous_output.json";
+const CURRENT_PATH = "./__tests__output/public_scrape_lifecycle/all_output.json";
+const RESULTS_PATH = "./__tests__output/public_scrape_lifecycle/results_output.json";
 
 // set up mongodb connection
 beforeAll(async () => {
@@ -131,27 +131,35 @@ describe("Basic public repository scrape lifecycle validation", () => {
 
         const { workspace, repositories } = await createPublicWorkspace(repoUrls);
 
-        const counts1 = repositories.map((repo) => {
-            const { fullName } = repo;
+        const counts1 = await Promise.all(
+            repositories.map((repo) => {
+                const { fullName } = repo;
 
-            return acquireCounts(fullName);
-        });
+                return acquireCounts(fullName);
+            })
+        );
 
         const { workspace: workspace2, repositories: repositories2 } = await createPublicWorkspace(
             repoUrls
         );
 
-        const counts2 = repositories2.map((repo) => {
-            const { fullName } = repo;
+        const counts2 = await Promise.all(
+            repositories2.map((repo) => {
+                const { fullName } = repo;
 
-            return acquireCounts(fullName);
-        });
+                return acquireCounts(fullName);
+            })
+        );
 
-        expect(repositories).toEqual(repositories2);
+        expect(new Set(repositories.map((repo) => repo._id.toString()))).toEqual(
+            new Set(repositories2.map((repo) => repo._id.toString()))
+        );
 
         expect(counts1).toEqual(counts2);
 
         previousResults[process.env.TEST_ID]["success1"] = true;
+
+        console.log("PREVIOUS_RESULTS", previousResults);
 
         process.env.CURRENT_RESULTS = JSON.stringify(previousResults);
 
@@ -177,17 +185,21 @@ describe("Basic public repository scrape lifecycle validation", () => {
 
         process.env.TEST_REPOSITORIES = JSON.stringify([repositories, repositories2]);
 
-        const counts1 = repositories.map((repo) => {
-            const { fullName } = repo;
+        const counts1 = await Promise.all(
+            repositories.map((repo) => {
+                const { fullName } = repo;
 
-            return acquireCounts(fullName);
-        });
+                return acquireCounts(fullName);
+            })
+        );
 
-        const counts2 = repositories2.map((repo) => {
-            const { fullName } = repo;
+        const counts2 = await Promise.all(
+            repositories2.map((repo) => {
+                const { fullName } = repo;
 
-            return acquireCounts(fullName);
-        });
+                return acquireCounts(fullName);
+            })
+        );
 
         expect(counts1).toEqual(counts2);
 
@@ -221,11 +233,13 @@ describe("Basic public repository scrape lifecycle validation", () => {
 
         process.env.TEST_REPOSITORIES = JSON.stringify([repositories, repositories2]);
 
-        const counts = repositories.map((repo) => {
-            const { fullName } = repo;
+        const counts = await Promise.all(
+            repositories.map((repo) => {
+                const { fullName } = repo;
 
-            return acquireCounts(fullName);
-        });
+                return acquireCounts(fullName);
+            })
+        );
 
         expect(counts).toEqual(expectedCounts);
 

@@ -1,15 +1,3 @@
-require("dotenv").config();
-
-//utility
-const _ = require("lodash");
-
-// api
-const apis = require("../../apis/api");
-
-// backend client
-const backendClient = apis.requestTestingUserBackendClient();
-const publicClient = apis.requestPublicClient();
-
 // models
 const Repository = require("../../models/Repository");
 

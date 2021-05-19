@@ -25,7 +25,7 @@ const {
     createPublicWorkspace,
     compareFields,
     compareSets,
-} = require("../../../__tests__helpers/github/github_public_scrape_helpers");
+} = require("../../../__tests__helpers/github/public_scrape_helpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -41,11 +41,11 @@ const NUM_REPOS = 1;
 const SAMPLE_OPTION = 0;
 
 // paths of stored json
-const PREVIOUS_PATH = "./__tests__output/basic_public_scrape_validation/previous_output.json";
-const CURRENT_PATH = "./__tests__output/basic_public_scrape_validation/all_output.json";
-const SUCCESS_PATH = "./__tests__output/basic_public_scrape_validation/success_output.json";
-const FAIL_PATH = "./__tests__output/basic_public_scrape_validation/failed_output.json";
-const RESULTS_PATH = "./__tests__output/basic_public_scrape_validation/results_output.json";
+const PREVIOUS_PATH = "./__tests__output/public_scrape_validation/previous_output.json";
+const CURRENT_PATH = "./__tests__output/public_scrape_validation/all_output.json";
+const SUCCESS_PATH = "./__tests__output/public_scrape_validation/success_output.json";
+const FAIL_PATH = "./__tests__output/public_scrape_validation/failed_output.json";
+const RESULTS_PATH = "./__tests__output/public_scrape_validation/results_output.json";
 
 // set up mongodb connection
 beforeAll(async () => {
@@ -85,7 +85,7 @@ afterAll(async () => {
 
         let successResults = {};
 
-        const testResults = repositories.map((repo, i) => {
+        const testResults = repositories.map((repo) => {
             const result = currentResults[repo.fullName];
 
             const fields = {
