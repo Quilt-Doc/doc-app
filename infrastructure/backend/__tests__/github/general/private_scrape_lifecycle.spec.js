@@ -1,17 +1,11 @@
 require("dotenv").config();
 
-//utility
-const fs = require("fs");
-
 // mongoose
 const mongoose = require("mongoose");
 
 // models
 const Workspace = require("../../../models/Workspace");
 const Repository = require("../../../models/Repository");
-
-// logger
-const { logger } = require("../../../fs_logging");
 
 // util helpers
 const { deleteWorkspace, createWorkspace } = require("../../../__tests__config/utils");
@@ -48,13 +42,19 @@ afterAll(async () => {
 
 describe("Basic private repository scrape lifecycle validation", () => {
     test("Workspaces with same repos do not have duplicate resources", async () => {
-        const { createWorkspaceId: workspaceId1, repositoryIds: repoIds1 } = await createWorkspace([
+        const {
+            createdWorkspaceId: workspaceId1,
+            repositoryIds: repoIds1,
+        } = await createWorkspace([
             "kgodara-testing/brodal_queue",
             "kgodara-testing/issue-scrape",
             "Quilt-Doc/doc-app",
         ]);
 
-        const { createWorkspaceId: workspaceId2, repositoryIds: repoIds2 } = await createWorkspace([
+        const {
+            createdWorkspaceId: workspaceId2,
+            repositoryIds: repoIds2,
+        } = await createWorkspace([
             "kgodara-testing/brodal_queue",
             "kgodara-testing/issue-scrape",
             "Quilt-Doc/doc-app",
@@ -64,13 +64,16 @@ describe("Basic private repository scrape lifecycle validation", () => {
             new Set(repoIds2.map((id) => id.toString()))
         );
 
-        const repositories1 = await Repository.find({
-            _id: { $in: repoIds1 },
-        });
-
-        const repositories2 = await Repository.find({
-            _id: { $in: repoIds2 },
-        });
+        const [workspace1, workspace2, repositories1, repositories2] = await Promise.all([
+            Workspace.findById(workspaceId1),
+            Workspace.findById(workspaceId2),
+            Repository.find({
+                _id: { $in: repoIds1 },
+            }),
+            Repository.find({
+                _id: { $in: repoIds2 },
+            }),
+        ]);
 
         const counts1 = await Promise.all(
             repositories1.map((repo) => {
@@ -92,7 +95,7 @@ describe("Basic private repository scrape lifecycle validation", () => {
 
         process.env.EXPECTED_COUNTS = JSON.stringify(counts1);
 
-        process.env.TEST_WORKSPACE_IDS = JSON.stringify([workspaceId1, workspaceId2]);
+        process.env.TEST_WORKSPACES = JSON.stringify([workspace1, workspace2]);
 
         process.env.TEST_REPOSITORIES = JSON.stringify([repositories1, repositories2]);
     });
@@ -127,5 +130,35 @@ describe("Basic private repository scrape lifecycle validation", () => {
         expect(counts1).toEqual(counts2);
 
         expect(counts1).toEqual(expectedCounts);
+    });
+
+    test("Deleting only workspace with repo content deletes content", async () => {
+        const workspaces = JSON.parse(process.env.TEST_WORKSPACES);
+
+        const workspace = workspaces[1];
+
+        const repos = JSON.parse(process.env.TEST_REPOSITORIES);
+
+        const expectedCounts = repos[0].map(() => {
+            return {
+                repositories: 1,
+                commits: 0,
+                tickets: 0,
+                branches: 0,
+                pullRequests: 0,
+            };
+        });
+
+        await deleteWorkspace(workspace._id);
+
+        const counts = await Promise.all(
+            repos[0].map((repo) => {
+                const { fullName } = repo;
+
+                return acquireCounts(fullName);
+            })
+        );
+
+        expect(counts).toEqual(expectedCounts);
     });
 });
