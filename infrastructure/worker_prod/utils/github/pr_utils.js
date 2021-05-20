@@ -36,6 +36,10 @@ const generatePRQuery = () => {
             title
             body
             number
+
+            author {
+              login
+            }
             
             createdAt
             updatedAt
@@ -45,6 +49,7 @@ const generatePRQuery = () => {
             
             url
             state
+            reviewDecision
             locked
             labels(first: ${LABEL_NUM}) {
               nodes {
@@ -158,9 +163,12 @@ const fetchAllRepoPRsAPIGraphQL = async (installationId, repositoryId, fullName,
         
                     pullRequestId: pr.id,
                     number: pr.number,
+
+                    creator: (pr.author != null) ? pr.author.login : null,
         
                     htmlUrl: pr.url,
                     state: pr.state,
+                    reviewDecision: pr.reviewDecision,
                     locked: pr.locked,
                     title: pr.title,
                     body: pr.body,

@@ -42,7 +42,7 @@ let pullRequestSchema = new Schema({
     name: { type: String },
     description: { type: String },
     sourceId: { type: String },
-    creator: { type: ObjectId, ref: "IntegrationUser" },
+    creator: { type: String },
 
     sourceCreationDate: { type: Date },
     sourceUpdateDate: { type: Date },
@@ -55,6 +55,7 @@ let pullRequestSchema = new Schema({
 
     htmlUrl: { type: String },
     state: { type: String, enum: ["OPEN", "MERGED", "CLOSED"], required: true },
+    reviewDecision: { type: String, enum: ["CHANGES_REQUESTED", "APPROVED", "REVIEW_REQUIRED", null] },
     locked: { type: Boolean },
     title: { type: String },
     body: { type: String },
