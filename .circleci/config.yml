@@ -30,7 +30,7 @@ jobs:
       #     pkg-manager: yarn 
       - run:
           name: Install Jest
-          command: npm install -g jest
+          command: npm install jest
       - run:
           name: Run tests
           command: jest -t "CircleCI playground to make sure testing is working"
