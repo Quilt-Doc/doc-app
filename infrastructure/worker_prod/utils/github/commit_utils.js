@@ -257,6 +257,7 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
 
     foundCommitsList = foundCommitsList.map(commitObj => {
         return Object.assign({}, commitObj, {   name: commitObj.commitMessage,
+                                                creator: commitObj.committerName,
                                                 repository: repositoryId,
                                                 sourceId: commitObj.sha,
                                                 sourceCreationDate: commitObj.committerDate });
