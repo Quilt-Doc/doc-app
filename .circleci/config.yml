@@ -28,7 +28,7 @@ jobs:
       # If you are using yarn instead npm, remove the line above and uncomment the two lines below.
       # - node/install-packages:
       #     pkg-manager: yarn 
-      - run: cd infrastructure/backend && pwd
+      - run: cd infrastructure/backend && npm run test:ci
      
 
 workflows:
