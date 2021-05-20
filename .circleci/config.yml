@@ -28,13 +28,7 @@ jobs:
       # If you are using yarn instead npm, remove the line above and uncomment the two lines below.
       # - node/install-packages:
       #     pkg-manager: yarn 
-      - run: cd infrastructure/backend
-      - run:
-          name: Install Jest
-          command: npm install jest
-      - run:
-          name: Run tests
-          command: npm run test:ci
+      - run: cd infrastructure/backend && npm install && npm test -- "circleci_playground.spec.js"
      
 
 workflows:
