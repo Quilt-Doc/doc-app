@@ -29,11 +29,8 @@ jobs:
       # - node/install-packages:
       #     pkg-manager: yarn 
       - run:
-          name: Install Jest
-          command: npm install jest
-      - run:
           name: Run tests
-          command: npm run test:ci
+          command: cd infrastructure/backend && npm run test:ci
      
 
 workflows:
