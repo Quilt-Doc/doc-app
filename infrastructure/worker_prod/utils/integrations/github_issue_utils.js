@@ -590,7 +590,15 @@ const getGithubIssueLinkages = async (
 const getGithubIssueLinkagesFromMarkdown = (issueObj) => {
     const regex = /[#][0-9]+/g;
 
-    var foundMatches = issueObj.githubIssueBody.match(regex);
+    // console.log(`Finding Issue Linkages for Issue #${issueObj.githubIssueNumber}`);
+
+    var foundMatches;
+    
+    if (issueObj.githubIssueBody == null) {
+        foundMatches = [];
+    } else {
+        foundMatches = issueObj.githubIssueBody.match(regex);
+    }
 
     if (foundMatches == null) {
         foundMatches = [];
