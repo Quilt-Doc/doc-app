@@ -6,6 +6,7 @@
     "scripts": {
         "install": "find ./node_modules/* -mtime +10950 -exec touch {} \\;",
         "test": "jest -i",
+        "test:ci": "jest -t 'CircleCI playground to make sure testing is working'",
         "test-watch": "jest --watch"
     },
     "jest": {
