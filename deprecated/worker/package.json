@@ -13,7 +13,7 @@
     "@elastic/elasticsearch": "^7.9.0",
     "await-spawn": "^3.0.0",
     "aws-sdk": "^2.699.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "dotenv": "^8.2.0",
     "fs-path": "0.0.24",
     "js-yaml": "^3.14.0",
