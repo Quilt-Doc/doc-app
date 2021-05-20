@@ -19,6 +19,6 @@ beforeAll(async () => {
 
 describe("CircleCI playground to make sure testing is working", () => {
     test("Sample circle ci test", () => {
-        "Run the test";
+        console.log("Run the test");
     });
 });
