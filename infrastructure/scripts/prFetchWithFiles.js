@@ -41,7 +41,7 @@ a
 */
 
 const generatePRQuery = () => {
-  return gql`
+    return gql`
     query fetchPRsWithFiles($repoName: String!, $repoOwner: String!, $cursor: String) { 
       repository(name: $repoName, owner:$repoOwner) { 
         pullRequests(first: ${PR_NUM}, after: $cursor) {
@@ -110,78 +110,78 @@ const generatePRQuery = () => {
 };
 
 const requestPublicGraphQLClient = () => {
-  const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
-    credentials: "include",
-    mode: "cors",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `token ${GITHUB_PUBLIC_USER_OAUTH}`,
-    },
-    /*
+    const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
+        credentials: "include",
+        mode: "cors",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `token ${GITHUB_PUBLIC_USER_OAUTH}`,
+        },
+        /*
         auth: {
             username: process.env.GITHUB_PUBLIC_USER_NAME,
             password: process.env.GITHUB_PUBLIC_USER_OAUTH,
         }
         */
-  });
-  return prismaClient;
+    });
+    return prismaClient;
 };
 
 const runProcedure = async (repoName, repoOwner) => {
-  var client = requestPublicGraphQLClient();
+    var client = requestPublicGraphQLClient();
 
-  var query = generatePRQuery(repoName, repoOwner);
+    var query = generatePRQuery(repoName, repoOwner);
 
-  var hasNextPage = true;
-  var queryResponse;
+    var hasNextPage = true;
+    var queryResponse;
 
-  var variables = { repoName: repoName, repoOwner: repoOwner };
+    var variables = { repoName: repoName, repoOwner: repoOwner };
 
-  var cursor = undefined;
+    var cursor = undefined;
 
-  var total_prs_scraped = 0;
+    var total_prs_scraped = 0;
 
-  while (hasNextPage) {
-    if (cursor) {
-      variables.cursor = cursor;
+    while (hasNextPage) {
+        if (cursor) {
+            variables.cursor = cursor;
+        }
+        queryResponse = await client.request(query, variables);
+
+        total_prs_scraped += queryResponse.repository.pullRequests.nodes.length;
+
+        // Iterate over list of PRs
+        for (i = 0; i < queryResponse.repository.pullRequests.nodes.length; i++) {
+            var currentPRObj = queryResponse.repository.pullRequests.nodes[i];
+        }
+
+        hasNextPage = queryResponse.repository.pullRequests.pageInfo.hasNextPage;
+        if (hasNextPage) {
+            cursor = queryResponse.repository.pullRequests.pageInfo.endCursor;
+        }
+        console.log(`cursor is ${cursor}`);
+        console.log(`total_prs_scraped: ${total_prs_scraped}`);
     }
-    queryResponse = await client.request(query, variables);
 
-    total_prs_scraped += queryResponse.repository.pullRequests.nodes.length;
-
-    // Iterate over list of PRs
-    for (i = 0; i < queryResponse.repository.pullRequests.nodes.length; i++) {
-      var currentPRObj = queryResponse.repository.pullRequests.nodes[i];
-    }
-
-    hasNextPage = queryResponse.repository.pullRequests.pageInfo.hasNextPage;
-    if (hasNextPage) {
-      cursor = queryResponse.repository.pullRequests.pageInfo.endCursor;
-    }
-    console.log(`cursor is ${cursor}`);
-    console.log(`total_prs_scraped: ${total_prs_scraped}`);
-  }
-
-  console.log(`Total PRs Scraped: ${total_prs_scraped}`);
+    console.log(`Total PRs Scraped: ${total_prs_scraped}`);
 };
 
 const optionDefinitions = [
-  { name: "name", alias: "n", type: String, defaultOption: false },
-  { name: "owner", alias: "o", type: String },
+    { name: "name", alias: "n", type: String, defaultOption: false },
+    { name: "owner", alias: "o", type: String },
 ];
 
 const commandLineArgs = require("command-line-args");
 const options = commandLineArgs(optionDefinitions);
 
 if (!options.name) {
-  console.log("No repository name provided '-n'");
-  return;
+    console.log("No repository name provided '-n'");
+    return;
 }
 
 if (!options.owner) {
-  console.log("No repository owner provided '-o'");
-  return;
+    console.log("No repository owner provided '-o'");
+    return;
 }
 
 runProcedure(options.name, options.owner);

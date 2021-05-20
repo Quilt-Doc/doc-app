@@ -86,6 +86,100 @@ const sampleGithubRepositories = async (queryFilters) => {
     return indices.map((index) => repositories[index]);
 };
 
+const checkSearchFilter = (filter, lower, upper) => {
+    if (filter.includes(">") || !filter) return false;
+
+    if (filter.includes("..")) {
+        let split = filter.split("..");
+
+        let filter1 = parseInt(split[0]);
+
+        let filter2 = parseInt(split[1]);
+
+        let filterUpper, filterLower;
+
+        if (filter1 > filter2) {
+            filterUpper = filter1;
+
+            filterLower = filter2;
+        } else {
+            filterUpper = filter2;
+
+            filterLower = filter1;
+        }
+
+        if (filterUpper <= upper && filterLower >= lower) return true;
+    } else {
+        console.log(filter);
+
+        filter = parseInt(filter);
+
+        if (filter >= lower && filter >= upper) return true;
+    }
+
+    return false;
+};
+const acquireSuccessSample = (previousResults) => {
+    let filtered = Object.keys(previousResults).filter(
+        (fullName) =>
+            previousResults[fullName]["success"] == true &&
+            !_.isNil(previousResults[fullName]["htmlUrl"])
+    );
+
+    const successSettings = [
+        [
+            [100, 2000],
+            [100, 2000],
+        ],
+        [
+            [2000, 5000],
+            [500, 3000],
+        ],
+        [
+            [5000, 20000],
+            [3000, 8000],
+        ],
+        [
+            [20000, 100000],
+            [10000, 20000],
+        ],
+    ];
+
+    logger.info(`${filtered.length} items after filtering`, {
+        obj: filtered,
+        func: "acquireSuccessSample",
+    });
+
+    let buckets = successSettings.map((setting) => {
+        return filtered
+            .filter((fullName) => {
+                let result = previousResults[fullName];
+
+                let sizeReq = checkSearchFilter(result.size, setting[0][0], setting[0][1]);
+
+                let starsReq = checkSearchFilter(result.stars, setting[1][0], setting[1][1]);
+
+                return sizeReq && starsReq;
+            })
+            .map((fullName) => previousResults[fullName]["htmlUrl"]);
+    });
+
+    buckets = buckets.map((bucket) => {
+        let arr = bucket.map((item, i) => i);
+
+        let indices = shuffle(arr).slice(0, 1);
+
+        return indices.map((index) => bucket[index]);
+    });
+
+    logger.info(`Successfully acquired ${buckets.length} buckets`, {
+        obj: buckets,
+        func: "acquireSuccessSample",
+    });
+
+    return buckets.flat();
+};
+
 const createPublicWorkspace = async (repoUrls, creatorId = process.env.TEST_USER_ID) => {
     const func = "createPublicWorkspace";
 
@@ -485,6 +579,7 @@ module.exports = {
     acquireRepositoryRawCommits,
     acquireRepositoryRawPullRequests,
     acquireRepositoryRawIssues,
+    acquireSuccessSample,
     compareFields,
     compareSets,
 };
