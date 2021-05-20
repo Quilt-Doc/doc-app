@@ -11,7 +11,7 @@ let commitSchema = new Schema({
     name: { type: String },
     description: { type: String },
     sourceId: { type: String },
-    creator: { type: ObjectId, ref: "IntegrationUser" },
+    creator: { type: String },
     sourceCreationDate: { type: Date },
 
     sha: { type: String, required: true },
