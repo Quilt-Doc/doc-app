@@ -33,7 +33,7 @@ jobs:
           command: npm install jest
       - run:
           name: Run tests
-          command: jest -t "CircleCI playground to make sure testing is working"
+          command: npm run test:ci
      
 
 workflows:
