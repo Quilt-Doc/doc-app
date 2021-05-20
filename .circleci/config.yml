@@ -29,8 +29,12 @@ jobs:
       # - node/install-packages:
       #     pkg-manager: yarn 
       - run:
+          name: Install Jest
+          command: npm install -g jest
+      - run:
           name: Run tests
           command: jest -t "CircleCI playground to make sure testing is working"
+     
 
 workflows:
   # Below is the definition of your workflow.
