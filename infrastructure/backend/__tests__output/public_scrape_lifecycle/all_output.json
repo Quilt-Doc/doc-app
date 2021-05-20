@@ -1,18 +1,20 @@
 {
-    "1621447389924": {
-        "repoUrls": ["https://github.com/johnagan/clean-webpack-plugin"],
-        "success1": true,
-        "success2": false,
-        "success3": false,
-        "success": false
+    "jwilder/docker-squash": {
+        "t1": true,
+        "t2": true,
+        "t3": true,
+        "success": true,
+        "htmlUrl": "https://github.com/jwilder/docker-squash",
+        "size": "100..1000",
+        "stars": "100..2000"
     },
-    "1621447479107": {
-        "repoUrls": ["https://github.com/satazor/js-spark-md5"],
-        "success1": true,
-        "success2": false,
-        "success3": false,
-        "success": false
-    },
-    "1621448066653": { "success2": true },
-    "1621448258856": { "success2": true }
+    "tfredrich/RestApiTutorial.com": {
+        "t1": true,
+        "t2": true,
+        "t3": true,
+        "success": true,
+        "htmlUrl": "https://github.com/tfredrich/RestApiTutorial.com",
+        "size": "2000..3000",
+        "stars": "500..3000"
+    }
 }

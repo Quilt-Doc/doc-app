@@ -16,6 +16,7 @@ const { logger } = require("../../../fs_logging");
 const { deleteWorkspace } = require("../../../__tests__config/utils");
 const {
     sampleGithubRepositories,
+    acquireSuccessSample,
     createPublicWorkspace,
 } = require("../../../__tests__helpers/github/public_scrape_helpers");
 const {
@@ -26,13 +27,13 @@ const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 // constants:
 // parameters to sampling function
-const NUM_STARS = "10..2000";
-const REPO_SIZE = "100..200";
+const NUM_STARS = "500..3000";
+const REPO_SIZE = "2000..3000";
 const NUM_REPOS = 1;
 
-// 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all
+// 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all 4 -- travis
 // or array of specific repoUrls
-const SAMPLE_OPTION = 0;
+const SAMPLE_OPTION = 4;
 
 // paths of stored json
 const PREVIOUS_PATH = "./__tests__output/public_scrape_lifecycle/previous_output.json";
@@ -63,25 +64,33 @@ afterAll(async () => {
     }
 
     if (process.env.CURRENT_RESULTS) {
+        const testRepositories = JSON.parse(process.env.TEST_REPOSITORIES);
+
         const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
-        if (
-            currentResults[process.env.TEST_ID]["success1"] &&
-            currentResults[process.env.TEST_ID]["success2"] &&
-            currentResults[process.env.TEST_ID]["success3"]
-        ) {
-            currentResults[process.env.TEST_ID]["success"] = true;
-        }
+        const previousResults = JSON.parse(process.env.PREVIOUS_RESULTS);
 
-        fs.writeFile(RESULTS_PATH, JSON.stringify(currentResults[process.env.TEST_ID]), () => {});
+        const repositories = testRepositories[0];
 
-        if (process.env.PREVIOUS_RESULTS) {
-            fs.writeFile(PREVIOUS_PATH, process.env.PREVIOUS_RESULTS, () => {});
-        }
+        let testResults = {};
 
-        if (process.env.CURRENT_RESULTS) {
-            fs.writeFile(CURRENT_PATH, process.env.CURRENT_RESULTS, () => {});
-        }
+        repositories.map((repo) => {
+            const { fullName } = repo;
+
+            const result = currentResults[fullName];
+
+            if (result["t1"] && result["t2"] && result["t3"]) {
+                result["success"] = true;
+            }
+
+            testResults[fullName] = result;
+        });
+
+        fs.writeFile(RESULTS_PATH, JSON.stringify(testResults), () => {});
+
+        fs.writeFile(PREVIOUS_PATH, JSON.stringify(previousResults), () => {});
+
+        fs.writeFile(CURRENT_PATH, JSON.stringify(currentResults), () => {});
     }
 });
 
@@ -89,13 +98,7 @@ describe("Basic public repository scrape lifecycle validation", () => {
     test("Sample repositories for validation", async () => {
         const previousResults = JSON.parse(fs.readFileSync(CURRENT_PATH, "utf8"));
 
-        const testId = new Date().getTime();
-
-        previousResults[testId] = {};
-
         process.env.PREVIOUS_RESULTS = JSON.stringify(previousResults);
-
-        process.env.TEST_ID = testId;
 
         let repoUrls = [];
 
@@ -106,6 +109,10 @@ describe("Basic public repository scrape lifecycle validation", () => {
                 repoSize: REPO_SIZE,
                 numRepos: NUM_REPOS,
             });
+        } else if (SAMPLE_OPTION == 4) {
+            repoUrls = acquireSuccessSample(previousResults);
+        } else if (typeof SAMPLE_OPTION == "object") {
+            repoUrls = SAMPLE_OPTION;
         }
 
         logger.info(`Sampled ${repoUrls.length} repositories`, {
@@ -117,19 +124,34 @@ describe("Basic public repository scrape lifecycle validation", () => {
     });
 
     test("Creating shared-repo workspaces does not create duplicates", async () => {
-        let previousResults = JSON.parse(process.env.PREVIOUS_RESULTS);
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
+        let currentResults = JSON.parse(process.env.PREVIOUS_RESULTS);
 
         const repoUrls = JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS);
 
-        previousResults[process.env.TEST_ID] = {
-            repoUrls: repoUrls,
-            success1: false,
-            success2: false,
-            success3: false,
-            success: false,
-        };
-
         const { workspace, repositories } = await createPublicWorkspace(repoUrls);
+
+        repositories.map((repo, i) => {
+            if (!currentResults[repo.fullName]) currentResults[repo.fullName] = {};
+
+            currentResults[repo.fullName] = {
+                ...currentResults[repo.fullName],
+                t1: false,
+                t2: false,
+                t3: false,
+                success: false,
+                htmlUrl: repoUrls[i],
+            };
+
+            if (SAMPLE_OPTION == 0) {
+                currentResults[repo.fullName]["size"] = REPO_SIZE;
+
+                currentResults[repo.fullName]["stars"] = NUM_STARS;
+            }
+        });
+
+        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
 
         const counts1 = await Promise.all(
             repositories.map((repo) => {
@@ -157,11 +179,11 @@ describe("Basic public repository scrape lifecycle validation", () => {
 
         expect(counts1).toEqual(counts2);
 
-        previousResults[process.env.TEST_ID]["success1"] = true;
+        repositories.map((repo) => {
+            currentResults[repo.fullName]["t1"] = true;
+        });
 
-        console.log("PREVIOUS_RESULTS", previousResults);
-
-        process.env.CURRENT_RESULTS = JSON.stringify(previousResults);
+        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
 
         process.env.EXPECTED_COUNTS = JSON.stringify(counts1);
 
@@ -171,7 +193,9 @@ describe("Basic public repository scrape lifecycle validation", () => {
     });
 
     test("Deleting single shared-repo workspaces does not delete shared resources", async () => {
-        let previousResults = JSON.parse(process.env.PREVIOUS_RESULTS);
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
+        let currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
         const workspaces = JSON.parse(process.env.TEST_WORKSPACES);
 
@@ -182,8 +206,6 @@ describe("Basic public repository scrape lifecycle validation", () => {
         const expectedCounts = JSON.parse(process.env.EXPECTED_COUNTS);
 
         await deleteWorkspace(workspace._id);
-
-        process.env.TEST_REPOSITORIES = JSON.stringify([repositories, repositories2]);
 
         const counts1 = await Promise.all(
             repositories.map((repo) => {
@@ -205,23 +227,29 @@ describe("Basic public repository scrape lifecycle validation", () => {
 
         expect(counts1).toEqual(expectedCounts);
 
-        previousResults[process.env.TEST_ID]["success2"] = true;
+        repositories.map((repo) => {
+            currentResults[repo.fullName]["t2"] = true;
+        });
 
-        process.env.CURRENT_RESULTS = JSON.stringify(previousResults);
+        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
     });
 
     test("Deleting only workspace with repo content deletes content", async () => {
-        let previousResults = JSON.parse(process.env.PREVIOUS_RESULTS);
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
+        let currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
         const workspaces = JSON.parse(process.env.TEST_WORKSPACES);
 
         const workspace = workspaces[1];
 
-        const [repositories, repositories2] = process.env.TEST_REPOSITORIES;
+        const repos = JSON.parse(process.env.TEST_REPOSITORIES);
+
+        const repositories = repos[1];
 
         const expectedCounts = repositories.map(() => {
             return {
-                repositories: 0,
+                repositories: 1,
                 commits: 0,
                 tickets: 0,
                 branches: 0,
@@ -230,8 +258,6 @@ describe("Basic public repository scrape lifecycle validation", () => {
         });
 
         await deleteWorkspace(workspace._id);
-
-        process.env.TEST_REPOSITORIES = JSON.stringify([repositories, repositories2]);
 
         const counts = await Promise.all(
             repositories.map((repo) => {
@@ -243,8 +269,10 @@ describe("Basic public repository scrape lifecycle validation", () => {
 
         expect(counts).toEqual(expectedCounts);
 
-        previousResults[process.env.TEST_ID]["success3"] = true;
+        repositories.map((repo) => {
+            currentResults[repo.fullName]["t3"] = true;
+        });
 
-        process.env.CURRENT_RESULTS = JSON.stringify(previousResults);
+        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
     });
 });

@@ -2,23 +2,14 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-const api = require("../../../apis/api");
-
 const Workspace = require("../../../models/Workspace");
 const Commit = require("../../../models/Commit");
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
-const Repository = require("../../../models/Repository");
+const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
 const Association = require("../../../models/associations/Association");
 const PullRequest = require("../../../models/PullRequest");
 
-const _ = require("lodash");
-
-const {
-    createWorkspace,
-    removeWorkspaces,
-    deleteWorkspace,
-} = require("../../../__tests__config/utils");
-const IntegrationBoard = require("../../../models/integrations/integration_objects/IntegrationBoard");
+const { createWorkspace, deleteWorkspace } = require("../../../__tests__config/utils");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -46,21 +37,16 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    let workspaces;
-
-    workspaces = await Workspace.find({
+    const workspaces = await Workspace.find({
         memberUsers: { $in: [TEST_USER_ID] },
     });
 
-    /*
     for (let i = 0; i < workspaces.length; i++) {
-        console.log(workspaces[i]._id);
-
         await deleteWorkspace(workspaces[i]._id);
-    }*/
+    }
 });
 
-describe("Issue Scraping Tests", () => {
+describe("Basic private issue scraping + associations test", () => {
     test("Board instantiated for repository", async () => {
         const boards = await IntegrationBoard.find({
             repositories: {
@@ -80,7 +66,7 @@ describe("Issue Scraping Tests", () => {
             source: "github",
         });
 
-        expect(issues.length).toEqual(6);
+        expect(issues.length).toEqual(9);
     });
 
     test("Issue referenced in commit", async () => {

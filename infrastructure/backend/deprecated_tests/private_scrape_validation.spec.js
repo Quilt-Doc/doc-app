@@ -40,6 +40,7 @@ const { ObjectId } = mongoose.Types;
 const Commit = require("../../../models/Commit");
 const Branch = require("../../../models/Branch");
 const PullRequest = require("../../../models/PullRequest");
+const Workspace = require("../../../models/Workspace");
 
 const api = require("../../../apis/api");
 
@@ -117,7 +118,15 @@ beforeAll(async () => {
     }
 });
 
-describe("Test Code Object Scrape", () => {
+afterAll(async () => {
+    const workspaces = await Workspace.find({ creator: TEST_USER_ID });
+
+    for (let i = 0; i < workspaces.length; i++) {
+        await deleteWorkspace(workspaces[i]._id);
+    }
+});
+
+describe("Private code object scrape validation", () => {
     let backendClient;
 
     beforeEach(() => {

@@ -22,6 +22,7 @@ const {
     acquireRepositoryRawCommits,
     acquireRepositoryRawPullRequests,
     acquireRepositoryRawIssues,
+    acquireSuccessSample,
     createPublicWorkspace,
     compareFields,
     compareSets,
@@ -32,11 +33,11 @@ const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 
 // constants:
 // parameters to sampling function
-const NUM_STARS = "10..2000";
-const REPO_SIZE = "100..200";
+const NUM_STARS = "100..2000";
+const REPO_SIZE = "100..1000";
 const NUM_REPOS = 1;
 
-// 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all
+// 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all 4 -- travis
 // or array of specific repoUrls
 const SAMPLE_OPTION = 0;
 
@@ -81,6 +82,8 @@ afterAll(async () => {
 
         const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
+        const previousResults = JSON.parse(process.env.PREVIOUS_RESULTS);
+
         let failedResults = {};
 
         let successResults = {};
@@ -122,14 +125,12 @@ afterAll(async () => {
         fs.writeFile(RESULTS_PATH, JSON.stringify(testResults), () => {});
 
         if (process.env.PREVIOUS_RESULTS) {
-            fs.writeFile(PREVIOUS_PATH, process.env.PREVIOUS_RESULTS, () => {});
+            fs.writeFile(PREVIOUS_PATH, JSON.stringify(previousResults), () => {});
         }
 
         if (process.env.CURRENT_RESULTS) {
-            fs.writeFile(CURRENT_PATH, process.env.CURRENT_RESULTS, () => {});
+            fs.writeFile(CURRENT_PATH, JSON.stringify(currentResults), () => {});
         }
-
-        console.log("Test Results", testResults);
     }
 });
 
@@ -172,6 +173,8 @@ describe("Basic public github scrape validation", () => {
                 .filter((item) => item !== null && item !== undefined);
         } else if (typeof SAMPLE_OPTION == "object") {
             repoUrls = SAMPLE_OPTION;
+        } else if (SAMPLE_OPTION == 4) {
+            repoUrls = acquireSuccessSample(previousResults);
         }
 
         logger.info(`Sampled ${repoUrls.length} repositories`, {
@@ -183,6 +186,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Scrape sample repositories and create workspace successfully", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const func = "Scrape sample repositories and create workspace successfully";
 
         let previousResults = JSON.parse(process.env.PREVIOUS_RESULTS);
@@ -191,7 +196,7 @@ describe("Basic public github scrape validation", () => {
 
         const { workspace, repositories } = await createPublicWorkspace(repoUrls);
 
-        repositories.map((repo) => {
+        repositories.map((repo, i) => {
             const { fullName } = repo;
 
             if (fullName in previousResults) {
@@ -201,9 +206,12 @@ describe("Basic public github scrape validation", () => {
                     func,
                     obj: results,
                 });
+            } else {
+                previousResults[fullName] = {};
             }
 
             previousResults[fullName] = {
+                ...previousResults[fullName],
                 commits: {
                     length: "PENDING",
                     name: "PENDING",
@@ -219,8 +227,14 @@ describe("Basic public github scrape validation", () => {
                     description: "PENDING",
                 },
                 success: false,
-                htmlUrl: repo.htmlUrl,
+                htmlUrl: repoUrls[i],
             };
+
+            if (SAMPLE_OPTION == 0) {
+                previousResults[fullName]["size"] = REPO_SIZE;
+
+                previousResults[fullName]["stars"] = NUM_STARS;
+            }
         });
 
         process.env.CURRENT_RESULTS = JSON.stringify(previousResults);
@@ -231,6 +245,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Acquire scraped and raw commits", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         // acquire commits for each repository from github API
@@ -249,6 +265,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate commit scrape and raw set equality", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allCommits = JSON.parse(process.env.TEST_ALL_COMMITS);
@@ -261,6 +279,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate commit names", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allCommits = JSON.parse(process.env.TEST_ALL_COMMITS);
@@ -273,6 +293,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Acquire scraped and raw pull requests", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         // acquire commits for each repository from github API
@@ -296,6 +318,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate pull request sets", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
@@ -308,6 +332,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate pull request names", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
@@ -320,6 +346,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate pull request descriptions", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
@@ -338,6 +366,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Acquire scraped and raw issues", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allPullRequests = JSON.parse(process.env.TEST_ALL_PULL_REQUESTS);
@@ -362,6 +392,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate equality of scraped and raw issue sets", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allIssues = JSON.parse(process.env.TEST_ALL_ISSUES);
@@ -374,6 +406,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate issue names", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allIssues = JSON.parse(process.env.TEST_ALL_ISSUES);
@@ -386,6 +420,8 @@ describe("Basic public github scrape validation", () => {
     });
 
     test("Validate issue descriptions", async () => {
+        if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
+
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
         const allIssues = JSON.parse(process.env.TEST_ALL_ISSUES);
