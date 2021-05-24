@@ -25,8 +25,7 @@ const app = express();
 
 //SENTRY
 Sentry.init({
-    dsn:
-        "https://5a8e044d64d24a7e8ec52600ee527944@o504090.ingest.sentry.io/5590374",
+    dsn: "https://5a8e044d64d24a7e8ec52600ee527944@o504090.ingest.sentry.io/5590374",
 });
 
 app.use(Sentry.Handlers.requestHandler());
@@ -133,10 +132,7 @@ app.use(function (req, res, next) {
     }
 
     // Check if asset call
-    if (
-        req.path.includes("/assets") ||
-        req.path.includes("/integrations/trello")
-    ) {
+    if (req.path.includes("/assets") || req.path.includes("/integrations/trello")) {
         isNonAuthPath = true;
     }
 
@@ -204,22 +200,4 @@ app.get("/", authCheck, (req, res) => {
 
 app.use(Sentry.Handlers.errorHandler());
 
-if (process.env.IS_PRODUCTION) {
-    setupESConnection().then(() => {
-        app.listen(API_PORT, "0.0.0.0", () =>
-            logger.info({
-                source: "backend-api",
-                message: `Listening on port ${API_PORT}`,
-                function: "index.js",
-            })
-        );
-    });
-} else {
-    app.listen(API_PORT, "0.0.0.0", () => {
-        logger.debug({
-            source: "backend-api",
-            message: `Listening on port ${API_PORT}`,
-            function: "index.js",
-        });
-    });
-}
+app.listen(API_PORT, "0.0.0.0", () => {});

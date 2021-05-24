@@ -1,3 +1,6 @@
+//utility
+const _ = require("lodash");
+
 //association helpers
 const DirectAssociationGenerator = require("./helpers/directAssociationGenerator");
 
@@ -16,6 +19,9 @@ const { ObjectId } = mongoose.Types;
 
 //utils
 const { checkValid } = require("../../utils/utils");
+
+// logger
+const { logger } = require("../../fs_logging");
 
 //models
 const Association = require("../../models/associations/Association");
@@ -40,7 +46,7 @@ const createGithubIssueBoard = async (req, res) => {
     return res.json({ success: true, result: createdBoard._id.toString() });
 };
 
-generateAssociations = async (req, res) => {
+const generateAssociations = async (req, res) => {
     const { workspaceId } = req.params;
 
     console.log("ENTERED IN GENERATE ASSOCS", workspaceId);
@@ -207,14 +213,19 @@ const getFileContext = async (req, res) => {
 
     const { filePath } = req.body;
 
-    if (!checkValid(workspaceId)) {
+    logger.info(
+        `Entered with workspaceId: ${workspaceId}, repositoryId: ${repositoryId} and filePath: ${filePath}`,
+        { func: "getFileContext" }
+    );
+
+    if (_.isNil(workspaceId)) {
         return res.json({
             success: false,
             error: "no association workspaceId provided",
         });
     }
 
-    if (!checkValid(filePath)) {
+    if (_.isNil(filePath)) {
         return res.json({
             success: false,
             error: "no association filePath provided",
@@ -227,64 +238,83 @@ const getFileContext = async (req, res) => {
         jira: {},
     };
 
+    let pullRequests = [];
+
     // Fetch PRs
     try {
-        let query = PullRequest.find();
+        pullRequests = await PullRequest.find({
+            repository: repositoryId,
+            fileList: { $in: [filePath] },
+        })
+            .populate("repository")
+            .limit(20)
+            .lean()
+            .exec();
 
-        query.where("repository").equals(repositoryId);
+        result["github"].pullRequests = pullRequests;
+    } catch (e) {
+        logger.error("Failure during pull request query", {
+            func: "getFileContext",
+            e,
+        });
 
-        query.where("fileList").in([filePath]);
-
-        result["github"].pullRequests = await query.limit(20).lean().exec();
-    } catch (err) {
         return res.json({
             success: false,
             error: `error finding PullRequests - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            trace: err,
+            trace: exports,
         });
     }
 
+    let commits = [];
+
     // Fetch Commits
     try {
-        let query = Commit.find();
+        commits = await Commit.find({
+            repository: repositoryId,
+            fileList: { $in: [filePath] },
+        })
+            .populate("repository")
+            .limit(20)
+            .lean()
+            .exec();
 
-        query.where("repository").equals(repositoryId);
+        result["github"].commits = commits;
+    } catch (e) {
+        logger.error("Failure during commit query", {
+            func: "getFileContext",
+            e,
+        });
 
-        query.where("fileList").in([filePath]);
-
-        result["github"].commits = await query.limit(20).lean().exec();
-    } catch (err) {
         return res.json({
             success: false,
             error: `error finding Commits - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            trace: err,
+            trace: e,
         });
     }
 
     // Get all Code Object Ids
-    let codeObjectIds = [];
-
-    Object.keys(result["github"]).map((modelType) => {
-        codeObjectIds = [
-            ...codeObjectIds,
-            ...result["github"][modelType].map((codeObject) => codeObject._id),
-        ];
-    });
+    let codeObjectIds = [
+        ...commits.map((commit) => commit._id),
+        ...pullRequests.map((pr) => pr._),
+    ];
 
     // Get all Associations of Code Objects
     let associations;
 
     try {
-        let query = Association.find();
-
-        query.where("secondElement").in(codeObjectIds);
-
-        query.where("workspaces").in([workspaceId]);
-
-        query.select("firstElement workspaces");
-
-        associations = await query.lean().exec();
+        associations = await Association.find({
+            secondElement: { $in: codeObjectIds },
+            workspaces: { $in: [workspaceId] },
+        })
+            .select("firstElement workspaces")
+            .lean()
+            .exec();
     } catch (e) {
+        logger.error("Failure during association query", {
+            func: "getFileContext",
+            e,
+        });
+
         return res.json({
             success: false,
             error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
@@ -318,6 +348,11 @@ const getFileContext = async (req, res) => {
             })
         );
     } catch (e) {
+        logger.error("Failure during ticket query", {
+            func: "getFileContext",
+            e,
+        });
+
         Sentry.captureException(e);
 
         return res.json({
@@ -329,6 +364,11 @@ const getFileContext = async (req, res) => {
 
     ticketsBySource.map((tickets, i) => {
         result[ticketSources[i]].tickets = tickets;
+    });
+
+    logger.info("Successfully returning context", {
+        obj: result,
+        func: "getFileContext",
     });
 
     //IntegrationTicket.populate(tickets, {path: "author references workspace repository tags snippets"});
