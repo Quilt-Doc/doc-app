@@ -1,43 +1,52 @@
 
 
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const { serializeError, deserializeError } = require('serialize-error');
+const { serializeError, deserializeError } = require("serialize-error");
 
-var LinkHeader = require('http-link-header');
+var LinkHeader = require("http-link-header");
 const parseUrl = require("parse-url");
-const queryString = require('query-string');
+const queryString = require("query-string");
 
-const { fetchAllRepoBranchesAPI, insertBranchesFromAPI } = require('./github/branch_utils');
-const { fetchAllRepoPRsAPIGraphQL, insertPRsFromAPI } = require('./github/pr_utils');
-const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require('./github/commit_utils');
+const { fetchAllRepoBranchesAPI, insertBranchesFromAPI } = require("./github/branch_utils");
+const { fetchAllRepoPRsAPIGraphQL, fetchAllRepoPRsAPIConcurrent, insertPRsFromAPI } = require("./github/pr_utils");
+const { fetchAllRepoCommitsCLI, insertAllCommitsFromCLI } = require("./github/commit_utils");
 
-const { printExecTime } = require('./print');
+const { printExecTime } = require("./print");
 
 const Sentry = require("@sentry/node");
 
 const { at } = require("lodash");
 
-const { cloneInstallationRepo } = require('./github/cli_utils');
+const { cloneInstallationRepo } = require("./github/cli_utils");
+
+const api = require("../apis/api");
+
 
 
 
 const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, installationClient, repositoryObj, workspaceId, repoDiskPath, public = false) => {
 
 
-    // Fetch all branches and PRs from Github
+    var client = (public) ? api.requestPublicGraphQLClient() :
+        api.requestInstallationGraphQLClient(installationId);
+
+
+    // Fetch all PRs from Github
     var start = process.hrtime();
     var foundPRList;
+
+
     try {
-        foundPRList = await fetchAllRepoPRsAPIGraphQL(installationId, repositoryId, repositoryObj.fullName, public);
-    }
-    catch (err) {
+        // foundPRList = await fetchAllRepoPRsAPIGraphQL(client, installationId, repositoryId, repositoryObj.fullName);
+        foundPRList = await fetchAllRepoPRsAPIConcurrent(client, installationId, repositoryId, repositoryObj.fullName);
+    } catch (err) {
 
         console.log(err);
 
         Sentry.setContext("scrapeGithubRepoCodeObjects", {
-            message: `Error fetching all repo PRs`,
+            message: "Error fetching all repo PRs",
             installationId: installationId,
             repositoryFullName: repositoryObj.fullName,
         });
@@ -46,20 +55,21 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
         throw err;
     }
-    printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIGraphQL("${repositoryObj.fullName}")`);
+    // printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIGraphQL("${repositoryObj.fullName}")`);
+    printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIConcurrent("${repositoryObj.fullName}")`);
 
 
-    var start = process.hrtime();
+
+    start = process.hrtime();
     var foundBranchList;
     try {
         foundBranchList = await fetchAllRepoBranchesAPI(installationClient, installationId, repositoryId, repositoryObj.fullName, public);
-    }
-    catch (err) {
+    } catch (err) {
 
         console.log(err);
 
         Sentry.setContext("scrapeGithubRepoCodeObjects", {
-            message: `Error fetching all repo branches`,
+            message: "Error fetching all repo branches",
             installationId: installationId,
             repositoryFullName: repositoryObj.fullName,
         });
@@ -78,13 +88,12 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         var start = process.hrtime();
         try {
             await insertBranchesFromAPI(foundBranchList, installationId, repositoryId);
-        }
-        catch (err) {
+        } catch (err) {
 
             console.log(err);
 
             Sentry.setContext("scrapeGithubRepoCodeObjects", {
-                message: `Error inserting Branches from API`,
+                message: "Error inserting Branches from API",
                 installationId: installationId,
                 repositoryId: repositoryId,
                 foundBranchListLength: foundBranchList.length,
@@ -103,13 +112,12 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
         var start = process.hrtime();
         try {
             await insertPRsFromAPI(foundPRList);
-        }
-        catch (err) {
+        } catch (err) {
 
             console.log(err);
 
             Sentry.setContext("scrapeGithubRepoCodeObjects", {
-                message: `Error inserting PRs from API`,
+                message: "Error inserting PRs from API",
                 installationId: installationId,
                 repositoryId: repositoryId,
                 foundPRListLength: foundPRList.length,
@@ -127,13 +135,12 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     var foundCommitList;
     try {
         foundCommitList = await fetchAllRepoCommitsCLI(installationId, repositoryObj._id.toString(), repoDiskPath);
-    }
-    catch (err) {
+    } catch (err) {
 
         console.log(err);
 
         Sentry.setContext("scrapeGithubRepoCodeObjects", {
-            message: `Error fetching all repo commits`,
+            message: "Error fetching all repo commits",
             installationId: installationId,
             repositoryId: repositoryId,
             repoDiskPath: repoDiskPath,
@@ -151,13 +158,12 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
     var insertedCommitsCLI;
     try {
         insertedCommitsCLI = await insertAllCommitsFromCLI(foundCommitList, installationId, repositoryId);
-    }
-    catch (err) {
+    } catch (err) {
 
         console.log(err);
 
         Sentry.setContext("scrapeGithubRepoCodeObjects", {
-            message: `Error inserting Commits from CLI`,
+            message: "Error inserting Commits from CLI",
             installationId: installationId,
             repositoryId: repositoryId,
             foundCommitListLength: foundCommitList.length,
@@ -175,8 +181,8 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
 
 
-}
+};
 
 module.exports = {
     scrapeGithubRepoCodeObjects,
-}
+};

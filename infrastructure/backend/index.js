@@ -33,8 +33,6 @@ app.use(Sentry.Handlers.requestHandler());
 
 const logger = require("./logging/index").logger;
 
-const setupESConnection = require("./logging/index").setupESConnection;
-
 const { format } = require("logform");
 
 const jsonFormat = format.json();
@@ -204,22 +202,10 @@ app.get("/", authCheck, (req, res) => {
 
 app.use(Sentry.Handlers.errorHandler());
 
-if (process.env.IS_PRODUCTION) {
-    setupESConnection().then(() => {
-        app.listen(API_PORT, "0.0.0.0", () =>
-            logger.info({
-                source: "backend-api",
-                message: `Listening on port ${API_PORT}`,
-                function: "index.js",
-            })
-        );
+app.listen(API_PORT, "0.0.0.0", () => {
+    logger.debug({
+        source: "backend-api",
+        message: `Listening on port ${API_PORT}`,
+        function: "index.js",
     });
-} else {
-    app.listen(API_PORT, "0.0.0.0", () => {
-        logger.debug({
-            source: "backend-api",
-            message: `Listening on port ${API_PORT}`,
-            function: "index.js",
-        });
-    });
-}
+});

@@ -33,9 +33,11 @@ infrastructure/lambdas/github-app/models*
 infrastructure/lambdas/github-app/constants*
 
 # Ignore token-manager build artifacts
-infrastructure/token-manager/models*
-infrastructure/token-manager/constants*
+infrastructure/lambdas/token-manager/models*
+infrastructure/lambdas/token-manager/constants*
 
+# Ignore test lambda
+infrastructure/lambdas/gh-app-listener*
 
 # Ignore dashboard-lambda build artifacts
 infrastructure/dashboard-lambda/models*
