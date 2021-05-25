@@ -70,7 +70,8 @@ const integrationTicketSchema = new Schema({
 
 
     // Github Issue specific fields
-    repositoryId: { type: ObjectId, ref: 'Repository' },
+    repositoryId: { type: ObjectId, ref: "Repository" },
+    githubIssueCreator: { type: String },
     // id: repositoryIssueObj.id, --> sourceId
     githubIssueHtmlUrl: { type: String },
     githubIssueNumber: { type: Number },
