@@ -146,7 +146,7 @@ logout = (req, res) => {
     // res.redirect(CLIENT_HOME_PAGE_URL);
 };
 
-checkInstallation = async (req, res) => {
+const checkInstallation = async (req, res) => {
     const { userId } = req.body;
 
     if (!checkValid(userId))

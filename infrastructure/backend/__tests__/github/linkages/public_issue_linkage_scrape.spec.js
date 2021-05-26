@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 
 // models
 const Workspace = require("../../../models/Workspace");
-const IntegrationTicket = require("../../../models/IntegrationTicket");
+const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
 
 // logger
 const { logger } = require("../../../fs_logging");
@@ -27,7 +27,7 @@ const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 // parameters to sampling function
 const NUM_STARS = "500..3000";
 const REPO_SIZE = "1000..2000";
-const NUM_REPOS = 1;
+const NUM_REPOS = 5;
 
 // 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all 4 -- travis
 // or array of specific repoUrls
@@ -94,10 +94,12 @@ describe("Basic public issue linkage validation", () => {
             obj: repoUrls,
         });
 
+        console.log("REPOURLS", repoUrls);
+
         process.env.TEST_SAMPLE_REPOSITORY_URLS = JSON.stringify(repoUrls);
     });
 
-    test("Creating shared-repo workspaces does not create duplicates", async () => {
+    test("Linkage counts seem accurate", async () => {
         if (JSON.parse(process.env.TEST_SAMPLE_REPOSITORY_URLS).length == 0) return;
 
         let currentResults = JSON.parse(process.env.PREVIOUS_RESULTS);
@@ -174,6 +176,8 @@ describe("Basic public issue linkage validation", () => {
                     (numIssuesCommit / tickets.length) * 100
                 } %`,
                 htmlUrl,
+                size: REPO_SIZE,
+                stars: NUM_STARS,
             };
         });
 
