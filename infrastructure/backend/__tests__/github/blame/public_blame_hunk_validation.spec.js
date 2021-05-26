@@ -162,6 +162,79 @@ describe("Basic public blame hunk validation", () => {
         process.env.COMMIT_SAMPLES = JSON.stringify(commitSamples);
     });
 
+    test("Validate commit blame hunk sourceIds", async () => {
+        const currentResults = JSON.parse(currentResults);
+
+        const repositories = JSON.parse(process.env.REPOSITORIES);
+
+        const insertHunks = await Promise.all(
+            repositories.map((repo) => {
+                InsertHunk.find({ repository: repo._id });
+            })
+        );
+
+        const shaRegex = /\b[0-9a-f]{7,40}\b/;
+
+        repositories.map((repo, i) => {
+            const { fullName } = repo;
+
+            const repoHunks = insertHunks[i];
+
+            let areRefsCorrect = true;
+
+            const errorData = [];
+
+            repoHunks.map((hunk) => {
+                const {
+                    commitSha,
+                    pullRequestNumber,
+                    filePath,
+                    lineStart,
+                    lines,
+                } = hunk;
+
+                const isBlankRef = !commitSha && !pullRequestNumber;
+
+                const isBlankFile = !filePath;
+
+                const isBlankStart = !lineStart;
+
+                const isBlankLines = !lines || lines.length == 0;
+
+                const isInvalidSha =
+                    !commitSha ||
+                    !shaRegex.test(commitSha) ||
+                    commitSha.length != 40;
+
+                if (
+                    isBlankRef ||
+                    isBlankFile ||
+                    isBlankStart ||
+                    isBlankLines ||
+                    isInvalidSha
+                ) {
+                    areRefsCorrect = false;
+
+                    errorData.push({
+                        ...hunk,
+                        isBlankRef,
+                        isBlankFile,
+                        isBlankStart,
+                        isBlankLines,
+                        isInvalidSha,
+                    });
+                }
+            });
+
+            currentResults[fullName]["field"] = {
+                errorData,
+                areRefsCorrect,
+            };
+        });
+
+        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+    });
+
     test("Validate commit blame hunk ranges", async () => {
         const currentResults = JSON.parse(currentResults);
 
@@ -195,11 +268,9 @@ describe("Basic public blame hunk validation", () => {
                 blameRanges[i]
             );
 
-            currentResults["range"] = results;
+            const { fullName } = repositories[i];
 
-            expect(
-                compareScrapeToSampleBlames(sample, insertHunks[i], blameRanges[i])
-            ).toEqual(true);
+            currentResults[fullName]["range"] = results;
         });
 
         process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
