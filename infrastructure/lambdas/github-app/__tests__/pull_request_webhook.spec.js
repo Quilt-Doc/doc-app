@@ -6,11 +6,11 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
 // models
-const Commit = require('../models/Commit');
-const Branch = require('../models/Branch');
-const PullRequest = require('../models/PullRequest');
+const Commit = require("../models/Commit");
+const Branch = require("../models/Branch");
+const PullRequest = require("../models/PullRequest");
 
-const InsertHunk = require('../models/InsertHunk');
+const InsertHunk = require("../models/InsertHunk");
 
 const api = require("../apis/api");
 
@@ -67,8 +67,7 @@ beforeAll(async () => {
         console.log(JSON.stringify(workspace));
 
         process.env.TEST_PULL_REQUEST_EVENT_WORKSPACE = JSON.stringify(workspace);
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
     }
 });
@@ -79,7 +78,7 @@ describe ("Test Code Object Scrape", () => {
 
     beforeEach(() => {
         backendClient = api.requestTestingUserBackendClient();
-        handler = require('../index').handler;
+        handler = require("../index").handler;
     });
 
 
@@ -94,8 +93,8 @@ describe ("Test Code Object Scrape", () => {
             prEvent = Object.assign({}, { body: JSON.stringify(prEvent) });
 
             prEvent.headers = {};
-            prEvent.headers['x-hub-signature'] = process.env.DEV_TOKEN;
-            prEvent.headers['x-github-event'] = 'pull_request';
+            prEvent.headers["x-hub-signature"] = process.env.DEV_TOKEN;
+            prEvent.headers["x-github-event"] = "pull_request";
 
             await handler(prEvent);
         }

@@ -12,13 +12,13 @@ installation	object	The GitHub App installation. Webhook payloads contain the in
 sender	        object	The user that triggered the event.
 */
 
-const handleCreateEvent = async (backendClient, event, githubEvent) => {
+const handleCreateEvent = async (backendClient, event) => {
     
     console.log(`Branch '${event.body.action}' Event Received`);
 
     var refType = event.body.ref_type;
 
-    if (refType == 'branch') {
+    if (refType == "branch") {
         var branchName = event.body.ref;
         var defaultBranchName = event.body.master_branch;
         var repositoryFullName = event.body.repository.full_name;
@@ -26,25 +26,22 @@ const handleCreateEvent = async (backendClient, event, githubEvent) => {
         var githubUserId = event.body.sender.id;
 
 
-        var createBranchResponse;
-
         var branchCreateData = {
-                    ref: branchName,
-                    masterBranch: defaultBranchName,
-                    installationId: installationId,
-                    fullName: repositoryFullName,
-                    githubUserId: githubUserId,
-                };
+            ref: branchName,
+            masterBranch: defaultBranchName,
+            installationId: installationId,
+            fullName: repositoryFullName,
+            githubUserId: githubUserId,
+        };
 
         try {
-            createBranchResponse = await backendClient.post("/branch/create", branchCreateData);
-        }
-        catch (err) {
+            await backendClient.post("/branch/create", branchCreateData);
+        } catch (err) {
 
             console.log(err);
 
             Sentry.setContext("handleCreateEvent", {
-                message: `Error creating branch`,
+                message: "Error creating branch",
                 branchCreateData: branchCreateData,
             });
     
@@ -55,8 +52,8 @@ const handleCreateEvent = async (backendClient, event, githubEvent) => {
 
         }
     }
-}
+};
 
 module.exports = {
     handleCreateEvent,
-}
+};
