@@ -1,7 +1,3 @@
-// How to handle pull requests?
-
-const fs = require("fs");
-
 require("dotenv").config();
 
 
@@ -30,10 +26,8 @@ exports.handler = async (event) => {
     hmac.update(event.body, "binary");
     var expected = "sha1=" + hmac.digest("hex");
 
-    // Modify
-    if (sig == process.env.DEV_TOKEN) {
-        console.log("LAMBDA RECEIVED DEV TOKEN");
-    } else if (!(sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)))) {
+    if (!(sig.length === expected.length &&
+        crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)))) {
         let response = {
             statusCode: 401,
             headers: {
@@ -67,22 +61,22 @@ exports.handler = async (event) => {
             console.log("Github 'error' action received");
             break;
         case "push":
-            await pushEvents.handlePushEvent(backendClient, event, githubEvent);
+            await pushEvents.handlePushEvent(backendClient, event);
             break;
         case "installation":
-            await installationEvents.handleInstallationEvent(backendClient, event, githubEvent);
+            await installationEvents.handleInstallationEvent(backendClient, event);
             break;
         case "installation_repositories":
-            await installationEvents.handleInstallationRepositoriesEvent(backendClient, event, githubEvent);
+            await installationEvents.handleInstallationRepositoriesEvent(backendClient, event);
             break;
         case "pull_request":
-            await pullRequestEvents.handlePullRequestEvent(backendClient, event, githubEvent);
+            await pullRequestEvents.handlePullRequestEvent(backendClient, event);
             break;
         case "create":
-            await refEvents.handleCreateEvent(backendClient, event, githubEvent);
+            await refEvents.handleCreateEvent(backendClient, event);
             break;
         case "issues":
-            await issueEvents.handleIssueEvent(backendClient, event, githubEvent);
+            await issueEvents.handleIssueEvent(backendClient, event);
         }
     } catch (err) {
         console.log(err);

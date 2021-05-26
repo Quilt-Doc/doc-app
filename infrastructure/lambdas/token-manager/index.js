@@ -12,14 +12,14 @@ const { ObjectId } = mongoose.Types;
 const Token = require("./models/Token");
 const GithubAuthProfile = require("./models/authentication/GithubAuthProfile");
 
-const {serializeError, deserializeError} = require("serialize-error");
-
 
 const password = process.env.EXTERNAL_DB_PASS;
 const user = process.env.EXTERNAL_DB_USER;
 var dbRoute = `mongodb+srv://${user}:${password}@docapp-cluster-hnftq.mongodb.net/test?retryWrites=true&w=majority`;
 
 const logger = require("./logging/index").logger;
+
+const Sentry = require("@sentry/serverless");
 
 mongoose.connect(dbRoute, { useNewUrlParser: true });
 
@@ -38,10 +38,18 @@ const refreshGithubTokens = async () => {
                 { refreshTokenExpireTime: { $lte: (currentMillis + (60*60*1000))} }],
         }).lean().exec();
     } catch (err) {
-        await logger.error({source: "token-lambda",
-            message: err,
-            errorDescription: "Error GithubAuthProfile find valid tokens expiring in less than an hour failed",
-            function: "refreshGithubTokens"});
+
+        logger.error("Error GithubAuthProfile find valid tokens expiring in less than an hour failed", {
+            func: "refreshGithubTokens",
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error GithubAuthProfile find valid tokens expiring in less than an hour failed",
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
     
@@ -101,10 +109,10 @@ const refreshGithubTokens = async () => {
     console.log(results);
 
     // Non-error responses
-    validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
+    var validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
 
     // Error responses
-    invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
+    var invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
 
     
     /*
@@ -121,9 +129,14 @@ const refreshGithubTokens = async () => {
                 filter: { user: ObjectId(queryObj.value.userId), status: "valid" },
                 // Where field is the field you want to update
                 update: { $set: { accessToken: queryObj.value.access_token,
-                    accessTokenExpireTime: (currentMillis + (parseInt(queryObj.value.expires_in, 10)*1000)),
+                    accessTokenExpireTime: 
+                        (currentMillis + (parseInt(queryObj.value.expires_in, 10)*1000)),
                     refreshToken: queryObj.value.refresh_token,
-                    refreshTokenExpireTime: (currentMillis + (parseInt(queryObj.value.refresh_token_expires_in, 10)*1000)) } },
+                    refreshTokenExpireTime: 
+                        (currentMillis +
+                            (parseInt(queryObj.value.refresh_token_expires_in, 10)*1000)
+                        ),
+                } },
                 upsert: false,
             },
         });
@@ -177,7 +190,7 @@ const refreshGithubTokens = async () => {
 
 };
 
-createAppJWTToken = () => {
+const createAppJWTToken = () => {
     
     const now = new Date().getTime();
     //Get timestamp in seconds
@@ -213,7 +226,10 @@ const insertNewAppToken = async () => {
 
     var createdToken;
     try {
-        createdToken = await Token.create({installationId: newToken.installationId, value: newToken.value, expireTime: newToken.expireTime, type: newToken.type});
+        createdToken = await Token.create({installationId: newToken.installationId,
+            value: newToken.value, 
+            expireTime: newToken.expireTime, 
+            type: newToken.type});
     } catch (err) {
         await logger.error({source: "token-lambda", message: err, errorDescription: "Error creating new 'APP' Token", function: "insertNewAppToken"});
         throw err;
@@ -231,7 +247,8 @@ const updateAppToken = async (oldToken) => {
     var updatedAppToken;
 
     try {
-        updatedAppToken = await Token.findOneAndUpdate({ _id: oldToken._id}, {$set: {value: newToken.value, expireTime: newToken.expireTime}});
+        updatedAppToken = await Token.findOneAndUpdate({ _id: oldToken._id}, 
+            {$set: {value: newToken.value, expireTime: newToken.expireTime}});
     } catch (err) {
         await logger.error({source: "token-lambda", message: err, errorDescription: "Error updating 'APP' Token", function: "updateAppToken"});
         throw err;
@@ -270,6 +287,20 @@ const getAppToken = async () => {
 
 exports.handler = async (event) => {
 
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+
+        // Set tracesSampleRate to 1.0 to capture 100%
+        // of transactions for performance monitoring.
+        // We recommend adjusting this value in production
+        tracesSampleRate: 1.0,
+    });
+
+    const response = {
+        statusCode: 200,
+        body: {success: true, result: "Success"},
+    };
+
     // App Token Section START ------
     var currentTime = new Date().getTime();
     var currentAppToken = undefined;
@@ -280,11 +311,18 @@ exports.handler = async (event) => {
     try {
         retrievedToken = await getAppToken();
     } catch (err) {
-        await logger.error({source: "token-lambda", message: err, errorDescription: "Error fetching 'APP' Token", function: "handler"});
-        const response = {
-            statusCode: 500,
-            body: {success: false, error: `Error fetching 'APP' Token: ${err}`},
-        };
+
+        logger.error("Error fetching 'APP' Token", {
+            func: "getAppToken",
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error fetching 'APP' Token",
+        });
+
+        Sentry.captureException(err);
+
         return response;
     }
 
@@ -321,10 +359,8 @@ exports.handler = async (event) => {
             }
 
             await logger.info({source: "token-lambda", message: `Successfully updated 'APP' token new expireTime: ${currentAppToken.expireTime}`, function: "handler"});
-        }
-
-        // If the app token is valid
-        else {
+        } else {
+            // If the app token is valid
             currentAppToken = retrievedToken;
         }
     }
@@ -483,10 +519,7 @@ exports.handler = async (event) => {
             await logger.info({source: "token-lambda", message: `Successfully updated ${bulkOps.length} 'INSTALL' tokens`, function: "handler"});
         }
     }
-    const response = {
-        statusCode: 200,
-        body: {success: true, result: "Success"},
-    };
+
     return response;
     // Install Token Update Section END ------
 };

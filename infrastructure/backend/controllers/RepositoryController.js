@@ -52,7 +52,7 @@ initRepository = async (req, res) => {
         if (!checkValid(publicHtmlUrl)) {
             return res.json({
                 success: false,
-                error: `No public repository html url provided`,
+                error: "No public repository html url provided",
             });
         } else {
             publicUrl = publicHtmlUrl;
@@ -78,12 +78,11 @@ initRepository = async (req, res) => {
         let prevCreatedRepository;
         try {
             prevCreatedRepository = await Repository.findOne({fullName: fullName})
-                                            .lean()
-                                            .exec();
-        }
-        catch (err) {
+                .lean()
+                .exec();
+        } catch (err) {
             Sentry.setContext("initRepository", {
-                message: `Repository.findOne({fullname}) failed`,
+                message: "Repository.findOne({fullname}) failed",
                 fullName: fullName,
                 installationId: installationId,
                 publicHtmlUrl: publicHtmlUrl,
@@ -122,7 +121,7 @@ initRepository = async (req, res) => {
         repository = await repository.save();
     } catch (err) {
         Sentry.setContext("initRepository", {
-            message: `Repository.save() failed`,
+            message: "Repository.save() failed",
             fullName: fullName,
             installationId: installationId,
             publicHtmlUrl: publicHtmlUrl,
@@ -148,7 +147,7 @@ initRepository = async (req, res) => {
         });
     } catch (err) {
         Sentry.setContext("initRepository", {
-            message: `Reference.create failed`,
+            message: "Reference.create failed",
             repositoryId: repository._id,
             repositoryFullName: repository.fullName,
         });
@@ -157,7 +156,7 @@ initRepository = async (req, res) => {
 
         return res.json({
             success: false,
-            error: `Error saving rootReference`,
+            error: "Error saving rootReference",
             trace: err,
         });
     }
@@ -1005,7 +1004,7 @@ searchPublicGithubRepositories = async (req, res) => {
     let requestUrl;
 
     if (query == "") {
-        q = encodeURIComponent(`a in:full_name`);
+        q = encodeURIComponent("a in:full_name");
 
         requestUrl = `/search/repositories?q=${q}&sort=stars&per_page=${12}&page=${1}`;
     } else {

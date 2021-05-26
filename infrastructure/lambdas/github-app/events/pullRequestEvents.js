@@ -1,12 +1,12 @@
 const Sentry = require("@sentry/node");
 
 
-const handlePullRequestEvent = async (backendClient, event, githubEvent) => {
+const handlePullRequestEvent = async (backendClient, event) => {
     console.log(`Pull Request '${event.body.action}' Event Received`);
 
     var prAction = event.body.action;
 
-    if (prAction == 'opened') {
+    if (prAction == "opened") {
 
         var prObj = event.body.pull_request;
 
@@ -61,20 +61,17 @@ const handlePullRequestEvent = async (backendClient, event, githubEvent) => {
         var installationId = event.body.installation.id;
         var repositoryFullName = event.body.repository.full_name;
 
-        var createPRResponse;
-
         try {
-            createPRResponse = await backendClient.post("/pull_requests/create", {  installationId,
-                                                                                    repositoryFullName,
-                                                                                    prData: prCreateData
-                                                                                });
-        }
-        catch (err) {
+            await backendClient.post("/pull_requests/create", {  installationId,
+                repositoryFullName,
+                prData: prCreateData,
+            });
+        } catch (err) {
 
             console.log(err);
 
             Sentry.setContext("handlePullRequestEvent", {
-                message: `Error Creating PR`,
+                message: "Error Creating PR",
                 installationId: installationId,
                 repositoryFullName: repositoryFullName,
                 prNumber: prCreateData.number,
@@ -86,8 +83,8 @@ const handlePullRequestEvent = async (backendClient, event, githubEvent) => {
         }
 
     }
-}
+};
 
 module.exports = {
-    handlePullRequestEvent
-}
+    handlePullRequestEvent,
+};
