@@ -8,7 +8,6 @@ const mongoose = require("mongoose");
 
 // models
 const Workspace = require("../../../models/Workspace");
-const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
 const Commit = require("../../../models/Commit");
 const InsertHunk = require("../../../models/InsertHunk");
 const PullRequest = require("../../../models/PullRequest");
@@ -25,6 +24,7 @@ const {
 const {
     acquireSampleBlames,
     compareScrapeToSampleBlames,
+    compareScrapeToSampleAdditions,
 } = require("../../../__tests__helpers/github/public_blame_hunk_validation_helpers");
 
 // env variables
@@ -236,14 +236,14 @@ describe("Basic public blame hunk validation", () => {
     });
 
     test("Validate commit blame hunk ranges", async () => {
-        const currentResults = JSON.parse(currentResults);
+        const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
         const commitSamples = JSON.parse(process.env.COMMIT_SAMPLES);
 
         const repositories = JSON.parse(process.env.REPOSITORIES);
 
-        const blameRanges = repositories.map((repo) =>
-            acquireSampleBlames(commitSamples, repo)
+        const blameRanges = repositories.map((repo, i) =>
+            acquireSampleBlames(commitSamples[i], repo)
         );
 
         const insertHunks = await Promise.all(
@@ -271,6 +271,67 @@ describe("Basic public blame hunk validation", () => {
             const { fullName } = repositories[i];
 
             currentResults[fullName]["range"] = results;
+        });
+
+        process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+    });
+
+    test("Acquire sample pull requests from scraped repositories", async () => {
+        const repositories = JSON.parse(process.env.TEST_REPOSITORIES);
+
+        const prCounts = await Promise.all(
+            repositories.map((repo) => {
+                return PullRequest.count({ repository: repo._id });
+            })
+        );
+
+        const prSamples = await Promise.all(
+            repositories.map((repo, i) => {
+                const sampleSize = NUM_PRS < prCounts[i] ? NUM_PRS : prCounts[i];
+
+                return PullRequest.aggregate([
+                    { $sample: { size: sampleSize } },
+                    { $match: { repository: repo._id } },
+                ]);
+            })
+        );
+
+        process.env.PR_SAMPLES = JSON.stringify(prSamples);
+    });
+
+    test("Validate pull request blame hunk ranges", async () => {
+        const currentResults = JSON.parse(process.env.CURRENT_RESULTS);
+
+        const prSamples = JSON.parse(process.env.PR_SAMPLES);
+
+        const repositories = JSON.parse(process.env.REPOSITORIES);
+
+        const prAdditions = repositories.map((repo, i) =>
+            acquirePullRequestAdditions(prSamples[i], repo)
+        );
+
+        const prHunks = await Promise.all(
+            prSamples.map((sample) => {
+                sample.map((pr) => {
+                    const { sourceId } = pr;
+
+                    InsertHunk.find({
+                        pullRequestNumber: sourceId,
+                    });
+                });
+            })
+        );
+
+        prSamples.map((sample, i) => {
+            const results = compareScrapeToSampleAdditions(
+                sample,
+                prHunks[i],
+                prAdditions[i]
+            );
+
+            const { fullName } = repositories[i];
+
+            currentResults[fullName]["prAdditions"] = results;
         });
 
         process.env.CURRENT_RESULTS = JSON.stringify(currentResults);

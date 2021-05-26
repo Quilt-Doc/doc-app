@@ -2,7 +2,7 @@ const { gql } = require("graphql-request");
 
 const { requestPublicGraphQLClient } = require("../../apis/api");
 
-const acquireSampleBlames = async (commitSamples, repo) => {
+const acquireSampleBlames = async (commitSample, repo) => {
     const client = requestPublicGraphQLClient();
 
     const query = generateCommitBlameQuery();
@@ -15,12 +15,13 @@ const acquireSampleBlames = async (commitSamples, repo) => {
     let progress = 0;
 
     let results = [];
-    while (progress != commitSamples.length) {
+    while (progress != commitSample.length) {
         // batch of 10
         results.push(
             await Promise.all(
-                commitSamples.slice(progress, progress + 10).map((sample) => {
-                    const { sourceId: sha, fileList } = sample;
+                commitSample.slice(progress, progress + 10).map((commit) => {
+                    const { sourceId: sha, fileList } = commit;
+
                     fileList.map((file) => {
                         return client.request(query, {
                             ...variables,
