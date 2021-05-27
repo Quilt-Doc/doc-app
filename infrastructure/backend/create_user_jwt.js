@@ -1,6 +1,6 @@
-var jwt = require('jsonwebtoken');
+var jwt = require("jsonwebtoken");
 
-const fs = require('fs');
+const fs = require("fs");
 
 createUserJWTToken = (userId, role) => {
 
@@ -9,19 +9,19 @@ createUserJWTToken = (userId, role) => {
   
     // Generate the JWT
     var payload = {
-      // issued at time
-      iat: timeNow,
-      // User identifiers
-      userId: userId,
-      role: role
+        // issued at time
+        iat: timeNow,
+        // User identifiers
+        userId: userId,
+        role: role,
 
-    }
+    };
   
-    var private_key = fs.readFileSync('docapp-test.pem', 'utf8');
+    var private_key = fs.readFileSync("docapp-test.pem", "utf8");
 
-    return jwt.sign(payload, private_key, { algorithm: 'RS256' });
+    return jwt.sign(payload, private_key, { algorithm: "RS256" });
 
-}
+};
 
 
 console.log(createUserJWTToken("5f8515464ff117c30c52b42e", "user"));

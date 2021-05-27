@@ -1,13 +1,13 @@
 const Sentry = require("@sentry/node");
 
 
-const handlePushEvent = async (backendClient, event, githubEvent) => {
+const handlePushEvent = async (backendClient, event) => {
     
-    console.log('Push Event Received');
+    console.log("Push Event Received");
 
     // var branch = event.payload.ref.split('/').pop();
     var ref = event.body.ref;
-    var baseCommit = event.body.before;
+    // var baseCommit = event.body.before;
     var headCommit = event.body.after;
     var repositoryFullName = event.body.repository.full_name;
     var cloneUrl = event.body.repository.clone_url;
@@ -19,12 +19,12 @@ const handlePushEvent = async (backendClient, event, githubEvent) => {
     var message;
     var currentCommit;
 
-    console.log('headCommit: ', headCommit);
+    console.log("headCommit: ", headCommit);
 
-    console.log('Commits Array: ');
+    console.log("Commits Array: ");
     console.log(JSON.stringify(event.body.commits));
 
-    for (i = 0; i < event.body.commits.length; i++) {
+    for (var i = 0; i < event.body.commits.length; i++) {
         currentCommit = event.body.commits[i];
         // KARAN TODO: The Commits array doesn't seem to have 'sha' fields, rather 'id' fields
         if (currentCommit.id == headCommit) {
@@ -34,8 +34,8 @@ const handlePushEvent = async (backendClient, event, githubEvent) => {
     }
 
     // If message is null or undefined, set it to empty string
-    if (!message && message != '') {
-        message = '';
+    if (!message && message != "") {
+        message = "";
     }
     console.log(`updating Repository - ref, headCommit, fullName, cloneUrl, installationId, message, pusher: ${ref}, ${headCommit}, ${repositoryFullName}, ${cloneUrl}, ${installationId}, ${message}, ${pusher}`);
 
@@ -45,13 +45,12 @@ const handlePushEvent = async (backendClient, event, githubEvent) => {
         if (updateResponse.data.success == false) {
             throw Error(`repositories/update success == false: ${updateResponse.error}`);
         }
-    }
-    catch (err) {
+    } catch (err) {
 
         console.log(err);
 
         Sentry.setContext("handlePushEvents", {
-            message: `Error calling update repository route`,
+            message: "Error calling update repository route",
             installationId: installationId,
             repositoryFullName: repositoryFullName,
         });
@@ -61,9 +60,9 @@ const handlePushEvent = async (backendClient, event, githubEvent) => {
         throw err;
     }
 
-    console.log('Successfully handled Push Event');
-}
+    console.log("Successfully handled Push Event");
+};
 
 module.exports = {
-    handlePushEvent
-}
+    handlePushEvent,
+};

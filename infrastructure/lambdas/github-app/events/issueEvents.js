@@ -2,17 +2,21 @@ const Sentry = require("@sentry/node");
 
 // "issue" event
 
-const handleIssueEvent = async (backendClient, event, githubEvent) => {
+const handleIssueEvent = async (backendClient, event) => {
 
     var issueAction = event.body.action;
 
-    var installationId = undefined;
+    // var installationId = undefined;
 
+    /*
     if (event.body.installation) {
         installationId = event.body.installation.id;
     }
+    */
 
-    if (issueAction == 'opened') {
+    var sourceId;
+
+    if (issueAction == "opened") {
 
         /*
             sourceId: repositoryIssueObj.id,
@@ -32,8 +36,8 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
             githubIssueAuthorAssociation: repositoryIssueObj.author_association,
         */
 
-        var sourceId = event.body.issue.id;
-        var source = 'github';
+        sourceId = event.body.issue.id;
+        var source = "github";
         var githubIssueHtmlUrl = event.body.issue.html_url;
         var githubIssueNumber = event.body.issue.number;
         var githubIssueState = event.body.issue.state;
@@ -42,7 +46,7 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
         var githubIssueLabels = event.body.issue.labels.map(labelObj => labelObj.name);
         var githubIssueLocked = event.body.issue.locked;
         var githubIssueCommentNumber = event.body.issue.comments;
-        var githubIssueClosedAt = (event.body.issue.closed_at == null || event.body.issue.closed_at == 'null') ? undefined : event.body.issue.closed_at;
+        var githubIssueClosedAt = (event.body.issue.closed_at == null || event.body.issue.closed_at == "null") ? undefined : event.body.issue.closed_at;
         var githubIssueCreatedAt = event.body.issue.created_at;
         var githubIssueUpdatedAt = event.body.issue.updated_at;
         var githubIssueAuthorAssociation = event.body.issue.author_association;
@@ -61,8 +65,8 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
             githubIssueClosedAt,
             githubIssueCreatedAt,
             githubIssueUpdatedAt,
-            githubIssueAuthorAssociation
-        }
+            githubIssueAuthorAssociation,
+        };
 
         var issueOpenResponse;
         try {
@@ -70,13 +74,12 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
             if (issueOpenResponse.data.success == false) {
                 throw Error(`Issue/create success == false: ${issueOpenResponse.error}`);
             }
-        }
-        catch (err) {
+        } catch (err) {
 
             console.log(err);
 
             Sentry.setContext("handleIssueEvent", {
-                message: `Error creating Github Issue`,
+                message: "Error creating Github Issue",
                 createIssueData: createIssueData,
             });
 
@@ -84,11 +87,9 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
 
             throw err;
         }
-    }
+    } else if (issueAction == "closed") {
 
-    else if (issueAction == 'closed') {
-
-        var sourceId = event.body.issue.id;
+        sourceId = event.body.issue.id;
 
         var issueCloseResponse;
         try {
@@ -96,13 +97,12 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
             if (issueCloseResponse.data.success == false) {
                 throw Error(`Issue/close success == false: ${issueCloseResponse.error}`);
             }
-        }
-        catch (err) {
+        } catch (err) {
 
             console.log(err);
 
             Sentry.setContext("handleIssueEvent", {
-                message: `Error closing Github Issue`,
+                message: "Error closing Github Issue",
                 sourceId: sourceId,
             });
 
@@ -111,10 +111,8 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
             throw err;
 
         }
-    }
-
-    else if (issueAction == 'deleted') {
-        var sourceId = event.body.issue.id;
+    } else if (issueAction == "deleted") {
+        sourceId = event.body.issue.id;
 
         var issueDeleteResponse;
         try {
@@ -122,14 +120,13 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
             if (issueDeleteResponse.data.success == false) {
                 throw Error(`Issue/delete success == false: ${issueDeleteResponse.error}`);
             }
-        }
-        catch (err) {
+        } catch (err) {
 
 
             console.log(err);
 
             Sentry.setContext("handleIssueEvent", {
-                message: `Error deleting Github Issue`,
+                message: "Error deleting Github Issue",
                 sourceId: sourceId,
             });
 
@@ -139,8 +136,8 @@ const handleIssueEvent = async (backendClient, event, githubEvent) => {
 
         }
     }
-}
+};
 
 module.exports = {
-    handleIssueEvent
-}
+    handleIssueEvent,
+};

@@ -130,6 +130,9 @@ const requestInstallationGraphQLClient = async (installationId) => {
 
     var appToken = await fetchAppToken();
     var installationToken = await requestInstallationToken(appToken, installationId);
+    console.log(
+        `Found installation token for installationId: ${installationToken.value}`
+    );
 
     const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
         credentials: "include",

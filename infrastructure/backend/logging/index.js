@@ -6,9 +6,6 @@ const { format } = require("logform");
 const { errors } = format;
 const errorsFormat = errors({ stack: true });
 
-var ElasticSearchTransport = require("./es_transport").ElasticSearchTransport;
-var setupESConnection = require("./es_transport").setupESConnection;
-
 var logger = undefined;
 
 const validKeys = [
@@ -43,5 +40,4 @@ logger = winston.createLogger({
 
 module.exports = {
     logger,
-    setupESConnection,
 };

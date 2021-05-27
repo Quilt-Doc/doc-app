@@ -1,10 +1,10 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
-const IntegrationBoard = require('../../models/integrations/integration_objects/IntegrationBoard');
+const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
 const Workspace = require("../../models/Workspace");
 
-const apis = require('../../apis/api');
+const apis = require("../../apis/api");
 const Sentry = require("@sentry/node");
 
 // Return created boardId
@@ -12,16 +12,13 @@ const generateGithubIssueBoard = async (repositoryId) => {
     var createdBoard;
     try {
         createdBoard = await IntegrationBoard.create({ source: "github", repositories: [repositoryId.toString()] });
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
-
-    await findBoard(createdBoard._id.toString());
     
     return createdBoard._id.toString();
-}
+};
 
 // Return created boardId
 const setupGithubIssueBoard = async (workspaceId, repositoryId) => {
@@ -30,37 +27,35 @@ const setupGithubIssueBoard = async (workspaceId, repositoryId) => {
 
     try {
         createdBoardId = await generateGithubIssueBoard(repositoryId);
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
 
-    await addBoardsToWorkspace(workspaceId, [ createdBoardId ]);
-
-    // await findBoard(createdBoardId);
+    await addBoardsToWorkspace(workspaceId, [createdBoardId]);
     
     return createdBoardId;
-}
+};
 
 const fetchBoardsFromRepositoryList = async (repositoryIdList) => {
 
 
-    var boardFindFilter = { repositories: { $in: repositoryIdList.map(id => ObjectId(id.toString())) },
-                            source: "github",
-                        };
+    var boardFindFilter = { repositories: { $in: repositoryIdList
+        .map(id => ObjectId(id.toString())), 
+    },
+    source: "github",
+    };
 
     console.log(`fetchBoardsFromRepositoryList - IntegrationBoard.find() filter: ${JSON.stringify(boardFindFilter)}`);
 
     var foundBoards;
     try {
         foundBoards = await IntegrationBoard.find(boardFindFilter,
-                                                    '_id',
-                                                )
-                                                .lean()
-                                                .exec();
-    }
-    catch (err) {
+            "_id"
+        )
+            .lean()
+            .exec();
+    } catch (err) {
         console.log(err);
         Sentry.captureException(err);
         throw err;
@@ -69,7 +64,7 @@ const fetchBoardsFromRepositoryList = async (repositoryIdList) => {
     console.log(`fetchBoardsFromRepositoryList - foundBoards: ${JSON.stringify(foundBoards)}`);
 
     return foundBoards;
-}
+};
 
 const addBoardsToWorkspace = async (workspaceId, boardIdList) => {
     // Attach Board to Workspace.boards
@@ -77,18 +72,12 @@ const addBoardsToWorkspace = async (workspaceId, boardIdList) => {
     try {
         await Workspace.updateOne({ _id: ObjectId(workspaceId.toString()) }, { $push: { boards: { $each: boardIdList.map(id => ObjectId(id.toString())) } } })
             .exec();
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
         Sentry.captureException(err);
         throw err;
     }
-}
-
-const findBoard = async (boardId) => {
-    console.log("Created IntegrationBoard: ");
-    console.log(await IntegrationBoard.findById(boardId).lean().exec());
-}
+};
 
 
 const generateAssociationsFromResults = async (workspaceId, successResults) => {
@@ -97,7 +86,7 @@ const generateAssociationsFromResults = async (workspaceId, successResults) => {
 
     var i = 0;
     for (i = 0; i < successResults.length; i++) {
-        createAssociationData.push({ _id: successResults[i].integrationBoardId, repositories: [ successResults[i].repositoryId ] });
+        createAssociationData.push({ _id: successResults[i].integrationBoardId, repositories: [successResults[i].repositoryId] });
     }
 
     var backendClient = apis.requestBackendClient();
@@ -105,16 +94,13 @@ const generateAssociationsFromResults = async (workspaceId, successResults) => {
     console.log(`Calling 'generate_associations' - workspaceId: ${workspaceId}`);
     console.log(createAssociationData);
 
-    await findBoard(createAssociationData[0]._id);
-
     try {
         await backendClient.post(`/associations/${workspaceId}/generate_associations`, { boardId: createAssociationData[0]._id, boards: createAssociationData });
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.captureException(err);
         throw err;
     }
-}
+};
 
 module.exports = {
     generateGithubIssueBoard,
@@ -123,4 +109,4 @@ module.exports = {
 
     addBoardsToWorkspace,
     fetchBoardsFromRepositoryList,
-}
+};

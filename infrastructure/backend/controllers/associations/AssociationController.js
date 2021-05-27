@@ -298,13 +298,17 @@ const getFileContext = async (req, res) => {
         ...pullRequests.map((pr) => pr._),
     ];
 
+    logger.info(`${codeObjectIds.length} code objects found`, {
+        obj: codeObjectIds,
+        func: "getFileContext",
+    });
+
     // Get all Associations of Code Objects
     let associations;
 
     try {
         associations = await Association.find({
             secondElement: { $in: codeObjectIds },
-            workspaces: { $in: [workspaceId] },
         })
             .select("firstElement workspaces")
             .lean()
@@ -321,6 +325,11 @@ const getFileContext = async (req, res) => {
             trace: e,
         });
     }
+
+    logger.info(`${associations.length} total associations were found.`, {
+        obj: associations,
+        func: "getFileContext",
+    });
 
     const ticketIds = Array.from(
         new Set(
