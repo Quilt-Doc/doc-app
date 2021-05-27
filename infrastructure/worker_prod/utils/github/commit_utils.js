@@ -8,6 +8,8 @@ const { spawnSync } = require("child_process");
 
 const { printExecTime } = require("../print");
 
+const lineByLine = require("n-readlines");
+
 const Sentry = require("@sentry/node");
 
 // DEPRECATED
@@ -203,23 +205,150 @@ const parseRepoCommitsNoDiff = (lines) => {
     return commitObjects;
 };
 
+const generateAllCommitObjectsFile = (repoDiskPath, scriptPath) => {
+
+    var timestamp = Date.now().toString();
+
+    try {
+        spawnSync(scriptPath, [`../${timestamp}-repo.patch`], { cwd: repoDiskPath });
+    } catch (err) {
+        console.log(err);
+
+        throw err;
+    }
+    return `./git_repos/${timestamp}-repo.patch`;
+};
+
+const parseRepoCommitsWithBody = (commitFilePath) => {
+
+    const liner = new lineByLine(commitFilePath);
+
+    var commitObjects = [];
+
+    var i = 0;
+
+    var currentCommitObj = {};
+    var atNewCommit = false;
+    var currentFileList = [];
+
+    var line;
+
+    // eslint-disable-next-line no-cond-assign
+    while (line = liner.next()) {
+
+        line = line.toString("ascii");
+
+        if (line == "END") {
+            atNewCommit = true;
+            if (i == 0) {
+                continue;
+            }
+
+            currentCommitObj.fileList = currentFileList;
+            commitObjects.push(currentCommitObj);
+
+            currentFileList = [];
+            currentCommitObj = {};
+        } else if (line.trim().length < 1) {
+            // Skip whitespace lines
+            continue;
+        } else if (atNewCommit == true) {
+            // currentCommitObj.sha = line;
+
+            var k = 0;
+            var reachedCommitMessageEnd = false;
+            while (reachedCommitMessageEnd == false) {
+
+                switch (k) {
+                case 0:
+                    currentCommitObj.sha = line;
+                    break;
+                case 1:
+                    currentCommitObj.committerDate = line;
+                    break;
+                case 2:
+                    currentCommitObj.treeHash = line;
+                    break;
+                case 3:
+                    currentCommitObj.authorName = line;
+                    break;
+                case 4:
+                    currentCommitObj.committerName = line;
+                    break;
+                case 5:
+                    currentCommitObj.committerEmail = line;
+                    break;
+                default:
+                    break;
+                }
+
+                if (k > 5) {
+
+                    if (line.trim() == "COMMIT_MSG_END") {
+                        atNewCommit = false;
+                        reachedCommitMessageEnd = true;
+                    } else {
+                        if (k == 6) {
+                            currentCommitObj.commitMessage = line;
+                        } else {
+                            currentCommitObj.commitMessage = `${currentCommitObj.commitMessage}\n${line}`;
+                        }
+                    }
+                }
+
+                line = liner.next();
+                line = line.toString("ascii");
+
+                k++;
+                i++;
+            }
+            atNewCommit = false;
+        } else if (atNewCommit == false) {
+            currentFileList.push(line);
+        }
+
+        i++;
+    }
+
+    if (currentCommitObj) {
+        currentCommitObj.fileList = currentFileList;
+        commitObjects.push(currentCommitObj);
+    }
+
+    return commitObjects;
+};
+
+const deleteCommitObjectsFile = (commitsFilePath) => {
+
+    try {
+        spawnSync("rm", [`${commitsFilePath}`]);
+    } catch (err) {
+        console.log(err);
+
+        throw err;
+    }
+
+};
+
+
 const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath) => {
 
     console.log(`fetchAllRepoCommitsCLI - repoDiskPath: ${repoDiskPath}`);
 
     var start = process.hrtime();
 
-    var gitShowResponse;
+    // Generate Commit Object File
+    var commitObjFilePath;
     try {
         // var repoDiskPath = 'git_repos/' + timestamp +'/';
         // ../ = git_repos/*
         // ../../ = worker_prod/*
-        gitShowResponse = spawnSync("../../git_scripts/print_all_commits.sh", [], { cwd: repoDiskPath });
+        commitObjFilePath = generateAllCommitObjectsFile(repoDiskPath, "../../git_scripts/print_all_commits_v2.sh");
     } catch (err) {
         console.log(err);
 
         Sentry.setContext("fetchAllRepoCommitsCLI", {
-            message: "Failed to run test.sh, cannot get Commit data from CLI",
+            message: "Failed to run print_all_commits_v2, cannot get Commit data from CLI",
             repositoryId: repositoryId,
             reposDiskPath: repoDiskPath,
         });
@@ -229,14 +358,50 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
         throw err;
     }
 
-    printExecTime(process.hrtime(start), "Output All Commits V2");
+    printExecTime(process.hrtime(start), `generateAllCommitObjectsFile("${repoDiskPath}", "../../git_scripts/print_all_commits_v2.sh")`);
+    console.log(`commitObjFilePath: ${commitObjFilePath}`);
+    // throw Error("STOP");
 
-    var lines = gitShowResponse.stdout.toString().trim().split("\n"); // stdout.split("\n");
-    lines = lines.map(e => e.trim());
+    start = process.hrtime();
+    // Parse Commit Object File
+    var commitObjects;
+    try {
+        commitObjects = parseRepoCommitsWithBody(commitObjFilePath);
+    } catch (err) {
+        console.log(err);
 
-    console.log(`lines.length: ${lines.length}`);
+        Sentry.setContext("fetchAllRepoCommitsCLI", {
+            message: `parseRepoCommitsWithBody(${commitObjFilePath}) failed`,
+            repositoryId: repositoryId,
+            reposDiskPath: repoDiskPath,
+        });
 
-    var commitObjects = parseRepoCommitsNoDiff(lines);
+        Sentry.captureException(err);
+
+        throw err;
+    }
+
+    printExecTime(process.hrtime(start), `parseRepoCommitsWithBody("${commitObjFilePath}")`);
+
+
+    
+    // Delete Commit Object File
+    try {
+        deleteCommitObjectsFile(commitObjFilePath);
+    } catch (err) {
+        console.log(err);
+
+        Sentry.setContext("fetchAllRepoCommitsCLI", {
+            message: `deleteCommitObjectsFile("${commitObjFilePath}") failed`,
+            repositoryId: repositoryId,
+            reposDiskPath: repoDiskPath,
+        });
+
+        Sentry.captureException(err);
+
+        throw err;
+    }
+    
 
     return commitObjects;
 };
