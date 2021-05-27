@@ -24,7 +24,7 @@ const generateAllCommitsDiffFile = (repoDiskPath, repositoryId) => {
     var timestamp = Date.now().toString();
 
     try {
-        const diffGenerate = spawnSync("../../git_scripts/v2_gen_all_commit_diffs.sh", [`../${timestamp}-${repositoryId}.patch`], { cwd: repoDiskPath });
+        const diffGenerate = spawnSync("../../git_scripts/gen_all_commit_diffs_v2.sh", [`../${timestamp}-${repositoryId}.patch`], { cwd: repoDiskPath });
     } catch (err) {
 
         Sentry.setContext("scanRepositories", {
