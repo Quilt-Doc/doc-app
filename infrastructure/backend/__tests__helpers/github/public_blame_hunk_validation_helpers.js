@@ -124,6 +124,31 @@ const compareScrapeToSampleBlames = (commitSample, insertHunks, blameRanges) => 
     return results;
 };
 
+/*
+const acquirePullRequestAdditions = (prSample, repo) => {
+    const client = requestPublicGraphQLClient();
+
+    const query = generateCommitBlameQuery();
+
+    let variables = {
+        repoName: repo.fullName.split("/")[0],
+        repoOwner: repo.fullName.split("/")[1],
+    };
+
+    let progress = 0;
+
+    let results = [];
+
+    prSample.map(pr => {
+        const { sourceId } = pr;
+
+        await client.request(query, { ...variables, })
+    })
+    
+
+    return results;
+}*/
+
 module.exports = {
     acquireSampleBlames,
     compareScrapeToSampleBlames,
