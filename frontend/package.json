@@ -15,7 +15,7 @@
     "@types/simonwep__selection-js": "^1.2.0",
     "antd": "^3.26.18",
     "apexcharts": "^3.19.3",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "chroma-js": "^2.1.0",
     "dom-to-image": "^2.6.0",
     "email-validator": "^2.0.4",
