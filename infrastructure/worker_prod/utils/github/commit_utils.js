@@ -1,12 +1,12 @@
 
-const { serializeError, deserializeError } = require('serialize-error');
+const { serializeError, deserializeError } = require("serialize-error");
 
-const Commit = require('../../models/Commit');
-const Repository = require('../../models/Repository');
+const Commit = require("../../models/Commit");
+const Repository = require("../../models/Repository");
 
-const { spawnSync } = require('child_process');
+const { spawnSync } = require("child_process");
 
-const { printExecTime } = require('../print');
+const { printExecTime } = require("../print");
 
 const Sentry = require("@sentry/node");
 
@@ -24,13 +24,12 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
     var foundBranchList;
     try {
         foundBranchList = await fetchAllRepoBranchesAPI(installationClient, repositoryObj.fullName);
-    }
-    catch (err) {
+    } catch (err) {
 
         console.log(err);
 
         Sentry.setContext("scrapeGithubRepoCommitsAPI", {
-            message: `Error fetching all repo branches`,
+            message: "Error fetching all repo branches",
             installationId: installationId,
             repositoryFullName: repositoryObj.fullName,
         });
@@ -59,19 +58,16 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
         while (commitPageNum <= lastPageNum) {
             try {
                 commitListResponse = await installationClient.get(`/repos/${repositoryObj.fullName}/commits?sha=${branchObj.name}&page=${commitPageNum}&per_page=${commitsPerPage}`);
-            }
-            catch (err) {
+            } catch (err) {
 
                 console.log(err);
-                return { error: 'Error', branchName: branchObj.name };
+                return { error: "Error", branchName: branchObj.name };
                 // throw new Error(`Github API List Commits failed - installationId, repositoryObj.fullName, branchName: ${installationId}, ${repositoryObj.fullName}, ${foundBranchList[0].name}`);
             }
 
             if (!commitListResponse.headers.link) {
                 pageNum = lastPageNum;
-            }
-
-            else {
+            } else {
                 var link = LinkHeader.parse(commitListResponse.headers.link);
 
                 console.log(`commitListResponse.headers.link: ${JSON.stringify(link)}`);
@@ -79,7 +75,7 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
 
                 var i;
                 for (i = 0; i < link.refs.length; i++) {
-                    if (link.refs[i].rel == 'last') {
+                    if (link.refs[i].rel == "last") {
                         searchString = parseUrl(link.refs[i].uri).search;
 
                         lastPageNum = queryString.parse(searchString).page;
@@ -109,9 +105,8 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
     var results;
     try {
         results = await Promise.allSettled(listCommitRequestList);
-    }
-    catch (err) {
-        console.log(`Error Promise.allSettled listing commits failed`);
+    } catch (err) {
+        console.log("Error Promise.allSettled listing commits failed");
         throw err;
     }
 
@@ -126,7 +121,7 @@ const scrapeGithubRepoCommitsAPI = async (installationId, repositoryId, installa
     validResults.map(async (promiseObj) => {
         console.log(`commitList length - promiseObj.value.length: ${promiseObj.value.length}`);
     });
-}
+};
 
 
 const parseRepoCommitsNoDiff = (lines) => {
@@ -143,13 +138,13 @@ const parseRepoCommitsNoDiff = (lines) => {
     for (i = 0; i < lines.length; i++) {
         currentLine = lines[i];
 
-        if (currentLine == 'END') {
+        if (currentLine == "END") {
             atNewCommit = true;
             if (i == 0) {
                 continue;
             }
 
-            currentCommitObj.fileList = currentFileList
+            currentCommitObj.fileList = currentFileList;
             commitObjects.push(currentCommitObj);
 
             currentFileList = [];
@@ -158,32 +153,31 @@ const parseRepoCommitsNoDiff = (lines) => {
         // Skip whitespace lines
         else if (currentLine.trim().length < 1) {
             continue;
-        }
-        else if (atNewCommit == true) {
+        } else if (atNewCommit == true) {
             // currentCommitObj.sha = currentLine;
 
             var k = 0;
             while (k < 7) {
                 currentLine = lines[i];
                 switch (k) {
-                    case 0:
-                        currentCommitObj.sha = currentLine;
-                    case 1:
-                        currentCommitObj.committerDate = currentLine;
-                    case 2:
-                        currentCommitObj.treeHash = currentLine;
-                    case 3:
-                        currentCommitObj.authorName = currentLine;
-                    case 4:
-                        currentCommitObj.committerName = currentLine;
-                    case 5:
-                        currentCommitObj.committerEmail = currentLine;
-                    case 6:
-                        currentCommitObj.commitMessage = currentLine;
-                        atNewCommit = false;
-                        break;
-                    default:
-                        break;
+                case 0:
+                    currentCommitObj.sha = currentLine;
+                case 1:
+                    currentCommitObj.committerDate = currentLine;
+                case 2:
+                    currentCommitObj.treeHash = currentLine;
+                case 3:
+                    currentCommitObj.authorName = currentLine;
+                case 4:
+                    currentCommitObj.committerName = currentLine;
+                case 5:
+                    currentCommitObj.committerEmail = currentLine;
+                case 6:
+                    currentCommitObj.commitMessage = currentLine;
+                    atNewCommit = false;
+                    break;
+                default:
+                    break;
                 }
 
                 k++;
@@ -191,9 +185,7 @@ const parseRepoCommitsNoDiff = (lines) => {
             }
 
             atNewCommit = false;
-        }
-
-        else if (atNewCommit == false) {
+        } else if (atNewCommit == false) {
             currentFileList.push(currentLine);
         }
 
@@ -201,17 +193,15 @@ const parseRepoCommitsNoDiff = (lines) => {
 
     if (currentCommitObj) {
         currentCommitObj.fileList = currentFileList;
-        commitObjects.push(currentCommitObj)
+        commitObjects.push(currentCommitObj);
     }
 
     // console.log(`parseRepoCommitsNoDiffSimple last two Commit objects:`);
     // console.log(commitObjects[commitObjects.length - 1]);
     // console.log(commitObjects[commitObjects.length - 2]);
 
-    return commitObjects
-}
-
-
+    return commitObjects;
+};
 
 const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath) => {
 
@@ -224,13 +214,12 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
         // var repoDiskPath = 'git_repos/' + timestamp +'/';
         // ../ = git_repos/*
         // ../../ = worker_prod/*
-        gitShowResponse = spawnSync('../../print_all_commits.sh', [], { cwd: repoDiskPath });
-    }
-    catch (err) {
+        gitShowResponse = spawnSync("../../git_scripts/print_all_commits.sh", [], { cwd: repoDiskPath });
+    } catch (err) {
         console.log(err);
 
         Sentry.setContext("fetchAllRepoCommitsCLI", {
-            message: `Failed to run test.sh, cannot get Commit data from CLI`,
+            message: "Failed to run test.sh, cannot get Commit data from CLI",
             repositoryId: repositoryId,
             reposDiskPath: repoDiskPath,
         });
@@ -250,29 +239,28 @@ const fetchAllRepoCommitsCLI = async (installationId, repositoryId, repoDiskPath
     var commitObjects = parseRepoCommitsNoDiff(lines);
 
     return commitObjects;
-}
+};
 
 const insertAllCommitsFromCLI = async (foundCommitsList, installationId, repositoryId) => {
 
 
     foundCommitsList = foundCommitsList.map(commitObj => {
         return Object.assign({}, commitObj, {   name: commitObj.commitMessage,
-                                                creator: commitObj.committerName,
-                                                repository: repositoryId,
-                                                sourceId: commitObj.sha,
-                                                sourceCreationDate: commitObj.committerDate });
+            creator: commitObj.committerName,
+            repository: repositoryId,
+            sourceId: commitObj.sha,
+            sourceCreationDate: commitObj.committerDate });
     });
 
     var bulkInsertResult;
     try {
         bulkInsertResult = await Commit.insertMany(foundCommitsList);
-    }
-    catch (err) {
+    } catch (err) {
 
         console.log(err);
 
         Sentry.setContext("insertAllCommitsFromCLI", {
-            message: `Error bulk inserting Commits`,
+            message: "Error bulk inserting Commits",
             repositoryId: repositoryId,
             installationId: installationId,
             numCommits: foundCommitsList.length,
@@ -284,7 +272,7 @@ const insertAllCommitsFromCLI = async (foundCommitsList, installationId, reposit
     }
 
     return foundCommitsList;
-}
+};
 
 const fetchAllInsertedRepositoryCommits = async (repositoryId, selectionString) => {
     var insertedCommits;
@@ -292,12 +280,11 @@ const fetchAllInsertedRepositoryCommits = async (repositoryId, selectionString) 
         insertedCommits = await Commit.find({ repository: repositoryId }, selectionString)
             .lean()
             .exec();
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
 
         Sentry.setContext("fetchAllInsertedRepositoryCommits", {
-            message: `Error finding Repository Commits`,
+            message: "Error finding Repository Commits",
             repositoryId: repositoryId,
             selectionString: selectionString,
         });
@@ -307,7 +294,7 @@ const fetchAllInsertedRepositoryCommits = async (repositoryId, selectionString) 
         throw err;
     }
     return insertedCommits;
-}
+};
 
 
 
@@ -327,17 +314,16 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
             try {
                 // KARAN TODO: Replace installationClient with a method to fetch the correct installationClient by repositoryId
                 response = await installationClientList[currentInstallationId].get(urlObj.url);
-            }
-            catch (err) {
+            } catch (err) {
 
                 Sentry.setContext("scan-repositories", {
-                    message: `scanRepositories failed fetching repository commits from Github API - GET "/repos/:owner/:name/commits/:default_branch"`,
+                    message: "scanRepositories failed fetching repository commits from Github API - GET \"/repos/:owner/:name/commits/:default_branch\"",
                     requestUrl: urlObj.url,
                 });
 
                 Sentry.captureException(err);
 
-                return { error: 'Error', statusCode: err.response.status };
+                return { error: "Error", statusCode: err.response.status };
             }
             return response;
         });
@@ -372,10 +358,9 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
             }
             return temp;
         });
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("scan-repositories", {
-            message: `scanRepositories failed fetching repository commits from Github API - GET "/repos/:owner/:name/commits/:default_branch"`,
+            message: "scanRepositories failed fetching repository commits from Github API - GET \"/repos/:owner/:name/commits/:default_branch\"",
             urlList: urlList,
         });
 
@@ -393,10 +378,8 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
         var commitFieldValue;
 
         if (repositoryCommitResponse.isEmptyRepository == true && !repositoryCommitResponse.failed) {
-            commitFieldValue = 'EMPTY';
-        }
-
-        else if (!repositoryCommitResponse.failed) {
+            commitFieldValue = "EMPTY";
+        } else if (!repositoryCommitResponse.failed) {
             commitFieldValue = repositoryCommitResponse.value.data.sha;
         }
 
@@ -410,12 +393,12 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
                 filter: { _id: unscannedRepositories[idx]._id },
                 // Where field is the field you want to update
                 update: { $set: { lastProcessedCommit: commitFieldValue } },
-                upsert: false
-            }
-        }
+                upsert: false,
+            },
+        };
     });
 
-    console.log('BULK LAST COMMIT OPS: ');
+    console.log("BULK LAST COMMIT OPS: ");
     console.log(JSON.stringify(bulkLastCommitOps));
 
     if (bulkLastCommitOps.length > 0 && bulkLastCommitOps.filter(op => op).length > 0) {
@@ -423,11 +406,10 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
             // Filter out undefined operations (these are operations on repositories whose '/commits/' API calls have failed)
             const bulkResult = await Repository.collection.bulkWrite(bulkLastCommitOps.filter(op => op));
             console.log(`bulk Repository 'lastProcessCommit' update results: ${JSON.stringify(bulkResult)}`);
-        }
-        catch (err) {
+        } catch (err) {
 
             Sentry.setContext("scan-repositories", {
-                message: `scanRepositories failed bulk updating lastProcessedCommit on repositories`,
+                message: "scanRepositories failed bulk updating lastProcessedCommit on repositories",
                 unscannedRepositoryIdList: unscannedRepositoryIdList,
             });
 
@@ -439,7 +421,7 @@ const updateRepositoryLastProcessedCommits = async (unscannedRepositories, unsca
 
     return repositoryListCommits;
 
-}
+};
 
 
 module.exports = {
@@ -447,4 +429,4 @@ module.exports = {
     insertAllCommitsFromCLI,
     fetchAllInsertedRepositoryCommits,
     updateRepositoryLastProcessedCommits,
-}
+};

@@ -57,6 +57,7 @@
         "passport-google-oauth20": "^2.0.0",
         "pusher": "^4.0.1",
         "quick-score": "0.0.9",
+        "remove-markdown": "^0.3.0",
         "request": "^2.88.0",
         "slate": "^0.47.9",
         "stopword": "^1.0.7",

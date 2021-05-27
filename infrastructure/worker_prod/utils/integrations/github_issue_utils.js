@@ -1166,7 +1166,7 @@ const scrapeGithubRepoIssues = async (
 ) => {
 
     var client = (public) ? api.requestPublicGraphQLClient() :
-        api.requestInstallationGraphQLClient(installationId);
+        await api.requestInstallationGraphQLClient(installationId);
     
     
     var start = process.hrtime();
