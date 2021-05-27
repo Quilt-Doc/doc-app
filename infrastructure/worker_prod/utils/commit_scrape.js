@@ -30,7 +30,7 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
 
     var client = (public) ? api.requestPublicGraphQLClient() :
-        api.requestInstallationGraphQLClient(installationId);
+        await api.requestInstallationGraphQLClient(installationId);
 
 
     // Fetch all PRs from Github

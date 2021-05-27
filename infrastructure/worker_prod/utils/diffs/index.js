@@ -13,6 +13,8 @@ const Sentry = require("@sentry/node");
 
 const apis = require("../../apis/api");
 
+const { printExecTime } = require("../print");
+
 
 
 
@@ -22,7 +24,7 @@ const generateAllCommitsDiffFile = (repoDiskPath, repositoryId) => {
     var timestamp = Date.now().toString();
 
     try {
-        const diffGenerate = spawnSync("../../generate_all_commit_diffs.sh", [`../${timestamp}-${repositoryId}.patch`], { cwd: repoDiskPath });
+        const diffGenerate = spawnSync("../../git_scripts/gen_all_commit_diffs_v2.sh", [`../${timestamp}-${repositoryId}.patch`], { cwd: repoDiskPath });
     } catch (err) {
 
         Sentry.setContext("scanRepositories", {
@@ -437,8 +439,7 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         throw err;
     }
 
-    hrend = process.hrtime(hrstart);
-    console.info(`Generate Commit Diffs File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Generate Commit Diffs File ("${repositoryId}")`);
 
     // Parse Diff file
     var allInsertHunks;
@@ -467,8 +468,8 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         // throw err;
     }
 
-    hrend = process.hrtime(hrstart);
-    console.info(`Create Blames from Patch File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Create Blames from Patch File ("${repositoryId}")`);
+
 
 
     hrstart = process.hrtime();
@@ -491,8 +492,7 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         throw err;
     }
 
-    hrend = process.hrtime(hrstart);
-    console.info(`Delete Repository Diff File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Delete Repository Diff File ("${repositoryId}")`);
 
 
     // If the parse operation failed, throw an error here
@@ -523,12 +523,12 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         throw err;
     }
 
-    hrend = process.hrtime(hrstart);
-    console.info(`Create ${allInsertHunks.length} InsertHunks for Repository ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Create ${allInsertHunks.length} InsertHunks for Repository ("${repositoryId}")`);
 
 };
 
-const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName, installationClient, public = false) => {
+const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName,
+    installationClient, public = false) => {
     // Fetch All PRs for Repository from DB
     var repositoryPRs;
     try {
@@ -584,7 +584,7 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
         throw err;
     }
 
-    validResults = prDiffScrapeListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
+    var validResults = prDiffScrapeListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
     validResults = validResults.map(resultObj => resultObj.value);
 
     // Parse all diffs to generate InsertHunks

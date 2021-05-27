@@ -548,6 +548,7 @@ const compareFields = (repo, type, raw, scraped, fieldName) => {
                 : rawItem["body"];
 
         if (rawField != scrapedField) {
+            console.log(`SCRAPED_FIELD: ${scrapedField}`);
             results[fieldName] = {
                 status: "ERROR",
                 data: {
