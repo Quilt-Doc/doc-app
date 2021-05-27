@@ -1,40 +1,18 @@
 {
-    "yairEO/fancyInput": {
-        "commits": {
-            "length": "SUCCESS",
-            "name": {
-                "status": "ERROR",
-                "data": {
-                    "sourceId": "923d46e9bfa0ea5a5df587272786f9f75034467c",
-                    "raw": "Merge pull request #53 from ilFortu/master\n\nCSS bug: removed double % symbol",
-                    "scraped": "Merge pull request #53 from ilFortu/master"
-                }
-            }
-        },
+    "dreamingechoes/awesome-mental-health": {
+        "commits": { "length": "SUCCESS", "name": "PENDING" },
         "pulls": {
             "length": "SUCCESS",
             "name": "SUCCESS",
-            "description": {
-                "status": "ERROR",
-                "data": {
-                    "sourceId": "13",
-                    "raw": "Just a little patch that added support for password fields that I needed for my project..\n\nFab lil' bit of JS :T\n\n![passwordfieldsupport](https://f.cloud.github.com/assets/943948/203467/3fc5058a-8138-11e2-9553-95b6068f64ad.png)\n"
-                }
-            }
+            "description": "PENDING"
         },
         "issues": {
             "length": "SUCCESS",
             "name": "SUCCESS",
-            "description": {
-                "status": "ERROR",
-                "data": {
-                    "sourceId": "1",
-                    "raw": "On OSX, try to type e.g. \"é\" by first pressing alt+e and then typing e - this seems to make everything break?\n"
-                }
-            }
+            "description": "PENDING"
         },
         "success": false,
-        "htmlUrl": "https://github.com/yairEO/fancyInput",
+        "htmlUrl": "https://github.com/dreamingechoes/awesome-mental-health",
         "size": "100..1000",
         "stars": "100..2000"
     }

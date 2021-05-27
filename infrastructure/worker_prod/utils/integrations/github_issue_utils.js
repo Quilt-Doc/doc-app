@@ -1054,6 +1054,12 @@ const fetchAllRepoIssuesAPIGraphQL = async (client, repositoryId,
 
                 source: "github",
 
+                creator: (issue.author != null) ? issue.author.login : null,
+                repository: repositoryId,
+                status: issue.state,
+                labels: issue.labels.nodes.map(labelObj => labelObj.name),
+                commentNum: issue.comments.totalCount,
+
                 githubIssueCreator: (issue.author != null) ? issue.author.login : null,
                 githubIssueHtmlUrl: issue.url,
                 githubIssueNumber: issue.number,
