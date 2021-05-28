@@ -27,7 +27,7 @@ const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
 // parameters to sampling function
 const NUM_STARS = "500..3000";
 const REPO_SIZE = "1000..2000";
-const NUM_REPOS = 5;
+const NUM_REPOS = 1;
 
 // 0 -- sample, 1 -- repeat, 2 -- run all successes, 3 -- run all 4 -- travis
 // or array of specific repoUrls
@@ -94,8 +94,6 @@ describe("Basic public issue linkage validation", () => {
             obj: repoUrls,
         });
 
-        console.log("REPOURLS", repoUrls);
-
         process.env.TEST_SAMPLE_REPOSITORY_URLS = JSON.stringify(repoUrls);
     });
 
@@ -141,13 +139,13 @@ describe("Basic public issue linkage validation", () => {
                 numAttachments += attachments.length;
 
                 attachments.map((att) => {
-                    const { model } = att;
+                    const { modelType } = att;
 
-                    if (model == "pullRequest") {
+                    if (modelType == "pullRequest") {
                         hasPr = true;
 
                         prAttachments += 1;
-                    } else if (model == "commit") {
+                    } else if (modelType == "commit") {
                         hasCommit = true;
 
                         commitAttachments += 1;

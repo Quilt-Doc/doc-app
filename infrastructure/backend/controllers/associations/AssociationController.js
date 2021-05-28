@@ -1,32 +1,23 @@
-//utility
+// utility
 const _ = require("lodash");
 
-//association helpers
+// association helpers
 const DirectAssociationGenerator = require("./helpers/directAssociationGenerator");
 
-//sentry
+// sentry
 const Sentry = require("@sentry/node");
 
-//code objects
+// code objects
 const PullRequest = require("../../models/PullRequest");
 const Branch = require("../../models/Branch");
 const Commit = require("../../models/Commit");
 
-// Workspace
-const Workspace = require("../../models/Workspace");
-const mongoose = require("mongoose");
-const { ObjectId } = mongoose.Types;
-
-//utils
-const { checkValid } = require("../../utils/utils");
-
 // logger
 const { logger } = require("../../fs_logging");
 
-//models
+// models
 const Association = require("../../models/associations/Association");
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
-
 const IntegrationBoard = require("../../models/integrations/integration_objects/IntegrationBoard");
 
 const createGithubIssueBoard = async (req, res) => {
@@ -49,17 +40,9 @@ const createGithubIssueBoard = async (req, res) => {
 const generateAssociations = async (req, res) => {
     const { workspaceId } = req.params;
 
-    console.log("ENTERED IN GENERATE ASSOCS", workspaceId);
-    //console.log("Generating Associations");
-
     // boards must be provided with unique repositories
     // in format: [ { _id, repositories }]
     const { boards, boardId } = req.body;
-
-    // console.log(`Trying to find IntegrationBoard with boardId: ${boardId}`);
-    // console.log(await IntegrationBoard.findById(boardId).lean().exec());
-
-    console.log("BOARDS", boards);
 
     const directGenerator = new DirectAssociationGenerator(workspaceId, boards);
 
@@ -88,125 +71,6 @@ const generateAssociations = async (req, res) => {
         result: directGenerator.associations,
     });
 };
-
-/*
-const getFileContext = async (req, res) => {
-    const { workspaceId, filePath } = req.body;
-
-    const repositoryId = req.repositoryObj._id.toString();
-
-    if (!checkValid(workspaceId))
-        return res.json({
-            success: false,
-            error: "no association workspaceId provided",
-        });
-    // if (!checkValid(repositoryId)) return res.json({success: false, error: 'no association repositoryId provided'});
-    if (!checkValid(filePath))
-        return res.json({
-            success: false,
-            error: "no association filePath provided",
-        });
-
-    // Fetch PRs
-    var relatedPRs;
-    try {
-        relatedPRs = await PullRequest.find({
-            repository: ObjectId(repositoryId),
-            fileList: { $in: [filePath] },
-        })
-            .limit(20)
-            .lean()
-            .exec();
-    } catch (err) {
-        await logger.error({
-            source: "backend-api",
-            message: err,
-            errorDescription: `error finding PullRequests - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            function: "getFileContext",
-        });
-
-        return res.json({
-            success: false,
-            error: `error finding PullRequests - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            trace: err,
-        });
-    }
-
-    // Fetch Commits
-    var relatedCommits;
-    try {
-        relatedCommits = await Commit.find({
-            repository: ObjectId(repositoryId),
-            fileList: { $in: [filePath] },
-        })
-            .limit(20)
-            .lean()
-            .exec();
-    } catch (err) {
-        await logger.error({
-            source: "backend-api",
-            message: err,
-            errorDescription: `error finding Commits - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            function: "getFileContext",
-        });
-
-        return res.json({
-            success: false,
-            error: `error finding Commits - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            trace: err,
-        });
-    }
-
-    // Generate list of distinct branch ids from PR
-    var distinctBranchIds = [];
-
-    var i = 0;
-    for (i = 0; i < relatedPRs.length; i++) {
-        var branchIds = relatedPRs[i].branches.map((id) => id.toString());
-        distinctBranchIds.push(branchIds);
-    }
-
-    distinctBranchIds = distinctBranchIds.flat();
-    distinctBranchIds = [...new Set(distinctBranchIds)];
-
-    // Fetch all branch ids
-    var relatedBranches;
-    try {
-        relatedBranches = await Branch.find({
-            _id: { $in: distinctBranchIds.map((id) => ObjectId(id)) },
-        })
-            .limit(20)
-            .lean()
-            .exec();
-    } catch (err) {
-        await logger.error({
-            source: "backend-api",
-            message: err,
-            errorDescription: `error finding Branches - distinctBranchIds: ${JSON.stringify(
-                distinctBranchIds
-            )}`,
-            function: "getFileContext",
-        });
-
-        return res.json({
-            success: false,
-            error: `error finding Branches - distinctBranchIds: ${JSON.stringify(
-                distinctBranchIds
-            )}`,
-            trace: err,
-        });
-    }
-
-    var returnObj = {};
-
-    returnObj.pullRequests = relatedPRs;
-    returnObj.commits = relatedCommits;
-    returnObj.branches = relatedBranches;
-
-    // Return
-
-    return res.json({ success: true, result: returnObj });
-};*/
 
 const getFileContext = async (req, res) => {
     const { workspaceId, repositoryId } = req.params;
@@ -347,11 +211,12 @@ const getFileContext = async (req, res) => {
 
     try {
         ticketsBySource = await Promise.all(
-            ticketSources.map((source) => {
+            ticketSources.map((source, i) => {
                 return IntegrationTicket.find({
                     _id: { $in: ticketIds },
                     source,
                 })
+                    .populate("repository tags")
                     .lean()
                     .exec();
             })
@@ -390,41 +255,3 @@ module.exports = {
     getFileContext,
     createGithubIssueBoard,
 };
-
-/*
- let associations;
-
-    try {
-        associations = await Promise.all(associationQueries);
-    } catch (e) {
-        return res.json({
-            success: false,
-            error: `error - repositoryId, filePath: ${repositoryId}, ${filePath}`,
-            trace: e,
-        });
-    }
-
-    const codeObjModelTypes = new Set("PullRequest", "Commit");
-
-    sources.map((source, i) => {
-        const sourceAssociations = associations[i];
-
-        sourceAssociations.map((association) => {
-            const { firstElement, firstElementModelType, secondElement, secondElementModelType } = association;
-
-            if (
-                firstElement.source === source &&
-                !codeObjModelTypes.has(firstElementModelType)
-            )
-                return firstElement;
-
-            if (
-                secondElement.source === source &&
-                !codeObjModelTypes.has(secondElementModelType)
-            )
-                return secondElement;
-
-            return null
-        }).filter(element => element != null);
-    }
-    // Return*/

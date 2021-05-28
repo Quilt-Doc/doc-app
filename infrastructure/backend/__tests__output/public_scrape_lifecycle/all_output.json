@@ -1,1 +1,20 @@
-{"jwilder/docker-squash":{"t1":true,"t2":true,"t3":true,"success":true,"htmlUrl":"https://github.com/jwilder/docker-squash","size":"100..1000","stars":"100..2000"},"tfredrich/RestApiTutorial.com":{"t1":true,"t2":true,"t3":true,"success":true,"htmlUrl":"https://github.com/tfredrich/RestApiTutorial.com","size":"2000..3000","stars":"500..3000"}}
+{
+    "jwilder/docker-squash": {
+        "t1": true,
+        "t2": true,
+        "t3": true,
+        "success": true,
+        "htmlUrl": "https://github.com/jwilder/docker-squash",
+        "size": "100..1000",
+        "stars": "100..2000"
+    },
+    "tfredrich/RestApiTutorial.com": {
+        "t1": true,
+        "t2": true,
+        "t3": true,
+        "success": true,
+        "htmlUrl": "https://github.com/tfredrich/RestApiTutorial.com",
+        "size": "2000..3000",
+        "stars": "500..3000"
+    }
+}
