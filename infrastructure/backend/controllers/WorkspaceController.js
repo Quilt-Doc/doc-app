@@ -56,7 +56,7 @@ const getScanRepositoriesData = async (
     repositoryIds,
     workspace,
     session,
-    public,
+    public
 ) => {
     // Get the list of installationIds for all Repositories
     var repositoryInstallationIds;
@@ -73,7 +73,7 @@ const getScanRepositoriesData = async (
         console.log(err);
 
         Sentry.setContext("getScanRepositoriesData", {
-            message: `Repository.find failed`,
+            message: "Repository.find failed",
             repositoryIds: repositoryIds,
         });
 
@@ -109,7 +109,7 @@ const getScanRepositoriesData = async (
 
     if (public) {
         scanRepositoriesData["installationIdLookup"] = {};
-        scanRepositoriesData["repositoryInstallationIds"] = []
+        scanRepositoriesData["repositoryInstallationIds"] = [];
         scanRepositoriesData["public"] = true;
     }
 
@@ -167,7 +167,7 @@ createWorkspace = async (req, res) => {
                 console.log(err);
 
                 Sentry.setContext("createWorkspace", {
-                    message: `Workspace.save() failed`,
+                    message: "Workspace.save() failed",
                     creator: creatorId,
                     repositoryIds: repositoryIds,
                 });
@@ -255,7 +255,7 @@ createWorkspace = async (req, res) => {
                     repositoryIds,
                     workspace,
                     session,
-                    public,
+                    public
                 );
             } catch (err) {
                 await logger.error({
@@ -391,15 +391,16 @@ deleteWorkspace = async (req, res) => {
 
     const session = await db.startSession();
 
-    console.log(
-        `deleteWorkspace Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`
-    );
+    console.log(`deleteWorkspace Attempting to delete Workspace ${workspaceId} - userId: ${req.tokenPayload.userId}`);
 
     try {
         await session.withTransaction(async () => {
-            console.log(
-                "deleteWorkspace Removing Workspace from User.workspaces"
-            );
+
+            // console.log("deleteWorkspace attempting to break transaction");
+
+            // await deleteUtils.breakDeleteWorkspaceTransaction(workspaceId);
+
+            console.log("deleteWorkspace Removing Workspace from User.workspaces");
             // Remove Workspace from User.workspaces
             await deleteUtils.detachWorkspaceFromMembers(workspaceId, session);
 
@@ -412,10 +413,9 @@ deleteWorkspace = async (req, res) => {
             console.log("deleteWorkspace Beginning to delete CodeObjects");
 
             // Get Repositories that need to be reset
-            var repositoriesToReset = await deleteUtils.acquireRepositoriesToReset(
-                deletedWorkspace,
-                session
-            );
+            var repositoriesToReset = await deleteUtils.acquireRepositoriesToReset(deletedWorkspace, session);
+
+            console.log(`acquireRepositoriesToReset - workspaceId: ${workspaceId}, repositoriesToReset: ${JSON.stringify(repositoriesToReset)}`);
 
             // Delete Repository Commits
             await deleteUtils.deleteCommits(repositoriesToReset, session);
@@ -475,14 +475,19 @@ deleteWorkspace = async (req, res) => {
                 session
             );
 
+            console.log("deleteWorkspace deleted IntegrationAttachments");
+            /*
             // Delete all ticketsToDelete IntegrationLabels
             await deleteUtils.deleteIntegrationLabels(ticketsToDelete, session);
+            */
+            // console.log("deleteWorkspace deleted IntegrationLabels");
 
             // Delete all ticketsToDelete IntegrationColumns
             await deleteUtils.deleteIntegrationColumns(
                 ticketsToDelete,
                 session
             );
+            console.log("deleteWorkspace deleted IntegrationColumns");
 
             // Delete all ticketsToDelete IntegrationComments
             await deleteUtils.deleteIntegrationComments(

@@ -3,37 +3,35 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 let commitSchema = new Schema({
+    created: { type: Date, default: Date.now },
 
-    created: {type: Date, default: Date.now },
-
-    repository: { type: ObjectId, ref: 'Repository', required: true },
+    repository: { type: ObjectId, ref: "Repository", required: true },
     installationId: { type: Number, required: false },
 
     name: { type: String },
     description: { type: String },
     sourceId: { type: String },
-    creator: { type: ObjectId, ref: "IntegrationUser" },
+    creator: { type: String },
     sourceCreationDate: { type: Date },
 
-    sha: {type: String, required: true},
-    ref: {type: String},
+    sha: { type: String, required: true },
+    ref: { type: String },
 
-    committerDate: {type: String},
-    treeHash: {type: String},
-    authorName: {type: String},
-    committerName: {type: String},
-    committerEmail: {type: String},
-    commitMessage: {type: String, required: true},
+    committerDate: { type: String },
+    treeHash: { type: String },
+    authorName: { type: String },
+    committerName: { type: String },
+    committerEmail: { type: String },
+    commitMessage: { type: String, required: true },
     fileList: [{ type: String }],
 
-    githubId: {type: Number},
+    githubId: { type: Number },
 
-    pusher: {type: String},
+    pusher: { type: String },
 
-    parents: [{ type: ObjectId, ref: 'Commit' }],
+    parents: [{ type: ObjectId, ref: "Commit" }],
 
-    fileChangeList: [{ type: ObjectId, ref: 'FileChange'}]
-
+    fileChangeList: [{ type: ObjectId, ref: "FileChange" }],
 });
 
 /*
@@ -47,6 +45,10 @@ let commitSchema = new Schema({
                 # parent hashes
                 # ref names without the " (", ")" wrapping.
 */
+
+commitSchema.index({
+    name: "text",
+});
 
 let Commit = mongoose.model("Commit", commitSchema);
 

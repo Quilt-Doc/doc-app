@@ -1,8 +1,8 @@
-const { spawnSync } = require('child_process');
-const fs = require('fs');
-const lineByLine = require('n-readlines');
+const { spawnSync } = require("child_process");
+const fs = require("fs");
+const lineByLine = require("n-readlines");
 
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Types;
 
 const { fetchAllPRsFromDB } = require("../github/pr_utils");
@@ -13,6 +13,8 @@ const Sentry = require("@sentry/node");
 
 const apis = require("../../apis/api");
 
+const { printExecTime } = require("../print");
+
 
 
 
@@ -22,12 +24,11 @@ const generateAllCommitsDiffFile = (repoDiskPath, repositoryId) => {
     var timestamp = Date.now().toString();
 
     try {
-        const diffGenerate = spawnSync('../../generate_all_commit_diffs.sh', [`../${timestamp}-${repositoryId}.patch`], { cwd: repoDiskPath });
-    }
-    catch (err) {
+        const diffGenerate = spawnSync("../../git_scripts/gen_all_commit_diffs_v2.sh", [`../${timestamp}-${repositoryId}.patch`], { cwd: repoDiskPath });
+    } catch (err) {
 
         Sentry.setContext("scanRepositories", {
-            message: `generateAllCommitDiffs error occurred trying to run '../generate_all_commit_diffs.sh'`,
+            message: "generateAllCommitDiffs error occurred trying to run '../generate_all_commit_diffs.sh'",
             outputFilePath: `../${timestamp}.patch`,
             cwd: repoDiskPath,
         });
@@ -39,17 +40,16 @@ const generateAllCommitsDiffFile = (repoDiskPath, repositoryId) => {
         throw err;
     }
     return `./git_repos/${timestamp}-${repositoryId}.patch`;
-}
+};
 
 const deleteRepositoryDiffFile = (diffFilePath) => {
 
     try {
-        const diffGenerate = spawnSync('rm', [`${diffFilePath}`]);
-    }
-    catch (err) {
+        const diffGenerate = spawnSync("rm", [`${diffFilePath}`]);
+    } catch (err) {
 
         Sentry.setContext("scanRepositories", {
-            message: `generateAllCommitDiffs error occurred trying to delete diff file`,
+            message: "generateAllCommitDiffs error occurred trying to delete diff file",
             filePath: `${diffFilePath}`,
         });
 
@@ -60,7 +60,7 @@ const deleteRepositoryDiffFile = (diffFilePath) => {
         throw err;
     }
 
-}
+};
 
 
 const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
@@ -97,7 +97,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
                     commitSha: currentCommitSha,
                     filePath: currentFilePath,
                     lineStart: currentNewRegionLineStart,
-                    lines: currentNewRegion
+                    lines: currentNewRegion,
                 });
                 currentNewRegion = [];
             }
@@ -120,7 +120,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
                     commitSha: currentCommitSha,
                     filePath: currentFilePath,
                     lineStart: currentNewRegionLineStart,
-                    lines: currentNewRegion
+                    lines: currentNewRegion,
                 });
                 currentNewRegion = [];
             }
@@ -147,7 +147,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
                     commitSha: currentCommitSha,
                     filePath: currentFilePath,
                     lineStart: currentNewRegionLineStart,
-                    lines: currentNewRegion
+                    lines: currentNewRegion,
                 });
                 currentNewRegion = [];
             }
@@ -180,7 +180,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
                     commitSha: currentCommitSha,
                     filePath: currentFilePath,
                     lineStart: currentNewRegionLineStart,
-                    lines: currentNewRegion
+                    lines: currentNewRegion,
                 });
                 currentNewRegion = [];
             }
@@ -217,13 +217,13 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
             commitSha: currentCommitSha,
             filePath: currentFilePath,
             lineStart: currentNewRegionLineStart,
-            lines: currentNewRegion
+            lines: currentNewRegion,
         });
         currentNewRegion = [];
     }
 
     allRegions = allRegions.map(regionObj => {
-        return Object.assign({}, { repository: repositoryId.toString() }, regionObj)
+        return Object.assign({}, { repository: repositoryId.toString() }, regionObj);
     });
 
     console.log("createBlamesFromPatchFile completed successfully");
@@ -231,7 +231,7 @@ const createBlamesFromPatchFile = (patchFilePath, repositoryId) => {
 
     return allRegions;
 
-}
+};
 
 
 const getPRDiffContent = async (installationClient, repositoryFullName, prNumber, public = false) => {
@@ -245,15 +245,14 @@ const getPRDiffContent = async (installationClient, repositoryFullName, prNumber
                 headers: {
                     "Content-Type": "application/vnd.github.v3.diff",
                     accept: "application/vnd.github.v3.diff",
-                }
+                },
             }
         );
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
 
         Sentry.setContext("getPRDiffContnet", {
-            message: `Error occurred fetching PR diff`,
+            message: "Error occurred fetching PR diff",
             repositoryFullName: repositoryFullName,
             prNumber: prNumber,
         });
@@ -263,7 +262,7 @@ const getPRDiffContent = async (installationClient, repositoryFullName, prNumber
         throw err;
     }
     return prDiffResponse.data;
-}
+};
 
 
 const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
@@ -300,7 +299,7 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
                 allRegions.push({
                     filePath: currentFilePath,
                     lineStart: currentNewRegionLineStart,
-                    lines: currentNewRegion
+                    lines: currentNewRegion,
                 });
                 currentNewRegion = [];
             }
@@ -321,7 +320,7 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
                 allRegions.push({
                     filePath: currentFilePath,
                     lineStart: currentNewRegionLineStart,
-                    lines: currentNewRegion
+                    lines: currentNewRegion,
                 });
                 currentNewRegion = [];
             }
@@ -350,7 +349,7 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
                 allRegions.push({
                     filePath: currentFilePath,
                     lineStart: currentNewRegionLineStart,
-                    lines: currentNewRegion
+                    lines: currentNewRegion,
                 });
                 currentNewRegion = [];
             }
@@ -381,28 +380,27 @@ const createBlamesFromPRPatch = (prPatchContent, prNumber, repositoryId) => {
         allRegions.push({
             filePath: currentFilePath,
             lineStart: currentNewRegionLineStart,
-            lines: currentNewRegion
+            lines: currentNewRegion,
         });
         currentNewRegion = [];
     }
 
     allRegions = allRegions.map(regionObj => {
-        return Object.assign({}, { pullRequestNumber: prNumber, repository: repositoryId }, regionObj)
+        return Object.assign({}, { pullRequestNumber: prNumber, repository: repositoryId }, regionObj);
     });
 
     return allRegions;
-}
+};
 
 const createInsertHunks = async (insertHunks) => {
     console.log(`createInsertHunks: Attempting to create #${insertHunks.length} InsertHunks`);
     var bulkInsertResult;
     try {
         bulkInsertResult = await InsertHunk.insertMany(insertHunks);
-    }
-    catch (err) {
+    } catch (err) {
 
         Sentry.setContext("scanRepositories", {
-            message: `generateAllCommitDiffs -  InsertHunk error occurred executing 'insertMany'`,
+            message: "generateAllCommitDiffs -  InsertHunk error occurred executing 'insertMany'",
             numInsertHunks: insertHunks.length,
         });
 
@@ -415,7 +413,7 @@ const createInsertHunks = async (insertHunks) => {
     }
 
     console.log(`createInsertHunks: Successfully created #${insertHunks.length}InsertHunks`);
-}
+};
 
 
 const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
@@ -428,10 +426,9 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
     var diffFilePath;
     try {
         diffFilePath = generateAllCommitsDiffFile(repoDiskPath);
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("scanRepositories", {
-            message: `createInsertHunksForRepository -  generateAllCommitsDiffFile failed`,
+            message: "createInsertHunksForRepository -  generateAllCommitsDiffFile failed",
             repoDiskPath: repoDiskPath,
         });
 
@@ -442,8 +439,7 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         throw err;
     }
 
-    hrend = process.hrtime(hrstart)
-    console.info(`Generate Commit Diffs File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Generate Commit Diffs File ("${repositoryId}")`);
 
     // Parse Diff file
     var allInsertHunks;
@@ -456,10 +452,9 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
 
     try {
         allInsertHunks = createBlamesFromPatchFile(diffFilePath, repositoryId);
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("scanRepositories", {
-            message: `createInsertHunksForRepository -  createBlamesFromPatchFile failed`,
+            message: "createInsertHunksForRepository -  createBlamesFromPatchFile failed",
             diffFilePath: diffFilePath,
             repositoryId: repositoryId,
         });
@@ -473,8 +468,8 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         // throw err;
     }
 
-    hrend = process.hrtime(hrstart);
-    console.info(`Create Blames from Patch File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Create Blames from Patch File ("${repositoryId}")`);
+
 
 
     hrstart = process.hrtime();
@@ -483,10 +478,9 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
     // If the parsing operation failed or not, still need to attempt to delete the patch file
     try {
         deleteRepositoryDiffFile(diffFilePath);
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("scanRepositories", {
-            message: `createInsertHunksForRepository -  deleteRepositoryDiffFile failed`,
+            message: "createInsertHunksForRepository -  deleteRepositoryDiffFile failed",
             diffFilePath: diffFilePath,
             repositoryId: repositoryId,
         });
@@ -498,8 +492,7 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         throw err;
     }
 
-    hrend = process.hrtime(hrstart);
-    console.info(`Delete Repository Diff File ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Delete Repository Diff File ("${repositoryId}")`);
 
 
     // If the parse operation failed, throw an error here
@@ -515,10 +508,9 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
 
     try {
         await createInsertHunks(allInsertHunks);
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("scanRepositories", {
-            message: `createInsertHunksForRepository -  createInsertHunks failed`,
+            message: "createInsertHunksForRepository -  createInsertHunks failed",
             numInsertHunks: allInsertHunks.length,
             repositoryId: repositoryId,
             repoDiskPath: repoDiskPath,
@@ -531,20 +523,19 @@ const createInsertHunksForRepository = async (repoDiskPath, repositoryId) => {
         throw err;
     }
 
-    hrend = process.hrtime(hrstart)
-    console.info(`Create ${allInsertHunks.length} InsertHunks for Repository ( ${repositoryId} ) Execution time (hr): ${hrend[0]}s ${hrend[1] / 1000000}ms`);
+    printExecTime(process.hrtime(hrstart), `Create ${allInsertHunks.length} InsertHunks for Repository ("${repositoryId}")`);
 
-}
+};
 
-const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName, installationClient, public = false) => {
+const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName,
+    installationClient, public = false) => {
     // Fetch All PRs for Repository from DB
     var repositoryPRs;
     try {
         repositoryPRs = await fetchAllPRsFromDB(repositoryId, "_id repository number");
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("scanRepositories", {
-            message: `createPRInsertHunksForRepository -  fetchAllPRsFromDB failed`,
+            message: "createPRInsertHunksForRepository -  fetchAllPRsFromDB failed",
             repositoryId: repositoryId,
         });
 
@@ -563,17 +554,16 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
         var diffContent;
         try {
             diffContent = await getPRDiffContent(installationClient, repositoryFullName, number, public);
-        }
-        catch (err) {
+        } catch (err) {
             Sentry.setContext("createPRInsertHunksForRepository", {
-                message: `getPRDiffContent failed`,
+                message: "getPRDiffContent failed",
                 repositoryFullName: repositoryFullName,
                 prNumber: number,
             });
 
             Sentry.captureException(err);
             console.log(err);
-            return { error: 'Error' };
+            return { error: "Error" };
         }
 
         return { diff: diffContent, prNumber: number };
@@ -583,10 +573,9 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
     var prDiffScrapeListResults;
     try {
         prDiffScrapeListResults = await Promise.allSettled(prDiffRequestList);
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("createPRInsertHunksForRepository", {
-            message: `Executing bulk PR diff Scrape Requests failed`,
+            message: "Executing bulk PR diff Scrape Requests failed",
             repositoryId: repositoryId,
             repositoryFullName: repositoryFullName,
         });
@@ -595,7 +584,7 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
         throw err;
     }
 
-    validResults = prDiffScrapeListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
+    var validResults = prDiffScrapeListResults.filter(resultObj => resultObj.value && !resultObj.value.error);
     validResults = validResults.map(resultObj => resultObj.value);
 
     // Parse all diffs to generate InsertHunks
@@ -613,10 +602,9 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
     // Create all InsertHunks
     try {
         await createInsertHunks(allPRInsertHunks);
-    }
-    catch (err) {
+    } catch (err) {
         Sentry.setContext("createPRInsertHunksForRepository", {
-            message: `createInsertHunks failed`,
+            message: "createInsertHunks failed",
             repositoryId: repositoryId,
             repositoryFullName: repositoryFullName,
         });
@@ -624,10 +612,10 @@ const createPRInsertHunksForRepository = async (repositoryId, repositoryFullName
         Sentry.captureException(err);
         throw err;
     }
-}
+};
 
 
 module.exports = {
     createInsertHunksForRepository,
-    createPRInsertHunksForRepository
-}
+    createPRInsertHunksForRepository,
+};

@@ -26,89 +26,6 @@ const { json } = require("body-parser");
 
 const { checkValid } = require("../utils/utils");
 
-/*
-initPublicRepository = async (req) => {
-    var { icon, publicHtmlUrl } = req.body;
-
-    var publicUrl;
-
-    if (!checkValid(publicHtmlUrl)) {
-        throw Error(`No public repository html url provided`);
-    }
-    else {
-        publicUrl = publicHtmlUrl;
-    }
-
-
-    var urlWithoutName = publicUrl.substring(0, publicUrl.lastIndexOf("/"));
-    var repoName = publicUrl.substring(publicUrl.lastIndexOf("/")+1, publicUrl.length);
-
-    var repoOwner = urlWithoutName.substring(urlWithoutName.lastIndexOf("/")+1, urlWithoutName.length);
-
-    fullName = `${repoOwner}/${repoName}`
-
-
-    console.log(`Initializing Repository - fullName, installationId: ${fullName}, ${installationId}`);
-
-    var repositoryCreateData = {
-        fullName,
-        public: true,
-        scanned: false,
-        currentlyScanning: false,
-    };
-
-    let repository = new Repository(repositoryCreateData);
-
-    try {
-        repository = await repository.save();
-    } catch (err) {
-
-        console.log(err);
-
-        Sentry.setContext("initRepository", {
-            message: `Repository.save() failed`,
-            fullName: fullName,
-            installationId: installationId,
-            publicHtmlUrl: publicHtmlUrl,
-        });
-
-        Sentry.captureException(err);
-
-        throw err;
-    }
-
-    try {
-        await Reference.create({
-            repository: repository._id,
-            name: repository.fullName,
-            kind: "dir",
-            path: "",
-            parseProvider: "create",
-            root: true,
-        });
-    } catch (err) {
-
-        console.log(err);
-
-        Sentry.setContext("initRepository", {
-            message: `Reference.create failed`,
-            repositoryId: repository._id,
-            repositoryFullName: repository.fullName,
-        });
-
-        Sentry.captureException(err);
-
-        throw err;
-    }
-
-    console.log(`Successfully initialized Repository - fullName: ${fullName}`);
-
-    return repository;
-
-
-}
-*/
-
 initRepository = async (req, res) => {
     var { fullName, installationId, isPublic, publicHtmlUrl } = req.body;
 
@@ -135,7 +52,7 @@ initRepository = async (req, res) => {
         if (!checkValid(publicHtmlUrl)) {
             return res.json({
                 success: false,
-                error: `No public repository html url provided`,
+                error: "No public repository html url provided",
             });
         } else {
             publicUrl = publicHtmlUrl;
@@ -155,6 +72,35 @@ initRepository = async (req, res) => {
         );
 
         fullName = `${repoOwner}/${repoName}`;
+        
+        // Verify that public Repository not already initialized
+
+        let prevCreatedRepository;
+        try {
+            prevCreatedRepository = await Repository.findOne({fullName: fullName})
+                .lean()
+                .exec();
+        } catch (err) {
+            Sentry.setContext("initRepository", {
+                message: "Repository.findOne({fullname}) failed",
+                fullName: fullName,
+                installationId: installationId,
+                publicHtmlUrl: publicHtmlUrl,
+            });
+    
+            Sentry.captureException(err);
+    
+            return res.json({
+                success: false,
+                error: `Error checking for previously initialized public Repository fullName: ${fullName}, installationId: ${installationId}`,
+                trace: err,
+            });
+        }
+
+        if (prevCreatedRepository) {
+            console.log(`Returning already initialized public Repository: ${fullName}`);
+            return res.json({success: true, result: prevCreatedRepository});
+        }
     }
 
     console.log(
@@ -175,7 +121,7 @@ initRepository = async (req, res) => {
         repository = await repository.save();
     } catch (err) {
         Sentry.setContext("initRepository", {
-            message: `Repository.save() failed`,
+            message: "Repository.save() failed",
             fullName: fullName,
             installationId: installationId,
             publicHtmlUrl: publicHtmlUrl,
@@ -201,7 +147,7 @@ initRepository = async (req, res) => {
         });
     } catch (err) {
         Sentry.setContext("initRepository", {
-            message: `Reference.create failed`,
+            message: "Reference.create failed",
             repositoryId: repository._id,
             repositoryFullName: repository.fullName,
         });
@@ -210,7 +156,7 @@ initRepository = async (req, res) => {
 
         return res.json({
             success: false,
-            error: `Error saving rootReference`,
+            error: "Error saving rootReference",
             trace: err,
         });
     }
@@ -1058,7 +1004,7 @@ searchPublicGithubRepositories = async (req, res) => {
     let requestUrl;
 
     if (query == "") {
-        q = encodeURIComponent(`a in:full_name`);
+        q = encodeURIComponent("a in:full_name");
 
         requestUrl = `/search/repositories?q=${q}&sort=stars&per_page=${12}&page=${1}`;
     } else {

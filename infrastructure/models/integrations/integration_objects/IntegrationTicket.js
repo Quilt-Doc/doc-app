@@ -23,10 +23,14 @@ const integrationTicketSchema = new Schema({
 
     link: { type: String }, // trelloCardLink: String,
 
-    creator: { type: ObjectId, ref: "IntegrationUser" },
+    creator: { type: String },
+    repository: { type: ObjectId, ref: "Repository" },
+    status: { type: String },
+    labels: [{ type: String }], //trelloCardLabels
+    commentNum: { type: Number },
+
     assignees: [{ type: ObjectId, ref: "IntegrationUser" }], // trelloCardMember
     members: [{ type: ObjectId, ref: "IntegrationUser" }],
-    labels: [{ type: ObjectId, ref: "IntegrationLabel" }], //trelloCardLabels
     board: { type: ObjectId, ref: "IntegrationBoard" },
     column: { type: ObjectId, ref: "IntegrationColumn" }, //  trelloCardList: String,
     comments: [{ type: ObjectId, ref: "IntegrationComments" }],
@@ -70,7 +74,8 @@ const integrationTicketSchema = new Schema({
 
 
     // Github Issue specific fields
-    repositoryId: { type: ObjectId, ref: 'Repository' },
+    repositoryId: { type: ObjectId, ref: "Repository" },
+    githubIssueCreator: { type: String },
     // id: repositoryIssueObj.id, --> sourceId
     githubIssueHtmlUrl: { type: String },
     githubIssueNumber: { type: Number },
