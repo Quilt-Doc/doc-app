@@ -7,12 +7,18 @@ const mongoose = require("mongoose");
 const Workspace = require("../../../models/Workspace");
 const Repository = require("../../../models/Repository");
 const IntegrationTicket = require("../../../models/integrations/integration_objects/IntegrationTicket");
+const Association = require("../../../models/associations/Association");
+
+const PullRequest = require("../../../models/PullRequest");
+const Commit = require("../../../models/Commit");
+const Branch = require("../../../models/Branch");
 
 // util helpers
 const {
     deleteWorkspace,
     createWorkspace,
 } = require("../../../__tests__config/utils");
+const { logger } = require("../../../logging");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -106,6 +112,8 @@ describe("Basic public association generation validation", () => {
 
         const acceptedModels = new Set(["branch", "issue", "pullRequest", "commit"]);
 
+        process.env.TEST_REPO_TICKETS = JSON.stringify(repoTickets);
+
         repoTickets.map((tickets) => {
             tickets.map((ticket) => {
                 const { attachments } = ticket;
@@ -129,5 +137,76 @@ describe("Basic public association generation validation", () => {
         });
     });
 
-    test("Validate association length and content", async () => {});
+    test("Validate association length and content", async () => {
+        const repositories = JSON.parse(process.env.TEST_REPOSITORIES);
+
+        const repoTickets = JSON.parse(process.env.TEST_REPO_TICKETS);
+
+        const repoAssociations = await Promise.all(
+            repositories.map((repo) => {
+                Association.find({
+                    repository: repo._id,
+                });
+            })
+        );
+
+        logger.info(`${repoAssociations.length} associations were found.`, {
+            func: "Validate association length and content",
+            obj: repoAssociations,
+        });
+
+        let modelTypeMap = {
+            pullRequest: PullRequest,
+            commit: Commit,
+            issue: IntegrationTicket,
+            branch: Branch,
+        };
+
+        let total = 0;
+
+        for (let i = 0; i < repoTickets.length; i++) {
+            const ticket = repoTickets[i];
+
+            let seen = new Set();
+
+            let { attachments } = ticket;
+
+            attachments = attachments.filter((item) => {
+                const { modelType, sourceId, repository } = item;
+
+                const key = `${modelType}-${sourceId}-${repository.toString()}`;
+
+                if (seen.has(key)) {
+                    return false;
+                } else {
+                    seen.add(key);
+
+                    return true;
+                }
+            });
+
+            for (let i = 0; i < attachments.length; i++) {
+                const { modelType, sourceId, repository } = attachments[i];
+
+                const codeObject = await modelTypeMap[modelType].findOne({
+                    sourceId,
+                    repository,
+                });
+
+                const association = await Association.find({
+                    repository,
+                    firstElement: ticket._id,
+                    secondElement: codeObject._id,
+                });
+
+                expect(association).toBeDefined();
+
+                expect(association).not.toBeNull();
+            }
+
+            total += attachments.length;
+        }
+
+        expect(total).toEqual(repoAssociations.length);
+    });
 });
