@@ -236,7 +236,7 @@ const parseRepoCommitsWithBody = (commitFilePath) => {
     // eslint-disable-next-line no-cond-assign
     while (line = liner.next()) {
 
-        line = line.toString("ascii");
+        line = line.toString("utf8");
 
         if (line == "END") {
             atNewCommit = true;
@@ -297,11 +297,21 @@ const parseRepoCommitsWithBody = (commitFilePath) => {
                 }
 
                 line = liner.next();
-                line = line.toString("ascii");
+                line = line.toString("utf8");
 
                 k++;
                 i++;
             }
+
+            // Remove '\n' from end for commit message
+            if (currentCommitObj.commitMessage.length > 0) {
+                if (currentCommitObj.commitMessage.charAt(currentCommitObj.commitMessage.length-1) == "\n") {
+                    currentCommitObj.commitMessage =
+                        currentCommitObj.commitMessage
+                            .slice(0, currentCommitObj.commitMessage.length-1);
+                }
+            }
+
             atNewCommit = false;
         } else if (atNewCommit == false) {
             currentFileList.push(line);

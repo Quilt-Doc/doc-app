@@ -11,10 +11,6 @@ const _ = require("lodash");
 
 const Sentry = require("@sentry/node");
 
-<<<<<<< HEAD
-const GithubIssue = require('../../models/integrations/github/GithubIssue');
-=======
->>>>>>> scrape-robust
 const IntegrationTicket = require("../../models/integrations/integration_objects/IntegrationTicket");
 // const IntegrationInterval = require("../../models/integrations/integration_objects/IntegrationInterval");
 const IntegrationAttachment = require("../../models/integrations/integration_objects/IntegrationAttachment");
@@ -1052,6 +1048,8 @@ const fetchAllRepoIssuesAPIGraphQL = async (client, repositoryId,
                 sourceId: issue.number,
 
                 description: issue.body,
+                body: issue.body,
+
                 sourceCreationDate: issue.createdAt,
                 sourceUpdateDate: issue.updatedAt,
                 sourceCloseDate: issue.closedAt,

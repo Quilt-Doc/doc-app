@@ -81,11 +81,11 @@ const fetchAppToken = async () => {
         if (!token) {
             await logger.error({
                 source: "backend-api",
-                message: Error(`Error finding 'APP' Token`),
+                message: Error("Error finding 'APP' Token"),
                 errorDescription: "Could not find the App Token",
                 function: "fetchAppToken",
             });
-            throw new Error(`Error finding 'APP' Token`);
+            throw new Error("Error finding 'APP' Token");
         }
         return token;
     } catch (err) {
@@ -226,25 +226,45 @@ const requestPublicClient = () => {
 
 
 const requestBackendClient = (token) => {
-	const axios = require('axios');
+    const axios = require("axios");
 
     if (process.env.IS_PRODUCTION != 1) {
         return axios.create({
             baseURL: process.env.LOCALHOST_API_URL,
             headers: {
-                "Authorization": `Bearer ${token}`
-            }
+                "Authorization": `Bearer ${token}`,
+            },
         });
-    }
-    else {
+    } else {
         return axios.create({
             baseURL: process.env.PRODUCTION_API_URL,
             headers: {
-                "Authorization": `Bearer ${token}`
-            }
-        })
+                "Authorization": `Bearer ${token}`,
+            },
+        });
     }
-}
+};
+
+const { GraphQLClient, gql, rawRequest, request } = require("graphql-request");
+const requestPublicGraphQLClient = () => {
+
+    const prismaClient = new GraphQLClient("https://api.github.com/graphql", {
+        credentials: "include",
+        mode: "cors",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `token ${process.env.GITHUB_PUBLIC_USER_OAUTH}`,
+        },
+        /*
+        auth: {
+            username: process.env.GITHUB_PUBLIC_USER_NAME,
+            password: process.env.GITHUB_PUBLIC_USER_OAUTH,
+        }
+        */       
+    });
+    return prismaClient;
+};
 
 module.exports = {
     requestLocalWorkerClient,
@@ -258,4 +278,5 @@ module.exports = {
     requestInstallationClient,
     requestPublicClient,
     requestBackendClient,
+    requestPublicGraphQLClient,
 };

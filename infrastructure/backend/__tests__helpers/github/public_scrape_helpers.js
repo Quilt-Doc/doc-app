@@ -8,6 +8,9 @@ const apis = require("../../apis/api");
 const backendClient = apis.requestTestingUserBackendClient();
 const publicClient = apis.requestPublicClient();
 
+const prFetcher = require("../github_gql_fetchers/pr_fetch");
+const issueFetcher = require("../github_gql_fetchers/issue_fetch");
+
 // logger
 const { logger } = require("../../fs_logging");
 
@@ -382,23 +385,27 @@ const acquireRepositoryRawCommits = async (repositories) => {
 };
 
 const acquireRepositoryRawPullRequests = async (repositories) => {
-    const func = "acquireRepositoryRawPullRequests";
+    const func = "acquireRepositoryRawPullRequestsGQL";
 
     logger.info(`Received ${repositories.length} repositories`, {
         func,
         obj: repositories,
     });
 
-    const publicClient = apis.requestPublicClient();
+    const publicClient = apis.requestPublicGraphQLClient();
 
     let allPullRequests = [];
 
     for (let i = 0; i < repositories.length; i++) {
         const repo = repositories[i];
 
+        let pulls = await prFetcher.fetchAllRepoPRsAPIGraphQL(publicClient, repo );
+
+        /*
         let pulls = await paginateResponse(publicClient, `/repos/${repo.fullName}/pulls`, {
             state: "all",
         });
+        */
 
         logger.info(`Received ${pulls.length} pull requests for repository ${repo.fullName}`, {
             func,
@@ -411,6 +418,7 @@ const acquireRepositoryRawPullRequests = async (repositories) => {
     return allPullRequests;
 };
 
+
 const acquireRepositoryRawIssues = async (repositories, allPullRequests) => {
     const func = "acquireRepositoryRawIssues";
 
@@ -419,22 +427,25 @@ const acquireRepositoryRawIssues = async (repositories, allPullRequests) => {
         obj: repositories,
     });
 
-    const publicClient = apis.requestPublicClient();
+    const publicClient = apis.requestPublicGraphQLClient();
 
     let allIssues = [];
 
     for (let i = 0; i < repositories.length; i++) {
         const repo = repositories[i];
 
+        /*
         let issues = await paginateResponse(publicClient, `/repos/${repo.fullName}/issues`, {
             state: "all",
         });
+        */
+        let issues = await issueFetcher.fetchAllRepoIssuesAPIGraphQL(publicClient, repo);
 
-        let pulls = allPullRequests[i];
+        // let pulls = allPullRequests[i];
 
-        let pullRequestSet = new Set(pulls.map((pull) => pull.number));
+        // let pullRequestSet = new Set(pulls.map((pull) => pull.number));
 
-        issues = issues.filter((issue) => !pullRequestSet.has(issue.number));
+        // issues = issues.filter((issue) => !pullRequestSet.has(issue.number));
 
         logger.info(`Received ${issues.length} issues for repository ${repo.fullName}`, {
             func,
@@ -520,11 +531,16 @@ const compareSets = async (repo, type, raw, scraped) => {
     });
 };
 
+// compareFields(repo, "pulls", allPullRequests[i], allScrapedPullRequests[i], "name")
+// compareFields(repo, "pulls", allPullRequests[i], allScrapedPullRequests[i], "description")
+
+
 const compareFields = (repo, type, raw, scraped, fieldName) => {
     let currentResults = JSON.parse(process.env.CURRENT_RESULTS);
 
     const { fullName } = repo;
 
+    // "pulls" -> "number"
     const identifier = type == "commits" ? "sha" : "number";
 
     let results = currentResults[fullName][type];
@@ -538,17 +554,36 @@ const compareFields = (repo, type, raw, scraped, fieldName) => {
 
         if (!rawItem) return;
 
-        const scrapedField = item[fieldName];
+        var scrapedField = item[fieldName];
+        if (type == "commits" && fieldName == "name") {
+            if (scrapedField) {
+                scrapedField = (scrapedField == null) ? scrapedField : scrapedField.trimEnd();
+            }
+        }
 
-        const rawField =
-            fieldName == "name"
-                ? type == "commits"
-                    ? rawItem["commit"]["message"]
-                    : rawItem["title"]
-                : rawItem["body"];
+        // ["pulls"]["name"] -> "title"
+        // ["pulls"]["description"] -> "body"
+        const rawField = (() => {
+            if (fieldName == "name") {
+                if (type == "commits") return rawItem["commit"]["message"];
+                if (type == "pulls") return rawItem["title"];
+                if (type == "issues") return rawItem["title"];
+            } else {
+                if (type == "commits") return rawItem["body"];
+                if (type == "pulls") return rawItem["body"];
+                if (type == "issues") return rawItem["body"];
+            }
+        })();
+
+        /*
+        fieldName == "name"
+            ? type == "commits"
+                ? rawItem["commit"]["message"]
+                : rawItem["title"]
+            : rawItem["body"];
+        */
 
         if (rawField != scrapedField) {
-            console.log(`SCRAPED_FIELD: ${scrapedField}`);
             results[fieldName] = {
                 status: "ERROR",
                 data: {

@@ -39,8 +39,8 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
 
     try {
-        // foundPRList = await fetchAllRepoPRsAPIGraphQL(client, installationId, repositoryId, repositoryObj.fullName);
-        foundPRList = await fetchAllRepoPRsAPIConcurrent(client, installationId, repositoryId, repositoryObj.fullName);
+        foundPRList = await fetchAllRepoPRsAPIGraphQL(client, installationId, repositoryId, repositoryObj.fullName);
+        // foundPRList = await fetchAllRepoPRsAPIConcurrent(client, installationId, repositoryId, repositoryObj.fullName);
     } catch (err) {
 
         console.log(err);
@@ -55,8 +55,8 @@ const scrapeGithubRepoCodeObjects = async (installationId, repositoryId, install
 
         throw err;
     }
-    // printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIGraphQL("${repositoryObj.fullName}")`);
-    printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIConcurrent("${repositoryObj.fullName}")`);
+    printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIGraphQL("${repositoryObj.fullName}")`);
+    // printExecTime(process.hrtime(start), `fetchAllRepoPRsAPIConcurrent("${repositoryObj.fullName}")`);
 
 
 

@@ -1,7 +1,7 @@
 // setup.js
 
-require('dotenv').config();
-const utils = require('./utils');
+require("dotenv").config();
+const utils = require("./utils");
 
 
 module.exports = async () => {
@@ -11,20 +11,18 @@ module.exports = async () => {
 
     try {
         await utils.removeWorkspaces();
-    }
-    catch (err) {
-        console.log('Error Clearing Test User Workspaces');
+    } catch (err) {
+        console.log("Error Clearing Test User Workspaces");
         console.log(err);
         throw err;
     }
 
-    var createWorkspaceResponse
+    var createWorkspaceResponse;
     try {
         // global.createdWorkspaceId = await utils.createWorkspace( createdRepositoryIds );
         createWorkspaceResponse = await utils.createWorkspace( ["kgodara-testing/brodal_queue", "kgodara-testing/doc-app"] );
-    }
-    catch (err) {
-        console.log('Error creating Workspace/fetching Repositories setup.js');
+    } catch (err) {
+        console.log("Error creating Workspace/fetching Repositories setup.js");
         throw err;
     }
 

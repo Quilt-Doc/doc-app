@@ -39,6 +39,8 @@
         "fs-path": "0.0.24",
         "fuse.js": "^6.4.6",
         "googleapis": "^66.0.0",
+        "graphql": "^15.5.0",
+        "graphql-request": "^3.4.0",
         "http": "0.0.1-security",
         "immutable": "^4.0.0-rc.12",
         "is-url": "^1.2.4",
