@@ -8,17 +8,17 @@ const Commit = require("../../../models/Commit");
 const Branch = require("../../../models/Branch");
 
 // util helpers
-const { logger } = require("../../../logging");
+const { logger } = require("../../fs_logging");
 
 const validateTicketBoards = async (isPublic = false) => {
     const repositories = JSON.parse(process.env.TEST_REPOSITORIES);
 
     const repoTickets = await Promise.all(
-        repositories.map((repo) => {
+        repositories.map((repo) =>
             IntegrationTicket.find({
                 repository: repo._id,
-            }).populate("attachments");
-        })
+            }).populate("attachments")
+        )
     );
 
     repoTickets.map((tickets, i) => {
@@ -110,11 +110,11 @@ const validateAssociations = async (isPublic = false) => {
     const repositories = JSON.parse(process.env.TEST_REPOSITORIES);
 
     const repoAssociations = await Promise.all(
-        repositories.map((repo) => {
+        repositories.map((repo) =>
             Association.find({
                 repository: repo._id,
-            });
-        })
+            })
+        )
     );
 
     logger.info(`${repoAssociations.length} associations were found.`, {

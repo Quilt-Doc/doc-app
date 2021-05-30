@@ -2,41 +2,6 @@ const { gql } = require("graphql-request");
 
 const { requestPublicGraphQLClient } = require("../../apis/api");
 
-const acquireSampleBlames = async (commitSample, repo) => {
-    const client = requestPublicGraphQLClient();
-
-    const query = generateCommitBlameQuery();
-
-    let variables = {
-        repoName: repo.fullName.split("/")[0],
-        repoOwner: repo.fullName.split("/")[1],
-    };
-
-    let progress = 0;
-
-    let results = [];
-    while (progress != commitSample.length) {
-        // batch of 10
-        results.push(
-            await Promise.all(
-                commitSample.slice(progress, progress + 10).map((commit) => {
-                    const { sourceId: sha, fileList } = commit;
-
-                    fileList.map((file) => {
-                        return client.request(query, {
-                            ...variables,
-                            commitSha: sha,
-                            filePath: file,
-                        });
-                    });
-                })
-            )
-        );
-    }
-
-    return results;
-};
-
 const generateCommitBlameQuery = () => {
     return gql`
         query fetchCommitWithBlames(
@@ -63,6 +28,44 @@ const generateCommitBlameQuery = () => {
     `;
 };
 
+const acquireSampleBlames = async (commitSample, repo) => {
+    const client = requestPublicGraphQLClient();
+
+    const query = generateCommitBlameQuery();
+
+    let variables = {
+        repoName: repo.fullName.split("/")[0],
+        repoOwner: repo.fullName.split("/")[1],
+    };
+
+    let progress = 0;
+
+    let results = [];
+
+    while (progress != commitSample.length) {
+        // batch of 10
+
+        const batch = await Promise.all(
+            commitSample.slice(progress, progress + 10).map((commit) => {
+                const { sourceId: sha, fileList } = commit;
+
+                fileList.map((file) => {
+                    return client.request(query, {
+                        ...variables,
+                        commitSha: sha,
+                        filePath: file,
+                    });
+                });
+            })
+        );
+
+        batch.map((item) => results.push(item));
+    }
+
+    // results is of form [ -commits [ -files [ -ranges ]]]
+    return results;
+};
+
 const compareScrapeToSampleBlames = (commitSample, insertHunks, blameRanges) => {
     let results = {};
 
@@ -84,6 +87,7 @@ const compareScrapeToSampleBlames = (commitSample, insertHunks, blameRanges) => 
 
             if (fileHunks.length != fileRanges.length) {
                 areBlamesCorrect = false;
+
                 data[file] = {
                     scrapedCount: fileHunks.length,
                     rawCount: fileRanges.length,

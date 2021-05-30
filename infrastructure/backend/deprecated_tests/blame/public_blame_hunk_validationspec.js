@@ -7,25 +7,25 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 
 // models
-const Workspace = require("../../../models/Workspace");
-const Commit = require("../../../models/Commit");
-const InsertHunk = require("../../../models/InsertHunk");
-const PullRequest = require("../../../models/PullRequest");
+const Workspace = require("../../models/Workspace");
+const Commit = require("../../models/Commit");
+const InsertHunk = require("../../models/InsertHunk");
+const PullRequest = require("../../models/PullRequest");
 
 // logger
-const { logger } = require("../../../fs_logging");
+const { logger } = require("../../fs_logging");
 
 // util helpers
-const { deleteWorkspace } = require("../../../__tests__config/utils");
+const { deleteWorkspace } = require("../../__tests__config/utils");
 const {
     sampleGithubRepositories,
     createPublicWorkspace,
-} = require("../../../__tests__helpers/github/public_scrape_helpers");
+} = require("../../__tests__helpers/github/public_scrape_helpers");
 const {
     acquireSampleBlames,
     compareScrapeToSampleBlames,
     compareScrapeToSampleAdditions,
-} = require("../../../__tests__helpers/github/public_blame_hunk_validation_helpers");
+} = require("../../__tests__helpers/github/public_blame_hunk_validation_helpers");
 
 // env variables
 const { TEST_USER_ID, EXTERNAL_DB_PASS, EXTERNAL_DB_USER } = process.env;
@@ -162,7 +162,7 @@ describe("Basic public blame hunk validation", () => {
         process.env.COMMIT_SAMPLES = JSON.stringify(commitSamples);
     });
 
-    test("Validate commit blame hunk sourceIds", async () => {
+    test("Validate commit blame hunk fields", async () => {
         const currentResults = JSON.parse(currentResults);
 
         const repositories = JSON.parse(process.env.REPOSITORIES);
@@ -233,6 +233,14 @@ describe("Basic public blame hunk validation", () => {
         });
 
         process.env.CURRENT_RESULTS = JSON.stringify(currentResults);
+
+        repositories.map((repo) => {
+            const { fullName } = repo;
+
+            expect(currentResults[fullName]["field"]["areRefsCorrect"]).toEqual(
+                true
+            );
+        });
     });
 
     test("Validate commit blame hunk ranges", async () => {
@@ -246,6 +254,7 @@ describe("Basic public blame hunk validation", () => {
             acquireSampleBlames(commitSamples[i], repo)
         );
 
+        // nested array form -> [ -repo [ -commit [ -file [ -hunk ] ]]]
         const insertHunks = await Promise.all(
             commitSamples.map((sample) => {
                 sample.map((commit) => {
