@@ -1,0 +1,13 @@
+{
+    "rusterlium/rustler": {
+        "fullName": "rusterlium/rustler",
+        "numIssues": 146,
+        "averagePullRequestAttachments": 0.3424657534246575,
+        "averageCommitAttachments": 0.2465753424657534,
+        "averageAttachments": 1.047945205479452,
+        "issuesLinkedToPullRequest": "30.136986301369863 %",
+        "issuesLinkedToCommit": "15.068493150684931 %",
+        "size": "1000..2000",
+        "stars": "500..3000"
+    }
+}
