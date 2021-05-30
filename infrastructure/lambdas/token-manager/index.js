@@ -29,6 +29,9 @@ db.once("open", () => console.log("connected to the database"));
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 const refreshGithubTokens = async () => {
+
+    const func = "refreshGithubTokens";
+
     // Refresh tokens if they are expiring less than one hour from now
     var currentMillis = new Date().getTime();
     var expiringAuthProfiles;
@@ -40,7 +43,7 @@ const refreshGithubTokens = async () => {
     } catch (err) {
 
         logger.error("Error GithubAuthProfile find valid tokens expiring in less than an hour failed", {
-            func: "refreshGithubTokens",
+            func,
             e: err,
         });
 
@@ -95,18 +98,25 @@ const refreshGithubTokens = async () => {
     try {
         results = await Promise.allSettled(requestList);
     } catch (err) {
-        await logger.error({source: "token-lambda",
-            message: err,
-            errorDescription: `Error Promise.allSettled refreshing ${refreshTokenDataList.length} Github tokens`,
-            function: "refreshGithubTokens"});
+
+        logger.error(`Error Promise.allSettled refreshing ${refreshTokenDataList.length} Github tokens`, {
+            func,
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: `Error Promise.allSettled refreshing ${refreshTokenDataList.length} Github tokens`,
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
 
     // We will update GithubAuthProfiles for successful calls
     // Invalidate for unsuccessful calls
 
-    console.log("RESULTS: ");
-    console.log(results);
+    logger.info("Results: ", {func, obj: results});
 
     // Non-error responses
     var validResults = results.filter(resultObj => resultObj.value && !resultObj.value.error);
@@ -114,7 +124,7 @@ const refreshGithubTokens = async () => {
     // Error responses
     var invalidResults = results.filter(resultObj => resultObj.value && resultObj.value.error);
 
-    
+
     /*
     accessToken: {type: String, required: true},
     accessTokenExpireTime: {type: Number, required: true},
@@ -146,10 +156,18 @@ const refreshGithubTokens = async () => {
         try {
             await GithubAuthProfile.bulkWrite(bulkAuthProfileUpdateOps);
         } catch (err) {
-            await logger.error({source: "token-lambda",
-                message: err,
-                errorDescription: "Error GithubAuthProfile bulkAuthProfileUpdateOps failed",
-                function: "refreshGithubTokens"});
+
+            logger.error("Error GithubAuthProfile bulkAuthProfileUpdateOps failed", {
+                func,
+                e: err,
+            });
+    
+            Sentry.setContext("token-lambda", {
+                message: "Error GithubAuthProfile bulkAuthProfileUpdateOps failed",
+            });
+    
+            Sentry.captureException(err);
+    
             throw err;
         }
     }
@@ -167,25 +185,32 @@ const refreshGithubTokens = async () => {
         });
     });
 
-    console.log("bulkAuthProfileInvalidateOps: ");
-    console.log(JSON.stringify(bulkAuthProfileInvalidateOps));
+    logger.info("bulkAuthProfileInvalidateOps: ", {func, obj: bulkAuthProfileInvalidateOps});
 
     if (bulkAuthProfileInvalidateOps.length > 0) {
         try {
             await GithubAuthProfile.bulkWrite(bulkAuthProfileInvalidateOps);
         } catch (err) {
-            await logger.error({source: "token-lambda",
-                message: err,
-                errorDescription: "Error GithubAuthProfile bulkAuthProfileInvalidateOps failed",
-                function: "refreshGithubTokens"});
+
+
+            logger.error("Error GithubAuthProfile bulkAuthProfileInvalidateOps failed", {
+                func,
+                e: err,
+            });
+    
+            Sentry.setContext("token-lambda", {
+                message: "Error GithubAuthProfile bulkAuthProfileInvalidateOps failed",
+            });
+    
+            Sentry.captureException(err);
+    
             throw err;
         }
     }
 
 
-    await logger.info({source: "token-lambda",
-        message: `refreshGithubTokens: ${validResults.length} Github tokens refreshed, ${invalidResults.length} tokens invalidated.`,
-        function: "refreshGithubTokens"});
+    logger.info(`refreshGithubTokens: ${validResults.length} Github tokens refreshed, ${invalidResults.length} tokens invalidated.`,
+        { func });
     return true;
 
 };
@@ -220,6 +245,9 @@ const createAppJWTToken = () => {
 };
 
 const insertNewAppToken = async () => {
+
+    const func = "insertNewAppToken";
+
     var newToken = createAppJWTToken();
     newToken.installationId = -1;
     newToken.type = "APP";
@@ -231,7 +259,18 @@ const insertNewAppToken = async () => {
             expireTime: newToken.expireTime, 
             type: newToken.type});
     } catch (err) {
-        await logger.error({source: "token-lambda", message: err, errorDescription: "Error creating new 'APP' Token", function: "insertNewAppToken"});
+
+        logger.error("Error creating new 'APP' Token", {
+            func,
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error creating new 'APP' Token",
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
 
@@ -239,6 +278,9 @@ const insertNewAppToken = async () => {
 };
 
 const updateAppToken = async (oldToken) => {
+
+    const func = "updateAppToken";
+
     var newToken = createAppJWTToken();
 
     oldToken.value = newToken.value;
@@ -250,19 +292,43 @@ const updateAppToken = async (oldToken) => {
         updatedAppToken = await Token.findOneAndUpdate({ _id: oldToken._id}, 
             {$set: {value: newToken.value, expireTime: newToken.expireTime}});
     } catch (err) {
-        await logger.error({source: "token-lambda", message: err, errorDescription: "Error updating 'APP' Token", function: "updateAppToken"});
+
+        logger.error("Error updating 'APP' Token", {
+            func,
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error updating 'APP' Token",
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
     return updatedAppToken;
 };
 
 const createNewInstallToken = async (tokenModel, githubAppClient) => {
+
+    const func = "createNewInstallToken";
+
     var newTokenResponse;
     try {
         newTokenResponse = await githubAppClient.post(`/app/installations/${tokenModel.installationId}/access_tokens`);
     } catch (err) {
 
-        await logger.error({source: "token-lambda", message: err, errorDescription: "Error getting new 'INSTALL' access token from Github API", function: "createNewInstallToken"});
+        logger.error("Error getting new 'INSTALL' access token from Github API", {
+            func,
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error getting new 'INSTALL' access token from Github API",
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
 
@@ -274,11 +340,24 @@ const createNewInstallToken = async (tokenModel, githubAppClient) => {
 };
 
 const getAppToken = async () => {
+
+    const func = "getAppToken";
+
     var tokenResult;
     try {
         tokenResult = await Token.findOne({"type": "APP"});
     } catch (err) {
-        await logger.error({source: "token-lambda", message: err, errorDescription: "Error fetching 'APP' Token", function: "getAppToken"});
+        logger.error("Error fetching 'APP' Token", {
+            func,
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error fetching 'APP' Token",
+        });
+
+        Sentry.captureException(err);
+
         throw err;
     }
 
@@ -286,6 +365,8 @@ const getAppToken = async () => {
 };
 
 exports.handler = async (event) => {
+
+    const func = "handler";
 
     Sentry.init({
         dsn: process.env.SENTRY_DSN,
@@ -313,7 +394,7 @@ exports.handler = async (event) => {
     } catch (err) {
 
         logger.error("Error fetching 'APP' Token", {
-            func: "getAppToken",
+            func,
             e: err,
         });
 
@@ -328,37 +409,51 @@ exports.handler = async (event) => {
 
     // If app token does not exist.
     if (!retrievedToken) {
-        await logger.info({source: "token-lambda", message: "No 'APP' token found, inserting new one", function: "handler"});
+        logger.info("No 'APP' token found, inserting new one", { func });
         try {
             currentAppToken = await insertNewAppToken();
         } catch (err) {
-            await logger.error({source: "token-lambda", message: err, errorDescription: "Error creating new 'APP' Token", function: "insertNewAppToken"});
-            const response = {
-                statusCode: 500,
-                body: {success: false, error: `Error creating new 'APP' Token: ${err}`},
-            };
+
+            logger.error("Error creating new 'APP' Token", {
+                func,
+                e: err,
+            });
+    
+            Sentry.setContext("token-lambda", {
+                message: "Error creating new 'APP' Token",
+            });
+    
+            Sentry.captureException(err);
+    
             return response;
         }
-        await logger.info({source: "token-lambda", message: "Successfully inserted new 'APP' token", function: "handler"});
+        logger.info("Successfully inserted new 'APP' token", { func });
     } else {
 
         // If app token expiring within 3 minutes
         if ((retrievedToken.expireTime - currentTime) < (60*3*1000)) {
 
-            await logger.info({source: "token-lambda", message: `Updating 'APP' token expireTime: ${retrievedToken.expireTime}`, function: "handler"});
+            logger.info(`Updating 'APP' token expireTime: ${retrievedToken.expireTime}`, { func });
 
             try {
                 currentAppToken = await updateAppToken(retrievedToken);
             } catch (err) {
-                await logger.error({source: "token-lambda", message: err, errorDescription: "Error updating 'APP' Token", function: "updateAppToken"});
-                const response = {
-                    statusCode: 500,
-                    body: {success: false, error: `Error updating 'APP' Token: ${err}`},
-                };
+
+                logger.error("Error updating 'APP' Token", {
+                    func,
+                    e: err,
+                });
+        
+                Sentry.setContext("token-lambda", {
+                    message: "Error updating 'APP' Token",
+                });
+        
+                Sentry.captureException(err);
+        
                 return response;
             }
 
-            await logger.info({source: "token-lambda", message: `Successfully updated 'APP' token new expireTime: ${currentAppToken.expireTime}`, function: "handler"});
+            logger.info(`Successfully updated 'APP' token new expireTime: ${currentAppToken.expireTime}`, { func });
         } else {
             // If the app token is valid
             currentAppToken = retrievedToken;
@@ -376,15 +471,18 @@ exports.handler = async (event) => {
     try {
         await refreshGithubTokens();
     } catch (err) {
-        await logger.error({source: "token-lambda",
-            message: err,
-            errorDescription: "Error refreshing Github tokens",
-            function: "handler"});
 
-        const response = {
-            statusCode: 500,
-            body: {success: false, error: "Error refreshing Github tokens"},
-        };
+        logger.error("Error refreshing Github tokens", {
+            func,
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error refreshing Github tokens",
+        });
+
+        Sentry.captureException(err);
+
         return response;
     }
     // Github Token Refresh Section END ------
@@ -402,18 +500,25 @@ exports.handler = async (event) => {
     // Create New Install Token Section START ------
     if (event.action) {
         if (event.action == "createInstallToken") {
-            await logger.info({source: "token-lambda", message: `Creating new 'INSTALL' token for installationId: ${event.installationId}`, function: "handler"});
+            logger.info(`Creating new 'INSTALL' token for installationId: ${event.installationId}`, { func });
             var installationId = event.installationId;
             
             var newInstallToken;
             try {
                 newInstallToken = await createNewInstallToken({installationId}, githubAppClient);
             } catch (err) {
-                await logger.error({source: "token-lambda", message: err, errorDescription: "Error getting new 'INSTALL' access token from Github API", function: "createNewInstallToken"});
-                const response = {
-                    statusCode: 500,
-                    body: {success: false, error: "Error getting new 'INSTALL' access token from Github API"},
-                };
+
+                logger.error("Error getting new 'INSTALL' access token from Github API", {
+                    func,
+                    e: err,
+                });
+        
+                Sentry.setContext("token-lambda", {
+                    message: "Error getting new 'INSTALL' access token from Github API",
+                });
+        
+                Sentry.captureException(err);
+        
                 return response;
             }
 
@@ -438,9 +543,7 @@ exports.handler = async (event) => {
             }
             */
 
-            await logger.info({source: "token-lambda",
-                message: `Successfully created new 'INSTALL' token for installationId: ${createdInstallToken.installationId}`,
-                function: "handler"});
+            logger.info(`Successfully created new 'INSTALL' token for installationId: ${createdInstallToken.installationId}`, { func });
             const response = {
                 statusCode: 200,
                 body: {success: true, result: createdInstallToken},
@@ -460,19 +563,26 @@ exports.handler = async (event) => {
     try {
         installTokens = await Token.find({"type": "INSTALL", "expireTime": { $lte: (currentTime + (60*3*1000))}});
     } catch (err) {
-        await logger.error({source: "token-lambda", message: err, errorDescription: "Error finding 'INSTALL' tokens expiring within 3 minutes", function: "handler"});
-        const response = {
-            statusCode: 500,
-            body: {success: false, error: "Error finding 'INSTALL' tokens expiring within 3 minutes"},
-        };
+
+        logger.error("Error finding 'INSTALL' tokens expiring within 3 minutes", {
+            func,
+            e: err,
+        });
+
+        Sentry.setContext("token-lambda", {
+            message: "Error finding 'INSTALL' tokens expiring within 3 minutes",
+        });
+
+        Sentry.captureException(err);
+
         return response;
+
     }
 
-    if (!installTokens) {
-        await logger.info({source: "token-lambda", message: "Found 0 'INSTALL' tokens to update", function: "handler"});
-    } else if (installTokens.length != 0) {
+    if (!installTokens) logger.info("Found 0 'INSTALL' tokens to update", { func });
+    else if (installTokens.length != 0) {
 
-        await logger.info({source: "token-lambda", message: `Found ${installTokens.length} 'INSTALL' tokens expiring within 3 minutes`, function: "handler"});
+        logger.info(`Found ${installTokens.length} 'INSTALL' tokens expiring within 3 minutes`, { func });
 
         var newTokens = installTokens.map(async (tokenModel) => {
             return await createNewInstallToken(tokenModel, githubAppClient);
@@ -481,19 +591,26 @@ exports.handler = async (event) => {
         // Now `newTokens` should have all of our new tokens
         var results;
         try {
-            await logger.info({source: "token-lambda", message: "Before Promise", function: "handler"});
+            logger.info("Before Promise", { func });
             results = await Promise.all(newTokens);
-            await logger.info({source: "token-lambda", message: "After Promise", function: "handler"});
+            logger.info("After Promise", { func });
         } catch (err) {
-            await logger.error({source: "token-lambda", message: err, errorDescription: "Error getting new 'INSTALL' access token from Github API", function: "createNewInstallToken"});
-            const response = {
-                statusCode: 500,
-                body: {success: false, error: "Error getting new 'INSTALL' access token from Github API"},
-            };
+
+            logger.error("Error getting new 'INSTALL' access token from Github API", {
+                func,
+                e: err,
+            });
+    
+            Sentry.setContext("token-lambda", {
+                message: "Error getting new 'INSTALL' access token from Github API",
+            });
+    
+            Sentry.captureException(err);
+    
             return response;
         }
 
-        await logger.info({source: "token-lambda", message: `results: ${JSON.stringify(results)}`, function: "handler"});
+        logger.info("results: ", { func, obj: results });
 
         const bulkOps = results.map(tokenObj => ({
             updateOne: {
@@ -509,14 +626,22 @@ exports.handler = async (event) => {
             try {
                 await Token.collection.bulkWrite(bulkOps);
             } catch (err){
-                await logger.error({source: "token-lambda", message: err, errorDescription: "Error bulk updating 'INSTALL' tokens", function: "handler"});
-                const response = {
-                    statusCode: 500,
-                    body: {success: false, error: `Error bulk updating Install Tokens: ${err}`},
-                };
+
+
+                logger.error("Error bulk updating 'INSTALL' tokens", {
+                    func,
+                    e: err,
+                });
+        
+                Sentry.setContext("token-lambda", {
+                    message: "Error bulk updating 'INSTALL' tokens",
+                });
+        
+                Sentry.captureException(err);
+        
                 return response;
             }
-            await logger.info({source: "token-lambda", message: `Successfully updated ${bulkOps.length} 'INSTALL' tokens`, function: "handler"});
+            logger.info(`Successfully updated ${bulkOps.length} 'INSTALL' tokens`, { func });
         }
     }
 

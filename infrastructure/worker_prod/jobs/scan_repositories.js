@@ -475,7 +475,7 @@ const scanRepositories = async () => {
         }
 
 
-        
+        /*
         // Generate InsertHunks for each Commit from each unscanned Repository
         var repositoryInsertHunksRequestList = unscannedRepositories.map(async (repositoryObj, idx) => {
             var integrationBoardId;
@@ -512,6 +512,7 @@ const scanRepositories = async () => {
             Sentry.captureException(err);
             throw err;
         }
+        */
 
 
         /*

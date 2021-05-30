@@ -25,8 +25,7 @@ const app = express();
 
 //SENTRY
 Sentry.init({
-    dsn:
-        "https://5a8e044d64d24a7e8ec52600ee527944@o504090.ingest.sentry.io/5590374",
+    dsn: process.env.SENTRY_DSN,
 });
 
 app.use(Sentry.Handlers.requestHandler());
