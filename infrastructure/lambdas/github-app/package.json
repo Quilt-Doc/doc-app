@@ -13,7 +13,7 @@
     "@elastic/elasticsearch": "^7.9.1",
     "@sentry/serverless": "^6.2.3",
     "aws-sdk": "^2.702.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "dotenv": "^8.2.0",
     "github-webhook-handler": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
