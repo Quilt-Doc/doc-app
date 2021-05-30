@@ -1048,6 +1048,8 @@ const fetchAllRepoIssuesAPIGraphQL = async (client, repositoryId,
                 sourceId: issue.number,
 
                 description: issue.body,
+                body: issue.body,
+
                 sourceCreationDate: issue.createdAt,
                 sourceUpdateDate: issue.updatedAt,
                 sourceCloseDate: issue.closedAt,

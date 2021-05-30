@@ -8,7 +8,7 @@ const queueUrl = process.env.JOB_QUEUE_URL;
 const LOCAL_WORKER = process.env.IS_PRODUCTION ? false : true;
 
 const dispatchScanRepositoriesJob = async (jobData) => {
-    console.log(`Dispatching 'scan_repositories' Job with jobData: `);
+    console.log("Dispatching 'scan_repositories' Job with jobData: ");
     console.log(jobData);
 
     console.log(LOCAL_WORKER);
@@ -20,7 +20,7 @@ const dispatchScanRepositoriesJob = async (jobData) => {
         try {
             workerResponse = await workerClient.post("/job", jobData);
         } catch (err) {
-            console.log(`dispatchScanRepositoriesJob - Error dispatching scan_repositories job`);
+            console.log("dispatchScanRepositoriesJob - Error dispatching scan_repositories job");
             throw err;
         }
         return;

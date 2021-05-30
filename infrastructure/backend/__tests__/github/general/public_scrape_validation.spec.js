@@ -297,19 +297,19 @@ describe("Basic public github scrape validation", () => {
 
         const repositories = JSON.parse(process.env.TEST_SAMPLE_REPOSITORIES);
 
-        // acquire commits for each repository from github API
+        // acquire Pull Requests for each repository from github API
         process.env.TEST_ALL_PULL_REQUESTS = JSON.stringify(
             await acquireRepositoryRawPullRequests(repositories)
         );
 
-        // acquire commits for each repository from database
+        // acquire Pull Requests for each repository from database
         process.env.TEST_ALL_SCRAPED_PULL_REQUESTS = JSON.stringify(
             await Promise.all(
                 repositories.map((repo) =>
                     PullRequest.find({
                         repository: repo._id,
                     })
-                        .select("_id sourceId name")
+                        .select("_id sourceId name description")
                         .lean()
                         .exec()
                 )
@@ -383,7 +383,7 @@ describe("Basic public github scrape validation", () => {
                         repositoryId: repo._id,
                         source: "github",
                     })
-                        .select("_id sourceId name")
+                        .select("_id sourceId name description")
                         .lean()
                         .exec();
                 })

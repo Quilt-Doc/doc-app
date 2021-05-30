@@ -48,6 +48,8 @@ const { checkValid } = require("../utils/utils");
 
 const deleteUtils = require("../utils/delete_utils");
 
+const LOCAL_WORKER = process.env.IS_PRODUCTION ? false : true;
+
 escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 };
@@ -56,7 +58,7 @@ const getScanRepositoriesData = async (
     repositoryIds,
     workspace,
     session,
-    public,
+    public
 ) => {
     // Get the list of installationIds for all Repositories
     var repositoryInstallationIds;
@@ -73,7 +75,7 @@ const getScanRepositoriesData = async (
         console.log(err);
 
         Sentry.setContext("getScanRepositoriesData", {
-            message: `Repository.find failed`,
+            message: "Repository.find failed",
             repositoryIds: repositoryIds,
         });
 
@@ -109,7 +111,7 @@ const getScanRepositoriesData = async (
 
     if (public) {
         scanRepositoriesData["installationIdLookup"] = {};
-        scanRepositoriesData["repositoryInstallationIds"] = []
+        scanRepositoriesData["repositoryInstallationIds"] = [];
         scanRepositoriesData["public"] = true;
     }
 
@@ -124,6 +126,21 @@ createWorkspace = async (req, res) => {
     const { name, creatorId, installationId, repositoryIds, public } = req.body;
 
     console.log({ name, creatorId, installationId, repositoryIds });
+
+    if (LOCAL_WORKER) {
+        req.setTimeout((1000 * 60 * 10), () => {
+            console.log("Request Timeout");
+            let err = new Error("Request Timeout");
+            err.status = 408;
+            next(err);
+        });
+        res.setTimeout((1000 * 60 * 10), () => {
+            console.log("Response Timeout");
+            let err = new Error("Response Timeout");
+            err.status = 408;
+            next(err);
+        });
+    }
 
     if (!checkValid(name))
         return res.json({
@@ -167,7 +184,7 @@ createWorkspace = async (req, res) => {
                 console.log(err);
 
                 Sentry.setContext("createWorkspace", {
-                    message: `Workspace.save() failed`,
+                    message: "Workspace.save() failed",
                     creator: creatorId,
                     repositoryIds: repositoryIds,
                 });
@@ -255,7 +272,7 @@ createWorkspace = async (req, res) => {
                     repositoryIds,
                     workspace,
                     session,
-                    public,
+                    public
                 );
             } catch (err) {
                 await logger.error({
@@ -475,14 +492,19 @@ deleteWorkspace = async (req, res) => {
                 session
             );
 
+            console.log("deleteWorkspace deleted IntegrationAttachments");
+            /*
             // Delete all ticketsToDelete IntegrationLabels
             await deleteUtils.deleteIntegrationLabels(ticketsToDelete, session);
+            */
+            // console.log("deleteWorkspace deleted IntegrationLabels");
 
             // Delete all ticketsToDelete IntegrationColumns
             await deleteUtils.deleteIntegrationColumns(
                 ticketsToDelete,
                 session
             );
+            console.log("deleteWorkspace deleted IntegrationColumns");
 
             // Delete all ticketsToDelete IntegrationComments
             await deleteUtils.deleteIntegrationComments(

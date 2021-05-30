@@ -38,6 +38,7 @@ const acquireCounts = async (fullName) => {
         `Acquired ${commits.length} commits, ${pullRequests.length} prs, ${branches.length} branches, ${tickets.length} tickets for repository ${fullName}`,
         {
             func: "acquireCounts",
+            /*
             obj: {
                 repositories,
                 commits,
@@ -45,6 +46,7 @@ const acquireCounts = async (fullName) => {
                 tickets,
                 branches,
             },
+            */
         }
     );
 

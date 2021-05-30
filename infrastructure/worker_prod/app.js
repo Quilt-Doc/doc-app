@@ -42,6 +42,19 @@ console.log(`process.env.NO_GITHUB_PROJECTS: ${process.env.NO_GITHUB_PROJECTS}`)
 
 app.post("/job", async function (req, res) {
 
+    req.setTimeout((1000 * 60 * 10), () => {
+        console.log("Request Timeout");
+        let err = new Error("Request Timeout");
+        err.status = 408;
+        next(err);
+    });
+    res.setTimeout((1000 * 60 * 10), () => {
+        console.log("Response Timeout");
+        let err = new Error("Response Timeout");
+        err.status = 408;
+        next(err);
+    });
+
     const { jobType } = req.body;
 
     console.log(`Received req.body: ${JSON.stringify(req.body)}`);
