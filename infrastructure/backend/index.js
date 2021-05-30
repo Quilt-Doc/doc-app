@@ -25,8 +25,7 @@ const app = express();
 
 //SENTRY
 Sentry.init({
-    dsn:
-        "https://5a8e044d64d24a7e8ec52600ee527944@o504090.ingest.sentry.io/5590374",
+    dsn: "https://5a8e044d64d24a7e8ec52600ee527944@o504090.ingest.sentry.io/5590374",
 });
 
 app.use(Sentry.Handlers.requestHandler());
@@ -131,10 +130,7 @@ app.use(function (req, res, next) {
     }
 
     // Check if asset call
-    if (
-        req.path.includes("/assets") ||
-        req.path.includes("/integrations/trello")
-    ) {
+    if (req.path.includes("/assets") || req.path.includes("/integrations/trello")) {
         isNonAuthPath = true;
     }
 

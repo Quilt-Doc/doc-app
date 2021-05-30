@@ -82,10 +82,7 @@ class DirectAssociationGenerator extends AssociationGenerator {
                         $and: [
                             { repository: ObjectId(repository) },
                             {
-                                $or: [
-                                    { baseRef: sourceId },
-                                    { headRef: sourceId },
-                                ],
+                                $or: [{ baseRef: sourceId }, { headRef: sourceId }],
                             },
                         ],
                     });
@@ -100,7 +97,7 @@ class DirectAssociationGenerator extends AssociationGenerator {
                 )
                     return;
 
-                // create match query for ticket
+                // create match query for ticket and specified model
                 const match = {
                     $match: {
                         $or: ticketQueries[modelType],
@@ -164,8 +161,7 @@ class DirectAssociationGenerator extends AssociationGenerator {
                 const seen = new Set();
 
                 ticketCodeObjects.map((codeObject) => {
-                    if (!codeObject || seen.has(codeObject._id.toString()))
-                        return;
+                    if (!codeObject || seen.has(codeObject._id.toString())) return;
 
                     let association = {
                         firstElement: ticketId,
@@ -185,8 +181,6 @@ class DirectAssociationGenerator extends AssociationGenerator {
                 });
             });
         });
-
-        console.log("\nASSOCIATIONS LENGTH: ", associations.length);
 
         associations = await Association.insertMany(associations);
 
