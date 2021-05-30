@@ -36,7 +36,7 @@
         "dotenv": "^8.2.0",
         "express": "^4.17.1",
         "express-session": "^1.17.0",
-        "fs-path": "0.0.24",
+        "fs-path": "0.0.25",
         "fuse.js": "^6.4.6",
         "googleapis": "^66.0.0",
         "graphql": "^15.5.0",
